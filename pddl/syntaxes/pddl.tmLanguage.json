@@ -7,6 +7,18 @@
 		},
 		{
 			"include": "#strings"
+		},
+		{
+			"include": "#comments"
+		},
+		{
+			"include": "#scalars"
+		},
+		{
+			"include": "#time-qualifiers"
+		},
+		{
+			"include": "#parameters"
 		}
 	],
 	"repository": {
@@ -14,6 +26,30 @@
 			"patterns": [{
 				"name": "keyword.control.pddl",
 				"match": "\\b(define|domain|problem|requirements)\\b|:[\\w-]+\\b"
+			}]
+		},
+		"comments": {
+			"patterns": [{
+				"name": "comment.line",
+				"match": ";.*$"
+			}]
+		},
+		"scalars": {
+			"patterns": [{
+				"name": "constant.numeric",
+				"match": "\\b[-+]?([0-9]*\\.[0-9]+|[0-9]+)\\b"
+			}]
+		},
+		"time-qualifiers":{
+			"patterns": [{
+				"name": "keyword.operator.pddl_qualifier",
+				"match": "\\b(and|not|at start|at end|over all|increase|decrease)\\b"
+			}]
+		},
+		"parameters":{
+			"patterns": [{
+				"name": "variable.parameter",
+				"match": "\\?\\w+\\b"
 			}]
 		},
 		"strings": {
@@ -26,7 +62,7 @@
 					"match": "\\\\."
 				}
 			]
-		},
+		}
 	},
 	"scopeName": "source.pddl"
 }

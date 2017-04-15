@@ -30,16 +30,16 @@
             "extensions": [".pddl"],
             "configuration": "./language-configuration.json"
         }],
+        "grammars": [{
+            "language": "pddl",
+            "scopeName": "source.pddl",
+            "path": "./syntaxes/pddl.tmLanguage.json"
+        }],
 		"snippets": [
 			{
 				"language": "pddl",
 				"path": "./snippets/pddl.json"
 			}
-		],
-        "grammars": [{
-            "language": "pddl",
-            "scopeName": "source.pddl",
-            "path": "./syntaxes/pddl.tmLanguage.json"
-        }]
+		]
     }
 }

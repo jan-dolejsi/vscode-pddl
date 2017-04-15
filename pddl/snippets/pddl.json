@@ -1,5 +1,5 @@
 {
-  "main": {
+  "domain": {
     "prefix": "domain",
     "body": [
       ";Header and description",
@@ -27,11 +27,36 @@
     ],
     "description": "Define domain"
   },
-  "sysout": {
-    "prefix": "sysout",
+  "action": {
+    "prefix": "action",
     "body": [
-      "System.out.println($1);"
+        "\t(:action start_rotation",
+        "\t :parameters ()",
+        "\t :precondition (and (not(predicate1))(predicate2))",
+        "\t :effect (and (predicate1)))",
+        ""
     ],
-    "description": "Print to standard out"
+    "description": "Creates an instantaneous action"
   },
+  "durativeaction": {
+    "prefix": "action-durative",
+    "body": [
+        "\t\t(:durative-action\tstart_rotation",
+        "\t:parameters\t(?t\ttype1)",
+        "\t:duration\t(=\t?duration\t1)",
+        "\t:condition\t(and\t",
+        "\t\t(at\tstart\t(not(predicate1)))",
+        "\t\t(over\tall\t(predicate2))",
+        "\t\t(at\tend\t(predicate3))",
+      "\t)",
+        "\t:effect\t(and\t",
+      "\t\t(at\tend(predicate1))",
+        "\t\t(at\tstart\t(not\t(predicate2)))",
+            "\t\t(increase\t(function1)\t(*\t#t\t(function2\t?t)))\t\t",
+      "\t)",
+      ")",
+      ""
+    ],
+    "description": "Creates a durative action" 
+  }
 }
