@@ -9,5 +9,7 @@ Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how 
 ### Added
 
 - Initial release
+- PDDL Snippets for `domain`, `problem`, `action` and `durative-action`.
+- Syntax highlighting for commonly used PDDL features
 
-[Unreleased]: https://github.com/olivierlacan/keep-a-changelog/compare/v0.3.0...HEAD
+[Unreleased]: https://github.com/jan-dolejsi/vscode-pddl/compare/v1.0.0...HEAD

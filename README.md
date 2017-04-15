@@ -23,7 +23,7 @@ Commonly used PDDL keywords are highlighted.
 
 ## Known Issues
 
-None yet.
+See unfixed issues and submit new ones [here][github pddl issues].
 
 ## Release Notes
 
@@ -46,3 +46,4 @@ Initial release with simple syntax highlighting and code snippets.
 **Enjoy!**
 
 [PDDL]: https://en.wikipedia.org/wiki/Planning_Domain_Definition_Language
+[github pddl issues]: https://github.com/jan-dolejsi/vscode-pddl/issues

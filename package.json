@@ -2,7 +2,7 @@
     "name": "pddl",
     "displayName": "PDDL",
     "description": "Planning Domain Description Language support",
-    "version": "0.0.1",
+    "version": "1.0.0",
     "publisher": "jan-dolejsi",
     "engines": {
         "vscode": "^1.11.0"
