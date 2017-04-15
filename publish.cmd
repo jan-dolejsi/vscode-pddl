@@ -7,4 +7,5 @@ call vsce package
 echo test extension 
 call code --install-extension pddl-1.0.0.vsix
 pause
-call vsce publish;;major minor patch 
+call vsce publish --packagePath pddl-1.0.0.vsix 
+::major minor patch 
