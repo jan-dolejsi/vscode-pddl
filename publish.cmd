@@ -1,8 +1,10 @@
-;; https://code.visualstudio.com/docs/extensions/publish-extension
+:: https://code.visualstudio.com/docs/extensions/publish-extension
 
-cd pddl
-vsce ls
+call vsce ls
 pause
-vsce package
+call vsce package
+:: https://code.visualstudio.com/docs/editor/extension-gallery#_install-from-a-vsix
+echo test extension 
+call code --install-extension pddl-*.vsix
 pause
-vsce publish;;major minor patch 
+call vsce publish;;major minor patch 

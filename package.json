@@ -15,9 +15,10 @@
 		"planning",
         "AI"
 	], 
+    "icon": "images/icon.png",
 	"galleryBanner": {
-		"color": "#ffdb59",
-		"theme": "dark"
+		"color": "#97ff6b",
+		"theme": "light"
 	}, 
 	"repository": {
 		"type": "git",
