@@ -1,0 +1,37 @@
+{
+  "main": {
+    "prefix": "domain",
+    "body": [
+      ";Header and description",
+      "",
+      "(define (domain domainName)",
+      "",
+      ";remove requirements that are not needed",
+      "(:requirements :strips :fluents :durative-actions :timed-initial-literals :typing :conditional-effects :negative-preconditions :duration-inequalities)",
+      "",
+      "(:types childType1 childType2 - parentType)",
+      "",
+      "(:constants childA childB - childType1 ",
+      ")",
+      "",
+      "(:predicates (predicate1 ?c - childType1) ",
+      ")",
+      "",
+      "",
+      "(:functions (function1 ?c - childType2)",
+      ")",
+      "",
+      ";define actions here",
+      "",
+      ")"
+    ],
+    "description": "Define domain"
+  },
+  "sysout": {
+    "prefix": "sysout",
+    "body": [
+      "System.out.println($1);"
+    ],
+    "description": "Print to standard out"
+  },
+}

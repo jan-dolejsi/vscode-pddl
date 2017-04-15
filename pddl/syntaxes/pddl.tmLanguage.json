@@ -1,0 +1,32 @@
+{
+	"$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+	"name": "PDDL",
+	"patterns": [
+		{
+			"include": "#keywords"
+		},
+		{
+			"include": "#strings"
+		}
+	],
+	"repository": {
+		"keywords": {
+			"patterns": [{
+				"name": "keyword.control.pddl",
+				"match": "\\b(define|domain|problem|requirements)\\b|:[\\w-]+\\b"
+			}]
+		},
+		"strings": {
+			"name": "string.quoted.double.pddl",
+			"begin": "\"",
+			"end": "\"",
+			"patterns": [
+				{
+					"name": "constant.character.escape.pddl",
+					"match": "\\\\."
+				}
+			]
+		},
+	},
+	"scopeName": "source.pddl"
+}

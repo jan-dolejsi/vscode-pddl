@@ -1,0 +1,45 @@
+{
+    "name": "pddl",
+    "displayName": "PDDL",
+    "description": "Planning Domain Description Language support",
+    "version": "0.0.1",
+    "publisher": "jan-dolejsi",
+    "engines": {
+        "vscode": "^1.11.0"
+    },
+    "categories": [
+        "Languages"
+    ],
+	"keywords": [
+		"PDDL",
+		"planning",
+        "AI"
+	], 
+	"galleryBanner": {
+		"color": "#ffdb59",
+		"theme": "dark"
+	}, 
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/jan-dolejsi/vscode-pddl"
+	},
+     "contributes": {
+        "languages": [{
+            "id": "pddl",
+            "aliases": ["PDDL", "pddl"],
+            "extensions": [".pddl"],
+            "configuration": "./language-configuration.json"
+        }],
+		"snippets": [
+			{
+				"language": "pddl",
+				"path": "./snippets/pddl.json"
+			}
+		],
+        "grammars": [{
+            "language": "pddl",
+            "scopeName": "source.pddl",
+            "path": "./syntaxes/pddl.tmLanguage.json"
+        }]
+    }
+}
