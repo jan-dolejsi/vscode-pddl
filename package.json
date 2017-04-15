@@ -17,7 +17,7 @@
 	], 
     "icon": "images/icon.png",
 	"galleryBanner": {
-		"color": "#97ff6b",
+		"color": "#ff402b",
 		"theme": "light"
 	}, 
 	"repository": {
