@@ -19,6 +19,7 @@
       "",
       "",
       "(:functions (function1 ?c - childType2)",
+      "            (cost)",
       ")",
       "",
       ";define actions here",
@@ -30,10 +31,10 @@
   "action": {
     "prefix": "action",
     "body": [
-        "\t(:action start_rotation",
-        "\t :parameters ()",
-        "\t :precondition (and (not(predicate1))(predicate2))",
-        "\t :effect (and (predicate1)))",
+        "(:action actionName",
+        "     :parameters ()",
+        "     :precondition (and (not(predicate1))(predicate2))",
+        "     :effect (and (predicate1)))",
         ""
     ],
     "description": "Creates an instantaneous action"
@@ -41,22 +42,46 @@
   "durativeaction": {
     "prefix": "action-durative",
     "body": [
-        "\t\t(:durative-action\tstart_rotation",
-        "\t:parameters\t(?t\ttype1)",
-        "\t:duration\t(=\t?duration\t1)",
-        "\t:condition\t(and\t",
-        "\t\t(at\tstart\t(not(predicate1)))",
-        "\t\t(over\tall\t(predicate2))",
-        "\t\t(at\tend\t(predicate3))",
-      "\t)",
-        "\t:effect\t(and\t",
-      "\t\t(at\tend(predicate1))",
-        "\t\t(at\tstart\t(not\t(predicate2)))",
-            "\t\t(increase\t(function1)\t(*\t#t\t(function2\t?t)))\t\t",
-      "\t)",
+        "(:durative-action actionName",
+        "    :parameters (?t type1)",
+        "    :duration (=?duration 1)",
+        "    :condition (and ",
+        "        (at start (not(predicate1)))",
+        "        (over all (predicate2))",
+        "        (at end (predicate3))",
+      "    )",
+        "    :effect (and ",
+      "        (at end(predicate1))",
+        "        (at start (not (predicate2)))",
+            "        (increase (function1) (* #t (function2 ?t)))",
+      "    )",
       ")",
       ""
     ],
     "description": "Creates a durative action" 
+  },
+  "problem": {
+    "prefix": "problem",
+    "body": [
+      "(define (problem problemName) (:domain domainName)",
+      "(:objects",
+        "    object11 object12 - childType1",
+        "    object21 object22 - childType2",
+      ")",
+      "(:init",
+        "    (predicate1 object12)",
+        "    (= (function1 object12) 123.45)",
+      ")",
+      "",
+      "(:goal (and",
+          "        (predicate1 object22)",
+        "    )",
+      ")",
+      "",
+      "(:metric minimize (cost))",
+      ")",
+      ""
+    ],
+    "description": "Creates a problem skeleton"
   }
 }

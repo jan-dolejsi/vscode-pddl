@@ -27,8 +27,9 @@
         "languages": [{
             "id": "pddl",
             "aliases": ["PDDL", "pddl"],
-            "extensions": [".pddl"],
-            "configuration": "./language-configuration.json"
+            "extensions": [".pddl", ""],
+            "configuration": "./language-configuration.json",
+            "firstLine": "\\(define\\s\\((domain|problem)\\b"
         }],
         "grammars": [{
             "language": "pddl",
