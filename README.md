@@ -15,7 +15,7 @@ Following snippets are supported if you start typing following prefix
 - `action-durative`: durative action
 - `problem`: creates a problem skeleton
 
-![snippets](images/snippets.gif)
+![snippets](https://raw.githubusercontent.com/jan-dolejsi/vscode-pddl/master/images/snippets.gif)
 
 ### Syntax highlighting
 
