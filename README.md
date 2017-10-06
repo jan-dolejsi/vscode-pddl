@@ -27,7 +27,9 @@ See unfixed issues and submit new ones [here][github pddl issues].
 
 ## Release Notes
 
-Users appreciate release notes as you update your extension.
+### 1.0.1
+
+Added missing `:requirements` options and fixed up the code snippets.
 
 ### 1.0.0
 

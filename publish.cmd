@@ -5,7 +5,7 @@ pause
 call vsce package
 :: https://code.visualstudio.com/docs/editor/extension-gallery#_install-from-a-vsix
 echo test extension 
-call code --install-extension pddl-1.0.0.vsix
+call code --install-extension pddl-1.0.1.vsix
 pause
-call vsce publish --packagePath pddl-1.0.0.vsix 
+call vsce publish --packagePath pddl-1.0.1.vsix 
 ::major minor patch 
