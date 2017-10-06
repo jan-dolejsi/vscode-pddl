@@ -36,7 +36,7 @@
 			},
 			{
 				"name": "keyword.control.pddl.requirements",
-				"match": ":(strips|fluents|durative-actions|timed-initial-literals|typing|conditional-effects|negative-preconditions|duration-inequalities)\\b"
+				"match": ":(strips|typing|negative-preconditions|disjunctive-preconditions|equality|existential-preconditions|universal-preconditions|quantified-preconditions|conditional-effects|fluents|numeric-fluents|adl|durative-actions|duration-inequalities|continuous-effects|derived-predicates|timed-initial-literals|preferences|constraints|action-costs|timed-initial-fluents)\\b"
 			},
 			{
 				"name": "keyword.control.pddl.action",
