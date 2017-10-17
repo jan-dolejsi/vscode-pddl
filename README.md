@@ -27,6 +27,10 @@ See unfixed issues and submit new ones [here][github pddl issues].
 
 ## Release Notes
 
+### 1.0.2
+
+Simplified snippets and added tabstops/placeholders to them, so they are easy to fill in with content.
+
 ### 1.0.1
 
 Added missing `:requirements` options and fixed up the code snippets.

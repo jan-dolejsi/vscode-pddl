@@ -2,7 +2,9 @@
     "name": "pddl",
     "displayName": "PDDL",
     "description": "Planning Domain Description Language support",
-    "version": "1.0.1",
+    "author": "Jan Dolejsi",
+    "license": "MIT",
+    "version": "1.0.2",
     "publisher": "jan-dolejsi",
     "engines": {
         "vscode": "^1.11.0"
@@ -42,6 +44,6 @@
 				"language": "pddl",
 				"path": "./snippets/pddl.json"
 			}
-		]
+        ]
     }
 }
