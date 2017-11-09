@@ -62,7 +62,7 @@
 		"time-qualifiers":{
 			"patterns": [{
 				"name": "keyword.operator.pddl_qualifier",
-				"match": "\\b(and|not|at start|at end|over all|increase|decrease|minimize)\\b"
+				"match": "\\b(and|not|at start|at end|over all|assign|increase|decrease|minimize)\\b"
 			}]
 		},
 		"parameters":{
