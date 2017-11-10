@@ -127,6 +127,7 @@
 					"scope": "resource",
 					"type": "string",
 					"title": "Planner executable or service URL",
+					"default": "http://solver.planning.domains/solve",
 					"description": "Enter the planner executable (e.g. planner.exe) with full path unless you have its location included in the %path% environment variable. If you are using a parsing service, make sure it starts with http: or https:"
 				},
 				"pddlPlanner.epsilonTimeStep": {

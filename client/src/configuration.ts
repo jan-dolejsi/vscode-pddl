@@ -146,12 +146,6 @@ export class PddlConfiguration {
     async getPlannerPath(): Promise<string> {
         let plannerPath: string = vscode.workspace.getConfiguration().get(PLANNER_LOCATION);
 
-        if (PddlConfiguration.isHttp(plannerPath)) {
-            // is a service
-            vscode.window.showInformationMessage("Sorry, not implemented yet.");
-            return null;
-        }
-
         if (!plannerPath) {
             plannerPath = await this.askNewPlannerPath();
         }
@@ -162,7 +156,7 @@ export class PddlConfiguration {
     async askNewPlannerPath() {
         let configuration: vscode.WorkspaceConfiguration;
 
-        let newPlannerPath = await vscode.window.showInputBox({ prompt: "Enter PDDL planner path local command or web service URL", placeHolder: `planner.exe OR java -jar c:\\planner.jar OR https://someserver/` });
+        let newPlannerPath = await vscode.window.showInputBox({ prompt: "Enter PDDL planner path local command or web service URL", placeHolder: `planner.exe OR java -jar c:\\planner.jar OR http://solver.planning.domains/solve` });
         if (newPlannerPath) {
             // todo: validate that this planner actually works by sending a dummy request to it
 

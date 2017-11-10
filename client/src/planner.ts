@@ -20,7 +20,7 @@ import { PddlConfiguration } from './configuration';
 import { Plan, PlanStep } from './plan';
 import { PddlPlanParser } from './PddlPlanParser';
 
-export class Planner {
+export abstract class Planner {
     output: OutputChannel;
     epsilon = 1e-3;
 
