@@ -6,9 +6,11 @@ Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how 
 
 ## [Unreleased]
 
-Language server with full language parsing and problem reporting.
-Auto-completion.
-Hover over documentation.
+More flexible configuration of a planning engine.
+
+## [2.0.0] - 2017-11-10
+
+PDDL Language Server now provides rich PDDL syntax validation, hover info, Go to Definition, Find All References, Jump to symbol, Auto-completion, configuration of custom PDDL parser, planner execution and plan visualization.
 
 ## [1.0.2] - 2017-10-16
 
@@ -33,6 +35,7 @@ Simplified snippets and added tabstops/placeholders to them, so they are easy to
 - PDDL Snippets for `domain`, `problem`, `action` and `durative-action`.
 - Syntax highlighting for commonly used PDDL features
 
-[Unreleased]: https://github.com/jan-dolejsi/vscode-pddl/compare/v1.0.2...HEAD
+[Unreleased]: https://github.com/jan-dolejsi/vscode-pddl/compare/v2.0.0...HEAD
+[2.0.0]:https://github.com/jan-dolejsi/vscode-pddl/compare/v1.0.2...v2.0.0
 [1.0.2]:https://github.com/jan-dolejsi/vscode-pddl/compare/v1.0.1...v1.0.2
 [1.0.1]:https://github.com/jan-dolejsi/vscode-pddl/compare/1.0.0...v1.0.1

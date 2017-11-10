@@ -1,0 +1,155 @@
+{
+    "name": "pddl",
+    "displayName": "PDDL",
+    "description": "Planning Domain Description Language support",
+	"author": "Jan Dolejsi",
+	"license": "MIT",
+	"version": "2.0.0",
+	"publisher": "jan-dolejsi",
+	"engines": {
+		"vscode": "^1.16.0"
+	},
+	"categories": [
+		"Other",
+		"Languages"
+	],
+	"keywords": [
+		"PDDL",
+		"planning",
+        "AI"
+	], 
+    "icon": "images/icon.png",
+	"galleryBanner": {
+		"color": "#ff402b",
+		"theme": "light"
+	}, 
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/jan-dolejsi/vscode-pddl"
+	},
+	"activationEvents": [
+		"onLanguage:pddl"
+	],
+	"main": "./out/client/src/extension",
+	"contributes": {
+        "languages": [{
+            "id": "pddl",
+            "aliases": ["PDDL", "pddl"],
+            "extensions": [".pddl", ""],
+            "configuration": "./language-configuration.json",
+            "firstLine": "\\(define\\s\\((domain|problem)\\b"
+        }],
+        "grammars": [{
+            "language": "pddl",
+            "scopeName": "source.pddl",
+            "path": "./syntaxes/pddl.tmLanguage.json"
+        }],
+		"snippets": [
+			{
+				"language": "pddl",
+				"path": "./snippets/pddl.json"
+			}
+        ],
+		"commands": [
+			{
+				"command": "pddl.planAndDisplayResult",
+				"title": "Run the planner and display the plan"
+			},
+			{
+				"command": "pddl.stopPlanner",
+				"title": "Stop planner"
+			},
+			{
+				"command": "pddl.configureParser",
+				"title": "Configure PDDL parser"
+			}
+		],
+		"menus": {
+			"editor/context": [
+				{
+					"command": "pddl.planAndDisplayResult",
+					"when": "resourceLangId == pddl"
+				}
+			]
+		},
+		"configuration": {
+			"type": "object",
+			"title": "PDDL parser and planner configuration",
+			"properties": {
+				"pddlParser.executableOrService": {
+					"scope": "resource",
+					"type": "string",
+					"description": "PDDL parser for syntactical analysis. Specify executable location or service URL e.g. parser.exe, validate.exe, or http://localhost:8090/parse."
+				},
+				"pddlParser.executableOptions": {
+					"scope": "resource",
+					"type": "string",
+					"description": "Override the command-line options passed to the PDDL parser configured in 'pddlParser.executableOrService'.",
+					"pattern": "^\\$\\(parser\\).+\\$\\(domain\\).+\\$\\(problem\\).*$",
+					"default": "$(parser) $(domain) $(problem)"
+				},				
+				"pddlParser.problemPattern": {
+					"scope": "resource",
+					"type": "string",
+					"description": "Pattern to match onto the parser output to extract the parsing problems. The syntax must be: '/regex/flags/order'. See more info at https://github.com/jan-dolejsi/vscode-pddl/wiki/Configuring-the-PDDL-parser"
+				},
+				"pddlParser.pddlParserService": {
+					"scope": "resource",
+					"type": "string",
+					"description": "Obsolete: please remove configuration values manually."
+				},
+				"pddlParser.delayInSecondsBeforeParsing": {
+					"scope": "resource",
+					"type": "number",
+					"default": 3,
+					"minimum": 1,
+					"description": "Delay in seconds the Language Server should wait after a PDDL file is modified before calls the parser."
+				},
+				"pddlParser.maxNumberOfProblems": {
+					"scope": "resource",
+					"type": "number",
+					"default": 100,
+					"minimum": 1,
+					"description": "Controls the maximum number of problems produced by the server."
+				},
+				"pddlParser.trace.server": {
+					"scope": "window",
+					"type": "string",
+					"enum": [
+						"off",
+						"messages",
+						"verbose"
+					],
+					"default": "off",
+					"description": "Traces the communication between VSCode and the language server."
+				},
+				"pddlPlanner.executableOrService": {
+					"scope": "resource",
+					"type": "string",
+					"title": "Planner executable or service URL",
+					"description": "Enter the planner executable (e.g. planner.exe) with full path unless you have its location included in the %path% environment variable. If you are using a parsing service, make sure it starts with http: or https:"
+				},
+				"pddlPlanner.epsilonTimeStep": {
+					"scope": "resource",
+					"type": "number",
+					"default": 0.001,
+					"title": "Default epsilon time step used by your planner.",
+					"description": "Default epsilon time step used by your planner. This is used when interpreting/visualizing the plan. "
+				}
+			}
+		}
+	},
+	"scripts": {
+		"vscode:prepublish": "tsc -p ./",
+		"compile": "tsc -p ./",
+		"watch": "tsc -w -p ./",
+		"update-vscode": "node ./node_modules/vscode/bin/install",
+		"postinstall": "node ./node_modules/vscode/bin/install"
+	},
+	"dependencies": {
+		"vscode": "^1.1.5",
+		"vscode-languageclient": "^3.4.2",
+		"child-process-data": "^0.5.5",
+		"tree-kill": "^1.2.0"
+	}
+}
