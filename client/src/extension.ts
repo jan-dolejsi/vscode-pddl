@@ -8,7 +8,7 @@ import * as path from 'path';
 import { workspace, window, ExtensionContext, commands, Uri, ViewColumn, Range, StatusBarAlignment, extensions } from 'vscode';
 import { LanguageClient, LanguageClientOptions, ServerOptions, TransportKind, State } from 'vscode-languageclient';
 
-import { Planner } from './planner'
+import { Planning } from './planning'
 
 import { PddlWorkspace } from '../../common/src/workspace-model';
 import { DomainInfo, PddlRange } from '../../common/src/parser';
@@ -56,17 +56,17 @@ export function activate(context: ExtensionContext) {
 
 	let pddlWorkspace = new PddlWorkspace();
 	subscribeToWorkspace(pddlWorkspace, context);
-	let planner = new Planner(pddlWorkspace, pddlConfiguration, context, status);
+	let planning = new Planning(pddlWorkspace, pddlConfiguration, context, status);
 
 	let planCommand = commands.registerCommand('pddl.planAndDisplayResult', () => {
-		planner.plan();
+		planning.plan();
 	});
 
 	let revealActionCommand = commands.registerCommand('pddl.revealAction', (domainFileUri: Uri, actionName: String) => {
 		revealAction(<DomainInfo>pddlWorkspace.getFileInfo(domainFileUri.toString()), actionName);
 	});
 
-	let stopPlannerCommand = commands.registerCommand(PDDL_STOP_PLANNER, () => planner.stopPlanner());
+	let stopPlannerCommand = commands.registerCommand(PDDL_STOP_PLANNER, () => planning.stopPlanner());
 	status.command = PDDL_STOP_PLANNER;
 
 	let configureParserCommand = commands.registerCommand(PDDL_CONFIGURE_PARSER, () => {
@@ -82,7 +82,7 @@ export function activate(context: ExtensionContext) {
 
 	// Push the disposables to the context's subscriptions so that the 
 	// client can be deactivated on extension deactivation
-	context.subscriptions.push(planCommand, revealActionCommand, planner.planDocumentProviderRegistration, status, stopPlannerCommand, stateChangeHandler, configureParserCommand);
+	context.subscriptions.push(planCommand, revealActionCommand, planning.planDocumentProviderRegistration, status, stopPlannerCommand, stateChangeHandler, configureParserCommand);
 }
 
 async function revealAction(domainInfo: DomainInfo, actionName: String) {

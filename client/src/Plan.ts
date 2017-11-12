@@ -23,3 +23,9 @@ export class Plan {
         this.makespan = Math.max(...steps.map(step => step.time + step.duration));
     }
 }
+
+export interface PlanningHandler {
+    handleOutput(outputText: string): void;
+    handleSuccess(stdout: string, plans: Plan[]): void;
+    handleError(error: Error, stderr: string): void;
+}
