@@ -12,9 +12,9 @@ import { Plan, PlanStep } from './plan';
 export class PddlPlanParser {
 
     plans: Plan[] = [];
-    planStepPattern = /^(\d+|\d+\.\d+|\.\d+)\s*:\s*\((.*)\)\s*(\[(\d+|\d+\.\d+|\.\d+)\])?\s*$/gim;
+    planStepPattern = /^((\d+|\d+\.\d+|\.\d+)\s*:)?\s*\((.*)\)\s*(\[(\d+|\d+\.\d+|\.\d+)\])?\s*$/gim;
     planStatesEvaluatedPattern = /^; States evaluated[\w ]*:[ ]*(\d*)\s*$/i;
-    planCostPattern = /^;[\w ]*(cost|metric)[\D :]*[ ]*(\d*|\d*\.\d*)\s*$/i
+    planCostPattern = /[\w ]*(cost|metric)[\D :]*[ ]*(\d*|\d*\.\d*)\s*$/i
 
     planBuilder = new PlanBuilder();
     endOfBufferToBeParsedNextTime = '';
@@ -51,9 +51,9 @@ export class PddlPlanParser {
         let group = this.planStepPattern.exec(outputLine);
         if (group) {
             // this line is a plan step
-            let time = parseFloat(group[1]);
-            let action = group[2];
-            let duration = group[4] ? parseFloat(group[4]) : this.epsilon;
+            let time = group[2] ? parseFloat(group[2]) : this.planBuilder.makespan();
+            let action = group[3];
+            let duration = group[5] ? parseFloat(group[5]) : this.epsilon;
 
             this.planBuilder.steps.push(new PlanStep(time, action, duration));
             if (!this.planBuilder.parsingPlan) this.planBuilder.parsingPlan = true;
@@ -117,8 +117,13 @@ class PlanBuilder {
         let plan = new Plan(this.steps, domainFileUri);
 
         plan.statesEvaluated = this.statesEvaluated;
-        plan.cost = this.cost;
+        // if cost was not output by the planning engine, use the plan makespan
+        plan.cost = this.cost ? this.cost : this.makespan();
 
         return plan;
+    }
+
+    makespan(): number {
+        return this.steps.length ? Math.max(...this.steps.map(step => step.time + step.duration)) : 0;
     }
 }

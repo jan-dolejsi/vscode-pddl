@@ -16,7 +16,8 @@ import { DomainInfo, ProblemInfo } from '../../common/src/parser';
 import { PddlConfiguration } from './configuration';
 import { Plan, PlanStep, PlanningHandler } from './plan';
 import { PlannerExecutable } from './PlannerExecutable';
-// import { Planner } from './planner';
+import { PlannerService } from './PlannerService';
+import { Planner } from './planner';
 import { PddlPlanParser } from './PddlPlanParser';
 
 export class Planning implements PlanningHandler {
@@ -26,8 +27,8 @@ export class Planning implements PlanningHandler {
     previewUri: Uri;
     provider: PlanDocumentContentProvider;
     planDocumentProviderRegistration: Disposable;
-    
-    planner: PlannerExecutable;
+
+    planner: Planner;
     planningProcessKilled: boolean;
 
     constructor(public pddlWorkspace: PddlWorkspace, public plannerConfiguration: PddlConfiguration, context: ExtensionContext, public status: StatusBarItem) {
@@ -106,11 +107,11 @@ export class Planning implements PlanningHandler {
             window.showInformationMessage("Selected file does not appear to be a valid PDDL domain or problem file.");
             return false;
         }
-        
+
         let planParser = new PddlPlanParser(domainFileInfo.fileUri, this.plannerConfiguration.getEpsilonTimeStep(), plans => this.visualizePlans(plans));
 
         this.planner = await this.createPlanner();
-        if(!this.planner) return false;
+        if (!this.planner) return false;
 
         this.planningProcessKilled = false;
 
@@ -123,14 +124,22 @@ export class Planning implements PlanningHandler {
         return true;
     }
 
-    async createPlanner(): Promise<PlannerExecutable> {
+    /**
+     * Creates the right planner wrapper according to the current configuration.
+     */
+    async createPlanner(): Promise<Planner> {
         let plannerPath = await this.plannerConfiguration.getPlannerPath();
         if (!plannerPath) return null;
 
-        let plannerOptions = await this.plannerConfiguration.getPlannerOptions();
-        if (plannerOptions == null) return null;
-        
-        return new PlannerExecutable(plannerPath, plannerOptions);
+        if (PddlConfiguration.isHttp(plannerPath)) {
+            return new PlannerService(plannerPath);
+        }
+        else {
+            let plannerOptions = await this.plannerConfiguration.getPlannerOptions();
+            if (plannerOptions == null) return null;
+
+            return new PlannerExecutable(plannerPath, plannerOptions);
+        }
     }
 
     stopPlanner() {
@@ -158,7 +167,7 @@ export class Planning implements PlanningHandler {
     handleOutput(outputText: string): void {
         this.output.append(outputText);
     }
-        
+
     handleSuccess(stdout: string, plans: Plan[]): void {
         this.output.appendLine('Process exited.');
         stdout.length; // just waste it, we did not need it here
@@ -171,7 +180,7 @@ export class Planning implements PlanningHandler {
     handleError(error: Error, stderr: string): void {
         stderr.length;
         this.planner = null;
-        
+
         window.showErrorMessage<ProcessErrorMessageItem>(error.message,
             { title: "Select planner", setPlanner: true },
             { title: "Ignore", setPlanner: false, isCloseAffordance: true }
@@ -216,7 +225,7 @@ export class Planning implements PlanningHandler {
         let lastSlashIdx = documentUri.lastIndexOf("/");
         return documentUri.substring(lastSlashIdx + 1);
     }
-    static q(path: string): string{
+    static q(path: string): string {
         return path.includes(' ') ? `"${path}"` : path;
     }
 }

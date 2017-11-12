@@ -17,5 +17,7 @@ export abstract class Planner {
 
     }
 
-    abstract async plan(domainFileInfo: DomainInfo, problemFileInfo: ProblemInfo, planParser: PddlPlanParser, parent: PlanningHandler): Promise<boolean>;
+    abstract plan(domainFileInfo: DomainInfo, problemFileInfo: ProblemInfo, planParser: PddlPlanParser, parent: PlanningHandler): void;
+
+    abstract stop(): void;
 }

@@ -25,7 +25,7 @@ export class PlannerExecutable extends Planner {
         super(plannerPath, plannerOptions);
     }
 
-    async plan(domainFileInfo: DomainInfo, problemFileInfo: ProblemInfo, planParser: PddlPlanParser, parent: PlanningHandler): Promise<boolean> {
+    plan(domainFileInfo: DomainInfo, problemFileInfo: ProblemInfo, planParser: PddlPlanParser, parent: PlanningHandler): void {
 
         //todo: if auto-save is not on, should copy file content to temp files
         let domainFilePath = PlannerExecutable.toPath(domainFileInfo.fileUri);
@@ -60,8 +60,6 @@ export class PlannerExecutable extends Planner {
             if (code) console.log("Exit code: " + code);
             if (signal) console.log("Exit Signal: " + signal);
         });
-
-        return true;
     }
 
     /**
