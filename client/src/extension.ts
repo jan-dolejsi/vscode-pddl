@@ -5,7 +5,7 @@
 'use strict';
 
 import * as path from 'path';
-import { workspace, window, ExtensionContext, commands, Uri, ViewColumn, Range, StatusBarAlignment, extensions } from 'vscode';
+import { workspace, window, ExtensionContext, commands, Uri, ViewColumn, Range, StatusBarAlignment, extensions, TextDocument } from 'vscode';
 import { LanguageClient, LanguageClientOptions, ServerOptions, TransportKind, State } from 'vscode-languageclient';
 
 import { Planning } from './planning'
@@ -16,6 +16,8 @@ import { PddlConfiguration } from './configuration';
 
 const PDDL_STOP_PLANNER = 'pddl.stopPlanner';
 const PDDL_CONFIGURE_PARSER = 'pddl.configureParser';
+const PDDL_CONFIGURE_PLANNER = 'pddl.configurePlanner';
+const PDDL = 'PDDL';
 
 export function activate(context: ExtensionContext) {
 
@@ -74,6 +76,11 @@ export function activate(context: ExtensionContext) {
 		pddlConfiguration.suggestNewParserConfiguration(false);
 	});
 
+	let configurePlannerCommand = commands.registerCommand(PDDL_CONFIGURE_PLANNER, () => {
+		pddlConfiguration.askNewPlannerPath();
+	});
+
+	// when the extension is done loading, subscribe to the client-server communication
 	let stateChangeHandler = languageClient.onDidChangeState((stateEvent) => {
 		if (stateEvent.newState == State.Running) languageClient.onRequest('pddl.configureParser', (showNever) => {
 			pddlConfiguration.suggestNewParserConfiguration(showNever);
@@ -82,7 +89,7 @@ export function activate(context: ExtensionContext) {
 
 	// Push the disposables to the context's subscriptions so that the 
 	// client can be deactivated on extension deactivation
-	context.subscriptions.push(planCommand, revealActionCommand, planning.planDocumentProviderRegistration, status, stopPlannerCommand, stateChangeHandler, configureParserCommand);
+	context.subscriptions.push(planCommand, revealActionCommand, planning.planDocumentProviderRegistration, status, stopPlannerCommand, stateChangeHandler, configureParserCommand, configurePlannerCommand);
 }
 
 async function revealAction(domainInfo: DomainInfo, actionName: String) {
@@ -103,9 +110,13 @@ function subscribeToWorkspace(pddlWorkspace: PddlWorkspace, context: ExtensionCo
 			pddlWorkspace.upsertFile(textDoc.uri.toString(), textDoc.version, textDoc.getText());
 		});
 
-	context.subscriptions.push(workspace.onDidOpenTextDocument(textDoc => pddlWorkspace.upsertFile(textDoc.uri.toString(), textDoc.version, textDoc.getText())));
-	context.subscriptions.push(workspace.onDidChangeTextDocument(docEvent => pddlWorkspace.upsertFile(docEvent.document.uri.toString(), docEvent.document.version, docEvent.contentChanges[docEvent.contentChanges.length - 1].text)));
-	context.subscriptions.push(workspace.onDidCloseTextDocument(docEvent => pddlWorkspace.removeFile(docEvent.uri.toString())));
+	context.subscriptions.push(workspace.onDidOpenTextDocument(textDoc => { if(isPddl(textDoc)) pddlWorkspace.upsertFile(textDoc.uri.toString(), textDoc.version, textDoc.getText())}));
+	context.subscriptions.push(workspace.onDidChangeTextDocument(docEvent => { if(isPddl(docEvent.document)) pddlWorkspace.upsertFile(docEvent.document.uri.toString(), docEvent.document.version, docEvent.document.getText())}));
+	context.subscriptions.push(workspace.onDidCloseTextDocument(docEvent => { if(isPddl(docEvent)) pddlWorkspace.removeFile(docEvent.uri.toString())}));
+}
+
+function isPddl(doc: TextDocument): boolean {
+	return doc.languageId.toLowerCase() == PDDL;
 }
 
 function uninstallLegacyExtension(pddlConfiguration: PddlConfiguration) {

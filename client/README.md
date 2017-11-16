@@ -86,6 +86,13 @@ See unfixed issues and submit new ones [here][github pddl issues].
 
 ## Release Notes
 
+### 2.0.1
+
+New command added to _Configure PDDL Planner_. Added configuration to override the planner command-line syntax.
+Added support for solver.planning.domains/solve web service.
+Supporting non-auto-saving editor mode by creating temp files for domain/problem when launching the planner.
+Fixed an issue with some domains where the extension was hanging (while regexp parsing the types).
+
 ### 2.0.0
 
 PDDL Language Server now provides rich PDDL syntax validation, hover info, Go to Definition, Find All References, Jump to symbol, Auto-completion, configuration of custom PDDL parser, planner execution and plan visualization.

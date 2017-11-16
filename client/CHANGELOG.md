@@ -6,7 +6,14 @@ Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how 
 
 ## [Unreleased]
 
-More flexible configuration of a planning engine.
+Plan visualization that features color-coding of actions and swim-lanes for objects per types.
+
+## [2.0.1] - 2017-11-16
+
+New command added to _Configure PDDL Planner_. Added configuration to override the planner command-line syntax.
+Added support for solver.planning.domains/solve web service.
+Supporting non-auto-saving editor mode by creating temp files for domain/problem when launching the planner.
+Fixed an issue with some domains where the extension was hanging (while regexp parsing the types).
 
 ## [2.0.0] - 2017-11-10
 
@@ -35,7 +42,8 @@ Simplified snippets and added tabstops/placeholders to them, so they are easy to
 - PDDL Snippets for `domain`, `problem`, `action` and `durative-action`.
 - Syntax highlighting for commonly used PDDL features
 
-[Unreleased]: https://github.com/jan-dolejsi/vscode-pddl/compare/v2.0.0...HEAD
+[Unreleased]: https://github.com/jan-dolejsi/vscode-pddl/compare/v2.0.1...HEAD
+[2.0.1]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.0.0...v2.
 [2.0.0]:https://github.com/jan-dolejsi/vscode-pddl/compare/v1.0.2...v2.0.0
 [1.0.2]:https://github.com/jan-dolejsi/vscode-pddl/compare/v1.0.1...v1.0.2
 [1.0.1]:https://github.com/jan-dolejsi/vscode-pddl/compare/1.0.0...v1.0.1

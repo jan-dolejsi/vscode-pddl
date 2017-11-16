@@ -45,15 +45,15 @@
     "body": [
       "(:durative-action ${1:name}",
         "    :parameters ($0)",
-        "    :duration ${2|(=?duration 1),(and (>= ?duration 1)(<= ?duration 2))|}",
+        "    :duration ${2|(= ?duration 1),(and (>= ?duration 1)(<= ?duration 2))|}",
         "    :condition (and ",
         "        (at start ())",
         "        (over all ())",
         "        (at end ())",
         "    )",
         "    :effect (and ",
-        "        (at end ())",
         "        (at start ())",
+        "        (at end ())",
         "    )",
         ")",
       ""

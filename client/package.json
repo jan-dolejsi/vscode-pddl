@@ -4,7 +4,7 @@
     "description": "Planning Domain Description Language support",
 	"author": "Jan Dolejsi",
 	"license": "MIT",
-	"version": "2.0.0",
+	"version": "2.0.1",
 	"publisher": "jan-dolejsi",
 	"engines": {
 		"vscode": "^1.16.0"
@@ -62,6 +62,10 @@
 			{
 				"command": "pddl.configureParser",
 				"title": "Configure PDDL parser"
+			},
+			{
+				"command": "pddl.configurePlanner",
+				"title": "Configure PDDL planner"
 			}
 		],
 		"menus": {
@@ -129,6 +133,13 @@
 					"title": "Planner executable or service URL",
 					"default": "http://solver.planning.domains/solve",
 					"description": "Enter the planner executable (e.g. planner.exe) with full path unless you have its location included in the %path% environment variable. If you are using a parsing service, make sure it starts with http: or https:"
+				},
+				"pddlPlanner.executableOptions": {
+					"scope": "resource",
+					"type": "string",
+					"description": "Override the command-line options passed to the PDDL planner configured in 'pddlPlanner.executableOrService'.",
+					"pattern": "^\\$\\(planner\\).+\\$\\(options\\).+\\$\\(domain\\).+\\$\\(problem\\).*$",
+					"default": "$(planner) $(options) $(domain) $(problem)"
 				},
 				"pddlPlanner.epsilonTimeStep": {
 					"scope": "resource",

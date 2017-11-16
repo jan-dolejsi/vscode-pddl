@@ -14,6 +14,7 @@ const tree_kill = require('tree-kill');
 import { Planner } from './planner';
 import { PlanningHandler } from './plan';
 import { DomainInfo, ProblemInfo } from '../../common/src/parser';
+import { Util } from '../../common/src/util';
 import { PddlPlanParser } from './PddlPlanParser';
 
 export class PlannerExecutable extends Planner {
@@ -21,17 +22,20 @@ export class PlannerExecutable extends Planner {
     // this property stores the reference to the planner child process, while planning is in progress
     child: process.ChildProcess;
 
-    constructor(plannerPath: string, plannerOptions: string) {
+    constructor(plannerPath: string, plannerOptions: string, public plannerSyntax: string) {
         super(plannerPath, plannerOptions);
     }
 
     plan(domainFileInfo: DomainInfo, problemFileInfo: ProblemInfo, planParser: PddlPlanParser, parent: PlanningHandler): void {
 
-        //todo: if auto-save is not on, should copy file content to temp files
-        let domainFilePath = PlannerExecutable.toPath(domainFileInfo.fileUri);
-        let problemFilePath = PlannerExecutable.toPath(problemFileInfo.fileUri);
+        let domainFilePath = Util.toFile("domain", domainFileInfo.text);
+        let problemFilePath = Util.toFile("problem", problemFileInfo.text);
 
-        let command = `${PlannerExecutable.q(this.plannerPath)} ${this.plannerOptions} ${PlannerExecutable.q(domainFilePath)} ${PlannerExecutable.q(problemFilePath)}`;
+        let command = this.plannerSyntax.replace('$(planner)', this.plannerPath)
+            .replace('$(options)', this.plannerOptions)
+            .replace('$(domain)', Util.q(domainFilePath))
+            .replace('$(problem)', Util.q(problemFilePath));
+    
         parent.handleOutput(command + '\n');
         
         let thisPlanner = this;

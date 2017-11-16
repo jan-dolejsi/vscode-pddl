@@ -79,7 +79,7 @@ export class Planning implements PlanningHandler {
 
                 domainFileInfo = domainFiles.find(doc => doc.fileUri == domainFileUri.toString());
             } else {
-                window.showInformationMessage("There is no domain file open in the editor.");
+                window.showInformationMessage("Ensure a corresponding domain file is open in the editor.");
                 return false;
             }
         }
@@ -99,7 +99,7 @@ export class Planning implements PlanningHandler {
 
                 problemFileInfo = problemFiles.find(fileInfo => fileInfo.fileUri.endsWith('/' + selectedProblemFileName));
             } else {
-                window.showInformationMessage("There is no problem file open in the editor.");
+                window.showInformationMessage("Ensure a corresponding problem file is open in the editor.");
                 return false;
             }
         }
@@ -138,7 +138,10 @@ export class Planning implements PlanningHandler {
             let plannerOptions = await this.plannerConfiguration.getPlannerOptions();
             if (plannerOptions == null) return null;
 
-            return new PlannerExecutable(plannerPath, plannerOptions);
+            let plannerSyntax = await this.plannerConfiguration.getPlannerSyntax();
+            if (plannerSyntax == null) return null;
+
+            return new PlannerExecutable(plannerPath, plannerOptions, plannerSyntax);
         }
     }
 
