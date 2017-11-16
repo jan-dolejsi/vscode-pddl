@@ -6,12 +6,15 @@
 
 import { Plan, PlanStep } from './plan';
 
+/**
+ * Parses plan in the PDDL form incrementally - line/buffer at a time.
+ */
 export class PddlPlanParser {
 
     plans: Plan[] = [];
-    planStepPattern = /^(\d+|\d+\.\d+|\.\d+)\s*:\s*\((.*)\)\s*(\[(\d+|\d+\.\d+|\.\d+)\])?\s*$/gim;
+    planStepPattern = /^\s*((\d+|\d+\.\d+|\.\d+)\s*:)?\s*\((.*)\)\s*(\[(\d+|\d+\.\d+|\.\d+)\])?\s*$/gim;
     planStatesEvaluatedPattern = /^; States evaluated[\w ]*:[ ]*(\d*)\s*$/i;
-    planCostPattern = /^;[\w ]*(cost|metric)[\D :]*[ ]*(\d*|\d*\.\d*)\s*$/i
+    planCostPattern = /[\w ]*(cost|metric)[\D :]*[ ]*(\d*|\d*\.\d*)\s*$/i
 
     planBuilder = new PlanBuilder();
     endOfBufferToBeParsedNextTime = '';
@@ -19,29 +22,38 @@ export class PddlPlanParser {
     constructor(public domainFileUri: string, public epsilon: number, public onPlanReady?: (plans: Plan[]) => void) {
     }
 
-    appendBuffer(text: string | Buffer): void {
-        const textString = this.endOfBufferToBeParsedNextTime + text.toString(); this.endOfBufferToBeParsedNextTime = '';
-        let lastEndl = 0;
-        let nextEndl: number;
-        while ((nextEndl = textString.indexOf('\n', lastEndl)) > -1) {
-            let nextLine = textString.substring(lastEndl, nextEndl + 1);
+    /**
+     * Appends and parses the planner output.
+     * @param text planner output
+     */
+    appendBuffer(text: string): void {
+        const textString = this.endOfBufferToBeParsedNextTime + text; 
+        this.endOfBufferToBeParsedNextTime = '';
+        let lastEndLine = 0;
+        let nextEndLine: number;
+        while ((nextEndLine = textString.indexOf('\n', lastEndLine)) > -1) {
+            let nextLine = textString.substring(lastEndLine, nextEndLine + 1);
             this.appendLine(nextLine);
-            lastEndl = nextEndl + 1;
+            lastEndLine = nextEndLine + 1;
         }
-        if (textString.length > lastEndl) {
-            this.endOfBufferToBeParsedNextTime = textString.substr(lastEndl);
+        if (textString.length > lastEndLine) {
+            this.endOfBufferToBeParsedNextTime = textString.substr(lastEndLine);
         }
     }
 
+    /**
+     * Parses one line of parser output.
+     * @param outputLine one line of planner output
+     */
     appendLine(outputLine: string): void {
 
         this.planStepPattern.lastIndex = 0;
         let group = this.planStepPattern.exec(outputLine);
         if (group) {
             // this line is a plan step
-            let time = parseFloat(group[1]);
-            let action = group[2];
-            let duration = group[4] ? parseFloat(group[4]) : this.epsilon;
+            let time = group[2] ? parseFloat(group[2]) : this.planBuilder.makespan();
+            let action = group[3];
+            let duration = group[5] ? parseFloat(group[5]) : this.epsilon;
 
             this.planBuilder.steps.push(new PlanStep(time, action, duration));
             if (!this.planBuilder.parsingPlan) this.planBuilder.parsingPlan = true;
@@ -65,6 +77,10 @@ export class PddlPlanParser {
         this.planBuilder.outputText += outputLine;
     }
 
+    /**
+     * Call this when the planning engine stopped. This flushes the last line in the buffered output through the parsing 
+     * and adds the last plan to the collection of plans.
+     */
     onPlanFinished(): void {
         if (this.endOfBufferToBeParsedNextTime.length) {
             this.appendLine(this.endOfBufferToBeParsedNextTime);
@@ -78,11 +94,17 @@ export class PddlPlanParser {
         if (this.onPlanReady) this.onPlanReady.apply(this, [this.plans]);
     }
 
+    /**
+     * Gets all plans.
+     */
     getPlans(): Plan[] {
         return this.plans;
     }
 }
 
+/**
+ * Utility for incremental plan building as it is being parsed.
+ */
 class PlanBuilder {
     statesEvaluated: number;
     cost: number;
@@ -95,8 +117,13 @@ class PlanBuilder {
         let plan = new Plan(this.steps, domainFileUri);
 
         plan.statesEvaluated = this.statesEvaluated;
-        plan.cost = this.cost;
+        // if cost was not output by the planning engine, use the plan makespan
+        plan.cost = this.cost ? this.cost : this.makespan();
 
         return plan;
+    }
+
+    makespan(): number {
+        return this.steps.length ? Math.max(...this.steps.map(step => step.time + step.duration)) : 0;
     }
 }

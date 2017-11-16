@@ -5,9 +5,10 @@
 import * as vscode from 'vscode';
 
 const PARSER_LOCATION = 'pddlParser.executableOrService';
-const PARSER_OPTIONS = 'pddlParser.executableOptions';
+const PARSER_SYNTAX = 'pddlParser.executableOptions';
 const PARSER_LEGACY_LOCATION = 'pddlParser.pddlParserService';
 const PLANNER_LOCATION = 'pddlPlanner.executableOrService';
+const PLANNER_SYNTAX = 'pddlPlanner.executableOptions';
 const PLANNER_EPSILON = 'pddlPlanner.epsilonTimeStep';
 
 export class PddlConfiguration {
@@ -118,7 +119,7 @@ export class PddlConfiguration {
     }
 
     async askParserOptions(scope: ScopeQuickPickItem) {
-        let existingValue: string = vscode.workspace.getConfiguration().get(PARSER_OPTIONS);
+        let existingValue: string = vscode.workspace.getConfiguration().get(PARSER_SYNTAX);
 
         let newParserOptions = await vscode.window.showInputBox({
             prompt: "In case you use command line switches and options, override the default syntax. For more info, see (the wiki)[https://github.com/jan-dolejsi/vscode-pddl/wiki/Configuring-the-PDDL-parser].",
@@ -133,7 +134,7 @@ export class PddlConfiguration {
             let configurationToUpdate = this.getConfigurationForScope(scope);
 
             // Update the value in the target
-            configurationToUpdate.update(PARSER_OPTIONS, newParserOptions, scope.target);
+            configurationToUpdate.update(PARSER_SYNTAX, newParserOptions, scope.target);
         }
 
         return newParserOptions;
@@ -146,12 +147,6 @@ export class PddlConfiguration {
     async getPlannerPath(): Promise<string> {
         let plannerPath: string = vscode.workspace.getConfiguration().get(PLANNER_LOCATION);
 
-        if (PddlConfiguration.isHttp(plannerPath)) {
-            // is a service
-            vscode.window.showInformationMessage("Sorry, not implemented yet.");
-            return null;
-        }
-
         if (!plannerPath) {
             plannerPath = await this.askNewPlannerPath();
         }
@@ -160,22 +155,54 @@ export class PddlConfiguration {
     }
 
     async askNewPlannerPath() {
-        let configuration: vscode.WorkspaceConfiguration;
+        let existingValue: string = vscode.workspace.getConfiguration().get(PLANNER_LOCATION);
+        
+        let newPlannerPath = await vscode.window.showInputBox({ 
+            prompt: "Enter PDDL planner path local command or web service URL", 
+            placeHolder: `planner.exe OR java -jar c:\\planner.jar OR http://solver.planning.domains/solve`,
+            value: existingValue,
+            ignoreFocusOut: true 
+        });
 
-        let newPlannerPath = await vscode.window.showInputBox({ prompt: "Enter PDDL planner path local command or web service URL", placeHolder: `planner.exe OR java -jar c:\\planner.jar OR https://someserver/` });
         if (newPlannerPath) {
             // todo: validate that this planner actually works by sending a dummy request to it
 
             let newPlannerScope = await this.askConfigurationScope();
 
             if (!newPlannerScope) return null;
-            configuration = this.getConfigurationForScope(newPlannerScope);
+            let configurationToUpdate = this.getConfigurationForScope(newPlannerScope);
+
+            if (!PddlConfiguration.isHttp(newPlannerPath)) {
+                this.askPlannerSyntax(newPlannerScope);
+            }
 
             // Update the value in the target
-            configuration.update(PLANNER_LOCATION, newPlannerPath, newPlannerScope.target);
+            configurationToUpdate.update(PLANNER_LOCATION, newPlannerPath, newPlannerScope.target);
         }
 
         return newPlannerPath;
+    }
+
+    async askPlannerSyntax(scope: ScopeQuickPickItem) {
+        let existingValue: string = vscode.workspace.getConfiguration().get(PLANNER_SYNTAX);
+
+        let newPlannerOptions = await vscode.window.showInputBox({
+            prompt: "In case you use command line switches and options, override the default syntax. For more info, see (the wiki)[https://github.com/jan-dolejsi/vscode-pddl/wiki/Configuring-the-PDDL-planner].",
+            placeHolder: `$(planner) $(options) $(domain) $(problem)`,
+            value: existingValue,
+            ignoreFocusOut: true
+        });
+
+        if (newPlannerOptions) {
+            // todo: validate that this planner actually works by sending a dummy request to it
+
+            let configurationToUpdate = this.getConfigurationForScope(scope);
+
+            // Update the value in the target
+            configurationToUpdate.update(PLANNER_SYNTAX, newPlannerOptions, scope.target);
+        }
+
+        return newPlannerOptions;
     }
 
     optionsHistory: OptionsQuickPickItem[] = [{ label: 'No options.', options: '', description: '' }, { label: 'Specify options...', newValue: true, options: '', description: '' }];
@@ -197,6 +224,10 @@ export class PddlConfiguration {
         }
         this.optionsHistory.unshift(optionsSelected); // insert to the first position
         return optionsSelected.options;
+    }
+
+    getPlannerSyntax(): string {
+        return vscode.workspace.getConfiguration().get(PLANNER_SYNTAX);
     }
 
     async askConfigurationScope(): Promise<ScopeQuickPickItem> {

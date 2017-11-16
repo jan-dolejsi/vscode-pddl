@@ -9,24 +9,23 @@ import {
 } from 'vscode-languageserver';
 
 import * as process from 'child_process';
-import * as tmp from 'tmp';
-import fs = require('fs');
 
 import { Validator } from './validator';
 import { ProblemPattern } from './ProblemPattern';
 import { DomainInfo, ProblemInfo } from '../../common/src/parser';
 import { PddlFactory } from '../../common/src/PddlFactory';
+import { Util } from '../../common/src/util';
 
 export class ValidatorExecutable extends Validator {
     constructor(path: string, public syntax: string, public customPattern: string) { super(path); }
 
     validate(domainInfo: DomainInfo, problemFiles: ProblemInfo[], onSuccess: (diagnostics: Map<string, Diagnostic[]>) => void, onError: (error: string) => void): void {
-        let domainFilePath = ValidatorExecutable.toFile("domain", domainInfo.text);
+        let domainFilePath = Util.toFile("domain", domainInfo.text);
 
         let diagnostics = this.createEmptyDiagnostics(domainInfo, problemFiles);
 
         if (!problemFiles.length) {
-            let problemFilePath = ValidatorExecutable.toFile("problem", PddlFactory.createEmptyProblem('dummy', domainInfo.name));
+            let problemFilePath = Util.toFile("problem", PddlFactory.createEmptyProblem('dummy', domainInfo.name));
             let pathToUriMap: [string, string][] = [[domainFilePath, domainInfo.fileUri]];
 
             this.validateOneProblem(domainFilePath, problemFilePath, output => {
@@ -36,7 +35,7 @@ export class ValidatorExecutable extends Validator {
         }
         else {
             problemFiles.forEach(problemFile => {
-                let problemFilePath = ValidatorExecutable.toFile("problem", problemFile.text);
+                let problemFilePath = Util.toFile("problem", problemFile.text);
                 let pathToUriMap: [string, string][] = [[domainFilePath, domainInfo.fileUri], [problemFilePath, problemFile.fileUri]];
 
                 // todo: the issues in the domain file should only be output once, not as many times as there are problem files
@@ -84,8 +83,8 @@ export class ValidatorExecutable extends Validator {
 
     private validateOneProblem(domainFilePath: string, problemFilePath: string, onOutput: (output: string) => void, onError: (error: string) => void): void {
         let command = this.syntax.replace('$(parser)', this.path)
-            .replace('$(domain)', ValidatorExecutable.q(domainFilePath))
-            .replace('$(problem)', ValidatorExecutable.q(problemFilePath));
+            .replace('$(domain)', Util.q(domainFilePath))
+            .replace('$(problem)', Util.q(problemFilePath));
 
         this.runProcess(command, onOutput, onError);
     }
@@ -100,15 +99,5 @@ export class ValidatorExecutable extends Validator {
 
             onOutput.apply(this, [stdout]);
         });
-    }
-
-    static q(path: string): string {
-        return path.includes(' ') ? `"${path}"` : path;
-    }
-
-    static toFile(prefix: string, text: string): string {
-        var tempFile = tmp.fileSync({ mode: 0o644, prefix: prefix + '-', postfix: '.pddl' });
-        fs.writeSync(tempFile.fd, text, 0, 'utf8');
-        return tempFile.name;
     }
 }

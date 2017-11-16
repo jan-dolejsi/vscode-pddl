@@ -14,7 +14,7 @@
 		"url": "https://github.com/jan-dolejsi/vscode-pddl"
 	},
 	"scripts": {
-		"postinstall": "cd server && npm install && cd ../client && npm install && cd ..",
+		"postinstall": "cd common && npm install && cd ../server && npm install && cd ../client && npm install && cd ..",
 		"compile": "tsc -p client/tsconfig.json && cd server && npm run installServer && cd .. && tsc -p server/tsconfig.json",
 		"compile:client": "tsc -p client/tsconfig.json",
 		"watch:client": "tsc -w -p client/tsconfig.json",
