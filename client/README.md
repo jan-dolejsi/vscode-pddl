@@ -4,7 +4,7 @@ This extension makes VS Code a great place for modeling planning domains. Read m
 
 ## Features
 
-Extension is activated on any `.pddl` files (commonly holding domain or problem definitions) or files with no extension (sometimes used for problem definitions). It brings PDDL to the family of first-class languages with the level of support on par with c#, python or javascript. 
+Extension is activated on any `.pddl` files (commonly holding domain or problem definitions) or files with no extension (sometimes used for problem definitions). It brings PDDL to the family of first-class languages with the level of support on par with c#, python or javascript.
 
 ### Snippets
 
@@ -33,7 +33,7 @@ You can also right click on such symbol and select _Find All References_.
 
 ### Jump to Symbol
 
-Use the VS Code keyboard shortcut _Ctrl + Shift + O_ to open up the symbol listing. That lists all predicates, functions and actions in the domain file. That way you may review the full list of actions in a concise way and jump to their declaration. 
+Use the VS Code keyboard shortcut _Ctrl + Shift + O_ to open up the symbol listing. That lists all predicates, functions and actions in the domain file. That way you may review the full list of actions in a concise way and jump to their declaration.
 
 ![symbol_listing](https://raw.githubusercontent.com/wiki/jan-dolejsi/vscode-pddl/img/PDDL_symbol_listing.gif)
 
