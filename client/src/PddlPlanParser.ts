@@ -5,6 +5,7 @@
 'use strict';
 
 import { Plan, PlanStep } from './plan';
+import { DomainInfo, ProblemInfo } from './parser';
 
 /**
  * Parses plan in the PDDL form incrementally - line/buffer at a time.
@@ -19,7 +20,7 @@ export class PddlPlanParser {
     planBuilder = new PlanBuilder();
     endOfBufferToBeParsedNextTime = '';
 
-    constructor(public domainFileUri: string, public epsilon: number, public onPlanReady?: (plans: Plan[]) => void) {
+    constructor(public domain: DomainInfo, public problem: ProblemInfo, public epsilon: number, public onPlanReady?: (plans: Plan[]) => void) {
     }
 
     /**
@@ -87,7 +88,7 @@ export class PddlPlanParser {
             this.endOfBufferToBeParsedNextTime = '';
         }
         if (this.planBuilder.steps.length > 0) {
-            this.plans.push(this.planBuilder.build(this.domainFileUri));
+            this.plans.push(this.planBuilder.build(this.domain, this.problem));
             this.planBuilder = new PlanBuilder();
         }
 
@@ -113,8 +114,8 @@ class PlanBuilder {
     outputText = ""; // for information only
     parsingPlan = false;
 
-    build(domainFileUri: string): Plan {
-        let plan = new Plan(this.steps, domainFileUri);
+    build(domain: DomainInfo, problem: ProblemInfo): Plan {
+        let plan = new Plan(this.steps, domain, problem);
 
         plan.statesEvaluated = this.statesEvaluated;
         // if cost was not output by the planning engine, use the plan makespan

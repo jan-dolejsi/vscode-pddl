@@ -4,6 +4,8 @@
  * ------------------------------------------------------------------------------------------ */
 'use strict';
 
+import { DomainInfo, ProblemInfo } from '../../common/src/parser';
+
 export class PlanStep {
     actionName: string;
     objects: string[];
@@ -19,7 +21,7 @@ export class Plan {
     statesEvaluated?: number;
     cost?: number;
  
-    constructor(public steps: PlanStep[], public domainFileUri: string) {
+    constructor(public steps: PlanStep[], public domain: DomainInfo, public problem: ProblemInfo) {
         this.makespan = Math.max(...steps.map(step => step.time + step.duration));
     }
 }

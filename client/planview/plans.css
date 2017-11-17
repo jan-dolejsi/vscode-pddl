@@ -1,0 +1,53 @@
+  div.planstep {
+    position: absolute;
+    white-space: pre;
+    display: inline-flex;
+    font-family: sans-serif;
+    align-items: center;
+  }
+  
+  div.planstep-bar {
+    background-color: darkgray;
+    height: 15px;
+    margin: 3px;
+    min-width: 1px;
+  }
+  
+  a:link {
+      text-decoration: none;
+  }
+  
+  a:visited {
+      text-decoration: none;
+  }
+  
+  a:hover {
+      text-decoration: underline;
+  }
+  
+  a:active {
+      text-decoration: underline;
+  }
+  .planSelector {
+      margin: 3px;
+      width: 50px;
+      text-align: center;
+      padding: 1px;
+      border: transparent 2px solid;
+      font-family: sans-serif;
+  }
+  .planSelector-selected {
+    border: 2px solid lightgray;
+  }
+  .planSelector:hover {
+      border: 2px solid darkgray;
+  }
+  .planMetricBar {
+      background-color: lightgreen;
+  }
+  .planSelectors {
+    margin: 5px; 
+    display: flex;
+    align-items: flex-end;
+    overflow: auto;
+  }

@@ -9,7 +9,7 @@ import {
     Event, EventEmitter, CancellationToken, ViewColumn, MessageItem, ExtensionContext, StatusBarItem
 } from 'vscode';
 
-const path = require('path');
+import * as path from 'path';
 
 import { PddlWorkspace } from '../../common/src/workspace-model';
 import { DomainInfo, ProblemInfo } from '../../common/src/parser';
@@ -35,7 +35,7 @@ export class Planning implements PlanningHandler {
         this.output = window.createOutputChannel("Planner output");
 
         this.previewUri = Uri.parse('pddl-plan://authority/plan');
-        this.provider = new PlanDocumentContentProvider();
+        this.provider = new PlanDocumentContentProvider(context);
         context.subscriptions.push(this.planDocumentProviderRegistration = workspace.registerTextDocumentContentProvider('pddl-plan', this.provider));
     }
 
@@ -108,7 +108,7 @@ export class Planning implements PlanningHandler {
             return false;
         }
 
-        let planParser = new PddlPlanParser(domainFileInfo.fileUri, this.plannerConfiguration.getEpsilonTimeStep(), plans => this.visualizePlans(plans));
+        let planParser = new PddlPlanParser(domainFileInfo, problemFileInfo, this.plannerConfiguration.getEpsilonTimeStep(), plans => this.visualizePlans(plans));
 
         this.planner = await this.createPlanner();
         if (!this.planner) return false;
@@ -237,6 +237,8 @@ class PlanDocumentContentProvider implements TextDocumentContentProvider {
     private _onDidChange = new EventEmitter<Uri>();
     private plans: Plan[]; // todo: this should not be a field, but a map against the Uri
 
+    constructor(public context: ExtensionContext) {}
+
     get onDidChange(): Event<Uri> {
         return this._onDidChange.event;
     }
@@ -261,88 +263,10 @@ class PlanDocumentContentProvider implements TextDocumentContentProvider {
 
         let planText = this.plans.map((plan, planIndex) => this.renderPlan(plan, planIndex, selectedPlan)).join("\n\n");
 
-        let script = `      <script>
-        function showPlan(planIndex) {
-            document.querySelectorAll("div.planstep").forEach(div => {
-                let planId = parseInt(div.getAttribute("plan"));
-                let newDisplayStyle = planId == planIndex ? "inline-flex" : "none";
-                let style = div.getAttribute("style");
-                style = style.replace(/display: (none|inline-flex);/i, "display: " + newDisplayStyle + ';');
-                div.setAttribute("style", style);
-            });
-            document.querySelectorAll("div.planSelector").forEach(div => {
-                let newClass = "planSelector";
-                let planId = parseInt(div.getAttribute("plan"));
-                if(planIndex == planId) newClass += " planSelector-selected";  
-                div.setAttribute("class", newClass);
-            });
-      }
-      function scrollPlanSelectorIntoView(planIndex){
-        document.querySelectorAll('div.planSelector').forEach(div => {
-            if(parseInt(div.getAttribute('plan')) == planIndex) div.scrollIntoViewIfNeeded();
-        });
-      }
-    </script>
-`;
-
         let html = `<!DOCTYPE html>        
 <head>
-    <style>
-      div.planstep {
-        position: absolute;
-        white-space: pre;
-        display: inline-flex;
-        font-family: sans-serif;
-        align-items: center;
-      }
-      
-      div.planstep-bar {
-        background-color: darkgray;
-        height: 15px;
-        margin: 3px;
-        min-width: 1px;
-      }
-      
-      a:link {
-          text-decoration: none;
-      }
-      
-      a:visited {
-          text-decoration: none;
-      }
-      
-      a:hover {
-          text-decoration: underline;
-      }
-      
-      a:active {
-          text-decoration: underline;
-      }
-      .planSelector {
-          margin: 3px;
-          width: 50px;
-          text-align: center;
-          padding: 1px;
-          border: transparent 2px solid;
-          font-family: sans-serif;
-      }
-      .planSelector-selected {
-        border: 2px solid lightgray;
-      }
-      .planSelector:hover {
-          border: 2px solid darkgray;
-      }
-      .planMetricBar {
-          background-color: lightgreen;
-      }
-      .planSelectors {
-        margin: 5px; 
-        display: flex;
-        align-items: flex-end;
-        overflow: auto;
-      }
-      </style>
-      ${script}
+    <link rel = "stylesheet" type = "text/css" href = "${this.asAbsolutePath('planview', 'plans.css')}" />
+    <script src="${this.asAbsolutePath('planview', 'plans.js')}"></script>
 </head>        
 <body onload="scrollPlanSelectorIntoView(${selectedPlan})">
     <div class="planSelectors" style="display: ${planSelectorsDisplayStyle};">${planSelectors}</div>
@@ -352,6 +276,10 @@ class PlanDocumentContentProvider implements TextDocumentContentProvider {
 </body>`;
 
         return html
+    }
+
+    asAbsolutePath(...paths: string[]): string {
+        return this.context.asAbsolutePath(path.join(...paths));
     }
 
     renderPlanSelector(plan: Plan, planIndex: number, selectedPlan: number, maxCost: number): string {
@@ -376,13 +304,17 @@ class PlanDocumentContentProvider implements TextDocumentContentProvider {
         let fromLeft = step.time / plan.makespan * 200;
         let width = Math.max(1, step.duration / plan.makespan * 200);
 
-        return `<div class="planstep" id="plan${planIndex}step${index}" plan="${planIndex}" style="left: ${fromLeft}px; top: ${fromTop}px; display: ${planIndex == selectedPlan ? "inline-flex" : "none"};"><div class="planstep-bar" style="width: ${width}px;"></div>${actionLink} ${step.objects.join(' ')}</div>`;
+        let actionIndex = plan.domain.actions.findIndex(action => action.name == step.actionName);
+        let actionColor = this.colors[actionIndex * 3 % this.colors.length];
+
+        return `<div class="planstep" id="plan${planIndex}step${index}" plan="${planIndex}" style="left: ${fromLeft}px; top: ${fromTop}px; display: ${planIndex == selectedPlan ? "inline-flex" : "none"};"><div class="planstep-bar" style="width: ${width}px; background-color: ${actionColor}"></div>${actionLink} ${step.objects.join(' ')}</div>`;
     }
 
     toActionLink(actionName: string, plan: Plan) {
-        return `<a href="${encodeURI('command:pddl.revealAction?' + JSON.stringify([plan.domainFileUri, actionName]))}">${actionName}</a>`;
+        return `<a href="${encodeURI('command:pddl.revealAction?' + JSON.stringify([plan.domain.fileUri, actionName]))}">${actionName}</a>`;
     }
 
+    colors = ['#ff0000', '#ff4000', '#ff8000', '#ffbf00', '#ffff00', '#bfff00', '#80ff00', '#40ff00', '#00ff00', '#00ff40', '#00ff80', '#00ffbf', '#00ffff', '#00bfff', '#0080ff', '#0040ff', '#0000ff', '#4000ff', '#8000ff', '#bf00ff', '#ff00ff', '#ff00bf', '#ff0080', '#ff0040'];
 }
 
 class ProcessErrorMessageItem implements MessageItem {
