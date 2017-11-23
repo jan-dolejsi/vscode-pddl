@@ -8,6 +8,8 @@
 		"url": "https://github.com/jan-dolejsi/vscode-pddl"
 	},
 	"scripts": {
+		"pretest": "tsc",
+		"test": "mocha -- out/test/*.js",
 		"vscode:prepublish": "tsc -p ./",
 		"compile": "tsc -p ./",
 		"watch": "tsc -w -p ./",
@@ -16,5 +18,9 @@
 	"dependencies": {
 		"tmp": "^0.0.33",
 		"@types/tmp": "^0.0.33"
+	},
+	"devDependencies": {
+		"mocha": "^4.0.1",
+		"@types/mocha": "^2.2.42"
 	}
 }

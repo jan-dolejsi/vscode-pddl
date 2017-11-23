@@ -1,0 +1,65 @@
+/* Tooltip container */
+.resourceTaskTooltip {
+    white-space: nowrap; 
+    overflow: hidden;
+    text-overflow: ellipsis; 
+    position: absolute;
+}
+
+/* We need to unhide the overflow, so the tooltip has something to show : ( */
+.resourceTaskTooltip:hover {
+    overflow: visible;
+    text-overflow: unset; 
+}
+
+/* Tooltip text */
+.resourceTaskTooltip .resourceTaskTooltipText {
+    visibility: hidden;
+    /* width: 120px; */
+    background-color: black;
+    color: #fff;
+    text-align: center;
+    padding: 5px;
+    border-radius: 3px;
+ 
+    position: absolute;
+    z-index: 1;
+
+    bottom: 150%;
+    left: 50%;
+    margin-left: -60px;
+}
+
+.resourceTaskTooltip .resourceTaskTooltipText::after {
+    content: "";
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    margin-left: -5px;
+    border-width: 5px;
+    border-style: solid;
+    border-color: black transparent transparent transparent;
+}
+
+/* Show the tooltip text when you mouse over the tooltip container */
+.resourceTaskTooltip:hover .resourceTaskTooltipText {
+    visibility: visible;
+}
+
+#diamond-narrow {
+	width: 0;
+	height: 0;
+	border: 3px solid transparent;
+	border-bottom: 7.5px solid red;
+	position: relative;
+	top: -3px;
+}
+#diamond-narrow:after {
+	content: '';
+	position: absolute;
+	left: -3px; top: 7.5px;
+	width: 0;
+	height: 0;
+	border: 3px solid transparent;
+	border-top: 7.5px solid red;
+}

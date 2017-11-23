@@ -1,29 +1,28 @@
 {
-	"name": "pddl",
-	"displayName": "PDDL",
-	"description": "Planning Domain Description Language support - build artifact, not an extension",
-	"author": "Jan Dolejsi",
-	"license": "MIT",
-	"version": "0.0.1",
-	"publisher": "jan-dolejsi",
-	"engines": {
-		"vscode": "^1.17.1"
-	},
-	"repository": {
-		"type": "git",
-		"url": "https://github.com/jan-dolejsi/vscode-pddl"
-	},
-	"scripts": {
-		"postinstall": "cd common && npm install && cd ../server && npm install && cd ../client && npm install && cd ..",
-		"compile": "tsc -p client/tsconfig.json && cd server && npm run installServer && cd .. && tsc -p server/tsconfig.json",
-		"compile:client": "tsc -p client/tsconfig.json",
-		"watch:client": "tsc -w -p client/tsconfig.json",
-		"compile:server": "cd server && npm run installServer && cd .. && tsc -p server/tsconfig.json",
-		"watch:server": "cd server && npm run installServer && cd .. && tsc -w -p server/tsconfig.json"
-	},
-	"devDependencies": {
-		"@types/mocha": "^2.2.42",
-		"@types/node": "^6.0.88",
-		"typescript": "^2.5.2"
-	}
+  "name": "pddl",
+  "displayName": "PDDL",
+  "description": "Planning Domain Description Language support - build artifact, not an extension",
+  "author": "Jan Dolejsi",
+  "license": "MIT",
+  "version": "0.0.1",
+  "publisher": "jan-dolejsi",
+  "engines": {
+    "vscode": "^1.17.1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/jan-dolejsi/vscode-pddl"
+  },
+  "scripts": {
+    "postinstall": "cd common && npm install && cd ../server && npm install && cd ../client && npm install && cd ..",
+    "compile": "tsc -p client/tsconfig.json && cd server && npm run installServer && cd .. && tsc -p server/tsconfig.json",
+    "compile:client": "tsc -p client/tsconfig.json",
+    "watch:client": "tsc -w -p client/tsconfig.json",
+    "compile:server": "cd server && npm run installServer && cd .. && tsc -p server/tsconfig.json",
+    "watch:server": "cd server && npm run installServer && cd .. && tsc -w -p server/tsconfig.json"
+  },
+  "devDependencies": {
+    "@types/node": "^6.0.88",
+    "typescript": "^2.5.2"
+  }
 }

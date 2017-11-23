@@ -82,6 +82,7 @@ export class AutoCompletion {
                 this.OPERATOR_EXISTS,
                 this.OPERATOR_INCREASE,
                 this.OPERATOR_DECREASE,
+                this.OPERATOR_ASSIGN,
                 this.OPERATOR_COLON,
             ];
             return operators.concat(predicates).concat(functions);

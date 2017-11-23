@@ -1,17 +1,19 @@
 function showPlan(planIndex) {
-    document.querySelectorAll("div.planstep").forEach(div => {
-        let planId = parseInt(div.getAttribute("plan"));
-        let newDisplayStyle = planId == planIndex ? "inline-flex" : "none";
-        let style = div.getAttribute("style");
-        style = style.replace(/display: (none|inline-flex);/i, "display: " + newDisplayStyle + ';');
-        div.setAttribute("style", style);
-    });
+    document.querySelectorAll("div.gantt").forEach(div => showPlanDiv(planIndex, div));
+    document.querySelectorAll("div.resourceUtilization").forEach(div => showPlanDiv(planIndex, div));
     document.querySelectorAll("div.planSelector").forEach(div => {
         let newClass = "planSelector";
         let planId = parseInt(div.getAttribute("plan"));
         if (planIndex == planId) newClass += " planSelector-selected";
         div.setAttribute("class", newClass);
     });
+}
+function showPlanDiv(planIndex, div) {
+    let planId = parseInt(div.getAttribute("plan"));
+    let newDisplayStyle = planId == planIndex ? "block" : "none";
+    let style = div.getAttribute("style");
+    style = style.replace(/display: (none|block);/i, "display: " + newDisplayStyle + ';');
+    div.setAttribute("style", style);
 }
 function scrollPlanSelectorIntoView(planIndex) {
     document.querySelectorAll('div.planSelector').forEach(div => {

@@ -26,6 +26,7 @@ export class Parser {
 
             let problemInfo = new ProblemInfo(fileUri, fileVersion, problemName, domainName);
             problemInfo.text = fileText;
+            this.getProblemStructure(pddlText, problemInfo);
             return problemInfo;
         }
         else {
@@ -60,7 +61,8 @@ export class Parser {
         if (matchGroups) {
             let typesText = matchGroups[3];
             domainInfo.setTypeInheritance(this.parseInheritance(typesText));
-            // let constantsText = matchGroups[5];
+            let constantsText = matchGroups[5];
+            domainInfo.setConstants(Parser.toTypeObjects(this.parseInheritance(constantsText)));
             let predicatesText = matchGroups[7];
             let predicates = this.parsePredicatesOrFunctions(predicatesText);
             domainInfo.setPredicates(predicates);
@@ -73,11 +75,34 @@ export class Parser {
         domainInfo.setActions(this.parseActions(domainText));
     }
 
+    getProblemStructure(problemText: string, problemInfo: ProblemInfo): void {
+        this.problemCompletePattern.lastIndex = 0;
+        let matchGroups = this.problemCompletePattern.exec(problemText);
+
+        if (matchGroups) {
+            let objectsText = matchGroups[3];
+            problemInfo.setObjects(Parser.toTypeObjects(this.parseInheritance(objectsText)));
+        }
+    }
+
+    static toTypeObjects(graph: DirectionalGraph): TypeObjects[] {
+        let typeSet = new Set<string>(graph.getEdges().map(edge => edge[1]));        
+        let typeObjects: TypeObjects[] = Array.from(typeSet).map(type => new TypeObjects(type));
+
+        graph.getVertices().forEach(obj => {
+            graph.getEdgesFrom(obj).forEach(type => typeObjects.find(to => to.type == type).objects.push(obj));
+        });
+
+        return typeObjects;
+    }
+
     parseInheritance(declarationText: string): DirectionalGraph {
         let pattern = /((\w[\w-]*\s*)+-\s*\w[\w-]*|\w[\w-]*)/g;
 
         // the inheritance graph is captured as a two dimensional array, where the first index is the types themselves, the second is the parent type they inherit from (PDDL supports multiple inheritance)
         let inheritance = new DirectionalGraph();
+
+        if (!declarationText) return inheritance; 
 
         // for some reason in cases without type inheritance, the regexp above is very slow
         if(!declarationText.includes('-') && !declarationText.match(/\bobject\b/i)){
@@ -221,12 +246,20 @@ export abstract class FileInfo {
 
 }
 
+/**
+ * Problem file.
+ */
 export class ProblemInfo extends FileInfo {
     domainName: string;
+    objects: TypeObjects[];
 
     constructor(fileUri: string, version: number, problemName: string, domainName: string) {
         super(fileUri, version, problemName);
         this.domainName = domainName;
+    }
+
+    setObjects(objects: TypeObjects[]): void {
+        this.objects = objects;
     }
 
     isDomain(): boolean {
@@ -237,30 +270,38 @@ export class ProblemInfo extends FileInfo {
     }
 }
 
+/**
+ * Domain file.
+ */
 export class DomainInfo extends FileInfo {
     predicates: Variable[];
     functions: Variable[];
     actions: Action[];
     typeInheritance: DirectionalGraph;
+    constants: TypeObjects[];
 
     constructor(fileUri: string, version: number, domainName: string) {
         super(fileUri, version, domainName);
     }
 
-    setPredicates(predicates: Variable[]) {
+    setPredicates(predicates: Variable[]): void {
         this.predicates = predicates;
     }
 
-    setFunctions(functions: Variable[]) {
+    setFunctions(functions: Variable[]): void {
         this.functions = functions;
     }
 
-    setActions(actions: Action[]) {
+    setActions(actions: Action[]): void {
         this.actions = actions;
     }
 
-    setTypeInheritance(typeInheritance: DirectionalGraph) {
+    setTypeInheritance(typeInheritance: DirectionalGraph): void {
         this.typeInheritance = typeInheritance;
+    }
+
+    setConstants(constants: TypeObjects[]): void {
+        this.constants = constants;
     }
 
     getTypes(): string[] {
@@ -323,15 +364,35 @@ export class UnknownFileInfo extends FileInfo {
     }
 }
 
+/**
+ * Simple directional graph.
+ */
 export class DirectionalGraph {
+    // vertices and edges stemming from them
     verticesAndEdges: [string, string[]][] = [];
 
     constructor() {
 
     }
 
+    /**
+     * Get all vertices.
+     */
     getVertices(): string[] {
         return this.verticesAndEdges.map(tuple => tuple[0]);
+    }
+
+    /**
+     * Get all edges.
+     */
+    getEdges(): [string, string][] {
+        let edges: [string, string][] = [];
+        this.verticesAndEdges.forEach(vertexEdges => {
+            let fromVertex = vertexEdges[0];
+            let connectedVertices = vertexEdges[1];
+            connectedVertices.forEach(toVertex => edges.push([fromVertex, toVertex]));
+        });
+        return edges;
     }
 
     addEdge(from: string, to: string): void {
@@ -356,6 +417,19 @@ export class DirectionalGraph {
     }
 }
 
+/**
+ * Holds objects belonging to the same type.
+ */
+export class TypeObjects {
+    objects:  string[] = [];
+
+    constructor(public type: string) { }
+
+    addAllObjects(objects: string[]): void {
+        objects.forEach(o => this.objects.push(o));        
+    }
+}
+
 export class Variable {
     name: string;
     fullNameWithoutTypes: string;
@@ -377,6 +451,11 @@ export class Action {
     }
 }
 
+/**
+ * This is a local version of the vscode Range class, but because the parser is used in both the extension (client)
+ * and the language server, where the Range class is defined separately, we need a single proprietary implementation,
+ * which is converted to the VS Code class specific to the two distinct client/server environment. 
+ */
 export class PddlRange {
     constructor(public startLine: number, public startCharacter: number, public endLine: number, public endCharacter: number){}
 }

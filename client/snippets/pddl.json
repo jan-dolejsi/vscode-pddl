@@ -32,9 +32,9 @@
     "prefix": "action",
     "body": [
         "(:action ${1:name}",
-        "     :parameters ($0)",
-        "     :precondition (and )",
-        "     :effect (and )",
+        "    :parameters ($0)",
+        "    :precondition (and )",
+        "    :effect (and )",
         ")",
         ""
     ],

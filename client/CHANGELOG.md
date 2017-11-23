@@ -6,7 +6,25 @@ Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how 
 
 ## [Unreleased]
 
+Further plan visualization improvements.
+
+Auto-completion for constant/object names.
+
+## [2.0.2] - 2017-11-23
+
 Plan visualization that features color-coding of actions and swim-lanes for objects per types.
+
+All commands this extension contributes were renamed to start with the 'PDDL:' prefix. That makes them easy to find when pressing Ctrl + P and is also more consistent with other extensions.
+
+Improved the snippets - they now use 4 character indentation uniformly, which makes it easier to keep the formatting while editing them further.
+
+The `assign` numeric effect was missing in the auto-completion options and was now added.
+
+Clean-up in the code. The .css and .js files needed by the HTML plan preview are now served as static resources from the disk (in the extension installation).
+
+Added Mocha-based unit tests to test the classes in the `common` module.
+
+PDDL parser was extended to pick up the constants and objects from domain/problem file. Those are used in the plan visualization, but not yet in the editor auto-completion for example.
 
 ## [2.0.1] - 2017-11-16
 
@@ -42,8 +60,9 @@ Simplified snippets and added tabstops/placeholders to them, so they are easy to
 - PDDL Snippets for `domain`, `problem`, `action` and `durative-action`.
 - Syntax highlighting for commonly used PDDL features
 
-[Unreleased]: https://github.com/jan-dolejsi/vscode-pddl/compare/v2.0.1...HEAD
-[2.0.1]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.0.0...v2.
+[Unreleased]: https://github.com/jan-dolejsi/vscode-pddl/compare/v2.0.2...HEAD
+[2.0.2]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.0.1...v2.0.2
+[2.0.1]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.0.0...v2.0.1
 [2.0.0]:https://github.com/jan-dolejsi/vscode-pddl/compare/v1.0.2...v2.0.0
 [1.0.2]:https://github.com/jan-dolejsi/vscode-pddl/compare/v1.0.1...v1.0.2
 [1.0.1]:https://github.com/jan-dolejsi/vscode-pddl/compare/1.0.0...v1.0.1

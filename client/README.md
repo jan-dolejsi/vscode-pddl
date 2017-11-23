@@ -86,9 +86,19 @@ See unfixed issues and submit new ones [here][github pddl issues].
 
 ## Release Notes
 
+### 2.0.2
+
+Plan visualization that features color-coding of actions and swim-lanes for objects per types.
+
+All commands this extension contributes were renamed to start with the 'PDDL:' prefix. That makes them easy to find when pressing Ctrl + P and is also more consistent with other extensions.
+
+Improved the snippets - they now use 4 character indentation uniformly, which makes it easier to keep the formatting while editing them further.
+
+The `assign` numeric effect was missing in the auto-completion options and was now added.
+
 ### 2.0.1
 
-New command added to _Configure PDDL Planner_. Added configuration to override the planner command-line syntax.
+New command added to _PDDL: Configure planner_. Added configuration to override the planner command-line syntax.
 Added support for solver.planning.domains/solve web service.
 Supporting non-auto-saving editor mode by creating temp files for domain/problem when launching the planner.
 Fixed an issue with some domains where the extension was hanging (while regexp parsing the types).

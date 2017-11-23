@@ -4,7 +4,7 @@
     "description": "Planning Domain Description Language support",
 	"author": "Jan Dolejsi",
 	"license": "MIT",
-	"version": "2.0.1",
+	"version": "2.0.2",
 	"publisher": "jan-dolejsi",
 	"engines": {
 		"vscode": "^1.16.0"
@@ -53,19 +53,19 @@
 		"commands": [
 			{
 				"command": "pddl.planAndDisplayResult",
-				"title": "Run the planner and display the plan"
+				"title": "PDDL: Run the planner and display the plan"
 			},
 			{
 				"command": "pddl.stopPlanner",
-				"title": "Stop planner"
+				"title": "PDDL: Stop planner"
 			},
 			{
 				"command": "pddl.configureParser",
-				"title": "Configure PDDL parser"
+				"title": "PDDL: Configure parser"
 			},
 			{
 				"command": "pddl.configurePlanner",
-				"title": "Configure PDDL planner"
+				"title": "PDDL: Configure planner"
 			}
 		],
 		"menus": {

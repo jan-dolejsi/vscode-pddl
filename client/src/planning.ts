@@ -5,16 +5,18 @@
 'use strict';
 
 import {
-    window, workspace, commands, OutputChannel, Uri, Disposable, TextDocumentContentProvider,
-    Event, EventEmitter, CancellationToken, ViewColumn, MessageItem, ExtensionContext, StatusBarItem
+    window, workspace, commands, OutputChannel, Uri, Disposable, 
+    ViewColumn, MessageItem, ExtensionContext, StatusBarItem
 } from 'vscode';
 
 import * as path from 'path';
 
+import { PlanDocumentContentProvider } from './PlanDocumentContentProvider';
+
 import { PddlWorkspace } from '../../common/src/workspace-model';
 import { DomainInfo, ProblemInfo } from '../../common/src/parser';
 import { PddlConfiguration } from './configuration';
-import { Plan, PlanStep, PlanningHandler } from './plan';
+import { Plan, PlanningHandler } from './plan';
 import { PlannerExecutable } from './PlannerExecutable';
 import { PlannerService } from './PlannerService';
 import { Planner } from './planner';
@@ -30,7 +32,7 @@ export class Planning implements PlanningHandler {
 
     planner: Planner;
     planningProcessKilled: boolean;
-
+    
     constructor(public pddlWorkspace: PddlWorkspace, public plannerConfiguration: PddlConfiguration, context: ExtensionContext, public status: StatusBarItem) {
         this.output = window.createOutputChannel("Planner output");
 
@@ -231,90 +233,6 @@ export class Planning implements PlanningHandler {
     static q(path: string): string {
         return path.includes(' ') ? `"${path}"` : path;
     }
-}
-
-class PlanDocumentContentProvider implements TextDocumentContentProvider {
-    private _onDidChange = new EventEmitter<Uri>();
-    private plans: Plan[]; // todo: this should not be a field, but a map against the Uri
-
-    constructor(public context: ExtensionContext) {}
-
-    get onDidChange(): Event<Uri> {
-        return this._onDidChange.event;
-    }
-
-    public update(uri: Uri, plans: Plan[]) {
-        this.plans = plans;
-        this._onDidChange.fire(uri);
-    }
-
-    provideTextDocumentContent(uri: Uri, token: CancellationToken): string | Thenable<string> {
-        if (token.isCancellationRequested) return "Canceled";
-
-        console.log("Todo: when supporting multiple plan panes, look this up: " + uri.toString());// todo: should pick up the  plan using the uri
-
-        let selectedPlan = this.plans.length - 1;
-
-        let maxCost = Math.max(...this.plans.map(plan => plan.cost));
-
-        let planSelectors = this.plans.map((plan, planIndex) => this.renderPlanSelector(plan, planIndex, selectedPlan, maxCost)).join(" ");
-
-        let planSelectorsDisplayStyle = this.plans.length > 1 ? "flex" : "none";
-
-        let planText = this.plans.map((plan, planIndex) => this.renderPlan(plan, planIndex, selectedPlan)).join("\n\n");
-
-        let html = `<!DOCTYPE html>        
-<head>
-    <link rel = "stylesheet" type = "text/css" href = "${this.asAbsolutePath('planview', 'plans.css')}" />
-    <script src="${this.asAbsolutePath('planview', 'plans.js')}"></script>
-</head>        
-<body onload="scrollPlanSelectorIntoView(${selectedPlan})">
-    <div class="planSelectors" style="display: ${planSelectorsDisplayStyle};">${planSelectors}</div>
-    <div style="margin: 5px; position: absolute;">
-        ${planText}
-    </div>
-</body>`;
-
-        return html
-    }
-
-    asAbsolutePath(...paths: string[]): string {
-        return this.context.asAbsolutePath(path.join(...paths));
-    }
-
-    renderPlanSelector(plan: Plan, planIndex: number, selectedPlan: number, maxCost: number): string {
-        let className = "planSelector";
-        if (planIndex == selectedPlan) className += " planSelector-selected";
-
-        let normalizedCost = plan.cost / maxCost * 100;
-
-        return `<div class="${className}" plan="${planIndex}" onclick="showPlan(${planIndex})"><span>${plan.cost}</span>
-        <div class="planMetricBar" style="height: ${normalizedCost}px"></div>
-        </div>`;
-    }
-
-    renderPlan(plan: Plan, planIndex: number, selectedPlan: number): string {
-        return plan.steps.map((step, stepIndex) => this.renderPlanStep(step, stepIndex, plan, planIndex, selectedPlan)).join("\n");
-    }
-
-    renderPlanStep(step: PlanStep, index: number, plan: Plan, planIndex: number, selectedPlan: number): string {
-        let actionLink = this.toActionLink(step.actionName, plan);
-
-        let fromTop = index * 20;
-        let fromLeft = step.time / plan.makespan * 200;
-        let width = Math.max(1, step.duration / plan.makespan * 200);
-
-        let actionIndex = plan.domain.actions.findIndex(action => action.name == step.actionName);
-        let actionColor = this.colors[actionIndex * 3 % this.colors.length];
-
-        return `<div class="planstep" id="plan${planIndex}step${index}" plan="${planIndex}" style="left: ${fromLeft}px; top: ${fromTop}px; display: ${planIndex == selectedPlan ? "inline-flex" : "none"};"><div class="planstep-bar" style="width: ${width}px; background-color: ${actionColor}"></div>${actionLink} ${step.objects.join(' ')}</div>`;
-    }
-
-    toActionLink(actionName: string, plan: Plan) {
-        return `<a href="${encodeURI('command:pddl.revealAction?' + JSON.stringify([plan.domain.fileUri, actionName]))}">${actionName}</a>`;
-    }
-
-    colors = ['#ff0000', '#ff4000', '#ff8000', '#ffbf00', '#ffff00', '#bfff00', '#80ff00', '#40ff00', '#00ff00', '#00ff40', '#00ff80', '#00ffbf', '#00ffff', '#00bfff', '#0080ff', '#0040ff', '#0000ff', '#4000ff', '#8000ff', '#bf00ff', '#ff00ff', '#ff00bf', '#ff0080', '#ff0040'];
 }
 
 class ProcessErrorMessageItem implements MessageItem {
