@@ -14,7 +14,7 @@ Auto-completion for constant/object names.
 
 Plan visualization that features color-coding of actions and swim-lanes for objects per types.
 
-All commands this extension contributes were renamed to start with the 'PDDL:' prefix. That makes them easy to find when pressing Ctrl + P and is also more consistent with other extensions.
+All commands this extension contributes were renamed to start with the 'PDDL:' prefix. That makes them easy to find when pressing _Ctrl + Shift + P_ and is also more consistent with other extensions.
 
 Improved the snippets - they now use 4 character indentation uniformly, which makes it easier to keep the formatting while editing them further.
 
