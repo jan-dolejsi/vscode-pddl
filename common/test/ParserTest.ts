@@ -68,7 +68,7 @@ describe('Parser', () => {
 
             assert.ok(graph.getEdgesFrom(child).includes(parent), 'child should have parent');
             assert.ok(graph.getEdgesFrom(parent).length == 0, 'parent should not have parent');
-            assert.ok(graph.getEdgesFrom(orphan).length == 0, 'orphan should not have parent');
+            assert.ok(graph.getEdgesFrom(orphan).length == 1, 'orphan should not have "object" parent');
         });
 
         it('should parse 2 parent-child declarations', () => {

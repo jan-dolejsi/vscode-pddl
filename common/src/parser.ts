@@ -97,23 +97,24 @@ export class Parser {
     }
 
     parseInheritance(declarationText: string): DirectionalGraph {
-        let pattern = /((\w[\w-]*\s*)+-\s*\w[\w-]*|\w[\w-]*)/g;
 
         // the inheritance graph is captured as a two dimensional array, where the first index is the types themselves, the second is the parent type they inherit from (PDDL supports multiple inheritance)
         let inheritance = new DirectionalGraph();
 
         if (!declarationText) return inheritance; 
 
-        // for some reason in cases without type inheritance, the regexp above is very slow
-        if(!declarationText.includes('-') && !declarationText.match(/\bobject\b/i)){
+        // if there are root types that do not inherit from 'object', add the 'object' inheritance.
+        // it will make the following regex work
+        if(!declarationText.match(/-\s+\w[\w-]*\s*$/)){
             declarationText += ' - object';
         }
 
+        let pattern = /(\w[\w-]*\s+)+-\s+\w[\w-]*/g;
         let match;
         while (match = pattern.exec(declarationText)) {
             // is this a group with inheritance?
-            if (match[1].indexOf(' -')) {
-                let fragments = match[1].split('-');
+            if (match[0].indexOf(' -')) {
+                let fragments = match[0].split('-');
                 let parent = fragments[1] ? fragments[1].trim() : null;
                 let children = fragments[0].trim().split(/\s+/g, );
 
