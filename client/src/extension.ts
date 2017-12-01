@@ -105,18 +105,21 @@ function toRange(pddlRange: PddlRange): Range {
 
 function subscribeToWorkspace(pddlWorkspace: PddlWorkspace, context: ExtensionContext): void {
 	workspace.textDocuments
-		.filter(textDoc => textDoc.languageId == 'pddl')
+		.filter(textDoc => isPddl(textDoc))
 		.forEach(textDoc => {
 			pddlWorkspace.upsertFile(textDoc.uri.toString(), textDoc.version, textDoc.getText());
 		});
 
 	context.subscriptions.push(workspace.onDidOpenTextDocument(textDoc => { if(isPddl(textDoc)) pddlWorkspace.upsertFile(textDoc.uri.toString(), textDoc.version, textDoc.getText())}));
-	context.subscriptions.push(workspace.onDidChangeTextDocument(docEvent => { if(isPddl(docEvent.document)) pddlWorkspace.upsertFile(docEvent.document.uri.toString(), docEvent.document.version, docEvent.document.getText())}));
+	context.subscriptions.push(workspace.onDidChangeTextDocument(docEvent => { 
+		if(isPddl(docEvent.document)) 
+			pddlWorkspace.upsertFile(docEvent.document.uri.toString(), docEvent.document.version, docEvent.document.getText())
+		}));
 	context.subscriptions.push(workspace.onDidCloseTextDocument(docEvent => { if(isPddl(docEvent)) pddlWorkspace.removeFile(docEvent.uri.toString())}));
 }
 
 function isPddl(doc: TextDocument): boolean {
-	return doc.languageId.toLowerCase() == PDDL;
+	return doc.languageId.toLowerCase() == PDDL.toLowerCase();
 }
 
 function uninstallLegacyExtension(pddlConfiguration: PddlConfiguration) {

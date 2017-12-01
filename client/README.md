@@ -86,6 +86,14 @@ See unfixed issues and submit new ones [here][github pddl issues].
 
 ## Release Notes
 
+### 2.0.3
+
+Fixed the 'there is no corresponding domain/problem open in the editor' as well as stale PDDL file content while launching the planner.
+
+Planner executable working directory is set to the folder in which the domain and problem files are located.
+
+Entered planner or parser executable/service location is trimmed for whitespace.
+
 ### 2.0.2
 
 Plan visualization that features color-coding of actions and swim-lanes for objects per types.
