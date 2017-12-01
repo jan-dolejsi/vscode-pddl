@@ -112,7 +112,7 @@ export class Planning implements PlanningHandler {
 
         let planParser = new PddlPlanParser(domainFileInfo, problemFileInfo, this.plannerConfiguration.getEpsilonTimeStep(), plans => this.visualizePlans(plans));
 
-        this.planner = await this.createPlanner();
+        this.planner = await this.createPlanner(Planning.getFolderPath(activeDocument.fileName));
         if (!this.planner) return false;
 
         this.planningProcessKilled = false;
@@ -129,7 +129,7 @@ export class Planning implements PlanningHandler {
     /**
      * Creates the right planner wrapper according to the current configuration.
      */
-    async createPlanner(): Promise<Planner> {
+    async createPlanner(workingDirectory: string): Promise<Planner> {
         let plannerPath = await this.plannerConfiguration.getPlannerPath();
         if (!plannerPath) return null;
 
@@ -143,7 +143,7 @@ export class Planning implements PlanningHandler {
             let plannerSyntax = await this.plannerConfiguration.getPlannerSyntax();
             if (plannerSyntax == null) return null;
 
-            return new PlannerExecutable(plannerPath, plannerOptions, plannerSyntax);
+            return new PlannerExecutable(plannerPath, plannerOptions, plannerSyntax, workingDirectory);
         }
     }
 

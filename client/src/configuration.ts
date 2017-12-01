@@ -99,6 +99,8 @@ export class PddlConfiguration {
         });
 
         if (newParserPath) {
+            newParserPath = newParserPath.trim();
+            
             // todo: validate that this parser actually works by sending a dummy request to it
 
             let newParserScope = await this.askConfigurationScope();
@@ -165,6 +167,9 @@ export class PddlConfiguration {
         });
 
         if (newPlannerPath) {
+
+            newPlannerPath = newPlannerPath.trim();
+            
             // todo: validate that this planner actually works by sending a dummy request to it
 
             let newPlannerScope = await this.askConfigurationScope();

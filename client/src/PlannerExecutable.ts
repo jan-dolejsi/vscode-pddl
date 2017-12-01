@@ -22,7 +22,7 @@ export class PlannerExecutable extends Planner {
     // this property stores the reference to the planner child process, while planning is in progress
     child: process.ChildProcess;
 
-    constructor(plannerPath: string, plannerOptions: string, public plannerSyntax: string) {
+    constructor(plannerPath: string, plannerOptions: string, public plannerSyntax: string, public workingDirectory: string) {
         super(plannerPath, plannerOptions);
     }
 
@@ -41,7 +41,9 @@ export class PlannerExecutable extends Planner {
         let thisPlanner = this;
         super.planningProcessKilled = false;
 
-        this.child = process.exec(command, (error, stdout, stderr) => {
+        this.child = process.exec(command, 
+            { cwd: this.workingDirectory },
+            (error, stdout, stderr) => {
             planParser.onPlanFinished();
 
             if (error && !thisPlanner.child.killed && !this.planningProcessKilled) {

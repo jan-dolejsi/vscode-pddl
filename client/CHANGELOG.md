@@ -8,7 +8,17 @@ Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how 
 
 Further plan visualization improvements.
 
+Find all references support for _type_.
+
 Auto-completion for constant/object names.
+
+## [2.0.3] - 2017-12-01
+
+Fixed the 'there is no corresponding domain/problem open in the editor' as well as stale PDDL file content while launching the planner.
+
+Planner executable working directory is set to the folder in which the domain and problem files are located.
+
+Entered planner or parser executable/service location is trimmed for whitespace.
 
 ## [2.0.2] - 2017-11-23
 
@@ -60,7 +70,8 @@ Simplified snippets and added tabstops/placeholders to them, so they are easy to
 - PDDL Snippets for `domain`, `problem`, `action` and `durative-action`.
 - Syntax highlighting for commonly used PDDL features
 
-[Unreleased]: https://github.com/jan-dolejsi/vscode-pddl/compare/v2.0.2...HEAD
+[Unreleased]: https://github.com/jan-dolejsi/vscode-pddl/compare/v2.0.3...HEAD
+[2.0.3]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.0.2...v2.0.3
 [2.0.2]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.0.1...v2.0.2
 [2.0.1]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.0.0...v2.0.1
 [2.0.0]:https://github.com/jan-dolejsi/vscode-pddl/compare/v1.0.2...v2.0.0
