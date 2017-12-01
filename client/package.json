@@ -66,6 +66,10 @@
 			{
 				"command": "pddl.configurePlanner",
 				"title": "PDDL: Configure planner"
+			},
+			{
+				"command": "pddl.planReport",
+				"title": "PDDL: Generate plan report"
 			}
 		],
 		"menus": {
@@ -166,6 +170,7 @@
 		"request": "^2.83.0",
 		"@types/request": "^2.0.5",
 		"tmp": "^0.0.33",
-		"@types/tmp": "^0.0.33"
+		"@types/tmp": "^0.0.33",
+		"opn": "^5.1.0"
 	}
 }

@@ -12,6 +12,8 @@ Find all references support for _type_.
 
 Auto-completion for constant/object names.
 
+Additional command for plan report export to a self-contained HTML file.
+
 ## [2.0.3] - 2017-12-01
 
 Fixed the 'there is no corresponding domain/problem open in the editor' as well as stale PDDL file content while launching the planner.

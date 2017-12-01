@@ -31,6 +31,7 @@ export class Planning implements PlanningHandler {
     planDocumentProviderRegistration: Disposable;
 
     planner: Planner;
+    plans: Plan[];
     planningProcessKilled: boolean;
     
     constructor(public pddlWorkspace: PddlWorkspace, public plannerConfiguration: PddlConfiguration, context: ExtensionContext, public status: StatusBarItem) {
@@ -126,6 +127,10 @@ export class Planning implements PlanningHandler {
         return true;
     }
 
+    getPlans(): Plan[] {
+        return this.plans;
+    }
+
     /**
      * Creates the right planner wrapper according to the current configuration.
      */
@@ -201,6 +206,7 @@ export class Planning implements PlanningHandler {
     }
 
     visualizePlans(plans: Plan[]): void {
+        this.plans = plans;
         this.provider.update(this.previewUri, plans);
 
         let usesViewColumnTwo = window.visibleTextEditors.some(editor => editor.viewColumn == ViewColumn.Two);
