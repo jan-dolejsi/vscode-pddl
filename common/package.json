@@ -10,9 +10,9 @@
 	"scripts": {
 		"pretest": "tsc",
 		"test": "mocha -- out/test/*.js",
-		"vscode:prepublish": "tsc -p ./",
 		"compile": "tsc -p ./",
 		"watch": "tsc -w -p ./",
+		"vscode:prepublish": "npm run compile",
 		"update-vscode": "node ./node_modules/vscode/bin/install"
 	},
 	"dependencies": {
@@ -21,6 +21,7 @@
 	},
 	"devDependencies": {
 		"mocha": "^4.0.1",
-		"@types/mocha": "^2.2.42"
+		"@types/mocha": "^2.2.42",
+		"typescript": "^2.5.2"
 	}
 }
