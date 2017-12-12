@@ -14,12 +14,15 @@
     "url": "https://github.com/jan-dolejsi/vscode-pddl"
   },
   "scripts": {
-    "postinstall": "cd common && npm install && cd ../server && npm install && cd ../client && npm install && cd ..",
-    "compile": "tsc -p client/tsconfig.json && cd server && npm run installServer && cd .. && tsc -p server/tsconfig.json",
-    "compile:client": "tsc -p client/tsconfig.json",
-    "watch:client": "tsc -w -p client/tsconfig.json",
-    "compile:server": "cd server && npm run installServer && cd .. && tsc -p server/tsconfig.json",
-    "watch:server": "cd server && npm run installServer && cd .. && tsc -w -p server/tsconfig.json"
+    "install:common": "cd common && npm install && npm test && cd ..",
+    "install:server": "cd server && npm install && cd ..",
+    "install:client": "cd client && npm install && cd ..",
+    "postinstall": "npm run install:common && npm run install:server && npm run install:client",
+    "compile:server": "cd server && npm run compile && cd ..",
+    "compile:client": "cd client && npm run compile && cd ..",
+    "compile": "npm run compile:server && npm run compile:client",
+    "watch:server": "cd server && npm run watch && cd ..",
+    "watch:client": "cd client && npm run watch && cd .."
   },
   "devDependencies": {
     "@types/node": "^6.0.88",
