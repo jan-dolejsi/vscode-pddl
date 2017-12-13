@@ -51,7 +51,9 @@ export class PlanFunctionEvaluator {
 
         let parser = new PlanValuesParser(this.plan.steps, groundedFunctions, lines);
 
-        this.plan.domain.getFunctions().forEach(liftedFunction => {
+        this.plan.domain.getFunctions()
+            .filter(liftedFunction => liftedFunction.parameters.length < 2)
+            .forEach(liftedFunction => {
             let functionName = liftedFunction.name;
             let values = parser.getValues(functionName);
             let objects = this.grounder.getObjectPermutations(liftedFunction.parameters.map(p => p.type));

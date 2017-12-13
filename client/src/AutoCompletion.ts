@@ -77,32 +77,36 @@ class CompletionCollector {
 
             let item = new CompletionItem('Initialize a symmetric predicate and function', CompletionItemKind.Snippet);
             item.insertText = new SnippetString(
-                "    (${1|" + symmetricPredicateNames + "|} ${2|" + objectNames + "|} ${3|" + objectNames + "|}) (${1} ${3} ${2})\n" +
-                "    (= (${4|" + symmetricFunctionNames + "|} ${2|" + objectNames + "|} ${3|" + objectNames + "|}) ${5}) (= (${4} ${3} ${2}) ${5})");
+                "(${1|" + symmetricPredicateNames + "|} ${2|" + objectNames + "|} ${3|" + objectNames + "|}) (${1} ${3} ${2})\n" +
+                "(= (${4|" + symmetricFunctionNames + "|} ${2|" + objectNames + "|} ${3|" + objectNames + "|}) ${5}) (= (${4} ${3} ${2}) ${5})");
             item.documentation = new MarkdownString()
                 .appendText("Inserts a predicate and function initialization for predicates and functions with two parameters of the same type.")
                 .appendCodeblock("(road A B) (road B A)\n(= (distance A B) 1) (= (distance B A) 1)", "PDDL")
                 .appendMarkdown("Use the `Tab` and `Enter` keys on your keyboard to cycle through the selection of the predicate, objects, function and the function value.");
             this.completions.push(item);
-        } else if (symmetricPredicates.length) {
+        } 
+        
+        if (symmetricPredicates.length) {
             let typesInvolved = this.getTypesInvolved(symmetricPredicates, domainFile);
             let objectNames = this.getObjects(allTypeObjects, typesInvolved)
                 .join(',');
 
             let item = new CompletionItem('Initialize a symmetric predicate', CompletionItemKind.Snippet);
-            item.insertText = new SnippetString("    (${1|" + symmetricPredicateNames + "|} ${2|" + objectNames + "|} ${3|" + objectNames + "|}) (${1} ${3} ${2})");
+            item.insertText = new SnippetString("(${1|" + symmetricPredicateNames + "|} ${2|" + objectNames + "|} ${3|" + objectNames + "|}) (${1} ${3} ${2})");
             item.documentation = new MarkdownString()
                 .appendText("Inserts a predicate initialization for predicates with two parameters of the same type.")
                 .appendCodeblock("(road A B) (road B A)", "pddl")
                 .appendMarkdown("Use the `Tab` and `Enter` keys on your keyboard to cycle through the selection of the predicate and objects.");
             this.completions.push(item);
-        } else if (symmetricFunctions.length) {
+        } 
+        
+        if (symmetricFunctions.length) {
             let typesInvolved = this.getTypesInvolved(symmetricFunctions, domainFile);
             let objectNames = this.getObjects(allTypeObjects, typesInvolved)
                 .join(',');
 
             let item = new CompletionItem('Initialize a symmetric function', CompletionItemKind.Snippet);
-            item.insertText = new SnippetString("    (= (${1|" + symmetricFunctionNames + "|} ${2|" + objectNames + "|} ${3|" + objectNames + "|}) ${4}) (= (${1} ${3} ${2}) ${4})");
+            item.insertText = new SnippetString("(= (${1|" + symmetricFunctionNames + "|} ${2|" + objectNames + "|} ${3|" + objectNames + "|}) ${4}) (= (${1} ${3} ${2}) ${4})");
             item.documentation = new MarkdownString()
                 .appendText("Inserts a function initialization for functions with two parameters of the same type.")
                 .appendCodeblock("(= (distance A B) 1) (= (distance B A) 1)", "pddl")
