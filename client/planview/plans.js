@@ -8,6 +8,7 @@ function showPlan(planIndex) {
         if (planIndex == planId) newClass += " planSelector-selected";
         div.setAttribute("class", newClass);
     });
+    eval("drawPlan"+planIndex+"Charts();");
 }
 function showPlanDiv(planIndex, div) {
     let planId = parseInt(div.getAttribute("plan"));

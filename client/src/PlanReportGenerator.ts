@@ -120,7 +120,7 @@ ${objectsHtml}
             functionValues.forEach((values, functionName) => {
                 let chartDivId = `chart_${planIndex}_${functionName}`;
                 let legend = values.objects.length ? values.objects : [''];
-                lineCharts += `        <div id="${chartDivId}" style="width: ${this.displayWidth+100}px; height: ${this.displayWidth/3}px"></div>\n`;
+                lineCharts += `        <div id="${chartDivId}" style="width: ${this.displayWidth+100}px; height: ${Math.round(this.displayWidth/3)}px"></div>\n`;
                 lineChartScripts += `        drawChart('${chartDivId}', '${functionName}', 'unit', ${JSON.stringify(legend)}, ${JSON.stringify(values.values)}, ${this.displayWidth});\n`;
             });
         }
@@ -135,11 +135,11 @@ ${lineCharts}
     }
 
     createPlansChartsScript(plans: Plan[]){
-        let script = plans.map((plan, index) => { plan; return `drawPlan${index}Charts();`; }).join('');
+        let selectedPlan = plans.length - 1;
         return `        <script>
                 google.charts.setOnLoadCallback(drawCharts);        
                 function drawCharts() {
-                    ${script}
+                    drawPlan${selectedPlan}Charts();
                 }
         </script>`;
     }

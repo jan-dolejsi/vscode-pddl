@@ -80,11 +80,50 @@ When using a planner executable, further command-line options may be specified.
 
 ![planner](https://raw.githubusercontent.com/wiki/jan-dolejsi/vscode-pddl/img/PDDL_plan_optimize.gif)
 
+### Auto-completion snippets for symmetric and sequential initialization
+
+Creating a realistic problem files to test the domain may be tedious. Here are several ways to make it substantially faster:
+
+Initializing a sequence of symmetric relationships.
+
+![planner](https://raw.githubusercontent.com/wiki/jan-dolejsi/vscode-pddl/img/PDDL_sequence_init.gif)
+
+Initializing a symmetric relationships.
+
+![planner](https://raw.githubusercontent.com/wiki/jan-dolejsi/vscode-pddl/img/PDDL_symmetric_init.gif)
+
 ## Known Issues
 
 See unfixed issues and submit new ones [here][github pddl issues].
 
 ## Release Notes
+
+### 2.4.0
+
+#### HTML report for plan details
+
+Additional command for plan report export to a self-contained HTML file.
+When the Plan preview pane is open (when the planner finishes a successful execution), press `Control + Shift + P` and type _PDDL_ to the command window. Select the option _PDDL: Generate plan report_. A new default browser window opens with a self-contained report HTML file. It is generated into the temporary folder.
+
+Note: If the report contains graphs showing function values, it only displays the graphs when open in the Chrome browser.
+
+#### Context-sensitive auto-complete snippet for symmetric initialization
+
+Auto-complete snippet for symmetric predicate and/or function initialization.
+
+Symmetric predicate initialization example: `(road A B) (road B A)`
+
+Symmetric function initialization example: `(= (distance A B) 13) (= (distance B A) 13)`
+
+To trigger the snippet, start typing 'init' inside the problem `(:init )` section.
+
+#### Fixes
+
+Fixed the PDDL parser to work with domains that completely omit the `(:types )` section.
+
+#### Other features
+
+Opt-in visualization of plan function values. Experimental.
 
 ### 2.0.3
 

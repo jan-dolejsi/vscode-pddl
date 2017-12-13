@@ -286,6 +286,27 @@ describe('Parser', () => {
 
             assert.equal(problemInfo.getObjects("basic-task").length, 3, 'there should be 3 objects');
         });
+
+        it('parses structure even where there is a requirements section', () => {
+            // GIVEN
+            let problemPddl = `
+            (define (problem p1) (:domain d1)
+            (:requirements :strips :fluents :durative-actions :timed-initial-literals :typing :conditional-effects :negative-preconditions :duration-inequalities :equality)
+            (:objects
+              task1 - task
+            )
+            
+            (:init )
+            (:goal )
+            )
+            `;
+            let problemInfo = new ProblemInfo("uri", 1, "p1", "d1");
+
+            // WHEN
+            new Parser().getProblemStructure(problemPddl, problemInfo);
+
+            assert.equal(problemInfo.getObjects("task").length, 1, 'there should be 1 object despite the requirements section');
+        });
     });
 });
 
