@@ -14,7 +14,10 @@ import { DomainInfo, ProblemInfo, FileStatus } from '../../common/src/parser';
 import request = require('request');
 
 export class ValidatorService extends Validator {
-    constructor(path: string) { super(path); }
+
+    constructor(path: string) { 
+        super(path);
+    }
     
     validate(domainInfo: DomainInfo, problemFiles: ProblemInfo[], onSuccess: (diagnostics: Map<string, Diagnostic[]>) => void, onError: (error: string) => void) {
         let requestBody = {

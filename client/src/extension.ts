@@ -13,9 +13,11 @@ import { Planning } from './planning'
 import { PddlWorkspace } from '../../common/src/workspace-model';
 import { DomainInfo, PddlRange } from '../../common/src/parser';
 import { PddlConfiguration } from './configuration';
+import { Authentication } from '../../common/src/Authentication';
 
 const PDDL_STOP_PLANNER = 'pddl.stopPlanner';
 const PDDL_CONFIGURE_PARSER = 'pddl.configureParser';
+const PDDL_LOGIN_PARSER_SERVICE = 'pddl.loginParserService';
 const PDDL_CONFIGURE_PLANNER = 'pddl.configurePlanner';
 const PDDL = 'PDDL';
 
@@ -76,6 +78,12 @@ export function activate(context: ExtensionContext) {
 		pddlConfiguration.suggestNewParserConfiguration(false);
 	});
 
+	let authentication = new Authentication();
+
+	let loginParserServiceCommand = commands.registerCommand(PDDL_LOGIN_PARSER_SERVICE, () => {
+		authentication.login();
+	});
+
 	let configurePlannerCommand = commands.registerCommand(PDDL_CONFIGURE_PLANNER, () => {
 		pddlConfiguration.askNewPlannerPath();
 	});
@@ -89,7 +97,7 @@ export function activate(context: ExtensionContext) {
 
 	// Push the disposables to the context's subscriptions so that the 
 	// client can be deactivated on extension deactivation
-	context.subscriptions.push(planCommand, revealActionCommand, planning.planDocumentProviderRegistration, status, stopPlannerCommand, stateChangeHandler, configureParserCommand, configurePlannerCommand);
+	context.subscriptions.push(planCommand, revealActionCommand, planning.planDocumentProviderRegistration, status, stopPlannerCommand, stateChangeHandler, configureParserCommand, loginParserServiceCommand, configurePlannerCommand);
 }
 
 async function revealAction(domainInfo: DomainInfo, actionName: String) {
