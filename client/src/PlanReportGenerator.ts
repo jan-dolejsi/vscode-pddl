@@ -111,7 +111,7 @@ ${objectsHtml}
 
         let evaluator = new PlanFunctionEvaluator(workspace.getConfiguration().get(VALUE_SEQ_LOCATION), plan);
 
-        let lineCharts = `    <div class="lineChart" plan="${planIndex}" style="display: ${styleDisplay};">\n`;
+        let lineCharts = `    <div class="lineChart" plan="${planIndex}" style="display: ${styleDisplay};margin-top: 20px;">\n`;
         let lineChartScripts = '';
 
         if(evaluator.isAvailable()){
@@ -128,14 +128,14 @@ ${objectsHtml}
         lineCharts += `\n    </div>`;
 
         return `${ganttChart}
-${swimLanes}<br/>
+${swimLanes}
 ${lineCharts}
         <script>function drawPlan${planIndex}Charts(){\n${lineChartScripts}}</script>
 `;
     }
 
     createPlansChartsScript(plans: Plan[]){
-        let script = plans.map((plan, index) => { plan; return `drawPlan${index}Charts();`; }).join();
+        let script = plans.map((plan, index) => { plan; return `drawPlan${index}Charts();`; }).join('');
         return `        <script>
                 google.charts.setOnLoadCallback(drawCharts);        
                 function drawCharts() {
