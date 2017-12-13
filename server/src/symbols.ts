@@ -44,11 +44,11 @@ export class SymbolInfoProvider {
 
         let actionSymbols = domainInfo.actions.map(action => SymbolInformation.create(action.name, SymbolKind.Module, SymbolInfoProvider.toRange(action.location)));
 
-        domainInfo.predicates.forEach(p => domainInfo.findVariableLocation(p));
-        let predicateSymbols = domainInfo.predicates.map(variable => SymbolInformation.create(variable.fullName, SymbolKind.Boolean, SymbolInfoProvider.toRange(variable.location)));
+        domainInfo.getPredicates().forEach(p => domainInfo.findVariableLocation(p));
+        let predicateSymbols = domainInfo.getPredicates().map(variable => SymbolInformation.create(variable.declaredName, SymbolKind.Boolean, SymbolInfoProvider.toRange(variable.location)));
         
-        domainInfo.functions.forEach(f => domainInfo.findVariableLocation(f));
-        let functionSymbols = domainInfo.functions.map(variable => SymbolInformation.create(variable.fullName, SymbolKind.Function, SymbolInfoProvider.toRange(variable.location)));
+        domainInfo.getFunctions().forEach(f => domainInfo.findVariableLocation(f));
+        let functionSymbols = domainInfo.getFunctions().map(variable => SymbolInformation.create(variable.declaredName, SymbolKind.Function, SymbolInfoProvider.toRange(variable.location)));
 
         let symbols = actionSymbols.concat(predicateSymbols, functionSymbols);
 
@@ -66,20 +66,20 @@ export class SymbolInfoProvider {
         if (!symbol) return null;
 
         if (symbol.isPrefixedBy('(')) {
-            let predicateFound = domainInfo.predicates.find(p => p.name == symbol.name);
+            let predicateFound = domainInfo.getPredicates().find(p => p.name == symbol.name);
             if (predicateFound) {
                 domainInfo.findVariableLocation(predicateFound);
                 return new VariableInfo(
-                    this.createHover(symbol.range, 'Predicate', this.brackets(predicateFound.fullName), predicateFound.documentation),
+                    this.createHover(symbol.range, 'Predicate', this.brackets(predicateFound.declaredName), predicateFound.documentation),
                     Location.create(domainInfo.fileUri, SymbolInfoProvider.toRange(predicateFound.location)),
                     predicateFound,
                 );
             }
-            let functionFound = domainInfo.functions.find(f => f.name == symbol.name);
+            let functionFound = domainInfo.getFunctions().find(f => f.name == symbol.name);
             if (functionFound) {
                 domainInfo.findVariableLocation(functionFound);
                 return new VariableInfo(
-                    this.createHover(symbol.range, 'Function', this.brackets(functionFound.fullName), functionFound.documentation),
+                    this.createHover(symbol.range, 'Function', this.brackets(functionFound.declaredName), functionFound.documentation),
                     Location.create(domainInfo.fileUri, SymbolInfoProvider.toRange(functionFound.location)),
                     functionFound
                 );
@@ -88,7 +88,7 @@ export class SymbolInfoProvider {
         else if (symbol.isPrefixedBy('- ')) {
 
             if (domainInfo.getTypes().includes(symbol.name)) {
-                let parents = domainInfo.typeInheritance.getEdgesFrom(symbol.name);
+                let parents = domainInfo.typeInheritance.getVerticesWithEdgesFrom(symbol.name);
                 let inheritsFromText = parents.length > 0 ? "Inherits from: " + parents.join(', ') : ""
                 return new TypeInfo(
                     this.createHover(symbol.range, 'Type', symbol.name, inheritsFromText),

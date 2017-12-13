@@ -82,7 +82,7 @@ export class Planning implements PlanningHandler {
 
                 domainFileInfo = domainFiles.find(doc => doc.fileUri == domainFileUri.toString());
             } else {
-                window.showInformationMessage("Ensure a corresponding domain file is open in the editor.");
+                window.showInformationMessage(`Ensure a domain '${problemFileInfo.domainName}' from the same folder is open in the editor.`);
                 return false;
             }
         }

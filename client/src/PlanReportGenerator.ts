@@ -5,15 +5,18 @@
 'use strict';
 
 import {
-    ExtensionContext
+    ExtensionContext, workspace
 } from 'vscode';
 
 import * as path from 'path';
 
 import { DomainInfo, TypeObjects } from '../../common/src/parser';
 import { SwimLane } from '../../common/src/SwimLane';
-import { Plan, PlanStep } from './plan';
+import { PlanStep } from '../../common/src/PlanStep';
+import { Plan } from './plan';
 import { Util } from '../../common/src/util';
+import { PlanFunctionEvaluator } from './PlanFunctionEvaluator';
+import { VALUE_SEQ_LOCATION } from './configuration';
 var opn = require('opn');
 var fs = require('fs')
 
@@ -43,6 +46,7 @@ export class PlanReportGenerator {
         let planSelectorsDisplayStyle = plans.length > 1 ? "flex" : "none";
 
         let plansHtml = plans.map((plan, planIndex) => this.renderPlan(plan, planIndex, selectedPlan)).join("\n\n");
+        let plansChartsScript = this.createPlansChartsScript(plans);
 
         let html = `<!DOCTYPE html>        
         <head>
@@ -50,11 +54,14 @@ export class PlanReportGenerator {
             ${this.includeStyle(this.asAbsolutePath('planview', 'plans.css'))}
             ${this.includeStyle(this.asAbsolutePath('planview', 'plan-resource-task.css'))}
             ${this.includeScript(this.asAbsolutePath('planview', 'plans.js'))}
+            <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+            ${this.includeScript(this.asAbsolutePath('planview', 'charts.js'))}
         </head>        
         <body onload="scrollPlanSelectorIntoView(${selectedPlan})">
             <div class="planSelectors" style="display: ${planSelectorsDisplayStyle};">${planSelectors}
             </div>
         ${plansHtml}
+        ${plansChartsScript}
         </body>`;
 
         return html;
@@ -79,7 +86,7 @@ export class PlanReportGenerator {
     renderPlan(plan: Plan, planIndex: number, selectedPlan: number): string {
         let planHtml = plan.steps.map((step, stepIndex) => this.renderPlanStep(step, stepIndex, plan, planIndex)).join("\n");
 
-        let allTypeObjects = PlanReportGenerator.concatObjects(plan.domain.constants, plan.problem.objects);
+        let allTypeObjects = TypeObjects.concatObjects(plan.domain.constants, plan.problem.objects);
 
         let styleDisplay = planIndex == selectedPlan ? "block" : "none";
 
@@ -92,31 +99,49 @@ export class PlanReportGenerator {
                     : '';
             }).join("\n");
 
-        return `    <div class="gantt" plan="${planIndex}" style="margin: 5px; height: ${plan.steps.length * this.planStepHeight}px; display: ${styleDisplay};">
+        let ganttChart = `    <div class="gantt" plan="${planIndex}" style="margin: 5px; height: ${plan.steps.length * this.planStepHeight}px; display: ${styleDisplay};">
 ${planHtml}
-    </div>
-    <div class="resourceUtilization" plan="${planIndex}" style="display: ${styleDisplay};">
+    </div>`;
+
+        let swimLanes = `    <div class="resourceUtilization" plan="${planIndex}" style="display: ${styleDisplay};">
         <table>
 ${objectsHtml}
         </table>
     </div>`;
+
+        let evaluator = new PlanFunctionEvaluator(workspace.getConfiguration().get(VALUE_SEQ_LOCATION), plan);
+
+        let lineCharts = `    <div class="lineChart" plan="${planIndex}" style="display: ${styleDisplay};">\n`;
+        let lineChartScripts = '';
+
+        if(evaluator.isAvailable()){
+            let functionValues = evaluator.evaluate();
+
+            functionValues.forEach((values, functionName) => {
+                let chartDivId = `chart_${planIndex}_${functionName}`;
+                let legend = values.objects.length ? values.objects : [''];
+                lineCharts += `        <div id="${chartDivId}" style="width: ${this.displayWidth+100}px; height: ${this.displayWidth/3}px"></div>\n`;
+                lineChartScripts += `        drawChart('${chartDivId}', '${functionName}', 'unit', ${JSON.stringify(legend)}, ${JSON.stringify(values.values)}, ${this.displayWidth});\n`;
+            });
+        }
+    
+        lineCharts += `\n    </div>`;
+
+        return `${ganttChart}
+${swimLanes}<br/>
+${lineCharts}
+        <script>function drawPlan${planIndex}Charts(){\n${lineChartScripts}}</script>
+`;
     }
 
-    static concatObjects(constants: TypeObjects[], objects: TypeObjects[]): TypeObjects[] {
-        let mergedObjects: TypeObjects[] = [];
-
-        constants.concat(objects).forEach(typeObj => {
-            let typeFound = mergedObjects.find(to1 => to1.type == typeObj.type);
-
-            if (!typeFound) {
-                typeFound = new TypeObjects(typeObj.type);
-                mergedObjects.push(typeFound);
-            }
-
-            typeFound.addAllObjects(typeObj.objects);
-        });
-
-        return mergedObjects;
+    createPlansChartsScript(plans: Plan[]){
+        let script = plans.map((plan, index) => { plan; return `drawPlan${index}Charts();`; }).join();
+        return `        <script>
+                google.charts.setOnLoadCallback(drawCharts);        
+                function drawCharts() {
+                    ${script}
+                }
+        </script>`;
     }
 
     renderTypeSwimLanes(type: string, objects: string[], plan: Plan): string {

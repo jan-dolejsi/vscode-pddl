@@ -1,6 +1,7 @@
 function showPlan(planIndex) {
     document.querySelectorAll("div.gantt").forEach(div => showPlanDiv(planIndex, div));
     document.querySelectorAll("div.resourceUtilization").forEach(div => showPlanDiv(planIndex, div));
+    document.querySelectorAll("div.lineChart").forEach(div => showPlanDiv(planIndex, div));
     document.querySelectorAll("div.planSelector").forEach(div => {
         let newClass = "planSelector";
         let planId = parseInt(div.getAttribute("plan"));

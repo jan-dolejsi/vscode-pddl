@@ -7,7 +7,7 @@
 	"version": "2.0.3",
 	"publisher": "jan-dolejsi",
 	"engines": {
-		"vscode": "^1.16.0"
+		"vscode": "^1.18.0"
 	},
 	"categories": [
 		"Other",
@@ -151,6 +151,10 @@
 					"default": 0.001,
 					"title": "Default epsilon time step used by your planner.",
 					"description": "Default epsilon time step used by your planner. This is used when interpreting/visualizing the plan. "
+				},
+				"pddlPlanner.valueSeqPath": {
+					"type": "string",
+					"description": "ValueSeq path - the tool that evaluates numeric values of functions at starts and ends of actions in the plan."
 				}
 			}
 		}
@@ -163,8 +167,8 @@
 		"postinstall": "node ./node_modules/vscode/bin/install"
 	},
 	"dependencies": {
-		"vscode": "^1.1.5",
-		"vscode-languageclient": "^3.4.2",
+		"vscode": "^1.1.10",
+		"vscode-languageclient": "^3.5.0",
 		"child-process-data": "^0.5.5",
 		"tree-kill": "^1.2.0",
 		"request": "^2.83.0",

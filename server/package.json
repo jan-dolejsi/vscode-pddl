@@ -5,18 +5,21 @@
 	"author": "Jan Dolejsi",
 	"license": "MIT",
 	"engines": {
-		"node": "*"
+		"vscode": "^1.18.0"
 	},
 	"repository": {
 		"type": "git",
 		"url": "https://github.com/jan-dolejsi/vscode-pddl"
 	},
 	"dependencies": {
-		"vscode-languageserver": "^3.4.3",
+		"vscode-languageserver": "^3.5.0",
 		"request": "^2.83.0",
 		"@types/request": "^2.0.5",
 		"tmp": "^0.0.33",
 		"@types/tmp": "^0.0.33"
+	},
+	"devDependencies": {
+		"vscode": "^1.1.10"
 	},
 	"scripts": {
 		"installServer": "installServerIntoExtension ../client ./package.json ./tsconfig.json",

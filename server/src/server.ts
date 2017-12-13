@@ -121,7 +121,7 @@ connection.onDidOpenTextDocument((params) => {
 	// A text document got opened in VSCode.
 	// params.uri uniquely identifies the document. For documents store on disk this is a file URI.
 	// params.text the initial full content of the document.
-	connection.console.log(`${params.textDocument.uri} opened.`);
+	// connection.console.log(`${params.textDocument.uri} opened.`);
 
 	if (params.textDocument.languageId == "pddl") {
 		workspace.upsertFile(params.textDocument.uri, params.textDocument.version, params.textDocument.text);
@@ -144,7 +144,7 @@ connection.onDidChangeTextDocument((params) => {
 connection.onDidCloseTextDocument((params) => {
 	// A text document got closed in VSCode.
 	// params.uri uniquely identifies the document.
-	connection.console.log(`${params.textDocument.uri} closed.`);
+	// connection.console.log(`${params.textDocument.uri} closed.`);
 
 	workspace.removeFile(params.textDocument.uri);
 	diagnostics.clearDiagnostics(params.textDocument.uri);

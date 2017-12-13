@@ -4,7 +4,7 @@
     "body": [
       ";Header and description",
       "",
-      "(define (domain ${1:name})",
+      "(define (domain ${1:domain_name})",
       "",
       ";remove requirements that are not needed",
       "(:requirements :strips :fluents :durative-actions :timed-initial-literals :typing :conditional-effects :negative-preconditions :duration-inequalities :equality)",
@@ -73,7 +73,7 @@
   "problem": {
     "prefix": "problem",
     "body": [
-      "(define (problem ${1:name}) (:domain ${2:domain-name})",
+      "(define (problem ${1:name}) (:domain ${2:domain_name})",
       "(:objects $0",
       ")",
       "",

@@ -5,7 +5,7 @@
 'use strict';
 
 import * as path from 'path';
-import { workspace, window, ExtensionContext, commands, Uri, ViewColumn, Range, StatusBarAlignment, extensions, TextDocument } from 'vscode';
+import { workspace, window, ExtensionContext, commands, Uri, ViewColumn, Range, StatusBarAlignment, extensions, TextDocument, languages } from 'vscode';
 import { LanguageClient, LanguageClientOptions, ServerOptions, TransportKind, State } from 'vscode-languageclient';
 
 import { Planning } from './planning'
@@ -15,6 +15,7 @@ import { DomainInfo, PddlRange } from '../../common/src/parser';
 import { PddlConfiguration } from './configuration';
 import { PlanReportGenerator } from './PlanReportGenerator';
 import { Plan } from './plan';
+import { AutoCompletion } from './AutoCompletion';
 
 const PDDL_STOP_PLANNER = 'pddl.stopPlanner';
 const PDDL_CONFIGURE_PARSER = 'pddl.configureParser';
@@ -100,9 +101,13 @@ export function activate(context: ExtensionContext) {
 		});
 	});
 
+	let completionItemProvider = languages.registerCompletionItemProvider(PDDL.toLowerCase(), new AutoCompletion(pddlWorkspace));
+
 	// Push the disposables to the context's subscriptions so that the 
 	// client can be deactivated on extension deactivation
-	context.subscriptions.push(planCommand, revealActionCommand, planning.planDocumentProviderRegistration, status, stopPlannerCommand, stateChangeHandler, configureParserCommand, configurePlannerCommand, generatePlanReportCommand);
+	context.subscriptions.push(planCommand, revealActionCommand, planning.planDocumentProviderRegistration, 
+		status, stopPlannerCommand, stateChangeHandler, configureParserCommand, configurePlannerCommand, 
+		generatePlanReportCommand, completionItemProvider);
 }
 
 async function revealAction(domainInfo: DomainInfo, actionName: String) {
