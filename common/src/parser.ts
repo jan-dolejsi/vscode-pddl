@@ -114,7 +114,7 @@ export class Parser {
         while (match = pattern.exec(declarationText)) {
             // is this a group with inheritance?
             if (match[0].indexOf(' -')) {
-                let fragments = match[0].split('-');
+                let fragments = match[0].split(' -');
                 let parent = fragments[1] ? fragments[1].trim() : null;
                 let children = fragments[0].trim().split(/\s+/g, );
 
@@ -282,6 +282,13 @@ export class ProblemInfo extends FileInfo {
 
     setObjects(objects: TypeObjects[]): void {
         this.objects = objects;
+    }
+
+    getObjects(type: string): string[] {
+        let thisTypesObjects = this.objects.find(to => to.type == type);
+
+        if (!thisTypesObjects) return [];
+        else return thisTypesObjects.objects;
     }
 
     isDomain(): boolean {
@@ -545,12 +552,12 @@ export class ObjectInstance extends Term {
 }
 export class Variable {
     name: string;
-    fullNameWithoutTypes: string;
+    declaredNameWithoutTypes: string;
     location: PddlRange = null; // initialized lazily
     documentation = ''; // initialized lazily
 
     constructor(public declaredName: string, public parameters: Term[]) {
-        this.fullNameWithoutTypes = declaredName.replace(/\s*-\s*[\w-_]+/gi, '');
+        this.declaredNameWithoutTypes = declaredName.replace(/\s+-\s+[\w-_]+/gi, '');
         this.name = declaredName.replace(/( .*)$/gi, '');
     }
 

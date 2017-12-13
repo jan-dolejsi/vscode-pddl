@@ -4,7 +4,7 @@
  * ------------------------------------------------------------------------------------------ */
 'use strict';
 
-import { Parser, DirectionalGraph, DomainInfo, Variable, Parameter } from '../src/parser'
+import { Parser, DirectionalGraph, DomainInfo, Variable, Parameter, ProblemInfo, ObjectInstance } from '../src/parser'
 import * as assert from 'assert';
 
 describe('Parser', () => {
@@ -24,6 +24,12 @@ describe('Parser', () => {
             let typeName = 'type1';
             let graph = subject.parseInheritance(typeName);
             assert.ok(graph.getVertices().includes(typeName), 'should include type1');
+        });
+
+        it('should parse single type declaration with a dash', () => {
+            let typeName = 'basic-type1';
+            let graph = subject.parseInheritance(typeName);
+            assert.ok(graph.getVertices().includes(typeName), 'should include basic-type1');
         });
 
         it('should parse two type declarations', () => {
@@ -108,7 +114,7 @@ describe('Parser', () => {
             let typeObjects = Parser.toTypeObjects(graph);
 
             assert.ok(typeObjects.length == 1, 'there should be 1 type');
-            assert.ok(typeObjects[0].type == type1, 'the type should be type1');
+            assert.equal(typeObjects[0].type, type1, 'the type should be type1');
             assert.ok(typeObjects[0].objects.includes(object1), 'the object should be object1');
             assert.ok(typeObjects[0].objects.includes(object2), 'the object should be object2');
         });
@@ -123,8 +129,8 @@ describe('Parser', () => {
             // WHEN
             let variables = Parser.parsePredicatesOrFunctions(predicatePddl);
 
-            assert.equal(1, variables.length, 'there should be 1 predicate');
-            assert.equal("said_hello", variables[0].getFullName(), 'the predicate name should be...');
+            assert.equal(variables.length, 1, 'there should be 1 predicate');
+            assert.equal(variables[0].getFullName(), "said_hello", 'the predicate name should be...');
         });
     });
 
@@ -202,8 +208,8 @@ describe('Parser', () => {
             // WHEN
             new Parser().getDomainStructure(domainPddl, domainInfo);
 
-            assert.equal(1, domainInfo.getPredicates().length, 'there should be 1 predicate');
-            assert.equal("said_hello", domainInfo.getPredicates()[0].getFullName(), 'the predicate should be "said_hello"');
+            assert.equal(domainInfo.getPredicates().length, 1, 'there should be 1 predicate');
+            assert.equal(domainInfo.getPredicates()[0].getFullName(), "said_hello", 'the predicate should be "said_hello"');
         });
 
         it('extracts function', () => {
@@ -219,8 +225,8 @@ describe('Parser', () => {
             // WHEN
             new Parser().getDomainStructure(domainPddl, domainInfo);
 
-            assert.equal(1, domainInfo.getFunctions().length, 'there should be 1 function');
-            assert.equal("count", domainInfo.getFunctions()[0].getFullName(), 'the function should be "count"');
+            assert.equal(domainInfo.getFunctions().length, 1, 'there should be 1 function');
+            assert.equal(domainInfo.getFunctions()[0].getFullName(), "count", 'the function should be "count"');
         });
 
         it('extracts types', () => {
@@ -236,11 +242,51 @@ describe('Parser', () => {
             // WHEN
             new Parser().getDomainStructure(domainPddl, domainInfo);
 
-            assert.equal(1, domainInfo.getTypes().length, 'there should be 1 type');
-            assert.equal("type1", domainInfo.getTypes()[0], 'the function should be "count"');
+            assert.equal(domainInfo.getTypes().length, 1, 'there should be 1 type');
+            assert.equal(domainInfo.getTypes()[0], "type1", 'the function should be "count"');
+        });
+
+        
+        it('extracts types with dashes', () => {
+            // GIVEN
+            let domainPddl = `(define (domain helloworld)
+            (:requirements :strips :negative-preconditions )
+            (:types 
+                some-type1
+            )
+            )`;
+            let domainInfo = new DomainInfo("uri", 1, "helloworld");
+
+            // WHEN
+            new Parser().getDomainStructure(domainPddl, domainInfo);
+
+            assert.equal(domainInfo.getTypes().length, 1, 'there should be 1 type');
+            assert.equal(domainInfo.getTypes()[0], "some-type1", 'the function should be "count"');
         });
     });
 
+    describe('#getProblemStructure', () => {
+        it('parses objects for types with dashes', () => {
+            // GIVEN
+            let problemPddl = `
+            (define (problem p1) (:domain d1)
+            
+            (:objects
+              ta-sk1 task2 task3 - basic-task
+            )
+            
+            (:init )
+            (:goal )
+            )
+            `;
+            let problemInfo = new ProblemInfo("uri", 1, "p1", "d1");
+
+            // WHEN
+            new Parser().getProblemStructure(problemPddl, problemInfo);
+
+            assert.equal(problemInfo.getObjects("basic-task").length, 3, 'there should be 3 objects');
+        });
+    });
 });
 
 describe('Variable', () => {
@@ -248,30 +294,56 @@ describe('Variable', () => {
     beforeEach(function () {
     });
 
-    describe('constructs-lifted', () => {
-        // GIVEN
-        let variableName = "predicate1 ?p1 - type1";
+    describe('#constructor', () => {
 
-        // WHEN
-        let variable = new Variable(variableName, [new Parameter("p1", "type1")]);
+        it('constructs-lifted', () => {
+            // GIVEN
+            let variableName = "predicate1 ?p1 - type1";
+    
+            // WHEN
+            let variable = new Variable(variableName, [new Parameter("p1", "type1")]);
+    
+            // THEN
+            assert.equal(variable.getFullName(), variableName, "full name should be...");
+            assert.equal(variable.declaredName, variableName, "declared name should be...");
+            assert.equal(variable.name, "predicate1");
+            assert.equal(variable.declaredNameWithoutTypes, "predicate1 ?p1");
+            assert.equal(variable.isGrounded(), false, "should NOT be grounded");
+            assert.equal(variable.parameters.length, 1);
+        });
+    
+        it('constructs-grounded', () => {
+            // GIVEN
+            let variableName = "predicate1 ?p1 - type1";
+    
+            // WHEN
+            let variable = new Variable(variableName, [new ObjectInstance("o1", "type1")]);
+    
+            // THEN
+            assert.equal(variable.getFullName(), "predicate1 o1", "full name should be...");
+            assert.equal(variable.declaredNameWithoutTypes, "predicate1 ?p1", "declared name without types should be...");
+            assert.equal(variable.declaredName, variableName, "declared name should be...");
+            assert.equal(variable.name, "predicate1");
+            assert.equal(variable.parameters.length, 1);
+            assert.equal(variable.isGrounded(), true, "should be grounded");
+        });
 
-        // THEN
-        assert.equal(variable.getFullName(), variableName);
-        assert.equal(variable.isGrounded(), false);
+        it('accepts names with dashes', () => {
+            // GIVEN
+            let variableName = "predi-cate1";
+    
+            // WHEN
+            let variable = new Variable(variableName, []);
+    
+            // THEN
+            assert.equal(variable.getFullName(), variableName, "full name should be...");
+            assert.equal(variable.declaredName, variableName, "declared name should be...");
+            assert.equal(variable.name, variableName, "the short un-parameterised name should be...");
+            assert.equal(variable.declaredNameWithoutTypes, variableName, "the declared name without types should be...");
+            assert.equal(variable.parameters.length, 0);
+            assert.equal(variable.isGrounded(), true, "should be grounded");
+        });
     });
-
-    describe('constructs-grounded', () => {
-        // GIVEN
-        let variableName = "predicate1 ?p1 - type1";
-
-        // WHEN
-        let variable = new Variable(variableName, [new Parameter("p1", "type1")]);
-
-        // THEN
-        assert.equal(variable.getFullName(), variableName);
-        assert.equal(variable.isGrounded(), false);
-    });
-
 });
 
 describe('DirectionalGraph', () => {
