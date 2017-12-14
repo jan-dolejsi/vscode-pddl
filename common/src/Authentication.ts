@@ -5,39 +5,17 @@
 'use strict';
 
 export class Authentication {
-    private authUrl: string;
-    private authRequestEncoded: string;
-    private clientid: string;
-    private tokensvcUrl: string;
-    private tokensvcApiKey: string;
-    private tokensvcAccessPath: string;
-    private tokensvcValidatePath: string;
-    private tokensvcCodePath: string;
-    private tokensvcRefreshPath: string;
-    private tokensvcSvctkPath: string;
-
-    refreshtoken: string;
-    accesstoken: string;
-    stoken: string;
-    
-    constructor() {
-        this.authUrl = 'https://sauth-dot-cfsauth-qa.appspot.com/v1/auth';
-        this.authRequestEncoded = 'NjI3NzQ1Nzd7ImNsaWVudGlkIjogImxoODA4MS1hdXRoLXV0aWwtYWlwbGFubmluZy5zbGJhcHAuY29tIiwgInJjYmlkIjoibGg4MDgxLWF1dGgtdXRpbCJ9NjQ5NjczNDg=';
-        this.clientid = 'lh8081-auth-util-aiplanning.slbapp.com';
-        this.tokensvcUrl = 'https://tksvc-dot-cfsauth-qa.appspot.com';
-        this.tokensvcApiKey = 'AIzaSyAR9jypT78fsXfO-wZ4sGfiwlonIADNKUA';
-        this.tokensvcAccessPath = '/v1/access';
-        this.tokensvcValidatePath = '/v1/validate';
-        this.tokensvcCodePath = '/v1/code';
-        this.tokensvcRefreshPath = '/v1/refresh';
-        this.tokensvcSvctkPath = '/v1/svctk';
+    constructor(private authUrl: string, private authRequestEncoded: string, private clientId: string, 
+        private tokensvcUrl: string, private tokensvcApiKey: string, private tokensvcAccessPath: string, 
+        private tokensvcValidatePath: string, private tokensvcCodePath: string, private tokensvcRefreshPath: string, private tokensvcSvctkPath: string,
+        public refreshToken: string, public accessToken: string, public sToken: string) {
         this.display();
     }
 
     display() {
         console.log(this.authUrl);
         console.log(this.authRequestEncoded);
-        console.log(this.clientid);
+        console.log(this.clientId);
         console.log(this.tokensvcUrl);
         console.log(this.tokensvcApiKey);
         console.log(this.tokensvcAccessPath);
@@ -45,9 +23,17 @@ export class Authentication {
         console.log(this.tokensvcCodePath);
         console.log(this.tokensvcRefreshPath);
         console.log(this.tokensvcSvctkPath);
+        console.log(this.refreshToken);
+        console.log(this.accessToken);
+        console.log(this.sToken);
     }
 
-    login() {
+    static create() {        
+        return new Authentication('https://sauth-dot-cfsauth-qa.appspot.com/v1/auth', 'NjI3NzQ1Nzd7ImNsaWVudGlkIjogImxoODA4MS1hdXRoLXV0aWwtYWlwbGFubmluZy5zbGJhcHAuY29tIiwgInJjYmlkIjoibGg4MDgxLWF1dGgtdXRpbCJ9NjQ5NjczNDg=', 'lh8081-auth-util-aiplanning.slbapp.com',
+        'https://tksvc-dot-cfsauth-qa.appspot.com', 'AIzaSyAR9jypT78fsXfO-wZ4sGfiwlonIADNKUA', '/v1/access', '/v1/validate', '/v1/code', '/v1/refresh', '/v1/svctk', null, null, null);
+    }
+
+    login(callback: (refreshToken: string, accessToken: string, sToken: string) => void) {
         const uuidv4 = require('uuid/v4');
         var nonce = uuidv4();
         var express = require('express')
@@ -60,9 +46,10 @@ export class Authentication {
         app.post('/auth/sauth/callback', function (req:any, res:any, next:any) {
             server.close();
             if(req.body.nonce == nonce) {
-                thisAuthentication.refreshtoken = req.body.refreshtoken;
-                thisAuthentication.accesstoken = req.body.accesstoken;
-                thisAuthentication = req.body.stoken;
+                thisAuthentication.refreshToken = req.body.refreshtoken;
+                thisAuthentication.accessToken = req.body.accesstoken;
+                thisAuthentication.sToken = req.body.stoken;
+                callback(thisAuthentication.refreshToken, thisAuthentication.accessToken, thisAuthentication.sToken)
                 res.sendStatus(200);
                 next();
             }
@@ -92,33 +79,33 @@ export class Authentication {
     }
 
     getValidSToken() {
-        if(this.stoken == null) {
-            if(this.accesstoken == null) {
-                if(this.refreshtoken == null) {
-                    this.stoken = null;
+        if(this.sToken == null) {
+            if(this.accessToken == null) {
+                if(this.refreshToken == null) {
+                    this.sToken = null;
                 }
                 else {
-                    if(this.refreshAccessToken(this.clientid, this.refreshtoken)) {
-                        this.stoken = this.getValidSToken();
+                    if(this.refreshAccessToken(this.clientId, this.refreshToken)) {
+                        this.sToken = this.getValidSToken();
                     }
                     else {
-                        this.stoken = null;
+                        this.sToken = null;
                     }
                 }
             }
             else {
-                if(!this.refreshSToken(this.clientid, this.accesstoken)) {
-                    this.stoken = null;
+                if(!this.refreshSToken(this.clientId, this.accessToken)) {
+                    this.sToken = null;
                 }
             }
         }
         else {
-            if(!this.validateSToken(this.clientid, this.stoken)) {
-                this.stoken = null;
-                this.stoken = this.getValidSToken();
+            if(!this.validateSToken(this.clientId, this.sToken)) {
+                this.sToken = null;
+                this.sToken = this.getValidSToken();
             }
         }
-        return this.stoken;
+        return this.sToken;
     }    
 
     validateSToken(clientid: string, stoken: string) {

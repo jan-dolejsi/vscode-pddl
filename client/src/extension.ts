@@ -78,10 +78,9 @@ export function activate(context: ExtensionContext) {
 		pddlConfiguration.suggestNewParserConfiguration(false);
 	});
 
-	let authentication = new Authentication();
-
 	let loginParserServiceCommand = commands.registerCommand(PDDL_LOGIN_PARSER_SERVICE, () => {
-		authentication.login();
+		let authentication = Authentication.create();
+		authentication.login(pddlConfiguration.savePddlParserAuthenticationTokens);
 	});
 
 	let configurePlannerCommand = commands.registerCommand(PDDL_CONFIGURE_PLANNER, () => {

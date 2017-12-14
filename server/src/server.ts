@@ -68,20 +68,35 @@ interface Settings {
 // These are the example settings we defined in the client's package.json
 // file
 interface PDDLParserSettings {
-	// Maximum number of problems to be sent back to VS Code
-	maxNumberOfProblems: number;
-
 	// path or URL for the PDDL parser executable or service
 	executableOrService: string;
 
 	// parser executable options syntax
 	executableOptions: string;
 
+	serviceAuthenticated: boolean;
+	authenticationUrl: string;
+	authenticationRequestEncoded: string;
+	authenticationClientId: string;
+	authenticationTokensvcUrl: string;
+	authenticationTokensvcApiKey: string;
+	authenticationTokensvcAccessPath: string;
+	authenticationTokensvcValidatePath: string;
+	authenticationTokensvcCodePath: string;
+	authenticationTokensvcRefreshPath: string;
+	authenticationTokensvcSvctkPath: string;
+	
+	authenticationRefreshToken: string;
+	authenticationAccessToken: string;
+
 	// parsing problem custom matching pattern
 	problemPattern: string;
 
 	// Delay in seconds the Language Server should wait after a PDDL file is modified before calls the parser.
 	delayInSecondsBeforeParsing: number;
+
+	// Maximum number of problems to be sent back to VS Code
+	maxNumberOfProblems: number;
 }
 
 // The settings have changed. Is send on server activation

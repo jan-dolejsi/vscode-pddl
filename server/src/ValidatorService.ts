@@ -10,22 +10,30 @@ import {
 
 import { Validator } from './validator';
 import { DomainInfo, ProblemInfo, FileStatus } from '../../common/src/parser';
+import { Authentication } from '../../common/src/Authentication';
 
 import request = require('request');
 
 export class ValidatorService extends Validator {
 
-    constructor(path: string) { 
+    constructor(path: string, private useAuthentication: boolean, private authentication: Authentication) { 
         super(path);
     }
     
     validate(domainInfo: DomainInfo, problemFiles: ProblemInfo[], onSuccess: (diagnostics: Map<string, Diagnostic[]>) => void, onError: (error: string) => void) {
+        let requestHeader: any = {};
+        if(this.useAuthentication) {
+            requestHeader = {
+                "Authorization": "Bearer " + this.authentication.getValidSToken()
+            }
+        }
+
         let requestBody = {
             "domain": domainInfo.text,
             "problems": problemFiles.map(pf => pf.text)
         }
 
-        request.post({ url: this.path, body: requestBody, json: true }, (err, httpResponse, responseBody) => {
+        request.post({ url: this.path, headers: requestHeader, body: requestBody, json: true }, (err, httpResponse, responseBody) => {
 
             if (err != null) {
                 onError.apply(this, [err.message]);

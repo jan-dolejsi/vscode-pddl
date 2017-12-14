@@ -7,6 +7,9 @@ import * as vscode from 'vscode';
 const PARSER_LOCATION = 'pddlParser.executableOrService';
 const PARSER_SYNTAX = 'pddlParser.executableOptions';
 const PARSER_LEGACY_LOCATION = 'pddlParser.pddlParserService';
+const PARSER_AUTHENTICATION_REFRESH_TOKEN = 'pddlParser.authenticationRefreshToken';
+const PARSER_AUTHENTICATION_ACCESS_TOKEN = 'pddlParser.authenticationAccessToken';
+const PARSER_AUTHENTICATION_S_TOKEN = 'pddlParser.authenticationSToken';
 const PLANNER_LOCATION = 'pddlPlanner.executableOrService';
 const PLANNER_SYNTAX = 'pddlPlanner.executableOptions';
 const PLANNER_EPSILON = 'pddlPlanner.epsilonTimeStep';
@@ -140,6 +143,12 @@ export class PddlConfiguration {
         }
 
         return newParserOptions;
+    }
+
+    async savePddlParserAuthenticationTokens(refreshtoken: string, accesstoken: string, stoken: string) {
+        vscode.workspace.getConfiguration().update(PARSER_AUTHENTICATION_REFRESH_TOKEN, refreshtoken);
+        vscode.workspace.getConfiguration().update(PARSER_AUTHENTICATION_ACCESS_TOKEN, accesstoken);
+        vscode.workspace.getConfiguration().update(PARSER_AUTHENTICATION_S_TOKEN, stoken);
     }
 
     static isHttp(path: string) {

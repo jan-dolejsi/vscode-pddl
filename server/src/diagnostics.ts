@@ -15,6 +15,7 @@ import { DomainInfo, ProblemInfo, FileInfo, FileStatus, Parser } from '../../com
 import { Validator } from './validator';
 import { ValidatorService } from './ValidatorService';
 import { ValidatorExecutable } from './ValidatorExecutable';
+import { Authentication } from './Authentication';
 
 export class Diagnostics {
 
@@ -157,7 +158,9 @@ export class Diagnostics {
             )){
             if (this.parserExecutableOrService.match(/^http[s]?:/i)) {
                 // is a service
-                return this.validator = new ValidatorService(this.parserExecutableOrService);
+                let useAuthentication = true;
+                let authentication = Authentication.create();
+                return this.validator = new ValidatorService(this.parserExecutableOrService, useAuthentication, authentication);
             }
             else{
                 return this.validator = new ValidatorExecutable(this.parserExecutableOrService, this.parserExecutableOptions, this.parserCustomPattern);

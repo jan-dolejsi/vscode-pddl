@@ -131,40 +131,45 @@
           "type": "string",
           "description": "Authentication request encoded."
         },
-        "pddlParser.tokensvcUrl": {
+        "pddlParser.authenticationClientId": {
           "scope": "resource",
           "type": "string",
-          "description": "Token service URL."
+          "description": "Authentication clientid."
         },
-        "pddlParser.tokensvcApiKey": {
+        "pddlParser.authenticationTokensvcUrl": {
           "scope": "resource",
           "type": "string",
-          "description": "Token service API Key."
+          "description": "Authentication token service URL."
         },
-        "pddlParser.tokensvcAccessPath": {
+        "pddlParser.authenticationTokensvcApiKey": {
           "scope": "resource",
           "type": "string",
-          "description": "Token service access path."
+          "description": "Authentication token service API Key."
         },
-        "pddlParser.tokensvcValidatePath": {
+        "pddlParser.authenticationTokensvcAccessPath": {
           "scope": "resource",
           "type": "string",
-          "description": "Token service validate path."
+          "description": "Authentication token service access path."
         },
-        "pddlParser.tokensvcCodePath": {
+        "pddlParser.authenticationTokensvcValidatePath": {
           "scope": "resource",
           "type": "string",
-          "description": "Token service code path."
+          "description": "Authentication token service validate path."
         },
-        "pddlParser.tokensvcRefreshPath": {
+        "pddlParser.authenticationTokensvcCodePath": {
           "scope": "resource",
           "type": "string",
-          "description": "Token service refresh path."
+          "description": "Authentication token service code path."
         },
-        "pddlParser.tokensvcSvctkPath": {
+        "pddlParser.authenticationTokensvcRefreshPath": {
           "scope": "resource",
           "type": "string",
-          "description": "Token service svctk path."
+          "description": "Authentication token service refresh path."
+        },
+        "pddlParser.authenticationTokensvcSvctkPath": {
+          "scope": "resource",
+          "type": "string",
+          "description": "Authentication token service svctk path."
         },
         "pddlParser.authenticationRefreshToken": {
           "scope": "resource",
@@ -175,6 +180,11 @@
           "scope": "resource",
           "type": "string",
           "description": "Authentication access token."
+        },
+        "pddlParser.authenticationSToken": {
+          "scope": "resource",
+          "type": "string",
+          "description": "Authentication s token."
         },
         "pddlParser.delayInSecondsBeforeParsing": {
           "scope": "resource",
