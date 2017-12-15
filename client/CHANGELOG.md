@@ -11,7 +11,7 @@ Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how 
 * Auto-completion for constant/object names.
 * Plan debugger
 
-## [2.4.0] - 2017-12-15
+## [2.4.1] - 2017-12-15
 
 ### HTML report for plan details
 
@@ -98,8 +98,8 @@ Simplified snippets and added tabstops/placeholders to them, so they are easy to
 * PDDL Snippets for `domain`, `problem`, `action` and `durative-action`.
 * Syntax highlighting for commonly used PDDL features
 
-[Unreleased]: https://github.com/jan-dolejsi/vscode-pddl/compare/v2.4.0...HEAD
-[2.4.0]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.0.3...v2.4.0
+[Unreleased]: https://github.com/jan-dolejsi/vscode-pddl/compare/v2.4.1...HEAD
+[2.4.1]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.0.3...v2.4.1
 [2.0.3]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.0.2...v2.0.3
 [2.0.2]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.0.1...v2.0.2
 [2.0.1]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.0.0...v2.0.1
