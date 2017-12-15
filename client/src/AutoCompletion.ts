@@ -83,8 +83,11 @@ class CompletionCollector {
     createSymmetricPredicateAndFunctionInitItem(symmetricPredicates: Variable[], symmetricFunctions: Variable[],
         domainFile: DomainInfo, allTypeObjects: TypeObjects[]): void {
         let typesInvolved = this.getTypesInvolved(symmetricPredicates.concat(symmetricFunctions), domainFile);
-        let objectNames = this.getObjects(allTypeObjects, typesInvolved)
+        let objectsDefined = this.getObjects(allTypeObjects, typesInvolved);
+        let objectNames = objectsDefined
             .join(',');
+
+        if(!objectsDefined.length) return;
 
         let item = new CompletionItem('Initialize a symmetric predicate and function', CompletionItemKind.Snippet);
         item.insertText = new SnippetString(
@@ -101,9 +104,12 @@ class CompletionCollector {
         domainFile: DomainInfo, allTypeObjects: TypeObjects[]): void {
 
         let typesInvolved = this.getTypesInvolved(symmetricPredicates, domainFile);
-        let objectNames = this.getObjects(allTypeObjects, typesInvolved)
+        let objectsDefined = this.getObjects(allTypeObjects, typesInvolved);
+        let objectNames = objectsDefined
             .join(',');
 
+        if(!objectsDefined.length) return;
+            
         let symmetricPredicateNames = CompletionCollector.toNamesCsv(symmetricPredicates);
 
         let item = new CompletionItem('Initialize a symmetric predicate', CompletionItemKind.Snippet);
@@ -118,8 +124,11 @@ class CompletionCollector {
     createSymmetricFunctionInitItem(symmetricFunctions: Variable[],
         domainFile: DomainInfo, allTypeObjects: TypeObjects[]): void {
         let typesInvolved = this.getTypesInvolved(symmetricFunctions, domainFile);
-        let objectNames = this.getObjects(allTypeObjects, typesInvolved)
+        let objectsDefined = this.getObjects(allTypeObjects, typesInvolved);
+        let objectNames = objectsDefined
             .join(',');
+
+        if(!objectsDefined.length) return;
 
         let symmetricFunctionNames = CompletionCollector.toNamesCsv(symmetricFunctions);
 

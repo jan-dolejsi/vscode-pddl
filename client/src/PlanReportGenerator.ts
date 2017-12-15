@@ -114,17 +114,25 @@ ${objectsHtml}
         let lineCharts = `    <div class="lineChart" plan="${planIndex}" style="display: ${styleDisplay};margin-top: 20px;">\n`;
         let lineChartScripts = '';
 
-        if(evaluator.isAvailable()){
-            let functionValues = evaluator.evaluate();
+        if (evaluator.isAvailable()) {
 
-            functionValues.forEach((values, functionName) => {
-                let chartDivId = `chart_${planIndex}_${functionName}`;
-                let legend = values.objects.length ? values.objects : [''];
-                lineCharts += `        <div id="${chartDivId}" style="width: ${this.displayWidth+100}px; height: ${Math.round(this.displayWidth/3)}px"></div>\n`;
-                lineChartScripts += `        drawChart('${chartDivId}', '${functionName}', 'unit', ${JSON.stringify(legend)}, ${JSON.stringify(values.values)}, ${this.displayWidth});\n`;
-            });
+            try {
+
+                let functionValues = evaluator.evaluate();
+
+                functionValues.forEach((values, variable) => {
+                    let chartDivId = `chart_${planIndex}_${variable.name}`;
+                    let legend = values.objects.length ? values.objects : [variable.name];
+                    lineCharts += `        <div id="${chartDivId}" style="width: ${this.displayWidth + 100}px; height: ${Math.round(this.displayWidth / 2)}px"></div>\n`;
+                    let chartTitleWithUnit = variable.name;
+                    if (variable.getUnit()) chartTitleWithUnit += ` [${variable.getUnit()}]`;
+                    lineChartScripts += `        drawChart('${chartDivId}', '${chartTitleWithUnit}', '', ${JSON.stringify(legend)}, ${JSON.stringify(values.values)}, ${this.displayWidth});\n`;
+                });
+            } catch (err) {
+                console.log(err);
+            }
         }
-    
+
         lineCharts += `\n    </div>`;
 
         return `${ganttChart}
@@ -134,7 +142,7 @@ ${lineCharts}
 `;
     }
 
-    createPlansChartsScript(plans: Plan[]){
+    createPlansChartsScript(plans: Plan[]) {
         let selectedPlan = plans.length - 1;
         return `        <script>
                 google.charts.setOnLoadCallback(drawCharts);        

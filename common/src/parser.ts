@@ -366,7 +366,7 @@ export class DomainInfo extends FileInfo {
             variable.location = location;
 
             if (commentStartColumn > -1) {
-                variable.documentation = line.substr(commentStartColumn + 1).trim();
+                variable.setDocumentation(line.substr(commentStartColumn + 1).trim());
             }
             return false; // we do not continue the search after the first hit
         });
@@ -385,7 +385,7 @@ export class DomainInfo extends FileInfo {
                 variable.location = new PddlRange(lineIdx, match.index, lineIdx, match.index + match[0].length);
 
                 if (commentStartColumn > -1) {
-                    variable.documentation = line.substr(commentStartColumn + 1).trim();
+                    variable.setDocumentation(line.substr(commentStartColumn + 1).trim());
                 }
 
                 return;
@@ -554,19 +554,36 @@ export class Variable {
     name: string;
     declaredNameWithoutTypes: string;
     location: PddlRange = null; // initialized lazily
-    documentation = ''; // initialized lazily
+    private documentation = ''; // initialized lazily
+    private unit = ''; // initialized lazily
 
     constructor(public declaredName: string, public parameters: Term[]) {
         this.declaredNameWithoutTypes = declaredName.replace(/\s+-\s+[\w-_]+/gi, '');
         this.name = declaredName.replace(/( .*)$/gi, '');
     }
 
-    getFullName() {
+    getFullName(): string {
         return this.name + this.parameters.map(par => " " + par.toPddlString()).join('');
     }
 
-    isGrounded() {
+    isGrounded(): boolean {
         return this.parameters.every(parameter => parameter.isGrounded());
+    }
+
+    setDocumentation(documentation: string): void {
+        this.documentation = documentation;
+        let match = documentation.match(/\[([^\]]*)\]/);
+        if(match){
+            this.unit = match[1];
+        }
+    }
+
+    getDocumentation(): string {
+        return this.documentation;
+    }
+
+    getUnit(): string {
+        return this.unit;
     }
 }
 

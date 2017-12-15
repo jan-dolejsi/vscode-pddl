@@ -22,7 +22,7 @@ describe('PlanValuesParser', () => {
             let functionName = "function1";
             let function1 = new Variable(functionName, []);
             let planSteps = [
-                new PlanStep(1, actionName, 2)
+                new PlanStep(1, actionName, true, 2)
             ];
 
             // WHEN
@@ -44,7 +44,7 @@ describe('PlanValuesParser', () => {
             let functionNames = ["function1", "function2"];
             let functions = functionNames.map(name => new Variable(name, []));
             let planSteps = [
-                new PlanStep(1, actionName, 2)
+                new PlanStep(1, actionName, true, 2)
             ];
 
             // WHEN
@@ -73,16 +73,36 @@ describe('PlanValuesParser', () => {
             let objects = ["o1", "o2"];
             let functions = objects.map(objectName => new Variable(liftedFunction.declaredName, [new ObjectInstance(objectName, type1)]));
             let planSteps = [
-                new PlanStep(1, actionName, 2)
+                new PlanStep(1, actionName, true, 2)
             ];
 
             // WHEN
             let parser = new PlanValuesParser(planSteps, functions, [actionRow]);
             
             // THEN
-            assert.equal(parser.stateValues.length, 2, "one durative action plan should generate 2 states (before/after");
+            assert.equal(parser.stateValues.length, 2, "one durative action plan should generate 2 states (before and after)");
 
             assert.deepEqual(parser.getValues(functionName), [[1, 1, 11], [3, 2, 12]], "Values vector for function1");
+        });
+
+        it('parses one instantaneous action, one function', () => {
+            // GIVEN
+            let actionName = "action1"; // this is an instantaneous action assigning value 13 to function1
+            let actionRow = actionName + ", 13";
+            let functionName = "function1";
+            let function1 = new Variable(functionName, []);
+            let planSteps = [
+                new PlanStep(1, actionName, false, 0.001)
+            ];
+
+            // WHEN
+            let parser = new PlanValuesParser(planSteps, [function1], [actionRow]);
+            
+            // THEN
+            assert.equal(parser.stateValues.length, 1, "one instantaneous action plan should generate 1 state (after the action)");
+            assert.equal(parser.stateValues[0].time, 1);
+            assert.equal(parser.stateValues[0].getValue(functionName), 13, "expected value after the action");
+            assert.deepEqual(parser.getValues(functionName), [[1, 13]], "Values vector for function");
         });
     });
 });

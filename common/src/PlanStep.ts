@@ -7,14 +7,16 @@
 export class PlanStep {
     actionName: string;
     objects: string[];
-    
-    constructor(public time: number, public fullActionName: string, public duration: number) {
+
+    constructor(public time: number, public fullActionName: string, public isDurative: boolean, public duration: number) {
         let nameFragments = fullActionName.split(' ');
         this.actionName = nameFragments[0];
         this.objects = nameFragments.slice(1);
     }
 
     toPddl(): string {
-        return `${this.time}: (${this.fullActionName}) [${this.duration}]`;
+        let output = `${this.time}: (${this.fullActionName})`;
+        if (this.isDurative) output += ` [${this.duration}]`;
+        return output;
     }
 }

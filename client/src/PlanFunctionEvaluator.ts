@@ -24,7 +24,7 @@ export class PlanFunctionEvaluator {
         return this.valueSeqPath ? true : false;
     }
 
-    evaluate(): Map<string, GroundedFunctionValues> {
+    evaluate(): Map<Variable, GroundedFunctionValues> {
         let domainFile = Util.toPddlFile("domain", this.plan.domain.text);
         let problemFile = Util.toPddlFile("problem", this.plan.problem.text);
         let planFile = Util.toPddlFile("plan", this.plan.getText());
@@ -32,7 +32,7 @@ export class PlanFunctionEvaluator {
             .map(f => this.ground(f))
             .reduce((x, y) => x.concat(y), []);
 
-        let chartData = new Map<string, GroundedFunctionValues>();
+        let chartData = new Map<Variable, GroundedFunctionValues>();
 
         if (groundedFunctions.length == 0) return chartData;
 
@@ -54,12 +54,13 @@ export class PlanFunctionEvaluator {
         this.plan.domain.getFunctions()
             .filter(liftedFunction => liftedFunction.parameters.length < 2)
             .forEach(liftedFunction => {
+            this.plan.domain.findVariableLocation(liftedFunction); // this forces the variable unit of measure to be parsed
             let functionName = liftedFunction.name;
             let values = parser.getValues(functionName);
             let objects = this.grounder.getObjectPermutations(liftedFunction.parameters.map(p => p.type));
             let objectNames = objects.map(obj => obj.join(' '));
             let functionValues = new GroundedFunctionValues(functionName, values, objectNames);
-            chartData.set(functionName, functionValues);
+            chartData.set(liftedFunction, functionValues);
         });
 
         return chartData;

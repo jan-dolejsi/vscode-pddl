@@ -11,37 +11,52 @@ export class PlanValuesParser {
 
     stateValues: StateValues[] = [];
 
-    constructor(public steps: PlanStep[], public functions: Variable[], actionFunctionValues: String[]){
-        
-        if(steps.length != actionFunctionValues.length) {
+    constructor(public steps: PlanStep[], public functions: Variable[], actionFunctionValues: String[]) {
+
+        if (steps.length != actionFunctionValues.length) {
             throw new Error("Plan steps and action values do not correspond.");
-        }        
-        
+        }
+
         steps.forEach((planStep, idx) => {
             let planStepFunctionValues = actionFunctionValues[idx].split(',');
 
-            if (planStepFunctionValues.length < 1 + 2 * this.functions.length) {
-                throw new Error("Not enough commas: " + actionFunctionValues[idx]);
+            if (!this.describesInstantaneousAction(planStepFunctionValues)
+                && !this.describesDurativeAction(planStepFunctionValues)) {
+                throw new Error("Wrong number of values on in the output: " + actionFunctionValues[idx]);
             }
 
-            if(planStep.fullActionName != planStepFunctionValues[0]){
-                throw new Error("Action name does not match the one in the plan: " + actionFunctionValues[idx]);                
+            if (planStep.fullActionName != planStepFunctionValues[0]) {
+                throw new Error("Action name does not match the one in the plan: " + actionFunctionValues[idx]);
             }
 
-            this.addState(planStep.time, 
+            this.addState(planStep.time,
                 planStepFunctionValues.slice(1, 1 + functions.length));
 
-            this.addState(planStep.time + planStep.duration, 
-                planStepFunctionValues.slice(1 + functions.length));
+            if (this.describesDurativeAction(planStepFunctionValues)) {
+                this.addState(planStep.time + planStep.duration,
+                    planStepFunctionValues.slice(1 + functions.length));
+            }
         });
 
         this.stateValues = this.stateValues.sort((s1, s2) => s1.time - s2.time);
     }
 
+    describesInstantaneousAction(planStepFunctionValues: string[]): boolean {
+        return this.compareCsvTermsToFunctionCount(planStepFunctionValues, 1);
+    }
+
+    describesDurativeAction(planStepFunctionValues: string[]): boolean {
+        return this.compareCsvTermsToFunctionCount(planStepFunctionValues, 2);
+    }
+
+    compareCsvTermsToFunctionCount(planStepFunctionValues: string[], multiple: number): boolean {
+        return planStepFunctionValues.length == 1 + multiple * this.functions.length;
+    }
+
     addState(time: number, values: string[]): void {
         let state = new StateValues(time);
 
-        if(values.length != this.functions.length) {
+        if (values.length != this.functions.length) {
             throw new Error(`Expecting number of values (${values}) to match number of functions ${this.functions.length}.`)
         }
 
@@ -59,7 +74,7 @@ export class PlanValuesParser {
     }
 
     getValues(functionName: String): number[][] {
-        let functions = this.functions.filter(f => f.name == functionName); 
+        let functions = this.functions.filter(f => f.name == functionName);
 
         return this.stateValues.map(state => this.getStateValues(functions, state));
     }
@@ -77,7 +92,7 @@ class StateValues {
 
     private values = new Map<String, number>();
 
-    constructor(public time: number){}
+    constructor(public time: number) { }
 
     setValue(functionName: String, value: number) {
         this.values.set(functionName, value);
