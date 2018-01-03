@@ -9,13 +9,13 @@ import {
     Diagnostic, DiagnosticSeverity
 } from 'vscode-languageserver';
 
+import { Authentication } from '../../common/src/Authentication';
 import { PddlWorkspace } from '../../common/src/workspace-model';
 import { DomainInfo, ProblemInfo, FileInfo, FileStatus, Parser } from '../../common/src/parser';
 
 import { Validator } from './validator';
 import { ValidatorService } from './ValidatorService';
 import { ValidatorExecutable } from './ValidatorExecutable';
-import { Authentication } from './Authentication';
 
 export class Diagnostics {
 
