@@ -16,6 +16,7 @@ import { PlanStep } from '../../common/src/PlanStep';
 import { Plan } from './plan';
 import { Util } from '../../common/src/util';
 import { PlanFunctionEvaluator } from './PlanFunctionEvaluator';
+import { PlanReportSettings } from './PlanReportSettings';
 import { VALUE_SEQ_LOCATION } from './configuration';
 var opn = require('opn');
 var fs = require('fs')
@@ -23,6 +24,7 @@ var fs = require('fs')
 export class PlanReportGenerator {
 
     planStepHeight = 20;
+    settings: Map<Plan, PlanReportSettings> = new Map();
 
     constructor(public context: ExtensionContext, public displayWidth: number, public selfContained: boolean) {
 
@@ -83,8 +85,23 @@ export class PlanReportGenerator {
         </div>`;
     }
 
+    shouldDisplay(planStep: PlanStep, plan: Plan): boolean {
+        if(this.settings.has(plan)){
+            return this.settings.get(plan).shouldDisplay(planStep);
+        }
+        else return true;
+    }
+
     renderPlan(plan: Plan, planIndex: number, selectedPlan: number): string {
-        let planHtml = plan.steps.map((step, stepIndex) => this.renderPlanStep(step, stepIndex, plan, planIndex)).join("\n");
+        this.settings.set(plan, new PlanReportSettings(plan.domain.fileUri));
+
+        let stepsToDisplay = plan.steps
+            .filter(step => this.shouldDisplay(step, plan));
+
+        let displayedStepsCount = stepsToDisplay.length;
+
+        let planHtml = stepsToDisplay
+            .map((step, stepIndex) => this.renderPlanStep(step, stepIndex, plan, planIndex)).join("\n");
 
         let allTypeObjects = TypeObjects.concatObjects(plan.domain.constants, plan.problem.objects);
 
@@ -99,7 +116,7 @@ export class PlanReportGenerator {
                     : '';
             }).join("\n");
 
-        let ganttChart = `    <div class="gantt" plan="${planIndex}" style="margin: 5px; height: ${plan.steps.length * this.planStepHeight}px; display: ${styleDisplay};">
+        let ganttChart = `    <div class="gantt" plan="${planIndex}" style="margin: 5px; height: ${displayedStepsCount * this.planStepHeight}px; display: ${styleDisplay};">
 ${planHtml}
     </div>`;
 
@@ -120,13 +137,12 @@ ${objectsHtml}
 
                 let functionValues = evaluator.evaluate();
 
-                functionValues.forEach((values, variable) => {
-                    let chartDivId = `chart_${planIndex}_${variable.name}`;
-                    let legend = values.objects.length ? values.objects : [variable.name];
+                functionValues.forEach((values, liftedVariable) => {
+                    let chartDivId = `chart_${planIndex}_${liftedVariable.name}`;
                     lineCharts += `        <div id="${chartDivId}" style="width: ${this.displayWidth + 100}px; height: ${Math.round(this.displayWidth / 2)}px"></div>\n`;
-                    let chartTitleWithUnit = variable.name;
-                    if (variable.getUnit()) chartTitleWithUnit += ` [${variable.getUnit()}]`;
-                    lineChartScripts += `        drawChart('${chartDivId}', '${chartTitleWithUnit}', '', ${JSON.stringify(legend)}, ${JSON.stringify(values.values)}, ${this.displayWidth});\n`;
+                    let chartTitleWithUnit = liftedVariable.name;
+                    if (liftedVariable.getUnit()) chartTitleWithUnit += ` [${liftedVariable.getUnit()}]`;
+                    lineChartScripts += `        drawChart('${chartDivId}', '${chartTitleWithUnit}', '', ${JSON.stringify(values.legend)}, ${JSON.stringify(values.values)}, ${this.displayWidth});\n`;
                 });
             } catch (err) {
                 console.log(err);
@@ -164,6 +180,7 @@ ${lineCharts}
     renderObjectSwimLane(obj: string, plan: Plan): string {
         let subLanes = new SwimLane(1);
         let stepsInvolvingThisObject = plan.steps
+            .filter(step => this.shouldDisplay(step, plan))
             .filter(step => step.objects.includes(obj.toLowerCase()))
             .map(step => this.renderStep(step, plan, obj, subLanes))
             .join('\n');

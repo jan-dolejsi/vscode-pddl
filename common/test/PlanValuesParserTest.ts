@@ -14,7 +14,7 @@ describe('PlanValuesParser', () => {
     beforeEach(function () { 
     });
 
-    describe('#parseInheritance', () => {
+    describe('#getValues', () => {
         it('parses one action, one function', () => {
             // GIVEN
             let actionName = "action param1 param2";

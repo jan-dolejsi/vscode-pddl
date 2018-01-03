@@ -98,7 +98,7 @@ See unfixed issues and submit new ones [here][github pddl issues].
 
 ## Release Notes
 
-### 2.4.1
+### 2.4.2
 
 #### HTML report for plan details
 
