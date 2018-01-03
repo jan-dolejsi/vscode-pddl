@@ -557,9 +557,16 @@ export class Variable {
     private documentation = ''; // initialized lazily
     private unit = ''; // initialized lazily
 
-    constructor(public declaredName: string, public parameters: Term[]) {
+    constructor(public declaredName: string, public parameters: Term[] = []) {
         this.declaredNameWithoutTypes = declaredName.replace(/\s+-\s+[\w-_]+/gi, '');
         this.name = declaredName.replace(/( .*)$/gi, '');
+    }
+
+    bind(objects: ObjectInstance[]) : Variable {
+        if(this.parameters.length != objects.length){
+            throw new Error(`Invalid objects ${objects} for function ${this.getFullName()} parameters ${this.parameters}.`);
+        }
+        return new Variable(this.name, objects);
     }
 
     getFullName(): string {

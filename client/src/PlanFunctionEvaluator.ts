@@ -6,11 +6,11 @@
 
 import * as process from 'child_process';
 
-import { PlanValuesParser } from '../../common/src/PlanValuesParser';
 import { Variable } from '../../common/src/parser';
 import { Grounder } from '../../common/src/Grounder';
 import { Plan } from './plan';
 import { Util } from '../../common/src/util';
+import { PlanTimeSeriesParser } from '../../common/src/PlanTimeSeriesParser';
 
 export class PlanFunctionEvaluator {
 
@@ -40,26 +40,19 @@ export class PlanFunctionEvaluator {
             .map(f => f.parameters.length > 0 ? `"${f.getFullName()}"` : f.getFullName())
             .join(' ');
 
-        let child = process.execSync(`${this.valueSeqPath} ${domainFile} ${problemFile} ${planFile} ${functions}`);
+        let child = process.execSync(`${this.valueSeqPath} -T ${domainFile} ${problemFile} ${planFile} ${functions}`);
 
         let csv = child.toString();
         console.log(csv);
 
-        let lines = csv.split('\n')
-            .map(l => l.trim())
-            .filter(l => l.length > 0);
-
-        let parser = new PlanValuesParser(this.plan.steps, groundedFunctions, lines);
+        let parser = new PlanTimeSeriesParser(groundedFunctions, csv);
 
         this.plan.domain.getFunctions()
             .filter(liftedFunction => liftedFunction.parameters.length < 2)
             .forEach(liftedFunction => {
             this.plan.domain.findVariableLocation(liftedFunction); // this forces the variable unit of measure to be parsed
-            let functionName = liftedFunction.name;
-            let values = parser.getValues(functionName);
-            let objects = this.grounder.getObjectPermutations(liftedFunction.parameters.map(p => p.type));
-            let objectNames = objects.map(obj => obj.join(' '));
-            let functionValues = new GroundedFunctionValues(functionName, values, objectNames);
+            let functionsValuesValues = parser.getFunctionData(liftedFunction);
+            let functionValues = new GroundedFunctionValues(liftedFunction, functionsValuesValues.values, functionsValuesValues.legend);
             chartData.set(liftedFunction, functionValues);
         });
 
@@ -72,5 +65,12 @@ export class PlanFunctionEvaluator {
 }
 
 class GroundedFunctionValues {
-    constructor(public functionName: string, public values: number[][], public objects: string[]) {}
+    values: number[][];
+    constructor(public liftedVariable: Variable, values: number[][], public legend: string[]) {
+        this.values = values.map(row => row.map(v => this.undefinedToNull(v)));
+    }
+
+    undefinedToNull(value: number): number {
+        return value == undefined ? null : value;
+    }
 }

@@ -70,7 +70,7 @@ export class SymbolInfoProvider {
             if (predicateFound) {
                 domainInfo.findVariableLocation(predicateFound);
                 return new VariableInfo(
-                    this.createHover(symbol.range, 'Predicate', this.brackets(predicateFound.declaredName), predicateFound.documentation),
+                    this.createHover(symbol.range, 'Predicate', this.brackets(predicateFound.declaredName), predicateFound.getDocumentation()),
                     Location.create(domainInfo.fileUri, SymbolInfoProvider.toRange(predicateFound.location)),
                     predicateFound,
                 );
@@ -79,7 +79,7 @@ export class SymbolInfoProvider {
             if (functionFound) {
                 domainInfo.findVariableLocation(functionFound);
                 return new VariableInfo(
-                    this.createHover(symbol.range, 'Function', this.brackets(functionFound.declaredName), functionFound.documentation),
+                    this.createHover(symbol.range, 'Function', this.brackets(functionFound.declaredName), functionFound.getDocumentation()),
                     Location.create(domainInfo.fileUri, SymbolInfoProvider.toRange(functionFound.location)),
                     functionFound
                 );

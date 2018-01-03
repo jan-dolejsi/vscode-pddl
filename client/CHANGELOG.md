@@ -11,7 +11,7 @@ Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how 
 * Auto-completion for constant/object names.
 * Plan debugger
 
-## [2.4.1] - 2017-12-15
+## [2.4.2] - 2017-12-15
 
 ### HTML report for plan details
 
@@ -37,6 +37,15 @@ Fixed the PDDL parser to work with domains that completely omit the `(:types )` 
 ### Other features
 
 Opt-in visualization of plan function values. Experimental.
+
+Plan visualization details may be fine tuned using an additional file `<domain>.planviz.json`. Following syntax is supported:
+
+    {
+        "excludeActions": [
+            "action-to-be-hidden",
+            "another-action"
+        ]
+    }
 
 Lastly, we are changing the versioning scheme to allow for safe distribution of intermediate builds to early adopters.
 
@@ -98,8 +107,8 @@ Simplified snippets and added tabstops/placeholders to them, so they are easy to
 * PDDL Snippets for `domain`, `problem`, `action` and `durative-action`.
 * Syntax highlighting for commonly used PDDL features
 
-[Unreleased]: https://github.com/jan-dolejsi/vscode-pddl/compare/v2.4.1...HEAD
-[2.4.1]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.0.3...v2.4.1
+[Unreleased]: https://github.com/jan-dolejsi/vscode-pddl/compare/v2.4.2...HEAD
+[2.4.2]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.0.3...v2.4.2
 [2.0.3]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.0.2...v2.0.3
 [2.0.2]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.0.1...v2.0.2
 [2.0.1]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.0.0...v2.0.1

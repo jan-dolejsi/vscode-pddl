@@ -158,13 +158,13 @@ export class AutoCompletion {
     }
     
     createPredicate(predicate: Variable): CompletionItem {
-        let completionItem = this.createCompletionItem(this.last_id++, predicate.declaredName, 'Predicate', predicate.documentation, CompletionItemKind.Value);
+        let completionItem = this.createCompletionItem(this.last_id++, predicate.declaredName, 'Predicate', predicate.getDocumentation(), CompletionItemKind.Value);
         completionItem.insertText = predicate.declaredNameWithoutTypes;
         return completionItem;
     }
 
     createFunction(functionSymbol: Variable): CompletionItem {
-        let completionItem = this.createCompletionItem(this.last_id++, functionSymbol.declaredName, 'Function', functionSymbol.documentation, CompletionItemKind.Reference);
+        let completionItem = this.createCompletionItem(this.last_id++, functionSymbol.declaredName, 'Function', functionSymbol.getDocumentation(), CompletionItemKind.Reference);
         completionItem.insertText = functionSymbol.declaredNameWithoutTypes;
         return completionItem;
     }
