@@ -7,9 +7,9 @@
 export class Parser {
 
     domainPattern = /^\s*\(define\s*\(domain\s+(\S+)\s*\)/gi;
-    domainDetailsPattern = /^\s*\(define\s*\(domain\s+(\S+)\s*\)\s*\(:requirements\s*([^\)]*)\)\s*\(:types\s*([^\)]*)\)\s*(\(:constants\s*([^\)]*)\))?\s*(\(:predicates\s*((\([^\)]*\)\s*)*)\))?\s*(\(:functions\s*((\([^\)]*\)\s*)*)\))?/gi;
+    domainDetailsPattern = /^\s*\(define\s*\(domain\s+(\S+)\s*\)\s*\(:requirements\s*([^\)]*)\)\s*(\(:types\s*([^\)]*)\))?\s*(\(:constants\s*([^\)]*)\))?\s*(\(:predicates\s*((\([^\)]*\)\s*)*)\))?\s*(\(:functions\s*((\([^\)]*\)\s*)*)\))?/gi;
     problemPattern = /^\s*\(define\s*\(problem\s+(\S+)\s*\)\s*\(:domain\s+(\S+)\s*\)/gi;
-    problemCompletePattern = /^\s*\(define\s*\(problem\s+(\S+)\s*\)\s*\(:domain\s+(\S+)\s*\)\s*\(:objects\s*([^\)]*)\)\s*\(:init\s*([\s\S]*)\s*\)\s*\(:goal\s*([\s\S]*?)\s*\)\s*(\(:constraints\s*([\s\S]*?)\s*\))?\s*(\(:metric\s*([\s\S]*?)\s*\))?\s*\)\s*$/gi;
+    problemCompletePattern = /^\s*\(define\s*\(problem\s+(\S+)\s*\)\s*\(:domain\s+(\S+)\s*\)\s*(\(:requirements\s*([^\)]*)\))?\s*(\(:objects\s*([^\)]*)\))?\s*\(:init\s*([\s\S]*)\s*\)\s*\(:goal\s*([\s\S]*?)\s*\)\s*(\(:constraints\s*([\s\S]*?)\s*\))?\s*(\(:metric\s*([\s\S]*?)\s*\))?\s*\)\s*$/gi;
 
     constructor() { }
 
@@ -59,16 +59,16 @@ export class Parser {
         let matchGroups = this.domainDetailsPattern.exec(domainText);
 
         if (matchGroups) {
-            let typesText = matchGroups[3];
+            let typesText = matchGroups[4];
             domainInfo.setTypeInheritance(this.parseInheritance(typesText));
-            let constantsText = matchGroups[5];
+            let constantsText = matchGroups[6];
             domainInfo.setConstants(Parser.toTypeObjects(this.parseInheritance(constantsText)));
-            let predicatesText = matchGroups[7];
-            let predicates = this.parsePredicatesOrFunctions(predicatesText);
+            let predicatesText = matchGroups[8];
+            let predicates = Parser.parsePredicatesOrFunctions(predicatesText);
             domainInfo.setPredicates(predicates);
 
-            let functionsText = matchGroups[10];
-            let functions = this.parsePredicatesOrFunctions(functionsText);
+            let functionsText = matchGroups[11];
+            let functions = Parser.parsePredicatesOrFunctions(functionsText);
             domainInfo.setFunctions(functions);
         }
 
@@ -80,17 +80,17 @@ export class Parser {
         let matchGroups = this.problemCompletePattern.exec(problemText);
 
         if (matchGroups) {
-            let objectsText = matchGroups[3];
+            let objectsText = matchGroups[6];
             problemInfo.setObjects(Parser.toTypeObjects(this.parseInheritance(objectsText)));
         }
     }
 
     static toTypeObjects(graph: DirectionalGraph): TypeObjects[] {
-        let typeSet = new Set<string>(graph.getEdges().map(edge => edge[1]));        
+        let typeSet = new Set<string>(graph.getEdges().map(edge => edge[1]));
         let typeObjects: TypeObjects[] = Array.from(typeSet).map(type => new TypeObjects(type));
 
         graph.getVertices().forEach(obj => {
-            graph.getEdgesFrom(obj).forEach(type => typeObjects.find(to => to.type == type).objects.push(obj));
+            graph.getVerticesWithEdgesFrom(obj).forEach(type => typeObjects.find(to => to.type == type).objects.push(obj));
         });
 
         return typeObjects;
@@ -101,11 +101,11 @@ export class Parser {
         // the inheritance graph is captured as a two dimensional array, where the first index is the types themselves, the second is the parent type they inherit from (PDDL supports multiple inheritance)
         let inheritance = new DirectionalGraph();
 
-        if (!declarationText) return inheritance; 
+        if (!declarationText) return inheritance;
 
         // if there are root types that do not inherit from 'object', add the 'object' inheritance.
         // it will make the following regex work
-        if(!declarationText.match(/-\s+\w[\w-]*\s*$/)){
+        if (!declarationText.match(/-\s+\w[\w-]*\s*$/)) {
             declarationText += ' - object';
         }
 
@@ -114,7 +114,7 @@ export class Parser {
         while (match = pattern.exec(declarationText)) {
             // is this a group with inheritance?
             if (match[0].indexOf(' -')) {
-                let fragments = match[0].split('-');
+                let fragments = match[0].split(' -');
                 let parent = fragments[1] ? fragments[1].trim() : null;
                 let children = fragments[0].trim().split(/\s+/g, );
 
@@ -125,18 +125,39 @@ export class Parser {
         return inheritance;
     }
 
-    parsePredicatesOrFunctions(predicatesText: string): Variable[] {
+    static parsePredicatesOrFunctions(predicatesText: string): Variable[] {
         let pattern = /\(([^\)]*)\)/gi;
         let predicates = new Array<Variable>();
 
         let group: RegExpExecArray;
 
         while (group = pattern.exec(predicatesText)) {
-            let symbolName = group[1];
-            predicates.push(new Variable(symbolName));
+            let fullSymbolName = group[1];
+            let parameters = Parser.parseParameters(fullSymbolName);
+            predicates.push(new Variable(fullSymbolName, parameters));
         }
 
         return predicates;
+    }
+
+    static parseParameters(fullSymbolName: string): Parameter[] {
+        let parameterPattern = /((\?[\w]+\s+)+)-\s+([\w][\w-]*)/g;
+
+        let parameters: Parameter[] = [];
+
+        let group: RegExpExecArray;
+
+        while (group = parameterPattern.exec(fullSymbolName)) {
+            let variables = group[1];
+            let type = group[3];
+
+            variables.split(/(\s+)/)
+                .filter(term => term.trim().length)
+                .map(variable => variable.substr(1).trim()) // skip the question-mark
+                .forEach(variable => parameters.push(new Parameter(variable, type)));
+        }
+
+        return parameters;
     }
 
     parseActions(domainText: string): Action[] {
@@ -145,31 +166,31 @@ export class Parser {
         let actions: Action[] = [];
 
         let group: RegExpExecArray;
-        
-                while (group = pattern.exec(domainText)) {
-                    let actionType = group[1];
-                    let actionName = group[2];
-                    let actionDocumentation = group[4];
-                    
-                    let action = new Action(actionName, actionType.includes('durative'));
-                    action.documentation = actionDocumentation;
-                    action.location = Parser.toRange(domainText, group.index, 0);
-                    actions.push(action);
-                }
-        
+
+        while (group = pattern.exec(domainText)) {
+            let actionType = group[1];
+            let actionName = group[2];
+            let actionDocumentation = group[4];
+
+            let action = new Action(actionName, actionType.includes('durative'));
+            action.documentation = actionDocumentation;
+            action.location = Parser.toRange(domainText, group.index, 0);
+            actions.push(action);
+        }
+
         return actions;
     }
 
     static toRange(text: string, index: number, length: number): PddlRange {
-        let lineLengths = text.split('\n').map(line => line.length+1);
+        let lineLengths = text.split('\n').map(line => line.length + 1);
 
         let totalCharactersSoFar = 0;
 
         for (var lineIdx = 0; lineIdx < lineLengths.length; lineIdx++) {
             let lineLength = lineLengths[lineIdx];
-            
-            if(totalCharactersSoFar + lineLength > index){
-                let firstCharacterOnLine = index-totalCharactersSoFar;
+
+            if (totalCharactersSoFar + lineLength > index) {
+                let firstCharacterOnLine = index - totalCharactersSoFar;
                 return new PddlRange(lineIdx, firstCharacterOnLine, lineIdx, firstCharacterOnLine + length);
             }
 
@@ -214,7 +235,7 @@ export abstract class FileInfo {
         return this.status;
     }
 
-    getVariableReferences(variable: Variable): PddlRange[]{
+    getVariableReferences(variable: Variable): PddlRange[] {
         let referenceLocations: PddlRange[] = [];
 
         this.findVariableReferences(variable, (location) => {
@@ -252,7 +273,7 @@ export abstract class FileInfo {
  */
 export class ProblemInfo extends FileInfo {
     domainName: string;
-    objects: TypeObjects[];
+    objects: TypeObjects[] = [];
 
     constructor(fileUri: string, version: number, problemName: string, domainName: string) {
         super(fileUri, version, problemName);
@@ -261,6 +282,13 @@ export class ProblemInfo extends FileInfo {
 
     setObjects(objects: TypeObjects[]): void {
         this.objects = objects;
+    }
+
+    getObjects(type: string): string[] {
+        let thisTypesObjects = this.objects.find(to => to.type == type);
+
+        if (!thisTypesObjects) return [];
+        else return thisTypesObjects.objects;
     }
 
     isDomain(): boolean {
@@ -275,18 +303,26 @@ export class ProblemInfo extends FileInfo {
  * Domain file.
  */
 export class DomainInfo extends FileInfo {
-    predicates: Variable[];
-    functions: Variable[];
-    actions: Action[];
+    private predicates: Variable[] = [];
+    private functions: Variable[] = [];
+    actions: Action[] = [];
     typeInheritance: DirectionalGraph;
-    constants: TypeObjects[];
+    constants: TypeObjects[] = [];
 
     constructor(fileUri: string, version: number, domainName: string) {
         super(fileUri, version, domainName);
     }
 
+    getPredicates(): Variable[] {
+        return this.predicates;
+    }
+
     setPredicates(predicates: Variable[]): void {
         this.predicates = predicates;
+    }
+
+    getFunctions(): Variable[] {
+        return this.functions;
     }
 
     setFunctions(functions: Variable[]): void {
@@ -302,11 +338,13 @@ export class DomainInfo extends FileInfo {
     }
 
     setConstants(constants: TypeObjects[]): void {
+        if (constants == undefined) throw new Error("Constants must be defined or empty.")
         this.constants = constants;
     }
 
     getTypes(): string[] {
-        return this.typeInheritance.getVertices();
+        return this.typeInheritance.getVertices()
+            .filter(t => t != "object");
     }
 
     isDomain(): boolean {
@@ -314,6 +352,10 @@ export class DomainInfo extends FileInfo {
     }
     isProblem(): boolean {
         return false;
+    }
+
+    getTypesInheritingFrom(type: string): string[] {
+        return this.typeInheritance.getSubtreePointingTo(type);
     }
 
     findVariableLocation(variable: Variable): void {
@@ -324,7 +366,7 @@ export class DomainInfo extends FileInfo {
             variable.location = location;
 
             if (commentStartColumn > -1) {
-                variable.documentation = line.substr(commentStartColumn + 1).trim();
+                variable.setDocumentation(line.substr(commentStartColumn + 1).trim());
             }
             return false; // we do not continue the search after the first hit
         });
@@ -343,7 +385,7 @@ export class DomainInfo extends FileInfo {
                 variable.location = new PddlRange(lineIdx, match.index, lineIdx, match.index + match[0].length);
 
                 if (commentStartColumn > -1) {
-                    variable.documentation = line.substr(commentStartColumn + 1).trim();
+                    variable.setDocumentation(line.substr(commentStartColumn + 1).trim());
                 }
 
                 return;
@@ -413,8 +455,34 @@ export class DirectionalGraph {
         if (to) this.addEdge(to, null);
     }
 
-    getEdgesFrom(vertex: string): string[] {
+    getVerticesWithEdgesFrom(vertex: string): string[] {
         return this.verticesAndEdges.find(t => t[0] == vertex)[1];
+    }
+
+    getVerticesWithEdgesTo(vertex: string): string[] {
+        return this.verticesAndEdges
+            .filter(t => t[1].includes(vertex))
+            .map(t => t[0]);
+    }
+
+    getSubtreePointingTo(vertex: string): string[] {
+        let vertices = this.getVerticesWithEdgesTo(vertex);
+
+        let verticesSubTree = vertices
+            .map(childVertex => this.getSubtreePointingTo(childVertex))
+            .reduce((x, y) => x.concat(y), []);
+
+        return vertices.concat(verticesSubTree);        
+    }
+
+    getSubtreePointingFrom(vertex: string): string[] {
+        let vertices = this.getVerticesWithEdgesFrom(vertex);
+
+        let verticesSubTree = vertices
+            .map(childVertex => this.getSubtreePointingFrom(childVertex))
+            .reduce((x, y) => x.concat(y), []);
+
+        return vertices.concat(verticesSubTree);
     }
 }
 
@@ -422,24 +490,100 @@ export class DirectionalGraph {
  * Holds objects belonging to the same type.
  */
 export class TypeObjects {
-    objects:  string[] = [];
+    objects: string[] = [];
 
     constructor(public type: string) { }
 
-    addAllObjects(objects: string[]): void {
-        objects.forEach(o => this.objects.push(o));        
+    addAllObjects(objects: string[]): TypeObjects {
+        objects.forEach(o => this.objects.push(o));
+
+        return this;
     }
+
+    static concatObjects(constants: TypeObjects[], objects: TypeObjects[]): TypeObjects[] {
+        let mergedObjects: TypeObjects[] = [];
+
+        constants.concat(objects).forEach(typeObj => {
+            let typeFound = mergedObjects.find(to1 => to1.type == typeObj.type);
+
+            if (!typeFound) {
+                typeFound = new TypeObjects(typeObj.type);
+                mergedObjects.push(typeFound);
+            }
+
+            typeFound.addAllObjects(typeObj.objects);
+        });
+
+        return mergedObjects;
+    }
+
 }
 
+export abstract class Term {
+    constructor(public type: string) { }
+
+    abstract toPddlString(): string;
+
+    abstract isGrounded(): boolean;
+}
+
+export class Parameter extends Term {
+    constructor(public name: string, type: string) {
+        super(type);
+    }
+
+    toPddlString(): string {
+        return `?${this.name} - ${this.type}`;
+    }
+
+    isGrounded() { return false; }
+}
+
+export class ObjectInstance extends Term {
+    constructor(public name: string, type: string) {
+        super(type);
+    }
+
+    toPddlString(): string {
+        return this.name;
+    }
+
+    isGrounded() { return true; }
+}
 export class Variable {
     name: string;
-    fullNameWithoutTypes: string;
+    declaredNameWithoutTypes: string;
     location: PddlRange = null; // initialized lazily
-    documentation = ''; // initialized lazily
+    private documentation = ''; // initialized lazily
+    private unit = ''; // initialized lazily
 
-    constructor(public fullName: string) {
-        this.fullNameWithoutTypes = fullName.replace(/\s*-\s*[\w-_]+/gi, '');
-        this.name = fullName.replace(/( .*)$/gi, '');
+    constructor(public declaredName: string, public parameters: Term[]) {
+        this.declaredNameWithoutTypes = declaredName.replace(/\s+-\s+[\w-_]+/gi, '');
+        this.name = declaredName.replace(/( .*)$/gi, '');
+    }
+
+    getFullName(): string {
+        return this.name + this.parameters.map(par => " " + par.toPddlString()).join('');
+    }
+
+    isGrounded(): boolean {
+        return this.parameters.every(parameter => parameter.isGrounded());
+    }
+
+    setDocumentation(documentation: string): void {
+        this.documentation = documentation;
+        let match = documentation.match(/\[([^\]]*)\]/);
+        if(match){
+            this.unit = match[1];
+        }
+    }
+
+    getDocumentation(): string {
+        return this.documentation;
+    }
+
+    getUnit(): string {
+        return this.unit;
     }
 }
 
@@ -458,5 +602,5 @@ export class Action {
  * which is converted to the VS Code class specific to the two distinct client/server environment. 
  */
 export class PddlRange {
-    constructor(public startLine: number, public startCharacter: number, public endLine: number, public endCharacter: number){}
+    constructor(public startLine: number, public startCharacter: number, public endLine: number, public endCharacter: number) { }
 }

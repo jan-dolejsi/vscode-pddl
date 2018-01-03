@@ -4,7 +4,8 @@
  * ------------------------------------------------------------------------------------------ */
 'use strict';
 
-import { Plan, PlanStep } from './plan';
+import { Plan } from './plan';
+import { PlanStep } from '../../common/src/PlanStep';
 import { DomainInfo, ProblemInfo } from '../../common/src/parser';
 
 /**
@@ -54,9 +55,10 @@ export class PddlPlanParser {
             // this line is a plan step
             let time = group[2] ? parseFloat(group[2]) : this.planBuilder.makespan();
             let action = group[3];
-            let duration = group[5] ? parseFloat(group[5]) : this.epsilon;
+            let isDurative = group[5] ? true : false;
+            let duration = isDurative ? parseFloat(group[5]) : this.epsilon;
 
-            this.planBuilder.steps.push(new PlanStep(time, action, duration));
+            this.planBuilder.steps.push(new PlanStep(time, action, isDurative, duration));
             if (!this.planBuilder.parsingPlan) this.planBuilder.parsingPlan = true;
         } else {
             // this line is NOT a plan step

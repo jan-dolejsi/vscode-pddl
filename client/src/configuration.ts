@@ -13,6 +13,7 @@ const PARSER_AUTHENTICATION_S_TOKEN = 'pddlParser.authenticationSToken';
 const PLANNER_LOCATION = 'pddlPlanner.executableOrService';
 const PLANNER_SYNTAX = 'pddlPlanner.executableOptions';
 const PLANNER_EPSILON = 'pddlPlanner.epsilonTimeStep';
+export const VALUE_SEQ_LOCATION  = "pddlPlanner.valueSeqPath";
 
 export class PddlConfiguration {
 
@@ -242,6 +243,10 @@ export class PddlConfiguration {
 
     getPlannerSyntax(): string {
         return vscode.workspace.getConfiguration().get(PLANNER_SYNTAX);
+    }
+
+    getValueSeqPath(): string {
+        return vscode.workspace.getConfiguration().get("pddlPlanner.valueSeqPath");
     }
 
     async askConfigurationScope(): Promise<ScopeQuickPickItem> {

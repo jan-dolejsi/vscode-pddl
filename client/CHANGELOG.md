@@ -6,11 +6,39 @@ Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how 
 
 ## [Unreleased]
 
-Further plan visualization improvements.
+* Find all references support for _type_.
+* Rename predicates, functions, types, parameters and objects
+* Auto-completion for constant/object names.
+* Plan debugger
 
-Find all references support for _type_.
+## [2.4.1] - 2017-12-15
 
-Auto-completion for constant/object names.
+### HTML report for plan details
+
+Additional command for plan report export to a self-contained HTML file.
+When the Plan preview pane is open (when the planner finishes a successful execution), press `Control + Shift + P` and type _PDDL_ to the command window. Select the option _PDDL: Generate plan report_. A new default browser window opens with a self-contained report HTML file. It is generated into the temporary folder.
+
+Note: If the report contains graphs showing function values, it only displays the graphs when open in the Chrome browser.
+
+### Context-sensitive auto-complete snippet for symmetric initialization
+
+Auto-complete snippet for symmetric predicate and/or function initialization.
+
+Symmetric predicate initialization example: `(road A B) (road B A)`
+
+Symmetric function initialization example: `(= (distance A B) 13) (= (distance B A) 13)`
+
+To trigger the snippet, start typing 'init' inside the problem `(:init )` section.
+
+### Fixes
+
+Fixed the PDDL parser to work with domains that completely omit the `(:types )` section.
+
+### Other features
+
+Opt-in visualization of plan function values. Experimental.
+
+Lastly, we are changing the versioning scheme to allow for safe distribution of intermediate builds to early adopters.
 
 ## [2.0.3] - 2017-12-01
 
@@ -55,22 +83,23 @@ Simplified snippets and added tabstops/placeholders to them, so they are easy to
 
 ### Added
 
-- missing PDDL requirements in syntax highlighting: `strips, typing, negative-preconditions, disjunctive-preconditions, equality, existential-preconditions, universal-preconditions, quantified-preconditions, conditional-effects, fluents, numeric-fluents, adl, durative-actions, duration-inequalities, continuous-effects, derived-predicates, timed-initial-literals, preferences, constraints, action-costs, timed-initial-fluents`
+* missing PDDL requirements in syntax highlighting: `strips, typing, negative-preconditions, disjunctive-preconditions, equality, existential-preconditions, universal-preconditions, quantified-preconditions, conditional-effects, fluents, numeric-fluents, adl, durative-actions, duration-inequalities, continuous-effects, derived-predicates, timed-initial-literals, preferences, constraints, action-costs, timed-initial-fluents`
 
 ### Changed
 
-- fixed parameters to action snippets
-- banner color
+* fixed parameters to action snippets
+* banner color
 
 ## 1.0.0 - 2017-04-15
 
 ### Added
 
-- Initial release
-- PDDL Snippets for `domain`, `problem`, `action` and `durative-action`.
-- Syntax highlighting for commonly used PDDL features
+* Initial release
+* PDDL Snippets for `domain`, `problem`, `action` and `durative-action`.
+* Syntax highlighting for commonly used PDDL features
 
-[Unreleased]: https://github.com/jan-dolejsi/vscode-pddl/compare/v2.0.3...HEAD
+[Unreleased]: https://github.com/jan-dolejsi/vscode-pddl/compare/v2.4.1...HEAD
+[2.4.1]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.0.3...v2.4.1
 [2.0.3]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.0.2...v2.0.3
 [2.0.2]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.0.1...v2.0.2
 [2.0.1]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.0.0...v2.0.1

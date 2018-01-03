@@ -5,16 +5,7 @@
 'use strict';
 
 import { DomainInfo, ProblemInfo } from '../../common/src/parser';
-
-export class PlanStep {
-    actionName: string;
-    objects: string[];
-    constructor(public time: number, public fullActionName: string, public duration: number) {
-        let nameFragments = fullActionName.split(' ');
-        this.actionName = nameFragments[0];
-        this.objects = nameFragments.slice(1);
-    }
-}
+import { PlanStep } from '../../common/src/PlanStep';
 
 export class Plan {
     makespan: number;
@@ -23,6 +14,10 @@ export class Plan {
  
     constructor(public steps: PlanStep[], public domain: DomainInfo, public problem: ProblemInfo) {
         this.makespan = Math.max(...steps.map(step => step.time + step.duration));
+    }
+
+    getText(): string {
+        return this.steps.map(step => step.toPddl()).join("\n");
     }
 }
 

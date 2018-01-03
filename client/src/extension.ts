@@ -5,7 +5,7 @@
 'use strict';
 
 import * as path from 'path';
-import { workspace, window, ExtensionContext, commands, Uri, ViewColumn, Range, StatusBarAlignment, extensions, TextDocument } from 'vscode';
+import { workspace, window, ExtensionContext, commands, Uri, ViewColumn, Range, StatusBarAlignment, extensions, TextDocument, languages } from 'vscode';
 import { LanguageClient, LanguageClientOptions, ServerOptions, TransportKind, State } from 'vscode-languageclient';
 
 import { Planning } from './planning'
@@ -14,11 +14,15 @@ import { PddlWorkspace } from '../../common/src/workspace-model';
 import { DomainInfo, PddlRange } from '../../common/src/parser';
 import { PddlConfiguration } from './configuration';
 import { Authentication } from '../../common/src/Authentication';
+import { PlanReportGenerator } from './PlanReportGenerator';
+import { Plan } from './plan';
+import { AutoCompletion } from './AutoCompletion';
 
 const PDDL_STOP_PLANNER = 'pddl.stopPlanner';
 const PDDL_CONFIGURE_PARSER = 'pddl.configureParser';
 const PDDL_LOGIN_PARSER_SERVICE = 'pddl.loginParserService';
 const PDDL_CONFIGURE_PLANNER = 'pddl.configurePlanner';
+const PDDL_GENERATE_PLAN_REPORT = 'pddl.planReport';
 const PDDL = 'PDDL';
 
 export function activate(context: ExtensionContext) {
@@ -86,7 +90,17 @@ export function activate(context: ExtensionContext) {
 	let configurePlannerCommand = commands.registerCommand(PDDL_CONFIGURE_PLANNER, () => {
 		pddlConfiguration.askNewPlannerPath();
 	});
+	
+	let generatePlanReportCommand = commands.registerCommand(PDDL_GENERATE_PLAN_REPORT, () => {
+		let plans: Plan[] = planning.getPlans();
 
+		if(plans!=null){
+			new PlanReportGenerator(context, 1000, true).export(plans, plans.length - 1);
+		}else{
+			window.showErrorMessage("There is no plan to export.");
+		}
+	});
+	
 	// when the extension is done loading, subscribe to the client-server communication
 	let stateChangeHandler = languageClient.onDidChangeState((stateEvent) => {
 		if (stateEvent.newState == State.Running) languageClient.onRequest('pddl.configureParser', (showNever) => {
@@ -94,9 +108,13 @@ export function activate(context: ExtensionContext) {
 		});
 	});
 
+	let completionItemProvider = languages.registerCompletionItemProvider(PDDL.toLowerCase(), new AutoCompletion(pddlWorkspace));
+
 	// Push the disposables to the context's subscriptions so that the 
 	// client can be deactivated on extension deactivation
-	context.subscriptions.push(planCommand, revealActionCommand, planning.planDocumentProviderRegistration, status, stopPlannerCommand, stateChangeHandler, configureParserCommand, loginParserServiceCommand, configurePlannerCommand);
+	context.subscriptions.push(planCommand, revealActionCommand, planning.planDocumentProviderRegistration, 
+		status, stopPlannerCommand, stateChangeHandler, configureParserCommand, loginParserServiceCommand, configurePlannerCommand, 
+		generatePlanReportCommand, completionItemProvider);
 }
 
 async function revealAction(domainInfo: DomainInfo, actionName: String) {

@@ -13,10 +13,14 @@ export class Util {
         return path.includes(' ') ? `"${path}"` : path;
     }
 
-    static toFile(prefix: string, text: string): string {
-        var tempFile = tmp.fileSync({ mode: 0o644, prefix: prefix + '-', postfix: '.pddl' });
+    static toFile(prefix: string, suffix: string, text: string): string {
+        var tempFile = tmp.fileSync({ mode: 0o644, prefix: prefix + '-', postfix: suffix });
         fs.writeSync(tempFile.fd, text, 0, 'utf8');
         return tempFile.name;
+    }
+
+    static toPddlFile(prefix: string, text: string): string {
+        return Util.toFile(prefix, '.pddl', text);
     }
 
 } 

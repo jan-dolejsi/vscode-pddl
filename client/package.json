@@ -4,10 +4,10 @@
   "description": "Planning Domain Description Language support",
   "author": "Jan Dolejsi",
   "license": "MIT",
-  "version": "2.0.3",
+  "version": "2.4.1",
   "publisher": "jan-dolejsi",
   "engines": {
-    "vscode": "^1.16.0"
+    "vscode": "^1.18.0"
   },
   "categories": [
     "Other",
@@ -80,6 +80,10 @@
       {
         "command": "pddl.configurePlanner",
         "title": "PDDL: Configure planner"
+      },
+      {
+        "command": "pddl.planReport",
+        "title": "PDDL: Generate plan report"
       }
     ],
     "menus": {
@@ -231,6 +235,10 @@
           "default": 0.001,
           "title": "Default epsilon time step used by your planner.",
           "description": "Default epsilon time step used by your planner. This is used when interpreting/visualizing the plan. "
+        },
+        "pddlPlanner.valueSeqPath": {
+          "type": "string",
+          "description": "ValueSeq path - the tool that evaluates numeric values of functions at starts and ends of actions in the plan."
         }
       }
     }
@@ -243,17 +251,17 @@
     "update-vscode": "node ./node_modules/vscode/bin/install"
   },
   "dependencies": {
-    "@types/request": "^2.0.5",
-    "@types/tmp": "^0.0.33",
-    "body-parser": "^1.18.2",
+    "vscode": "^1.1.10",
+    "vscode-languageclient": "^3.5.0",
     "child-process-data": "^0.5.5",
-    "express": "^4.16.2",
-    "opn": "^5.1.0",
-    "request": "^2.83.0",
-    "tmp": "^0.0.33",
     "tree-kill": "^1.2.0",
-    "typescript": "^2.5.2",
-    "vscode": "^1.1.5",
-    "vscode-languageclient": "^3.4.2"
+    "request": "^2.83.0",
+    "@types/request": "^2.0.5",
+    "tmp": "^0.0.33",
+    "@types/tmp": "^0.0.33",
+    "opn": "^5.1.0"
+  },
+  "devDependencies": {
+    "typescript": "^2.6.2"
   }
 }

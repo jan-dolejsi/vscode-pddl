@@ -31,6 +31,7 @@ export class Planning implements PlanningHandler {
     planDocumentProviderRegistration: Disposable;
 
     planner: Planner;
+    plans: Plan[];
     planningProcessKilled: boolean;
     
     constructor(public pddlWorkspace: PddlWorkspace, public plannerConfiguration: PddlConfiguration, context: ExtensionContext, public status: StatusBarItem) {
@@ -81,7 +82,7 @@ export class Planning implements PlanningHandler {
 
                 domainFileInfo = domainFiles.find(doc => doc.fileUri == domainFileUri.toString());
             } else {
-                window.showInformationMessage("Ensure a corresponding domain file is open in the editor.");
+                window.showInformationMessage(`Ensure a domain '${problemFileInfo.domainName}' from the same folder is open in the editor.`);
                 return false;
             }
         }
@@ -124,6 +125,10 @@ export class Planning implements PlanningHandler {
         this.output.show();
 
         return true;
+    }
+
+    getPlans(): Plan[] {
+        return this.plans;
     }
 
     /**
@@ -201,6 +206,7 @@ export class Planning implements PlanningHandler {
     }
 
     visualizePlans(plans: Plan[]): void {
+        this.plans = plans;
         this.provider.update(this.previewUri, plans);
 
         let usesViewColumnTwo = window.visibleTextEditors.some(editor => editor.viewColumn == ViewColumn.Two);

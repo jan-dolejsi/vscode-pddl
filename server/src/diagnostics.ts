@@ -132,7 +132,7 @@ export class Diagnostics {
         domainInfo.setStatus(FileStatus.Validating);
         problemFiles.forEach(p => p.setStatus(FileStatus.Validating));
 
-        this.connection.console.log(`Validating ${domainInfo.name} and ${problemFiles.length} problem files.`)
+        // this.connection.console.log(`Validating ${domainInfo.name} and ${problemFiles.length} problem files.`)
 
         let validator = this.createValidator();  
         if(!validator) return;
