@@ -4,6 +4,12 @@
  * ------------------------------------------------------------------------------------------ */
 'use strict';
 
+import uuidv4 = require('uuid/v4');
+import express = require('express');
+import request = require('request');
+import bodyParser = require('body-parser')
+import opn = require('opn');
+
 export class Authentication {
     constructor(private authUrl: string, private authRequestEncoded: string, private clientId: string, 
         private tokensvcUrl: string, private tokensvcApiKey: string, private tokensvcAccessPath: string, 
@@ -29,16 +35,13 @@ export class Authentication {
     }
 
     static create() {        
-        return new Authentication('https://sauth-dot-cfsauth-qa.appspot.com/v1/auth', 'NjI3NzQ1Nzd7ImNsaWVudGlkIjogImxoODA4MS1hdXRoLXV0aWwtYWlwbGFubmluZy5zbGJhcHAuY29tIiwgInJjYmlkIjoibGg4MDgxLWF1dGgtdXRpbCJ9NjQ5NjczNDg=', 'lh8081-auth-util-aiplanning.slbapp.com',
+        return new Authentication('https://sauth-dot-cfsauth-qa.appspot.com/v1/auth', 'ODU0MDYwNDd7ImNsaWVudGlkIjoibGg4MDgxLXZzY29kZS1wZGRsLWFpcGxhbm5pbmcuc2xiYXBwLmNvbSIsICJyY2JpZCI6ImxoODA4MS12c2NvZGUtcGRkbCJ9NDkwNTk5NzA=', 'lh8081-vscode-pddl-aiplanning.slbapp.com',
         'https://tksvc-dot-cfsauth-qa.appspot.com', 'AIzaSyAR9jypT78fsXfO-wZ4sGfiwlonIADNKUA', '/v1/access', '/v1/validate', '/v1/code', '/v1/refresh', '/v1/svctk', null, null, null);
     }
 
     login(callback: (refreshToken: string, accessToken: string, sToken: string) => void) {
-        const uuidv4 = require('uuid/v4');
         var nonce = uuidv4();
-        var express = require('express')
         var app = express()
-        var bodyParser = require('body-parser')
         app.use(bodyParser.json());
         app.use(bodyParser.urlencoded({ extended: true }));
         var server:any = null;
@@ -61,19 +64,16 @@ export class Authentication {
         })
         server = app.listen(8081)
 
-        const opn = require('opn');
         let authUrl = this.authUrl + '?authRequest=' + this.authRequestEncoded + '&nonce=' + nonce + '&refreshtoken&accesstoken&stoken';
         opn(authUrl);
     }
 
     refreshAccessToken(clientid: string, refreshtoken: string) {
-        const request = require('request');
         request.get({ url: this.tokensvcUrl + this.tokensvcRefreshPath + '?key=' + this.tokensvcApiKey + '&accesstoken=\'\'', json: {clientid: clientid, refreshoken: refreshtoken}});
         return false;
     }
 
     refreshSToken(clientid: string, accesstoken: string) {
-        const request = require('request');
         request.get({ url: this.tokensvcUrl + this.tokensvcAccessPath + '?key=' + this.tokensvcApiKey + '&stoken=\'\'', json: {clientid: clientid, accesstoken: accesstoken}});
         return false;
     }
@@ -109,7 +109,6 @@ export class Authentication {
     }    
 
     validateSToken(clientid: string, stoken: string) {
-        const request = require('request');
         request.get({ url: this.tokensvcUrl + this.tokensvcValidatePath + '?key=' + this.tokensvcApiKey, json: {clientid: clientid, audiences: clientid, stoken: stoken}});
         return false;
     }

@@ -14,6 +14,7 @@ import { PddlWorkspace } from '../../common/src/workspace-model';
 import { Diagnostics } from './diagnostics';
 import { AutoCompletion } from './autocompletion';
 import { SymbolInfoProvider } from './symbols';
+import { Settings } from '../../common/src/Settings';
 
 // Create a connection for the server. The connection uses Node's IPC as a transport
 let connection: IConnection = createConnection(new IPCMessageReader(process), new IPCMessageWriter(process));
@@ -60,54 +61,11 @@ documents.onDidChangeContent((change) => {
 	diagnostics.validatePddlDocumentByUri(change.document.uri, false);
 });
 
-// The settings interface describe the server relevant settings part
-interface Settings {
-	pddlParser: PDDLParserSettings;
-}
-
-// These are the example settings we defined in the client's package.json
-// file
-interface PDDLParserSettings {
-
-	// path or URL for the PDDL parser executable or service
-	executableOrService: string;
-
-	// parser executable options syntax
-	executableOptions: string;
-
-	serviceAuthenticated: boolean;
-	authenticationUrl: string;
-	authenticationRequestEncoded: string;
-	authenticationClientId: string;
-	authenticationTokensvcUrl: string;
-	authenticationTokensvcApiKey: string;
-	authenticationTokensvcAccessPath: string;
-	authenticationTokensvcValidatePath: string;
-	authenticationTokensvcCodePath: string;
-	authenticationTokensvcRefreshPath: string;
-	authenticationTokensvcSvctkPath: string;
-	
-	authenticationRefreshToken: string;
-	authenticationAccessToken: string;
-
-	// parsing problem custom matching pattern
-	problemPattern: string;
-
-	// Delay in seconds the Language Server should wait after a PDDL file is modified before calls the parser.
-	delayInSecondsBeforeParsing: number;
-	// Maximum number of problems to be sent back to VS Code
-	maxNumberOfProblems: number;
-}
-
 // The settings have changed. Is send on server activation
 // as well.
 connection.onDidChangeConfiguration((change) => {
 	let settings = <Settings>change.settings;
-	diagnostics.maxNumberOfProblems = settings.pddlParser.maxNumberOfProblems || 100;
-	diagnostics.parserExecutableOrService = settings.pddlParser.executableOrService;
-	diagnostics.parserExecutableOptions = settings.pddlParser.executableOptions;
-	diagnostics.parserCustomPattern = settings.pddlParser.problemPattern;
-	diagnostics.timerDelayInSeconds = settings.pddlParser.delayInSecondsBeforeParsing || diagnostics.timerDelayInSeconds;
+	diagnostics.pddlParserSettings = settings.pddlParser;
 	// Revalidate any open text documents
 	diagnostics.revalidateAll();
 });
