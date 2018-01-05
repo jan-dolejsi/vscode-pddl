@@ -24,7 +24,7 @@ export class ValidatorService extends Validator {
         let requestHeader: any = {};
         if(this.useAuthentication) {
             requestHeader = {
-                "Authorization": "Bearer " + this.authentication.getValidSToken()
+                "Authorization": "Bearer " + this.authentication.sToken
             }
         }
 

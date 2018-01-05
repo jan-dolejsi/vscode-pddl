@@ -21,6 +21,7 @@ import { AutoCompletion } from './AutoCompletion';
 const PDDL_STOP_PLANNER = 'pddl.stopPlanner';
 const PDDL_CONFIGURE_PARSER = 'pddl.configureParser';
 const PDDL_LOGIN_PARSER_SERVICE = 'pddl.loginParserService';
+const PDDL_UPDATE_TOKENS_PARSER_SERVICE = 'pddl.updateTokensParserService';
 const PDDL_CONFIGURE_PLANNER = 'pddl.configurePlanner';
 const PDDL_GENERATE_PLAN_REPORT = 'pddl.planReport';
 const PDDL = 'PDDL';
@@ -83,8 +84,13 @@ export function activate(context: ExtensionContext) {
 	});
 
 	let loginParserServiceCommand = commands.registerCommand(PDDL_LOGIN_PARSER_SERVICE, () => {
-		let authentication = Authentication.create();
+		let authentication = createAuthentication(pddlConfiguration);
 		authentication.login(pddlConfiguration.savePddlParserAuthenticationTokens);
+	});
+
+	let updateTokensParserServiceCommand = commands.registerCommand(PDDL_UPDATE_TOKENS_PARSER_SERVICE, () => {
+		let authentication = createAuthentication(pddlConfiguration);
+		authentication.updateTokens(pddlConfiguration.savePddlParserAuthenticationTokens);
 	});
 
 	let configurePlannerCommand = commands.registerCommand(PDDL_CONFIGURE_PLANNER, () => {
@@ -113,8 +119,16 @@ export function activate(context: ExtensionContext) {
 	// Push the disposables to the context's subscriptions so that the 
 	// client can be deactivated on extension deactivation
 	context.subscriptions.push(planCommand, revealActionCommand, planning.planDocumentProviderRegistration, 
-		status, stopPlannerCommand, stateChangeHandler, configureParserCommand, loginParserServiceCommand, configurePlannerCommand, 
-		generatePlanReportCommand, completionItemProvider);
+		status, stopPlannerCommand, stateChangeHandler, configureParserCommand, loginParserServiceCommand, updateTokensParserServiceCommand, 
+		configurePlannerCommand, generatePlanReportCommand, completionItemProvider);
+}
+
+function createAuthentication(pddlConfiguration: PddlConfiguration): Authentication {
+    let configuration = pddlConfiguration.getPddlParserServiceAuthenticationConfiguration();
+	return new Authentication(configuration.url, configuration.requestEncoded, configuration.clientId, 
+		configuration.tokensvcUrl, configuration.tokensvcApiKey, configuration.tokensvcAccessPath, configuration.tokensvcValidatePath,
+	    configuration.tokensvcCodePath, configuration.tokensvcRefreshPath, configuration.tokensvcSvctkPath,
+        configuration.refreshToken, configuration.accessToken, configuration.sToken);
 }
 
 async function revealAction(domainInfo: DomainInfo, actionName: String) {

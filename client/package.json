@@ -78,6 +78,10 @@
         "title": "PDDL: Login for parser service"
       },
       {
+        "command": "pddl.updateTokensParserService",
+        "title": "PDDL: Update tokens for parser service"
+      },
+      {
         "command": "pddl.configurePlanner",
         "title": "PDDL: Configure planner"
       },
@@ -120,72 +124,72 @@
           "type": "string",
           "description": "Obsolete: please remove configuration values manually."
         },
-        "pddlParser.serviceAuthenticated": {
+        "pddlParser.serviceAuthenticationEnabled": {
           "scope": "resource",
           "type": "boolean",
           "description": "PDDL parser requires authentication."
         },
-        "pddlParser.authenticationUrl": {
+        "pddlParser.serviceAuthenticationUrl": {
           "scope": "resource",
           "type": "string",
           "description": "Authentication URL."
         },
-        "pddlParser.authenticationRequestEncoded": {
+        "pddlParser.serviceAuthenticationRequestEncoded": {
           "scope": "resource",
           "type": "string",
           "description": "Authentication request encoded."
         },
-        "pddlParser.authenticationClientId": {
+        "pddlParser.serviceAuthenticationClientId": {
           "scope": "resource",
           "type": "string",
           "description": "Authentication clientid."
         },
-        "pddlParser.authenticationTokensvcUrl": {
+        "pddlParser.serviceAuthenticationTokensvcUrl": {
           "scope": "resource",
           "type": "string",
           "description": "Authentication token service URL."
         },
-        "pddlParser.authenticationTokensvcApiKey": {
+        "pddlParser.serviceAuthenticationTokensvcApiKey": {
           "scope": "resource",
           "type": "string",
           "description": "Authentication token service API Key."
         },
-        "pddlParser.authenticationTokensvcAccessPath": {
+        "pddlParser.serviceAuthenticationTokensvcAccessPath": {
           "scope": "resource",
           "type": "string",
           "description": "Authentication token service access path."
         },
-        "pddlParser.authenticationTokensvcValidatePath": {
+        "pddlParser.serviceAuthenticationTokensvcValidatePath": {
           "scope": "resource",
           "type": "string",
           "description": "Authentication token service validate path."
         },
-        "pddlParser.authenticationTokensvcCodePath": {
+        "pddlParser.serviceAuthenticationTokensvcCodePath": {
           "scope": "resource",
           "type": "string",
           "description": "Authentication token service code path."
         },
-        "pddlParser.authenticationTokensvcRefreshPath": {
+        "pddlParser.serviceAuthenticationTokensvcRefreshPath": {
           "scope": "resource",
           "type": "string",
           "description": "Authentication token service refresh path."
         },
-        "pddlParser.authenticationTokensvcSvctkPath": {
+        "pddlParser.serviceAuthenticationTokensvcSvctkPath": {
           "scope": "resource",
           "type": "string",
           "description": "Authentication token service svctk path."
         },
-        "pddlParser.authenticationRefreshToken": {
+        "pddlParser.serviceAuthenticationRefreshToken": {
           "scope": "resource",
           "type": "string",
           "description": "Authentication refresh token."
         },
-        "pddlParser.authenticationAccessToken": {
+        "pddlParser.serviceAuthenticationAccessToken": {
           "scope": "resource",
           "type": "string",
           "description": "Authentication access token."
         },
-        "pddlParser.authenticationSToken": {
+        "pddlParser.serviceAuthenticationSToken": {
           "scope": "resource",
           "type": "string",
           "description": "Authentication s token."

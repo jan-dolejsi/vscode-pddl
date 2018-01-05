@@ -66,6 +66,7 @@ documents.onDidChangeContent((change) => {
 connection.onDidChangeConfiguration((change) => {
 	let settings = <Settings>change.settings;
 	diagnostics.pddlParserSettings = settings.pddlParser;
+	diagnostics.validator = null;
 	// Revalidate any open text documents
 	diagnostics.revalidateAll();
 });

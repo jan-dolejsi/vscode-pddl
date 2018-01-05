@@ -34,11 +34,6 @@ export class Authentication {
         console.log(this.sToken);
     }
 
-    static create() {        
-        return new Authentication('https://sauth-dot-cfsauth-qa.appspot.com/v1/auth', 'ODU0MDYwNDd7ImNsaWVudGlkIjoibGg4MDgxLXZzY29kZS1wZGRsLWFpcGxhbm5pbmcuc2xiYXBwLmNvbSIsICJyY2JpZCI6ImxoODA4MS12c2NvZGUtcGRkbCJ9NDkwNTk5NzA=', 'lh8081-vscode-pddl-aiplanning.slbapp.com',
-        'https://tksvc-dot-cfsauth-qa.appspot.com', 'AIzaSyAR9jypT78fsXfO-wZ4sGfiwlonIADNKUA', '/v1/access', '/v1/validate', '/v1/code', '/v1/refresh', '/v1/svctk', null, null, null);
-    }
-
     login(callback: (refreshToken: string, accessToken: string, sToken: string) => void) {
         var nonce = uuidv4();
         var app = express()
@@ -68,48 +63,73 @@ export class Authentication {
         opn(authUrl);
     }
 
-    refreshAccessToken(clientid: string, refreshtoken: string) {
-        request.get({ url: this.tokensvcUrl + this.tokensvcRefreshPath + '?key=' + this.tokensvcApiKey + '&accesstoken=\'\'', json: {clientid: clientid, refreshoken: refreshtoken}});
-        return false;
-    }
-
-    refreshSToken(clientid: string, accesstoken: string) {
-        request.get({ url: this.tokensvcUrl + this.tokensvcAccessPath + '?key=' + this.tokensvcApiKey + '&stoken=\'\'', json: {clientid: clientid, accesstoken: accesstoken}});
-        return false;
-    }
-
-    getValidSToken() {
-        if(this.sToken == null) {
-            if(this.accessToken == null) {
-                if(this.refreshToken == null) {
+    updateTokens(callback: (refreshToken: string, accessToken: string, sToken: string) => void) {
+        if(this.sToken == null || this.sToken == "") {
+            if(this.accessToken == null || this.accessToken == "") {
+                if(this.refreshToken == null || this.refreshToken == "") {
+                    this.refreshToken = null;
+                    this.accessToken = null;
                     this.sToken = null;
                 }
                 else {
-                    if(this.refreshAccessToken(this.clientId, this.refreshToken)) {
-                        this.sToken = this.getValidSToken();
-                    }
-                    else {
-                        this.sToken = null;
-                    }
+                    this.accessToken = null;
+                    this.sToken = null;
+                    this.refreshAccessAndSToken(callback);
                 }
             }
             else {
-                if(!this.refreshSToken(this.clientId, this.accessToken)) {
-                    this.sToken = null;
-                }
+                this.sToken = null;
+                this.refreshSToken(callback);
             }
         }
         else {
-            if(!this.validateSToken(this.clientId, this.sToken)) {
-                this.sToken = null;
-                this.sToken = this.getValidSToken();
-            }
+            this.validateSToken(callback);
         }
-        return this.sToken;
-    }    
+    }
 
-    validateSToken(clientid: string, stoken: string) {
-        request.get({ url: this.tokensvcUrl + this.tokensvcValidatePath + '?key=' + this.tokensvcApiKey, json: {clientid: clientid, audiences: clientid, stoken: stoken}});
-        return false;
+    refreshAccessAndSToken(callback: (refreshToken: string, accessToken: string, sToken: string) => void) {
+        let authentication = this;
+        request.post({ url: this.tokensvcUrl + this.tokensvcRefreshPath + '?key=' + this.tokensvcApiKey + '&accesstoken=\'\'', json: {clientid: this.clientId, refreshtoken: this.refreshToken}}, 
+        function(error, response, body) {
+            if(error == null && response.statusCode == 200 && body != null) {
+                authentication.accessToken = body.accesstoken;                
+                callback(authentication.refreshToken, authentication.accessToken, authentication.sToken);
+                authentication.refreshSToken(callback);
+            }
+            else {
+                authentication.accessToken = null;
+                authentication.sToken = null;
+                callback(authentication.refreshToken, authentication.accessToken, authentication.sToken);
+            }
+            });
+    }
+
+    refreshSToken(callback: (refreshToken: string, accessToken: string, sToken: string) => void) {
+        let authentication = this;
+        request.post({ url: this.tokensvcUrl + this.tokensvcAccessPath + '?key=' + this.tokensvcApiKey + '&stoken=\'\'', json: {clientid: this.clientId, accesstoken: this.accessToken}}, 
+        function(error, response, body) {
+            if(error == null && response.statusCode == 200 && body != null) {
+                authentication.sToken = body.stoken;
+                callback(authentication.refreshToken, authentication.accessToken, authentication.sToken);
+            }
+            else {
+                authentication.sToken = null;
+                callback(authentication.refreshToken, authentication.accessToken, authentication.sToken);
+            }
+            });
+    }
+
+    validateSToken(callback: (refreshToken: string, accessToken: string, sToken: string) => void) {
+        let authentication = this;
+        request.post({ url: this.tokensvcUrl + this.tokensvcValidatePath + '?key=' + this.tokensvcApiKey, json: {clientid: this.clientId, audiences: this.clientId, stoken: this.sToken}}, 
+        function(error, response, body) {
+            if(error == null && response.statusCode == 200 && body != null) {
+                authentication.sToken = authentication.sToken;
+                callback(authentication.refreshToken, authentication.accessToken, authentication.sToken);
+            }
+            else {
+                authentication.refreshSToken(callback);
+            }
+            });
     }
 }

@@ -4,29 +4,31 @@
  * ------------------------------------------------------------------------------------------ */
 import * as vscode from 'vscode';
 
-const PARSER_LOCATION = 'pddlParser.executableOrService';
-const PARSER_SYNTAX = 'pddlParser.executableOptions';
-const PARSER_LEGACY_LOCATION = 'pddlParser.pddlParserService';
-const PARSER_AUTHENTICATION_REFRESH_TOKEN = 'pddlParser.authenticationRefreshToken';
-const PARSER_AUTHENTICATION_ACCESS_TOKEN = 'pddlParser.authenticationAccessToken';
-const PARSER_AUTHENTICATION_S_TOKEN = 'pddlParser.authenticationSToken';
-const PLANNER_LOCATION = 'pddlPlanner.executableOrService';
-const PLANNER_SYNTAX = 'pddlPlanner.executableOptions';
-const PLANNER_EPSILON = 'pddlPlanner.epsilonTimeStep';
-export const VALUE_SEQ_LOCATION  = "pddlPlanner.valueSeqPath";
+const PDDL_PARSER = 'pddlParser';
+const PARSER_EXECUTABLE_OR_SERVICE = PDDL_PARSER + '.executableOrService';
+const PARSER_EXECUTABLE_OPTIONS = PDDL_PARSER + '.executableOptions';
+const PARSER_LEGACY_LOCATION = PDDL_PARSER + '.pddlParserService';
+const PARSER_SERVICE_AUTHENTICATION_REFRESH_TOKEN = PDDL_PARSER + '.serviceAuthenticationRefreshToken';
+const PARSER_SERVICE_AUTHENTICATION_ACCESS_TOKEN = PDDL_PARSER + '.serviceAuthenticationAccessToken';
+const PARSER_SERVICE_AUTHENTICATION_S_TOKEN = PDDL_PARSER + '.serviceAuthenticationSToken';
+
+const PDDL_PLANNER = 'pddlPlanner';
+const PLANNER_EXECUTABLE_OR_SERVICE = PDDL_PLANNER + '.executableOrService';
+const PLANNER_EXECUTABLE_OPTIONS = PDDL_PLANNER + '.executableOptions';
+const PLANNER_EPSILON_TIMESTEP = PDDL_PLANNER + '.epsilonTimeStep';
+export const PLANNER_VALUE_SEQ_PATH  = PDDL_PLANNER + ".valueSeqPath";
 
 export class PddlConfiguration {
 
     constructor(public context: vscode.ExtensionContext) {
-
     }
 
     getEpsilonTimeStep(): number {
-        return vscode.workspace.getConfiguration().get(PLANNER_EPSILON);
+        return vscode.workspace.getConfiguration().get(PLANNER_EPSILON_TIMESTEP);
     }
 
     async getParserPath(): Promise<string> {
-        let parserPath: string = vscode.workspace.getConfiguration().get(PARSER_LOCATION);
+        let parserPath: string = vscode.workspace.getConfiguration().get(PARSER_EXECUTABLE_OR_SERVICE);
 
         if (!parserPath) {
             parserPath = await this.askNewParserPath();
@@ -84,7 +86,7 @@ export class PddlConfiguration {
 
         if (legacyParserUrl) {
 
-            await this.moveConfiguration(configuration, PARSER_LEGACY_LOCATION, PARSER_LOCATION);
+            await this.moveConfiguration(configuration, PARSER_LEGACY_LOCATION, PARSER_EXECUTABLE_OR_SERVICE);
             return legacyParserUrl;
         }
         else {
@@ -93,7 +95,7 @@ export class PddlConfiguration {
     }
 
     async askNewParserPath() {
-        let existingValue: string = vscode.workspace.getConfiguration().get(PARSER_LOCATION);
+        let existingValue: string = vscode.workspace.getConfiguration().get(PARSER_EXECUTABLE_OR_SERVICE);
 
         let newParserPath = await vscode.window.showInputBox({
             prompt: "Enter PDDL parser/validator path local command or web service URL",
@@ -118,14 +120,14 @@ export class PddlConfiguration {
             }
 
             // Update the value in the target
-            configurationToUpdate.update(PARSER_LOCATION, newParserPath, newParserScope.target);
+            configurationToUpdate.update(PARSER_EXECUTABLE_OR_SERVICE, newParserPath, newParserScope.target);
         }
 
         return newParserPath;
     }
 
     async askParserOptions(scope: ScopeQuickPickItem) {
-        let existingValue: string = vscode.workspace.getConfiguration().get(PARSER_SYNTAX);
+        let existingValue: string = vscode.workspace.getConfiguration().get(PARSER_EXECUTABLE_OPTIONS);
 
         let newParserOptions = await vscode.window.showInputBox({
             prompt: "In case you use command line switches and options, override the default syntax. For more info, see (the wiki)[https://github.com/jan-dolejsi/vscode-pddl/wiki/Configuring-the-PDDL-parser].",
@@ -140,16 +142,35 @@ export class PddlConfiguration {
             let configurationToUpdate = this.getConfigurationForScope(scope);
 
             // Update the value in the target
-            configurationToUpdate.update(PARSER_SYNTAX, newParserOptions, scope.target);
+            configurationToUpdate.update(PARSER_EXECUTABLE_OPTIONS, newParserOptions, scope.target);
         }
 
         return newParserOptions;
     }
 
+    getPddlParserServiceAuthenticationConfiguration() {
+        let configuration = vscode.workspace.getConfiguration();
+        return {
+            url: configuration.get<string>(PDDL_PARSER + '.serviceAuthenticationUrl'),
+            requestEncoded: configuration.get<string>(PDDL_PARSER + '.serviceAuthenticationRequestEncoded'),
+            clientId: configuration.get<string>(PDDL_PARSER + '.serviceAuthenticationClientId'),
+            tokensvcUrl: configuration.get<string>(PDDL_PARSER + '.serviceAuthenticationTokensvcUrl'),
+            tokensvcApiKey: configuration.get<string>(PDDL_PARSER + '.serviceAuthenticationTokensvcApiKey'),
+            tokensvcAccessPath: configuration.get<string>(PDDL_PARSER + '.serviceAuthenticationTokensvcAccessPath'),
+            tokensvcValidatePath: configuration.get<string>(PDDL_PARSER + '.serviceAuthenticationTokensvcValidatePath'),
+            tokensvcCodePath: configuration.get<string>(PDDL_PARSER + '.serviceAuthenticationTokensvcCodePath'),
+            tokensvcRefreshPath: configuration.get<string>(PDDL_PARSER + '.serviceAuthenticationTokensvcRefreshPath'),
+            tokensvcSvctkPath: configuration.get<string>(PDDL_PARSER + '.serviceAuthenticationTokensvcSvctkPath'),
+            refreshToken: configuration.get<string>(PARSER_SERVICE_AUTHENTICATION_REFRESH_TOKEN),
+            accessToken: configuration.get<string>(PARSER_SERVICE_AUTHENTICATION_ACCESS_TOKEN),
+            sToken: configuration.get<string>(PARSER_SERVICE_AUTHENTICATION_S_TOKEN),
+        }
+    }
+
     async savePddlParserAuthenticationTokens(refreshtoken: string, accesstoken: string, stoken: string) {
-        vscode.workspace.getConfiguration().update(PARSER_AUTHENTICATION_REFRESH_TOKEN, refreshtoken);
-        vscode.workspace.getConfiguration().update(PARSER_AUTHENTICATION_ACCESS_TOKEN, accesstoken);
-        vscode.workspace.getConfiguration().update(PARSER_AUTHENTICATION_S_TOKEN, stoken);
+        vscode.workspace.getConfiguration().update(PARSER_SERVICE_AUTHENTICATION_REFRESH_TOKEN, refreshtoken);
+        vscode.workspace.getConfiguration().update(PARSER_SERVICE_AUTHENTICATION_ACCESS_TOKEN, accesstoken);
+        vscode.workspace.getConfiguration().update(PARSER_SERVICE_AUTHENTICATION_S_TOKEN, stoken);
     }
 
     static isHttp(path: string) {
@@ -157,7 +178,7 @@ export class PddlConfiguration {
     }
 
     async getPlannerPath(): Promise<string> {
-        let plannerPath: string = vscode.workspace.getConfiguration().get(PLANNER_LOCATION);
+        let plannerPath: string = vscode.workspace.getConfiguration().get(PLANNER_EXECUTABLE_OR_SERVICE);
 
         if (!plannerPath) {
             plannerPath = await this.askNewPlannerPath();
@@ -167,7 +188,7 @@ export class PddlConfiguration {
     }
 
     async askNewPlannerPath() {
-        let existingValue: string = vscode.workspace.getConfiguration().get(PLANNER_LOCATION);
+        let existingValue: string = vscode.workspace.getConfiguration().get(PLANNER_EXECUTABLE_OR_SERVICE);
         
         let newPlannerPath = await vscode.window.showInputBox({ 
             prompt: "Enter PDDL planner path local command or web service URL", 
@@ -192,14 +213,14 @@ export class PddlConfiguration {
             }
 
             // Update the value in the target
-            configurationToUpdate.update(PLANNER_LOCATION, newPlannerPath, newPlannerScope.target);
+            configurationToUpdate.update(PLANNER_EXECUTABLE_OR_SERVICE, newPlannerPath, newPlannerScope.target);
         }
 
         return newPlannerPath;
     }
 
     async askPlannerSyntax(scope: ScopeQuickPickItem) {
-        let existingValue: string = vscode.workspace.getConfiguration().get(PLANNER_SYNTAX);
+        let existingValue: string = vscode.workspace.getConfiguration().get(PLANNER_EXECUTABLE_OPTIONS);
 
         let newPlannerOptions = await vscode.window.showInputBox({
             prompt: "In case you use command line switches and options, override the default syntax. For more info, see (the wiki)[https://github.com/jan-dolejsi/vscode-pddl/wiki/Configuring-the-PDDL-planner].",
@@ -214,7 +235,7 @@ export class PddlConfiguration {
             let configurationToUpdate = this.getConfigurationForScope(scope);
 
             // Update the value in the target
-            configurationToUpdate.update(PLANNER_SYNTAX, newPlannerOptions, scope.target);
+            configurationToUpdate.update(PLANNER_EXECUTABLE_OPTIONS, newPlannerOptions, scope.target);
         }
 
         return newPlannerOptions;
@@ -242,11 +263,11 @@ export class PddlConfiguration {
     }
 
     getPlannerSyntax(): string {
-        return vscode.workspace.getConfiguration().get(PLANNER_SYNTAX);
+        return vscode.workspace.getConfiguration().get(PLANNER_EXECUTABLE_OPTIONS);
     }
 
     getValueSeqPath(): string {
-        return vscode.workspace.getConfiguration().get("pddlPlanner.valueSeqPath");
+        return vscode.workspace.getConfiguration().get(PLANNER_VALUE_SEQ_PATH);
     }
 
     async askConfigurationScope(): Promise<ScopeQuickPickItem> {

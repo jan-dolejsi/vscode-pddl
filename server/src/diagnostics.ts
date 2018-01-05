@@ -149,22 +149,31 @@ export class Diagnostics {
         });
     }
 
-    createValidator(): Validator{
+    createValidator(): Validator {
         if(!this.validator || this.validator.path != this.pddlParserSettings.executableOrService
             || (this.validator instanceof ValidatorExecutable) && (
                 this.validator.syntax != this.pddlParserSettings.executableOptions ||
                 this.validator.customPattern != this.pddlParserSettings.problemPattern
-            )){
+            )) {
             if (this.pddlParserSettings.executableOrService.match(/^http[s]?:/i)) {
                 // is a service
-                let authentication = new Authentication(this.pddlParserSettings.authenticationUrl, this.pddlParserSettings.authenticationRequestEncoded, this.pddlParserSettings.authenticationClientId, 
-                    this.pddlParserSettings.authenticationTokensvcUrl, this.pddlParserSettings.authenticationTokensvcApiKey, 
-                    this.pddlParserSettings.authenticationTokensvcAccessPath, this.pddlParserSettings.authenticationTokensvcValidatePath, this.pddlParserSettings.authenticationTokensvcCodePath, 
-                    this.pddlParserSettings.authenticationTokensvcRefreshPath, this.pddlParserSettings.authenticationTokensvcSvctkPath, 
-                    this.pddlParserSettings.authenticationRefreshToken,this.pddlParserSettings.authenticationAccessToken, this.pddlParserSettings.authenticationSToken);
-                return this.validator = new ValidatorService(this.pddlParserSettings.executableOrService, this.pddlParserSettings.serviceAuthenticated, authentication);
+                let authentication = new Authentication(
+                    this.pddlParserSettings.serviceAuthenticationUrl, 
+                    this.pddlParserSettings.serviceAuthenticationRequestEncoded, 
+                    this.pddlParserSettings.serviceAuthenticationClientId, 
+                    this.pddlParserSettings.serviceAuthenticationTokensvcUrl, 
+                    this.pddlParserSettings.serviceAuthenticationTokensvcApiKey, 
+                    this.pddlParserSettings.serviceAuthenticationTokensvcAccessPath, 
+                    this.pddlParserSettings.serviceAuthenticationTokensvcValidatePath, 
+                    this.pddlParserSettings.serviceAuthenticationTokensvcCodePath, 
+                    this.pddlParserSettings.serviceAuthenticationTokensvcRefreshPath, 
+                    this.pddlParserSettings.serviceAuthenticationTokensvcSvctkPath, 
+                    this.pddlParserSettings.serviceAuthenticationRefreshToken,
+                    this.pddlParserSettings.serviceAuthenticationAccessToken, 
+                    this.pddlParserSettings.serviceAuthenticationSToken);
+                return this.validator = new ValidatorService(this.pddlParserSettings.executableOrService, this.pddlParserSettings.serviceAuthenticationEnabled, authentication);
             }
-            else{
+            else {
                 return this.validator = new ValidatorExecutable(this.pddlParserSettings.executableOrService, this.pddlParserSettings.executableOptions, this.pddlParserSettings.problemPattern);
             }
         }
