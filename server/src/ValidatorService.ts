@@ -39,8 +39,15 @@ export class ValidatorService extends Validator {
                 onError.apply(this, [err.message]);
                 return;
             }
+
+            if(this.useAuthentication) {
+                if (httpResponse && httpResponse.statusCode == 400) {
+                    this.authentication.updateTokens(() => { this.validate(domainInfo, problemFiles, onSuccess, onError); }, () => { console.log('Couldn\'t update the tokens, try to login.'); });
+                }
+            }
+
             if (httpResponse && httpResponse.statusCode != 200) {
-                let notificationMessage = `PDDL Language Server returned code ${httpResponse.statusCode} ${httpResponse.statusMessage}`;
+                let notificationMessage = `PDDL Language Validator Server returned code ${httpResponse.statusCode} ${httpResponse.statusMessage}`;
                 //let notificationType = MessageType.Warning;
                 onError.apply(this, [notificationMessage]);
                 return;

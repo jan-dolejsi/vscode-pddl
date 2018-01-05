@@ -19,22 +19,22 @@ export class Authentication {
     }
 
     display() {
-        console.log(this.authUrl);
-        console.log(this.authRequestEncoded);
-        console.log(this.clientId);
-        console.log(this.tokensvcUrl);
-        console.log(this.tokensvcApiKey);
-        console.log(this.tokensvcAccessPath);
-        console.log(this.tokensvcValidatePath);
-        console.log(this.tokensvcCodePath);
-        console.log(this.tokensvcRefreshPath);
-        console.log(this.tokensvcSvctkPath);
-        console.log(this.refreshToken);
-        console.log(this.accessToken);
-        console.log(this.sToken);
+        console.log('URL: ' + this.authUrl);
+        console.log('Request encoded: ' + this.authRequestEncoded);
+        console.log('ClientId: ' + this.clientId);
+        console.log('Token Svc Url: ' + this.tokensvcUrl);
+        console.log('Token Svc Api Key: ' + this.tokensvcApiKey);
+        console.log('Token Svc Access Path: ' + this.tokensvcAccessPath);
+        console.log('Token Svc Validate Path: ' + this.tokensvcValidatePath);
+        console.log('Token Svc Code Path: ' + this.tokensvcCodePath);
+        console.log('Token Svc Refresh Path: ' + this.tokensvcRefreshPath);
+        console.log('Token Svc Svctk Path: ' + this.tokensvcSvctkPath);
+        console.log('Refresh Token: ' + this.refreshToken);
+        console.log('Access Token: ' + this.accessToken);
+        console.log('S Token: ' + this.sToken);
     }
 
-    login(callback: (refreshToken: string, accessToken: string, sToken: string) => void) {
+    login(onSuccess: (refreshToken: string, accessToken: string, sToken: string) => void, onError: () => void) {
         var nonce = uuidv4();
         var app = express()
         app.use(bodyParser.json());
@@ -47,12 +47,13 @@ export class Authentication {
                 thisAuthentication.refreshToken = req.body.refreshtoken;
                 thisAuthentication.accessToken = req.body.accesstoken;
                 thisAuthentication.sToken = req.body.stoken;
-                callback(thisAuthentication.refreshToken, thisAuthentication.accessToken, thisAuthentication.sToken)
+                onSuccess(thisAuthentication.refreshToken, thisAuthentication.accessToken, thisAuthentication.sToken)
                 res.sendStatus(200);
                 next();
             }
             else {
                 console.log('Unexpected nonce: ' + req.body.nonce + '(expected:' + nonce + ')');
+                onError();
                 res.sendStatus(401);
                 next();
             }
@@ -63,7 +64,7 @@ export class Authentication {
         opn(authUrl);
     }
 
-    updateTokens(callback: (refreshToken: string, accessToken: string, sToken: string) => void) {
+    updateTokens(onSuccess: (refreshToken: string, accessToken: string, sToken: string) => void, onError: () => void) {
         if(this.sToken == null || this.sToken == "") {
             if(this.accessToken == null || this.accessToken == "") {
                 if(this.refreshToken == null || this.refreshToken == "") {
@@ -74,61 +75,60 @@ export class Authentication {
                 else {
                     this.accessToken = null;
                     this.sToken = null;
-                    this.refreshAccessAndSToken(callback);
+                    this.refreshAccessAndSToken(onSuccess, onError);
                 }
             }
             else {
                 this.sToken = null;
-                this.refreshSToken(callback);
+                this.refreshSToken(onSuccess, onError);
             }
         }
         else {
-            this.validateSToken(callback);
+            this.validateSToken(onSuccess, onError);
         }
     }
 
-    refreshAccessAndSToken(callback: (refreshToken: string, accessToken: string, sToken: string) => void) {
+    refreshAccessAndSToken(onSuccess: (refreshToken: string, accessToken: string, sToken: string) => void, onError: () => void) {
         let authentication = this;
         request.post({ url: this.tokensvcUrl + this.tokensvcRefreshPath + '?key=' + this.tokensvcApiKey + '&accesstoken=\'\'', json: {clientid: this.clientId, refreshtoken: this.refreshToken}}, 
         function(error, response, body) {
             if(error == null && response.statusCode == 200 && body != null) {
                 authentication.accessToken = body.accesstoken;                
-                callback(authentication.refreshToken, authentication.accessToken, authentication.sToken);
-                authentication.refreshSToken(callback);
+                authentication.refreshSToken(onSuccess, onError);
             }
             else {
                 authentication.accessToken = null;
                 authentication.sToken = null;
-                callback(authentication.refreshToken, authentication.accessToken, authentication.sToken);
+                onError();
             }
             });
     }
 
-    refreshSToken(callback: (refreshToken: string, accessToken: string, sToken: string) => void) {
+    refreshSToken(onSuccess: (refreshToken: string, accessToken: string, sToken: string) => void, onError: () => void) {
         let authentication = this;
         request.post({ url: this.tokensvcUrl + this.tokensvcAccessPath + '?key=' + this.tokensvcApiKey + '&stoken=\'\'', json: {clientid: this.clientId, accesstoken: this.accessToken}}, 
         function(error, response, body) {
             if(error == null && response.statusCode == 200 && body != null) {
                 authentication.sToken = body.stoken;
-                callback(authentication.refreshToken, authentication.accessToken, authentication.sToken);
+                onSuccess(authentication.refreshToken, authentication.accessToken, authentication.sToken);
             }
             else {
                 authentication.sToken = null;
-                callback(authentication.refreshToken, authentication.accessToken, authentication.sToken);
+                onError();
             }
             });
     }
 
-    validateSToken(callback: (refreshToken: string, accessToken: string, sToken: string) => void) {
+    validateSToken(onSuccess: (refreshToken: string, accessToken: string, sToken: string) => void, onError: () => void) {
         let authentication = this;
         request.post({ url: this.tokensvcUrl + this.tokensvcValidatePath + '?key=' + this.tokensvcApiKey, json: {clientid: this.clientId, audiences: this.clientId, stoken: this.sToken}}, 
         function(error, response, body) {
             if(error == null && response.statusCode == 200 && body != null) {
                 authentication.sToken = authentication.sToken;
-                callback(authentication.refreshToken, authentication.accessToken, authentication.sToken);
+                onSuccess(authentication.refreshToken, authentication.accessToken, authentication.sToken);
             }
             else {
-                authentication.refreshSToken(callback);
+                authentication.refreshSToken(onSuccess, onError);
             }
             });
     }

@@ -85,12 +85,12 @@ export function activate(context: ExtensionContext) {
 
 	let loginParserServiceCommand = commands.registerCommand(PDDL_LOGIN_PARSER_SERVICE, () => {
 		let authentication = createAuthentication(pddlConfiguration);
-		authentication.login(pddlConfiguration.savePddlParserAuthenticationTokens);
+		authentication.login(pddlConfiguration.savePddlParserAuthenticationTokens, () => { console.log('Login failure.'); });
 	});
 
 	let updateTokensParserServiceCommand = commands.registerCommand(PDDL_UPDATE_TOKENS_PARSER_SERVICE, () => {
 		let authentication = createAuthentication(pddlConfiguration);
-		authentication.updateTokens(pddlConfiguration.savePddlParserAuthenticationTokens);
+		authentication.updateTokens(pddlConfiguration.savePddlParserAuthenticationTokens, () => { console.log('Couldn\'t update the tokens, try to login.'); });
 	});
 
 	let configurePlannerCommand = commands.registerCommand(PDDL_CONFIGURE_PLANNER, () => {
@@ -102,7 +102,7 @@ export function activate(context: ExtensionContext) {
 
 		if(plans!=null){
 			new PlanReportGenerator(context, 1000, true).export(plans, plans.length - 1);
-		}else{
+		} else {
 			window.showErrorMessage("There is no plan to export.");
 		}
 	});
