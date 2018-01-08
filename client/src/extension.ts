@@ -23,6 +23,8 @@ const PDDL_CONFIGURE_PARSER = 'pddl.configureParser';
 const PDDL_LOGIN_PARSER_SERVICE = 'pddl.loginParserService';
 const PDDL_UPDATE_TOKENS_PARSER_SERVICE = 'pddl.updateTokensParserService';
 const PDDL_CONFIGURE_PLANNER = 'pddl.configurePlanner';
+const PDDL_LOGIN_PLANNER_SERVICE = 'pddl.loginPlannerService';
+const PDDL_UPDATE_TOKENS_PLANNER_SERVICE = 'pddl.updateTokensPlannerService';
 const PDDL_GENERATE_PLAN_REPORT = 'pddl.planReport';
 const PDDL = 'PDDL';
 
@@ -96,6 +98,16 @@ export function activate(context: ExtensionContext) {
 	let configurePlannerCommand = commands.registerCommand(PDDL_CONFIGURE_PLANNER, () => {
 		pddlConfiguration.askNewPlannerPath();
 	});
+
+	let loginPlannerServiceCommand = commands.registerCommand(PDDL_LOGIN_PLANNER_SERVICE, () => {
+		let authentication = createAuthentication(pddlConfiguration);
+		authentication.login(pddlConfiguration.savePddlPlannerAuthenticationTokens, () => { console.log('Login failure.'); });
+	});
+
+	let updateTokensPlannerServiceCommand = commands.registerCommand(PDDL_UPDATE_TOKENS_PLANNER_SERVICE, () => {
+		let authentication = createAuthentication(pddlConfiguration);
+		authentication.updateTokens(pddlConfiguration.savePddlPlannerAuthenticationTokens, () => { console.log('Couldn\'t update the tokens, try to login.'); });
+	});
 	
 	let generatePlanReportCommand = commands.registerCommand(PDDL_GENERATE_PLAN_REPORT, () => {
 		let plans: Plan[] = planning.getPlans();
@@ -120,7 +132,7 @@ export function activate(context: ExtensionContext) {
 	// client can be deactivated on extension deactivation
 	context.subscriptions.push(planCommand, revealActionCommand, planning.planDocumentProviderRegistration, 
 		status, stopPlannerCommand, stateChangeHandler, configureParserCommand, loginParserServiceCommand, updateTokensParserServiceCommand, 
-		configurePlannerCommand, generatePlanReportCommand, completionItemProvider);
+		configurePlannerCommand, loginPlannerServiceCommand, updateTokensPlannerServiceCommand, generatePlanReportCommand, completionItemProvider);
 }
 
 function createAuthentication(pddlConfiguration: PddlConfiguration): Authentication {

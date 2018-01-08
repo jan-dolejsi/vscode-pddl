@@ -71,6 +71,7 @@ export class Authentication {
                     this.refreshToken = null;
                     this.accessToken = null;
                     this.sToken = null;
+                    onError();
                 }
                 else {
                     this.accessToken = null;
@@ -113,6 +114,7 @@ export class Authentication {
                 onSuccess(authentication.refreshToken, authentication.accessToken, authentication.sToken);
             }
             else {
+                authentication.accessToken = null;
                 authentication.sToken = null;
                 onError();
             }

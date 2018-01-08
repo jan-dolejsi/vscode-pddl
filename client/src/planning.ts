@@ -21,6 +21,7 @@ import { PlannerExecutable } from './PlannerExecutable';
 import { PlannerService } from './PlannerService';
 import { Planner } from './planner';
 import { PddlPlanParser } from './PddlPlanParser';
+import { Authentication } from '../../common/src/Authentication';
 
 export class Planning implements PlanningHandler {
     output: OutputChannel;
@@ -139,7 +140,16 @@ export class Planning implements PlanningHandler {
         if (!plannerPath) return null;
 
         if (PddlConfiguration.isHttp(plannerPath)) {
-            return new PlannerService(plannerPath);
+            let useAuthentication = this.plannerConfiguration.isPddlPlannerServiceAuthenticationEnabled();
+            let authentication = null;
+            if(useAuthentication) {
+                let configuration = this.plannerConfiguration.getPddlPlannerServiceAuthenticationConfiguration()
+                authentication = new Authentication(configuration.url, configuration.requestEncoded, configuration.clientId, 
+                    configuration.tokensvcUrl, configuration.tokensvcApiKey, configuration.tokensvcAccessPath, configuration.tokensvcValidatePath, 
+                    configuration.tokensvcCodePath, configuration.tokensvcRefreshPath, configuration.tokensvcSvctkPath, 
+                    configuration.refreshToken, configuration.accessToken, configuration.sToken);
+            }
+            return new PlannerService(plannerPath, useAuthentication, authentication);
         }
         else {
             let plannerOptions = await this.plannerConfiguration.getPlannerOptions();

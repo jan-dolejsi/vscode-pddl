@@ -15,6 +15,9 @@ const PARSER_SERVICE_AUTHENTICATION_S_TOKEN = PDDL_PARSER + '.serviceAuthenticat
 const PDDL_PLANNER = 'pddlPlanner';
 const PLANNER_EXECUTABLE_OR_SERVICE = PDDL_PLANNER + '.executableOrService';
 const PLANNER_EXECUTABLE_OPTIONS = PDDL_PLANNER + '.executableOptions';
+const PLANNER_SERVICE_AUTHENTICATION_REFRESH_TOKEN = PDDL_PLANNER + '.serviceAuthenticationRefreshToken';
+const PLANNER_SERVICE_AUTHENTICATION_ACCESS_TOKEN = PDDL_PLANNER + '.serviceAuthenticationAccessToken';
+const PLANNER_SERVICE_AUTHENTICATION_S_TOKEN = PDDL_PLANNER + '.serviceAuthenticationSToken';
 const PLANNER_EPSILON_TIMESTEP = PDDL_PLANNER + '.epsilonTimeStep';
 export const PLANNER_VALUE_SEQ_PATH  = PDDL_PLANNER + ".valueSeqPath";
 
@@ -147,6 +150,10 @@ export class PddlConfiguration {
 
         return newParserOptions;
     }
+    
+    isPddlParserServiceAuthenticationEnabled() {
+        return vscode.workspace.getConfiguration().get<boolean>(PDDL_PARSER + '.serviceAuthenticationEnabled');
+    }
 
     getPddlParserServiceAuthenticationConfiguration() {
         let configuration = vscode.workspace.getConfiguration();
@@ -171,6 +178,35 @@ export class PddlConfiguration {
         vscode.workspace.getConfiguration().update(PARSER_SERVICE_AUTHENTICATION_REFRESH_TOKEN, refreshtoken);
         vscode.workspace.getConfiguration().update(PARSER_SERVICE_AUTHENTICATION_ACCESS_TOKEN, accesstoken);
         vscode.workspace.getConfiguration().update(PARSER_SERVICE_AUTHENTICATION_S_TOKEN, stoken);
+    }
+    
+    isPddlPlannerServiceAuthenticationEnabled() {
+        return vscode.workspace.getConfiguration().get<boolean>(PDDL_PLANNER + '.serviceAuthenticationEnabled');
+    }
+
+    getPddlPlannerServiceAuthenticationConfiguration() {
+        let configuration = vscode.workspace.getConfiguration();
+        return {
+            url: configuration.get<string>(PDDL_PLANNER + '.serviceAuthenticationUrl'),
+            requestEncoded: configuration.get<string>(PDDL_PLANNER + '.serviceAuthenticationRequestEncoded'),
+            clientId: configuration.get<string>(PDDL_PLANNER + '.serviceAuthenticationClientId'),
+            tokensvcUrl: configuration.get<string>(PDDL_PLANNER + '.serviceAuthenticationTokensvcUrl'),
+            tokensvcApiKey: configuration.get<string>(PDDL_PLANNER + '.serviceAuthenticationTokensvcApiKey'),
+            tokensvcAccessPath: configuration.get<string>(PDDL_PLANNER + '.serviceAuthenticationTokensvcAccessPath'),
+            tokensvcValidatePath: configuration.get<string>(PDDL_PLANNER + '.serviceAuthenticationTokensvcValidatePath'),
+            tokensvcCodePath: configuration.get<string>(PDDL_PLANNER + '.serviceAuthenticationTokensvcCodePath'),
+            tokensvcRefreshPath: configuration.get<string>(PDDL_PLANNER + '.serviceAuthenticationTokensvcRefreshPath'),
+            tokensvcSvctkPath: configuration.get<string>(PDDL_PLANNER + '.serviceAuthenticationTokensvcSvctkPath'),
+            refreshToken: configuration.get<string>(PLANNER_SERVICE_AUTHENTICATION_REFRESH_TOKEN),
+            accessToken: configuration.get<string>(PLANNER_SERVICE_AUTHENTICATION_ACCESS_TOKEN),
+            sToken: configuration.get<string>(PLANNER_SERVICE_AUTHENTICATION_S_TOKEN),
+        }
+    }
+
+    async savePddlPlannerAuthenticationTokens(refreshtoken: string, accesstoken: string, stoken: string) {
+        vscode.workspace.getConfiguration().update(PLANNER_SERVICE_AUTHENTICATION_REFRESH_TOKEN, refreshtoken);
+        vscode.workspace.getConfiguration().update(PLANNER_SERVICE_AUTHENTICATION_ACCESS_TOKEN, accesstoken);
+        vscode.workspace.getConfiguration().update(PLANNER_SERVICE_AUTHENTICATION_S_TOKEN, stoken);
     }
 
     static isHttp(path: string) {

@@ -86,6 +86,14 @@
         "title": "PDDL: Configure planner"
       },
       {
+        "command": "pddl.loginPlannerService",
+        "title": "PDDL: Login for planner service"
+      },
+      {
+        "command": "pddl.updateTokensPlannerService",
+        "title": "PDDL: Update tokens for planner service"
+      },
+      {
         "command": "pddl.planReport",
         "title": "PDDL: Generate plan report"
       }
@@ -232,6 +240,76 @@
           "description": "Override the command-line options passed to the PDDL planner configured in 'pddlPlanner.executableOrService'.",
           "pattern": "^\\$\\(planner\\).+\\$\\(options\\).+\\$\\(domain\\).+\\$\\(problem\\).*$",
           "default": "$(planner) $(options) $(domain) $(problem)"
+        },
+        "pddlPlanner.serviceAuthenticationEnabled": {
+          "scope": "resource",
+          "type": "boolean",
+          "description": "PDDL planner requires authentication."
+        },
+        "pddlPlanner.serviceAuthenticationUrl": {
+          "scope": "resource",
+          "type": "string",
+          "description": "Authentication URL."
+        },
+        "pddlPlanner.serviceAuthenticationRequestEncoded": {
+          "scope": "resource",
+          "type": "string",
+          "description": "Authentication request encoded."
+        },
+        "pddlPlanner.serviceAuthenticationClientId": {
+          "scope": "resource",
+          "type": "string",
+          "description": "Authentication clientid."
+        },
+        "pddlPlanner.serviceAuthenticationTokensvcUrl": {
+          "scope": "resource",
+          "type": "string",
+          "description": "Authentication token service URL."
+        },
+        "pddlPlanner.serviceAuthenticationTokensvcApiKey": {
+          "scope": "resource",
+          "type": "string",
+          "description": "Authentication token service API Key."
+        },
+        "pddlPlanner.serviceAuthenticationTokensvcAccessPath": {
+          "scope": "resource",
+          "type": "string",
+          "description": "Authentication token service access path."
+        },
+        "pddlPlanner.serviceAuthenticationTokensvcValidatePath": {
+          "scope": "resource",
+          "type": "string",
+          "description": "Authentication token service validate path."
+        },
+        "pddlPlanner.serviceAuthenticationTokensvcCodePath": {
+          "scope": "resource",
+          "type": "string",
+          "description": "Authentication token service code path."
+        },
+        "pddlPlanner.serviceAuthenticationTokensvcRefreshPath": {
+          "scope": "resource",
+          "type": "string",
+          "description": "Authentication token service refresh path."
+        },
+        "pddlPlanner.serviceAuthenticationTokensvcSvctkPath": {
+          "scope": "resource",
+          "type": "string",
+          "description": "Authentication token service svctk path."
+        },
+        "pddlPlanner.serviceAuthenticationRefreshToken": {
+          "scope": "resource",
+          "type": "string",
+          "description": "Authentication refresh token."
+        },
+        "pddlPlanner.serviceAuthenticationAccessToken": {
+          "scope": "resource",
+          "type": "string",
+          "description": "Authentication access token."
+        },
+        "pddlPlanner.serviceAuthenticationSToken": {
+          "scope": "resource",
+          "type": "string",
+          "description": "Authentication s token."
         },
         "pddlPlanner.epsilonTimeStep": {
           "scope": "resource",
