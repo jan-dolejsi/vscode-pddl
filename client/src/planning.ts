@@ -144,7 +144,7 @@ export class Planning implements PlanningHandler {
             let authentication = null;
             if(useAuthentication) {
                 let configuration = this.plannerConfiguration.getPddlPlannerServiceAuthenticationConfiguration()
-                authentication = new Authentication(configuration.url, configuration.requestEncoded, configuration.clientId, 
+                authentication = new Authentication(configuration.url, configuration.requestEncoded, configuration.clientId, configuration.callbackPort, configuration.timeoutInMs,
                     configuration.tokensvcUrl, configuration.tokensvcApiKey, configuration.tokensvcAccessPath, configuration.tokensvcValidatePath, 
                     configuration.tokensvcCodePath, configuration.tokensvcRefreshPath, configuration.tokensvcSvctkPath, 
                     configuration.refreshToken, configuration.accessToken, configuration.sToken);

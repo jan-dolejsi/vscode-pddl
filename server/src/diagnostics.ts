@@ -160,7 +160,9 @@ export class Diagnostics {
                 let authentication = new Authentication(
                     this.pddlParserSettings.serviceAuthenticationUrl, 
                     this.pddlParserSettings.serviceAuthenticationRequestEncoded, 
-                    this.pddlParserSettings.serviceAuthenticationClientId, 
+                    this.pddlParserSettings.serviceAuthenticationClientId,
+                    this.pddlParserSettings.serviceAuthenticationCallbackPort,
+                    this.pddlParserSettings.serviceAuthenticationTimeoutInMs,
                     this.pddlParserSettings.serviceAuthenticationTokensvcUrl, 
                     this.pddlParserSettings.serviceAuthenticationTokensvcApiKey, 
                     this.pddlParserSettings.serviceAuthenticationTokensvcAccessPath, 

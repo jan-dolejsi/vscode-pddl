@@ -33,6 +33,8 @@ export interface PDDLParserSettings {
 	serviceAuthenticationUrl: string;
 	serviceAuthenticationRequestEncoded: string;
 	serviceAuthenticationClientId: string;
+	serviceAuthenticationCallbackPort: number;
+	serviceAuthenticationTimeoutInMs: number;
 	serviceAuthenticationTokensvcUrl: string;
 	serviceAuthenticationTokensvcApiKey: string;
 	serviceAuthenticationTokensvcAccessPath: string;

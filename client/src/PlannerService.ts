@@ -40,8 +40,17 @@ export class PlannerService extends Planner {
             }
 
             if(this.useAuthentication) {
-                if (httpResponse && httpResponse.statusCode == 400) {
-                    this.authentication.updateTokens(() => { this.plan(domainFileInfo, problemFileInfo, planParser, parent); }, () => { console.log('Couldn\'t update the tokens, try to login.'); });
+                if (httpResponse) {
+                    if (httpResponse.statusCode == 400) {
+                        let message = "Authentication failed. Please login or update tokens."
+                        parent.handleError(new Error(message), message);
+                        return;
+                    }
+                    else if (httpResponse.statusCode == 401) {
+                        let message = "Invalid token. Please update tokens."
+                        parent.handleError(new Error(message), message);
+                        return;
+                    }
                 }
             }
 

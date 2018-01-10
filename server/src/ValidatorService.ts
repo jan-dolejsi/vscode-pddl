@@ -41,8 +41,17 @@ export class ValidatorService extends Validator {
             }
 
             if(this.useAuthentication) {
-                if (httpResponse && httpResponse.statusCode == 400) {
-                    this.authentication.updateTokens(() => { this.validate(domainInfo, problemFiles, onSuccess, onError); }, () => { console.log('Couldn\'t update the tokens, try to login.'); });
+                if (httpResponse) {
+                    if (httpResponse.statusCode == 400) {
+                        let message = "Authentication failed. Please login or update tokens."
+                        onError.apply(this, [message]);
+                        return;
+                    }
+                    else if (httpResponse.statusCode == 401) {
+                        let message = "Invalid token. Please update tokens."
+                        onError.apply(this, [message]);
+                        return;
+                    }
                 }
             }
 

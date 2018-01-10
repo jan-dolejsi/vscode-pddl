@@ -152,6 +152,17 @@
           "type": "string",
           "description": "Authentication clientid."
         },
+        "pddlParser.serviceAuthenticationCallbackPort": {
+          "scope": "resource",
+          "type": "string",
+          "description": "Authentication callback port."
+        },
+        "pddlParser.serviceAuthenticationTimeoutInMs": {
+          "scope": "resource",
+          "type": "number",
+          "default": 10000,
+          "description": "Authentication timeout in ms."
+        },
         "pddlParser.serviceAuthenticationTokensvcUrl": {
           "scope": "resource",
           "type": "string",
@@ -260,6 +271,17 @@
           "scope": "resource",
           "type": "string",
           "description": "Authentication clientid."
+        },
+        "pddlPlanner.serviceAuthenticationCallbackPort": {
+          "scope": "resource",
+          "type": "string",
+          "description": "Authentication callback port."
+        },
+        "pddlPlanner.serviceAuthenticationTimeoutInMs": {
+          "scope": "resource",
+          "type": "number",
+          "default": 10000,
+          "description": "Authentication timeout in ms."
         },
         "pddlPlanner.serviceAuthenticationTokensvcUrl": {
           "scope": "resource",
