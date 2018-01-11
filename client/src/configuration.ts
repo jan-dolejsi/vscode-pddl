@@ -176,10 +176,10 @@ export class PddlConfiguration {
         }
     }
 
-    async savePddlParserAuthenticationTokens(refreshtoken: string, accesstoken: string, stoken: string) {
-        vscode.workspace.getConfiguration().update(PARSER_SERVICE_AUTHENTICATION_REFRESH_TOKEN, refreshtoken);
-        vscode.workspace.getConfiguration().update(PARSER_SERVICE_AUTHENTICATION_ACCESS_TOKEN, accesstoken);
-        vscode.workspace.getConfiguration().update(PARSER_SERVICE_AUTHENTICATION_S_TOKEN, stoken);
+    async savePddlParserAuthenticationTokens(configuration: vscode.WorkspaceConfiguration, refreshtoken: string, accesstoken: string, stoken: string, target: vscode.ConfigurationTarget) {
+        configuration.update(PARSER_SERVICE_AUTHENTICATION_REFRESH_TOKEN, refreshtoken, target);
+        configuration.update(PARSER_SERVICE_AUTHENTICATION_ACCESS_TOKEN, accesstoken, target);
+        configuration.update(PARSER_SERVICE_AUTHENTICATION_S_TOKEN, stoken, target);
     }
     
     isPddlPlannerServiceAuthenticationEnabled() {
@@ -207,10 +207,10 @@ export class PddlConfiguration {
         }
     }
 
-    async savePddlPlannerAuthenticationTokens(refreshtoken: string, accesstoken: string, stoken: string) {
-        vscode.workspace.getConfiguration().update(PLANNER_SERVICE_AUTHENTICATION_REFRESH_TOKEN, refreshtoken);
-        vscode.workspace.getConfiguration().update(PLANNER_SERVICE_AUTHENTICATION_ACCESS_TOKEN, accesstoken);
-        vscode.workspace.getConfiguration().update(PLANNER_SERVICE_AUTHENTICATION_S_TOKEN, stoken);
+    async savePddlPlannerAuthenticationTokens(configuration: vscode.WorkspaceConfiguration, refreshtoken: string, accesstoken: string, stoken: string, target: vscode.ConfigurationTarget) {
+        configuration.update(PLANNER_SERVICE_AUTHENTICATION_REFRESH_TOKEN, refreshtoken, target);
+        configuration.update(PLANNER_SERVICE_AUTHENTICATION_ACCESS_TOKEN, accesstoken, target);
+        configuration.update(PLANNER_SERVICE_AUTHENTICATION_S_TOKEN, stoken, target);
     }
 
     static isHttp(path: string) {
