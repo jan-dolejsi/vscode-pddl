@@ -6,10 +6,19 @@ Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how 
 
 ## [Unreleased]
 
-* Find all references support for _type_.
-* Rename predicates, functions, types, parameters and objects
+* Rename parameters and objects
 * Auto-completion for constant/object names.
 * Plan debugger
+
+## [2.5.2] - 2018-01-99
+
+Better support for PDDL object types. _Go to Definition_, _Find all References_ and _Rename_ operations are now supported.
+
+PDDL language configuration was improved - hyphens inside identifiers work as expected in the editor.
+
+Implemented predicate and function renaming. Try this: put cursor into predicate/function name, press `F2`, modify the name and press Enter.
+
+Improved hover-over tooltip markdown rendering by moving the code from the language server directly to the extension.
 
 ## [2.4.2] - 2017-12-15
 

@@ -5,55 +5,15 @@
 'use strict';
 
 import {
-    Position, Range, MarkedString, Hover, Location, SymbolInformation, SymbolKind
-} from 'vscode-languageserver';
+    Position, Range, Hover, Location, Uri, TextDocument, MarkdownString
+} from 'vscode';
 
 import { PddlWorkspace } from '../../common/src/workspace-model';
 
-import { Variable, DomainInfo, PddlRange } from '../../common/src/parser';
+import { Variable, PddlRange } from '../../common/src/parser';
 
-export class SymbolInfoProvider {
-    workspace: PddlWorkspace;
-    constructor(workspace: PddlWorkspace) {
-        this.workspace = workspace;
-    }
-
-    getHover(fileUri: string, position: Position) {
-        let info = this.getSymbolInfo(fileUri, position);
-        return info ? info.hover : null;
-    }
-
-    getDefinition(fileUri: string, position: Position): Location {
-        let info = this.getSymbolInfo(fileUri, position);
-        return info ? info.location : null;
-    }
-
-    getReferences(fileUri: string, position: Position, includeDeclaration: boolean): Location[] {
-        let info = this.getSymbolInfo(fileUri, position);
-        if (!info) return [];
-
-        return this.findSymbolReferences(fileUri, info, includeDeclaration);
-    }
-
-    getSymbols(fileUri: string): SymbolInformation[] {
-        let fileInfo = this.workspace.getFileInfo(fileUri);
-        
-        if(!fileInfo.isDomain()) return [];
-        
-        let domainInfo = <DomainInfo>fileInfo;
-
-        let actionSymbols = domainInfo.actions.map(action => SymbolInformation.create(action.name, SymbolKind.Module, SymbolInfoProvider.toRange(action.location)));
-
-        domainInfo.getPredicates().forEach(p => domainInfo.findVariableLocation(p));
-        let predicateSymbols = domainInfo.getPredicates().map(variable => SymbolInformation.create(variable.declaredName, SymbolKind.Boolean, SymbolInfoProvider.toRange(variable.location)));
-        
-        domainInfo.getFunctions().forEach(f => domainInfo.findVariableLocation(f));
-        let functionSymbols = domainInfo.getFunctions().map(variable => SymbolInformation.create(variable.declaredName, SymbolKind.Function, SymbolInfoProvider.toRange(variable.location)));
-
-        let symbols = actionSymbols.concat(predicateSymbols, functionSymbols);
-
-        return symbols;
-    }
+export class SymbolUtils {
+    constructor(public workspace: PddlWorkspace) {}
     
     getSymbolInfo(fileUri: string, position: Position): SymbolInfo {
         let fileInfo = this.workspace.getFileInfo(fileUri);
@@ -71,7 +31,7 @@ export class SymbolInfoProvider {
                 domainInfo.findVariableLocation(predicateFound);
                 return new VariableInfo(
                     this.createHover(symbol.range, 'Predicate', this.brackets(predicateFound.declaredName), predicateFound.getDocumentation()),
-                    Location.create(domainInfo.fileUri, SymbolInfoProvider.toRange(predicateFound.location)),
+                    new Location(this.toUri(domainInfo.fileUri), SymbolUtils.toRange(predicateFound.location)),
                     predicateFound,
                 );
             }
@@ -80,7 +40,7 @@ export class SymbolInfoProvider {
                 domainInfo.findVariableLocation(functionFound);
                 return new VariableInfo(
                     this.createHover(symbol.range, 'Function', this.brackets(functionFound.declaredName), functionFound.getDocumentation()),
-                    Location.create(domainInfo.fileUri, SymbolInfoProvider.toRange(functionFound.location)),
+                    new Location(this.toUri(domainInfo.fileUri), SymbolUtils.toRange(functionFound.location)),
                     functionFound
                 );
             }
@@ -92,7 +52,7 @@ export class SymbolInfoProvider {
                 let inheritsFromText = parents.length > 0 ? "Inherits from: " + parents.join(', ') : ""
                 return new TypeInfo(
                     this.createHover(symbol.range, 'Type', symbol.name, inheritsFromText),
-                    null, // todo?
+                    new Location(this.toUri(domainInfo.fileUri), SymbolUtils.toRange(domainInfo.getTypeLocation(symbol.name))),
                     symbol.name
                 );
             }
@@ -101,29 +61,6 @@ export class SymbolInfoProvider {
         // we return an answer only if we find something
         // otherwise no hover information is given
         return null;
-    }
-
-    createHover(range: Range, title: string, symbolName: string, documentation: string) {
-
-        let contents: MarkedString[] = [
-            {
-                language: 'markdown', value: `## ${title}`
-            },
-            {
-                language: 'pddl', value: symbolName
-            },
-            {
-                language: 'plaintext', value: documentation
-            }];
-
-        return {
-            contents: contents,
-            range: range
-        }
-    }
-
-    brackets(symbolName: string): string {
-        return `(${symbolName})`;
     }
 
     leadingSymbolPattern = /([\w_][\w_-]*)$/gi;
@@ -149,13 +86,21 @@ export class SymbolInfoProvider {
 
         let symbolName = leadingSymbolPart + followingSymbolPart.substr(1);
 
-        let range = Range.create(
+        let range = new Range(
             position.line, position.character - leadingSymbolPart.length,
             position.line, position.character + followingSymbolPart.length - 1);
 
         return new Symbol(symbolName, range, line);
     }
+    
+    createHover(range: Range, title: string, symbolName: string, documentation: string) {
 
+		let markdownString = new MarkdownString(`## ${title}`);
+        markdownString.appendCodeblock(symbolName, 'pddl');
+        markdownString.appendText(documentation);
+        return new Hover(markdownString, range);
+    }
+    
     findSymbolReferences(fileUri: string, symbol: SymbolInfo, includeDeclaration: boolean): Location[] {
         let fileInfo = this.workspace.getFileInfo(fileUri);
 
@@ -170,8 +115,8 @@ export class SymbolInfoProvider {
             // add variable references found in the domain file
             domainInfo.getVariableReferences((<VariableInfo>symbol).variable).forEach(range => {
                 if(includeReference){
-                    locations.push(Location.create(domainInfo.fileUri, SymbolInfoProvider.toRange(range)))
-                }else{
+                    locations.push(new Location(this.toUri(domainInfo.fileUri), SymbolUtils.toRange(range)))
+                } else {
                     // we skipped the declaration, but let's include any further references
                     includeReference = true;
                 }
@@ -180,19 +125,55 @@ export class SymbolInfoProvider {
             // add variable references found in all problem files
             problemFiles.forEach(p => 
                 p.getVariableReferences((<VariableInfo>symbol).variable)
-                    .forEach(range => locations.push(Location.create(p.fileUri, SymbolInfoProvider.toRange(range)))));
+                    .forEach(range => locations.push(new Location(this.toUri(p.fileUri), SymbolUtils.toRange(range)))));
+        } else if (symbol instanceof TypeInfo) {
+            // add type references found in the domain file
+            if(includeDeclaration) {
+                locations.push(symbol.location);
+            }
+            let typeName = (<TypeInfo>symbol).type;
+            domainInfo.getTypeReferences(typeName).forEach(range => {
+                let vsRange = SymbolUtils.toRange(range); 
+                if(!vsRange.isEqual(symbol.location.range)){
+                    locations.push(new Location(this.toUri(domainInfo.fileUri), vsRange));
+                }
+            })
+
+            // add type references found in all problem files
+            problemFiles.forEach(p =>
+                p.getTypeReferences(typeName)
+                    .forEach(range => locations.push(new Location(this.toUri(p.fileUri), SymbolUtils.toRange(range))))
+            );
         }
 
         return locations;
     }
 
-    
+    assertFileParsed(document: TextDocument): void {
+        let fileUri = document.uri.toString();
+        if (!this.workspace.getFileInfo(fileUri)) {
+            this.workspace.upsertFile(fileUri, document.version, document.getText());
+        }
+    }
+
     static toRange(pddlRange: PddlRange): Range {
-        return Range.create(pddlRange.startLine, pddlRange.startCharacter, pddlRange.endLine, pddlRange.endCharacter);
+        return new Range(pddlRange.startLine, pddlRange.startCharacter, pddlRange.endLine, pddlRange.endCharacter);
+    }
+
+    static toLocation(document: TextDocument, pddlRange: PddlRange): Location {
+        return new Location(document.uri, SymbolUtils.toRange(pddlRange));
+    }
+
+    brackets(symbolName: string): string {
+        return `(${symbolName})`;
+    }
+
+    toUri(uriString: string): Uri {
+        return Uri.parse(uriString);
     }
 }
 
-class Symbol {
+export class Symbol {
 
     constructor(public name: string, public range: Range, public line: string) {
     }
@@ -202,17 +183,17 @@ class Symbol {
     }
 }
 
-class SymbolInfo {
+export class SymbolInfo {
     constructor(public hover: Hover, public location: Location) { }
 }
 
-class VariableInfo extends SymbolInfo {
+export class VariableInfo extends SymbolInfo {
     constructor(public hover: Hover, public location: Location, public variable: Variable) {
         super(hover, location);
     }
 }
 
-class TypeInfo extends SymbolInfo {
+export class TypeInfo extends SymbolInfo {
     constructor(public hover: Hover, public location: Location, public type: string) {
         super(hover, location);
     }

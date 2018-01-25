@@ -17,6 +17,8 @@ import { Authentication } from '../../common/src/Authentication';
 import { PlanReportGenerator } from './PlanReportGenerator';
 import { Plan } from './plan';
 import { AutoCompletion } from './AutoCompletion';
+import { SymbolRenameProvider } from './SymbolRenameProvider';
+import { SymbolInfoProvider } from './SymbolInfoProvider';
 
 const PDDL_STOP_PLANNER = 'pddl.stopPlanner';
 const PDDL_CONFIGURE_PARSER = 'pddl.configureParser';
@@ -164,11 +166,21 @@ export function activate(context: ExtensionContext) {
 
 	let completionItemProvider = languages.registerCompletionItemProvider(PDDL.toLowerCase(), new AutoCompletion(pddlWorkspace));
 
+	let renameProvider = languages.registerRenameProvider(PDDL.toLowerCase(), new SymbolRenameProvider(pddlWorkspace));
+
+	let symbolInfoProvider = new SymbolInfoProvider(pddlWorkspace);
+
+	let documentSymbolProvider = languages.registerDocumentSymbolProvider(PDDL.toLowerCase(), symbolInfoProvider);
+	let definitionProvider = languages.registerDefinitionProvider(PDDL.toLowerCase(), symbolInfoProvider);
+	let referencesProvider = languages.registerReferenceProvider(PDDL.toLowerCase(), symbolInfoProvider);
+	let hoverProvider = languages.registerHoverProvider(PDDL.toLowerCase(), symbolInfoProvider);
+
 	// Push the disposables to the context's subscriptions so that the 
 	// client can be deactivated on extension deactivation
 	context.subscriptions.push(planCommand, revealActionCommand, planning.planDocumentProviderRegistration, 
 		status, stopPlannerCommand, stateChangeHandler, configureParserCommand, loginParserServiceCommand, updateTokensParserServiceCommand, 
-		configurePlannerCommand, loginPlannerServiceCommand, updateTokensPlannerServiceCommand, generatePlanReportCommand, completionItemProvider);
+		configurePlannerCommand, loginPlannerServiceCommand, updateTokensPlannerServiceCommand, generatePlanReportCommand, completionItemProvider, 
+		renameProvider, documentSymbolProvider, definitionProvider, referencesProvider, hoverProvider);
 }
 
 function createAuthentication(pddlConfiguration: PddlConfiguration): Authentication {

@@ -22,5 +22,10 @@
         ["(", ")"],
         ["\"", "\""],
         ["'", "'"]
-    ]
+    ],
+    // PDDL allows hyphen character on the second and further character of identifiers 
+    "wordPattern": {
+        "pattern": "\\w[-\\w]*",
+        "flags": "g"
+    }
 }

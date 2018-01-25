@@ -6,14 +6,11 @@
 
 import {
 	IPCMessageReader, IPCMessageWriter, createConnection, IConnection, TextDocuments,
-	InitializeResult, TextDocumentPositionParams, CompletionItem, Hover, Definition, Location,
-	SymbolInformation
-} from 'vscode-languageserver';
+	InitializeResult, TextDocumentPositionParams, CompletionItem} from 'vscode-languageserver';
 
 import { PddlWorkspace } from '../../common/src/workspace-model';
 import { Diagnostics } from './diagnostics';
 import { AutoCompletion } from './autocompletion';
-import { SymbolInfoProvider } from './symbols';
 import { Settings } from '../../common/src/Settings';
 
 // Create a connection for the server. The connection uses Node's IPC as a transport
@@ -40,11 +37,7 @@ connection.onInitialize((params): InitializeResult => {
 			completionProvider: {
 				resolveProvider: true,
 				triggerCharacters: [':', '(', '-']
-			},
-			hoverProvider: true,
-			definitionProvider: true,
-			referencesProvider: true,
-			documentSymbolProvider: true
+			}
 		}
 	}
 });
@@ -53,7 +46,6 @@ let workspace = new PddlWorkspace();
 documents.all().filter(doc => doc.languageId == 'pddl').forEach(doc => workspace.upsertFile(doc.uri, doc.version, doc.getText()));
 let diagnostics: Diagnostics = new Diagnostics(workspace, connection);
 let autoCompletion: AutoCompletion = new AutoCompletion(workspace);
-let symbolProvider: SymbolInfoProvider = new SymbolInfoProvider(workspace);
 
 // The content of a text document has changed. This event is emitted
 // when the text document first opened or when its content has changed.
@@ -124,37 +116,5 @@ connection.onDidCloseTextDocument((params) => {
 	diagnostics.clearDiagnostics(params.textDocument.uri);
 });
 
-connection.onHover(({ textDocument, position }): Hover => {
-	return assertFileParsed(textDocument.uri) ? symbolProvider.getHover(textDocument.uri, position) : null;
-});
-
-connection.onDefinition(({ textDocument, position }): Definition => {
-	return assertFileParsed(textDocument.uri) ? symbolProvider.getDefinition(textDocument.uri, position) : null;
-});
-
-connection.onReferences(({textDocument, position, context}): Location[] =>{
-	return assertFileParsed(textDocument.uri) ? symbolProvider.getReferences(textDocument.uri, position, context.includeDeclaration) : null;
-});
-
-connection.onDocumentSymbol(({textDocument}): SymbolInformation[] => {
-	return assertFileParsed(textDocument.uri) ? symbolProvider.getSymbols(textDocument.uri) : [];
-});
-
 // Listen on the connection
 connection.listen();
-
-function assertFileParsed(fileUri: string): boolean {
-	if (!workspace.getFileInfo(fileUri)) {
-		let textDocument = documents.get(fileUri);
-
-		if (textDocument) {
-			workspace.upsertFile(textDocument.uri, textDocument.version, textDocument.getText());
-			diagnostics.scheduleValidation();
-		}
-		else{
-			// not success!
-			return false;
-		}
-	}
-	return true;
-}
