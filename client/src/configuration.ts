@@ -108,7 +108,7 @@ export class PddlConfiguration {
         });
 
         if (newParserPath) {
-            newParserPath = newParserPath.trim();
+            newParserPath = newParserPath.trim().replace(/\\/g, '/');
             
             // todo: validate that this parser actually works by sending a dummy request to it
 
@@ -239,7 +239,7 @@ export class PddlConfiguration {
 
         if (newPlannerPath) {
 
-            newPlannerPath = newPlannerPath.trim();
+            newPlannerPath = newPlannerPath.trim().replace(/\\/g, '/');
             
             // todo: validate that this planner actually works by sending a dummy request to it
 
