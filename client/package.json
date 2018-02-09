@@ -28,7 +28,10 @@
     "url": "https://github.com/jan-dolejsi/vscode-pddl"
   },
   "activationEvents": [
-    "onLanguage:pddl"
+    "onLanguage:pddl",
+    "workspaceContains:**/.pddl",
+    "onCommand:pddl.configureParser",
+    "onCommand:pddl.configurePlanner"
   ],
   "main": "./out/client/src/extension",
   "contributes": {
@@ -106,6 +109,13 @@
         }
       ]
     },
+    "keybindings":[
+      {
+        "command": "pddl.planAndDisplayResult",
+        "key": "alt+p",
+        "when": "resourceLangId == pddl"
+      }
+    ],
     "configuration": {
       "type": "object",
       "title": "PDDL parser and planner configuration",
