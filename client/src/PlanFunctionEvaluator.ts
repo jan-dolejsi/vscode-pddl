@@ -28,35 +28,48 @@ export class PlanFunctionEvaluator {
         let domainFile = Util.toPddlFile("domain", this.plan.domain.text);
         let problemFile = Util.toPddlFile("problem", this.plan.problem.text);
         let planFile = Util.toPddlFile("plan", this.plan.getText());
-        let groundedFunctions = this.plan.domain.getFunctions()
-            .map(f => this.ground(f))
-            .reduce((x, y) => x.concat(y), []);
 
         let chartData = new Map<Variable, GroundedFunctionValues>();
 
-        if (groundedFunctions.length == 0) return chartData;
+        this.plan.domain.getFunctions()
+            .filter(liftedFunction => liftedFunction.parameters.length < 2)
+            .forEach(liftedFunction => this.tryAddChartValues(domainFile, problemFile, planFile, liftedFunction, chartData));
+
+        return chartData;
+    }
+
+    tryAddChartValues(domainFile: string, problemFile: string, planFile: string, liftedFunction: Variable, chartData: Map<Variable, GroundedFunctionValues>): void {
+        try {
+            this.addChartValues(domainFile, problemFile, planFile, liftedFunction, chartData);
+        } catch (err) {
+            console.log("Cannot get values for function " + liftedFunction.getFullName());
+            console.log(err);
+        }
+    }
+
+    addChartValues(domainFile: string, problemFile: string, planFile: string, liftedFunction: Variable, chartData: Map<Variable, GroundedFunctionValues>): void {
+        // this forces the variable unit of measure to be parsed    
+        this.plan.domain.findVariableLocation(liftedFunction);
+
+        let groundedFunctions = this.ground(liftedFunction);
+
+        if (groundedFunctions.length == 0) return;
 
         let functions = groundedFunctions
             .map(f => f.parameters.length > 0 ? `"${f.getFullName()}"` : f.getFullName())
+            .map(name => name.toLowerCase())
             .join(' ');
 
         let child = process.execSync(`${this.valueSeqPath} -T ${domainFile} ${problemFile} ${planFile} ${functions}`);
 
         let csv = child.toString();
-        console.log(csv);
 
         let parser = new PlanTimeSeriesParser(groundedFunctions, csv);
 
-        this.plan.domain.getFunctions()
-            .filter(liftedFunction => liftedFunction.parameters.length < 2)
-            .forEach(liftedFunction => {
-            this.plan.domain.findVariableLocation(liftedFunction); // this forces the variable unit of measure to be parsed
-            let functionsValuesValues = parser.getFunctionData(liftedFunction);
-            let functionValues = new GroundedFunctionValues(liftedFunction, functionsValuesValues.values, functionsValuesValues.legend);
-            chartData.set(liftedFunction, functionValues);
-        });
-
-        return chartData;
+        let functionsValuesValues = parser.getFunctionData(liftedFunction);
+        if (functionsValuesValues.isConstant()) return; // it is not interesting...
+        let functionValues = new GroundedFunctionValues(liftedFunction, functionsValuesValues.values, functionsValuesValues.legend);
+        chartData.set(liftedFunction, functionValues);
     }
 
     ground(variable: Variable): Variable[] {

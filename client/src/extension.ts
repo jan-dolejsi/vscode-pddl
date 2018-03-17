@@ -19,6 +19,7 @@ import { Plan } from './plan';
 import { AutoCompletion } from './AutoCompletion';
 import { SymbolRenameProvider } from './SymbolRenameProvider';
 import { SymbolInfoProvider } from './SymbolInfoProvider';
+import { Diagnostics } from './diagnostics/Diagnostics';
 
 const PDDL_STOP_PLANNER = 'pddl.stopPlanner';
 const PDDL_CONFIGURE_PARSER = 'pddl.configureParser';
@@ -95,7 +96,7 @@ export function activate(context: ExtensionContext) {
 			authentication.login(
 				(refreshtoken: string, accesstoken: string, stoken: string) => {
 						pddlConfiguration.savePddlParserAuthenticationTokens(configuration, refreshtoken, accesstoken, stoken, scope.target); 
-						window.showInformationMessage("Login succesful."); 	 
+						window.showInformationMessage("Login successful."); 	 
 				},
 				(message: string) => { window.showErrorMessage('Login failure: ' + message); });
 		});
@@ -127,7 +128,7 @@ export function activate(context: ExtensionContext) {
 			authentication.login(
 				(refreshtoken: string, accesstoken: string, stoken: string) => {
 						pddlConfiguration.savePddlPlannerAuthenticationTokens(configuration, refreshtoken, accesstoken, stoken, scope.target); 
-						window.showInformationMessage("Login succesful."); 	 
+						window.showInformationMessage("Login successful."); 	 
 				},
 				(message: string) => { window.showErrorMessage('Login failure: ' + message); });
 		});
@@ -174,6 +175,11 @@ export function activate(context: ExtensionContext) {
 	let definitionProvider = languages.registerDefinitionProvider(PDDL.toLowerCase(), symbolInfoProvider);
 	let referencesProvider = languages.registerReferenceProvider(PDDL.toLowerCase(), symbolInfoProvider);
 	let hoverProvider = languages.registerHoverProvider(PDDL.toLowerCase(), symbolInfoProvider);
+	let diagnosticCollection = languages.createDiagnosticCollection(PDDL);
+	//todo: let diagnostics = 
+	new Diagnostics(pddlWorkspace, diagnosticCollection,  pddlConfiguration);
+	//todo: subscribe to pddlWorkspace document updates
+	// pddlWorkspace.onChange(doc -> diagnostics.docChanged(doc));
 
 	// Push the disposables to the context's subscriptions so that the 
 	// client can be deactivated on extension deactivation

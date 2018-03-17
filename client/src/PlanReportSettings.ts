@@ -31,6 +31,10 @@ export class PlanReportSettings {
 
         if (this.excludeActions == null) this.excludeActions = this.settings["excludeActions"];
         if (!this.excludeActions) return true;
-        return !this.excludeActions.includes(planStep.actionName);
+        return !this.excludeActions.some(pattern => this.matches(pattern, planStep.actionName));
+    }
+
+    matches(pattern: string, actionName: string): boolean {
+        return actionName.match(pattern) != null;
     }
 }

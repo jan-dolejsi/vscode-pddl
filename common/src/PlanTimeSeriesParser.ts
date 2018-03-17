@@ -19,7 +19,7 @@ export class PlanTimeSeriesParser {
         let currentFunctionValues: FunctionValues = null;
 
         lines.forEach(line => {
-            let newFunction = functions.find(f => f.getFullName() == line);
+            let newFunction = functions.find(f => f.getFullName().toLowerCase() == line);
 
             if (newFunction) {
                 if (currentFunctionValues) this.addFunctionValues(currentFunctionValues);
@@ -94,13 +94,21 @@ export class FunctionsValues {
 
     constructor(public liftedVariable: Variable, public values: number[][], public functions: Variable[]) {
         if (functions.length == 1 && functions[0].parameters.length == 0) {
-            // the function had not parameters
+            // the function had no parameters
             this.legend = [liftedVariable.name];
         }
         else {
             let objects = this.functions.map(f => f.parameters.map(p => p.toPddlString()).join(' '));
             this.legend = objects;
         }
+    }
+
+    isConstant(): boolean {
+        let that = this;
+        return this.functions.every((_, idx) => {
+            let firstValue = that.values[0][idx+1];
+            return that.values.every(values1 => values1[idx+1] == firstValue);
+        });
     }
 }
 

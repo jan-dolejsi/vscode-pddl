@@ -95,9 +95,11 @@ export class SymbolUtils {
     
     createHover(range: Range, title: string, symbolName: string, documentation: string) {
 
-		let markdownString = new MarkdownString(`## ${title}`);
+		let markdownString = new MarkdownString(`**${title}**`);
         markdownString.appendCodeblock(symbolName, 'pddl');
-        markdownString.appendText(documentation);
+        markdownString.appendMarkdown(`---
+`);
+        markdownString.appendMarkdown(documentation);
         return new Hover(markdownString, range);
     }
     

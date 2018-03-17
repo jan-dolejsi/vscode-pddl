@@ -12,7 +12,7 @@
       "(:types ;todo: enumerate types and their hierarchy here, e.g. car truck bus - vehicle",
       ")",
       "",
-      "; uncomment following line if constants are needed",
+      "; un-comment following line if constants are needed",
       ";(:constants )",
       "",
       "(:predicates ;todo: define predicates here",
@@ -86,7 +86,7 @@
       "    )",
       ")",
       "",
-      ";uncomment the following line if metric is needed",
+      ";un-comment the following line if metric is needed",
       ";(:metric ${3|minimize,maximize|} (???))",
       ")",
       ""

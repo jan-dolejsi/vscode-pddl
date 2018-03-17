@@ -31,11 +31,17 @@ You can also right click on such symbol and select _Find All References_.
 
 ![hover_go_to_definition_references](https://raw.githubusercontent.com/wiki/jan-dolejsi/vscode-pddl/img/PDDL_symbol_definition_and_references.gif)
 
-### Jump to Symbol
+### Jump to Symbol e.g. predicate/function/action
 
 Use the VS Code keyboard shortcut _Ctrl + Shift + O_ to open up the symbol listing. That lists all predicates, functions and actions in the domain file. That way you may review the full list of actions in a concise way and jump to their declaration.
 
 ![symbol_listing](https://raw.githubusercontent.com/wiki/jan-dolejsi/vscode-pddl/img/PDDL_symbol_listing.gif)
+
+### Global predicate/function/type renaming
+
+Put cursor into a predicate, function or type name and press _F2_ to rename its appearances in the domain file and all associated problem files currently open in the editor.
+
+![symbol_renaming](https://raw.githubusercontent.com/wiki/jan-dolejsi/vscode-pddl/img/PDDL_symbol_renaming.gif)
 
 ### Auto-completion
 
@@ -73,6 +79,22 @@ Domain and problem files correspond to each other, if:
 - both files are open in the editor.
 
 ![planner](https://raw.githubusercontent.com/wiki/jan-dolejsi/vscode-pddl/img/PDDL_plan.gif)
+
+#### Hide actions from plan visualization
+
+Plan visualization details may be fine-tuned using an additional file `<domain>.planviz.json`, where `<domain>` refers to the domain file name without the `.pddl` extension, placed into the same folder as the domain file. Following syntax is supported:
+
+```json
+{
+    "excludeActions": [
+        "action-to-be-hidden",
+        "^prefix_",
+        "suffix$"
+    ]
+}
+```
+
+The entries may use regular expression pattern. Note that backslashes in the regex must be doubled up to comply with JSON syntax.
 
 ### Planning with command-line switches
 
@@ -123,7 +145,9 @@ Fixed the PDDL parser to work with domains that completely omit the `(:types )` 
 
 #### Other features
 
-Opt-in visualization of plan function values. Experimental.
+Actions appearing in the plan visualization can be filtered using an additional file `<domain>.planviz.json`.
+
+Experimental: Opt-in visualization of plan function values via `pddlPlanner.valueSeqPath` setting. Contact the author to optain the `valueSeq` utility. 
 
 ### 2.0.3
 

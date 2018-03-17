@@ -4,7 +4,7 @@
  * ------------------------------------------------------------------------------------------ */
 'use strict';
 
-import { PlanTimeSeriesParser, FunctionValues, StateValues } from '../src/PlanTimeSeriesParser';
+import { PlanTimeSeriesParser, FunctionValues, StateValues, FunctionsValues } from '../src/PlanTimeSeriesParser';
 import * as assert from 'assert';
 import { Variable, ObjectInstance, Parameter } from '../src/parser';
 
@@ -189,5 +189,79 @@ describe('PlanTimeSeriesParser', () => {
             assert.equal(states[1].time, time);
             assert.equal(states[1].getValue(function1), value, "expected value");
         });
+    });
+});
+
+describe('FunctionsValues', () => {
+
+    beforeEach(function () { 
+    });
+
+    describe('#isConstant', () => {
+        it('single function single value is constant', () => {
+            // GIVEN
+            let functionName = "function1";
+            let function1 = new Variable(functionName, []);
+            let values = [[0, 1]];
+
+            // WHEN
+            let functionsValues = new FunctionsValues(function1, values, [function1]);
+            
+            // // THEN
+            assert.ok(functionsValues.isConstant(), "single value should be constant");
+        });
+
+        it('single function two identical values are constant', () => {
+            // GIVEN
+            let functionName = "function1";
+            let function1 = new Variable(functionName, []);
+            let values = [[0, 1], [1, 1]];
+
+            // WHEN
+            let functionsValues = new FunctionsValues(function1, values, [function1]);
+            
+            // // THEN
+            assert.ok(functionsValues.isConstant(), "single value should be constant");
+        });
+
+        it('two functions two identical values are constant', () => {
+            // GIVEN
+            let functionName = "function1";
+            let function1 = new Variable(functionName, []);
+            let values = [[0, 1, 2], [1, 1, 2]];
+
+            // WHEN
+            let functionsValues = new FunctionsValues(function1, values, [function1]);
+            
+            // // THEN
+            assert.ok(functionsValues.isConstant(), "two values should be constant");
+        });
+
+        it('single function two different values are NOT constant', () => {
+            // GIVEN
+            let functionName = "function1";
+            let function1 = new Variable(functionName, []);
+            let values = [[0, 1], [1, 100]];
+
+            // WHEN
+            let functionsValues = new FunctionsValues(function1, values, [function1]);
+            
+            // // THEN
+            assert.equal(functionsValues.isConstant(), false, "different value series should not be constant");
+        });
+
+        it('two functions, where one has two different values are NOT constant', () => {
+            // GIVEN
+            let functionName = "function1";
+            let function1 = new Variable(functionName, []);
+            let values = [[0, 1, 5], [1, 100, 5]];
+
+            // WHEN
+            let functionsValues = new FunctionsValues(function1, values, [function1]);
+            
+            // // THEN
+            assert.equal(functionsValues.isConstant(), false, "different value series for one function should not be constant");
+        });
+
     });
 });
