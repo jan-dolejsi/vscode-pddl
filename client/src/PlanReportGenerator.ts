@@ -17,7 +17,7 @@ import { Plan } from './plan';
 import { Util } from '../../common/src/util';
 import { PlanFunctionEvaluator } from './PlanFunctionEvaluator';
 import { PlanReportSettings } from './PlanReportSettings';
-import { VALUE_SEQ_LOCATION } from './configuration';
+import { PLANNER_VALUE_SEQ_PATH } from './configuration';
 var opn = require('opn');
 var fs = require('fs')
 
@@ -126,7 +126,7 @@ ${objectsHtml}
         </table>
     </div>`;
 
-        let evaluator = new PlanFunctionEvaluator(workspace.getConfiguration().get(VALUE_SEQ_LOCATION), plan);
+        let evaluator = new PlanFunctionEvaluator(workspace.getConfiguration().get(PLANNER_VALUE_SEQ_PATH), plan);
 
         let lineCharts = `    <div class="lineChart" plan="${planIndex}" style="display: ${styleDisplay};margin-top: 20px;">\n`;
         let lineChartScripts = '';

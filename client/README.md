@@ -23,7 +23,8 @@ Commonly used PDDL keywords are highlighted.
 
 ### Hover, go to definition and find all references
 
-Similar to other programing languages, you can hover over a PDDL predicate, function or type and see the definition. If some comments are placed on the same line, they are also displayed while hovering.
+Similar to other programing languages, you can hover over a PDDL predicate, function or type and see the definition. If some comments are placed on the same line, they are also displayed while hovering. The code comments may include markdown syntax.
+![hover_markdown](https://raw.githubusercontent.com/wiki/jan-dolejsi/vscode-pddl/img/PDDL_hover_markdown.gif)
 
 You can jump to definition of predicates and functions in two ways: _Ctrl+click_ or _Right-click > Go to Definition_ menu.
 
@@ -31,11 +32,17 @@ You can also right click on such symbol and select _Find All References_.
 
 ![hover_go_to_definition_references](https://raw.githubusercontent.com/wiki/jan-dolejsi/vscode-pddl/img/PDDL_symbol_definition_and_references.gif)
 
-### Jump to Symbol
+### Jump to Symbol e.g. predicate/function/action
 
 Use the VS Code keyboard shortcut _Ctrl + Shift + O_ to open up the symbol listing. That lists all predicates, functions and actions in the domain file. That way you may review the full list of actions in a concise way and jump to their declaration.
 
 ![symbol_listing](https://raw.githubusercontent.com/wiki/jan-dolejsi/vscode-pddl/img/PDDL_symbol_listing.gif)
+
+### Global predicate/function/type renaming
+
+Put cursor into a predicate, function or type name and press _F2_ to rename its appearances in the domain file and all associated problem files currently open in the editor.
+
+![symbol_renaming](https://raw.githubusercontent.com/wiki/jan-dolejsi/vscode-pddl/img/PDDL_symbol_renaming.gif)
 
 ### Auto-completion
 
@@ -74,6 +81,22 @@ Domain and problem files correspond to each other, if:
 
 ![planner](https://raw.githubusercontent.com/wiki/jan-dolejsi/vscode-pddl/img/PDDL_plan.gif)
 
+#### Hide actions from plan visualization
+
+Plan visualization details may be fine-tuned using an additional file `<domain>.planviz.json`, where `<domain>` refers to the domain file name without the `.pddl` extension, placed into the same folder as the domain file. Following syntax is supported:
+
+```json
+{
+    "excludeActions": [
+        "action-to-be-hidden",
+        "^prefix_",
+        "suffix$"
+    ]
+}
+```
+
+The entries may use regular expression pattern. Note that backslashes in the regex must be doubled up to comply with JSON syntax.
+
 ### Planning with command-line switches
 
 When using a planner executable, further command-line options may be specified.
@@ -98,75 +121,8 @@ See unfixed issues and submit new ones [here][github pddl issues].
 
 ## Release Notes
 
-### 2.4.2
+See [CHANGELOG](CHANGELOG.md).
 
-#### HTML report for plan details
-
-Additional command for plan report export to a self-contained HTML file.
-When the Plan preview pane is open (when the planner finishes a successful execution), press `Control + Shift + P` and type _PDDL_ to the command window. Select the option _PDDL: Generate plan report_. A new default browser window opens with a self-contained report HTML file. It is generated into the temporary folder.
-
-Note: If the report contains graphs showing function values, it only displays the graphs when open in the Chrome browser.
-
-#### Context-sensitive auto-complete snippet for symmetric initialization
-
-Auto-complete snippet for symmetric predicate and/or function initialization.
-
-Symmetric predicate initialization example: `(road A B) (road B A)`
-
-Symmetric function initialization example: `(= (distance A B) 13) (= (distance B A) 13)`
-
-To trigger the snippet, start typing 'init' inside the problem `(:init )` section.
-
-#### Fixes
-
-Fixed the PDDL parser to work with domains that completely omit the `(:types )` section.
-
-#### Other features
-
-Opt-in visualization of plan function values. Experimental.
-
-### 2.0.3
-
-Fixed the 'there is no corresponding domain/problem open in the editor' as well as stale PDDL file content while launching the planner.
-
-Planner executable working directory is set to the folder in which the domain and problem files are located.
-
-Entered planner or parser executable/service location is trimmed for whitespace.
-
-### 2.0.2
-
-Plan visualization that features color-coding of actions and swim-lanes for objects per types.
-
-All commands this extension contributes were renamed to start with the 'PDDL:' prefix. That makes them easy to find when pressing _Ctrl + Shift + P_ and is also more consistent with other extensions.
-
-Improved the snippets - they now use 4 character indentation uniformly, which makes it easier to keep the formatting while editing them further.
-
-The `assign` numeric effect was missing in the auto-completion options and was now added.
-
-### 2.0.1
-
-New command added to _PDDL: Configure planner_. Added configuration to override the planner command-line syntax.
-Added support for solver.planning.domains/solve web service.
-Supporting non-auto-saving editor mode by creating temp files for domain/problem when launching the planner.
-Fixed an issue with some domains where the extension was hanging (while regexp parsing the types).
-
-### 2.0.0
-
-PDDL Language Server now provides rich PDDL syntax validation, hover info, Go to Definition, Find All References, Jump to symbol, Auto-completion, configuration of custom PDDL parser, planner execution and plan visualization.
-
-### 1.0.2
-
-Simplified snippets and added tabstops/placeholders to them, so they are easy to fill in with content.
-
-### 1.0.1
-
-Added missing `:requirements` options and fixed up the code snippets.
-
-### 1.0.0
-
-Initial release with simple syntax highlighting and code snippets.
-
------------------------------------------------------------------------------------------------------------
 
 ## Source
 

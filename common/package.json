@@ -1,27 +1,36 @@
 {
-	"name": "pddl-parser",
-	"description": "PDDL language server.",
-	"license": "MIT",
-	"version": "0.0.1",
-	"repository": {
-		"type": "git",
-		"url": "https://github.com/jan-dolejsi/vscode-pddl"
-	},
-	"scripts": {
-		"pretest": "tsc",
-		"test": "mocha -- out/test/*.js",
-		"compile": "tsc -p ./",
-		"watch": "tsc -w -p ./",
-		"vscode:prepublish": "npm run compile",
-		"update-vscode": "node ./node_modules/vscode/bin/install"
-	},
-	"dependencies": {
-		"tmp": "^0.0.33",
-		"@types/tmp": "^0.0.33"
-	},
-	"devDependencies": {
-		"mocha": "^4.0.1",
-		"@types/mocha": "^2.2.42",
-		"typescript": "^2.5.2"
-	}
+  "name": "pddl-parser",
+  "description": "PDDL language server.",
+  "license": "MIT",
+  "version": "0.0.1",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/jan-dolejsi/vscode-pddl"
+  },
+  "scripts": {
+    "pretest": "tsc",
+    "test": "mocha -- out/test/*.js",
+    "compile": "tsc -p ./",
+    "watch": "tsc -w -p ./",
+    "vscode:prepublish": "npm run compile",
+    "update-vscode": "node ./node_modules/vscode/bin/install"
+  },
+  "dependencies": {
+    "@types/tmp": "^0.0.33",
+    "body-parser": "^1.18.2",
+    "express": "^4.16.2",
+    "opn": "^5.1.0",
+    "request": "^2.83.0",
+    "tmp": "^0.0.33"
+  },
+  "devDependencies": {
+    "@types/body-parser": "^1.16.8",
+    "@types/express": "^4.11.0",
+    "@types/mocha": "^2.2.42",
+    "@types/opn": "^5.1.0",
+    "@types/request": "^2.0.9",
+    "@types/uuid": "^3.4.3",
+    "mocha": "^4.0.1",
+    "typescript": "^2.5.2"
+  }
 }

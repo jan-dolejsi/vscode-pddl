@@ -168,11 +168,46 @@ describe('Parser', () => {
             // WHEN
             let parameters = Parser.parseParameters(predicatePddl);
 
+            // THEN
             assert.equal(parameters.length, 2, 'there should be 2 parameters');
             assert.equal(parameters[0].name, 'p1', 'the parameter name should be...');
             assert.equal(parameters[0].type, 'type2', 'the parameter name should be...');
             assert.equal(parameters[1].name, 'p2', 'the parameter name should be...');
             assert.equal(parameters[1].type, 'type2', 'the parameter name should be...');
+        });
+    });
+
+    describe('#parseDerived', () => {
+        let domainPddl = `(define (domain Depot-Derived)
+        (:requirements :typing :durative-actions)
+        (:types place locatable - object
+                depot distributor - place
+                truck hoist surface - locatable
+                pallet crate - surface)
+        
+        (:predicates (at ?x - locatable ?y - place) 
+                     (on ?x - crate ?y - surface)
+                     (in ?x - crate ?y - truck)
+                     (lifting ?x - hoist ?y - crate)
+                     (available ?x - hoist)
+                     (clear ?x - surface))
+        
+        (:derived (can-lift ?c - crate ?s - surface) ; can lift crate from the surface
+           (and (clear ?c) (on ?c ?s)))
+        
+        (:derived (c) (+ (a) (b))`;
+
+        it('extracts one derived predicate', () => {
+            // GIVEN
+            // WHEN
+            let derived = new Parser().parseDerived(domainPddl);
+
+            // THEN
+            assert.equal(derived.length, 2, 'there should be 2 derived variables');
+            assert.equal(derived[0].name, 'can-lift');
+            assert.equal(derived[0].parameters.length, 2);
+            assert.ok(derived[0].getDocumentation().startsWith('can lift'));
+            assert.equal(derived[1].name, 'c');
         });
     });
 
@@ -190,6 +225,7 @@ describe('Parser', () => {
             // WHEN
             new Parser().getDomainStructure(domainPddl, domainInfo);
 
+            // THEN
             assert.equal(1, domainInfo.getPredicates().length, 'there should be 1 predicate');
             assert.equal(0, domainInfo.getTypes().length, 'there should be 0 types');
             assert.equal(0, domainInfo.getFunctions().length, 'there should be 0 functions');
@@ -363,6 +399,96 @@ describe('Variable', () => {
             assert.equal(variable.declaredNameWithoutTypes, variableName, "the declared name without types should be...");
             assert.equal(variable.parameters.length, 0);
             assert.equal(variable.isGrounded(), true, "should be grounded");
+        });
+    });
+});
+
+describe('DomainInfo', () => {
+
+    describe('#getTypeLocation', () => {
+        it('finds type location in multi-line declaration', () => {
+            // GIVEN
+            let domainInfo = new DomainInfo("/uri", 1.0, "name");
+            domainInfo.text = `(define (domain generator)
+            (:requirements :fluents :durative-actions :duration-inequalities
+                    :negative-preconditions :typing)
+            
+            (:types generator tankstelle ; comment
+            tank)
+            `;
+            
+            // WHEN
+            let range = domainInfo.getTypeLocation('tank');
+
+            // THEN
+            assert.ok(range != null, "range should not be null");
+            assert.equal(range.startLine, 5);
+            assert.equal(range.endLine, 5);
+            assert.equal(range.startCharacter, 12);
+            assert.equal(range.endCharacter, 16);
+        });
+
+        it('finds type location in single line declaration', () => {
+            // GIVEN
+            let domainInfo = new DomainInfo("/uri", 1.0, "name");
+            domainInfo.text = `(define (domain generator) (:types generator tankstelle tank)`;
+            
+            // WHEN
+            let range = domainInfo.getTypeLocation('tank');
+
+            // THEN
+            assert.ok(range != null, "range should not be null");
+            assert.equal(range.startLine, 0);
+            assert.equal(range.endLine, 0);
+            assert.equal(range.startCharacter, 56);
+            assert.equal(range.endCharacter, 56 + 4);
+        });
+    });
+
+    describe('#getTypeReferences', () => {
+        it('finds all references', () => {
+            // GIVEN
+            let domainInfo = new DomainInfo("/uri", 1.0, "name");
+            domainInfo.text = `(define (domain generator)
+            (:requirements :fluents :durative-actions :duration-inequalities
+                    :negative-preconditions :typing)
+            
+            (:types tank - generator)
+            
+            (:predicates 
+                (generator-ran) ; Flags that the generator ran
+                (used ?t - tank) ; To force the planner to empty the entire tank in one action (rather than bit by bit), we mark the tank as 'used'
+            )
+            
+            (:functions 
+                (fuel-level ?t - generator) ; Fuel level in the generator
+                (fuel-reserve ?t - tank) ; Fuel reserve in the tank
+                (refuel-rate ?g - generator) ; Refuel rate of the generator
+                (capacity ?g - generator) ; Total fuel-capacity of the generator
+            )
+            
+            (:durative-action generate
+                :parameters (?g - generator)
+                :duration (= ?duration  100) ; arbitrarily the duration is set to 100 time-units
+                :condition 
+                    (over all (>= (fuel-level ?g) 0))
+                :effect (and 
+                    (decrease (fuel-level ?g) (* #t 1))
+                    (at end (generator-ran))
+                )
+            )
+            `;
+            
+            // WHEN
+            let ranges = domainInfo.getTypeReferences('generator');
+
+            // THEN
+            assert.equal(ranges.length, 5, "there should be N hits");
+            let range = ranges[0];
+            assert.equal(range.startLine, 4);
+            assert.equal(range.endLine, 4);
+            assert.equal(range.startCharacter, 27);
+            assert.equal(range.endCharacter, 36);
         });
     });
 });

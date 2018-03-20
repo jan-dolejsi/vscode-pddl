@@ -9,27 +9,51 @@ import { Planner } from './planner';
 import { PlanningHandler } from './plan';
 import { DomainInfo, ProblemInfo } from '../../common/src/parser';
 import { PddlPlanParser } from './PddlPlanParser';
+import { Authentication } from '../../common/src/Authentication';
 
 export class PlannerService extends Planner {
 
-    constructor(plannerPath: string) {
+    constructor(plannerPath: string, private useAuthentication: boolean, private authentication: Authentication) {
         super(plannerPath, "");
     }
 
     plan(domainFileInfo: DomainInfo, problemFileInfo: ProblemInfo, planParser: PddlPlanParser, parent: PlanningHandler): void {
-        parent.handleOutput(`Planning service: ${this.plannerPath}\nDomain: ${domainFileInfo.name}, Problem: ${problemFileInfo.name}`);
+        parent.handleOutput(`Planning service: ${this.plannerPath}\nDomain: ${domainFileInfo.name}, Problem: ${problemFileInfo.name}\n`);
 
+        let requestHeader: any = {};
+        if(this.useAuthentication) {
+            requestHeader = {
+                "Authorization": "Bearer " + this.authentication.sToken
+            }
+        }
+        
         let requestBody = {
             "domain": domainFileInfo.text,
             "problem": problemFileInfo.text
         }
 
-        request.post({ url: this.plannerPath, body: requestBody, json: true }, (err, httpResponse, responseBody) => {
+        request.post({ url: this.plannerPath, headers: requestHeader, body: requestBody, json: true }, (err, httpResponse, responseBody) => {
 
             if (err != null) {
                 parent.handleError(err, "");
                 return;
             }
+
+            if(this.useAuthentication) {
+                if (httpResponse) {
+                    if (httpResponse.statusCode == 400) {
+                        let message = "Authentication failed. Please login or update tokens."
+                        parent.handleError(new Error(message), message);
+                        return;
+                    }
+                    else if (httpResponse.statusCode == 401) {
+                        let message = "Invalid token. Please update tokens."
+                        parent.handleError(new Error(message), message);
+                        return;
+                    }
+                }
+            }
+
             if (httpResponse && httpResponse.statusCode != 200) {
                 let notificationMessage = `PDDL Planning Service returned code ${httpResponse.statusCode} ${httpResponse.statusMessage}`;
                 //let notificationType = MessageType.Warning;

@@ -32,11 +32,19 @@ class CompletionCollector {
 
             this.createProblemCompletionItems(problemFileInfo);
         }
+        else if (activeFileInfo.isDomain()) {
+            let domainFileInfo = <DomainInfo>activeFileInfo;
 
+            this.createDomainCompletionItems(domainFileInfo);
+        }
     }
 
     getCompletions(): CompletionItem[] {
         return this.completions;
+    }
+
+    createDomainCompletionItems(domainFileInfo: DomainInfo): void {
+        domainFileInfo;
     }
 
     createProblemCompletionItems(problemFileInfo: ProblemInfo): void {

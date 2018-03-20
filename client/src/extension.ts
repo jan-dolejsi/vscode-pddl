@@ -13,13 +13,21 @@ import { Planning } from './planning'
 import { PddlWorkspace } from '../../common/src/workspace-model';
 import { DomainInfo, PddlRange } from '../../common/src/parser';
 import { PddlConfiguration } from './configuration';
+import { Authentication } from '../../common/src/Authentication';
 import { PlanReportGenerator } from './PlanReportGenerator';
 import { Plan } from './plan';
 import { AutoCompletion } from './AutoCompletion';
+import { SymbolRenameProvider } from './SymbolRenameProvider';
+import { SymbolInfoProvider } from './SymbolInfoProvider';
+import { Diagnostics } from './diagnostics/Diagnostics';
 
 const PDDL_STOP_PLANNER = 'pddl.stopPlanner';
 const PDDL_CONFIGURE_PARSER = 'pddl.configureParser';
+const PDDL_LOGIN_PARSER_SERVICE = 'pddl.loginParserService';
+const PDDL_UPDATE_TOKENS_PARSER_SERVICE = 'pddl.updateTokensParserService';
 const PDDL_CONFIGURE_PLANNER = 'pddl.configurePlanner';
+const PDDL_LOGIN_PLANNER_SERVICE = 'pddl.loginPlannerService';
+const PDDL_UPDATE_TOKENS_PLANNER_SERVICE = 'pddl.updateTokensPlannerService';
 const PDDL_GENERATE_PLAN_REPORT = 'pddl.planReport';
 const PDDL = 'PDDL';
 
@@ -80,16 +88,72 @@ export function activate(context: ExtensionContext) {
 		pddlConfiguration.suggestNewParserConfiguration(false);
 	});
 
+	let loginParserServiceCommand = commands.registerCommand(PDDL_LOGIN_PARSER_SERVICE, () => {
+		let scopePromise = pddlConfiguration.askConfigurationScope();
+		scopePromise.then((scope) => {
+			let configuration = pddlConfiguration.getConfigurationForScope(scope);
+			let authentication = createAuthentication(pddlConfiguration);
+			authentication.login(
+				(refreshtoken: string, accesstoken: string, stoken: string) => {
+						pddlConfiguration.savePddlParserAuthenticationTokens(configuration, refreshtoken, accesstoken, stoken, scope.target); 
+						window.showInformationMessage("Login successful."); 	 
+				},
+				(message: string) => { window.showErrorMessage('Login failure: ' + message); });
+		});
+	});
+
+	let updateTokensParserServiceCommand = commands.registerCommand(PDDL_UPDATE_TOKENS_PARSER_SERVICE, () => {
+		let scopePromise = pddlConfiguration.askConfigurationScope();
+		scopePromise.then((scope) => {
+			let configuration = pddlConfiguration.getConfigurationForScope(scope);
+			let authentication = createAuthentication(pddlConfiguration);
+			authentication.login(
+				(refreshtoken: string, accesstoken: string, stoken: string) => {
+						pddlConfiguration.savePddlParserAuthenticationTokens(configuration, refreshtoken, accesstoken, stoken, scope.target); 
+						window.showInformationMessage("Tokens refreshed and saved."); 	 
+				},
+				(message: string) => { window.showErrorMessage('Couldn\'t refresh the tokens, try to login: ' + message); });
+		});
+	});
+
 	let configurePlannerCommand = commands.registerCommand(PDDL_CONFIGURE_PLANNER, () => {
 		pddlConfiguration.askNewPlannerPath();
+	});
+
+	let loginPlannerServiceCommand = commands.registerCommand(PDDL_LOGIN_PLANNER_SERVICE, () => {
+		let scopePromise = pddlConfiguration.askConfigurationScope();
+		scopePromise.then((scope) => {
+			let configuration = pddlConfiguration.getConfigurationForScope(scope);
+			let authentication = createAuthentication(pddlConfiguration);
+			authentication.login(
+				(refreshtoken: string, accesstoken: string, stoken: string) => {
+						pddlConfiguration.savePddlPlannerAuthenticationTokens(configuration, refreshtoken, accesstoken, stoken, scope.target); 
+						window.showInformationMessage("Login successful."); 	 
+				},
+				(message: string) => { window.showErrorMessage('Login failure: ' + message); });
+		});
+	});
+
+	let updateTokensPlannerServiceCommand = commands.registerCommand(PDDL_UPDATE_TOKENS_PLANNER_SERVICE, () => {
+		let scopePromise = pddlConfiguration.askConfigurationScope();
+		scopePromise.then((scope) => {
+			let configuration = pddlConfiguration.getConfigurationForScope(scope);
+			let authentication = createAuthentication(pddlConfiguration);
+			authentication.login(
+				(refreshtoken: string, accesstoken: string, stoken: string) => {
+						pddlConfiguration.savePddlPlannerAuthenticationTokens(configuration, refreshtoken, accesstoken, stoken, scope.target); 
+						window.showInformationMessage("Tokens refreshed and saved."); 	 
+				},
+				(message: string) => { window.showErrorMessage('Couldn\'t refresh the tokens, try to login: ' + message); });
+		});
 	});
 	
 	let generatePlanReportCommand = commands.registerCommand(PDDL_GENERATE_PLAN_REPORT, () => {
 		let plans: Plan[] = planning.getPlans();
 
-		if(plans!=null){
+		if(plans != null){
 			new PlanReportGenerator(context, 1000, true).export(plans, plans.length - 1);
-		}else{
+		} else {
 			window.showErrorMessage("There is no plan to export.");
 		}
 	});
@@ -103,11 +167,34 @@ export function activate(context: ExtensionContext) {
 
 	let completionItemProvider = languages.registerCompletionItemProvider(PDDL.toLowerCase(), new AutoCompletion(pddlWorkspace));
 
+	let renameProvider = languages.registerRenameProvider(PDDL.toLowerCase(), new SymbolRenameProvider(pddlWorkspace));
+
+	let symbolInfoProvider = new SymbolInfoProvider(pddlWorkspace);
+
+	let documentSymbolProvider = languages.registerDocumentSymbolProvider(PDDL.toLowerCase(), symbolInfoProvider);
+	let definitionProvider = languages.registerDefinitionProvider(PDDL.toLowerCase(), symbolInfoProvider);
+	let referencesProvider = languages.registerReferenceProvider(PDDL.toLowerCase(), symbolInfoProvider);
+	let hoverProvider = languages.registerHoverProvider(PDDL.toLowerCase(), symbolInfoProvider);
+	let diagnosticCollection = languages.createDiagnosticCollection(PDDL);
+	//todo: let diagnostics = 
+	new Diagnostics(pddlWorkspace, diagnosticCollection,  pddlConfiguration);
+	//todo: subscribe to pddlWorkspace document updates
+	// pddlWorkspace.onChange(doc -> diagnostics.docChanged(doc));
+
 	// Push the disposables to the context's subscriptions so that the 
 	// client can be deactivated on extension deactivation
 	context.subscriptions.push(planCommand, revealActionCommand, planning.planDocumentProviderRegistration, 
-		status, stopPlannerCommand, stateChangeHandler, configureParserCommand, configurePlannerCommand, 
-		generatePlanReportCommand, completionItemProvider);
+		status, stopPlannerCommand, stateChangeHandler, configureParserCommand, loginParserServiceCommand, updateTokensParserServiceCommand, 
+		configurePlannerCommand, loginPlannerServiceCommand, updateTokensPlannerServiceCommand, generatePlanReportCommand, completionItemProvider, 
+		renameProvider, documentSymbolProvider, definitionProvider, referencesProvider, hoverProvider);
+}
+
+function createAuthentication(pddlConfiguration: PddlConfiguration): Authentication {
+    let configuration = pddlConfiguration.getPddlParserServiceAuthenticationConfiguration();
+	return new Authentication(configuration.url, configuration.requestEncoded, configuration.clientId, configuration.callbackPort,configuration.timeoutInMs,
+		configuration.tokensvcUrl, configuration.tokensvcApiKey, configuration.tokensvcAccessPath, configuration.tokensvcValidatePath,
+	    configuration.tokensvcCodePath, configuration.tokensvcRefreshPath, configuration.tokensvcSvctkPath,
+        configuration.refreshToken, configuration.accessToken, configuration.sToken);
 }
 
 async function revealAction(domainInfo: DomainInfo, actionName: String) {

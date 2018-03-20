@@ -1,29 +1,33 @@
 {
-	"name": "pddl-parser",
-	"description": "PDDL language server.",
-	"version": "0.0.1",
-	"author": "Jan Dolejsi",
-	"license": "MIT",
-	"engines": {
-		"vscode": "^1.18.0"
-	},
-	"repository": {
-		"type": "git",
-		"url": "https://github.com/jan-dolejsi/vscode-pddl"
-	},
-	"dependencies": {
-		"vscode-languageserver": "^3.5.0",
-		"request": "^2.83.0",
-		"@types/request": "^2.0.5",
-		"tmp": "^0.0.33",
-		"@types/tmp": "^0.0.33"
-	},
-	"devDependencies": {
-		"vscode": "^1.1.10"
-	},
-	"scripts": {
-		"installServer": "installServerIntoExtension ../client ./package.json ./tsconfig.json",
-		"compile": "npm run installServer && tsc -p .",
-		"watch": "npm run installServer && tsc -w -p ."
-	}
+  "name": "pddl-parser",
+  "description": "PDDL language server.",
+  "version": "0.0.1",
+  "author": "Jan Dolejsi",
+  "license": "MIT",
+  "engines": {
+    "vscode": "^1.18.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/jan-dolejsi/vscode-pddl"
+  },
+  "dependencies": {
+    "@types/request": "^2.0.5",
+    "@types/tmp": "^0.0.33",
+    "body-parser": "^1.18.2",
+    "express": "^4.16.2",
+    "opn": "^5.1.0",
+    "request": "^2.83.0",
+    "tmp": "^0.0.33",
+    "vscode": "^1.1.10",
+    "vscode-languageserver": "^3.5.0"
+  },
+  "devDependencies": {
+    "typescript": "^2.6.2"
+  },
+  "scripts": {
+    "installServer": "installServerIntoExtension ../client ./package.json ./tsconfig.json",
+    "compile": "npm run installServer && tsc -p .",
+    "watch": "npm run installServer && tsc -w -p ."
+  }
 }

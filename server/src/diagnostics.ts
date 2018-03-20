@@ -9,25 +9,24 @@ import {
     Diagnostic, DiagnosticSeverity
 } from 'vscode-languageserver';
 
+import { Authentication } from '../../common/src/Authentication';
 import { PddlWorkspace } from '../../common/src/workspace-model';
 import { DomainInfo, ProblemInfo, FileInfo, FileStatus, Parser } from '../../common/src/parser';
 
 import { Validator } from './validator';
 import { ValidatorService } from './ValidatorService';
 import { ValidatorExecutable } from './ValidatorExecutable';
+import { PDDLParserSettings } from './Settings';
 
 export class Diagnostics {
 
-    // hold the maxNumberOfProblems setting
-    maxNumberOfProblems: number;
     workspace: PddlWorkspace;
     connection: IConnection;
-    parserExecutableOrService: string;
-    parserExecutableOptions: string;
-    parserCustomPattern: string;
-    timerDelayInSeconds = 3;
     timeout: NodeJS.Timer;
     validator: Validator;
+    pddlParserSettings: PDDLParserSettings;
+
+    private defaultTimerDelayInSeconds = 3;
 
     constructor(workspace: PddlWorkspace, connection: IConnection) {
         this.connection = connection;
@@ -36,7 +35,8 @@ export class Diagnostics {
 
     scheduleValidation(): void {
         this.cancelScheduledValidation()
-        this.timeout = setTimeout(() => { this.validateAllDirty(); }, this.timerDelayInSeconds * 1000);
+        let timerDelayInSeconds = this.pddlParserSettings.delayInSecondsBeforeParsing || this.defaultTimerDelayInSeconds;
+        this.timeout = setTimeout(() => { this.validateAllDirty(); }, timerDelayInSeconds * 1000);
     }
 
     cancelScheduledValidation(): void {
@@ -119,7 +119,7 @@ export class Diagnostics {
 
     validateDomainAndProblems(domainInfo: DomainInfo, problemFiles: ProblemInfo[], scheduleFurtherValidation: boolean): void {
 
-        if (this.parserExecutableOrService == null || this.parserExecutableOrService == "") {
+        if (this.pddlParserSettings.executableOrService == null || this.pddlParserSettings.executableOrService == "") {
             // suggest the user to update the settings
             this.connection.client.connection.sendRequest("pddl.configureParser", true).then(() => { }, () => {
                 console.log("pddl.configureParser request rejected");
@@ -149,18 +149,34 @@ export class Diagnostics {
         });
     }
 
-    createValidator(): Validator{
-        if(!this.validator || this.validator.path != this.parserExecutableOrService
+    createValidator(): Validator {
+        if(!this.validator || this.validator.path != this.pddlParserSettings.executableOrService
             || (this.validator instanceof ValidatorExecutable) && (
-                this.validator.syntax != this.parserExecutableOptions ||
-                this.validator.customPattern != this.parserCustomPattern
-            )){
-            if (this.parserExecutableOrService.match(/^http[s]?:/i)) {
+                this.validator.syntax != this.pddlParserSettings.executableOptions ||
+                this.validator.customPattern != this.pddlParserSettings.problemPattern
+            )) {
+            if (this.pddlParserSettings.executableOrService.match(/^http[s]?:/i)) {
                 // is a service
-                return this.validator = new ValidatorService(this.parserExecutableOrService);
+                let authentication = new Authentication(
+                    this.pddlParserSettings.serviceAuthenticationUrl, 
+                    this.pddlParserSettings.serviceAuthenticationRequestEncoded, 
+                    this.pddlParserSettings.serviceAuthenticationClientId,
+                    this.pddlParserSettings.serviceAuthenticationCallbackPort,
+                    this.pddlParserSettings.serviceAuthenticationTimeoutInMs,
+                    this.pddlParserSettings.serviceAuthenticationTokensvcUrl, 
+                    this.pddlParserSettings.serviceAuthenticationTokensvcApiKey, 
+                    this.pddlParserSettings.serviceAuthenticationTokensvcAccessPath, 
+                    this.pddlParserSettings.serviceAuthenticationTokensvcValidatePath, 
+                    this.pddlParserSettings.serviceAuthenticationTokensvcCodePath, 
+                    this.pddlParserSettings.serviceAuthenticationTokensvcRefreshPath, 
+                    this.pddlParserSettings.serviceAuthenticationTokensvcSvctkPath, 
+                    this.pddlParserSettings.serviceAuthenticationRefreshToken,
+                    this.pddlParserSettings.serviceAuthenticationAccessToken, 
+                    this.pddlParserSettings.serviceAuthenticationSToken);
+                return this.validator = new ValidatorService(this.pddlParserSettings.executableOrService, this.pddlParserSettings.serviceAuthenticationEnabled, authentication);
             }
-            else{
-                return this.validator = new ValidatorExecutable(this.parserExecutableOrService, this.parserExecutableOptions, this.parserCustomPattern);
+            else {
+                return this.validator = new ValidatorExecutable(this.pddlParserSettings.executableOrService, this.pddlParserSettings.executableOptions, this.pddlParserSettings.problemPattern);
             }
         }
         else{

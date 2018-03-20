@@ -6,10 +6,29 @@ Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how 
 
 ## [Unreleased]
 
-* Find all references support for _type_.
-* Rename predicates, functions, types, parameters and objects
+* Rename parameters and objects
 * Auto-completion for constant/object names.
 * Plan debugger
+
+## [2.5.0] - 2018-03-99
+
+Better support for PDDL object types. _Go to Definition_, _Find all References_ and _Rename_ operations are now supported.
+
+PDDL language configuration was improved - hyphens inside identifiers work as expected in the editor.
+
+Implemented predicate and function renaming. Try this: put cursor into predicate/function name, press `F2`, modify the name and press Enter.
+
+Improved function/predicate/type hover-over tooltip markdown rendering by moving the code from the language server directly to the extension. It is more readable and the documentation may use markdown syntax too.
+
+Replaced backslashes with forward slashes in configuration entries.
+
+Added keyboard shortcut `Alt + P` to the _PDDL: Run the planner and display the plan_ command.
+
+Extension is activated also when one of the `PDDL: Configure ...` commands is invoked, in addition to a PDDL file be opened.
+
+Plan visualization configuration `<domain>.planviz.json` file now supports regular expression matching for action names to be hidden. Plan visualization of function values is more robust (but slower) for larger domains. Graphs are not shown for functions with constant values.
+
+Added syntax highlighting and auto-completion for the `:derived` keyword.
 
 ## [2.4.2] - 2017-12-15
 
@@ -38,14 +57,16 @@ Fixed the PDDL parser to work with domains that completely omit the `(:types )` 
 
 Opt-in visualization of plan function values. Experimental.
 
-Plan visualization details may be fine tuned using an additional file `<domain>.planviz.json`. Following syntax is supported:
+Plan visualization details may be fine-tuned using an additional file `<domain>.planviz.json`. Following syntax is supported:
 
-    {
-        "excludeActions": [
-            "action-to-be-hidden",
-            "another-action"
-        ]
-    }
+```json
+{
+    "excludeActions": [
+        "action-to-be-hidden",
+        "another-action"
+    ]
+}
+```
 
 Lastly, we are changing the versioning scheme to allow for safe distribution of intermediate builds to early adopters.
 
@@ -107,7 +128,8 @@ Simplified snippets and added tabstops/placeholders to them, so they are easy to
 * PDDL Snippets for `domain`, `problem`, `action` and `durative-action`.
 * Syntax highlighting for commonly used PDDL features
 
-[Unreleased]: https://github.com/jan-dolejsi/vscode-pddl/compare/v2.4.2...HEAD
+[Unreleased]: https://github.com/jan-dolejsi/vscode-pddl/compare/v2.5.0...HEAD
+[2.5.0]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.4.2...v2.5.0
 [2.4.2]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.0.3...v2.4.2
 [2.0.3]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.0.2...v2.0.3
 [2.0.2]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.0.1...v2.0.2

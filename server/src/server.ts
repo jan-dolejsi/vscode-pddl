@@ -6,14 +6,12 @@
 
 import {
 	IPCMessageReader, IPCMessageWriter, createConnection, IConnection, TextDocuments,
-	InitializeResult, TextDocumentPositionParams, CompletionItem, Hover, Definition, Location,
-	SymbolInformation
-} from 'vscode-languageserver';
+	InitializeResult, TextDocumentPositionParams, CompletionItem} from 'vscode-languageserver';
 
 import { PddlWorkspace } from '../../common/src/workspace-model';
 import { Diagnostics } from './diagnostics';
 import { AutoCompletion } from './autocompletion';
-import { SymbolInfoProvider } from './symbols';
+import { Settings } from '../../common/src/Settings';
 
 // Create a connection for the server. The connection uses Node's IPC as a transport
 let connection: IConnection = createConnection(new IPCMessageReader(process), new IPCMessageWriter(process));
@@ -39,11 +37,7 @@ connection.onInitialize((params): InitializeResult => {
 			completionProvider: {
 				resolveProvider: true,
 				triggerCharacters: [':', '(', '-']
-			},
-			hoverProvider: true,
-			definitionProvider: true,
-			referencesProvider: true,
-			documentSymbolProvider: true
+			}
 		}
 	}
 });
@@ -52,7 +46,6 @@ let workspace = new PddlWorkspace();
 documents.all().filter(doc => doc.languageId == 'pddl').forEach(doc => workspace.upsertFile(doc.uri, doc.version, doc.getText()));
 let diagnostics: Diagnostics = new Diagnostics(workspace, connection);
 let autoCompletion: AutoCompletion = new AutoCompletion(workspace);
-let symbolProvider: SymbolInfoProvider = new SymbolInfoProvider(workspace);
 
 // The content of a text document has changed. This event is emitted
 // when the text document first opened or when its content has changed.
@@ -60,39 +53,12 @@ documents.onDidChangeContent((change) => {
 	diagnostics.validatePddlDocumentByUri(change.document.uri, false);
 });
 
-// The settings interface describe the server relevant settings part
-interface Settings {
-	pddlParser: PDDLParserSettings;
-}
-
-// These are the example settings we defined in the client's package.json
-// file
-interface PDDLParserSettings {
-	// Maximum number of problems to be sent back to VS Code
-	maxNumberOfProblems: number;
-
-	// path or URL for the PDDL parser executable or service
-	executableOrService: string;
-
-	// parser executable options syntax
-	executableOptions: string;
-
-	// parsing problem custom matching pattern
-	problemPattern: string;
-
-	// Delay in seconds the Language Server should wait after a PDDL file is modified before calls the parser.
-	delayInSecondsBeforeParsing: number;
-}
-
 // The settings have changed. Is send on server activation
 // as well.
 connection.onDidChangeConfiguration((change) => {
 	let settings = <Settings>change.settings;
-	diagnostics.maxNumberOfProblems = settings.pddlParser.maxNumberOfProblems || 100;
-	diagnostics.parserExecutableOrService = settings.pddlParser.executableOrService;
-	diagnostics.parserExecutableOptions = settings.pddlParser.executableOptions;
-	diagnostics.parserCustomPattern = settings.pddlParser.problemPattern;
-	diagnostics.timerDelayInSeconds = settings.pddlParser.delayInSecondsBeforeParsing || diagnostics.timerDelayInSeconds;
+	diagnostics.pddlParserSettings = settings.pddlParser;
+	diagnostics.validator = null;
 	// Revalidate any open text documents
 	diagnostics.revalidateAll();
 });
@@ -150,37 +116,5 @@ connection.onDidCloseTextDocument((params) => {
 	diagnostics.clearDiagnostics(params.textDocument.uri);
 });
 
-connection.onHover(({ textDocument, position }): Hover => {
-	return assertFileParsed(textDocument.uri) ? symbolProvider.getHover(textDocument.uri, position) : null;
-});
-
-connection.onDefinition(({ textDocument, position }): Definition => {
-	return assertFileParsed(textDocument.uri) ? symbolProvider.getDefinition(textDocument.uri, position) : null;
-});
-
-connection.onReferences(({textDocument, position, context}): Location[] =>{
-	return assertFileParsed(textDocument.uri) ? symbolProvider.getReferences(textDocument.uri, position, context.includeDeclaration) : null;
-});
-
-connection.onDocumentSymbol(({textDocument}): SymbolInformation[] => {
-	return assertFileParsed(textDocument.uri) ? symbolProvider.getSymbols(textDocument.uri) : [];
-});
-
 // Listen on the connection
 connection.listen();
-
-function assertFileParsed(fileUri: string): boolean {
-	if (!workspace.getFileInfo(fileUri)) {
-		let textDocument = documents.get(fileUri);
-
-		if (textDocument) {
-			workspace.upsertFile(textDocument.uri, textDocument.version, textDocument.getText());
-			diagnostics.scheduleValidation();
-		}
-		else{
-			// not success!
-			return false;
-		}
-	}
-	return true;
-}

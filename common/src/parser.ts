@@ -72,6 +72,8 @@ export class Parser {
             domainInfo.setFunctions(functions);
         }
 
+        domainInfo.setDerived(this.parseDerived(domainText));
+
         domainInfo.setActions(this.parseActions(domainText));
     }
 
@@ -160,6 +162,27 @@ export class Parser {
         return parameters;
     }
 
+    parseDerived(domainText: string): Variable[] {
+        let pattern = /\(\s*:(derived)\s*\(([_\w][_\w-]*[^\)]*)\)\s(;\s(.*))?/gi;
+
+        let derivedVariables: Variable[] = [];
+
+        let group: RegExpExecArray;
+
+        while (group = pattern.exec(domainText)) {
+            let fullSymbolName = group[2];
+            let parameters = Parser.parseParameters(fullSymbolName);
+            let documentation = group[4];
+
+            let derived = new Variable(fullSymbolName, parameters);
+            if(documentation) derived.setDocumentation(documentation);
+            derived.location = Parser.toRange(domainText, group.index, 0);
+            derivedVariables.push(derived);
+        }
+
+        return derivedVariables;
+    }
+
     parseActions(domainText: string): Action[] {
         let pattern = /\(\s*:(action|durative\-action)\s*([_\w][_\w-]*)\s(;\s(.*))?/gi;
 
@@ -246,6 +269,27 @@ export abstract class FileInfo {
         return referenceLocations;
     }
 
+    getTypeReferences(typeName: string): PddlRange[] {
+        let referenceLocations: PddlRange[] = [];
+
+        let pattern = `-\\s+${typeName}\\b`;
+
+        let lines = Parser.stripComments(this.text).split('\n');
+
+        let regexp = new RegExp(pattern, "gi");
+        for (var lineIdx = 0; lineIdx < lines.length; lineIdx++) {
+            let line = lines[lineIdx];
+            regexp.lastIndex = 0;
+            let match = regexp.exec(line);
+            if (match) {
+                let range = new PddlRange(lineIdx, match.index + 2, lineIdx, match.index + match[0].length);
+                referenceLocations.push(range);
+            }
+        }
+
+        return referenceLocations;
+    }
+
     protected findVariableReferences(variable: Variable, callback: (location: PddlRange, line: string) => boolean): void {
         let lines = this.text.split('\n');
         let pattern = "\\(\\s*" + variable.name + "( [^\\)]*)?\\)";
@@ -305,6 +349,7 @@ export class ProblemInfo extends FileInfo {
 export class DomainInfo extends FileInfo {
     private predicates: Variable[] = [];
     private functions: Variable[] = [];
+    private derived: Variable[] = [];
     actions: Action[] = [];
     typeInheritance: DirectionalGraph;
     constants: TypeObjects[] = [];
@@ -327,6 +372,14 @@ export class DomainInfo extends FileInfo {
 
     setFunctions(functions: Variable[]): void {
         this.functions = functions;
+    }
+
+    getDerived(): Variable[] {
+        return this.derived;
+    }
+
+    setDerived(derived: Variable[]): void {
+        this.derived = derived;
     }
 
     setActions(actions: Action[]): void {
@@ -357,6 +410,36 @@ export class DomainInfo extends FileInfo {
     getTypesInheritingFrom(type: string): string[] {
         return this.typeInheritance.getSubtreePointingTo(type);
     }
+
+    TYPES_SECTION_START = "(:types";
+
+    getTypeLocation(type: string): PddlRange {
+        let pattern = `\\b${type}\\b`;
+        let regexp = new RegExp(pattern, "gi");
+        let foundTypesStart = false;
+        let lines = this.text.split('\n');
+        for (var lineIdx = 0; lineIdx < lines.length; lineIdx++) {
+            let line = lines[lineIdx];
+            let lineWithoutComments = line.split(';')[0];
+            let offset = 0;
+            if (!foundTypesStart) {
+                let typesSectionStartIdx = lineWithoutComments.indexOf(this.TYPES_SECTION_START);
+                if(typesSectionStartIdx > -1) {
+                    foundTypesStart = true;
+                    offset = typesSectionStartIdx + this.TYPES_SECTION_START.length;
+                }
+            }
+            if (foundTypesStart) {
+                regexp.lastIndex = offset;
+                let match = regexp.exec(lineWithoutComments);
+                if (match) {
+                    return new PddlRange(lineIdx, match.index, lineIdx, match.index + match[0].length);
+                }
+            }
+        }
+
+        return null;
+    } 
 
     findVariableLocation(variable: Variable): void {
         if (variable.location) return;//already initialized
