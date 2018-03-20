@@ -42,6 +42,7 @@ export class AutoCompletion {
                     this.KEYWORD_DOMAIN_CONSTANTS,
                     this.KEYWORD_DOMAIN_PREDICATES,
                     this.KEYWORD_DOMAIN_FUNCTIONS,
+                    this.KEYWORD_DOMAIN_DERIVED,
                     this.KEYWORD_DOMAIN_CONSTRAINTS,
                     this.KEYWORD_DOMAIN_ACTION,
                     this.KEYWORD_DOMAIN_DURATIVE_ACTION,
@@ -62,6 +63,7 @@ export class AutoCompletion {
         else if (leadingText.length > 0 && leadingText.endsWith('(')) {
             let predicates = this.getPredicates(fileInfo).map(p => this.createPredicate(p));
             let functions = this.getFunctions(fileInfo).map(f => this.createFunction(f));
+            let derived = this.getDerived(fileInfo).map(f => this.createDerived(f));
             let operators = [
                 this.OPERATOR_CONJUNCTION,
                 this.OPERATOR_NEGATION,
@@ -85,7 +87,7 @@ export class AutoCompletion {
                 this.OPERATOR_ASSIGN,
                 this.OPERATOR_COLON,
             ];
-            return operators.concat(predicates).concat(functions);
+            return operators.concat(predicates).concat(functions).concat(derived);
         } else if (leadingText.length > 0 && leadingText.endsWith(':')) {
             return [
                 this.KEYWORD_ACTION_PARAMETERS,
@@ -110,6 +112,7 @@ export class AutoCompletion {
     KEYWORD_DOMAIN_CONSTANTS = this.createKeyword(this.last_id++, 'constants', 'Constants', 'Constant objects that will be part of all problems defined for this domain.');
     KEYWORD_DOMAIN_PREDICATES = this.createKeyword(this.last_id++, 'predicates', 'Predicates', 'Predicates are things that are either true or false.');
     KEYWORD_DOMAIN_FUNCTIONS = this.createKeyword(this.last_id++, 'functions', 'Functions', 'Functions are used to define numeric values.');
+    KEYWORD_DOMAIN_DERIVED = this.createKeyword(this.last_id++, 'derived', 'Derived predicate/function', 'Derived predicate/function can be defined to simplify action declaration. Example: `(:derived (c) (+ (a) (b))`.');
     KEYWORD_DOMAIN_CONSTRAINTS = this.createKeyword(this.last_id++, 'constraints', 'Constraints', 'Constraints.... you may want to stay away from those.');
     KEYWORD_DOMAIN_ACTION = this.createKeyword(this.last_id++, 'action', 'Instantaneous action', 'Actions that change state of the world.');
     KEYWORD_DOMAIN_DURATIVE_ACTION = this.createKeyword(this.last_id++, 'durative-action', 'Durative action', 'Actions that change the state of the world when they start, then they last for a defined duration period, while changing the world continuously and finally change the state when they end.');
@@ -169,6 +172,12 @@ export class AutoCompletion {
         return completionItem;
     }
 
+    createDerived(derivedSymbol: Variable): CompletionItem {
+        let completionItem = this.createCompletionItem(this.last_id++, derivedSymbol.declaredName, 'Derived predicate/function', derivedSymbol.getDocumentation(), CompletionItemKind.Field);
+        completionItem.insertText = derivedSymbol.declaredNameWithoutTypes;
+        return completionItem;
+    }
+
     createType(typeName: string): CompletionItem {
         let completionItem = this.createCompletionItem(this.last_id++, typeName, 'Type', '', CompletionItemKind.Class);
         completionItem.insertText = ' ' + typeName; // prefix with a space for formatting
@@ -202,6 +211,11 @@ export class AutoCompletion {
     getFunctions(fileInfo: FileInfo): Variable[] {
         let domainInfo = this.workspace.asDomain(fileInfo);
         return domainInfo ? domainInfo.getFunctions() : [];
+    }
+
+    getDerived(fileInfo: FileInfo): Variable[] {
+        let domainInfo = this.workspace.asDomain(fileInfo);
+        return domainInfo ? domainInfo.getDerived() : [];
     }
 
     getTypes(fileInfo: FileInfo): string[]{

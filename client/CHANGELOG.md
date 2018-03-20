@@ -18,7 +18,7 @@ PDDL language configuration was improved - hyphens inside identifiers work as ex
 
 Implemented predicate and function renaming. Try this: put cursor into predicate/function name, press `F2`, modify the name and press Enter.
 
-Improved hover-over tooltip markdown rendering by moving the code from the language server directly to the extension.
+Improved function/predicate/type hover-over tooltip markdown rendering by moving the code from the language server directly to the extension. It is more readable and the documentation may use markdown syntax too.
 
 Replaced backslashes with forward slashes in configuration entries.
 
@@ -27,6 +27,8 @@ Added keyboard shortcut `Alt + P` to the _PDDL: Run the planner and display the 
 Extension is activated also when one of the `PDDL: Configure ...` commands is invoked, in addition to a PDDL file be opened.
 
 Plan visualization configuration `<domain>.planviz.json` file now supports regular expression matching for action names to be hidden. Plan visualization of function values is more robust (but slower) for larger domains. Graphs are not shown for functions with constant values.
+
+Added syntax highlighting and auto-completion for the `:derived` keyword.
 
 ## [2.4.2] - 2017-12-15
 

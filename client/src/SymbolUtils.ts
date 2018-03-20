@@ -44,6 +44,15 @@ export class SymbolUtils {
                     functionFound
                 );
             }
+            let derivedFound = domainInfo.getDerived().find(d => d.name == symbol.name);
+            if (derivedFound) {
+                // todo: refresh the documentation string
+                return new VariableInfo(
+                    this.createHover(symbol.range, 'Derived predicate/function', this.brackets(derivedFound.declaredName), derivedFound.getDocumentation()),
+                    new Location(this.toUri(domainInfo.fileUri), SymbolUtils.toRange(derivedFound.location)),
+                    derivedFound
+                );
+            }
         }
         else if (symbol.isPrefixedBy('- ')) {
 
