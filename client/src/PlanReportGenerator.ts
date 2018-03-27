@@ -18,7 +18,7 @@ import { Util } from '../../common/src/util';
 import { PlanFunctionEvaluator } from './PlanFunctionEvaluator';
 import { PlanReportSettings } from './PlanReportSettings';
 import { PLANNER_VALUE_SEQ_PATH } from './configuration';
-var opn = require('opn');
+var opn = require('opn');   
 var fs = require('fs')
 
 export class PlanReportGenerator {
