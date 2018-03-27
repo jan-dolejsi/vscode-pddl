@@ -5,7 +5,7 @@
 'use strict';
 
 import * as path from 'path';
-import { workspace, window, ExtensionContext, commands, Uri, ViewColumn, Range, StatusBarAlignment, extensions, TextDocument, languages } from 'vscode';
+import { workspace, window, ExtensionContext, commands, Uri, ViewColumn, Range, StatusBarAlignment, TextDocument, languages } from 'vscode';
 import { LanguageClient, LanguageClientOptions, ServerOptions, TransportKind, State } from 'vscode-languageclient';
 
 import { Planning } from './planning'
@@ -20,6 +20,7 @@ import { AutoCompletion } from './AutoCompletion';
 import { SymbolRenameProvider } from './SymbolRenameProvider';
 import { SymbolInfoProvider } from './SymbolInfoProvider';
 import { Diagnostics } from './diagnostics/Diagnostics';
+import { StartUp } from './StartUp'
 
 const PDDL_STOP_PLANNER = 'pddl.stopPlanner';
 const PDDL_CONFIGURE_PARSER = 'pddl.configureParser';
@@ -39,7 +40,9 @@ export function activate(context: ExtensionContext) {
 	let debugOptions = { execArgv: ["--nolazy", "--inspect=6009"] };
 
 	let pddlConfiguration = new PddlConfiguration(context);
-	uninstallLegacyExtension(pddlConfiguration);
+
+	// run start-up actions
+	new StartUp(context).atStartUp(pddlConfiguration);
 
 	// If the extension is launched in debug mode then the debug server options are used
 	// Otherwise the run options are used
@@ -225,13 +228,4 @@ function subscribeToWorkspace(pddlWorkspace: PddlWorkspace, context: ExtensionCo
 
 function isPddl(doc: TextDocument): boolean {
 	return doc.languageId.toLowerCase() == PDDL.toLowerCase();
-}
-
-function uninstallLegacyExtension(pddlConfiguration: PddlConfiguration) {
-	let extension = extensions.getExtension("jan-dolejsi.pddl-parser");
-	
-	if (extension) {
-		pddlConfiguration.copyFromLegacyParserConfig()
-		window.showWarningMessage(`The internal preview extension 'PDDL SL8 Only' is now obsolete. Please uninstall it, or it will interfere with functionality of the PDDL extension.`);
-	}
 }

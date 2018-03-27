@@ -1,34 +1,27 @@
-# Change Log
+# What's new?
 
-All notable changes to the "pddl" extension will be documented in this file.
+## [2.5.0] - 2018-03-28
 
-Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
-
-## [Unreleased]
-
-* Rename parameters and objects
-* Auto-completion for constant/object names.
-* Plan debugger
-
-## [2.5.0] - 2018-03-99
-
-Better support for PDDL object types. _Go to Definition_, _Find all References_ and _Rename_ operations are now supported.
+Better support for PDDL object types (i.e. types declared in the ```(:types )``` section). Select _Go to Definition_ (or press <kbd>F12</kbd>), _Find all References_ and _Rename_ (or <kbd>F2</kbd>) operations are now supported.
 
 PDDL language configuration was improved - hyphens inside identifiers work as expected in the editor.
 
-Implemented predicate and function renaming. Try this: put cursor into predicate/function name, press `F2`, modify the name and press Enter.
+Implemented predicate and function renaming. Try this: put cursor into predicate/function name, press <kbd>F2</kbd>, modify the name and press <kbd>Enter</kbd>.
+![symbol_renaming](https://raw.githubusercontent.com/wiki/jan-dolejsi/vscode-pddl/img/PDDL_symbol_renaming.gif)
 
 Improved function/predicate/type hover-over tooltip markdown rendering by moving the code from the language server directly to the extension. It is more readable and the documentation may use markdown syntax too.
 
 Replaced backslashes with forward slashes in configuration entries.
 
-Added keyboard shortcut `Alt + P` to the _PDDL: Run the planner and display the plan_ command.
+Added keyboard shortcut <kbd>Alt</kbd> + <kbd>P</kbd> to the _PDDL: Run the planner and display the plan_ command.
 
 Extension is activated also when one of the `PDDL: Configure ...` commands is invoked, in addition to a PDDL file be opened.
 
 Plan visualization configuration `<domain>.planviz.json` file now supports regular expression matching for action names to be hidden. Plan visualization of function values is more robust (but slower) for larger domains. Graphs are not shown for functions with constant values.
 
 Added syntax highlighting and auto-completion for the `:derived` keyword.
+
+Added wiki page with [useful keyboard shortcuts for working with PDDL in VS Code](https://github.com/jan-dolejsi/vscode-pddl/wiki/keyboard-shortcuts).
 
 ## [2.4.2] - 2017-12-15
 
@@ -127,6 +120,17 @@ Simplified snippets and added tabstops/placeholders to them, so they are easy to
 * Initial release
 * PDDL Snippets for `domain`, `problem`, `action` and `durative-action`.
 * Syntax highlighting for commonly used PDDL features
+
+## [Unreleased]
+
+* Rename parameters and objects
+* Auto-completion for constant/object names.
+* Plan debugger
+* Domain _unit_ testing
+
+Note for open source contributors: all notable changes to the "pddl" extension will be documented in this file.
+
+Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
 
 [Unreleased]: https://github.com/jan-dolejsi/vscode-pddl/compare/v2.5.0...HEAD
 [2.5.0]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.4.2...v2.5.0
