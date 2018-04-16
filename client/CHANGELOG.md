@@ -1,5 +1,13 @@
 # What's new?
 
+## [2.5.1] - 2018-04-?????
+
+Improved syntax highlighting.
+
+Added support for bracket matching for a popular templating library (`{{` matches `}}` and `{%` matches `%}`).
+
+Added dynamic code snippets for Timed Initial Literals and Timed Initial Fluents.
+
 ## [2.5.0] - 2018-03-28
 
 Better support for PDDL object types (i.e. types declared in the ```(:types )``` section). Select _Go to Definition_ (or press <kbd>F12</kbd>), _Find all References_ and _Rename_ (or <kbd>F2</kbd>) operations are now supported.

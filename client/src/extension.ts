@@ -168,7 +168,7 @@ export function activate(context: ExtensionContext) {
 		});
 	});
 
-	let completionItemProvider = languages.registerCompletionItemProvider(PDDL.toLowerCase(), new AutoCompletion(pddlWorkspace));
+	let completionItemProvider = languages.registerCompletionItemProvider(PDDL.toLowerCase(), new AutoCompletion(pddlWorkspace), '(', ':', '-');
 
 	let renameProvider = languages.registerRenameProvider(PDDL.toLowerCase(), new SymbolRenameProvider(pddlWorkspace));
 

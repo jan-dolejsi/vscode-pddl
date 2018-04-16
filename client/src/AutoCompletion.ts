@@ -10,6 +10,8 @@ import { ProblemInfo, DomainInfo, TypeObjects, Variable } from '../../common/src
 
 export class AutoCompletion implements CompletionItemProvider {
 
+    // For snippet syntax read this: https://code.visualstudio.com/docs/editor/userdefinedsnippets
+
     constructor(public pddlWorkspace: PddlWorkspace) {
 
     }
@@ -60,7 +62,11 @@ class CompletionCollector {
     createProblemInitCompletionItems(problemFileInfo: ProblemInfo, domainFiles: DomainInfo[]): void {
         if (domainFiles.length == 1) {
             // there is a single associated domain file
+            
             this.createSymmetricInit(problemFileInfo, domainFiles[0]);
+            this.createTimedInitialLiteral(problemFileInfo, domainFiles[0]);
+            this.createTimedInitialNegativeLiteral(problemFileInfo, domainFiles[0]);
+            this.createTimedInitialFluent(problemFileInfo, domainFiles[0]);
         }
     }
 
@@ -171,9 +177,88 @@ class CompletionCollector {
 
         this.completions.push(item);
     }
+
+    createTimedInitialLiteral(problemFileInfo: ProblemInfo, domainFile: DomainInfo): void {
+        problemFileInfo; // burn it to avoid warning
+
+        let predicates = domainFile.getPredicates();
+
+        if (!predicates.length) return;
+
+        let namesCsv = CompletionCollector.toTypeLessNamesCsv(predicates);
+
+        let item = new CompletionItem('at <time> (predicate1)', CompletionItemKind.Snippet);
+        item.filterText = 'at ';
+        item.insertText = new SnippetString(this.enclose(
+            "at ${1:1.0} (${2|" + namesCsv + "|})"));
+        item.detail = 'Timed initial literal'
+        item.documentation = new MarkdownString()
+            .appendMarkdown("Defines that selected predicated changes value to `true` at specified time.")
+            .appendCodeblock("(at 42 (predicate1))", "PDDL")
+            .appendMarkdown("Use the `Tab` and `Enter` keys on your keyboard to cycle through the snippet inputs.");
+        this.completions.push(item); 
+    }
+
+    createTimedInitialNegativeLiteral(problemFileInfo: ProblemInfo, domainFile: DomainInfo): void {
+        problemFileInfo; // burn it to avoid warning
+
+        let predicates = domainFile.getPredicates();
+
+        if (!predicates.length) return;
+
+        let namesCsv = CompletionCollector.toTypeLessNamesCsv(predicates);
+
+        let item = new CompletionItem('at <time> (not (predicate1))', CompletionItemKind.Snippet);
+        item.filterText = 'at ';
+        item.insertText = new SnippetString(this.enclose(
+            "at ${1:1.0} (not (${2|" + namesCsv + "|}))"));
+        item.detail = 'Timed initial literal (negative)'
+        item.documentation = new MarkdownString()
+            .appendMarkdown("Defines that selected predicated changes value to `false` at specified time.")
+            .appendCodeblock("(at 42 (not (predicate1)))", "PDDL")
+            .appendMarkdown("Use the `Tab` and `Enter` keys on your keyboard to cycle through the snippet inputs.");
+        this.completions.push(item); 
+    }
+
+    createTimedInitialFluent(problemFileInfo: ProblemInfo, domainFile: DomainInfo): void {
+        problemFileInfo; // burn it to avoid warning
+
+        let functions = domainFile.getFunctions();
+
+        if (!functions.length) return;
+
+        let item = new CompletionItem('at <time> (= (function1) <value>)', CompletionItemKind.Snippet);
+        item.filterText = 'at ';
+        item.insertText = new SnippetString(this.enclose(
+            "at ${1:1.0} (= (${2|" + CompletionCollector.toTypeLessNamesCsv(functions) + "|}) ${3:42})"));
+        item.detail = 'Timed initial fluent'
+        item.documentation = new MarkdownString()
+            .appendText("Defines that selected function changes value at specified time.")
+            .appendCodeblock("(at 42 (= (function1) 1.0))", "PDDL")
+            .appendMarkdown("Use the `Tab` and `Enter` keys on your keyboard to cycle through the snippet inputs.");
+        this.completions.push(item); 
+    }
+
+    enclose(snippetText: string): string {
+        let enclosingStart = '';
+        let enclosingEnd = '';
+        if (this.context.triggerCharacter != "(") {
+            enclosingStart = '(';
+            enclosingEnd = ')';
+        }
+
+        return enclosingStart + snippetText + enclosingEnd;
+    }
+
     static toNamesCsv(variables: Variable[]): string {
         return variables
             .map(var1 => var1.name)
+            .join(',');
+    }
+
+    static toTypeLessNamesCsv(variables: Variable[]): string {
+        return variables
+            .map(var1 => var1.declaredNameWithoutTypes)
             .join(',');
     }
 
