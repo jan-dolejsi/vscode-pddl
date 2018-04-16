@@ -4,6 +4,9 @@
  * ------------------------------------------------------------------------------------------ */
 'use strict';
 
+///<reference path="./typings/node/node.d.ts" />
+import { EventEmitter }  from 'events';
+
 import { Parser, FileInfo, DomainInfo, ProblemInfo, UnknownFileInfo } from '../../common/src/parser'
 
 class Folder {
@@ -67,11 +70,15 @@ class Folder {
     }
 }
 
-export class PddlWorkspace {
+export class PddlWorkspace extends EventEmitter {
     folders: Map<string, Folder> = new Map<string, Folder>();
     parser: Parser;
 
+    public static UPDATED = Symbol("UPDATED");
+    public static REMOVING = Symbol("REMOVING");
+
     constructor() {
+        super();
         this.parser = new Parser();
     }
 
@@ -88,6 +95,8 @@ export class PddlWorkspace {
     }
 
     upsertFile(fileUri: string, fileVersion: number, fileText: string): FileInfo {
+
+        this.emit(PddlWorkspace.UPDATED);
 
         let folderUri = PddlWorkspace.getFolderUri(fileUri);
 
@@ -130,6 +139,7 @@ export class PddlWorkspace {
     }
 
     removeFile(documentUri: string): boolean {
+
         let folderUri = PddlWorkspace.getFolderUri(documentUri);
 
         if (this.folders.has(folderUri)) {
@@ -137,6 +147,7 @@ export class PddlWorkspace {
             if (folder.hasFile(documentUri)) {
                 let documentInfo = folder.get(documentUri);
 
+                this.emit(PddlWorkspace.REMOVING, documentInfo);
                 return folder.remove(documentInfo);
             }
         }

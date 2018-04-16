@@ -33,6 +33,9 @@ export class Diagnostics {
         this.diagnosticCollection = diagnosticCollection;
         this.workspace = workspace;
         this.pddlConfiguration = configuration;
+
+        this.workspace.on(PddlWorkspace.UPDATED, _ => this.scheduleValidation());
+        this.workspace.on(PddlWorkspace.REMOVING, (doc: FileInfo) => this.clearDiagnostics(doc.fileUri));
     }
 
     scheduleValidation(): void {
