@@ -5,8 +5,8 @@
 'use strict';
 
 import { CompletionItemProvider, CompletionItem, TextDocument, Position, CancellationToken, SnippetString, MarkdownString, CompletionItemKind, CompletionList, CompletionContext, Range } from 'vscode';
-import { PddlWorkspace } from './workspace-model';
-import { ProblemInfo, DomainInfo, TypeObjects, Variable } from '../../common/src/parser';
+import { PddlWorkspace } from '../../../common/src/workspace-model';
+import { ProblemInfo, DomainInfo, TypeObjects, Variable } from '../../../common/src/parser';
 
 export class AutoCompletion implements CompletionItemProvider {
 

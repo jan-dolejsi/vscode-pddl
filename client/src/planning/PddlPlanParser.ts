@@ -5,8 +5,8 @@
 'use strict';
 
 import { Plan } from './plan';
-import { PlanStep } from '../../common/src/PlanStep';
-import { DomainInfo, ProblemInfo } from '../../common/src/parser';
+import { PlanStep } from '../../../common/src/PlanStep';
+import { DomainInfo, ProblemInfo } from '../../../common/src/parser';
 
 /**
  * Parses plan in the PDDL form incrementally - line/buffer at a time.

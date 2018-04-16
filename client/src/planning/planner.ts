@@ -4,8 +4,8 @@
  * ------------------------------------------------------------------------------------------ */
 'use strict';
 
-import { DomainInfo, ProblemInfo } from '../../common/src/parser';
-import { PlanningHandler } from './plan';
+import { DomainInfo, ProblemInfo } from '../../../common/src/parser';
+import { Plan, PlanningHandler } from './plan';
 import { PddlPlanParser } from './PddlPlanParser';
 
 export abstract class Planner {
@@ -17,7 +17,9 @@ export abstract class Planner {
 
     }
 
-    abstract plan(domainFileInfo: DomainInfo, problemFileInfo: ProblemInfo, planParser: PddlPlanParser, parent: PlanningHandler): void;
+    abstract plan(domainFileInfo: DomainInfo, problemFileInfo: ProblemInfo, planParser: PddlPlanParser, parent: PlanningHandler): Promise<Plan[]>;
 
-    abstract stop(): void;
+    stop(): void {
+        this.planningProcessKilled = true;
+    }
 }

@@ -5,18 +5,18 @@
 'use strict';
 
 import * as path from 'path';
-import { workspace, window, ExtensionContext, commands, Uri, ViewColumn, Range, StatusBarAlignment, TextDocument, languages } from 'vscode';
+import { workspace, window, ExtensionContext, commands, Uri, ViewColumn, Range, TextDocument, languages } from 'vscode';
 import { LanguageClient, LanguageClientOptions, ServerOptions, TransportKind, State } from 'vscode-languageclient';
 
-import { Planning } from './planning'
+import { Planning } from './planning/planning'
 
 import { PddlWorkspace } from '../../common/src/workspace-model';
 import { DomainInfo, PddlRange } from '../../common/src/parser';
 import { PddlConfiguration } from './configuration';
 import { Authentication } from '../../common/src/Authentication';
-import { PlanReportGenerator } from './PlanReportGenerator';
-import { Plan } from './plan';
-import { AutoCompletion } from './AutoCompletion';
+import { PlanReportGenerator } from './planning/PlanReportGenerator';
+import { Plan } from './planning/plan';
+import { AutoCompletion } from './completion/AutoCompletion';
 import { SymbolRenameProvider } from './SymbolRenameProvider';
 import { SymbolInfoProvider } from './SymbolInfoProvider';
 // import { Diagnostics } from './diagnostics/Diagnostics';
@@ -67,13 +67,9 @@ export function activate(context: ExtensionContext) {
 	let languageClient = new LanguageClient('pddlParser', 'PDDL Language Server', serverOptions, clientOptions);
 	context.subscriptions.push(languageClient.start());
 
-	const status = window.createStatusBarItem(StatusBarAlignment.Right, 100);
-	status.text = '$(server)';
-	status.tooltip = 'Stop the planning engine.'
-
 	let pddlWorkspace = new PddlWorkspace();
 	subscribeToWorkspace(pddlWorkspace, context);
-	let planning = new Planning(pddlWorkspace, pddlConfiguration, context, status);
+	let planning = new Planning(pddlWorkspace, pddlConfiguration, context);
 
 	let planCommand = commands.registerCommand('pddl.planAndDisplayResult', () => {
 		planning.plan();
@@ -84,7 +80,6 @@ export function activate(context: ExtensionContext) {
 	});
 
 	let stopPlannerCommand = commands.registerCommand(PDDL_STOP_PLANNER, () => planning.stopPlanner());
-	status.command = PDDL_STOP_PLANNER;
 
 	let configureParserCommand = commands.registerCommand(PDDL_CONFIGURE_PARSER, () => {
 		pddlConfiguration.setupParserLater = false;
@@ -187,7 +182,7 @@ export function activate(context: ExtensionContext) {
 	// Push the disposables to the context's subscriptions so that the 
 	// client can be deactivated on extension deactivation
 	context.subscriptions.push(planCommand, revealActionCommand, planning.planDocumentProviderRegistration, 
-		status, stopPlannerCommand, stateChangeHandler, configureParserCommand, loginParserServiceCommand, updateTokensParserServiceCommand, 
+		stopPlannerCommand, stateChangeHandler, configureParserCommand, loginParserServiceCommand, updateTokensParserServiceCommand, 
 		configurePlannerCommand, loginPlannerServiceCommand, updateTokensPlannerServiceCommand, generatePlanReportCommand, completionItemProvider, 
 		renameProvider, documentSymbolProvider, definitionProvider, referencesProvider, hoverProvider);
 }

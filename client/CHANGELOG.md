@@ -2,6 +2,8 @@
 
 ## [2.5.1] - 2018-04-?????
 
+When executing the planning engine, the UI shows feedback in a form of a cancelable notification. This makes it much easier to find the cancel button. 
+
 Improved syntax highlighting.
 
 Added support for bracket matching for a popular templating library (`{{` matches `}}` and `{%` matches `%}`).

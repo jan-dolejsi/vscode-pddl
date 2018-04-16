@@ -12,9 +12,9 @@ import * as process from 'child_process';
 const tree_kill = require('tree-kill');
 
 import { Planner } from './planner';
-import { PlanningHandler } from './plan';
-import { DomainInfo, ProblemInfo } from '../../common/src/parser';
-import { Util } from '../../common/src/util';
+import { PlanningHandler, Plan } from './plan';
+import { DomainInfo, ProblemInfo } from '../../../common/src/parser';
+import { Util } from '../../../common/src/util';
 import { PddlPlanParser } from './PddlPlanParser';
 
 export class PlannerExecutable extends Planner {
@@ -26,7 +26,7 @@ export class PlannerExecutable extends Planner {
         super(plannerPath, plannerOptions);
     }
 
-    plan(domainFileInfo: DomainInfo, problemFileInfo: ProblemInfo, planParser: PddlPlanParser, parent: PlanningHandler): void {
+    plan(domainFileInfo: DomainInfo, problemFileInfo: ProblemInfo, planParser: PddlPlanParser, parent: PlanningHandler): Promise<Plan[]> {
 
         let domainFilePath = Util.toPddlFile("domain", domainFileInfo.text);
         let problemFilePath = Util.toPddlFile("problem", problemFileInfo.text);
@@ -41,30 +41,34 @@ export class PlannerExecutable extends Planner {
         let thisPlanner = this;
         super.planningProcessKilled = false;
 
-        this.child = process.exec(command, 
-            { cwd: this.workingDirectory },
-            (error, stdout, stderr) => {
-            planParser.onPlanFinished();
-
-            if (error && !thisPlanner.child.killed && !this.planningProcessKilled) {
-                parent.handleError(error, stderr);
-            }
-
-            let plans = planParser.getPlans();
-            parent.handleSuccess(stdout, plans);
-            thisPlanner.child = null;
-        });
-
-        this.child.stdout.on('data', data => {
-            const dataString = data.toString();
-            parent.handleOutput(dataString);
-            planParser.appendBuffer(dataString);
-        });
-        this.child.stderr.on('data', data => parent.handleOutput("Error: " + data));
-
-        this.child.on("close", (code, signal) => {
-            if (code) console.log("Exit code: " + code);
-            if (signal) console.log("Exit Signal: " + signal);
+        return new Promise<Plan[]>(function(resolve, reject) {
+            thisPlanner.child = process.exec(command, 
+                { cwd: thisPlanner.workingDirectory },
+                (error, stdout, stderr) => {
+                planParser.onPlanFinished();
+    
+                if (error && !thisPlanner.child.killed && !thisPlanner.planningProcessKilled) {
+                    parent.handleError(error, stderr);//todo: remove this and use Promise
+                    reject(error);
+                }
+    
+                let plans = planParser.getPlans();
+                parent.handleSuccess(stdout, plans);//todo: remove this and use Promise
+                resolve(plans);
+                thisPlanner.child = null;
+            });
+    
+            thisPlanner.child.stdout.on('data', (data: any) => {
+                const dataString = data.toString();
+                parent.handleOutput(dataString);
+                planParser.appendBuffer(dataString);
+            });
+            thisPlanner.child.stderr.on('data', (data: any) => parent.handleOutput("Error: " + data));
+    
+            thisPlanner.child.on("close", (code: any, signal: any) => {
+                if (code) console.log("Exit code: " + code);
+                if (signal) console.log("Exit Signal: " + signal);
+            });
         });
     }
 
@@ -73,7 +77,7 @@ export class PlannerExecutable extends Planner {
      */
     stop(): void {
         if (this.child) {
-            this.planningProcessKilled = true;
+            super.stop();
 
             // try to kill just the shell
             // this.child.kill();//'SIGINT');

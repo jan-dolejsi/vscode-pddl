@@ -4,8 +4,8 @@
  * ------------------------------------------------------------------------------------------ */
 'use strict';
 
-import { DomainInfo, ProblemInfo } from '../../common/src/parser';
-import { PlanStep } from '../../common/src/PlanStep';
+import { DomainInfo, ProblemInfo } from '../../../common/src/parser';
+import { PlanStep } from '../../../common/src/PlanStep';
 
 export class Plan {
     makespan: number;
