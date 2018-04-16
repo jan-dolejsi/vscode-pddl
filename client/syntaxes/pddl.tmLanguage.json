@@ -6,9 +6,6 @@
 			"include": "#keywords"
 		},
 		{
-			"include": "#strings"
-		},
-		{
 			"include": "#comments"
 		},
 		{
@@ -16,6 +13,9 @@
 		},
 		{
 			"include": "#time-qualifiers"
+		},
+		{
+			"include": "#operators"
 		},
 		{
 			"include": "#parameters"
@@ -31,12 +31,12 @@
 				"match": "\\b(define|domain|problem)\\b"
 			},
 			{
-				"name": "keyword.control.pddl.global",
-				"match": ":(requirements|types|constants|predicates|functions|derived|action|durative-action|domain|objects|init|goal|metric)\\b"
-			},
-			{
 				"name": "keyword.control.pddl.requirements",
 				"match": ":(strips|typing|negative-preconditions|disjunctive-preconditions|equality|existential-preconditions|universal-preconditions|quantified-preconditions|conditional-effects|fluents|numeric-fluents|adl|durative-actions|duration-inequalities|continuous-effects|derived-predicates|derived-functions|timed-initial-literals|preferences|constraints|action-costs|timed-initial-fluents)\\b"
+			},
+			{
+				"name": "keyword.control.pddl.global",
+				"match": ":(requirements|types|constants|predicates|functions|derived|action|durative-action|domain|objects|init|goal|metric)\\b"
 			},
 			{
 				"name": "keyword.control.pddl.action",
@@ -60,10 +60,36 @@
 			}]
 		},
 		"time-qualifiers":{
-			"patterns": [{
-				"name": "keyword.operator.pddl_qualifier",
-				"match": "\\b(and|not|at start|at end|over all|assign|increase|decrease|minimize)\\b"
-			}]
+			"patterns": [
+				{
+					"name": "keyword.other.pddl_qualifier",
+					"match": "\\b(at start|at end|over all)\\b"
+				},
+				{
+					"name": "keyword.other.delta_t",
+					"match": "#t\\b"
+				}
+			]
+		},
+		"operators":{
+			"patterns": [
+				{
+					"name": "keyword.operator.logical",
+					"match": "\\b(and|not|or|either)\\b"
+				},
+				{
+					"name": "keyword.other.numeric",
+					"match": "(>|<|>=|<=|=|/|\\*|\\+)"
+				},
+				{
+					"name": "keyword.other.effects",
+					"match": "\\b(assign|increase|decrease)\\b"
+				},
+				{
+					"name": "keyword.other.metric",
+					"match": "\\b(minimize|maximize)\\b"
+				}
+			]
 		},
 		"parameters":{
 			"patterns": [{

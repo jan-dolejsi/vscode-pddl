@@ -104,7 +104,7 @@ export class StartUp {
 
         if(currentVersion != lastValue) {
             //let changeLog = this.context.asAbsolutePath('CHANGELOG.md');
-            let changeLog = 'https://github.com/jan-dolejsi/vscode-pddl/blob/master/client/CHANGELOG.md';
+            let changeLog = 'https://marketplace.visualstudio.com/items/jan-dolejsi.pddl/changelog';
             commands.executeCommand('vscode.open', Uri.parse(changeLog));
             
             this.context.globalState.update(this.WHATS_NEW_SHOWN_FOR_VERSION, currentVersion);

@@ -19,7 +19,7 @@ import { Plan } from './plan';
 import { AutoCompletion } from './AutoCompletion';
 import { SymbolRenameProvider } from './SymbolRenameProvider';
 import { SymbolInfoProvider } from './SymbolInfoProvider';
-import { Diagnostics } from './diagnostics/Diagnostics';
+// import { Diagnostics } from './diagnostics/Diagnostics';
 import { StartUp } from './StartUp'
 
 const PDDL_STOP_PLANNER = 'pddl.stopPlanner';
@@ -178,9 +178,9 @@ export function activate(context: ExtensionContext) {
 	let definitionProvider = languages.registerDefinitionProvider(PDDL.toLowerCase(), symbolInfoProvider);
 	let referencesProvider = languages.registerReferenceProvider(PDDL.toLowerCase(), symbolInfoProvider);
 	let hoverProvider = languages.registerHoverProvider(PDDL.toLowerCase(), symbolInfoProvider);
-	let diagnosticCollection = languages.createDiagnosticCollection(PDDL);
+	//todo: let diagnosticCollection = languages.createDiagnosticCollection(PDDL);
 	//todo: let diagnostics = 
-	new Diagnostics(pddlWorkspace, diagnosticCollection,  pddlConfiguration);
+	// new Diagnostics(pddlWorkspace, diagnosticCollection,  pddlConfiguration);
 	//todo: subscribe to pddlWorkspace document updates
 	// pddlWorkspace.onChange(doc -> diagnostics.docChanged(doc));
 
