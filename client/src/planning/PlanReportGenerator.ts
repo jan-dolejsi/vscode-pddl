@@ -10,14 +10,14 @@ import {
 
 import * as path from 'path';
 
-import { DomainInfo, TypeObjects } from '../../common/src/parser';
-import { SwimLane } from '../../common/src/SwimLane';
-import { PlanStep } from '../../common/src/PlanStep';
+import { DomainInfo, TypeObjects } from '../../../common/src/parser';
+import { SwimLane } from '../../../common/src/SwimLane';
+import { PlanStep } from '../../../common/src/PlanStep';
 import { Plan } from './plan';
-import { Util } from '../../common/src/util';
+import { Util } from '../../../common/src/util';
 import { PlanFunctionEvaluator } from './PlanFunctionEvaluator';
 import { PlanReportSettings } from './PlanReportSettings';
-import { PLANNER_VALUE_SEQ_PATH } from './configuration';
+import { PLANNER_VALUE_SEQ_PATH } from '../configuration';
 var opn = require('opn');   
 var fs = require('fs')
 
@@ -30,15 +30,15 @@ export class PlanReportGenerator {
 
     }
 
-    export(plans: Plan[], planId: number): void {
-        let html = this.generateHtml(plans, planId);
+    async export(plans: Plan[], planId: number) {
+        let html = await this.generateHtml(plans, planId);
 
         let htmlFile = Util.toFile("plan-report", ".html", html);
 
         opn("file://" + htmlFile);
     }
 
-    generateHtml(plans: Plan[], planId: number = -1): string {
+    async generateHtml(plans: Plan[], planId: number = -1): Promise<string> {
         let selectedPlan = planId < 0 ? plans.length - 1 : planId;
 
         let maxCost = Math.max(...plans.map(plan => plan.cost));
@@ -47,7 +47,8 @@ export class PlanReportGenerator {
 
         let planSelectorsDisplayStyle = plans.length > 1 ? "flex" : "none";
 
-        let plansHtml = plans.map((plan, planIndex) => this.renderPlan(plan, planIndex, selectedPlan)).join("\n\n");
+        let planHtmlArr: string[] = await Promise.all(plans.map(async (plan, planIndex) => await this.renderPlan(plan, planIndex, selectedPlan)));
+        let plansHtml = planHtmlArr.join("\n\n");
         let plansChartsScript = this.createPlansChartsScript(plans);
 
         let html = `<!DOCTYPE html>        
@@ -92,7 +93,7 @@ export class PlanReportGenerator {
         else return true;
     }
 
-    renderPlan(plan: Plan, planIndex: number, selectedPlan: number): string {
+    async renderPlan(plan: Plan, planIndex: number, selectedPlan: number): Promise<string> {
         this.settings.set(plan, new PlanReportSettings(plan.domain.fileUri));
 
         let stepsToDisplay = plan.steps
@@ -135,7 +136,7 @@ ${objectsHtml}
 
             try {
 
-                let functionValues = evaluator.evaluate();
+                let functionValues = await evaluator.evaluate();
 
                 functionValues.forEach((values, liftedVariable) => {
                     let chartDivId = `chart_${planIndex}_${liftedVariable.name}`;

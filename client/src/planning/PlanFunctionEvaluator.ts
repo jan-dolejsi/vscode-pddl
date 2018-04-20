@@ -6,11 +6,11 @@
 
 import * as process from 'child_process';
 
-import { Variable } from '../../common/src/parser';
-import { Grounder } from '../../common/src/Grounder';
+import { Variable } from '../../../common/src/parser';
+import { Grounder } from '../../../common/src/Grounder';
 import { Plan } from './plan';
-import { Util } from '../../common/src/util';
-import { PlanTimeSeriesParser } from '../../common/src/PlanTimeSeriesParser';
+import { Util } from '../../../common/src/util';
+import { PlanTimeSeriesParser } from '../../../common/src/PlanTimeSeriesParser';
 
 export class PlanFunctionEvaluator {
 
@@ -24,30 +24,33 @@ export class PlanFunctionEvaluator {
         return this.valueSeqPath ? true : false;
     }
 
-    evaluate(): Map<Variable, GroundedFunctionValues> {
+    async evaluate(): Promise<Map<Variable, GroundedFunctionValues>> {
         let domainFile = Util.toPddlFile("domain", this.plan.domain.text);
         let problemFile = Util.toPddlFile("problem", this.plan.problem.text);
         let planFile = Util.toPddlFile("plan", this.plan.getText());
 
         let chartData = new Map<Variable, GroundedFunctionValues>();
 
-        this.plan.domain.getFunctions()
-            .filter(liftedFunction => liftedFunction.parameters.length < 2)
-            .forEach(liftedFunction => this.tryAddChartValues(domainFile, problemFile, planFile, liftedFunction, chartData));
+        let simplyGroundableFunctions = this.plan.domain.getFunctions()
+            .filter(liftedFunction => liftedFunction.parameters.length < 2);
+
+        await Promise.all(simplyGroundableFunctions.map(async (liftedFunction) => {
+            await this.tryAddChartValues(domainFile, problemFile, planFile, liftedFunction, chartData);
+        }))
 
         return chartData;
     }
 
-    tryAddChartValues(domainFile: string, problemFile: string, planFile: string, liftedFunction: Variable, chartData: Map<Variable, GroundedFunctionValues>): void {
+    async tryAddChartValues(domainFile: string, problemFile: string, planFile: string, liftedFunction: Variable, chartData: Map<Variable, GroundedFunctionValues>) {
         try {
-            this.addChartValues(domainFile, problemFile, planFile, liftedFunction, chartData);
+            await this.addChartValues(domainFile, problemFile, planFile, liftedFunction, chartData);
         } catch (err) {
             console.log("Cannot get values for function " + liftedFunction.getFullName());
             console.log(err);
         }
     }
 
-    addChartValues(domainFile: string, problemFile: string, planFile: string, liftedFunction: Variable, chartData: Map<Variable, GroundedFunctionValues>): void {
+    async addChartValues(domainFile: string, problemFile: string, planFile: string, liftedFunction: Variable, chartData: Map<Variable, GroundedFunctionValues>) {
         // this forces the variable unit of measure to be parsed    
         this.plan.domain.findVariableLocation(liftedFunction);
 
@@ -60,7 +63,7 @@ export class PlanFunctionEvaluator {
             .map(name => name.toLowerCase())
             .join(' ');
 
-        let child = process.execSync(`${this.valueSeqPath} -T ${domainFile} ${problemFile} ${planFile} ${functions}`);
+        let child = await process.execSync(`${this.valueSeqPath} -T ${domainFile} ${problemFile} ${planFile} ${functions}`);
 
         let csv = child.toString();
 

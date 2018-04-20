@@ -6,22 +6,22 @@
 
 import {
     window, workspace, commands, OutputChannel, Uri, Disposable, 
-    ViewColumn, MessageItem, ExtensionContext, StatusBarItem
+    ViewColumn, MessageItem, ExtensionContext, ProgressLocation
 } from 'vscode';
 
 import * as path from 'path';
 
 import { PlanDocumentContentProvider } from './PlanDocumentContentProvider';
 
-import { PddlWorkspace } from '../../common/src/workspace-model';
-import { DomainInfo, ProblemInfo } from '../../common/src/parser';
-import { PddlConfiguration } from './configuration';
+import { PddlWorkspace } from '../../../common/src/workspace-model';
+import { DomainInfo, ProblemInfo } from '../../../common/src/parser';
+import { PddlConfiguration } from '../configuration';
 import { Plan, PlanningHandler } from './plan';
 import { PlannerExecutable } from './PlannerExecutable';
 import { PlannerService } from './PlannerService';
 import { Planner } from './planner';
 import { PddlPlanParser } from './PddlPlanParser';
-import { Authentication } from '../../common/src/Authentication';
+import { Authentication } from '../../../common/src/Authentication';
 
 export class Planning implements PlanningHandler {
     output: OutputChannel;
@@ -35,7 +35,7 @@ export class Planning implements PlanningHandler {
     plans: Plan[];
     planningProcessKilled: boolean;
     
-    constructor(public pddlWorkspace: PddlWorkspace, public plannerConfiguration: PddlConfiguration, context: ExtensionContext, public status: StatusBarItem) {
+    constructor(public pddlWorkspace: PddlWorkspace, public plannerConfiguration: PddlConfiguration, context: ExtensionContext) {
         this.output = window.createOutputChannel("Planner output");
 
         this.previewUri = Uri.parse('pddl-plan://authority/plan');
@@ -119,9 +119,18 @@ export class Planning implements PlanningHandler {
 
         this.planningProcessKilled = false;
 
-        this.planner.plan(domainFileInfo, problemFileInfo, planParser, this);
+        window.withProgress<Plan[]>({
+            location: ProgressLocation.Notification,
+            title: "Searching for plans...",
+            cancellable: true
+        }, (progress, token) => {
+            progress;
+            token.onCancellationRequested(() => {
+                this.stopPlanner();
+            });
 
-        this.showStopButton();
+			return this.planner.plan(domainFileInfo, problemFileInfo, planParser, this);
+        });
 
         this.output.show();
 
@@ -166,7 +175,7 @@ export class Planning implements PlanningHandler {
         try {
             if (this.planner) {
                 this.planner.stop();
-                this.planningProcessKilled = true;
+
                 this.planner = null;
                 this.output.appendLine('Process killing requested.');
             }
@@ -176,14 +185,6 @@ export class Planning implements PlanningHandler {
         }
     }
 
-    showStopButton() {
-        this.status.show();
-    }
-
-    hideStopButton() {
-        this.status.hide();
-    }
-
     handleOutput(outputText: string): void {
         this.output.append(outputText);
     }
@@ -191,7 +192,6 @@ export class Planning implements PlanningHandler {
     handleSuccess(stdout: string, plans: Plan[]): void {
         this.output.appendLine('Process exited.');
         stdout.length; // just waste it, we did not need it here
-        this.hideStopButton();
 
         this.visualizePlans(plans);
         this.planner = null;

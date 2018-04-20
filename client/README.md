@@ -21,6 +21,8 @@ Following snippets are supported if you start typing following prefix
 
 Commonly used PDDL keywords are highlighted.
 
+![syntax_highlighting](https://raw.githubusercontent.com/wiki/jan-dolejsi/vscode-pddl/img/PDDL_syntax_highlighting.png)
+
 ### Hover, go to definition and find all references
 
 Similar to other programing languages, you can hover over a PDDL predicate, function or type and see the definition. If some comments are placed on the same line, they are also displayed while hovering. The code comments may include markdown syntax.
@@ -50,6 +52,10 @@ When typing in the domain or problem file characters such as `(` or `:`, Visual 
 
 ![auto_completion](https://raw.githubusercontent.com/wiki/jan-dolejsi/vscode-pddl/img/PDDL_auto_completion.gif)
 
+Some PDDL constructs are supported with smart snippets, which are aware of where you are in the document and what is in your model:
+
+![timed_initial_literals_snippets](https://raw.githubusercontent.com/wiki/jan-dolejsi/vscode-pddl/img/PDDL_timed_initial_snippets.gif)
+
 ### Syntactic errors
 
 PDDL parser can be configured to run in the background and draw attention to syntactic errors, so you can fix them before running the planner. This dramatically shortens the time you need to come up with a valid PDDL.
@@ -60,7 +66,7 @@ To learn more about how to configure the extension to work with one of the parse
 
 ### Run the planner and visualize plans
 
-The planner can be invoke in the context of a currently edited PDDL file. There are two ways how to do that via the user interface.
+The planner can be invoked in the context of a currently edited PDDL file. There are two ways how to do that via the user interface.
 
 - Type `Ctrl + Shift + P` and type _plan_ to filter the list of available commands. The _Run the planner and visualize the plan_ command should be visible.
 - Right click on the PDDL file and select  _Run the planner and visualize the plan_
@@ -75,7 +81,7 @@ There are multiple scenarios supported:
 
 Domain and problem files correspond to each other, if:
 
-- they have the same domain name and
+- they have the same domain name i.e. `(domain name)` and
 - they are located in the same folder and
 - both files are open in the editor.
 

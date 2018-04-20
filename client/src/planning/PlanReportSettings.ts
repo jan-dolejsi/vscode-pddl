@@ -5,7 +5,7 @@
  * ------------------------------------------------------------------------------------------ */
 'use strict';
 
-import { PlanStep } from "./PlanStep";
+import { PlanStep } from "../../../common/src/PlanStep";
 const fs = require('fs');
 const { URL } = require('url');
 
