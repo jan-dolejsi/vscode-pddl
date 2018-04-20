@@ -1,14 +1,17 @@
 # What's new?
 
-## [2.5.1] - 2018-04-?????
+## [2.5.1] - 2018-04-20
 
-When executing the planning engine, the UI shows feedback in a form of a cancelable notification. This makes it much easier to find the cancel button. 
+When executing the planning engine, the UI shows feedback in a form of a cancelable notification. This makes it much easier to find the cancel button.
+![cancel_planning](https://raw.githubusercontent.com/wiki/jan-dolejsi/vscode-pddl/img/PDDL_cancel_planning.gif)
 
 Improved syntax highlighting.
+![syntax_highlighting](https://raw.githubusercontent.com/wiki/jan-dolejsi/vscode-pddl/img/PDDL_syntax_highlighting.png)
 
 Added support for bracket matching for a popular templating library (`{{` matches `}}` and `{%` matches `%}`).
 
-Added dynamic code snippets for Timed Initial Literals and Timed Initial Fluents.
+Added dynamic code snippets for Timed Initial Literals (TIL) and Timed Initial Fluents (TIF).
+![timed_initial_literals_snippets](https://raw.githubusercontent.com/wiki/jan-dolejsi/vscode-pddl/img/PDDL_timed_initial_snippets.gif)
 
 ## [2.5.0] - 2018-03-28
 
@@ -133,16 +136,17 @@ Simplified snippets and added tabstops/placeholders to them, so they are easy to
 
 ## [Unreleased]
 
+* PDDL _unit_ testing
 * Rename parameters and objects
 * Auto-completion for constant/object names.
 * Plan debugger
-* Domain _unit_ testing
 
 Note for open source contributors: all notable changes to the "pddl" extension will be documented in this file.
 
 Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
 
-[Unreleased]: https://github.com/jan-dolejsi/vscode-pddl/compare/v2.5.0...HEAD
+[Unreleased]: https://github.com/jan-dolejsi/vscode-pddl/compare/v2.5.1...HEAD
+[2.5.1]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.5.0...v2.5.1
 [2.5.0]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.4.2...v2.5.0
 [2.4.2]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.0.3...v2.4.2
 [2.0.3]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.0.2...v2.0.3
