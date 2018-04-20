@@ -1,0 +1,136 @@
+{
+    "$id": "http://pddl-schema.org/ptest.json",
+    "type": "object",
+    "definitions": {},
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "properties": {
+        "defaultDomain": {
+            "$id": "/properties/defaultDomain",
+            "type": "string",
+            "title": "The domain file, if common to many of the test cases. The 'domain' property in the 'test' element overrides this value.",
+            "default": "",
+            "examples": [
+                "domain.pddl"
+            ]
+        },
+        "defaultProblem": {
+            "$id": "/properties/defaultProblem",
+            "type": "string",
+            "title": "The problem file, if common to many of the test cases. The 'problem' property in the 'test' element overrides this value.",
+            "default": "",
+            "examples": [
+                "problem.pddl"
+            ]
+        },
+        "defaultOptions": {
+            "$id": "/properties/defaultOptions",
+            "type": "string",
+            "title": "The command line options. Set this to empty string to avoid getting asked every time.",
+            "default": "",
+            "examples": [
+                ""
+            ]
+        },
+        "tests": {
+            "$id": "/properties/tests",
+            "type": "array",
+            "items": {
+                "$id": "/properties/tests/items",
+                "type": "object",
+                "properties": {
+                    "label": {
+                        "$id": "/properties/tests/items/properties/label",
+                        "type": "string",
+                        "title": "The Label for the test",
+                        "default": "Test XYZ",
+                        "examples": [
+                            "Test case number 1"
+                        ]
+                    },
+                    "domain": {
+                        "$id": "/properties/tests/items/properties/domain",
+                        "type": "string",
+                        "title": "The Domain file. Use absolute path, or relative to this ptest manifest file.",
+                        "default": "domain.pddl",
+                        "examples": [
+                            "domain.pddl"
+                        ]
+                    },
+                    "problem": {
+                        "$id": "/properties/tests/items/properties/problem",
+                        "type": "string",
+                        "title": "The Problem file or template.",
+                        "default": "problem.pddl",
+                        "examples": [
+                            "problem.pddl"
+                        ]
+                    },
+                    "options": {
+                        "$id": "/properties/tests/items/properties/options",
+                        "type": "string",
+                        "title": "The command-line options",
+                        "default": "",
+                        "examples": [
+                            "-t 0.001"
+                        ]
+                    },
+                    "preProcess": {
+                        "$id": "/properties/tests/items/properties/preProcess",
+                        "description": "Pre-processor to execute before launching the planner.",
+                        "type": "object",
+                        "required": [
+                            "kind"
+                        ],
+                        "properties": {
+                            "kind": {
+                                "$id": "/properties/tests/items/properties/preProcess/properties/kind",
+                                "type": "string",
+                                "title": "The kind of pre-processor.",
+                                "pattern": "^(shell|jinja2)$",
+                                "default": "jinja2",
+                                "examples": [
+                                    "shell",
+                                    "jinja2"
+                                ]
+                            },
+                            "command": {
+                                "$id": "/properties/tests/items/properties/preProcess/properties/command",
+                                "type": "string",
+                                "title": "The command to execute",
+                                "default": "",
+                                "examples": [
+                                    "python3",
+                                    "python3"
+                                ]
+                            },
+                            "args": {
+                                "$id": "/properties/tests/items/properties/preProcess/properties/args",
+                                "type": "array",
+                                "description": "Command-line arguments",
+                                "items": {
+                                    "$id": "/properties/tests/items/properties/preProcess/properties/args/items",
+                                    "type": "string",
+                                    "title": "The command-line argument",
+                                    "default": "",
+                                    "examples": [
+                                        "script.py",
+                                        "data.json"
+                                    ]
+                                }
+                            },
+                            "data": {
+                                "$id": "/properties/tests/items/properties/preProcess/properties/data",
+                                "type": "string",
+                                "title": "The JSON data file. This property is mandatory if 'kind' is set to 'jinja2'",
+                                "default": "case1.json",
+                                "examples": [
+                                    "data.json"
+                                ]
+                            },
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

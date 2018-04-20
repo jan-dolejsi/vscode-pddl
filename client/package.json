@@ -29,7 +29,8 @@
   },
   "activationEvents": [
     "onLanguage:pddl",
-    "workspaceContains:**/.pddl",
+    "workspaceContains:**/*.pddl",
+    "workspaceContains:**/*ptest.json",
     "onCommand:pddl.configureParser",
     "onCommand:pddl.configurePlanner"
   ],
@@ -99,6 +100,30 @@
       {
         "command": "pddl.planReport",
         "title": "PDDL: Generate plan report"
+      },
+      {
+        "command": "pddl.tests.refresh",
+        "title": "Refresh",
+        "icon": {
+          "light": "images/light/refresh.svg",
+          "dark": "images/dark/refresh.svg"
+        }
+      },
+      {
+        "command": "pddl.tests.run",
+        "title": "Run",
+        "icon": {
+          "light": "images/light/play.svg",
+          "dark": "images/dark/play.svg"
+        }
+      },
+      {
+        "command": "pddl.tests.view",
+        "title": "View test",
+        "icon": {
+          "light": "images/light/open-file.svg",
+          "dark": "images/dark/open-file.svg"
+        }
       }
     ],
     "menus": {
@@ -107,30 +132,53 @@
           "command": "pddl.planAndDisplayResult",
           "when": "resourceLangId == pddl"
         }
+      ],
+      "view/title": [
+        {
+          "command": "pddl.tests.refresh",
+          "when": "view == PTestExplorer",
+          "group": "navigation"
+        }
+      ],
+      "view/item/context": [
+        {
+          "command": "pddl.tests.run",
+          "when": "view == PTestExplorer && viewItem == test",
+          "group": "navigation"
+        },
+        {
+          "command": "pddl.tests.view",
+          "when": "view == PTestExplorer && viewItem == test",
+          "group": "navigation"
+        }
       ]
     },
-    "keybindings":[
+    "keybindings": [
       {
         "command": "pddl.planAndDisplayResult",
         "key": "alt+p",
         "when": "resourceLangId == pddl"
       }
     ],
-    "jsonValidation": [{
+    "jsonValidation": [
+      {
         "fileMatch": "*.planviz.json",
         "url": "./schemas/planviz.json"
-    }],
+      },
+      {
+        "fileMatch": "*.ptest.json",
+        "url": "./schemas/ptest.json"
+      }
+    ],
     "configuration": {
       "type": "object",
       "title": "PDDL parser and planner configuration",
       "properties": {
         "pddlParser.executableOrService": {
-          "scope": "resource",
           "type": "string",
           "description": "PDDL parser for syntactical analysis. Specify executable location or service URL e.g. parser.exe, validate.exe, or http://localhost:8090/parse."
         },
         "pddlParser.executableOptions": {
-          "scope": "resource",
           "type": "string",
           "description": "Override the command-line options passed to the PDDL parser configured in 'pddlParser.executableOrService'.",
           "pattern": "^\\$\\(parser\\).+\\$\\(domain\\).+\\$\\(problem\\).*$",
@@ -348,7 +396,6 @@
           "description": "Authentication s token."
         },
         "pddlPlanner.epsilonTimeStep": {
-          "scope": "resource",
           "type": "number",
           "default": 0.001,
           "title": "Default epsilon time step used by your planner.",
@@ -357,8 +404,21 @@
         "pddlPlanner.valueSeqPath": {
           "type": "string",
           "description": "ValueSeq path - the tool that evaluates numeric values of functions at starts and ends of actions in the plan."
+        },
+        "pddlTestExplorer.enabled": {
+          "type": "boolean",
+          "default": false,
+          "description": "Enable the preview of PDDL test explorer. Restart the editor for the change to take effect."
         }
       }
+    },
+    "views": {
+      "explorer": [
+        {
+          "id": "PTestExplorer",
+          "name": "PDDL Tests"
+        }
+      ]
     }
   },
   "scripts": {
@@ -369,8 +429,6 @@
     "update-vscode": "node ./node_modules/vscode/bin/install"
   },
   "dependencies": {
-    "@types/request": "^2.0.5",
-    "@types/tmp": "^0.0.33",
     "child-process-data": "^0.5.5",
     "express": "^4.16.2",
     "opn": "^5.1.0",
@@ -379,9 +437,12 @@
     "tree-kill": "^1.2.0",
     "vscode": "^1.1.14",
     "vscode-languageclient": "^3.5.0",
-    "util.promisify": "^1.0.0"
+    "util.promisify": "^1.0.0",
+    "jinja-js": "^0.1.8"
   },
   "devDependencies": {
-    "typescript": "^2.6.2"
+    "@types/request": "^2.0.5",
+    "@types/tmp": "^0.0.33",
+    "typescript": "^2.8.1"
   }
 }

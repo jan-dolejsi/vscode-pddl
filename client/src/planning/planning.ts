@@ -5,8 +5,8 @@
 'use strict';
 
 import {
-    window, workspace, commands, OutputChannel, Uri, Disposable, 
-    ViewColumn, MessageItem, ExtensionContext, ProgressLocation
+    window, workspace, commands, OutputChannel, Uri, 
+    ViewColumn, MessageItem, ExtensionContext, ProgressLocation, TextDocument
 } from 'vscode';
 
 import * as path from 'path';
@@ -14,7 +14,7 @@ import * as path from 'path';
 import { PlanDocumentContentProvider } from './PlanDocumentContentProvider';
 
 import { PddlWorkspace } from '../../../common/src/workspace-model';
-import { DomainInfo, ProblemInfo } from '../../../common/src/parser';
+import { DomainInfo, ProblemInfo, FileInfo } from '../../../common/src/parser';
 import { PddlConfiguration } from '../configuration';
 import { Plan, PlanningHandler } from './plan';
 import { PlannerExecutable } from './PlannerExecutable';
@@ -22,14 +22,17 @@ import { PlannerService } from './PlannerService';
 import { Planner } from './planner';
 import { PddlPlanParser } from './PddlPlanParser';
 import { Authentication } from '../../../common/src/Authentication';
+import { dirname } from 'path';
 
+/**
+ * Delegate for handling requests to run the planner and visualize the plans.
+ */
 export class Planning implements PlanningHandler {
     output: OutputChannel;
     epsilon = 1e-3;
 
     previewUri: Uri;
     provider: PlanDocumentContentProvider;
-    planDocumentProviderRegistration: Disposable;
 
     planner: Planner;
     plans: Plan[];
@@ -38,11 +41,45 @@ export class Planning implements PlanningHandler {
     constructor(public pddlWorkspace: PddlWorkspace, public plannerConfiguration: PddlConfiguration, context: ExtensionContext) {
         this.output = window.createOutputChannel("Planner output");
 
+        context.subscriptions.push(commands.registerCommand('pddl.planAndDisplayResult', 
+            async (domainUri: Uri, problemUri: Uri, workingFolder: string, options: string) => {
+                if (problemUri) {
+                    this.planByUri(domainUri, problemUri, workingFolder, options);
+                } else {
+                    this.plan();
+                }
+            })
+        );
+
         this.previewUri = Uri.parse('pddl-plan://authority/plan');
         this.provider = new PlanDocumentContentProvider(context);
-        context.subscriptions.push(this.planDocumentProviderRegistration = workspace.registerTextDocumentContentProvider('pddl-plan', this.provider));
+        context.subscriptions.push(workspace.registerTextDocumentContentProvider('pddl-plan', this.provider));
     }
 
+    /**
+     * Invokes the planner in context of model specified via file URIs.
+     * @param domainUri domain file uri
+     * @param problemUri problem file uri
+     * @param workingFolder working folder
+     * @param options planner options
+     */
+    async planByUri(domainUri: Uri, problemUri: Uri, workingFolder: string, options?: string): Promise<boolean> {
+        let domainDocument = await workspace.openTextDocument(domainUri);
+        let problemDocument = await workspace.openTextDocument(problemUri);
+
+        let domainInfo = <DomainInfo>this.upsertFile(domainDocument);
+        let problemInfo = <ProblemInfo>this.upsertFile(problemDocument);
+
+        return this.planExplicit(domainInfo, problemInfo, workingFolder, options);
+    }
+
+    private upsertFile(doc: TextDocument): FileInfo {
+        return this.pddlWorkspace.upsertFile(doc.uri.toString(), doc.version, doc.getText());
+    }
+
+    /**
+     * Invokes the planner in the context of the currently opened files in the workspace.
+     */
     async plan(): Promise<boolean> {
 
         if (this.planner) {
@@ -112,9 +149,21 @@ export class Planning implements PlanningHandler {
             return false;
         }
 
+        return this.planExplicit(domainFileInfo, problemFileInfo, Planning.getFolderPath(activeDocument.fileName));
+    }
+
+    /**
+     * Invokes the planner and visualize the plan(s).
+     * @param domainFileInfo domain
+     * @param problemFileInfo problem
+     * @param workingDirectory workflow folder for auxiliary output files
+     * @param options planner options
+     */
+    async planExplicit(domainFileInfo: DomainInfo, problemFileInfo: ProblemInfo, workingDirectory: string, options?: string): Promise<boolean> {
+
         let planParser = new PddlPlanParser(domainFileInfo, problemFileInfo, this.plannerConfiguration.getEpsilonTimeStep(), plans => this.visualizePlans(plans));
 
-        this.planner = await this.createPlanner(Planning.getFolderPath(activeDocument.fileName));
+        this.planner = await this.createPlanner(workingDirectory, options);
         if (!this.planner) return false;
 
         this.planningProcessKilled = false;
@@ -143,8 +192,12 @@ export class Planning implements PlanningHandler {
 
     /**
      * Creates the right planner wrapper according to the current configuration.
+     * 
+     * @param workingDirectory directory where planner creates output files by default
+     * @param options planner options
+     * @returns `Planner` instance of the configured planning engine
      */
-    async createPlanner(workingDirectory: string): Promise<Planner> {
+    async createPlanner(workingDirectory: string, options?: string): Promise<Planner> {
         let plannerPath = await this.plannerConfiguration.getPlannerPath();
         if (!plannerPath) return null;
 
@@ -161,7 +214,7 @@ export class Planning implements PlanningHandler {
             return new PlannerService(plannerPath, useAuthentication, authentication);
         }
         else {
-            let plannerOptions = await this.plannerConfiguration.getPlannerOptions();
+            let plannerOptions = options != undefined ? options : await this.plannerConfiguration.getPlannerOptions();
             if (plannerOptions == null) return null;
 
             let plannerSyntax = await this.plannerConfiguration.getPlannerSyntax();
@@ -202,7 +255,7 @@ export class Planning implements PlanningHandler {
         this.planner = null;
 
         window.showErrorMessage<ProcessErrorMessageItem>(error.message,
-            { title: "Select planner", setPlanner: true },
+            { title: "Re-configure the planner", setPlanner: true },
             { title: "Ignore", setPlanner: false, isCloseAffordance: true }
         ).then(selection => {
             if (selection && selection.setPlanner) {
@@ -226,19 +279,8 @@ export class Planning implements PlanningHandler {
             .then((_) => { }, (reason) => window.showErrorMessage(reason));
     }
 
-    // copied from the Workspace class
-    static getFolderUri(documentUri: string): string {
-        let lastSlashIdx = documentUri.lastIndexOf("/");
-        let folderUri = documentUri.substring(0, lastSlashIdx);
-
-        return folderUri;
-    }
-
     static getFolderPath(documentPath: string): string {
-        let lastSlashIdx = documentPath.lastIndexOf(path.sep);
-        let folderPath = documentPath.substring(0, lastSlashIdx);
-
-        return folderPath;
+        return dirname(documentPath);
     }
 
     // copied from the Workspace class

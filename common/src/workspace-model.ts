@@ -4,7 +4,9 @@
  * ------------------------------------------------------------------------------------------ */
 'use strict';
 
-import { Parser, FileInfo, DomainInfo, ProblemInfo, UnknownFileInfo } from '../../common/src/parser'
+import { Parser, FileInfo, DomainInfo, ProblemInfo, UnknownFileInfo } from './parser'
+import { Util } from './util';
+import { dirname, basename } from 'path';
 
 class Folder {
     files: Map<string, FileInfo> = new Map<string, FileInfo>();
@@ -76,15 +78,13 @@ export class PddlWorkspace {
     }
 
     static getFolderUri(documentUri: string): string {
-        let lastSlashIdx = documentUri.lastIndexOf("/");
-        let folderUri = documentUri.substring(0, lastSlashIdx);
-
-        return folderUri;
+        let documentPath = Util.fsPath(documentUri);
+        return Util.replaceAll(dirname(documentPath), '\\', '/');
     }
 
     static getFileName(documentUri: string): string {
-        let lastSlashIdx = documentUri.lastIndexOf("/");
-        return documentUri.substring(lastSlashIdx + 1);
+        let documentPath = Util.fsPath(documentUri);
+        return basename(documentPath);
     }
 
     upsertFile(fileUri: string, fileVersion: number, fileText: string): FileInfo {

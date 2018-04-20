@@ -197,16 +197,16 @@ export class Diagnostics {
         if (domainFiles.length > 1) {
             let message = `There are multiple candidate domains with name ${problemFile.domainName}: ` + domainFiles.map(d => PddlWorkspace.getFileName(d.fileUri)).join(', ');
 
-            this.sendDiagnosticHint(problemFile.fileUri, message);
+            this.sendDiagnosticInfo(problemFile.fileUri, message);
             problemFile.setStatus(FileStatus.Validated);
             return null;
         }
         else if (domainFiles.length == 0) {
             // this.workspace.folders.forEach()
 
-            let message = `There are no domains open in the same folder with name '${problemFile.domainName}' open in the editor.`;
+            let message = `There are no domains open in the same folder with name (domain '${problemFile.domainName}') open in the editor.`;
 
-            this.sendDiagnosticHint(problemFile.fileUri, message);
+            this.sendDiagnosticInfo(problemFile.fileUri, message);
             problemFile.setStatus(FileStatus.Validated);
             return null;
         }
@@ -216,8 +216,8 @@ export class Diagnostics {
 
     }
 
-    sendDiagnosticHint(fileUri: string, message: string) {
-        this.sendDiagnostic(fileUri, message, DiagnosticSeverity.Hint);
+    sendDiagnosticInfo(fileUri: string, message: string) {
+        this.sendDiagnostic(fileUri, message, DiagnosticSeverity.Information);
     }
 
     sendDiagnostic(fileUri: string, message: string, severity: DiagnosticSeverity) {
