@@ -176,7 +176,7 @@ export function activate(context: ExtensionContext) {
 	//todo: subscribe to pddlWorkspace document updates
 	// pddlWorkspace.onChange(doc -> diagnostics.docChanged(doc));
 
-	if(workspace.getConfiguration().get<boolean>("pddlTestExplorer.enabled")) new PTestExplorer(context);
+	if(workspace.getConfiguration().get<boolean>("pddlTestExplorer.enabled")) new PTestExplorer(context, planning);
 
 	// Push the disposables to the context's subscriptions so that the 
 	// client can be deactivated on extension deactivation

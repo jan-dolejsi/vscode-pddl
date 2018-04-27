@@ -7,7 +7,7 @@
 import { Uri } from 'vscode';
 import { join, dirname } from 'path';
 import { TestsManifest } from './TestsManifest';
-import { PreProcessor, ShellPreProcessor } from "../../../common/src/PreProcessors";
+import { PreProcessor, CommandPreProcessor, Jinja2PreProcessor } from "../../../common/src/PreProcessors";
 
 /**
  * Test definitions
@@ -19,6 +19,7 @@ export class Test {
     private domain: string;
     private options: string;
     private preProcessor: PreProcessor
+    private expectedPlans: string[];
     uri: Uri;
 
     constructor(public manifest: TestsManifest, index: number, readonly json: any) {
@@ -26,14 +27,18 @@ export class Test {
         this.domain = json["domain"];
         this.problem = json["problem"];
         this.options = json["options"];
+        this.expectedPlans = json["expectedPlans"] || [];
         this.uri = this.manifest.uri.with({ fragment: index.toString() });
 
         if(json["preProcess"]) {
             let kind = json["preProcess"]["kind"];
 
             switch(kind){
-                case "shell":
-                    this.preProcessor = ShellPreProcessor.fromJson(json["preProcess"]);
+                case "command":
+                    this.preProcessor = CommandPreProcessor.fromJson(json["preProcess"]);
+                    break;
+                case "jinja2":
+                    this.preProcessor = new Jinja2PreProcessor(json["preProcess"]["data"], dirname(manifest.path));
                     break;
             }
         }
@@ -44,7 +49,7 @@ export class Test {
     }
 
     getDomainUri(): Uri {
-        return Uri.file(join(dirname(this.manifest.path), this.getDomain()));
+        return Uri.file(this.toAbsolutePath(this.getDomain()));
     }
 
     getProblem(): string {
@@ -52,7 +57,7 @@ export class Test {
     }
 
     getProblemUri(): Uri {
-        return Uri.file(join(dirname(this.manifest.path), this.getProblem()));
+        return Uri.file(this.toAbsolutePath(this.getProblem()));
     }
 
     getLabel(): string {
@@ -65,6 +70,18 @@ export class Test {
 
     getPreProcessor(): PreProcessor {
         return this.preProcessor;
+    }
+
+    hasExpectedPlans() : boolean {
+        return this.expectedPlans.length > 0;
+    }
+
+    getExpectedPlans(): string[] {
+        return this.expectedPlans;
+    }
+
+    toAbsolutePath(fileName: string): string {
+        return join(dirname(this.manifest.path), fileName);
     }
 
     static fromUri(uri: Uri): Test {

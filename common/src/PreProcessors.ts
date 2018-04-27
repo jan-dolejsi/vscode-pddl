@@ -5,9 +5,9 @@
 'use strict';
 
 import * as process from 'child_process';
-var jinja = require('jinja-js');
 import { readFileSync } from 'fs';
 import * as path from 'path';
+import * as nunjucks from 'nunjucks';
 
 export interface OutputAdaptor {
     appendLine(text: string): void;
@@ -22,11 +22,11 @@ export interface PreProcessor {
 /**
  * Shell command based pre-processor.
  */
-export class ShellPreProcessor implements PreProcessor {
+export class CommandPreProcessor implements PreProcessor {
     constructor(public command: string, public args: string[]) { }
 
     static fromJson(json: any): any {
-        return new ShellPreProcessor(json["command"], json["args"]);
+        return new CommandPreProcessor(json["command"], json["args"]);
     }
 
     async transform(input: string, workingDirectory: string, outputWindow: OutputAdaptor): Promise<string> {
@@ -78,7 +78,7 @@ export class ShellPreProcessor implements PreProcessor {
         } catch (error) {
             outputWindow.appendLine('Failed to transform the problem file.')
             outputWindow.appendLine(error.message)
-            outputWindow.appendLine(error.stderr.toString())
+            if(error.stderr) outputWindow.appendLine(error.stderr.toString())
             outputWindow.show();
             return input;
         }
@@ -90,30 +90,32 @@ export class ShellPreProcessor implements PreProcessor {
  */
 export class Jinja2PreProcessor implements PreProcessor {
     data: any;
+    nunjucksEnv: nunjucks.Environment;
+
     constructor(public dataFile: any, workingDirectory: string) { 
         let dataPath = path.join(workingDirectory, dataFile);
         let dataText = readFileSync(dataPath);
         this.data = JSON.parse(dataText.toLocaleString());
+        this.nunjucksEnv = nunjucks.configure({ trimBlocks: false, lstripBlocks: false, throwOnUndefined: true});
     }
 
     async transform(input: string, workingDirectory: string, outputWindow: OutputAdaptor): Promise<string> {
         return this.transformSync(input, workingDirectory, outputWindow);
     }
-
+   
     transformSync(input: string, workingDirectory: string, outputWindow: OutputAdaptor): string {
 
         workingDirectory;
 
         try {
 
-            let template = jinja.compile(input);
-            let translated = template(this.data)
+            let translated = this.nunjucksEnv.renderString(input, {data: this.data});
     
             return translated;
         } catch (error) {
             outputWindow.appendLine('Failed to transform the problem file.')
             outputWindow.appendLine(error.message)
-            outputWindow.appendLine(error.stderr.toString())
+            if(error.stderr) outputWindow.appendLine(error.stderr.toString())
             outputWindow.show();
             return input;
         }

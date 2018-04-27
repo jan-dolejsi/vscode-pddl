@@ -41,7 +41,7 @@
                     "label": {
                         "$id": "/properties/tests/items/properties/label",
                         "type": "string",
-                        "title": "The Label for the test",
+                        "description": "The Label for the test",
                         "default": "Test XYZ",
                         "examples": [
                             "Test case number 1"
@@ -50,7 +50,7 @@
                     "domain": {
                         "$id": "/properties/tests/items/properties/domain",
                         "type": "string",
-                        "title": "The Domain file. Use absolute path, or relative to this ptest manifest file.",
+                        "description": "The Domain file. Use absolute path, or relative to this ptest manifest file.",
                         "default": "domain.pddl",
                         "examples": [
                             "domain.pddl"
@@ -59,7 +59,7 @@
                     "problem": {
                         "$id": "/properties/tests/items/properties/problem",
                         "type": "string",
-                        "title": "The Problem file or template.",
+                        "description": "The Problem file or template.",
                         "default": "problem.pddl",
                         "examples": [
                             "problem.pddl"
@@ -68,7 +68,7 @@
                     "options": {
                         "$id": "/properties/tests/items/properties/options",
                         "type": "string",
-                        "title": "The command-line options",
+                        "description": "The command-line options",
                         "default": "",
                         "examples": [
                             "-t 0.001"
@@ -85,22 +85,22 @@
                             "kind": {
                                 "$id": "/properties/tests/items/properties/preProcess/properties/kind",
                                 "type": "string",
-                                "title": "The kind of pre-processor.",
-                                "pattern": "^(shell|jinja2)$",
+                                "description": "The kind of pre-processor.",
+                                "pattern": "^(command|jinja2)$",
                                 "default": "jinja2",
                                 "examples": [
-                                    "shell",
+                                    "command",
                                     "jinja2"
                                 ]
                             },
                             "command": {
                                 "$id": "/properties/tests/items/properties/preProcess/properties/command",
                                 "type": "string",
-                                "title": "The command to execute",
+                                "description": "The command to execute",
                                 "default": "",
                                 "examples": [
                                     "python3",
-                                    "python3"
+                                    "program.exe"
                                 ]
                             },
                             "args": {
@@ -121,12 +121,23 @@
                             "data": {
                                 "$id": "/properties/tests/items/properties/preProcess/properties/data",
                                 "type": "string",
-                                "title": "The JSON data file. This property is mandatory if 'kind' is set to 'jinja2'",
+                                "description": "The JSON data file. This property is mandatory if 'kind' is set to 'jinja2'",
                                 "default": "case1.json",
                                 "examples": [
                                     "data.json"
                                 ]
-                            },
+                            }
+                        }
+                    },
+                    "expectedPlans": {
+                        "$id": "/properties/tests/items/properties/expectedPlans",
+                        "description": "Expected plans - put one or more plan file names here",
+                        "type": "array",
+                        "items": {
+                            "$id": "/properties/tests/items/properties/expectedPlans/items",
+                            "type": "string",
+                            "title": "Plan file name",
+                            "default": ""
                         }
                     }
                 }

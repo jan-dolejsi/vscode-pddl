@@ -92,5 +92,21 @@
       ""
     ],
     "description": "Creates a problem skeleton"
+  },
+  "meta-pre-parsing-command": {
+    "prefix": ";;!pre-parsing:command",
+    "body": [
+      ";;!pre-parsing:{type: \"command\", command: \"${1:python3}\", args: [${2:\"your_script.py\", \"data.json\", \"1234\"}]}",
+      "$0"
+    ],
+    "description": "Pre-parsing problem file transformation via a shell command."
+  },
+  "meta-pre-parsing-jinja2":{
+    "prefix": ";;!pre-parsing:jinja2",
+    "body": [
+      ";;!pre-parsing:{type: \"jinja2\", data: \"${1:case1.json}\"}",
+      "$0"
+    ],
+    "description": "Pre-parsing problem file transformation via Jinja2."
   }
 }

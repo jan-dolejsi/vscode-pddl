@@ -20,7 +20,7 @@ export class SymbolRenameProvider implements RenameProvider {
         this.symbolUtils.assertFileParsed(document);
 
         let fileUri = document.uri.toString();
-        let symbolInfo = this.symbolUtils.getSymbolInfo(fileUri, position);
+        let symbolInfo = this.symbolUtils.getSymbolInfo(document, position);
 
         if (!symbolInfo || !this.canRename(symbolInfo)) return null;
 

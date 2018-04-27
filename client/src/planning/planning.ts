@@ -5,8 +5,8 @@
 'use strict';
 
 import {
-    window, workspace, commands, OutputChannel, Uri, 
-    ViewColumn, MessageItem, ExtensionContext, ProgressLocation, TextDocument
+    window, workspace, commands, OutputChannel, Uri,
+    ViewColumn, MessageItem, ExtensionContext, ProgressLocation, TextDocument, EventEmitter, Event
 } from 'vscode';
 
 import * as path from 'path';
@@ -23,6 +23,7 @@ import { Planner } from './planner';
 import { PddlPlanParser } from './PddlPlanParser';
 import { Authentication } from '../../../common/src/Authentication';
 import { dirname } from 'path';
+import { PlanningResult } from './PlanningResult';
 
 /**
  * Delegate for handling requests to run the planner and visualize the plans.
@@ -37,11 +38,11 @@ export class Planning implements PlanningHandler {
     planner: Planner;
     plans: Plan[];
     planningProcessKilled: boolean;
-    
+
     constructor(public pddlWorkspace: PddlWorkspace, public plannerConfiguration: PddlConfiguration, context: ExtensionContext) {
         this.output = window.createOutputChannel("Planner output");
 
-        context.subscriptions.push(commands.registerCommand('pddl.planAndDisplayResult', 
+        context.subscriptions.push(commands.registerCommand('pddl.planAndDisplayResult',
             async (domainUri: Uri, problemUri: Uri, workingFolder: string, options: string) => {
                 if (problemUri) {
                     this.planByUri(domainUri, problemUri, workingFolder, options);
@@ -152,6 +153,9 @@ export class Planning implements PlanningHandler {
         return this.planExplicit(domainFileInfo, problemFileInfo, Planning.getFolderPath(activeDocument.fileName));
     }
 
+    private readonly _onPlansFound = new EventEmitter<PlanningResult>();
+    public onPlansFound: Event<PlanningResult> = this._onPlansFound.event;
+
     /**
      * Invokes the planner and visualize the plan(s).
      * @param domainFileInfo domain
@@ -178,8 +182,11 @@ export class Planning implements PlanningHandler {
                 this.stopPlanner();
             });
 
-			return this.planner.plan(domainFileInfo, problemFileInfo, planParser, this);
-        });
+            return this.planner.plan(domainFileInfo, problemFileInfo, planParser, this);
+        })
+        .then(plans => this._onPlansFound.fire(PlanningResult.success(plans)),
+            reason => this._onPlansFound.fire(PlanningResult.failure(reason.toString()))
+        );
 
         this.output.show();
 
@@ -204,11 +211,11 @@ export class Planning implements PlanningHandler {
         if (PddlConfiguration.isHttp(plannerPath)) {
             let useAuthentication = this.plannerConfiguration.isPddlPlannerServiceAuthenticationEnabled();
             let authentication = null;
-            if(useAuthentication) {
+            if (useAuthentication) {
                 let configuration = this.plannerConfiguration.getPddlPlannerServiceAuthenticationConfiguration()
                 authentication = new Authentication(configuration.url, configuration.requestEncoded, configuration.clientId, configuration.callbackPort, configuration.timeoutInMs,
-                    configuration.tokensvcUrl, configuration.tokensvcApiKey, configuration.tokensvcAccessPath, configuration.tokensvcValidatePath, 
-                    configuration.tokensvcCodePath, configuration.tokensvcRefreshPath, configuration.tokensvcSvctkPath, 
+                    configuration.tokensvcUrl, configuration.tokensvcApiKey, configuration.tokensvcAccessPath, configuration.tokensvcValidatePath,
+                    configuration.tokensvcCodePath, configuration.tokensvcRefreshPath, configuration.tokensvcSvctkPath,
                     configuration.refreshToken, configuration.accessToken, configuration.sToken);
             }
             return new PlannerService(plannerPath, useAuthentication, authentication);

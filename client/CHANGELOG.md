@@ -1,16 +1,29 @@
 # What's new?
 
+## [Unreleased]
+
+- PDDL Test explorer with test file viewing, planner execution and expected plan(s) assertion
+- Support for templated problem files supported by test explorer. Supported pre-processors are any shell commands and jinja2.
+- Support for PDDL parsing of templated problem files via pre-parsing preprocessing meta instruction
+- upgraded to latest typescript, mocha and node versions
+- fixed symbol at position implementation (used by hover, reference and definition provider)
+- promoted diagnostic Hints to Info to make them appear in the 'Problem' pane
+- Additional code folding control via `;;(` and `;;)` instructions helps with long problem files
+
 ## [2.5.1] - 2018-04-20
 
 When executing the planning engine, the UI shows feedback in a form of a cancelable notification. This makes it much easier to find the cancel button.
+
 ![cancel_planning](https://raw.githubusercontent.com/wiki/jan-dolejsi/vscode-pddl/img/PDDL_cancel_planning.gif)
 
 Improved syntax highlighting.
+
 ![syntax_highlighting](https://raw.githubusercontent.com/wiki/jan-dolejsi/vscode-pddl/img/PDDL_syntax_highlighting.png)
 
 Added support for bracket matching for a popular templating library (`{{` matches `}}` and `{%` matches `%}`).
 
 Added dynamic code snippets for Timed Initial Literals (TIL) and Timed Initial Fluents (TIF).
+
 ![timed_initial_literals_snippets](https://raw.githubusercontent.com/wiki/jan-dolejsi/vscode-pddl/img/PDDL_timed_initial_snippets.gif)
 
 ## [2.5.0] - 2018-03-28
@@ -134,9 +147,8 @@ Simplified snippets and added tabstops/placeholders to them, so they are easy to
 * PDDL Snippets for `domain`, `problem`, `action` and `durative-action`.
 * Syntax highlighting for commonly used PDDL features
 
-## [Unreleased]
+## Future work
 
-* PDDL _unit_ testing
 * Rename parameters and objects
 * Auto-completion for constant/object names.
 * Plan debugger

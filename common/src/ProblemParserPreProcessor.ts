@@ -6,7 +6,7 @@
 'use strict';
 
 // var Sync = require('sync');
-import { PreProcessor, ShellPreProcessor, OutputAdaptor, Jinja2PreProcessor } from "./PreProcessors";
+import { PreProcessor, CommandPreProcessor, OutputAdaptor, Jinja2PreProcessor } from "./PreProcessors";
 
 export class ProblemParserPreProcessor {
     problemCompletePattern = /^;;\s*!pre-parsing:\s*{\s*type:\s*"(command|jinja2)"\s*,\s*(command:\s*"([\w:\-/\\\. ]+)"\s*(,\s*args:\s*\[([^\]]*)\])?|data:\s*"([\w:\-/\\\. ]+)")\s*}/gm;
@@ -25,10 +25,10 @@ export class ProblemParserPreProcessor {
             switch (match[1]) {
                 case "command":
                     let args: string[] = match[5] ? match[5].split(',').map(arg => arg.trim().slice(1, -1)) : [];
-                    preProcessor = new ShellPreProcessor(match[3], args);
+                    preProcessor = new CommandPreProcessor(match[3], args);
                     break;
                 case "jinja2":
-                    console.log("Jinja2 templates not yet supported.");
+                    console.log("Jinja2 template support is in preview.");
 
                     try {
                         preProcessor = new Jinja2PreProcessor(match[6], workingDirectory);

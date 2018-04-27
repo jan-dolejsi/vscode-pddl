@@ -24,18 +24,12 @@ export class TestsManifest {
         this.defaultProblem = json["defaultProblem"];
         this.defaultOptions = json["defaultOptions"];
         this.uri = Uri.file(path);
-        this.tests = json["tests"].map((t: any, index: number) => new Test(this, index, t));
+        this.tests = json["tests"] ? json["tests"].map((t: any, index: number) => new Test(this, index, t)) : [];
     }
 
     static load(path: string): TestsManifest {
         let settings = readFileSync(path);
-        try {
-            let json = JSON.parse(settings.toLocaleString());
-            return new TestsManifest(path, json);
-        } catch (err) {
-            console.log(err);
-        }
-
-        return new TestsManifest(path, []);
+        let json = JSON.parse(settings.toLocaleString());
+        return new TestsManifest(path, json);
     }
 }

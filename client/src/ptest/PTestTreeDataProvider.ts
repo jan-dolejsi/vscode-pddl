@@ -5,7 +5,7 @@
 'use strict';
 
 import {
-    workspace, Uri, ExtensionContext, TreeDataProvider, Event, TreeItem, EventEmitter, TreeItemCollapsibleState
+    workspace, Uri, ExtensionContext, TreeDataProvider, Event, TreeItem, EventEmitter, TreeItemCollapsibleState, window
 } from 'vscode';
 import { basename, join } from 'path';
 import { readdirSync, statSync } from 'fs';
@@ -82,7 +82,9 @@ export class PTestTreeDataProvider implements TreeDataProvider<PTestNode> {
             let parentPath = element.resource.fsPath;
 
             if (PTestTreeDataProvider.isTestManifest(parentPath)) {
-                let manifest = TestsManifest.load(parentPath);
+                let manifest = this.tryLoadManifest(parentPath);
+                if (!manifest) return [];
+
                 return manifest.tests
                     .map((test, idx) => ({
                         resource: test.uri,
@@ -103,6 +105,16 @@ export class PTestTreeDataProvider implements TreeDataProvider<PTestNode> {
                         })
                     );
             }
+        }
+    }
+
+    tryLoadManifest(manifestPath: string): TestsManifest {
+        try {
+            return TestsManifest.load(manifestPath);
+        } catch (error) {
+            window.showErrorMessage(`Unable to load test manifest from: ${manifestPath}
+${error.message}`);
+            return null;
         }
     }
 

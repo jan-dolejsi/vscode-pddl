@@ -22,12 +22,13 @@
     "opn": "^5.1.0",
     "request": "^2.83.0",
     "tmp": "^0.0.33",
-    "jinja-js": "^0.1.8"
+    "nunjucks": "^3.1.2"
   },
   "devDependencies": {
     "@types/body-parser": "^1.16.8",
     "@types/express": "^4.11.0",
     "@types/mocha": "^2.2.42",
+    "@types/nunjucks": "^3.0.0",
     "@types/opn": "^5.1.0",
     "@types/request": "^2.0.9",
     "@types/uuid": "^3.4.3",

@@ -8,10 +8,13 @@ import {
     workspace, TreeView, ExtensionContext, window, commands, ViewColumn, Uri, OutputChannel
 } from 'vscode';
 import { dirname } from 'path';
-import { existsSync } from 'fs';
+import { existsSync, readFileSync } from 'fs';
 import { Test } from './Test';
 import { PTestTreeDataProvider, PTestNode, PTestNodeKind } from './PTestTreeDataProvider';
 import { GeneratedDocumentContentProvider } from './GeneratedDocumentContentProvider';
+import { Planning } from '../planning/planning';
+import { Plan } from '../planning/plan';
+import { PddlPlanParser } from '../planning/PddlPlanParser';
 
 /**
  * PDDL Test Explorer pane.
@@ -22,7 +25,7 @@ export class PTestExplorer {
     private pTestViewer: TreeView<PTestNode>;
     private outputWindow: OutputChannel;
 
-    constructor(context: ExtensionContext) {
+    constructor(context: ExtensionContext, public planning: Planning) {
         let pTestTreeDataProvider = new PTestTreeDataProvider(context);
 
         this.pTestViewer = window.createTreeView('PTestExplorer', { treeDataProvider: pTestTreeDataProvider });
@@ -50,6 +53,9 @@ export class PTestExplorer {
             await window.showTextDocument(domainDocument.uri, { preview: true, viewColumn: ViewColumn.One });
 
             this.openProblemFile(test);
+        } else if (node.kind == PTestNodeKind.Manifest) {
+            let manifestDocument = await workspace.openTextDocument(node.resource);
+            await window.showTextDocument(manifestDocument.uri, { preview: true, viewColumn: ViewColumn.One });
         }
     }
 
@@ -87,12 +93,67 @@ export class PTestExplorer {
                 problemUri = test.getProblemUri();
             }
 
+            let resultSubscription = this.planning.onPlansFound(result => {
+                resultSubscription.dispose();
+
+                if (!result.success) return;
+
+                if (test.hasExpectedPlans()) {
+                    let success = result.plans.every(plan =>
+                        test.getExpectedPlans()
+                            .map(expectedPlanFileName => test.toAbsolutePath(expectedPlanFileName))    
+                            .some(expectedPlanPath => this.areSame(plan, this.loadPlan(expectedPlanPath)))
+                    );
+                    if (success) {
+                        this.outputWindow.appendLine(`Actual plan is matching one of the expected plans.`);
+                    } else {
+                        this.outputWindow.appendLine(`Actual plan is NOT matching any of the expected plans.`);
+                        this.outputWindow.show();
+                    }
+                }
+            });
+
             commands.executeCommand('pddl.planAndDisplayResult', test.getDomainUri(), problemUri, dirname(test.manifest.path), test.getOptions());
         }
     }
 
+    areSame(actualPlan: Plan, expectedPlan: Plan): boolean {
+        if (actualPlan.steps.length != expectedPlan.steps.length) return false;
+        if (actualPlan.makespan != expectedPlan.makespan) return false;
+        
+        for (let index = 0; index < actualPlan.steps.length; index++) {
+            const actualStep = actualPlan.steps[index];
+            const expectedStep = expectedPlan.steps[index];
+            
+            if (!expectedStep.equals(actualStep)) return false
+        }
+
+        return true;
+    }
+
+    loadPlan(expectedPlanPath: string): Plan {
+        let expectedPlanText = readFileSync(expectedPlanPath, { encoding: "utf-8" });
+        let parser = new PddlPlanParser(null, null, 1e-3);
+        parser.appendBuffer(expectedPlanText);
+        parser.onPlanFinished();
+        let plans = parser.getPlans();
+        if (plans.length == 1) {
+            return plans[0];
+        }
+        else {
+            throw new Error(`Unexpected number of plans ${plans.length} in file ${expectedPlanPath}.`);
+        }
+    }
+
     assertValid(test: Test) {
-        if (!existsSync(test.getDomainUri().fsPath)) { window.showErrorMessage("Domain file not found: " + test.getDomain()); return; }
-        if (!existsSync(test.getProblemUri().fsPath)) { window.showErrorMessage("Problem file not found: " + test.getProblem()); return; }
+        this.assertFileExists(test.getDomainUri().fsPath, 'Domain', test.getDomain()) || 
+        this.assertFileExists(test.getProblemUri().fsPath, 'Problem', test.getProblem()) || 
+        test.getExpectedPlans().every(planPath => this.assertFileExists(test.toAbsolutePath(planPath), 'Test', planPath));
+    }
+
+    assertFileExists(path: string, resourceName: string, fileName: string): boolean {
+        let exists = existsSync(path);
+        if (!exists) { window.showErrorMessage(`${resourceName} file not found: ${fileName}`); }
+        return exists;
     }
 }
