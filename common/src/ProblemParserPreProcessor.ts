@@ -25,13 +25,13 @@ export class ProblemParserPreProcessor {
             switch (match[1]) {
                 case "command":
                     let args: string[] = match[5] ? match[5].split(',').map(arg => arg.trim().slice(1, -1)) : [];
-                    preProcessor = new CommandPreProcessor(match[3], args);
+                    preProcessor = new CommandPreProcessor(match[3], args, match[0]);
                     break;
                 case "jinja2":
                     console.log("Jinja2 template support is in preview.");
 
                     try {
-                        preProcessor = new Jinja2PreProcessor(match[6], workingDirectory);
+                        preProcessor = new Jinja2PreProcessor(match[6], workingDirectory, match[0]);
                     } catch (err) {
                         console.log(err);
                     }
@@ -45,7 +45,7 @@ export class ProblemParserPreProcessor {
             let transformed: string = null;
 
             transformed = preProcessor.transformSync(templatedProblem, workingDirectory, new ConsoleOutputAdaptor());
-
+            console.log("Pre-processed successfully using " + preProcessor.toString());
             return transformed ? transformed : templatedProblem;
         }
         else {

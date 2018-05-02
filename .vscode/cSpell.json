@@ -10,6 +10,7 @@
         "Groundable",
         "jinja",
         "pddl",
+        "ptest",
         "templated",
         "tpddl"
     ],

@@ -9,12 +9,14 @@ import { join, dirname } from 'path';
 import { TestsManifest } from './TestsManifest';
 import { PreProcessor, CommandPreProcessor, Jinja2PreProcessor } from "../../../common/src/PreProcessors";
 
+export enum TestOutcome { UNKNOWN, SUCCESS, FAILED, SKIPPED, IN_PROGRESS }
+
 /**
  * Test definitions
  */
 export class Test {
 
-    private label: string;
+    label: string;
     problem: string;
     private domain: string;
     private options: string;

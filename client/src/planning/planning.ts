@@ -45,9 +45,9 @@ export class Planning implements PlanningHandler {
         context.subscriptions.push(commands.registerCommand('pddl.planAndDisplayResult',
             async (domainUri: Uri, problemUri: Uri, workingFolder: string, options: string) => {
                 if (problemUri) {
-                    this.planByUri(domainUri, problemUri, workingFolder, options);
+                    await this.planByUri(domainUri, problemUri, workingFolder, options);
                 } else {
-                    this.plan();
+                    await this.plan();
                 }
             })
         );
@@ -188,7 +188,7 @@ export class Planning implements PlanningHandler {
             reason => this._onPlansFound.fire(PlanningResult.failure(reason.toString()))
         );
 
-        this.output.show();
+        this.output.show(true);
 
         return true;
     }

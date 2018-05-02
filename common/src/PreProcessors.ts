@@ -14,24 +14,39 @@ export interface OutputAdaptor {
     show(): void;
 }
 
-export interface PreProcessor {
-    transform(input: string, workingDirectory: string, outputWindow: OutputAdaptor): Promise<string>;
-    transformSync(input: string, workingDirectory: string, outputWindow: OutputAdaptor): string;
+export abstract class PreProcessor {
+    constructor(private metaDataLine: string) { }
+    abstract transform(input: string, workingDirectory: string, outputWindow: OutputAdaptor): Promise<string>;
+    abstract transformSync(input: string, workingDirectory: string, outputWindow: OutputAdaptor): string;
+    abstract toString(): string;
+    removeMetaDataLine(text: string) { 
+        this.metaDataLine;
+        let pattern = /^;;\s*!pre-parsing:/;
+        
+        return text.split('\n').map(line => pattern.test(line) ? "; Generated from meta-data" : line).join('\n');
+    }
 }
 
 /**
  * Shell command based pre-processor.
  */
-export class CommandPreProcessor implements PreProcessor {
-    constructor(public command: string, public args: string[]) { }
+export class CommandPreProcessor extends PreProcessor {
+    constructor(public command: string, public args: string[], metaDataLine: string) { 
+        super(metaDataLine); 
+    }
+
+    toString(): string {
+        return `${this.command} ` + this.args.join(' ');
+    }
 
     static fromJson(json: any): any {
-        return new CommandPreProcessor(json["command"], json["args"]);
+        return new CommandPreProcessor(json["command"], json["args"], '');
     }
 
     async transform(input: string, workingDirectory: string, outputWindow: OutputAdaptor): Promise<string> {
 
-        let command = this.command + ' ' + this.args.join(' ')
+        let command = this.command + ' ' + this.args.join(' ');
+        let that = this;
 
         return new Promise<string>(function (resolve, reject) {
             let childProcess = process.exec(command,
@@ -51,7 +66,7 @@ export class CommandPreProcessor implements PreProcessor {
                         reject(error);
                     }
 
-                    resolve(stdout);
+                    resolve(that.removeMetaDataLine(stdout));
                 });
             childProcess.stdin.write(input);
             childProcess.stdin.end();
@@ -73,7 +88,7 @@ export class CommandPreProcessor implements PreProcessor {
                     stdio: ['pipe']
                 });
 
-            return outputBuffer.toString();
+            return this.removeMetaDataLine(outputBuffer.toString());
 
         } catch (error) {
             outputWindow.appendLine('Failed to transform the problem file.')
@@ -88,15 +103,20 @@ export class CommandPreProcessor implements PreProcessor {
 /**
  * Jinja2 based pre-processor
  */
-export class Jinja2PreProcessor implements PreProcessor {
+export class Jinja2PreProcessor extends PreProcessor {
     data: any;
     nunjucksEnv: nunjucks.Environment;
 
-    constructor(public dataFile: any, workingDirectory: string) { 
+    constructor(public dataFile: any, workingDirectory: string, metaDataLine: string) { 
+        super(metaDataLine);
         let dataPath = path.join(workingDirectory, dataFile);
         let dataText = readFileSync(dataPath);
         this.data = JSON.parse(dataText.toLocaleString());
         this.nunjucksEnv = nunjucks.configure({ trimBlocks: false, lstripBlocks: false, throwOnUndefined: true});
+    }
+
+    toString(): string {
+        return `Jinja2 ${this.dataFile}`;
     }
 
     async transform(input: string, workingDirectory: string, outputWindow: OutputAdaptor): Promise<string> {
@@ -111,7 +131,7 @@ export class Jinja2PreProcessor implements PreProcessor {
 
             let translated = this.nunjucksEnv.renderString(input, {data: this.data});
     
-            return translated;
+            return this.removeMetaDataLine(translated);
         } catch (error) {
             outputWindow.appendLine('Failed to transform the problem file.')
             outputWindow.appendLine(error.message)

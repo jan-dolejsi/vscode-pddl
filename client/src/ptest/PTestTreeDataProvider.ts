@@ -10,6 +10,7 @@ import {
 import { basename, join } from 'path';
 import { readdirSync, statSync } from 'fs';
 import { TestsManifest } from './TestsManifest';
+import { TestOutcome, Test } from './Test';
 
 export interface PTestNode {
     resource: Uri;
@@ -24,12 +25,35 @@ export class PTestTreeDataProvider implements TreeDataProvider<PTestNode> {
     private _onDidChange: EventEmitter<PTestNode> = new EventEmitter<PTestNode>();
     onDidChangeTreeData?: Event<PTestNode> = this._onDidChange.event;
 
+    private testResults: Map<string, TestOutcome> = new Map();
+    private treeNodeCache: Map<string, PTestNode> = new Map();
+
     constructor(private context: ExtensionContext) {
 
     }
 
     refresh() {
+        this.testResults.clear();
+        this.treeNodeCache.clear();
         this._onDidChange.fire();
+    }
+
+    getTestOutcome(testUri: Uri): TestOutcome {
+        if (this.testResults.has(testUri.toString())) {
+            return this.testResults.get(testUri.toString());
+        } else {
+            return TestOutcome.UNKNOWN;
+        }
+    }
+
+    setTestOutcome(test: Test, testOutcome: TestOutcome) {
+        this.testResults.set(test.uri.toString(), testOutcome);
+        let node = this.findNodeByResource(test.uri);
+        this._onDidChange.fire(node);
+    }
+
+    findNodeByResource(resource: Uri): PTestNode {
+        return this.treeNodeCache.get(resource.toString());
     }
 
     getTreeItem(element: PTestNode): TreeItem | Thenable<TreeItem> {
@@ -41,10 +65,30 @@ export class PTestTreeDataProvider implements TreeDataProvider<PTestNode> {
             icon = 'folder_16x' + '.svg';
             contextValue = 'folder';
         } else if (element.kind == PTestNodeKind.Manifest) {
-            icon = 'document_16x' + '.svg';
+            icon = 'file_type_test' + '.svg';
             contextValue = 'manifest';
         } else {
-            icon = 'file_type_test' + '.svg';
+            let testOutcome = this.getTestOutcome(element.resource);
+            switch (testOutcome) {
+                case TestOutcome.UNKNOWN:
+                    icon = 'exclamation';
+                    break;
+                case TestOutcome.SUCCESS:
+                    icon = 'checked';
+                    break;
+                case TestOutcome.FAILED:
+                    icon = 'error';
+                    break;
+                case TestOutcome.SKIPPED:
+                    icon = 'skipped';
+                    break;
+                case TestOutcome.IN_PROGRESS:
+                    icon = 'progress';
+                    break;
+                default:
+                    icon = 'interrogation';
+            }
+            icon += '.svg';
             contextValue = 'test';
         }
 

@@ -118,12 +118,28 @@
         }
       },
       {
+        "command": "pddl.tests.runAll",
+        "title": "Run all",
+        "icon": {
+          "light": "images/light/play.svg",
+          "dark": "images/dark/play.svg"
+        }
+      },
+      {
         "command": "pddl.tests.view",
-        "title": "View",
+        "title": "Open PDDL domain and test problem",
         "icon": {
           "light": "images/light/open-file.svg",
           "dark": "images/dark/open-file.svg"
         }
+      },
+      {
+        "command": "pddl.tests.viewDefinition",
+        "title": "Open test definition"
+      },
+      {
+        "command": "pddl.tests.viewExpectedPlans",
+        "title": "Open expected plan(s)"
       }
     ],
     "menus": {
@@ -144,12 +160,27 @@
         {
           "command": "pddl.tests.run",
           "when": "view == PTestExplorer && viewItem == test",
-          "group": "navigation"
+          "group": "execution"
+        },
+        {
+          "command": "pddl.tests.runAll",
+          "when": "view == PTestExplorer && viewItem == manifest",
+          "group": "execution"
         },
         {
           "command": "pddl.tests.view",
+          "when": "view == PTestExplorer && viewItem == test",
+          "group": "navigation"
+        },
+        {
+          "command": "pddl.tests.viewDefinition",
           "when": "view == PTestExplorer && viewItem != folder",
           "group": "navigation"
+        },
+        {
+          "command": "pddl.tests.viewExpectedPlans",
+          "when": "view == PTestExplorer && viewItem == test",
+          "group": "navigation"          
         }
       ]
     },
@@ -301,14 +332,14 @@
           "description": "Traces the communication between VSCode and the language server."
         },
         "pddlPlanner.executableOrService": {
-          "scope": "resource",
+          "scope": "window",
           "type": "string",
           "title": "Planner executable or service URL",
           "default": "http://solver.planning.domains/solve",
           "description": "Enter the planner executable (e.g. planner.exe) with full path unless you have its location included in the %path% environment variable. If you are using a parsing service, make sure it starts with http: or https:"
         },
         "pddlPlanner.executableOptions": {
-          "scope": "resource",
+          "scope": "window",
           "type": "string",
           "description": "Override the command-line options passed to the PDDL planner configured in 'pddlPlanner.executableOrService'.",
           "pattern": "^\\$\\(planner\\).+\\$\\(options\\).+\\$\\(domain\\).+\\$\\(problem\\).*$",
