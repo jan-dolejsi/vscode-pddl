@@ -13,6 +13,7 @@ import { Test, TestOutcome } from './Test';
 import { PTestTreeDataProvider, PTestNode, PTestNodeKind } from './PTestTreeDataProvider';
 import { GeneratedDocumentContentProvider } from './GeneratedDocumentContentProvider';
 import { Planning } from '../planning/planning';
+import { PlanningOutcome } from '../planning/PlanningResult';
 import { Plan } from '../planning/plan';
 import { PddlPlanParser } from '../planning/PddlPlanParser';
 import { TestsManifest } from './TestsManifest';
@@ -202,9 +203,12 @@ export class PTestExplorer {
             let resultSubscription = this.planning.onPlansFound(result => {
                 resultSubscription.dispose();
 
-                if (!result.success) {
+                if (result.outcome == PlanningOutcome.FAILURE) {
                     this.outputTestResult(test, TestOutcome.FAILED, result.error);
                     reject(new Error(result.error));
+                    return;
+                } else if (result.outcome == PlanningOutcome.KILLED) {
+                    this.outputTestResult(test, TestOutcome.SKIPPED, 'Killed by the user.');
                     return;
                 }
 

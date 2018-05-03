@@ -179,12 +179,16 @@ export class Planning implements PlanningHandler {
         }, (progress, token) => {
             progress;
             token.onCancellationRequested(() => {
+                this.planningProcessKilled = true;
                 this.stopPlanner();
             });
 
             return this.planner.plan(domainFileInfo, problemFileInfo, planParser, this);
         })
-        .then(plans => this._onPlansFound.fire(PlanningResult.success(plans)),
+        .then(plans => {
+                let result = this.planningProcessKilled ? PlanningResult.killed() : PlanningResult.success(plans);
+                this._onPlansFound.fire(result);
+            },
             reason => this._onPlansFound.fire(PlanningResult.failure(reason.toString()))
         );
 
