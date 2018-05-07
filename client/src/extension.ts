@@ -68,7 +68,7 @@ export function activate(context: ExtensionContext) {
 	let languageClient = new LanguageClient('pddlParser', 'PDDL Language Server', serverOptions, clientOptions);
 	context.subscriptions.push(languageClient.start());
 
-	let pddlWorkspace = new PddlWorkspace();
+	let pddlWorkspace = new PddlWorkspace(context);
 	subscribeToWorkspace(pddlWorkspace, context);
 	let planning = new Planning(pddlWorkspace, pddlConfiguration, context);
 

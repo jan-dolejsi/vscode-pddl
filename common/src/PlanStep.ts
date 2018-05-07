@@ -14,12 +14,19 @@ export class PlanStep {
         this.objects = nameFragments.slice(1);
     }
 
-    equals(other: PlanStep): boolean {
-        if(this.isDurative){
-            if (!other.isDurative || this.duration != other.duration) return false;
+    equals(other: PlanStep, epsilon: number): boolean {
+        if (this.isDurative) {
+            if (!other.isDurative || !PlanStep.equalsWithin(this.duration, other.duration, epsilon)) {
+                return false;
+            }
         }
 
-        return this.time == other.time && this.fullActionName == other.fullActionName;
+        return PlanStep.equalsWithin(this.time, other.time, epsilon) 
+            && this.fullActionName.toLowerCase() == other.fullActionName.toLowerCase();
+    }
+
+    static equalsWithin(a: number, b: number, epsilon: number): boolean {
+        return Math.abs(a - b) <= 1.1 * epsilon;
     }
 
     toPddl(): string {

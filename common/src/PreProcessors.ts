@@ -15,7 +15,7 @@ export interface OutputAdaptor {
 }
 
 export abstract class PreProcessor {
-    constructor(private metaDataLine: string) { }
+    constructor(private metaDataLine?: string) { }
     abstract transform(input: string, workingDirectory: string, outputWindow: OutputAdaptor): Promise<string>;
     abstract transformSync(input: string, workingDirectory: string, outputWindow: OutputAdaptor): string;
     abstract toString(): string;
@@ -31,7 +31,7 @@ export abstract class PreProcessor {
  * Shell command based pre-processor.
  */
 export class CommandPreProcessor extends PreProcessor {
-    constructor(public command: string, public args: string[], metaDataLine: string) { 
+    constructor(public command: string, public args: string[], metaDataLine?: string) { 
         super(metaDataLine); 
     }
 
@@ -101,22 +101,53 @@ export class CommandPreProcessor extends PreProcessor {
 }
 
 /**
- * Jinja2 based pre-processor
+ * Python-based pre-processor
  */
-export class Jinja2PreProcessor extends PreProcessor {
+export class PythonPreProcessor extends CommandPreProcessor {
+    constructor(pythonPath: string, script: string, args: string[], metaDataLine?: string) {
+        super(pythonPath, [script].concat(args), metaDataLine);
+    }
+
+    static fromJson(json: any): any {
+        json
+        throw "For Jinja2 pre-processor, use the constructor instead"
+    }
+}
+
+/**
+ * Jinja2 pre-processor
+ */
+export class Jinja2PreProcessor extends PythonPreProcessor {
+    constructor(pythonPath: string, extensionRoot: string, public dataFileName: string, metaDataLine?: string) {
+        super(pythonPath, path.join(extensionRoot, "scripts", "transform_jinja2.py"), [dataFileName], metaDataLine);
+    }
+
+    static fromJson(json: any): any {
+        json
+        throw "For Jinja2 pre-processor, use the constructor instead"
+    }
+}
+
+/**
+ * Nunjucks based pre-processor
+ */
+export class NunjucksPreProcessor extends PreProcessor {
     data: any;
     nunjucksEnv: nunjucks.Environment;
 
-    constructor(public dataFile: any, workingDirectory: string, metaDataLine: string) { 
+    constructor(public dataFileName: string, workingDirectory: string, metaDataLine: string, preserveWhitespace: boolean) { 
         super(metaDataLine);
-        let dataPath = path.join(workingDirectory, dataFile);
+        let dataPath = path.join(workingDirectory, dataFileName);
         let dataText = readFileSync(dataPath);
         this.data = JSON.parse(dataText.toLocaleString());
-        this.nunjucksEnv = nunjucks.configure({ trimBlocks: false, lstripBlocks: false, throwOnUndefined: true});
+        this.nunjucksEnv = nunjucks.configure({ trimBlocks: false, lstripBlocks: !preserveWhitespace, throwOnUndefined: true });
+        this.nunjucksEnv.addFilter('map', function(array, attribute) { 
+            return array.map((item: any) => item[attribute]); 
+        });
     }
 
     toString(): string {
-        return `Jinja2 ${this.dataFile}`;
+        return `Nunjucks ${this.dataFileName}`;
     }
 
     async transform(input: string, workingDirectory: string, outputWindow: OutputAdaptor): Promise<string> {

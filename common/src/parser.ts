@@ -7,6 +7,7 @@
 import { ProblemParserPreProcessor } from "./ProblemParserPreProcessor";
 import { dirname } from "path";
 import { Util } from "./util";
+import { PddlExtensionContext } from "./PddlExtensionContext";
 
 export class Parser {
 
@@ -15,9 +16,11 @@ export class Parser {
     problemPattern = /^\s*\(define\s*\(problem\s+(\S+)\s*\)\s*\(:domain\s+(\S+)\s*\)/gi;
     problemCompletePattern = /^\s*\(define\s*\(problem\s+(\S+)\s*\)\s*\(:domain\s+(\S+)\s*\)\s*(\(:requirements\s*([^\)]*)\))?\s*(\(:objects\s*([^\)]*)\))?\s*\(:init\s*([\s\S]*)\s*\)\s*\(:goal\s*([\s\S]*?)\s*\)\s*(\(:constraints\s*([\s\S]*?)\s*\))?\s*(\(:metric\s*([\s\S]*?)\s*\))?\s*\)\s*$/gi;
 
-    preProcessor = new ProblemParserPreProcessor();
+    preProcessor: ProblemParserPreProcessor;
 
-    constructor() { }
+    constructor(context?: PddlExtensionContext) {
+        this.preProcessor = new ProblemParserPreProcessor(context);
+    }
 
     tryProblem(fileUri: string, fileVersion: number, fileText: string): ProblemInfo {
         let filePath = Util.fsPath(fileUri);

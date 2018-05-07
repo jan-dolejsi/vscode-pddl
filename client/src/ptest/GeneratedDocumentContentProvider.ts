@@ -33,11 +33,11 @@ export class GeneratedDocumentContentProvider implements TextDocumentContentProv
 
         let problemTemplateWithoutExtension = problemTemplatePath.replace('.pddl', '');
 
-        if (test.getLabel()) {
-            problemPath = join(problemTemplateWithoutExtension + ' (' + test.getLabel() + ').pddl');
+        if (test.label) {
+            problemPath = join(problemTemplateWithoutExtension + ` (${test.label}).pddl`);
         }
         else {
-            problemPath = problemTemplateWithoutExtension + ` (${testIdx})` + '.pddl';
+            problemPath = problemTemplateWithoutExtension + ` (${testIdx}).pddl`;
         }
 
         let uri = Uri.file(problemPath).with({scheme: 'tpddl'});

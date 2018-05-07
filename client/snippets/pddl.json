@@ -101,17 +101,25 @@
   "meta-pre-parsing-command": {
     "prefix": ";;!pre-parsing:command",
     "body": [
-      ";;!pre-parsing:{type: \"command\", command: \"${1:python3}\", args: [${2:\"your_script.py\", \"data.json\", \"1234\"}]}",
+      ";;!pre-parsing:{type: \"command\", command: \"${1:program}\", args: [${2:\"data.json\", \"1234\"}]}",
       "$0"
     ],
     "description": "Pre-parsing problem file transformation via a shell command."
   },
-  "meta-pre-parsing-jinja2":{
-    "prefix": ";;!pre-parsing:jinja2",
+  "meta-pre-parsing-python": {
+    "prefix": ";;!pre-parsing:python",
     "body": [
-      ";;!pre-parsing:{type: \"jinja2\", data: \"${1:case1.json}\"}",
+      ";;!pre-parsing:{type: \"python\", command: \"${1:your_script.py}\", args: [${2:\"data.json\", \"1234\"}]}",
       "$0"
     ],
-    "description": "Pre-parsing problem file transformation via Jinja2."
+    "description": "Pre-parsing problem file transformation via a python script."
+  },
+  "meta-pre-parsing-templating":{
+    "prefix": ";;!pre-parsing:",
+    "body": [
+      ";;!pre-parsing:{type: \"${1|nunjucks,jinja2|}\", data: \"${2:case1.json}\"}",
+      "$0"
+    ],
+    "description": "Pre-parsing problem file transformation via Nunjucks or Jinja2."
   }
 }

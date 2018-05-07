@@ -56,6 +56,11 @@ export class PTestTreeDataProvider implements TreeDataProvider<PTestNode> {
         return this.treeNodeCache.get(resource.toString());
     }
 
+    cache(node: PTestNode): PTestNode {
+        this.treeNodeCache.set(node.resource.toString(), node);
+        return node;
+    }
+
     getTreeItem(element: PTestNode): TreeItem | Thenable<TreeItem> {
 
         let icon: string;
@@ -95,6 +100,7 @@ export class PTestTreeDataProvider implements TreeDataProvider<PTestNode> {
         let isCollapsible = element.kind == PTestNodeKind.Directory || element.kind == PTestNodeKind.Manifest;
 
         return {
+            id: element.resource.toString(),
             resourceUri: element.resource,
             collapsibleState: isCollapsible ? TreeItemCollapsibleState.Collapsed : void 0,
             contextValue: contextValue,
@@ -115,7 +121,7 @@ export class PTestTreeDataProvider implements TreeDataProvider<PTestNode> {
         if (!element) {
             if (workspace.workspaceFolders) {
                 let rootNodes: PTestNode[] = workspace.workspaceFolders
-                    .map(wf => ({ resource: wf.uri, kind: PTestNodeKind.Directory }));
+                    .map(wf => this.cache({ resource: wf.uri, kind: PTestNodeKind.Directory }));
 
                 return rootNodes;
             } else {
@@ -130,10 +136,10 @@ export class PTestTreeDataProvider implements TreeDataProvider<PTestNode> {
                 if (!manifest) return [];
 
                 return manifest.tests
-                    .map((test, idx) => ({
+                    .map(test => this.cache({
                         resource: test.uri,
                         kind: PTestNodeKind.Test,
-                        label: test.getLabel() || test.problem || test.getProblem() + ` (${idx + 1})`
+                        label: test.getLabel()
                     }));
             }
             else {
@@ -142,11 +148,27 @@ export class PTestTreeDataProvider implements TreeDataProvider<PTestNode> {
                 return children
                     .map(child => join(parentPath, child))
                     .filter(childPath => PTestTreeDataProvider.isOrHasTests(childPath))
-                    .map(childPath => (
-                        {
+                    .map(childPath => {
+                        let kind = this.filePathToNodeKind(childPath);
+                        if(kind == PTestNodeKind.Manifest){
+                            let label = childPath;
+                            let baseName = basename(childPath);
+                            if(baseName.length == PTestTreeDataProvider.PTEST_SUFFIX.length){
+                                label = 'Test cases';
+                            } else {
+                                label = baseName.substring(0, baseName.length - PTestTreeDataProvider.PTEST_SUFFIX.length);
+                            }
+                            return this.cache({
+                                resource: Uri.file(childPath),
+                                kind: kind,
+                                label: label
+                            });
+                    }
+                        return this.cache({
                             resource: Uri.file(childPath),
-                            kind: this.filePathToNodeKind(childPath)
+                            kind: kind
                         })
+                    }
                     );
             }
         }
@@ -154,7 +176,7 @@ export class PTestTreeDataProvider implements TreeDataProvider<PTestNode> {
 
     tryLoadManifest(manifestPath: string): TestsManifest {
         try {
-            return TestsManifest.load(manifestPath);
+            return TestsManifest.load(manifestPath, this.context);
         } catch (error) {
             window.showErrorMessage(`Unable to load test manifest from: ${manifestPath}
 ${error.message}`);
@@ -185,8 +207,10 @@ ${error.message}`);
         } else return this.isTestManifest(childPath);
     }
 
+    static PTEST_SUFFIX = '.ptest.json';
+
     static isTestManifest(filePath: string): boolean {
-        return basename(filePath).toLowerCase().endsWith('.ptest.json');
+        return basename(filePath).toLowerCase().endsWith(this.PTEST_SUFFIX);
     }
 
     static getAllChildrenFiles(dir: string): string[] {

@@ -39,6 +39,8 @@ export class Planning implements PlanningHandler {
     plans: Plan[];
     planningProcessKilled: boolean;
 
+    extensionPath: string;
+
     constructor(public pddlWorkspace: PddlWorkspace, public plannerConfiguration: PddlConfiguration, context: ExtensionContext) {
         this.output = window.createOutputChannel("Planner output");
 
@@ -55,6 +57,8 @@ export class Planning implements PlanningHandler {
         this.previewUri = Uri.parse('pddl-plan://authority/plan');
         this.provider = new PlanDocumentContentProvider(context);
         context.subscriptions.push(workspace.registerTextDocumentContentProvider('pddl-plan', this.provider));
+
+        this.extensionPath = context.extensionPath;
     }
 
     /**
@@ -174,7 +178,7 @@ export class Planning implements PlanningHandler {
 
         window.withProgress<Plan[]>({
             location: ProgressLocation.Notification,
-            title: "Searching for plans...",
+            title: `Searching for plans for domain ${domainFileInfo.name} and problem ${problemFileInfo.name}...`,
             cancellable: true
         }, (progress, token) => {
             progress;

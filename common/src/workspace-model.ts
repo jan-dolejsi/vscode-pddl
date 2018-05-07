@@ -7,6 +7,7 @@
 import { Parser, FileInfo, DomainInfo, ProblemInfo, UnknownFileInfo } from './parser'
 import { Util } from './util';
 import { dirname, basename } from 'path';
+import { PddlExtensionContext } from './PddlExtensionContext';
 
 class Folder {
     files: Map<string, FileInfo> = new Map<string, FileInfo>();
@@ -73,8 +74,8 @@ export class PddlWorkspace {
     folders: Map<string, Folder> = new Map<string, Folder>();
     parser: Parser;
 
-    constructor() {
-        this.parser = new Parser();
+    constructor(context?: PddlExtensionContext) {
+        this.parser = new Parser(context);
     }
 
     static getFolderUri(documentUri: string): string {

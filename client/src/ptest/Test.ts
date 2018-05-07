@@ -4,10 +4,11 @@
  * ------------------------------------------------------------------------------------------ */
 'use strict';
 
-import { Uri } from 'vscode';
+import { Uri, workspace } from 'vscode';
 import { join, dirname } from 'path';
 import { TestsManifest } from './TestsManifest';
-import { PreProcessor, CommandPreProcessor, Jinja2PreProcessor } from "../../../common/src/PreProcessors";
+import { PreProcessor, CommandPreProcessor, NunjucksPreProcessor, PythonPreProcessor, Jinja2PreProcessor } from "../../../common/src/PreProcessors";
+import { PddlExtensionContext } from '../../../common/src/PddlExtensionContext';
 
 export enum TestOutcome { UNKNOWN, SUCCESS, FAILED, SKIPPED, IN_PROGRESS }
 
@@ -24,7 +25,7 @@ export class Test {
     private expectedPlans: string[];
     uri: Uri;
 
-    constructor(public manifest: TestsManifest, index: number, readonly json: any) {
+    constructor(public manifest: TestsManifest, public index: number, readonly json: any, readonly context: PddlExtensionContext) {
         this.label = json["label"];
         this.domain = json["domain"];
         this.problem = json["problem"];
@@ -32,15 +33,26 @@ export class Test {
         this.expectedPlans = json["expectedPlans"] || [];
         this.uri = this.manifest.uri.with({ fragment: index.toString() });
 
-        if(json["preProcess"]) {
-            let kind = json["preProcess"]["kind"];
+        let preProcessSettings = json["preProcess"];
+
+        if(preProcessSettings) {
+            let kind = preProcessSettings["kind"];
+
+            // get python location (if python extension si installed)
+            let pythonPath = workspace.getConfiguration().get("python.pythonPath", "python");
 
             switch(kind){
                 case "command":
-                    this.preProcessor = CommandPreProcessor.fromJson(json["preProcess"]);
+                    this.preProcessor = CommandPreProcessor.fromJson(preProcessSettings);
+                    break;
+                case "python":
+                    this.preProcessor = new PythonPreProcessor(pythonPath, preProcessSettings["script"], preProcessSettings["args"]);
+                    break;
+                case "nunjucks":
+                    this.preProcessor = new NunjucksPreProcessor(preProcessSettings["data"], dirname(manifest.path), undefined, false);
                     break;
                 case "jinja2":
-                    this.preProcessor = new Jinja2PreProcessor(json["preProcess"]["data"], dirname(manifest.path));
+                    this.preProcessor = new Jinja2PreProcessor(pythonPath, context.extensionPath, preProcessSettings["data"]);
                     break;
             }
         }
@@ -63,7 +75,7 @@ export class Test {
     }
 
     getLabel(): string {
-        return this.label;
+        return this.label || this.problem || this.getProblem() + ` (${this.index + 1})`;
     }
 
     getOptions(): string {
@@ -86,10 +98,10 @@ export class Test {
         return join(dirname(this.manifest.path), fileName);
     }
 
-    static fromUri(uri: Uri): Test {
+    static fromUri(uri: Uri, context: PddlExtensionContext): Test {
         let testIndex = parseInt(uri.fragment);
         if (testIndex != NaN) {
-            let manifest = TestsManifest.load(uri.fsPath);
+            let manifest = TestsManifest.load(uri.fsPath, context);
             return manifest.tests[testIndex];
         }
         else {

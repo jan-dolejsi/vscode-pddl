@@ -1,14 +1,25 @@
-# What's new?
+# What's new
 
 ## [Unreleased]
 
-- PDDL Test explorer with test file viewing, planner execution and expected plan(s) assertion
-- Support for templated problem files supported by test explorer. Supported pre-processors are any shell commands and jinja2.
-- Support for PDDL parsing of templated problem files via pre-parsing preprocessing meta instruction
-- upgraded to latest typescript, mocha and node versions
-- fixed symbol at position implementation (used by hover, reference and definition provider)
-- promoted diagnostic Hints to Info to make them appear in the 'Problem' pane
+## [2.6.1] - 2018-05-07
+
+- PDDL Test explorer tree with test file viewing, planner execution and expected plan(s) assertion
+
+![Test Explorer](https://raw.githubusercontent.com/wiki/jan-dolejsi/vscode-pddl/img/PDDL_Test_Explorer.gif)
+
+- Support for templated problem files supported by test explorer. Supported pre-processors are any shell commands, python scripts, nunjucks and jinja2.
+
+![Templated PDDL](https://raw.githubusercontent.com/wiki/jan-dolejsi/vscode-pddl/img/PDDL_Templated_problem_files.gif)
+
+- Experimental: Support for PDDL parsing of templated problem files via pre-parsing preprocessing meta instruction
 - Additional code folding control via `;;(` and `;;)` instructions helps with long problem files
+
+![Init block folding](https://raw.githubusercontent.com/wiki/jan-dolejsi/vscode-pddl/img/PDDL_init_block_folding.gif)
+
+- Upgraded to latest typescript, mocha and node versions
+- Fixed symbol at position implementation (used by hover, reference and definition provider)
+- Promoted diagnostic Hints to Info to make them appear in the 'Problem' pane
 
 ## [2.5.1] - 2018-04-20
 
@@ -136,28 +147,32 @@ Simplified snippets and added tabstops/placeholders to them, so they are easy to
 
 ### Changed
 
-* fixed parameters to action snippets
-* banner color
+- fixed parameters to action snippets
+- banner color
 
 ## 1.0.0 - 2017-04-15
 
 ### Added
 
-* Initial release
-* PDDL Snippets for `domain`, `problem`, `action` and `durative-action`.
-* Syntax highlighting for commonly used PDDL features
+- Initial release
+- PDDL Snippets for `domain`, `problem`, `action` and `durative-action`.
+- Syntax highlighting for commonly used PDDL features
 
 ## Future work
 
-* Rename parameters and objects
-* Auto-completion for constant/object names.
-* Plan debugger
+- Port custom html views to webview API
+- Review configuration properties scope - which properties should be moved to 'application' scope?
+- Validate new symbol name while renaming using `prepareRename`
+- Rename parameters and objects
+- Auto-completion for constant/object names.
+- Plan debugger
 
 Note for open source contributors: all notable changes to the "pddl" extension will be documented in this file.
 
 Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
 
-[Unreleased]: https://github.com/jan-dolejsi/vscode-pddl/compare/v2.5.1...HEAD
+[Unreleased]: https://github.com/jan-dolejsi/vscode-pddl/compare/v2.6.1...HEAD
+[2.6.1]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.5.1...v2.6.1
 [2.5.1]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.5.0...v2.5.1
 [2.5.0]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.4.2...v2.5.0
 [2.4.2]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.0.3...v2.4.2

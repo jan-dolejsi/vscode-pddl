@@ -31,7 +31,7 @@
 		"meta": {
 			"patterns": [{
 				"name": "meta.preprocessor.pre-parsing",
-				"match": "^;;\\s*!pre-parsing:\\s*{\\s*type:\\s*\"(command|jinja2)\"\\s*,\\s*(command:\\s*\"([\\w:\\-/\\\\\\. ]+)\"\\s*(,\\s*args:\\s*\\[([^\\]]*)\\])?|data:\\s*\"([\\w:\\-/\\\\\\. ]+)\")\\s*}",
+				"match": "^;;\\s*!pre-parsing:\\s*{\\s*type:\\s*\"(command|nunjucks|jinja2|python)\"\\s*,\\s*(command:\\s*\"([\\w:\\-/\\\\\\. ]+)\"\\s*(,\\s*args:\\s*\\[([^\\]]*)\\])?|data:\\s*\"([\\w:\\-/\\\\\\. ]+)\")\\s*}",
 				"captures": {
 					"1": { "name": "variable.parameter.pre-parsing.type"},
 					"3": { "name": "variable.parameter.pre-parsing.command"},
@@ -48,7 +48,16 @@
 			{
 				"name": "meta.preprocessor",
 				"match": "^;;\\s*!"
-			}]
+			},
+			{
+				"name": "meta.preprocessor.template.flow-control",
+				"match": "{%[^%]+%}"
+			},
+			{
+				"name": "meta.preprocessor.template.literal",
+				"match": "{{[^}]+}}"
+			}
+			]
 		},
 		"keywords": {
 			"patterns": [{
