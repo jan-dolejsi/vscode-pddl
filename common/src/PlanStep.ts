@@ -14,6 +14,21 @@ export class PlanStep {
         this.objects = nameFragments.slice(1);
     }
 
+    equals(other: PlanStep, epsilon: number): boolean {
+        if (this.isDurative) {
+            if (!other.isDurative || !PlanStep.equalsWithin(this.duration, other.duration, epsilon)) {
+                return false;
+            }
+        }
+
+        return PlanStep.equalsWithin(this.time, other.time, epsilon) 
+            && this.fullActionName.toLowerCase() == other.fullActionName.toLowerCase();
+    }
+
+    static equalsWithin(a: number, b: number, epsilon: number): boolean {
+        return Math.abs(a - b) <= 1.1 * epsilon;
+    }
+
     toPddl(): string {
         let output = `${this.time}: (${this.fullActionName})`;
         if (this.isDurative) output += ` [${this.duration}]`;

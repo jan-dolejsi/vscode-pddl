@@ -3,9 +3,10 @@
  * Licensed under the MIT License. See License.txt in the project root for license information.
  * ------------------------------------------------------------------------------------------ */
 
-// import tmp = require('tmp');
 import * as tmp from 'tmp';
 import fs = require('fs');
+import { URL } from "url";
+
 
 export class Util {
     
@@ -23,4 +24,22 @@ export class Util {
         return Util.toFile(prefix, '.pddl', text);
     }
 
+    static fsPath(fileUri: string): string {
+
+        let url = new URL(fileUri);
+        let decodedPath: string = decodeURIComponent(url.pathname);
+        if(decodedPath.startsWith('/')) decodedPath = decodedPath.substr(1);
+
+        return decodedPath;
+    }
+
+    /**
+     * Replaces all occurrences
+     * @param text text to replace in
+     * @param searchValue value to replace
+     * @param replaceValue replacement value
+     */
+    static replaceAll(text: string, searchValue: string, replaceValue: string): any {
+        return text.split(searchValue).join(replaceValue);
+    }
 } 
