@@ -23,7 +23,7 @@ export abstract class PreProcessor {
         this.metaDataLine;
         let pattern = /^;;\s*!pre-parsing:/;
         
-        return text.split('\n').map(line => pattern.test(line) ? "; Generated from meta-data" : line).join('\n');
+        return text.split('\n').map(line => pattern.test(line) ? "; Generated from a PDDL template and a data file" : line).join('\n');
     }
 }
 
@@ -132,17 +132,17 @@ export class Jinja2PreProcessor extends PythonPreProcessor {
  * Nunjucks based pre-processor
  */
 export class NunjucksPreProcessor extends PreProcessor {
-    data: any;
     nunjucksEnv: nunjucks.Environment;
 
-    constructor(public dataFileName: string, workingDirectory: string, metaDataLine: string, preserveWhitespace: boolean) { 
+    constructor(public dataFileName: string, metaDataLine: string, preserveWhitespace: boolean) { 
         super(metaDataLine);
-        let dataPath = path.join(workingDirectory, dataFileName);
-        let dataText = readFileSync(dataPath);
-        this.data = JSON.parse(dataText.toLocaleString());
         this.nunjucksEnv = nunjucks.configure({ trimBlocks: false, lstripBlocks: !preserveWhitespace, throwOnUndefined: true });
         this.nunjucksEnv.addFilter('map', function(array, attribute) { 
             return array.map((item: any) => item[attribute]); 
+        });
+        this.nunjucksEnv.addFilter('setAttribute', function(dictionary, key, value) {
+            dictionary[key] = value;
+            return dictionary;
         });
     }
 
@@ -156,17 +156,29 @@ export class NunjucksPreProcessor extends PreProcessor {
    
     transformSync(input: string, workingDirectory: string, outputWindow: OutputAdaptor): string {
 
-        workingDirectory;
+
+        let dataPath = path.join(workingDirectory, this.dataFileName);
+        let dataText = readFileSync(dataPath);
+        let data: any;
+
+        try {
+            data = JSON.parse(dataText.toLocaleString());
+        }catch (error){
+            outputWindow.appendLine(`Failed to read from ${this.dataFileName}.`);
+            outputWindow.appendLine(error.message);
+            outputWindow.show();
+            return input;
+        }
 
         try {
 
-            let translated = this.nunjucksEnv.renderString(input, {data: this.data});
+            let translated = this.nunjucksEnv.renderString(input, {data: data});
     
             return this.removeMetaDataLine(translated);
         } catch (error) {
-            outputWindow.appendLine('Failed to transform the problem file.')
-            outputWindow.appendLine(error.message)
-            if(error.stderr) outputWindow.appendLine(error.stderr.toString())
+            outputWindow.appendLine('Failed to transform the problem file.');
+            outputWindow.appendLine(error.message);
+            if(error.stderr) outputWindow.appendLine(error.stderr.toString());
             outputWindow.show();
             return input;
         }

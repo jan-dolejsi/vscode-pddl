@@ -56,6 +56,7 @@ export class PlanReportGenerator {
             <title>Plan report</title>
             ${this.includeStyle(this.asAbsolutePath('planview', 'plans.css'))}
             ${this.includeStyle(this.asAbsolutePath('planview', 'plan-resource-task.css'))}
+            ${this.includeStyle(this.asAbsolutePath('planview', 'menu.css'))}
             ${this.includeScript(this.asAbsolutePath('planview', 'plans.js'))}
             <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
             ${this.includeScript(this.asAbsolutePath('planview', 'charts.js'))}
@@ -152,7 +153,8 @@ ${objectsHtml}
 
         lineCharts += `\n    </div>`;
 
-        return `${ganttChart}
+        return `${this.selfContained ? '' : this.renderMenu()}
+${ganttChart}
 ${swimLanes}
 ${lineCharts}
         <script>function drawPlan${planIndex}Charts(){\n${lineChartScripts}}</script>
@@ -206,7 +208,7 @@ ${stepsInvolvingThisObject}
         let availableLane = swimLanes.placeNext(leftOffset, width);
 
         return `
-                    <div class="resourceTaskTooltip" style="background-color: ${actionColor}; left: ${leftOffset}px; width: ${width}px; top: ${availableLane * this.planStepHeight + 1}px;">${step.actionName} ${objects}<span class="resourceTaskTooltipText">${step.actionName} ${objects}</span></div>`;
+                    <div class="resourceTaskTooltip" style="background-color: ${actionColor}; left: ${leftOffset}px; width: ${width}px; top: ${availableLane * this.planStepHeight + 1}px;">${step.actionName} ${objects}<span class="resourceTaskTooltipText">${this.toActionTooltip(step)}</span></div>`;
     };
 
     renderPlanStep(step: PlanStep, index: number, plan: Plan, planIndex: number): string {
@@ -221,7 +223,7 @@ ${stepsInvolvingThisObject}
         return `        <div class="planstep" id="plan${planIndex}step${index}" style="left: ${fromLeft}px; top: ${fromTop}px; "><div class="planstep-bar" style="width: ${width}px; background-color: ${actionColor}"></div>${actionLink} ${step.objects.join(' ')}</div>`;
     }
 
-    toActionLink(actionName: string, plan: Plan) {
+    toActionLink(actionName: string, plan: Plan): string {
         if (this.selfContained) {
             return actionName;
         }
@@ -230,7 +232,14 @@ ${stepsInvolvingThisObject}
         }
     }
 
-    includeStyle(path: string): any {
+    toActionTooltip(step: PlanStep): string {
+        let durationRow = step.isDurative ?
+            `<tr><td class="actionToolTip">Duration: </td><td class="actionToolTip">${step.duration}</td></tr>` :
+            '';
+        return `<table><tr><th colspan="2" class="actionToolTip">${step.actionName} ${step.objects.join(' ')}</th></tr><tr><td class="actionToolTip">Start:</td><td class="actionToolTip">${step.time}</td></tr>${durationRow}</table>`;
+    }
+
+    includeStyle(path: string): string {
         if (this.selfContained) {
             let styleText = fs.readFileSync(path, 'utf8');
             return `<style>\n${styleText}\n</style>`;
@@ -239,7 +248,7 @@ ${stepsInvolvingThisObject}
         }
     }
 
-    includeScript(path: string): any {
+    includeScript(path: string): string {
         if (this.selfContained) {
             let scriptText = fs.readFileSync(path, 'utf8');
             return `<script>\n${scriptText}\n</script>`;
@@ -250,6 +259,13 @@ ${stepsInvolvingThisObject}
 
     computeLeftOffset(step: PlanStep, plan: Plan): number {
         return step.time / plan.makespan * this.displayWidth;
+    }
+
+    renderMenu(): string {
+        let generateReportUri = encodeURI('command:pddl.planReport');
+        return `<div class="menu">&#x2630;
+        <span class="menutooltip"><a href="${generateReportUri}">Generate plan report</a></span>
+    </div>`;
     }
 
     computeWidth(step: PlanStep, plan: Plan): number {

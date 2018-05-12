@@ -39,7 +39,7 @@ export class ProblemParserPreProcessor {
                     break;
                 case "nunjucks":
                     try {
-                        preProcessor = new NunjucksPreProcessor(match[6], workingDirectory, match[0], true);
+                        preProcessor = new NunjucksPreProcessor(match[6], match[0], true);
                     } catch (err) {
                         console.log(err);
                     }

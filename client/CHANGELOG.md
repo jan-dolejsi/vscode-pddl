@@ -1,6 +1,17 @@
 # What's new
 
-## [Unreleased]
+## [2.6.2] - 2018-05-13
+
+- Plan visualization now displays a menu symbol &#x2630; in the top-right corner, which shows applicable commands. The first command displayed there is the _PDDL: Generate plan report_.
+
+![Plan visualization menu](https://raw.githubusercontent.com/wiki/jan-dolejsi/vscode-pddl/img/PDDL_plan_viz_menu.jpg)
+
+- Plan visualization includes start time and duration in action tool-tip.
+
+![Plan visualization tooltip](https://raw.githubusercontent.com/wiki/jan-dolejsi/vscode-pddl/img/PDDL_plan_viz_tooltip.jpg)
+
+- Bug fixes to make Test explorer more robust.
+- More robust parsing of type inheritance
 
 ## [2.6.1] - 2018-05-07
 
@@ -167,11 +178,16 @@ Simplified snippets and added tabstops/placeholders to them, so they are easy to
 - Auto-completion for constant/object names.
 - Plan debugger
 
+## [Unreleased]
+
+N/A
+
 Note for open source contributors: all notable changes to the "pddl" extension will be documented in this file.
 
 Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
 
-[Unreleased]: https://github.com/jan-dolejsi/vscode-pddl/compare/v2.6.1...HEAD
+[Unreleased]: https://github.com/jan-dolejsi/vscode-pddl/compare/v2.6.2...HEAD
+[2.6.2]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.6.1...v2.6.2
 [2.6.1]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.5.1...v2.6.1
 [2.5.1]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.5.0...v2.5.1
 [2.5.0]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.4.2...v2.5.0

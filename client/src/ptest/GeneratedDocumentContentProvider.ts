@@ -5,10 +5,10 @@
 'use strict';
 
 import {
-    Uri, Event, TextDocumentContentProvider, CancellationToken, workspace, OutputChannel, EventEmitter
+    Uri, Event, TextDocumentContentProvider, CancellationToken, workspace, OutputChannel, EventEmitter, window
 } from 'vscode';
 import { Test } from './Test';
-import { join, dirname } from 'path';
+import { join, dirname, basename } from 'path';
 import { readFileSync } from 'fs';
 
 export class GeneratedDocumentContentProvider implements TextDocumentContentProvider {
@@ -40,7 +40,7 @@ export class GeneratedDocumentContentProvider implements TextDocumentContentProv
             problemPath = problemTemplateWithoutExtension + ` (${testIdx}).pddl`;
         }
 
-        let uri = Uri.file(problemPath).with({scheme: 'tpddl'});
+        let uri = Uri.file(problemPath).with({ scheme: 'tpddl' });
 
         this.uriMap.set(uri.toString(), test);
 
@@ -61,7 +61,12 @@ export class GeneratedDocumentContentProvider implements TextDocumentContentProv
             documentText = readFileSync(test.getProblemUri().fsPath).toString();
         }
 
-        return await test.getPreProcessor().transform(documentText, dirname(test.manifest.path), this.outputWindow);
+        try {
+            return await test.getPreProcessor().transform(documentText, dirname(test.manifest.path), this.outputWindow);
+        } catch (ex) {
+            window.showErrorMessage(`Cannot show problem file ${basename(uri.fsPath)}: ${ex}`);
+            return Promise.reject(ex);
+        }
     }
 }
 

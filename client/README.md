@@ -68,8 +68,8 @@ To learn more about how to configure the extension to work with one of the parse
 
 The planner can be invoked in the context of a currently edited PDDL file. There are two ways how to do that via the user interface.
 
-- Type `Ctrl + Shift + P` and type _plan_ to filter the list of available commands. The _Run the planner and visualize the plan_ command should be visible.
-- Right click on the PDDL file and select  _Run the planner and visualize the plan_
+- Type `Ctrl + Shift + P` and type _plan_ to filter the list of available commands. The _PDDL: Run the planner and visualize the plan_ command should be visible.
+- Right click on the PDDL file and select  _PDDL: Run the planner and visualize the plan_
 - Alternatively you can set up a keyboard shortcut such as `Alt + P` to be associated with the above command (see VS Code documentation for that)
 
 There are multiple scenarios supported:
@@ -104,6 +104,12 @@ Plan visualization details may be fine-tuned using an additional file `<domain>.
 ```
 
 The entries may use regular expression pattern. Note that backslashes in the regex must be doubled up to comply with JSON syntax.
+
+#### Generate plan report
+
+Plan visualization displays a menu symbol &#x2630; in the top-right corner, which shows applicable commands. For example the _PDDL: Generate plan report_, which opens the plan report generated into a self-contained HTML file that you can save and share/email.
+
+![Plan visualization menu](https://raw.githubusercontent.com/wiki/jan-dolejsi/vscode-pddl/img/PDDL_plan_viz_menu.jpg)
 
 ### Planning with command-line switches
 
@@ -154,7 +160,7 @@ In order to test the PDDL domain model and its scalability, it is useful to be a
 There are several templating options supported out of the box:
 
 - [Nunjucks](https://mozilla.github.io/nunjucks/)
-- In preview: [Jinja2](http://jinja.pocoo.org/docs/)
+- [Jinja2](http://jinja.pocoo.org/docs/)
 - Python script
 - Command-line command
 
@@ -167,7 +173,7 @@ For the ultimate flexibility, here is how to configure a Python scriipt to do a 
     "defaultDomain": "domain.pddl",
     "defaultProblem": "problem_template.pddl",
     "defaultOptions": "",
-    "tests": [
+    "cases": [
         {
             "label": "Case #1",
             "preProcess": {
@@ -188,7 +194,9 @@ For the ultimate flexibility, here is how to configure a Python scriipt to do a 
                 "kind": "command",
                 "command": "myprogram.exe",
                 "args": [
-                    "case2_data.json"
+                    "case2_data.json",
+                    "some_switch",
+                    42
                 ]
             }
         },
@@ -208,8 +216,7 @@ For the ultimate flexibility, here is how to configure a Python scriipt to do a 
 
 ![Templated PDDL](https://raw.githubusercontent.com/wiki/jan-dolejsi/vscode-pddl/img/PDDL_Templated_problem_files.gif)
 
-
-### Problem generation via Python a script
+### Problem generation via a Python script
 
 This is what happens if you set `"kind": "python"`: Before executing the test, the extension runs the `populate_transform.py` script using the `python` command, pipes the `problem_template.pddl` onto it and reads the PDDL output of the script. The script uses the data from the configured .json file in this case, but as this is basically a command-line argument, you could refer to a database table just as well.
 

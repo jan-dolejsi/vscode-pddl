@@ -26,7 +26,11 @@ export class Parser {
         let filePath = Util.fsPath(fileUri);
         let workingDirectory = dirname(filePath);
 
-        fileText = this.preProcessor.process(fileText, workingDirectory);
+        try {
+            fileText = this.preProcessor.process(fileText, workingDirectory);
+        } catch (ex) {
+            console.error(ex);
+        }
 
         let pddlText = Parser.stripComments(fileText);
 
@@ -128,13 +132,11 @@ export class Parser {
         let match;
         while (match = pattern.exec(declarationText)) {
             // is this a group with inheritance?
-            if (match[0].indexOf(' -')) {
-                let fragments = match[0].split(' -');
-                let parent = fragments[1] ? fragments[1].trim() : null;
-                let children = fragments[0].trim().split(/\s+/g, );
+            let fragments = match[0].split(/\s-/);
+            let parent = fragments.length > 1 ? fragments[1].trim() : null;
+            let children = fragments[0].trim().split(/\s+/g, );
 
-                children.forEach(childType => inheritance.addEdge(childType, parent));
-            }
+            children.forEach(childType => inheritance.addEdge(childType, parent));
         }
 
         return inheritance;
@@ -188,7 +190,7 @@ export class Parser {
             let documentation = group[4];
 
             let derived = new Variable(fullSymbolName, parameters);
-            if(documentation) derived.setDocumentation(documentation);
+            if (documentation) derived.setDocumentation(documentation);
             derived.location = Parser.toRange(domainText, group.index, 0);
             derivedVariables.push(derived);
         }
@@ -437,7 +439,7 @@ export class DomainInfo extends FileInfo {
             let offset = 0;
             if (!foundTypesStart) {
                 let typesSectionStartIdx = lineWithoutComments.indexOf(this.TYPES_SECTION_START);
-                if(typesSectionStartIdx > -1) {
+                if (typesSectionStartIdx > -1) {
                     foundTypesStart = true;
                     offset = typesSectionStartIdx + this.TYPES_SECTION_START.length;
                 }
@@ -452,7 +454,7 @@ export class DomainInfo extends FileInfo {
         }
 
         return null;
-    } 
+    }
 
     findVariableLocation(variable: Variable): void {
         if (variable.location) return;//already initialized
@@ -568,7 +570,7 @@ export class DirectionalGraph {
             .map(childVertex => this.getSubtreePointingTo(childVertex))
             .reduce((x, y) => x.concat(y), []);
 
-        return vertices.concat(verticesSubTree);        
+        return vertices.concat(verticesSubTree);
     }
 
     getSubtreePointingFrom(vertex: string): string[] {
@@ -658,8 +660,8 @@ export class Variable {
         this.name = declaredName.replace(/( .*)$/gi, '');
     }
 
-    bind(objects: ObjectInstance[]) : Variable {
-        if(this.parameters.length != objects.length){
+    bind(objects: ObjectInstance[]): Variable {
+        if (this.parameters.length != objects.length) {
             throw new Error(`Invalid objects ${objects} for function ${this.getFullName()} parameters ${this.parameters}.`);
         }
         return new Variable(this.name, objects);
@@ -676,7 +678,7 @@ export class Variable {
     setDocumentation(documentation: string): void {
         this.documentation = documentation;
         let match = documentation.match(/\[([^\]]*)\]/);
-        if(match){
+        if (match) {
             this.unit = match[1];
         }
     }
