@@ -1,0 +1,31 @@
+.menu {
+    display: inline-block;
+    font-size: 200%;
+    position: absolute;
+    top: 0;
+    right: 0;
+}
+
+.menu .menutooltip {
+    font-size: initial;
+    visibility: hidden;
+    width: 150px;
+    background-color: black;
+    color: #fff;
+    text-align: left;
+    padding: 5px 0;
+    border-radius: 6px;
+
+    position: absolute;
+    z-index: 1;
+    top: 3px;
+    right: 105%;
+}
+
+.menu .menutooltip a {
+    color: white
+}
+
+.menu:hover .menutooltip {
+    visibility: visible;
+}

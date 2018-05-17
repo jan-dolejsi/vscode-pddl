@@ -4,10 +4,11 @@
  * ------------------------------------------------------------------------------------------ */
 'use strict';
 
-///<reference path="./typings/node/node.d.ts" />
+import { Parser, FileInfo, DomainInfo, ProblemInfo, UnknownFileInfo } from './parser'
+import { Util } from './util';
+import { dirname, basename } from 'path';
+import { PddlExtensionContext } from './PddlExtensionContext';
 import { EventEmitter }  from 'events';
-
-import { Parser, FileInfo, DomainInfo, ProblemInfo, UnknownFileInfo } from '../../common/src/parser'
 
 class Folder {
     files: Map<string, FileInfo> = new Map<string, FileInfo>();
@@ -77,21 +78,19 @@ export class PddlWorkspace extends EventEmitter {
     public static UPDATED = Symbol("UPDATED");
     public static REMOVING = Symbol("REMOVING");
 
-    constructor() {
+    constructor(context?: PddlExtensionContext) {
         super();
-        this.parser = new Parser();
+        this.parser = new Parser(context);
     }
 
     static getFolderUri(documentUri: string): string {
-        let lastSlashIdx = documentUri.lastIndexOf("/");
-        let folderUri = documentUri.substring(0, lastSlashIdx);
-
-        return folderUri;
+        let documentPath = Util.fsPath(documentUri);
+        return Util.replaceAll(dirname(documentPath), '\\', '/');
     }
 
     static getFileName(documentUri: string): string {
-        let lastSlashIdx = documentUri.lastIndexOf("/");
-        return documentUri.substring(lastSlashIdx + 1);
+        let documentPath = Util.fsPath(documentUri);
+        return basename(documentPath);
     }
 
     upsertFile(fileUri: string, fileVersion: number, fileText: string): FileInfo {

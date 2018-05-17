@@ -1,0 +1,168 @@
+{
+    "$id": "http://pddl-schema.org/ptest.json",
+    "type": "object",
+    "definitions": {},
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "properties": {
+        "defaultDomain": {
+            "$id": "/properties/defaultDomain",
+            "type": "string",
+            "title": "The domain file, if common to many of the test cases. The 'domain' property in each individual test case can override this value.",
+            "default": "",
+            "examples": [
+                "domain.pddl"
+            ]
+        },
+        "defaultProblem": {
+            "$id": "/properties/defaultProblem",
+            "type": "string",
+            "title": "The problem file, if common to many of the test cases. The 'problem' property in each individual test case can override this value.",
+            "default": "",
+            "examples": [
+                "problem.pddl"
+            ]
+        },
+        "defaultOptions": {
+            "$id": "/properties/defaultOptions",
+            "type": "string",
+            "title": "The command line options. Set this to empty string to avoid getting asked every time.",
+            "default": "",
+            "examples": [
+                ""
+            ]
+        },
+        "cases": {
+            "$id": "/properties/cases",
+            "type": "array",
+            "items": {
+                "$id": "/properties/cases/items",
+                "type": "object",
+                "properties": {
+                    "label": {
+                        "$id": "/properties/cases/items/properties/label",
+                        "type": "string",
+                        "description": "The Label for the test case",
+                        "default": "Test XYZ",
+                        "examples": [
+                            "Test case number 1"
+                        ]
+                    },
+                    "description": {
+                        "$id": "/properties/cases/items/properties/description",
+                        "type": "string",
+                        "description": "The Description for the test case",
+                        "default": "Test XYZ...",
+                        "examples": [
+                            "Given ... when ... then ..."
+                        ]
+                    },
+                    "domain": {
+                        "$id": "/properties/cases/items/properties/domain",
+                        "type": "string",
+                        "description": "The Domain file. Use absolute path, or relative to this ptest manifest file.",
+                        "default": "domain.pddl",
+                        "examples": [
+                            "domain.pddl"
+                        ]
+                    },
+                    "problem": {
+                        "$id": "/properties/cases/items/properties/problem",
+                        "type": "string",
+                        "description": "The Problem file or template.",
+                        "default": "problem.pddl",
+                        "examples": [
+                            "problem.pddl"
+                        ]
+                    },
+                    "options": {
+                        "$id": "/properties/cases/items/properties/options",
+                        "type": "string",
+                        "description": "The command-line options",
+                        "default": "",
+                        "examples": [
+                            "-t 0.001"
+                        ]
+                    },
+                    "preProcess": {
+                        "$id": "/properties/cases/items/properties/preProcess",
+                        "description": "Pre-processor to execute before launching the planner.",
+                        "type": "object",
+                        "required": [
+                            "kind"
+                        ],
+                        "properties": {
+                            "kind": {
+                                "$id": "/properties/cases/items/properties/preProcess/properties/kind",
+                                "type": "string",
+                                "description": "The kind of pre-processor.",
+                                "pattern": "^(nunjucks|jinja2|python|command)$",
+                                "default": "nunjucks",
+                                "examples": [
+                                    "command",
+                                    "python",
+                                    "nunjucks",
+                                    "jinja2"
+                                ]
+                            },
+                            "command": {
+                                "$id": "/properties/cases/items/properties/preProcess/properties/command",
+                                "type": "string",
+                                "description": "The command to execute. Mandatory when 'kind' is set to 'command'.",
+                                "default": "",
+                                "examples": [
+                                    "shell",
+                                    "script.bat",
+                                    "program.exe"
+                                ]
+                            },
+                            "script": {
+                                "$id": "/properties/cases/items/properties/preProcess/properties/script",
+                                "type": "string",
+                                "description": "The python script to execute. Mandatory when 'kind' is set to 'python'.",
+                                "default": "myscript.py",
+                                "examples": [
+                                    "script.py"
+                                ]
+                            },
+                            "args": {
+                                "$id": "/properties/cases/items/properties/preProcess/properties/args",
+                                "type": "array",
+                                "description": "Command-line arguments",
+                                "items": {
+                                    "$id": "/properties/cases/items/properties/preProcess/properties/args/items",
+                                    "type": "string",
+                                    "title": "The command-line argument",
+                                    "default": "",
+                                    "examples": [
+                                        "script.py",
+                                        "data.json"
+                                    ]
+                                }
+                            },
+                            "data": {
+                                "$id": "/properties/cases/items/properties/preProcess/properties/data",
+                                "type": "string",
+                                "description": "The JSON data file. This property is mandatory if 'kind' is set to 'jinja2' or 'nunjucks'",
+                                "default": "case1.json",
+                                "examples": [
+                                    "data.json"
+                                ]
+                            }
+                        }
+                    },
+                    "expectedPlans": {
+                        "$id": "/properties/cases/items/properties/expectedPlans",
+                        "description": "Expected plans - put one or more plan file names here",
+                        "type": "array",
+                        "items": {
+                            "$id": "/properties/cases/items/properties/expectedPlans/items",
+                            "type": "string",
+                            "title": "Plan file name",
+                            "default": ""
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

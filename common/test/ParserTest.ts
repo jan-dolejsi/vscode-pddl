@@ -50,6 +50,17 @@ describe('Parser', () => {
             assert.ok(graph.getVerticesWithEdgesFrom(parent).length == 0, 'parent should not have parent');
         });
 
+        it('should parse parent-child declarations with new line', () => {
+            let parent = 'parent';
+            let child = 'child';
+            let graph = subject.parseInheritance(`${child} 
+- ${parent}`);
+            assert.ok(graph.getVertices().includes(parent), 'should include parent');
+            assert.ok(graph.getVertices().includes(child), 'should include child');
+            assert.ok(graph.getVerticesWithEdgesFrom(child).includes(parent), 'child should have parent');
+            assert.ok(graph.getVerticesWithEdgesFrom(parent).length == 0, 'parent should not have parent');
+        });
+
         it('should parse parent-2children declarations', () => {
             let parent = 'parent';
             let child1 = 'child1';

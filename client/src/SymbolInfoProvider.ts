@@ -21,7 +21,7 @@ export class SymbolInfoProvider implements DocumentSymbolProvider, DefinitionPro
         if(token.isCancellationRequested) return null;
         this.symbolUtils.assertFileParsed(document);
 
-        let info = this.symbolUtils.getSymbolInfo(document.uri.toString(), position);
+        let info = this.symbolUtils.getSymbolInfo(document, position);
         return info ? info.hover : null;
     }
 
@@ -29,7 +29,7 @@ export class SymbolInfoProvider implements DocumentSymbolProvider, DefinitionPro
         if(token.isCancellationRequested) return null;
         this.symbolUtils.assertFileParsed(document);
 
-        let info = this.symbolUtils.getSymbolInfo(document.uri.toString(), position);
+        let info = this.symbolUtils.getSymbolInfo(document, position);
         if (!info) return [];
 
         return this.symbolUtils.findSymbolReferences(document.uri.toString(), info, context.includeDeclaration);
@@ -39,7 +39,7 @@ export class SymbolInfoProvider implements DocumentSymbolProvider, DefinitionPro
         if(token.isCancellationRequested) return null;
         this.symbolUtils.assertFileParsed(document);
 
-        let info = this.symbolUtils.getSymbolInfo(document.uri.toString(), position);
+        let info = this.symbolUtils.getSymbolInfo(document, position);
         return info ? info.location : null;
     }
 

@@ -21,6 +21,7 @@ import { SymbolRenameProvider } from './SymbolRenameProvider';
 import { SymbolInfoProvider } from './SymbolInfoProvider';
 // import { Diagnostics } from './diagnostics/Diagnostics';
 import { StartUp } from './StartUp'
+import { PTestExplorer } from './ptest/PTestExplorer';
 
 const PDDL_STOP_PLANNER = 'pddl.stopPlanner';
 const PDDL_CONFIGURE_PARSER = 'pddl.configureParser';
@@ -67,13 +68,9 @@ export function activate(context: ExtensionContext) {
 	let languageClient = new LanguageClient('pddlParser', 'PDDL Language Server', serverOptions, clientOptions);
 	context.subscriptions.push(languageClient.start());
 
-	let pddlWorkspace = new PddlWorkspace();
+	let pddlWorkspace = new PddlWorkspace(context);
 	subscribeToWorkspace(pddlWorkspace, context);
 	let planning = new Planning(pddlWorkspace, pddlConfiguration, context);
-
-	let planCommand = commands.registerCommand('pddl.planAndDisplayResult', () => {
-		planning.plan();
-	});
 
 	let revealActionCommand = commands.registerCommand('pddl.revealAction', (domainFileUri: Uri, actionName: String) => {
 		revealAction(<DomainInfo>pddlWorkspace.getFileInfo(domainFileUri.toString()), actionName);
@@ -93,8 +90,8 @@ export function activate(context: ExtensionContext) {
 			let authentication = createAuthentication(pddlConfiguration);
 			authentication.login(
 				(refreshtoken: string, accesstoken: string, stoken: string) => {
-						pddlConfiguration.savePddlParserAuthenticationTokens(configuration, refreshtoken, accesstoken, stoken, scope.target); 
-						window.showInformationMessage("Login successful."); 	 
+					pddlConfiguration.savePddlParserAuthenticationTokens(configuration, refreshtoken, accesstoken, stoken, scope.target);
+					window.showInformationMessage("Login successful.");
 				},
 				(message: string) => { window.showErrorMessage('Login failure: ' + message); });
 		});
@@ -107,8 +104,8 @@ export function activate(context: ExtensionContext) {
 			let authentication = createAuthentication(pddlConfiguration);
 			authentication.login(
 				(refreshtoken: string, accesstoken: string, stoken: string) => {
-						pddlConfiguration.savePddlParserAuthenticationTokens(configuration, refreshtoken, accesstoken, stoken, scope.target); 
-						window.showInformationMessage("Tokens refreshed and saved."); 	 
+					pddlConfiguration.savePddlParserAuthenticationTokens(configuration, refreshtoken, accesstoken, stoken, scope.target);
+					window.showInformationMessage("Tokens refreshed and saved.");
 				},
 				(message: string) => { window.showErrorMessage('Couldn\'t refresh the tokens, try to login: ' + message); });
 		});
@@ -125,8 +122,8 @@ export function activate(context: ExtensionContext) {
 			let authentication = createAuthentication(pddlConfiguration);
 			authentication.login(
 				(refreshtoken: string, accesstoken: string, stoken: string) => {
-						pddlConfiguration.savePddlPlannerAuthenticationTokens(configuration, refreshtoken, accesstoken, stoken, scope.target); 
-						window.showInformationMessage("Login successful."); 	 
+					pddlConfiguration.savePddlPlannerAuthenticationTokens(configuration, refreshtoken, accesstoken, stoken, scope.target);
+					window.showInformationMessage("Login successful.");
 				},
 				(message: string) => { window.showErrorMessage('Login failure: ' + message); });
 		});
@@ -139,23 +136,23 @@ export function activate(context: ExtensionContext) {
 			let authentication = createAuthentication(pddlConfiguration);
 			authentication.login(
 				(refreshtoken: string, accesstoken: string, stoken: string) => {
-						pddlConfiguration.savePddlPlannerAuthenticationTokens(configuration, refreshtoken, accesstoken, stoken, scope.target); 
-						window.showInformationMessage("Tokens refreshed and saved."); 	 
+					pddlConfiguration.savePddlPlannerAuthenticationTokens(configuration, refreshtoken, accesstoken, stoken, scope.target);
+					window.showInformationMessage("Tokens refreshed and saved.");
 				},
 				(message: string) => { window.showErrorMessage('Couldn\'t refresh the tokens, try to login: ' + message); });
 		});
 	});
-	
+
 	let generatePlanReportCommand = commands.registerCommand(PDDL_GENERATE_PLAN_REPORT, () => {
 		let plans: Plan[] = planning.getPlans();
 
-		if(plans != null){
+		if (plans != null) {
 			new PlanReportGenerator(context, 1000, true).export(plans, plans.length - 1);
 		} else {
 			window.showErrorMessage("There is no plan to export.");
 		}
 	});
-	
+
 	// when the extension is done loading, subscribe to the client-server communication
 	let stateChangeHandler = languageClient.onDidChangeState((stateEvent) => {
 		if (stateEvent.newState == State.Running) languageClient.onRequest('pddl.configureParser', (showNever) => {
@@ -179,20 +176,22 @@ export function activate(context: ExtensionContext) {
 	//todo: subscribe to pddlWorkspace document updates
 	// pddlWorkspace.onChange(doc -> diagnostics.docChanged(doc));
 
+	if(workspace.getConfiguration().get<boolean>("pddlTestExplorer.enabled")) new PTestExplorer(context, planning);
+
 	// Push the disposables to the context's subscriptions so that the 
 	// client can be deactivated on extension deactivation
-	context.subscriptions.push(planCommand, revealActionCommand, planning.planDocumentProviderRegistration, 
-		stopPlannerCommand, stateChangeHandler, configureParserCommand, loginParserServiceCommand, updateTokensParserServiceCommand, 
-		configurePlannerCommand, loginPlannerServiceCommand, updateTokensPlannerServiceCommand, generatePlanReportCommand, completionItemProvider, 
+	context.subscriptions.push(revealActionCommand,
+		stopPlannerCommand, stateChangeHandler, configureParserCommand, loginParserServiceCommand, updateTokensParserServiceCommand,
+		configurePlannerCommand, loginPlannerServiceCommand, updateTokensPlannerServiceCommand, generatePlanReportCommand, completionItemProvider,
 		renameProvider, documentSymbolProvider, definitionProvider, referencesProvider, hoverProvider);
 }
 
 function createAuthentication(pddlConfiguration: PddlConfiguration): Authentication {
-    let configuration = pddlConfiguration.getPddlParserServiceAuthenticationConfiguration();
-	return new Authentication(configuration.url, configuration.requestEncoded, configuration.clientId, configuration.callbackPort,configuration.timeoutInMs,
+	let configuration = pddlConfiguration.getPddlParserServiceAuthenticationConfiguration();
+	return new Authentication(configuration.url, configuration.requestEncoded, configuration.clientId, configuration.callbackPort, configuration.timeoutInMs,
 		configuration.tokensvcUrl, configuration.tokensvcApiKey, configuration.tokensvcAccessPath, configuration.tokensvcValidatePath,
-	    configuration.tokensvcCodePath, configuration.tokensvcRefreshPath, configuration.tokensvcSvctkPath,
-        configuration.refreshToken, configuration.accessToken, configuration.sToken);
+		configuration.tokensvcCodePath, configuration.tokensvcRefreshPath, configuration.tokensvcSvctkPath,
+		configuration.refreshToken, configuration.accessToken, configuration.sToken);
 }
 
 async function revealAction(domainInfo: DomainInfo, actionName: String) {
@@ -213,12 +212,12 @@ function subscribeToWorkspace(pddlWorkspace: PddlWorkspace, context: ExtensionCo
 			pddlWorkspace.upsertFile(textDoc.uri.toString(), textDoc.version, textDoc.getText());
 		});
 
-	context.subscriptions.push(workspace.onDidOpenTextDocument(textDoc => { if(isPddl(textDoc)) pddlWorkspace.upsertFile(textDoc.uri.toString(), textDoc.version, textDoc.getText())}));
-	context.subscriptions.push(workspace.onDidChangeTextDocument(docEvent => { 
-		if(isPddl(docEvent.document)) 
+	context.subscriptions.push(workspace.onDidOpenTextDocument(textDoc => { if (isPddl(textDoc)) pddlWorkspace.upsertFile(textDoc.uri.toString(), textDoc.version, textDoc.getText()) }));
+	context.subscriptions.push(workspace.onDidChangeTextDocument(docEvent => {
+		if (isPddl(docEvent.document))
 			pddlWorkspace.upsertFile(docEvent.document.uri.toString(), docEvent.document.version, docEvent.document.getText())
-		}));
-	context.subscriptions.push(workspace.onDidCloseTextDocument(docEvent => { if(isPddl(docEvent)) pddlWorkspace.removeFile(docEvent.uri.toString())}));
+	}));
+	context.subscriptions.push(workspace.onDidCloseTextDocument(docEvent => { if (isPddl(docEvent)) pddlWorkspace.removeFile(docEvent.uri.toString()) }));
 }
 
 function isPddl(doc: TextDocument): boolean {

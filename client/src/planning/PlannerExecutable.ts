@@ -46,7 +46,7 @@ export class PlannerExecutable extends Planner {
                 { cwd: thisPlanner.workingDirectory },
                 (error, stdout, stderr) => {
                 planParser.onPlanFinished();
-    
+
                 if (error && !thisPlanner.child.killed && !thisPlanner.planningProcessKilled) {
                     parent.handleError(error, stderr);//todo: remove this and use Promise
                     reject(error);

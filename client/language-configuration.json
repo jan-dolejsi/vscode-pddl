@@ -14,20 +14,21 @@
         ["(", ")"],
         ["\"", "\""],
         ["'", "'"],
-        ["{%", "%}"],
-        ["{{", "}}"]
+        ["%", "%"] // used by some popular templating libraries: {% %}
     ],
     // symbols that that can be used to surround a selection
     "surroundingPairs": [
-        ["{", "}"],
-        ["[", "]"],
-        ["(", ")"],
-        ["\"", "\""],
-        ["'", "'"]
+        ["(", ")"]
     ],
     // PDDL allows hyphen character on the second and further character of identifiers 
     "wordPattern": {
         "pattern": "\\w[-\\w]*",
         "flags": "g"
+    },
+    "folding": {
+        "markers": {
+            "start": "^\\s*;;\\(",
+            "end": "^\\s*;;\\)"
+        }
     }
 }

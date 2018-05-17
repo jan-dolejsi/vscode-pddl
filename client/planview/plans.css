@@ -63,3 +63,7 @@ th, td {
 td.objectName {
     vertical-align: baseline;
 }
+
+th.actionToolTip, td.actionToolTip {
+    border-bottom-style: none;
+}

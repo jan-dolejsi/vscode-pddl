@@ -13,15 +13,15 @@ import { PddlWorkspace } from '../../common/src/workspace-model';
 import { Variable, PddlRange } from '../../common/src/parser';
 
 export class SymbolUtils {
-    constructor(public workspace: PddlWorkspace) {}
-    
-    getSymbolInfo(fileUri: string, position: Position): SymbolInfo {
-        let fileInfo = this.workspace.getFileInfo(fileUri);
+    constructor(public workspace: PddlWorkspace) { }
+
+    getSymbolInfo(document: TextDocument, position: Position): SymbolInfo {
+        let fileInfo = this.workspace.getFileInfo(document.uri.toString());
 
         let domainInfo = this.workspace.asDomain(fileInfo);
         if (!domainInfo) return null;
 
-        let symbol = this.getSymbolOnPosition(fileInfo.text, position);
+        let symbol = this.getSymbolAtPosition(document, position);
 
         if (!symbol) return null;
 
@@ -72,19 +72,30 @@ export class SymbolUtils {
         return null;
     }
 
+    getWordAtDocumentPosition(document: TextDocument, position: Position): WordOnPositionContext {
+        // find the word at the position leveraging the TextDocument facility
+        let wordRange = document.getWordRangeAtPosition(position, /\w[-\w]*/);
+        if (wordRange.isEmpty || !wordRange.isSingleLine) return null;
+
+        let word = document.getText(wordRange);
+        let lineIdx = wordRange.start.line;
+        let before = document.getText(new Range(new Position(lineIdx, 0), wordRange.start));
+        let after = document.getText(new Range(wordRange.end, new Position(lineIdx, Number.MAX_SAFE_INTEGER)));
+        let line = document.getText(new Range(lineIdx, 0, lineIdx, Number.MAX_SAFE_INTEGER));
+
+        return {before: before, word: word, after: after, range: wordRange, line: line};
+    }
+
     leadingSymbolPattern = /([\w_][\w_-]*)$/gi;
     followingSymbolPattern = /^([\w_-]+)/gi;
 
-    getSymbolOnPosition(text: string, position: Position): Symbol {
+    getWordAtTextPosition(text: string, position: Position): WordOnPositionContext {
         let line = text.split('\n')[position.line];
         let leadingText = line.substring(0, position.character);
         let followingText = line.substring(position.character - 1);
 
-        // are we hovering over comments? 
-        if (leadingText.includes(';')) return null;
-
         this.leadingSymbolPattern.lastIndex = 0;
-        let match = this.leadingSymbolPattern.exec(leadingText);
+        let match = this.leadingSymbolPattern.exec(leadingText); //todo: this pattern does not match, if the word was selected
         if (!match) return null;
         let leadingSymbolPart = match[1];
 
@@ -99,19 +110,34 @@ export class SymbolUtils {
             position.line, position.character - leadingSymbolPart.length,
             position.line, position.character + followingSymbolPart.length - 1);
 
-        return new Symbol(symbolName, range, line);
+        return {
+            before: line.substring(0, range.start.character), 
+            word: symbolName, 
+            after: line.substring(range.end.character+1), 
+            line: line,
+            range: range
+        };
     }
-    
+
+    getSymbolAtPosition(document: TextDocument, position: Position): Symbol {
+        let wordContext = this.getWordAtDocumentPosition(document, position);
+
+        // is the position not a word, or within comments? 
+        if (wordContext == null || wordContext.before.includes(';')) return null;
+
+        return new Symbol(wordContext.word, wordContext.range, wordContext.line);
+    }
+
     createHover(range: Range, title: string, symbolName: string, documentation: string) {
 
-		let markdownString = new MarkdownString(`**${title}**`);
+        let markdownString = new MarkdownString(`**${title}**`);
         markdownString.appendCodeblock(symbolName, 'pddl');
         markdownString.appendMarkdown(`---
 `);
         markdownString.appendMarkdown(documentation);
         return new Hover(markdownString, range);
     }
-    
+
     findSymbolReferences(fileUri: string, symbol: SymbolInfo, includeDeclaration: boolean): Location[] {
         let fileInfo = this.workspace.getFileInfo(fileUri);
 
@@ -121,31 +147,31 @@ export class SymbolUtils {
         let problemFiles = this.workspace.getProblemFiles(domainInfo);
 
         let locations: Location[] = [];
-        let includeReference = includeDeclaration; 
+        let includeReference = includeDeclaration;
         if (symbol instanceof VariableInfo) {
             // add variable references found in the domain file
             domainInfo.getVariableReferences((<VariableInfo>symbol).variable).forEach(range => {
-                if(includeReference){
+                if (includeReference) {
                     locations.push(new Location(this.toUri(domainInfo.fileUri), SymbolUtils.toRange(range)))
                 } else {
                     // we skipped the declaration, but let's include any further references
                     includeReference = true;
                 }
             });
-         
+
             // add variable references found in all problem files
-            problemFiles.forEach(p => 
+            problemFiles.forEach(p =>
                 p.getVariableReferences((<VariableInfo>symbol).variable)
                     .forEach(range => locations.push(new Location(this.toUri(p.fileUri), SymbolUtils.toRange(range)))));
         } else if (symbol instanceof TypeInfo) {
             // add type references found in the domain file
-            if(includeDeclaration) {
+            if (includeDeclaration) {
                 locations.push(symbol.location);
             }
             let typeName = (<TypeInfo>symbol).type;
             domainInfo.getTypeReferences(typeName).forEach(range => {
-                let vsRange = SymbolUtils.toRange(range); 
-                if(!vsRange.isEqual(symbol.location.range)){
+                let vsRange = SymbolUtils.toRange(range);
+                if (!vsRange.isEqual(symbol.location.range)) {
                     locations.push(new Location(this.toUri(domainInfo.fileUri), vsRange));
                 }
             })
@@ -208,4 +234,12 @@ export class TypeInfo extends SymbolInfo {
     constructor(public hover: Hover, public location: Location, public type: string) {
         super(hover, location);
     }
+}
+
+interface WordOnPositionContext {
+    before: string;
+    word: string;
+    after: string;
+    line: string;
+    range: Range;
 }
