@@ -18,6 +18,7 @@ export enum TestOutcome { UNKNOWN, SUCCESS, FAILED, SKIPPED, IN_PROGRESS }
 export class Test {
 
     label: string;
+    description: string;
     problem: string;
     private domain: string;
     private options: string;
@@ -27,6 +28,7 @@ export class Test {
 
     constructor(public manifest: TestsManifest, public index: number, readonly json: any, readonly context: PddlExtensionContext) {
         this.label = json["label"];
+        this.description = json["description"];
         this.domain = json["domain"];
         this.problem = json["problem"];
         this.options = json["options"];
@@ -76,6 +78,10 @@ export class Test {
 
     getLabel(): string {
         return this.label || this.problem || this.getProblem() + ` (${this.index + 1})`;
+    }
+
+    getDescription(): string {
+        return this.description;
     }
 
     getOptions(): string {

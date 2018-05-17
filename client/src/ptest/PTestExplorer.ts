@@ -219,7 +219,7 @@ export class PTestExplorer {
 
         return new Promise(async (resolve, reject) => {
             if (!this.assertValid(test)) {
-                this.outputTestResult(test, TestOutcome.SKIPPED, "Invalid test definition");
+                this.outputTestResult(test, TestOutcome.SKIPPED, Number.NaN, "Invalid test definition");
                 reject(new Error('Invalid test ' + test.getLabel()));
                 return;
             }
@@ -228,15 +228,15 @@ export class PTestExplorer {
                 resultSubscription.dispose();
 
                 if (result.outcome == PlanningOutcome.FAILURE) {
-                    this.outputTestResult(test, TestOutcome.FAILED, result.error);
+                    this.outputTestResult(test, TestOutcome.FAILED, result.elapsedTime, result.error);
                     reject(new Error(result.error));
                     return;
                 } else if (result.outcome == PlanningOutcome.KILLED) {
-                    this.outputTestResult(test, TestOutcome.SKIPPED, 'Killed by the user.');
+                    this.outputTestResult(test, TestOutcome.SKIPPED, result.elapsedTime, 'Killed by the user.');
                     resolve(false);
                     return;
                 } else if (result.plans.length == 0){
-                    this.outputTestResult(test, TestOutcome.FAILED, 'No plan found.');
+                    this.outputTestResult(test, TestOutcome.FAILED, result.elapsedTime, 'No plan found.');
                     resolve(false);
                     return;
                 }
@@ -248,13 +248,13 @@ export class PTestExplorer {
                             .some(expectedPlanPath => this.areSame(plan, this.loadPlan(expectedPlanPath)))
                     );
                     if (success) {
-                        this.outputTestResult(test, TestOutcome.SUCCESS);
+                        this.outputTestResult(test, TestOutcome.SUCCESS, result.elapsedTime);
                     } else {
-                        this.outputTestResult(test, TestOutcome.FAILED, "Actual plan is NOT matching any of the expected plans.");
+                        this.outputTestResult(test, TestOutcome.FAILED, result.elapsedTime, "Actual plan is NOT matching any of the expected plans.");
                     }
                 }
                 else {
-                    this.outputTestResult(test, TestOutcome.SUCCESS);
+                    this.outputTestResult(test, TestOutcome.SUCCESS, result.elapsedTime);
                 }
 
                 resolve(true);
@@ -268,7 +268,7 @@ export class PTestExplorer {
         });
     }
 
-    outputTestResult(test: Test, outcome: TestOutcome, error?: string) {
+    outputTestResult(test: Test, outcome: TestOutcome, elapsedTime: number, error?: string) {
         let outcomeChar = String.fromCharCode(0x2591);
 
         switch (outcome) {
@@ -286,6 +286,10 @@ export class PTestExplorer {
         }
 
         let outputMessage = `${outcomeChar} ${test.getLabel()}`;
+
+        if (!Number.isNaN(elapsedTime)){
+            outputMessage += ` (${elapsedTime/1000.0} sec)`;
+        }
 
         if (error) {
             outputMessage += `\n    ${error}`;

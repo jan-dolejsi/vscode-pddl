@@ -16,6 +16,7 @@ export interface PTestNode {
     resource: Uri;
     kind: PTestNodeKind;
     label?: string;
+    tooltip?: string;
 }
 
 export enum PTestNodeKind { Directory, Manifest, Test }
@@ -105,7 +106,8 @@ export class PTestTreeDataProvider implements TreeDataProvider<PTestNode> {
             collapsibleState: isCollapsible ? TreeItemCollapsibleState.Collapsed : void 0,
             contextValue: contextValue,
             label: element.label,
-            iconPath: this.getIcon(icon)
+            iconPath: this.getIcon(icon),
+            tooltip: element.tooltip
         };
     }
 
@@ -139,7 +141,8 @@ export class PTestTreeDataProvider implements TreeDataProvider<PTestNode> {
                     .map(test => this.cache({
                         resource: test.uri,
                         kind: PTestNodeKind.Test,
-                        label: test.getLabel()
+                        label: test.getLabel(),
+                        tooltip: test.getDescription()
                     }));
             }
             else {

@@ -47,6 +47,15 @@
                             "Test case number 1"
                         ]
                     },
+                    "description": {
+                        "$id": "/properties/cases/items/properties/description",
+                        "type": "string",
+                        "description": "The Description for the test case",
+                        "default": "Test XYZ...",
+                        "examples": [
+                            "Given ... when ... then ..."
+                        ]
+                    },
                     "domain": {
                         "$id": "/properties/cases/items/properties/domain",
                         "type": "string",

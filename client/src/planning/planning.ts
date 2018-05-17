@@ -176,6 +176,8 @@ export class Planning implements PlanningHandler {
 
         this.planningProcessKilled = false;
 
+        let startTime: Date;
+
         window.withProgress<Plan[]>({
             location: ProgressLocation.Notification,
             title: `Searching for plans for domain ${domainFileInfo.name} and problem ${problemFileInfo.name}...`,
@@ -187,10 +189,12 @@ export class Planning implements PlanningHandler {
                 this.stopPlanner();
             });
 
+            startTime = new Date();
             return this.planner.plan(domainFileInfo, problemFileInfo, planParser, this);
         })
         .then(plans => {
-                let result = this.planningProcessKilled ? PlanningResult.killed() : PlanningResult.success(plans);
+                let elapsedTime = new Date().getTime() - startTime.getTime();
+                let result = this.planningProcessKilled ? PlanningResult.killed() : PlanningResult.success(plans, elapsedTime);
                 this._onPlansFound.fire(result);
             },
             reason => this._onPlansFound.fire(PlanningResult.failure(reason.toString()))

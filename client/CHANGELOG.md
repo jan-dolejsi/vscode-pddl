@@ -1,5 +1,23 @@
 # What's new
 
+## [2.6.3] - 2018-05-16
+
+- Added performance measurement to the PDDL test output console.
+
+```text
+Executing tests from .ptest.json.
+☑ case1.pddl (1.631 sec)
+☑ case2.pddl (1.716 sec)
+☒ case3.pddl (0.982 sec)
+    Actual plan is NOT matching any of the expected plans.
+☐ case4
+    Killed by the user.
+Finished executing tests from .ptest.json.
+```
+
+- Added action end time into plan visualization action tooltip.
+- Added support for PDDL Test case description property in the `*.ptest.json` schema, which gets displayed as tooltip in the tree.
+
 ## [2.6.2] - 2018-05-13
 
 - Plan visualization now displays a menu symbol &#x2630; in the top-right corner, which shows applicable commands. The first command displayed there is the _PDDL: Generate plan report_.
@@ -177,6 +195,8 @@ Simplified snippets and added tabstops/placeholders to them, so they are easy to
 - Rename parameters and objects
 - Auto-completion for constant/object names.
 - Plan debugger
+- Removal of the language server
+- More general matching of domain file to problem file across workspace folder structure 
 
 ## [Unreleased]
 
@@ -186,7 +206,8 @@ Note for open source contributors: all notable changes to the "pddl" extension w
 
 Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
 
-[Unreleased]: https://github.com/jan-dolejsi/vscode-pddl/compare/v2.6.2...HEAD
+[Unreleased]: https://github.com/jan-dolejsi/vscode-pddl/compare/v2.6.3...HEAD
+[2.6.3]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.6.2...v2.6.3
 [2.6.2]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.6.1...v2.6.2
 [2.6.1]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.5.1...v2.6.1
 [2.5.1]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.5.0...v2.5.1

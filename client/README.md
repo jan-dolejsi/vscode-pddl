@@ -160,7 +160,7 @@ In order to test the PDDL domain model and its scalability, it is useful to be a
 There are several templating options supported out of the box:
 
 - [Nunjucks](https://mozilla.github.io/nunjucks/)
-- [Jinja2](http://jinja.pocoo.org/docs/)
+- [Jinja2](http://jinja.pocoo.org/docs/2.10/templates/)
 - Python script
 - Command-line command
 

@@ -234,7 +234,8 @@ ${stepsInvolvingThisObject}
 
     toActionTooltip(step: PlanStep): string {
         let durationRow = step.isDurative ?
-            `<tr><td class="actionToolTip">Duration: </td><td class="actionToolTip">${step.duration}</td></tr>` :
+            `<tr><td class="actionToolTip">Duration: </td><td class="actionToolTip">${step.duration}</td></tr>
+            <tr><td class="actionToolTip">End: </td><td class="actionToolTip">${step.time + step.duration}</td></tr>` :
             '';
         return `<table><tr><th colspan="2" class="actionToolTip">${step.actionName} ${step.objects.join(' ')}</th></tr><tr><td class="actionToolTip">Start:</td><td class="actionToolTip">${step.time}</td></tr>${durationRow}</table>`;
     }
