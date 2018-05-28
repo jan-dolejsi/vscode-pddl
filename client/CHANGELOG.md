@@ -1,5 +1,13 @@
 # What's new
 
+## [2.6.4] - 2018-05-28
+
+### Bug-fixes
+
+- Test cases that fail in the pre-processing step (e.g. Python script fails), the test case result now correctly shows as failed.
+- The Plan Visualization menu (&#x2630;) now displays at a fixed top-right location above the action list.
+- The action tool tip in Plan Visualization text is better aligned, so numbers are visible even for long action names. 
+
 ## [2.6.3] - 2018-05-16
 
 - Added performance measurement to the PDDL test output console.
@@ -196,17 +204,18 @@ Simplified snippets and added tabstops/placeholders to them, so they are easy to
 - Auto-completion for constant/object names.
 - Plan debugger
 - Removal of the language server
-- More general matching of domain file to problem file across workspace folder structure 
+- More general matching of domain file to problem file across workspace folder structure
 
 ## [Unreleased]
 
-N/A
+Migration of language support implementation from the language server to the client part and removal of the language server.
 
 Note for open source contributors: all notable changes to the "pddl" extension will be documented in this file.
 
 Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
 
-[Unreleased]: https://github.com/jan-dolejsi/vscode-pddl/compare/v2.6.3...HEAD
+[Unreleased]: https://github.com/jan-dolejsi/vscode-pddl/compare/v2.6.4...HEAD
+[2.6.4]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.6.3...v2.6.4
 [2.6.3]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.6.2...v2.6.3
 [2.6.2]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.6.1...v2.6.2
 [2.6.1]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.5.1...v2.6.1
