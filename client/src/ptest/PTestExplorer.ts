@@ -263,6 +263,7 @@ export class PTestExplorer {
             try {
                 await commands.executeCommand('pddl.planAndDisplayResult', test.getDomainUri(), problemUri, dirname(test.manifest.path), test.getOptions());
             } catch (e) {
+                this.setTestOutcome(test, TestOutcome.FAILED);
                 reject(e);
             }
         });

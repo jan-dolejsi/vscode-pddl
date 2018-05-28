@@ -216,6 +216,8 @@ For the ultimate flexibility, here is how to configure a Python scriipt to do a 
 
 ![Templated PDDL](https://raw.githubusercontent.com/wiki/jan-dolejsi/vscode-pddl/img/PDDL_Templated_problem_files.gif)
 
+Note that if you are referring to other files such as Python scripts or JSON data files in the `.ptest.json`, you may use relative path i.e. relative to the path, where the `.ptest.json` file is located as that is the runtime context in which the pre-processor will be executed.
+
 ### Problem generation via a Python script
 
 This is what happens if you set `"kind": "python"`: Before executing the test, the extension runs the `populate_transform.py` script using the `python` command, pipes the `problem_template.pddl` onto it and reads the PDDL output of the script. The script uses the data from the configured .json file in this case, but as this is basically a command-line argument, you could refer to a database table just as well.
