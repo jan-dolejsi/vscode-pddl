@@ -12,14 +12,14 @@ import { Planning } from './planning/planning'
 
 import { PddlWorkspace } from '../../common/src/workspace-model';
 import { DomainInfo, PddlRange } from '../../common/src/parser';
-import { PddlConfiguration } from './configuration';
+import { PddlConfiguration, PDDL_PARSER } from './configuration';
 import { Authentication } from '../../common/src/Authentication';
 import { PlanReportGenerator } from './planning/PlanReportGenerator';
 import { Plan } from './planning/plan';
 import { AutoCompletion } from './completion/AutoCompletion';
 import { SymbolRenameProvider } from './SymbolRenameProvider';
 import { SymbolInfoProvider } from './SymbolInfoProvider';
-// import { Diagnostics } from './diagnostics/Diagnostics';
+import { Diagnostics } from './diagnostics/Diagnostics';
 import { StartUp } from './StartUp'
 import { PTestExplorer } from './ptest/PTestExplorer';
 
@@ -66,10 +66,10 @@ export function activate(context: ExtensionContext) {
 
 	// Create the language client and start the client.
 	let languageClient = new LanguageClient('pddlParser', 'PDDL Language Server', serverOptions, clientOptions);
-	context.subscriptions.push(languageClient.start());
+	// this is where the language server is disconnected:
+	// context.subscriptions.push(languageClient.start());
 
 	let pddlWorkspace = new PddlWorkspace(context);
-	subscribeToWorkspace(pddlWorkspace, context);
 	let planning = new Planning(pddlWorkspace, pddlConfiguration, context);
 
 	let revealActionCommand = commands.registerCommand('pddl.revealAction', (domainFileUri: Uri, actionName: String) => {
@@ -170,17 +170,19 @@ export function activate(context: ExtensionContext) {
 	let definitionProvider = languages.registerDefinitionProvider(PDDL.toLowerCase(), symbolInfoProvider);
 	let referencesProvider = languages.registerReferenceProvider(PDDL.toLowerCase(), symbolInfoProvider);
 	let hoverProvider = languages.registerHoverProvider(PDDL.toLowerCase(), symbolInfoProvider);
-	//todo: let diagnosticCollection = languages.createDiagnosticCollection(PDDL);
-	//todo: let diagnostics = 
-	// new Diagnostics(pddlWorkspace, diagnosticCollection,  pddlConfiguration);
-	//todo: subscribe to pddlWorkspace document updates
-	// pddlWorkspace.onChange(doc -> diagnostics.docChanged(doc));
+	let diagnosticCollection = languages.createDiagnosticCollection(PDDL);
+	let diagnostics = new Diagnostics(pddlWorkspace, diagnosticCollection,  pddlConfiguration);
+	workspace.onDidChangeConfiguration(e => {
+		if(e.affectsConfiguration(PDDL_PARSER)) diagnostics.handleConfigurationChange();
+	});
 
 	if(workspace.getConfiguration().get<boolean>("pddlTestExplorer.enabled")) new PTestExplorer(context, planning);
 
+	subscribeToWorkspace(pddlWorkspace, context);
+
 	// Push the disposables to the context's subscriptions so that the 
 	// client can be deactivated on extension deactivation
-	context.subscriptions.push(revealActionCommand,
+	context.subscriptions.push(diagnostics, revealActionCommand,
 		stopPlannerCommand, stateChangeHandler, configureParserCommand, loginParserServiceCommand, updateTokensParserServiceCommand,
 		configurePlannerCommand, loginPlannerServiceCommand, updateTokensPlannerServiceCommand, generatePlanReportCommand, completionItemProvider,
 		renameProvider, documentSymbolProvider, definitionProvider, referencesProvider, hoverProvider);
@@ -206,20 +208,33 @@ function toRange(pddlRange: PddlRange): Range {
 }
 
 function subscribeToWorkspace(pddlWorkspace: PddlWorkspace, context: ExtensionContext): void {
+	// add all open documents
 	workspace.textDocuments
 		.filter(textDoc => isPddl(textDoc))
 		.forEach(textDoc => {
 			pddlWorkspace.upsertFile(textDoc.uri.toString(), textDoc.version, textDoc.getText());
 		});
 
-	context.subscriptions.push(workspace.onDidOpenTextDocument(textDoc => { if (isPddl(textDoc)) pddlWorkspace.upsertFile(textDoc.uri.toString(), textDoc.version, textDoc.getText()) }));
+	// subscribe to document opening event
+	context.subscriptions.push(workspace.onDidOpenTextDocument(textDoc => { 
+		if (isPddl(textDoc)) 
+			pddlWorkspace.upsertFile(textDoc.uri.toString(), textDoc.version, textDoc.getText()) 
+		}
+	));
+
+	// subscribe to document changing event
 	context.subscriptions.push(workspace.onDidChangeTextDocument(docEvent => {
 		if (isPddl(docEvent.document))
 			pddlWorkspace.upsertFile(docEvent.document.uri.toString(), docEvent.document.version, docEvent.document.getText())
+		}
+	));
+
+	// subscribe to document closing event
+	context.subscriptions.push(workspace.onDidCloseTextDocument(docEvent => { 
+		if (isPddl(docEvent)) pddlWorkspace.removeFile(docEvent.uri.toString()) 
 	}));
-	context.subscriptions.push(workspace.onDidCloseTextDocument(docEvent => { if (isPddl(docEvent)) pddlWorkspace.removeFile(docEvent.uri.toString()) }));
 }
 
 function isPddl(doc: TextDocument): boolean {
-	return doc.languageId.toLowerCase() == PDDL.toLowerCase();
+	return doc.languageId.toLowerCase() == PDDL.toLowerCase() && doc.uri.scheme != "git";
 }

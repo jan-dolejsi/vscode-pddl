@@ -5,7 +5,7 @@
 'use strict';
 
 import {
-    Diagnostic, DiagnosticSeverity, DiagnosticCollection, Uri, window
+    Diagnostic, DiagnosticSeverity, DiagnosticCollection, Uri, window, Disposable
 } from 'vscode';
 
 import { Authentication } from '../../../common/src/Authentication';
@@ -18,7 +18,7 @@ import { ValidatorExecutable } from './ValidatorExecutable';
 import { PDDLParserSettings } from '../../../common/src/Settings';
 import { PddlConfiguration } from '../configuration';
 
-export class Diagnostics {
+export class Diagnostics extends Disposable {
 
     workspace: PddlWorkspace;
     pddlConfiguration: PddlConfiguration;
@@ -29,10 +29,12 @@ export class Diagnostics {
 
     private defaultTimerDelayInSeconds = 3;
 
-    constructor(workspace: PddlWorkspace, diagnosticCollection: DiagnosticCollection, configuration: PddlConfiguration) {
+    constructor(pddlWorkspace: PddlWorkspace, diagnosticCollection: DiagnosticCollection, configuration: PddlConfiguration) {
+        super(() => this.workspace.removeAllListeners()); //todo: this is probably too harsh
         this.diagnosticCollection = diagnosticCollection;
-        this.workspace = workspace;
+        this.workspace = pddlWorkspace;
         this.pddlConfiguration = configuration;
+        this.pddlParserSettings = configuration.getParserSettings();
 
         this.workspace.on(PddlWorkspace.UPDATED, _ => this.scheduleValidation());
         this.workspace.on(PddlWorkspace.REMOVING, (doc: FileInfo) => this.clearDiagnostics(doc.fileUri));
@@ -50,13 +52,13 @@ export class Diagnostics {
 
     validateAllDirty(): void {
         // find all dirty unknown files
-        let dirtyUnknowns = this.workspace.getAllFilesIf(fileInfo => !fileInfo.isProblem() && !fileInfo.isDomain() && fileInfo.getStatus() == FileStatus.Dirty);
+        let dirtyUnknowns = this.workspace.getAllFilesIf(fileInfo => !fileInfo.isProblem() && !fileInfo.isDomain() && fileInfo.getStatus() == FileStatus.Parsed);
 
         // validate unknown files (those where the header does not parse)
         dirtyUnknowns.forEach(file => this.validateUnknownFile(file));
 
         // find all dirty domains
-        let dirtyDomains = this.workspace.getAllFilesIf(fileInfo => fileInfo.isDomain() && fileInfo.getStatus() == FileStatus.Dirty);
+        let dirtyDomains = this.workspace.getAllFilesIf(fileInfo => fileInfo.isDomain() && fileInfo.getStatus() == FileStatus.Parsed);
 
         if (dirtyDomains.length > 0) {
             let firstDirtyDomain = <DomainInfo>dirtyDomains[0];
@@ -68,7 +70,7 @@ export class Diagnostics {
         }
 
         // find all dirty problems
-        let dirtyProblems = this.workspace.getAllFilesIf(fileInfo => fileInfo.isProblem() && fileInfo.getStatus() == FileStatus.Dirty);
+        let dirtyProblems = this.workspace.getAllFilesIf(fileInfo => fileInfo.isProblem() && fileInfo.getStatus() == FileStatus.Parsed);
 
         if (dirtyProblems.length > 0) {
             let firstDirtyProblem = <ProblemInfo>dirtyProblems[0];
@@ -80,10 +82,19 @@ export class Diagnostics {
         }
     }
 
+    handleConfigurationChange(): void {
+        this.pddlParserSettings = this.pddlConfiguration.getParserSettings();
+        this.revalidateAll();
+    }
+
     revalidateAll(): void {
         // mark all files as dirty
         this.workspace.folders.forEach(folder => {
-            folder.files.forEach(f => f.setStatus(FileStatus.Dirty));
+            folder.files
+                .forEach(f => {
+                    if(f.getStatus() != FileStatus.Dirty) f.setStatus(FileStatus.Parsed)
+                }
+            );
         });
         // revalidate all files
         this.cancelScheduledValidation(); // ... and validate immediately

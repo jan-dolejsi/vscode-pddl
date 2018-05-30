@@ -83,7 +83,7 @@ export class SymbolUtils {
         let after = document.getText(new Range(wordRange.end, new Position(lineIdx, Number.MAX_SAFE_INTEGER)));
         let line = document.getText(new Range(lineIdx, 0, lineIdx, Number.MAX_SAFE_INTEGER));
 
-        return {before: before, word: word, after: after, range: wordRange, line: line};
+        return { before: before, word: word, after: after, range: wordRange, line: line };
     }
 
     leadingSymbolPattern = /([\w_][\w_-]*)$/gi;
@@ -111,9 +111,9 @@ export class SymbolUtils {
             position.line, position.character + followingSymbolPart.length - 1);
 
         return {
-            before: line.substring(0, range.start.character), 
-            word: symbolName, 
-            after: line.substring(range.end.character+1), 
+            before: line.substring(0, range.start.character),
+            word: symbolName,
+            after: line.substring(range.end.character + 1),
             line: line,
             range: range
         };
@@ -129,13 +129,17 @@ export class SymbolUtils {
     }
 
     createHover(range: Range, title: string, symbolName: string, documentation: string) {
+        let markdownString = this.createSymbolMarkdownDocumentation(title, symbolName, documentation);
+        return new Hover(markdownString, range);
+    }
 
-        let markdownString = new MarkdownString(`**${title}**`);
+    createSymbolMarkdownDocumentation(title: string, symbolName: string, documentation: string) {
+        let markdownString = new MarkdownString(title ? `**${title}**` : undefined);
         markdownString.appendCodeblock(symbolName, 'pddl');
         markdownString.appendMarkdown(`---
 `);
         markdownString.appendMarkdown(documentation);
-        return new Hover(markdownString, range);
+        return markdownString;
     }
 
     findSymbolReferences(fileUri: string, symbol: SymbolInfo, includeDeclaration: boolean): Location[] {
@@ -189,7 +193,7 @@ export class SymbolUtils {
     assertFileParsed(document: TextDocument): void {
         let fileUri = document.uri.toString();
         if (!this.workspace.getFileInfo(fileUri)) {
-            this.workspace.upsertFile(fileUri, document.version, document.getText());
+            this.workspace.upsertAndParseFile(fileUri, document.version, document.getText());
         }
     }
 

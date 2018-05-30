@@ -3,8 +3,9 @@
  * Licensed under the MIT License. See License.txt in the project root for license information.
  * ------------------------------------------------------------------------------------------ */
 import * as vscode from 'vscode';
+import { PDDLParserSettings } from './Settings';
 
-const PDDL_PARSER = 'pddlParser';
+export const PDDL_PARSER = 'pddlParser';
 const PARSER_EXECUTABLE_OR_SERVICE = PDDL_PARSER + '.executableOrService';
 const PARSER_EXECUTABLE_OPTIONS = PDDL_PARSER + '.executableOptions';
 const PARSER_LEGACY_LOCATION = PDDL_PARSER + '.pddlParserService';
@@ -361,7 +362,13 @@ export class PddlConfiguration {
             return vscode.workspace.getConfiguration();
         }
     }
+    
+    getParserSettings(): PDDLParserSettings {
+        let configurationAny: any = vscode.workspace.getConfiguration(PDDL_PARSER);
+        let configuration = <PDDLParserSettings>configurationAny;
 
+        return configuration;
+    }
 }
 
 class ScopeQuickPickItem implements vscode.QuickPickItem {

@@ -79,7 +79,7 @@ export class Planning implements PlanningHandler {
     }
 
     private upsertFile(doc: TextDocument): FileInfo {
-        return this.pddlWorkspace.upsertFile(doc.uri.toString(), doc.version, doc.getText());
+        return this.pddlWorkspace.upsertAndParseFile(doc.uri.toString(), doc.version, doc.getText());
     }
 
     /**
@@ -97,7 +97,7 @@ export class Planning implements PlanningHandler {
         const activeDocument = window.activeTextEditor.document;
         const activeFilePath = activeDocument.fileName;
 
-        const activeFileInfo = this.pddlWorkspace.upsertFile(activeDocument.uri.toString(), activeDocument.version, activeDocument.getText());
+        const activeFileInfo = this.pddlWorkspace.upsertAndParseFile(activeDocument.uri.toString(), activeDocument.version, activeDocument.getText());
 
         let problemFileInfo: ProblemInfo;
         let domainFileInfo: DomainInfo;

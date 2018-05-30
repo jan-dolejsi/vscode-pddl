@@ -253,17 +253,25 @@ export class Parser {
     }
 }
 
-export enum FileStatus { Dirty, Validating, Validated }
+export enum FileStatus { Parsed, Dirty, Validating, Validated }
 
 export abstract class FileInfo {
     text: string;
-    private status: FileStatus = FileStatus.Dirty;
+    private status: FileStatus = FileStatus.Parsed;
 
     constructor(public fileUri: string, public version: number, public name: string) {
     }
 
     abstract isDomain(): boolean;
     abstract isProblem(): boolean;
+
+    update(version: number, text: string){
+        if (version > this.version){
+            this.setStatus(FileStatus.Dirty);
+            this.version = version;
+            this.text = text;
+        }
+    }
 
     setStatus(status: FileStatus) {
         this.status = status;

@@ -4,11 +4,11 @@
  * ------------------------------------------------------------------------------------------ */
 'use strict';
 
-import { Parser, FileInfo, DomainInfo, ProblemInfo, UnknownFileInfo } from './parser'
+import { Parser, FileInfo, DomainInfo, ProblemInfo, UnknownFileInfo, FileStatus } from './parser'
 import { Util } from './util';
 import { dirname, basename } from 'path';
 import { PddlExtensionContext } from './PddlExtensionContext';
-import { EventEmitter }  from 'events';
+import { EventEmitter } from 'events';
 
 class Folder {
     files: Map<string, FileInfo> = new Map<string, FileInfo>();
@@ -74,7 +74,10 @@ class Folder {
 export class PddlWorkspace extends EventEmitter {
     folders: Map<string, Folder> = new Map<string, Folder>();
     parser: Parser;
+    timeout: NodeJS.Timer;
+    defaultTimerDelayInSeconds = 1;
 
+    public static INSERTED = Symbol("INSERTED");
     public static UPDATED = Symbol("UPDATED");
     public static REMOVING = Symbol("REMOVING");
 
@@ -93,37 +96,89 @@ export class PddlWorkspace extends EventEmitter {
         return basename(documentPath);
     }
 
-    upsertFile(fileUri: string, fileVersion: number, fileText: string): FileInfo {
+    upsertAndParseFile(fileUri: string, fileVersion: number, fileText: string): FileInfo {
+        let fileInfo = this.upsertFile(fileUri, fileVersion, fileText);
+        if (fileInfo.getStatus() == FileStatus.Dirty) {
+            fileInfo = this.reParseFile(fileInfo);
+        }
 
-        this.emit(PddlWorkspace.UPDATED);
+        return fileInfo;
+    }
+
+    upsertFile(fileUri: string, fileVersion: number, fileText: string): FileInfo {
 
         let folderUri = PddlWorkspace.getFolderUri(fileUri);
 
         let folder = this.upsertFolder(folderUri);
 
-        folder.removeByUri(fileUri);
+        let fileInfo: FileInfo = folder.get(fileUri);
+        if (fileInfo) {
+            fileInfo.update(fileVersion, fileText);
+            this.scheduleParsing();
+        }
+        else {
+            fileInfo = this.insertFile(folder, fileUri, fileVersion, fileText);
+        }
 
+        return fileInfo;
+    }
+
+    private insertFile(folder: Folder, fileUri: string, fileVersion: number, fileText: string): FileInfo {
+        let fileInfo = this.parseFile(fileUri, fileVersion, fileText);
+        folder.add(fileInfo);
+        this.emit(PddlWorkspace.UPDATED, fileInfo);
+        this.emit(PddlWorkspace.INSERTED, fileInfo);
+        return fileInfo;
+    }
+
+    scheduleParsing(): void {
+        this.cancelScheduledParsing()
+        this.timeout = setTimeout(() => this.parseAllDirty(), this.defaultTimerDelayInSeconds * 1000);
+    }
+
+    private cancelScheduledParsing(): void {
+        if (this.timeout) clearTimeout(this.timeout);
+    }
+
+    private parseAllDirty(): void {
+        // find all dirty files
+        let dirtyFiles = this.getAllFilesIf(fileInfo => fileInfo.getStatus() == FileStatus.Dirty);
+
+        dirtyFiles.forEach(file => this.reParseFile(file));
+    }
+
+    private reParseFile(fileInfo: FileInfo): FileInfo {
+        let folderUri = PddlWorkspace.getFolderUri(fileInfo.fileUri);
+
+        let folder = this.upsertFolder(folderUri);
+
+        folder.remove(fileInfo);
+        fileInfo = this.parseFile(fileInfo.fileUri, fileInfo.version, fileInfo.text);
+        folder.add(fileInfo);
+        this.emit(PddlWorkspace.UPDATED, fileInfo);
+
+        return fileInfo;
+    }
+
+    private parseFile(fileUri: string, fileVersion: number, fileText: string): FileInfo {
         let domainInfo = this.parser.tryDomain(fileUri, fileVersion, fileText);
 
         if (domainInfo) {
-            folder.add(domainInfo);
             return domainInfo;
         } else {
             let problemInfo = this.parser.tryProblem(fileUri, fileVersion, fileText);
 
             if (problemInfo) {
-                folder.add(problemInfo);
                 return problemInfo;
             }
         }
 
         let unknownFile = new UnknownFileInfo(fileUri, fileVersion);
         unknownFile.text = fileText;
-        folder.add(unknownFile);
         return unknownFile;
     }
 
-    upsertFolder(folderUri: string): Folder {
+    private upsertFolder(folderUri: string): Folder {
         let folder: Folder;
 
         if (!this.folders.has(folderUri)) {
@@ -201,8 +256,8 @@ export class PddlWorkspace extends EventEmitter {
 
         return selectedFiles;
     }
-    
-    asDomain(fileInfo: FileInfo): DomainInfo{
+
+    asDomain(fileInfo: FileInfo): DomainInfo {
         if (fileInfo.isDomain()) {
             return <DomainInfo>fileInfo;
         }
@@ -220,7 +275,6 @@ export class PddlWorkspace extends EventEmitter {
 
         return domainFiles.length == 1 ? domainFiles[0] : null;
     }
-
 
     getFolderOf(fileInfo: FileInfo): Folder {
         return this.folders.get(PddlWorkspace.getFolderUri(fileInfo.fileUri));
