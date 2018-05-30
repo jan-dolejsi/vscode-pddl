@@ -48,7 +48,7 @@ export class PTestExplorer {
 
         this.outputWindow = window.createOutputChannel("PDDL Test output");
 
-        this.generatedDocumentContentProvider = new GeneratedDocumentContentProvider(this.outputWindow);
+        this.generatedDocumentContentProvider = new GeneratedDocumentContentProvider(this.outputWindow, planning.pddlWorkspace);
         context.subscriptions.push(workspace.registerTextDocumentContentProvider('tpddl', this.generatedDocumentContentProvider));
     }
 

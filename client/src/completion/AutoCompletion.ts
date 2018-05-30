@@ -57,7 +57,7 @@ class CompletionCollector {
         this.leadingText = this.lineText.substring(0, position.character);
         if (this.leadingText.includes(';')) return; // do not auto-complete in comment text
 
-        const activeFileInfo = this.pddlWorkspace.upsertAndParseFile(document.uri.toString(), document.version, document.getText());
+        const activeFileInfo = this.pddlWorkspace.upsertFile(document.uri.toString(), document.version, document.getText());
 
         if (activeFileInfo.isProblem()) {
             let problemFileInfo = <ProblemInfo>activeFileInfo;

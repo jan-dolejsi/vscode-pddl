@@ -265,15 +265,17 @@ export abstract class FileInfo {
     abstract isDomain(): boolean;
     abstract isProblem(): boolean;
 
-    update(version: number, text: string){
-        if (version > this.version){
+    update(version: number, text: string): boolean {
+        let newVersion = version > this.version;
+        if (newVersion) {
             this.setStatus(FileStatus.Dirty);
             this.version = version;
             this.text = text;
         }
+        return newVersion;
     }
 
-    setStatus(status: FileStatus) {
+    setStatus(status: FileStatus): void {
         this.status = status;
     }
 

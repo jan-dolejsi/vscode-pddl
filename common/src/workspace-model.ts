@@ -113,8 +113,9 @@ export class PddlWorkspace extends EventEmitter {
 
         let fileInfo: FileInfo = folder.get(fileUri);
         if (fileInfo) {
-            fileInfo.update(fileVersion, fileText);
-            this.scheduleParsing();
+            if (fileInfo.update(fileVersion, fileText)) {
+                this.scheduleParsing();
+            }
         }
         else {
             fileInfo = this.insertFile(folder, fileUri, fileVersion, fileText);

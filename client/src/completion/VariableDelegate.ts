@@ -60,7 +60,7 @@ export class VariableDelegate extends Delegate {
     }
 
     private createSymbol(symbol: Variable, title: string, kind: CompletionItemKind) {
-        let markdownString = this.symbolUtils.createSymbolMarkdownDocumentation('', `(${symbol.declaredName})`, symbol.getDocumentation());
+        let markdownString = this.symbolUtils.createSymbolMarkdownDocumentation(undefined, `(${symbol.declaredName})`, symbol.getDocumentation());
         let completionItem = this.createCompletionItem(symbol.declaredName, title, markdownString, kind);
         completionItem.insertText = symbol.declaredNameWithoutTypes;
         return completionItem;
