@@ -14,8 +14,6 @@ import { PddlWorkspace } from '../../common/src/workspace-model';
 import { DomainInfo, PddlRange } from '../../common/src/parser';
 import { PddlConfiguration, PDDL_PARSER } from './configuration';
 import { Authentication } from '../../common/src/Authentication';
-import { PlanReportGenerator } from './planning/PlanReportGenerator';
-import { Plan } from './planning/plan';
 import { AutoCompletion } from './completion/AutoCompletion';
 import { SymbolRenameProvider } from './SymbolRenameProvider';
 import { SymbolInfoProvider } from './SymbolInfoProvider';
@@ -30,7 +28,6 @@ const PDDL_UPDATE_TOKENS_PARSER_SERVICE = 'pddl.updateTokensParserService';
 const PDDL_CONFIGURE_PLANNER = 'pddl.configurePlanner';
 const PDDL_LOGIN_PLANNER_SERVICE = 'pddl.loginPlannerService';
 const PDDL_UPDATE_TOKENS_PLANNER_SERVICE = 'pddl.updateTokensPlannerService';
-const PDDL_GENERATE_PLAN_REPORT = 'pddl.planReport';
 const PDDL = 'PDDL';
 
 export function activate(context: ExtensionContext) {
@@ -143,16 +140,6 @@ export function activate(context: ExtensionContext) {
 		});
 	});
 
-	let generatePlanReportCommand = commands.registerCommand(PDDL_GENERATE_PLAN_REPORT, () => {
-		let plans: Plan[] = planning.getPlans();
-
-		if (plans != null) {
-			new PlanReportGenerator(context, 1000, true).export(plans, plans.length - 1);
-		} else {
-			window.showErrorMessage("There is no plan to export.");
-		}
-	});
-
 	// when the extension is done loading, subscribe to the client-server communication
 	let stateChangeHandler = languageClient.onDidChangeState((stateEvent) => {
 		if (stateEvent.newState == State.Running) languageClient.onRequest('pddl.configureParser', (showNever) => {
@@ -184,7 +171,7 @@ export function activate(context: ExtensionContext) {
 	// client can be deactivated on extension deactivation
 	context.subscriptions.push(diagnostics, revealActionCommand,
 		stopPlannerCommand, stateChangeHandler, configureParserCommand, loginParserServiceCommand, updateTokensParserServiceCommand,
-		configurePlannerCommand, loginPlannerServiceCommand, updateTokensPlannerServiceCommand, generatePlanReportCommand, completionItemProvider,
+		configurePlannerCommand, loginPlannerServiceCommand, updateTokensPlannerServiceCommand, completionItemProvider,
 		renameProvider, documentSymbolProvider, definitionProvider, referencesProvider, hoverProvider);
 }
 

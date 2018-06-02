@@ -24,6 +24,13 @@ import { PddlPlanParser } from './PddlPlanParser';
 import { Authentication } from '../../../common/src/Authentication';
 import { dirname } from 'path';
 import { PlanningResult } from './PlanningResult';
+import { PlanReportGenerator } from './PlanReportGenerator';
+import { PlanExporter } from './PlanExporter';
+import { PlanHappeningsExporter } from './PlanHappeningsExporter';
+
+export const PDDL_GENERATE_PLAN_REPORT = 'pddl.planReport';
+export const PDDL_EXPORT_PLAN = 'pddl.exportPlan';
+const PDDL_CONVERT_PLAN_TO_HAPPENINGS = 'pddl.convertPlanToHappenings';
 
 /**
  * Delegate for handling requests to run the planner and visualize the plans.
@@ -53,7 +60,34 @@ export class Planning implements PlanningHandler {
                 }
             })
         );
-
+        
+        context.subscriptions.push(commands.registerCommand(PDDL_GENERATE_PLAN_REPORT, () => {
+            let plans: Plan[] = this.getPlans();
+            if (plans != null) {
+                new PlanReportGenerator(context, 1000, true).export(plans, plans.length - 1);
+            } else {
+                window.showErrorMessage("There is no plan to export.");
+            }
+        }));
+        
+        context.subscriptions.push(commands.registerCommand(PDDL_EXPORT_PLAN, selectedPlan => {
+            let plans: Plan[] = this.getPlans();
+            if (plans != null && selectedPlan < plans.length) {
+                new PlanExporter().export(plans[selectedPlan]);
+            } else {
+                window.showErrorMessage("There is no plan open, or the selected plan does not exist.");
+            }
+        }));
+        
+        context.subscriptions.push(commands.registerCommand(PDDL_CONVERT_PLAN_TO_HAPPENINGS, async() => {
+            if (window.activeTextEditor && window.activeTextEditor.document.languageId == "plan"){
+                let epsilon = plannerConfiguration.getEpsilonTimeStep();
+                new PlanHappeningsExporter(window.activeTextEditor.document, epsilon).export();
+            } else {
+                window.showErrorMessage("There is no plan file open.");
+            }
+        }));
+        
         this.previewUri = Uri.parse('pddl-plan://authority/plan');
         this.provider = new PlanDocumentContentProvider(context);
         context.subscriptions.push(workspace.registerTextDocumentContentProvider('pddl-plan', this.provider));

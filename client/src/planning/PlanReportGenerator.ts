@@ -18,6 +18,7 @@ import { Util } from '../../../common/src/util';
 import { PlanFunctionEvaluator } from './PlanFunctionEvaluator';
 import { PlanReportSettings } from './PlanReportSettings';
 import { PLANNER_VALUE_SEQ_PATH } from '../configuration';
+import { PDDL_GENERATE_PLAN_REPORT, PDDL_EXPORT_PLAN } from './planning';
 var opn = require('opn');   
 var fs = require('fs')
 
@@ -60,7 +61,12 @@ export class PlanReportGenerator {
             ${this.includeScript(this.asAbsolutePath('planview', 'plans.js'))}
             <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
             ${this.includeScript(this.asAbsolutePath('planview', 'charts.js'))}
-        </head>        
+            <script type="text/javascript">var selectedPlan = 0;
+            function updatePlanExportHref(a) {
+                a.search = "?" + encodeURI(JSON.stringify([selectedPlan]));
+            }
+            </script>
+        </head>
         <body onload="scrollPlanSelectorIntoView(${selectedPlan})">
             <div class="planSelectors" style="display: ${planSelectorsDisplayStyle};">${planSelectors}
             </div>
@@ -228,7 +234,8 @@ ${stepsInvolvingThisObject}
             return actionName;
         }
         else {
-            return `<a href="${encodeURI('command:pddl.revealAction?' + JSON.stringify([plan.domain.fileUri, actionName]))}">${actionName}</a>`;
+            let revealActionUri = encodeURI('command:pddl.revealAction?' + JSON.stringify([plan.domain.fileUri, actionName]));
+            return `<a href="${revealActionUri}">${actionName}</a>`;
         }
     }
 
@@ -263,9 +270,14 @@ ${stepsInvolvingThisObject}
     }
 
     renderMenu(): string {
-        let generateReportUri = encodeURI('command:pddl.planReport');
-        return `<div class="menu">&#x2630;
-        <span class="menutooltip"><a href="${generateReportUri}">Generate plan report</a></span>
+        let generateReportUri = encodeURI('command:' + PDDL_GENERATE_PLAN_REPORT);
+        let exportPlanUri = encodeURI('command:' + PDDL_EXPORT_PLAN + '?' + JSON.stringify([0]));
+        //onClick="updatePlanExportHref(this)"
+        return `    <div class="menu">&#x2630;
+        <span class="menutooltip">
+            <a href="${generateReportUri}">Generate plan report</a>
+            <a href="${exportPlanUri}">Export as .plan file...</a>
+        </span>
     </div>`;
     }
 

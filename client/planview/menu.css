@@ -10,12 +10,12 @@
 .menu .menutooltip {
     font-size: initial;
     visibility: hidden;
-    width: 150px;
+    width: 160px;
     background-color: black;
     color: #fff;
     text-align: left;
-    padding: 5px 0;
-    border-radius: 6px;
+    padding: 5px 5px;
+    border-radius: 3px;
 
     position: absolute;
     z-index: 1;

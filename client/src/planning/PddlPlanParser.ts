@@ -14,7 +14,7 @@ import { DomainInfo, ProblemInfo } from '../../../common/src/parser';
 export class PddlPlanParser {
 
     plans: Plan[] = [];
-    public planStepPattern = /^\s*((\d+|\d+\.\d+|\.\d+)\s*:)?\s*\((.*)\)\s*(\[(\d+|\d+\.\d+|\.\d+)\])?\s*$/gim;
+    public static planStepPattern = /^\s*((\d+|\d+\.\d+|\.\d+)\s*:)?\s*\((.*)\)\s*(\[(\d+|\d+\.\d+|\.\d+)\])?\s*$/gim;
     planStatesEvaluatedPattern = /^; States evaluated[\w ]*:[ ]*(\d*)\s*$/i;
     planCostPattern = /[\w ]*(cost|metric)[\D :]*[ ]*(\d*|\d*\.\d*)\s*$/i
 
@@ -49,8 +49,8 @@ export class PddlPlanParser {
      */
     appendLine(outputLine: string): void {
 
-        this.planStepPattern.lastIndex = 0;
-        let group = this.planStepPattern.exec(outputLine);
+        PddlPlanParser.planStepPattern.lastIndex = 0;
+        let group = PddlPlanParser.planStepPattern.exec(outputLine);
         if (group) {
             // this line is a plan step
             let time = group[2] ? parseFloat(group[2]) : this.planBuilder.makespan();

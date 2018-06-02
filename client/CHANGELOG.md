@@ -1,12 +1,35 @@
 # What's new
 
+## [Unreleased] - 2018-06-??
+
+### Plan and Plan Happenings support
+
+Added support for .plan files in the format of the typical PDDL planner output.
+A .plan file can be generated using an option in the Plan Visualization menu, or using a _PDDL: Export plan a to file..._ command.
+
+A context menu option in .plan file _PDDL: Convert plan to happenings..._ supports export to a .happenings file.
+
+### Improved auto-completion support
+
+- Predicates and Functions now display the documentation string
+- Snippet is available for continuous numeric effects
+- Clearer description of many auto-completion items: more descriptive text and proper markdown rendering.
+
+### Problem generation from templates
+
+When the problem template file and corresponding generated problem file are open side-by side, the edits in the template are reflected in the generated problem file as a live preview as you type.
+
+[[[[need a gif]]]]
+
+Language Server pattern was removed. Both auto-completion and PDDL parsing is now happening in the extension main process (i.e. client).
+
 ## [2.6.4] - 2018-05-28
 
 ### Bug-fixes
 
 - Test cases that fail in the pre-processing step (e.g. Python script fails), the test case result now correctly shows as failed.
 - The Plan Visualization menu (&#x2630;) now displays at a fixed top-right location above the action list.
-- The action tool tip in Plan Visualization text is better aligned, so numbers are visible even for long action names. 
+- The action tool tip in Plan Visualization text is better aligned, so numbers are visible even for long action names.
 
 ## [2.6.3] - 2018-05-16
 
@@ -206,9 +229,7 @@ Simplified snippets and added tabstops/placeholders to them, so they are easy to
 - Removal of the language server
 - More general matching of domain file to problem file across workspace folder structure
 
-## [Unreleased]
-
-Migration of language support implementation from the language server to the client part and removal of the language server.
+## Note to contributors
 
 Note for open source contributors: all notable changes to the "pddl" extension will be documented in this file.
 

@@ -49,6 +49,28 @@
         ],
         "configuration": "./language-configuration.json",
         "firstLine": "\\(define\\s\\((domain|problem)\\b"
+      },
+      {
+        "id": "plan",
+        "aliases": [
+          "PDDL Plan",
+          "Plan"
+        ],
+        "extensions": [
+          ".plan"
+        ],
+        "configuration": "./language-configuration.json"
+      },
+      {
+        "id": "happenings",
+        "aliases": [
+          "PDDL Plan Happenings",
+          "Happenings"
+        ],
+        "extensions": [
+          ".happenings"
+        ],
+        "configuration": "./language-configuration.json"
       }
     ],
     "grammars": [
@@ -56,6 +78,16 @@
         "language": "pddl",
         "scopeName": "source.pddl",
         "path": "./syntaxes/pddl.tmLanguage.json"
+      },
+      {
+        "language": "plan",
+        "scopeName": "source.pddl.plan",
+        "path": "./syntaxes/plan.tmLanguage.json"
+      },
+      {
+        "language": "happenings",
+        "scopeName": "source.pddl.happenings",
+        "path": "./syntaxes/happenings.tmLanguage.json"
       }
     ],
     "snippets": [
@@ -100,6 +132,14 @@
       {
         "command": "pddl.planReport",
         "title": "PDDL: Generate plan report"
+      },
+      {
+        "command": "pddl.exportPlan",
+        "title": "PDDL: Export plan a to file..."
+      },
+      {
+        "command": "pddl.convertPlanToHappenings",
+        "title": "PDDL: Convert plan to happenings..."
       },
       {
         "command": "pddl.tests.refresh",
@@ -155,6 +195,10 @@
         {
           "command": "pddl.tests.problemSaveAs",
           "when": "resourceLangId == pddl && resourceScheme == tpddl"
+        },
+        {
+          "command": "pddl.convertPlanToHappenings",
+          "when": "resourceLangId == plan"
         }
       ],
       "view/title": [
