@@ -10,7 +10,7 @@ import {
 
 import { PddlWorkspace } from '../../common/src/workspace-model';
 
-import { Variable, PddlRange } from '../../common/src/parser';
+import { Variable, PddlRange, toLanguageFromId } from '../../common/src/parser';
 
 export class SymbolUtils {
     constructor(public workspace: PddlWorkspace) { }
@@ -75,7 +75,7 @@ export class SymbolUtils {
     getWordAtDocumentPosition(document: TextDocument, position: Position): WordOnPositionContext {
         // find the word at the position leveraging the TextDocument facility
         let wordRange = document.getWordRangeAtPosition(position, /\w[-\w]*/);
-        if (wordRange.isEmpty || !wordRange.isSingleLine) return null;
+        if (!wordRange || wordRange.isEmpty || !wordRange.isSingleLine) return null;
 
         let word = document.getText(wordRange);
         let lineIdx = wordRange.start.line;
@@ -193,7 +193,7 @@ export class SymbolUtils {
     assertFileParsed(document: TextDocument): void {
         let fileUri = document.uri.toString();
         if (!this.workspace.getFileInfo(fileUri)) {
-            this.workspace.upsertAndParseFile(fileUri, document.version, document.getText());
+            this.workspace.upsertAndParseFile(fileUri, toLanguageFromId(document.languageId), document.version, document.getText());
         }
     }
 

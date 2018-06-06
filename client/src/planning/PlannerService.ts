@@ -6,9 +6,10 @@
 
 import * as request from 'request';
 import { Planner } from './planner';
-import { Plan, PlanningHandler } from './plan';
+import { PlanningHandler } from './plan';
+import { Plan } from '../../../common/src/Plan';
 import { DomainInfo, ProblemInfo } from '../../../common/src/parser';
-import { PddlPlanParser } from './PddlPlanParser';
+import { PddlPlanParser } from '../../../common/src/PddlPlanParser';
 import { Authentication } from '../../../common/src/Authentication';
 
 export class PlannerService extends Planner {
@@ -31,9 +32,10 @@ export class PlannerService extends Planner {
             "domain": domainFileInfo.text,
             "problem": problemFileInfo.text
         }
-
+        
+        let that = this;
         return new Promise<Plan[]>(function(resolve, reject) {
-            request.post({ url: this.plannerPath, headers: requestHeader, body: requestBody, json: true }, (err, httpResponse, responseBody) => {
+            request.post({ url: that.plannerPath, headers: requestHeader, body: requestBody, json: true }, (err, httpResponse, responseBody) => {
 
                 if (err != null) {
                     parent.handleError(err, "");
@@ -41,7 +43,7 @@ export class PlannerService extends Planner {
                     return;
                 }
     
-                if(this.useAuthentication) {
+                if(that.useAuthentication) {
                     if (httpResponse) {
                         if (httpResponse.statusCode == 400) {
                             let message = "Authentication failed. Please login or update tokens."

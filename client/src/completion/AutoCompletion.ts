@@ -6,7 +6,7 @@
 
 import { CompletionItemProvider, CompletionItem, TextDocument, Position, CancellationToken, CompletionList, CompletionContext, Range } from 'vscode';
 import { PddlWorkspace } from '../../../common/src/workspace-model';
-import { ProblemInfo, DomainInfo } from '../../../common/src/parser';
+import { ProblemInfo, DomainInfo, toLanguageFromId } from '../../../common/src/parser';
 import { KeywordDelegate } from './KeywordDelegate';
 import { ProblemInitDelegate } from './ProblemInitDelegate';
 import { OperatorDelegate } from './OperatorDelegate';
@@ -57,7 +57,7 @@ class CompletionCollector {
         this.leadingText = this.lineText.substring(0, position.character);
         if (this.leadingText.includes(';')) return; // do not auto-complete in comment text
 
-        const activeFileInfo = this.pddlWorkspace.upsertFile(document.uri.toString(), document.version, document.getText());
+        const activeFileInfo = this.pddlWorkspace.upsertFile(document.uri.toString(), toLanguageFromId(document.languageId), document.version, document.getText());
 
         if (activeFileInfo.isProblem()) {
             let problemFileInfo = <ProblemInfo>activeFileInfo;

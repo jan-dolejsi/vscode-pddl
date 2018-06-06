@@ -24,3 +24,8 @@ function scrollPlanSelectorIntoView(planIndex) {
         if (parseInt(div.getAttribute('plan')) == planIndex) div.scrollIntoViewIfNeeded();
     });
 }
+
+var selectedPlan = 0;
+function updatePlanExportHref(a) {
+    a.search = "?" + encodeURI(JSON.stringify([selectedPlan]));
+}

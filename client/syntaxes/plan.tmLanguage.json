@@ -22,7 +22,7 @@
 		"action": {
 			"patterns": [{
 				"name": "variable.action",
-				"match": "^\\s*((\\d+|\\d+\\.\\d+|\\.\\d+)\\s*:)?\\s*\\((.*)\\)\\s*(\\[(\\d+|\\d+\\.\\d+|\\.\\d+)\\])?\\s*",
+				"match": "^\\s*((\\d+|\\d+\\.\\d+|\\.\\d+)\\s*:)?\\s*\\(([\\w -]+)\\)\\s*(\\[(\\d+|\\d+\\.\\d+|\\.\\d+)\\])?\\s*",
 				"captures": {
 					"2": { "name": "constant.numeric.action.time" },
 					"3": { "name": "support.function.action.name"},
@@ -64,6 +64,10 @@
 			{
 				"name": "invalid.illegal",
 				"match": "\\?"
+			},
+			{
+				"name": "invalid.illegal",
+				"match": ".*"
 			}]
 		}
 	},

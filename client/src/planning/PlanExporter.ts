@@ -8,7 +8,7 @@ import {
     Uri, SaveDialogOptions, window, workspace, Position
 } from 'vscode';
 
-import { Plan } from './plan';
+import { Plan } from "../../../common/src/Plan";
 import { parse, format } from 'path';
 import { isNullOrUndefined } from 'util';
 

@@ -14,13 +14,14 @@ import * as path from 'path';
 import { PlanDocumentContentProvider } from './PlanDocumentContentProvider';
 
 import { PddlWorkspace } from '../../../common/src/workspace-model';
-import { DomainInfo, ProblemInfo, FileInfo } from '../../../common/src/parser';
+import { DomainInfo, ProblemInfo, FileInfo, PddlLanguage } from '../../../common/src/parser';
 import { PddlConfiguration } from '../configuration';
-import { Plan, PlanningHandler } from './plan';
+import { Plan } from '../../../common/src/Plan';
+import { PlanningHandler } from './plan';
 import { PlannerExecutable } from './PlannerExecutable';
 import { PlannerService } from './PlannerService';
 import { Planner } from './planner';
-import { PddlPlanParser } from './PddlPlanParser';
+import { PddlPlanParser } from '../../../common/src/PddlPlanParser';
 import { Authentication } from '../../../common/src/Authentication';
 import { dirname } from 'path';
 import { PlanningResult } from './PlanningResult';
@@ -113,7 +114,7 @@ export class Planning implements PlanningHandler {
     }
 
     private upsertFile(doc: TextDocument): FileInfo {
-        return this.pddlWorkspace.upsertAndParseFile(doc.uri.toString(), doc.version, doc.getText());
+        return this.pddlWorkspace.upsertAndParseFile(doc.uri.toString(), PddlLanguage.PDDL, doc.version, doc.getText());
     }
 
     /**
@@ -122,7 +123,7 @@ export class Planning implements PlanningHandler {
     async plan(): Promise<boolean> {
 
         if (this.planner) {
-            window.showErrorMessage("Planner is already running. Stop it using button in the status bar or wait for it to finish.");
+            window.showErrorMessage("Planner is already running. Stop it using the Cancel button in the progress notification or wait for it to finish.");
             return false;
         }
 
@@ -131,7 +132,7 @@ export class Planning implements PlanningHandler {
         const activeDocument = window.activeTextEditor.document;
         const activeFilePath = activeDocument.fileName;
 
-        const activeFileInfo = this.pddlWorkspace.upsertAndParseFile(activeDocument.uri.toString(), activeDocument.version, activeDocument.getText());
+        const activeFileInfo = this.upsertFile(activeDocument);
 
         let problemFileInfo: ProblemInfo;
         let domainFileInfo: DomainInfo;

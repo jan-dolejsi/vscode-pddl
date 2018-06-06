@@ -9,7 +9,7 @@ import {
 } from 'vscode';
 
 import { PlanExporter } from './PlanExporter';
-import { PddlPlanParser } from './PddlPlanParser';
+import { PddlPlanParser } from '../../../common/src/PddlPlanParser';
 
 export class PlanHappeningsExporter {
 

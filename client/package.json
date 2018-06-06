@@ -184,6 +184,10 @@
       {
         "command": "pddl.tests.problemSaveAs",
         "title": "PDDL: Open as an editable problem file..."
+      },
+      {
+        "command": "pddl.plan.validate",
+        "title": "PDDL: Validate plan"
       }
     ],
     "menus": {
@@ -198,6 +202,10 @@
         },
         {
           "command": "pddl.convertPlanToHappenings",
+          "when": "resourceLangId == plan"
+        },
+        {
+          "command": "pddl.plan.validate",
           "when": "resourceLangId == plan"
         }
       ],
@@ -492,6 +500,10 @@
           "type": "boolean",
           "default": true,
           "description": "Enable/disable the preview of PDDL test explorer. Restart the editor for the change to take effect."
+        },
+        "pddlPlan.validatorPath": {
+          "type":"string",
+          "description": "Path of the 'validate' executable."
         }
       }
     },

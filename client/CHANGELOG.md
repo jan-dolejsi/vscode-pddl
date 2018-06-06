@@ -5,15 +5,22 @@
 ### Plan and Plan Happenings support
 
 Added support for .plan files in the format of the typical PDDL planner output.
-A .plan file can be generated using an option in the Plan Visualization menu, or using a _PDDL: Export plan a to file..._ command.
+A .plan file can be generated using an option in the Plan Visualization menu (&#x2630;), or using a _PDDL: Export plan to a file..._ command.
 
 A context menu option in .plan file _PDDL: Convert plan to happenings..._ supports export to a .happenings file.
+
+Both plan formats are covered by syntax highlighting and .plan files have a context menu option _PDDL: Validate plan_, which requires the `validate` executable path to be configured in the _pddlPlan.validatorPath_ setting. See [VAL](https://github.com/KCL-Planning/VAL) for more details.
+
+Problems in .plan files are displayed in the Problems panel of VS Code as long as a corresponding problem and domain files (located in the same folder) are open in the editor and the `validate` executable location is configured via the _pddlPlan.validatorPath_ setting.
+[[[need a gif!!!]]]
 
 ### Improved auto-completion support
 
 - Predicates and Functions now display the documentation string
 - Snippet is available for continuous numeric effects
 - Clearer description of many auto-completion items: more descriptive text and proper markdown rendering.
+
+[[[need a gif!!!]]]
 
 ### Problem generation from templates
 
@@ -22,6 +29,10 @@ When the problem template file and corresponding generated problem file are open
 [[[[need a gif]]]]
 
 Language Server pattern was removed. Both auto-completion and PDDL parsing is now happening in the extension main process (i.e. client).
+
+### Bug-fixes
+
+Fixed issues arising when using a planning service.
 
 ## [2.6.4] - 2018-05-28
 

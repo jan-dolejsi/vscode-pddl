@@ -8,6 +8,8 @@ import { ProblemParserPreProcessor } from "./ProblemParserPreProcessor";
 import { dirname } from "path";
 import { Util } from "./util";
 import { PddlExtensionContext } from "./PddlExtensionContext";
+import { PlanStep } from "./PlanStep";
+import { PlanBuilder } from "./PddlPlanParser";
 
 export class Parser {
 
@@ -69,6 +71,32 @@ export class Parser {
         else {
             return null;
         }
+    }
+
+    parsePlan(fileUri: string, fileVersion: number, fileText: string, epsilon: number): PlanInfo {
+        let problemName = 'unspecified';
+        let problemMatch = fileText.match(/^;;\s*!problem:\s*([\w-]+)\s*$/m);
+        if (problemMatch) {
+            problemName = problemMatch[1];
+        }
+
+        let domainName = 'unspecified';
+        let domainMatch = fileText.match(/^;;\s*!domain:\s*([\w-]+)\s*$/m);
+        if (domainMatch) {
+            domainName = domainMatch[1];
+        }
+        
+        let planInfo = new PlanInfo(fileUri, fileVersion, problemName, domainName, fileText);
+        let planBuilder = new PlanBuilder(epsilon);
+        fileText.split('\n').forEach((planLine: string, index: number) => {
+            let planStep = planBuilder.parse(planLine, index);
+            if (planStep) {
+                planBuilder.add(planStep);
+            }
+        });
+        planInfo.setSteps(planBuilder.getSteps());
+
+        return planInfo;
     }
 
     getDomainStructure(domainText: string, domainInfo: DomainInfo): void {
@@ -262,17 +290,32 @@ export abstract class FileInfo {
     constructor(public fileUri: string, public version: number, public name: string) {
     }
 
-    abstract isDomain(): boolean;
-    abstract isProblem(): boolean;
+    abstract getLanguage(): PddlLanguage;
+
+    isDomain(): boolean {
+        return false;
+    }
+    isProblem(): boolean {
+        return false;
+    }
+    isUnknownPddl(): boolean {
+        return false;
+    }
+    isPlan(): boolean {
+        return false;
+    }
+    isHappenings(): boolean {
+        return false;
+    }
 
     update(version: number, text: string): boolean {
-        let newVersion = version > this.version;
-        if (newVersion) {
+        let isNewerVersion = version > this.version;
+        if (isNewerVersion) {
             this.setStatus(FileStatus.Dirty);
             this.version = version;
             this.text = text;
         }
-        return newVersion;
+        return isNewerVersion;
     }
 
     setStatus(status: FileStatus): void {
@@ -341,12 +384,14 @@ export abstract class FileInfo {
  * Problem file.
  */
 export class ProblemInfo extends FileInfo {
-    domainName: string;
     objects: TypeObjects[] = [];
 
-    constructor(fileUri: string, version: number, problemName: string, domainName: string) {
+    constructor(fileUri: string, version: number, problemName: string, public domainName: string) {
         super(fileUri, version, problemName);
-        this.domainName = domainName;
+    }
+
+    getLanguage(): PddlLanguage {
+        return PddlLanguage.PDDL;
     }
 
     setObjects(objects: TypeObjects[]): void {
@@ -360,9 +405,6 @@ export class ProblemInfo extends FileInfo {
         else return thisTypesObjects.objects;
     }
 
-    isDomain(): boolean {
-        return false;
-    }
     isProblem(): boolean {
         return true;
     }
@@ -381,6 +423,10 @@ export class DomainInfo extends FileInfo {
 
     constructor(fileUri: string, version: number, domainName: string) {
         super(fileUri, version, domainName);
+    }
+
+    getLanguage(): PddlLanguage {
+        return PddlLanguage.PDDL;
     }
 
     getPredicates(): Variable[] {
@@ -427,9 +473,6 @@ export class DomainInfo extends FileInfo {
 
     isDomain(): boolean {
         return true;
-    }
-    isProblem(): boolean {
-        return false;
     }
 
     getTypesInheritingFrom(type: string): string[] {
@@ -502,16 +545,46 @@ export class DomainInfo extends FileInfo {
     }
 }
 
+/**
+ * Plan file.
+ */
+export class PlanInfo extends FileInfo {
+
+    steps: PlanStep[] = [];
+
+    constructor(fileUri: string, version: number, public problemName: string, public domainName: string, text: string) {
+        super(fileUri, version, problemName);
+        this.text = text;
+    }
+
+    getLanguage(): PddlLanguage {
+        return PddlLanguage.PLAN;
+    }
+
+    setSteps(steps: PlanStep[]): void {
+        this.steps = steps;
+    }
+
+    getSteps(): PlanStep[] {
+        return this.steps;
+    }
+
+    isPlan(): boolean {
+        return true;
+    }
+}
+
 export class UnknownFileInfo extends FileInfo {
     constructor(fileUri: string, version: number) {
         super(fileUri, version, "");
     }
-
-    isDomain(): boolean {
-        return false;
+    
+    getLanguage(): PddlLanguage {
+        return PddlLanguage.PDDL;
     }
-    isProblem(): boolean {
-        return false;
+
+    isUnknownPddl(): boolean {
+        return true;
     }
 }
 
@@ -718,4 +791,22 @@ export class Action {
  */
 export class PddlRange {
     constructor(public startLine: number, public startCharacter: number, public endLine: number, public endCharacter: number) { }
+}
+
+export enum PddlLanguage {
+    PDDL, PLAN
+}
+
+// Language ID of Domain and Problem files
+export const PDDL = 'pddl';
+// Language ID of Plan files
+export const PLAN = 'plan';
+
+var languageMap = new Map<string, PddlLanguage>([
+	[PDDL, PddlLanguage.PDDL],
+	[PLAN, PddlLanguage.PLAN]
+]);
+
+export function toLanguageFromId(languageId: string): PddlLanguage {
+	return languageMap.get(languageId);
 }

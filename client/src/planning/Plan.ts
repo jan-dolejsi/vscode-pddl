@@ -4,22 +4,7 @@
  * ------------------------------------------------------------------------------------------ */
 'use strict';
 
-import { DomainInfo, ProblemInfo } from '../../../common/src/parser';
-import { PlanStep } from '../../../common/src/PlanStep';
-
-export class Plan {
-    makespan: number;
-    statesEvaluated?: number;
-    cost?: number;
- 
-    constructor(public steps: PlanStep[], public domain: DomainInfo, public problem: ProblemInfo) {
-        this.makespan = Math.max(...steps.map(step => step.time + step.duration));
-    }
-
-    getText(): string {
-        return this.steps.map(step => step.toPddl()).join("\n");
-    }
-}
+import { Plan } from "../../../common/src/Plan";
 
 export interface PlanningHandler {
     handleOutput(outputText: string): void;

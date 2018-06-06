@@ -13,7 +13,7 @@ import * as path from 'path';
 import { DomainInfo, TypeObjects } from '../../../common/src/parser';
 import { SwimLane } from '../../../common/src/SwimLane';
 import { PlanStep } from '../../../common/src/PlanStep';
-import { Plan } from './plan';
+import { Plan } from '../../../common/src/Plan';
 import { Util } from '../../../common/src/util';
 import { PlanFunctionEvaluator } from './PlanFunctionEvaluator';
 import { PlanReportSettings } from './PlanReportSettings';
@@ -61,11 +61,6 @@ export class PlanReportGenerator {
             ${this.includeScript(this.asAbsolutePath('planview', 'plans.js'))}
             <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
             ${this.includeScript(this.asAbsolutePath('planview', 'charts.js'))}
-            <script type="text/javascript">var selectedPlan = 0;
-            function updatePlanExportHref(a) {
-                a.search = "?" + encodeURI(JSON.stringify([selectedPlan]));
-            }
-            </script>
         </head>
         <body onload="scrollPlanSelectorIntoView(${selectedPlan})">
             <div class="planSelectors" style="display: ${planSelectorsDisplayStyle};">${planSelectors}
@@ -241,10 +236,10 @@ ${stepsInvolvingThisObject}
 
     toActionTooltip(step: PlanStep): string {
         let durationRow = step.isDurative ?
-            `<tr><td class="actionToolTip">Duration: </td><td class="actionToolTip">${step.duration}</td></tr>
-            <tr><td class="actionToolTip">End: </td><td class="actionToolTip">${step.time + step.duration}</td></tr>` :
+            `<tr><td class="actionToolTip">Duration: </td><td class="actionToolTip">${step.getDuration()}</td></tr>
+            <tr><td class="actionToolTip">End: </td><td class="actionToolTip">${step.getEndTime()}</td></tr>` :
             '';
-        return `<table><tr><th colspan="2" class="actionToolTip">${step.actionName} ${step.objects.join(' ')}</th></tr><tr><td class="actionToolTip" style="width:50px">Start:</td><td class="actionToolTip">${step.time}</td></tr>${durationRow}</table>`;
+        return `<table><tr><th colspan="2" class="actionToolTip">${step.actionName} ${step.objects.join(' ')}</th></tr><tr><td class="actionToolTip" style="width:50px">Start:</td><td class="actionToolTip">${step.getStartTime()}</td></tr>${durationRow}</table>`;
     }
 
     includeStyle(path: string): string {
@@ -266,23 +261,22 @@ ${stepsInvolvingThisObject}
     }
 
     computeLeftOffset(step: PlanStep, plan: Plan): number {
-        return step.time / plan.makespan * this.displayWidth;
+        return step.getStartTime() / plan.makespan * this.displayWidth;
     }
 
     renderMenu(): string {
         let generateReportUri = encodeURI('command:' + PDDL_GENERATE_PLAN_REPORT);
         let exportPlanUri = encodeURI('command:' + PDDL_EXPORT_PLAN + '?' + JSON.stringify([0]));
-        //onClick="updatePlanExportHref(this)"
         return `    <div class="menu">&#x2630;
         <span class="menutooltip">
             <a href="${generateReportUri}">Generate plan report</a>
-            <a href="${exportPlanUri}">Export as .plan file...</a>
+            <a href="${exportPlanUri}" onClick="updatePlanExportHref(this)">Export as .plan file...</a>
         </span>
     </div>`;
     }
 
     computeWidth(step: PlanStep, plan: Plan): number {
-        return Math.max(1, step.duration / plan.makespan * this.displayWidth);
+        return Math.max(1, step.getDuration() / plan.makespan * this.displayWidth);
     }
 
     getActionColor(step: PlanStep, domain: DomainInfo): string {

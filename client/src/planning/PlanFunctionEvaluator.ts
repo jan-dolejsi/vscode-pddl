@@ -8,7 +8,7 @@ import * as process from 'child_process';
 
 import { Variable } from '../../../common/src/parser';
 import { Grounder } from '../../../common/src/Grounder';
-import { Plan } from './plan';
+import { Plan } from "../../../common/src/Plan";
 import { Util } from '../../../common/src/util';
 import { PlanTimeSeriesParser } from '../../../common/src/PlanTimeSeriesParser';
 
