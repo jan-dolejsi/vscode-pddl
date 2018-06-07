@@ -22,7 +22,7 @@ describe('PlanValuesParser', () => {
             let functionName = "function1";
             let function1 = new Variable(functionName, []);
             let planSteps = [
-                new PlanStep(1, actionName, true, 2)
+                new PlanStep(1, actionName, true, 2, undefined)
             ];
 
             // WHEN
@@ -44,7 +44,7 @@ describe('PlanValuesParser', () => {
             let functionNames = ["function1", "function2"];
             let functions = functionNames.map(name => new Variable(name, []));
             let planSteps = [
-                new PlanStep(1, actionName, true, 2)
+                new PlanStep(1, actionName, true, 2, undefined)
             ];
 
             // WHEN
@@ -73,7 +73,7 @@ describe('PlanValuesParser', () => {
             let objects = ["o1", "o2"];
             let functions = objects.map(objectName => new Variable(liftedFunction.declaredName, [new ObjectInstance(objectName, type1)]));
             let planSteps = [
-                new PlanStep(1, actionName, true, 2)
+                new PlanStep(1, actionName, true, 2, undefined)
             ];
 
             // WHEN
@@ -92,7 +92,7 @@ describe('PlanValuesParser', () => {
             let functionName = "function1";
             let function1 = new Variable(functionName, []);
             let planSteps = [
-                new PlanStep(1, actionName, false, 0.001)
+                new PlanStep(1, actionName, false, 0.001, undefined)
             ];
 
             // WHEN
