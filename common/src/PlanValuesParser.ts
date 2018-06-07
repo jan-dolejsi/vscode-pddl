@@ -29,11 +29,11 @@ export class PlanValuesParser {
                 throw new Error("Action name does not match the one in the plan: " + actionFunctionValues[idx]);
             }
 
-            this.addState(planStep.time,
+            this.addState(planStep.getStartTime(),
                 planStepFunctionValues.slice(1, 1 + functions.length));
 
             if (this.describesDurativeAction(planStepFunctionValues)) {
-                this.addState(planStep.time + planStep.duration,
+                this.addState(planStep.getStartTime() + planStep.getDuration(),
                     planStepFunctionValues.slice(1 + functions.length));
             }
         });

@@ -65,16 +65,6 @@
     ],
     "description": "Creates a durative action"
   },
-  "increase":{
-    "prefix": "increase",
-    "body": ["(increase ${1} (* #t $0)"],
-    "description": "Continuous increase effect"
-  },
-  "decrease":{
-    "prefix": "decrease",
-    "body": ["(decrease ${1} (* #t $0)"],
-    "description": "Continuous decrease effect"
-  },
   "problem": {
     "prefix": "problem",
     "body": [

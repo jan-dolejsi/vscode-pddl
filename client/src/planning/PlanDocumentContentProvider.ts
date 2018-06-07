@@ -8,7 +8,7 @@ import {
     Uri, TextDocumentContentProvider, Event, EventEmitter, CancellationToken, ExtensionContext
 } from 'vscode';
 
-import { Plan } from './plan';
+import { Plan } from "../../../common/src/Plan";
 import { PlanReportGenerator } from './PlanReportGenerator';
 
 export class PlanDocumentContentProvider implements TextDocumentContentProvider {

@@ -14,8 +14,8 @@ import { PTestTreeDataProvider, PTestNode, PTestNodeKind } from './PTestTreeData
 import { GeneratedDocumentContentProvider } from './GeneratedDocumentContentProvider';
 import { Planning } from '../planning/planning';
 import { PlanningOutcome } from '../planning/PlanningResult';
-import { Plan } from '../planning/plan';
-import { PddlPlanParser } from '../planning/PddlPlanParser';
+import { Plan } from '../../../common/src/Plan';
+import { PddlPlanParser } from '../../../common/src/PddlPlanParser';
 import { TestsManifest } from './TestsManifest';
 import { PlanStep } from '../../../common/src/PlanStep';
 
@@ -48,7 +48,7 @@ export class PTestExplorer {
 
         this.outputWindow = window.createOutputChannel("PDDL Test output");
 
-        this.generatedDocumentContentProvider = new GeneratedDocumentContentProvider(this.outputWindow);
+        this.generatedDocumentContentProvider = new GeneratedDocumentContentProvider(this.outputWindow, planning.pddlWorkspace);
         context.subscriptions.push(workspace.registerTextDocumentContentProvider('tpddl', this.generatedDocumentContentProvider));
     }
 

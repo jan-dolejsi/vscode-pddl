@@ -8,10 +8,22 @@ export class PlanStep {
     actionName: string;
     objects: string[];
 
-    constructor(public time: number, public fullActionName: string, public isDurative: boolean, public duration: number) {
+    constructor(private time: number, public fullActionName: string, public isDurative: boolean, private duration: number, public lineIndex: number | undefined) {
         let nameFragments = fullActionName.split(' ');
         this.actionName = nameFragments[0];
         this.objects = nameFragments.slice(1);
+    }
+
+    getStartTime(): number {
+        return this.time;
+    }
+
+    getEndTime(): number {
+        return this.isDurative ? this.time + this.duration : this.time;
+    }
+
+    getDuration(): number {
+        return this.duration;
     }
 
     equals(other: PlanStep, epsilon: number): boolean {

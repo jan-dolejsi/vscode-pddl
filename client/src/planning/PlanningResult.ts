@@ -4,7 +4,7 @@
  * ------------------------------------------------------------------------------------------ */
 'use strict';
 
-import { Plan } from './plan';
+import { Plan } from '../../../common/src/Plan';
 
 export enum PlanningOutcome { SUCCESS, FAILURE, KILLED }
 

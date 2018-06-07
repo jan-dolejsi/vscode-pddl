@@ -12,10 +12,11 @@ import * as process from 'child_process';
 const tree_kill = require('tree-kill');
 
 import { Planner } from './planner';
-import { PlanningHandler, Plan } from './plan';
+import { PlanningHandler } from './plan';
 import { DomainInfo, ProblemInfo } from '../../../common/src/parser';
 import { Util } from '../../../common/src/util';
-import { PddlPlanParser } from './PddlPlanParser';
+import { PddlPlanParser } from '../../../common/src/PddlPlanParser';
+import { Plan } from "../../../common/src/Plan";
 
 export class PlannerExecutable extends Planner {
 

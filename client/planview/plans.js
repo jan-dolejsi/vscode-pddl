@@ -1,4 +1,6 @@
 function showPlan(planIndex) {
+    // remember the index of the plan that is being shown for later manipulation
+    selectedPlan = planIndex;
     document.querySelectorAll("div.gantt").forEach(div => showPlanDiv(planIndex, div));
     document.querySelectorAll("div.resourceUtilization").forEach(div => showPlanDiv(planIndex, div));
     document.querySelectorAll("div.lineChart").forEach(div => showPlanDiv(planIndex, div));
@@ -21,4 +23,9 @@ function scrollPlanSelectorIntoView(planIndex) {
     document.querySelectorAll('div.planSelector').forEach(div => {
         if (parseInt(div.getAttribute('plan')) == planIndex) div.scrollIntoViewIfNeeded();
     });
+}
+
+var selectedPlan = 0;
+function updatePlanExportHref(a) {
+    a.search = "?" + encodeURI(JSON.stringify([selectedPlan]));
 }

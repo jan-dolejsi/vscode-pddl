@@ -45,13 +45,13 @@ export class Diagnostics {
 
     validateAllDirty(): void {
         // find all dirty unknown files
-        let dirtyUnknowns = this.workspace.getAllFilesIf(fileInfo => !fileInfo.isProblem() && !fileInfo.isDomain() && fileInfo.getStatus() == FileStatus.Dirty);
+        let dirtyUnknowns = this.workspace.getAllFilesIf(fileInfo => !fileInfo.isProblem() && !fileInfo.isDomain() && fileInfo.getStatus() == FileStatus.Parsed);
 
         // validate unknown files (those where the header does not parse)
         dirtyUnknowns.forEach(file => this.validateUnknownFile(file));
 
         // find all dirty domains
-        let dirtyDomains = this.workspace.getAllFilesIf(fileInfo => fileInfo.isDomain() && fileInfo.getStatus() == FileStatus.Dirty);
+        let dirtyDomains = this.workspace.getAllFilesIf(fileInfo => fileInfo.isDomain() && fileInfo.getStatus() == FileStatus.Parsed);
 
         if (dirtyDomains.length > 0) {
             let firstDirtyDomain = <DomainInfo>dirtyDomains[0];
@@ -63,7 +63,7 @@ export class Diagnostics {
         }
 
         // find all dirty problems
-        let dirtyProblems = this.workspace.getAllFilesIf(fileInfo => fileInfo.isProblem() && fileInfo.getStatus() == FileStatus.Dirty);
+        let dirtyProblems = this.workspace.getAllFilesIf(fileInfo => fileInfo.isProblem() && fileInfo.getStatus() == FileStatus.Parsed);
 
         if (dirtyProblems.length > 0) {
             let firstDirtyProblem = <ProblemInfo>dirtyProblems[0];
@@ -78,7 +78,7 @@ export class Diagnostics {
     revalidateAll(): void {
         // mark all files as dirty
         this.workspace.folders.forEach(folder => {
-            folder.files.forEach(f => f.setStatus(FileStatus.Dirty));
+            folder.files.forEach(f => f.setStatus(FileStatus.Parsed));
         });
         // revalidate all files
         this.cancelScheduledValidation(); // ... and validate immediately

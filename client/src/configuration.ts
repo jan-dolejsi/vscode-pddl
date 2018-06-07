@@ -3,8 +3,9 @@
  * Licensed under the MIT License. See License.txt in the project root for license information.
  * ------------------------------------------------------------------------------------------ */
 import * as vscode from 'vscode';
+import { PDDLParserSettings } from './Settings';
 
-const PDDL_PARSER = 'pddlParser';
+export const PDDL_PARSER = 'pddlParser';
 const PARSER_EXECUTABLE_OR_SERVICE = PDDL_PARSER + '.executableOrService';
 const PARSER_EXECUTABLE_OPTIONS = PDDL_PARSER + '.executableOptions';
 const PARSER_LEGACY_LOCATION = PDDL_PARSER + '.pddlParserService';
@@ -20,6 +21,8 @@ const PLANNER_SERVICE_AUTHENTICATION_ACCESS_TOKEN = PDDL_PLANNER + '.serviceAuth
 const PLANNER_SERVICE_AUTHENTICATION_S_TOKEN = PDDL_PLANNER + '.serviceAuthenticationSToken';
 const PLANNER_EPSILON_TIMESTEP = PDDL_PLANNER + '.epsilonTimeStep';
 export const PLANNER_VALUE_SEQ_PATH  = PDDL_PLANNER + ".valueSeqPath";
+export const PDDL_PLAN = 'pddlPlan';
+export const VALIDATION_PATH = 'validatorPath';
 
 export class PddlConfiguration {
 
@@ -310,6 +313,10 @@ export class PddlConfiguration {
         return vscode.workspace.getConfiguration().get(PLANNER_VALUE_SEQ_PATH);
     }
 
+    getValidatorPath(): string {
+        return vscode.workspace.getConfiguration(PDDL_PLAN).get(VALIDATION_PATH);
+    }
+
     async askConfigurationScope(): Promise<ScopeQuickPickItem> {
         let availableScopes: ScopeQuickPickItem[] = [
             { label: 'This machine (default)', description: 'Selected tool will be used for all domain/problem files on this computer.', target: vscode.ConfigurationTarget.Global }
@@ -361,7 +368,13 @@ export class PddlConfiguration {
             return vscode.workspace.getConfiguration();
         }
     }
+    
+    getParserSettings(): PDDLParserSettings {
+        let configurationAny: any = vscode.workspace.getConfiguration(PDDL_PARSER);
+        let configuration = <PDDLParserSettings>configurationAny;
 
+        return configuration;
+    }
 }
 
 class ScopeQuickPickItem implements vscode.QuickPickItem {

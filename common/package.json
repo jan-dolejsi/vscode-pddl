@@ -22,6 +22,7 @@
     "opn": "^5.1.0",
     "request": "^2.83.0",
     "tmp": "^0.0.33",
+    "events": "^2.0.0",
     "nunjucks": "^3.1.2"
   },
   "devDependencies": {
@@ -32,6 +33,7 @@
     "@types/opn": "^5.1.0",
     "@types/request": "^2.0.9",
     "@types/uuid": "^3.4.3",
+    "@types/events": "^1.2.0",
     "mocha": "^5.1.1",
     "typescript": "^2.8.1"
   }

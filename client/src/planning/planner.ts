@@ -5,8 +5,9 @@
 'use strict';
 
 import { DomainInfo, ProblemInfo } from '../../../common/src/parser';
-import { Plan, PlanningHandler } from './plan';
-import { PddlPlanParser } from './PddlPlanParser';
+import { PlanningHandler } from './plan';
+import { Plan } from '../../../common/src/Plan';
+import { PddlPlanParser } from '../../../common/src/PddlPlanParser';
 
 export abstract class Planner {
     epsilon = 1e-3;

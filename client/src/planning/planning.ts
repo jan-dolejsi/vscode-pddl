@@ -14,16 +14,24 @@ import * as path from 'path';
 import { PlanDocumentContentProvider } from './PlanDocumentContentProvider';
 
 import { PddlWorkspace } from '../../../common/src/workspace-model';
-import { DomainInfo, ProblemInfo, FileInfo } from '../../../common/src/parser';
+import { DomainInfo, ProblemInfo, FileInfo, PddlLanguage } from '../../../common/src/parser';
 import { PddlConfiguration } from '../configuration';
-import { Plan, PlanningHandler } from './plan';
+import { Plan } from '../../../common/src/Plan';
+import { PlanningHandler } from './plan';
 import { PlannerExecutable } from './PlannerExecutable';
 import { PlannerService } from './PlannerService';
 import { Planner } from './planner';
-import { PddlPlanParser } from './PddlPlanParser';
+import { PddlPlanParser } from '../../../common/src/PddlPlanParser';
 import { Authentication } from '../../../common/src/Authentication';
 import { dirname } from 'path';
 import { PlanningResult } from './PlanningResult';
+import { PlanReportGenerator } from './PlanReportGenerator';
+import { PlanExporter } from './PlanExporter';
+import { PlanHappeningsExporter } from './PlanHappeningsExporter';
+
+export const PDDL_GENERATE_PLAN_REPORT = 'pddl.planReport';
+export const PDDL_EXPORT_PLAN = 'pddl.exportPlan';
+const PDDL_CONVERT_PLAN_TO_HAPPENINGS = 'pddl.convertPlanToHappenings';
 
 /**
  * Delegate for handling requests to run the planner and visualize the plans.
@@ -53,7 +61,34 @@ export class Planning implements PlanningHandler {
                 }
             })
         );
-
+        
+        context.subscriptions.push(commands.registerCommand(PDDL_GENERATE_PLAN_REPORT, () => {
+            let plans: Plan[] = this.getPlans();
+            if (plans != null) {
+                new PlanReportGenerator(context, 1000, true).export(plans, plans.length - 1);
+            } else {
+                window.showErrorMessage("There is no plan to export.");
+            }
+        }));
+        
+        context.subscriptions.push(commands.registerCommand(PDDL_EXPORT_PLAN, selectedPlan => {
+            let plans: Plan[] = this.getPlans();
+            if (plans != null && selectedPlan < plans.length) {
+                new PlanExporter().export(plans[selectedPlan]);
+            } else {
+                window.showErrorMessage("There is no plan open, or the selected plan does not exist.");
+            }
+        }));
+        
+        context.subscriptions.push(commands.registerCommand(PDDL_CONVERT_PLAN_TO_HAPPENINGS, async() => {
+            if (window.activeTextEditor && window.activeTextEditor.document.languageId == "plan"){
+                let epsilon = plannerConfiguration.getEpsilonTimeStep();
+                new PlanHappeningsExporter(window.activeTextEditor.document, epsilon).export();
+            } else {
+                window.showErrorMessage("There is no plan file open.");
+            }
+        }));
+        
         this.previewUri = Uri.parse('pddl-plan://authority/plan');
         this.provider = new PlanDocumentContentProvider(context);
         context.subscriptions.push(workspace.registerTextDocumentContentProvider('pddl-plan', this.provider));
@@ -79,7 +114,7 @@ export class Planning implements PlanningHandler {
     }
 
     private upsertFile(doc: TextDocument): FileInfo {
-        return this.pddlWorkspace.upsertFile(doc.uri.toString(), doc.version, doc.getText());
+        return this.pddlWorkspace.upsertAndParseFile(doc.uri.toString(), PddlLanguage.PDDL, doc.version, doc.getText());
     }
 
     /**
@@ -88,7 +123,7 @@ export class Planning implements PlanningHandler {
     async plan(): Promise<boolean> {
 
         if (this.planner) {
-            window.showErrorMessage("Planner is already running. Stop it using button in the status bar or wait for it to finish.");
+            window.showErrorMessage("Planner is already running. Stop it using the Cancel button in the progress notification or wait for it to finish.");
             return false;
         }
 
@@ -97,7 +132,7 @@ export class Planning implements PlanningHandler {
         const activeDocument = window.activeTextEditor.document;
         const activeFilePath = activeDocument.fileName;
 
-        const activeFileInfo = this.pddlWorkspace.upsertFile(activeDocument.uri.toString(), activeDocument.version, activeDocument.getText());
+        const activeFileInfo = this.upsertFile(activeDocument);
 
         let problemFileInfo: ProblemInfo;
         let domainFileInfo: DomainInfo;
@@ -262,7 +297,7 @@ export class Planning implements PlanningHandler {
     }
 
     handleSuccess(stdout: string, plans: Plan[]): void {
-        this.output.appendLine('Process exited.');
+        this.output.appendLine('Planner finished successfully.');
         stdout.length; // just waste it, we did not need it here
 
         this.visualizePlans(plans);

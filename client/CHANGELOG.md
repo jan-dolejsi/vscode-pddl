@@ -1,12 +1,47 @@
 # What's new
 
+## [2.6.5] - 2018-06-07
+
+### Plan and Plan Happenings support
+
+Added support for .plan files in the format of the usual PDDL planner output.
+A .plan file can be generated using an option in the Plan Visualization menu (&#x2630;), or using a _PDDL: Export plan to a file..._ command.
+
+A context menu option in .plan file _PDDL: Convert plan to happenings..._ supports export to a .happenings file.
+
+Both plan formats are covered by syntax highlighting and .plan files have a context menu option _PDDL: Validate plan_, which requires the `validate` executable path to be configured in the _pddlPlan.validatorPath_ setting. See [VAL](https://github.com/KCL-Planning/VAL) for more details.
+
+Problems in .plan files are displayed in the Problems panel of VS Code as long as a corresponding problem and domain files (located in the same folder) are open in the editor and the `validate` executable location is configured via the _pddlPlan.validatorPath_ setting.
+
+![Plan validation](https://raw.githubusercontent.com/wiki/jan-dolejsi/vscode-pddl/img/PDDL_plan_validation.gif)
+
+### Improved auto-completion support
+
+- Predicates and Functions now display the documentation string
+- Snippet is available for continuous numeric effects
+- Clearer description of many auto-completion items: more descriptive text and proper markdown rendering.
+
+![Improved auto-completion](https://raw.githubusercontent.com/wiki/jan-dolejsi/vscode-pddl/img/PDDL_auto_completion2.gif)
+
+### Problem generation from templates
+
+When the problem template file and corresponding generated problem file are open side-by side, the edits in the template are reflected in the generated problem file as a live preview as you type.
+
+![Templated problem file generation with live preview](https://raw.githubusercontent.com/wiki/jan-dolejsi/vscode-pddl/img/PDDL_templated_problem_live_preview.gif)
+
+Language Server pattern was removed. Both auto-completion and PDDL parsing is now happening in the extension main process (i.e. client).
+
+### Bug-fixes
+
+Fixed issues arising when using a planning service.
+
 ## [2.6.4] - 2018-05-28
 
 ### Bug-fixes
 
 - Test cases that fail in the pre-processing step (e.g. Python script fails), the test case result now correctly shows as failed.
 - The Plan Visualization menu (&#x2630;) now displays at a fixed top-right location above the action list.
-- The action tool tip in Plan Visualization text is better aligned, so numbers are visible even for long action names. 
+- The action tool tip in Plan Visualization text is better aligned, so numbers are visible even for long action names.
 
 ## [2.6.3] - 2018-05-16
 
@@ -206,15 +241,14 @@ Simplified snippets and added tabstops/placeholders to them, so they are easy to
 - Removal of the language server
 - More general matching of domain file to problem file across workspace folder structure
 
-## [Unreleased]
-
-Migration of language support implementation from the language server to the client part and removal of the language server.
+## Note to contributors
 
 Note for open source contributors: all notable changes to the "pddl" extension will be documented in this file.
 
 Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
 
-[Unreleased]: https://github.com/jan-dolejsi/vscode-pddl/compare/v2.6.4...HEAD
+[Unreleased]: https://github.com/jan-dolejsi/vscode-pddl/compare/v2.6.5...HEAD
+[2.6.5]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.6.4...v2.6.5
 [2.6.4]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.6.3...v2.6.4
 [2.6.3]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.6.2...v2.6.3
 [2.6.2]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.6.1...v2.6.2

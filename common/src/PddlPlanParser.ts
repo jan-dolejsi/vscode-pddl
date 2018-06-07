@@ -5,8 +5,8 @@
 'use strict';
 
 import { Plan } from './plan';
-import { PlanStep } from '../../../common/src/PlanStep';
-import { DomainInfo, ProblemInfo } from '../../../common/src/parser';
+import { PlanStep } from './PlanStep';
+import { DomainInfo, ProblemInfo } from './parser';
 
 /**
  * Parses plan in the PDDL form incrementally - line/buffer at a time.
@@ -14,14 +14,15 @@ import { DomainInfo, ProblemInfo } from '../../../common/src/parser';
 export class PddlPlanParser {
 
     plans: Plan[] = [];
-    public planStepPattern = /^\s*((\d+|\d+\.\d+|\.\d+)\s*:)?\s*\((.*)\)\s*(\[(\d+|\d+\.\d+|\.\d+)\])?\s*$/gim;
-    planStatesEvaluatedPattern = /^; States evaluated[\w ]*:[ ]*(\d*)\s*$/i;
+    public static planStepPattern = /^\s*((\d+|\d+\.\d+)\s*:)?\s*\((.*)\)\s*(\[(\d+|\d+\.\d+)\])?\s*$/gim;
+    planStatesEvaluatedPattern = /^;\s*States evaluated[\w ]*:[ ]*(\d*)\s*$/i;
     planCostPattern = /[\w ]*(cost|metric)[\D :]*[ ]*(\d*|\d*\.\d*)\s*$/i
 
-    planBuilder = new PlanBuilder();
+    planBuilder: PlanBuilder;
     endOfBufferToBeParsedNextTime = '';
 
     constructor(public domain: DomainInfo, public problem: ProblemInfo, public epsilon: number, public onPlanReady?: (plans: Plan[]) => void) {
+        this.planBuilder = new PlanBuilder(epsilon);
     }
 
     /**
@@ -29,7 +30,7 @@ export class PddlPlanParser {
      * @param text planner output
      */
     appendBuffer(text: string): void {
-        const textString = this.endOfBufferToBeParsedNextTime + text; 
+        const textString = this.endOfBufferToBeParsedNextTime + text;
         this.endOfBufferToBeParsedNextTime = '';
         let lastEndLine = 0;
         let nextEndLine: number;
@@ -49,17 +50,10 @@ export class PddlPlanParser {
      */
     appendLine(outputLine: string): void {
 
-        this.planStepPattern.lastIndex = 0;
-        let group = this.planStepPattern.exec(outputLine);
-        if (group) {
+        let planStep = this.planBuilder.parse(outputLine, undefined);
+        if (planStep) {
             // this line is a plan step
-            let time = group[2] ? parseFloat(group[2]) : this.planBuilder.makespan();
-            let action = group[3];
-            let isDurative = group[5] ? true : false;
-            let duration = isDurative ? parseFloat(group[5]) : this.epsilon;
-
-            this.planBuilder.steps.push(new PlanStep(time, action, isDurative, duration));
-            if (!this.planBuilder.parsingPlan) this.planBuilder.parsingPlan = true;
+            this.appendStep(planStep);
         } else {
             // this line is NOT a plan step
             if (this.planBuilder.parsingPlan) {
@@ -67,6 +61,7 @@ export class PddlPlanParser {
                 this.onPlanFinished();
             }
 
+            let group: RegExpExecArray;
             this.planStatesEvaluatedPattern.lastIndex = 0;
             this.planCostPattern.lastIndex = 0;
             if (group = this.planStatesEvaluatedPattern.exec(outputLine)) {
@@ -81,6 +76,15 @@ export class PddlPlanParser {
     }
 
     /**
+     * Appends plan step. Use this when the plan does not need parsing.
+     * @param planStep plan step to add to the plan
+     */
+    appendStep(planStep: PlanStep) {
+        this.planBuilder.add(planStep);
+        if (!this.planBuilder.parsingPlan) this.planBuilder.parsingPlan = true;
+    }
+
+    /**
      * Call this when the planning engine stopped. This flushes the last line in the buffered output through the parsing 
      * and adds the last plan to the collection of plans.
      */
@@ -89,9 +93,9 @@ export class PddlPlanParser {
             this.appendLine(this.endOfBufferToBeParsedNextTime);
             this.endOfBufferToBeParsedNextTime = '';
         }
-        if (this.planBuilder.steps.length > 0) {
+        if (this.planBuilder.getSteps().length > 0) {
             this.plans.push(this.planBuilder.build(this.domain, this.problem));
-            this.planBuilder = new PlanBuilder();
+            this.planBuilder = new PlanBuilder(this.epsilon);
         }
 
         if (this.onPlanReady) this.onPlanReady.apply(this, [this.plans]);
@@ -108,25 +112,55 @@ export class PddlPlanParser {
 /**
  * Utility for incremental plan building as it is being parsed.
  */
-class PlanBuilder {
+export class PlanBuilder {
     statesEvaluated: number;
     cost: number;
-    steps: PlanStep[] = [];
+    private steps: PlanStep[] = [];
 
     outputText = ""; // for information only
     parsingPlan = false;
+    makespan = 0;
+
+    constructor(private epsilon: number) {}
+
+    parse(planLine: string, lineIndex: number | undefined): PlanStep | undefined {
+        PddlPlanParser.planStepPattern.lastIndex = 0;
+        let group = PddlPlanParser.planStepPattern.exec(planLine);
+        if (group) {
+            // this line is a valid plan step
+            let time = group[2] ? parseFloat(group[2]) : this.getMakespan();
+            let action = group[3];
+            let isDurative = group[5] ? true : false;
+            let duration = isDurative ? parseFloat(group[5]) : this.epsilon;
+
+            return new PlanStep(time, action, isDurative, duration, lineIndex);
+        } else {
+            return undefined;
+        }
+    }
+
+    add(step: PlanStep) {
+        if (this.makespan < step.getEndTime()) {
+            this.makespan = step.getEndTime();
+        }
+        this.steps.push(step);
+    }
+
+    getSteps(): PlanStep[] {
+        return this.steps;
+    }
 
     build(domain: DomainInfo, problem: ProblemInfo): Plan {
         let plan = new Plan(this.steps, domain, problem);
 
         plan.statesEvaluated = this.statesEvaluated;
         // if cost was not output by the planning engine, use the plan makespan
-        plan.cost = this.cost ? this.cost : this.makespan();
+        plan.cost = this.cost ? this.cost : this.getMakespan();
 
         return plan;
     }
 
-    makespan(): number {
-        return this.steps.length ? Math.max(...this.steps.map(step => step.time + step.duration)) : 0;
+    getMakespan(): number {
+        return this.makespan;
     }
 }

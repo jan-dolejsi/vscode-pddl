@@ -6,12 +6,17 @@
 
 import * as request from 'request';
 import { Planner } from './planner';
-import { Plan, PlanningHandler } from './plan';
+import { PlanningHandler } from './plan';
+import { Plan } from '../../../common/src/Plan';
 import { DomainInfo, ProblemInfo } from '../../../common/src/parser';
-import { PddlPlanParser } from './PddlPlanParser';
+import { PddlPlanParser } from '../../../common/src/PddlPlanParser';
+import { PlanStep } from '../../../common/src/PlanStep';
 import { Authentication } from '../../../common/src/Authentication';
 
 export class PlannerService extends Planner {
+
+    // This epsilon is used only for the duration of instantaneous actions
+    epsilon = 1e-3;
 
     constructor(plannerPath: string, private useAuthentication: boolean, private authentication: Authentication) {
         super(plannerPath, "");
@@ -31,9 +36,10 @@ export class PlannerService extends Planner {
             "domain": domainFileInfo.text,
             "problem": problemFileInfo.text
         }
-
+        
+        let that = this;
         return new Promise<Plan[]>(function(resolve, reject) {
-            request.post({ url: this.plannerPath, headers: requestHeader, body: requestBody, json: true }, (err, httpResponse, responseBody) => {
+            request.post({ url: that.plannerPath, headers: requestHeader, body: requestBody, json: true }, (err, httpResponse, responseBody) => {
 
                 if (err != null) {
                     parent.handleError(err, "");
@@ -41,7 +47,7 @@ export class PlannerService extends Planner {
                     return;
                 }
     
-                if(this.useAuthentication) {
+                if(that.useAuthentication) {
                     if (httpResponse) {
                         if (httpResponse.statusCode == 400) {
                             let message = "Authentication failed. Please login or update tokens."
@@ -107,12 +113,17 @@ export class PlannerService extends Planner {
     
                 for (var index = 0; index < planSteps.length; index++) {
                     var planStep = planSteps[index];
-                    planParser.appendLine(planStep["name"]);
+                    let fullActionName = (<string>planStep["name"]).replace('(','').replace(')', '');
+                    let planStepObj = new PlanStep(planStep["time"], fullActionName, planStep["duration"] != null, planStep["duration"] ? planStep["duration"] : that.epsilon, index);
+                    planParser.appendStep(planStepObj);
                 }
     
                 planParser.onPlanFinished();
     
                 let plans = planParser.getPlans();
+                if (plans.length > 0) parent.handleOutput(plans[0].getText() + '\n');
+                else parent.handleOutput('No plan found.');
+
                 parent.handleSuccess(responseBody.toString(), plans);
                 resolve(plans);
             });
