@@ -297,7 +297,7 @@ export class Planning implements PlanningHandler {
     }
 
     handleSuccess(stdout: string, plans: Plan[]): void {
-        this.output.appendLine('Process exited.');
+        this.output.appendLine('Planner finished successfully.');
         stdout.length; // just waste it, we did not need it here
 
         this.visualizePlans(plans);

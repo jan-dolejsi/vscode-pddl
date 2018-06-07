@@ -4,16 +4,23 @@ This extension makes VS Code a great place for modeling planning domains. Read m
 
 ## Features
 
-Extension is activated on any `.pddl` files (commonly holding domain or problem definitions) or files with no extension (sometimes used for problem definitions). It brings PDDL to the family of first-class languages with the level of support on par with c#, python or javascript.
+This extension brings PDDL to the family of first-class languages with the level of support on par with c#, python or javascript. It aims to help the novice and empower the expert by following features:
+
+* planning domain modeling
+* planning domain validation by number of regression or scalability test cases
+* planning solution industrializing by problem file generation from templates
+* plan validation
+
+Extension is activated on any `.pddl` files (commonly holding domain or problem definitions) or selected PDDL commands to configure parser and planner.
 
 ### Snippets
 
 Following snippets are supported if you start typing following prefix
 
-- `domain`: creates a domain skeleton
-- `action`: instantaneous action
-- `action-durative`: durative action
-- `problem`: creates a problem skeleton
+* `domain`: creates a domain skeleton
+* `action`: instantaneous action
+* `action-durative`: durative action
+* `problem`: creates a problem skeleton
 
 ![snippets](https://raw.githubusercontent.com/wiki/jan-dolejsi/vscode-pddl/img/snippets.gif)
 
@@ -50,17 +57,19 @@ Put cursor into a predicate, function or type name and press _F2_ to rename its 
 
 When typing in the domain or problem file characters such as `(` or `:`, Visual Studio Code pops up the suggested keywords or names of predicates/functions.
 
-![auto_completion](https://raw.githubusercontent.com/wiki/jan-dolejsi/vscode-pddl/img/PDDL_auto_completion.gif)
+![Auto-completion](https://raw.githubusercontent.com/wiki/jan-dolejsi/vscode-pddl/img/PDDL_auto_completion.gif)
 
 Some PDDL constructs are supported with smart snippets, which are aware of where you are in the document and what is in your model:
 
-![timed_initial_literals_snippets](https://raw.githubusercontent.com/wiki/jan-dolejsi/vscode-pddl/img/PDDL_timed_initial_snippets.gif)
+![Auto-completion with smart snippets - continuous decrease](https://raw.githubusercontent.com/wiki/jan-dolejsi/vscode-pddl/img/PDDL_auto_completion2.gif)
+
+![Auto-completion with smart snippets - timed initial literals/fluents](https://raw.githubusercontent.com/wiki/jan-dolejsi/vscode-pddl/img/PDDL_timed_initial_snippets.gif)
 
 ### Syntactic errors
 
 PDDL parser can be configured to run in the background and draw attention to syntactic errors, so you can fix them before running the planner. This dramatically shortens the time you need to come up with a valid PDDL.
 
-![parser_configuration](https://raw.githubusercontent.com/wiki/jan-dolejsi/vscode-pddl/img/PDDL_parser_configuration.gif)
+![PDDL Parser Configuration](https://raw.githubusercontent.com/wiki/jan-dolejsi/vscode-pddl/img/PDDL_parser_configuration.gif)
 
 To learn more about how to configure the extension to work with one of the parsers available or even your own, read this [wiki page](https://github.com/jan-dolejsi/vscode-pddl/wiki/Configuring-the-PDDL-parser).
 
@@ -68,26 +77,24 @@ To learn more about how to configure the extension to work with one of the parse
 
 The planner can be invoked in the context of a currently edited PDDL file. There are two ways how to do that via the user interface.
 
-- Type `Ctrl + Shift + P` and type _plan_ to filter the list of available commands. The _PDDL: Run the planner and visualize the plan_ command should be visible.
-- Right click on the PDDL file and select  _PDDL: Run the planner and visualize the plan_
-- Alternatively you can set up a keyboard shortcut such as `Alt + P` to be associated with the above command (see VS Code documentation for that)
+* Type `Ctrl + Shift + P` and type _plan_ to filter the list of available commands. The _PDDL: Run the planner and visualize the plan_ command should be visible.
+* Right click on the PDDL file and select  _PDDL: Run the planner and visualize the plan_
+* Alternatively you can set up a keyboard shortcut such as `Alt + P` to be associated with the above command (see VS Code documentation for that)
 
 There are multiple scenarios supported:
 
-- if command is invoked on the domain file,
-  - and if single corresponding problem file is open, the planner will run without asking further questions
-  - and if multiple corresponding problem files are open, the list of applicable problem files will appear and the user will select one.
-- if command is invoked on a problem file, the domain file (if open in the editor) will be selected automatically.
+* if command is invoked on the domain file,
+    - and if single corresponding problem file is open, the planner will run without asking further questions
+    - and if multiple corresponding problem files are open, the list of applicable problem files will appear and the user will select one.
+* if command is invoked on a problem file, the domain file (if open in the editor) will be selected automatically.
 
 Domain and problem files correspond to each other, if:
 
-- they have the same domain name i.e. `(domain name)` and
-- they are located in the same folder and
-- both files are open in the editor.
+* they have the same domain name i.e. `(domain name)` and
+* they are located in the same folder and
+* both files are open in the editor.
 
 ![planner](https://raw.githubusercontent.com/wiki/jan-dolejsi/vscode-pddl/img/PDDL_plan.gif)
-
-See other [useful keyboard shortcuts for working with PDDL in VS Code](https://github.com/jan-dolejsi/vscode-pddl/wiki/keyboard-shortcuts).
 
 #### Hide actions from plan visualization
 
@@ -159,10 +166,10 @@ In order to test the PDDL domain model and its scalability, it is useful to be a
 
 There are several templating options supported out of the box:
 
-- [Nunjucks](https://mozilla.github.io/nunjucks/)
-- [Jinja2](http://jinja.pocoo.org/docs/2.10/templates/)
-- Python script
-- Command-line command
+* [Nunjucks](https://mozilla.github.io/nunjucks/)
+* [Jinja2](http://jinja.pocoo.org/docs/2.10/templates/)
+* Python script
+* Command-line command
 
 Nunjucks and Jinja2 are two very similar templating engines, but differ in some important details. Nunjucks runs natively in Javascript and the file generation will not cause preceable delays, while Jinja2 needs to invoke Python and will slow down your development process somewhat.
 
@@ -218,15 +225,48 @@ For the ultimate flexibility, here is how to configure a Python scriipt to do a 
 
 Note that if you are referring to other files such as Python scripts or JSON data files in the `.ptest.json`, you may use relative path i.e. relative to the path, where the `.ptest.json` file is located as that is the runtime context in which the pre-processor will be executed.
 
+The templated problem file and the problem file generated using the pre-processed PDDL test case may be open side-by-side and used as a live preview of the code generation.
+
+![Templated problem file generation with live preview](https://raw.githubusercontent.com/wiki/jan-dolejsi/vscode-pddl/img/PDDL_templated_problem_live_preview.gif)
+
 ### Problem generation via a Python script
 
 This is what happens if you set `"kind": "python"`: Before executing the test, the extension runs the `populate_transform.py` script using the `python` command, pipes the `problem_template.pddl` onto it and reads the PDDL output of the script. The script uses the data from the configured .json file in this case, but as this is basically a command-line argument, you could refer to a database table just as well.
 
 If you have multiple python installations (e.g. 2.7, 3.5), there are several ways how to indicate which one you want to use:
 
-- python executable is in the %path%
-- you are using the [Python extension](https://marketplace.visualstudio.com/items?itemName=ms-python.python) to select the python runtime
-- you simply configure the python executable path via the `python.pythonPath` setting property
+* python executable is in the %path%
+* you are using the [Python extension](https://marketplace.visualstudio.com/items?itemName=ms-python.python) to select the python runtime
+* you simply configure the python executable path via the `python.pythonPath` setting property
+
+## Plan validation
+
+A .plan file can be generated using an option in the Plan Visualization menu (&#x2630;), or using a _PDDL: Export plan to a file..._ command.
+
+All .plan files have a context menu option _PDDL: Validate plan_, which requires the `validate` executable path to be configured in the _pddlPlan.validatorPath_ setting. See [VAL](https://github.com/KCL-Planning/VAL) for more details.
+
+Sometimes it is more convenient to create a desired plan by hand and using the `validate` tool to find out what is wrong in the domain model. While manually modifying the .plan file, all parsing and validation problems are displayed in the Problems panel of VS Code as long as a corresponding problem and domain files (located in the same folder) are open in the editor and the `validate` executable location is configured via the _pddlPlan.validatorPath_ setting.
+
+![Plan validation](https://raw.githubusercontent.com/wiki/jan-dolejsi/vscode-pddl/img/PDDL_plan_validation.gif)
+
+## Plan happenings listing (in preview)
+
+A context menu option in .plan file _PDDL: Convert plan to happenings..._ supports export to a .happenings file. This shows the exact temporal sequence of action starts and ends.
+
+This is the syntax supported by the preview:
+
+```PDDL Plan Happenings
+;;!domain: airport-ground-operations
+;;!problem: _1plane
+
+; timed initial fluent
+1.000: (= (available_fuel-truck truck1) 1000)
+; timed initial literal
+5.000: set (final-approach p1)
+5.001: start (land p1 rw1)
+5.100: unset (final-approach p1)
+7.001: end (land p1 rw1)
+```
 
 ## Block folding in `:init` section of the problem file
 
@@ -248,7 +288,8 @@ See [CHANGELOG](CHANGELOG.md).
 
 ### For more information
 
-- [PDDL][PDDL]
+* See other [useful keyboard shortcuts for working with PDDL in VS Code](https://github.com/jan-dolejsi/vscode-pddl/wiki/keyboard-shortcuts).
+* Read more about [PDDL][PDDL]
 
 **Enjoy!**
 

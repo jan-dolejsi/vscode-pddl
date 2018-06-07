@@ -15,7 +15,7 @@ export class PddlPlanParser {
 
     plans: Plan[] = [];
     public static planStepPattern = /^\s*((\d+|\d+\.\d+)\s*:)?\s*\((.*)\)\s*(\[(\d+|\d+\.\d+)\])?\s*$/gim;
-    planStatesEvaluatedPattern = /^; States evaluated[\w ]*:[ ]*(\d*)\s*$/i;
+    planStatesEvaluatedPattern = /^;\s*States evaluated[\w ]*:[ ]*(\d*)\s*$/i;
     planCostPattern = /[\w ]*(cost|metric)[\D :]*[ ]*(\d*|\d*\.\d*)\s*$/i
 
     planBuilder: PlanBuilder;
@@ -53,8 +53,7 @@ export class PddlPlanParser {
         let planStep = this.planBuilder.parse(outputLine, undefined);
         if (planStep) {
             // this line is a plan step
-            this.planBuilder.add(planStep);
-            if (!this.planBuilder.parsingPlan) this.planBuilder.parsingPlan = true;
+            this.appendStep(planStep);
         } else {
             // this line is NOT a plan step
             if (this.planBuilder.parsingPlan) {
@@ -74,6 +73,15 @@ export class PddlPlanParser {
         }
 
         this.planBuilder.outputText += outputLine;
+    }
+
+    /**
+     * Appends plan step. Use this when the plan does not need parsing.
+     * @param planStep plan step to add to the plan
+     */
+    appendStep(planStep: PlanStep) {
+        this.planBuilder.add(planStep);
+        if (!this.planBuilder.parsingPlan) this.planBuilder.parsingPlan = true;
     }
 
     /**

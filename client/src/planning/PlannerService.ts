@@ -10,9 +10,13 @@ import { PlanningHandler } from './plan';
 import { Plan } from '../../../common/src/Plan';
 import { DomainInfo, ProblemInfo } from '../../../common/src/parser';
 import { PddlPlanParser } from '../../../common/src/PddlPlanParser';
+import { PlanStep } from '../../../common/src/PlanStep';
 import { Authentication } from '../../../common/src/Authentication';
 
 export class PlannerService extends Planner {
+
+    // This epsilon is used only for the duration of instantaneous actions
+    epsilon = 1e-3;
 
     constructor(plannerPath: string, private useAuthentication: boolean, private authentication: Authentication) {
         super(plannerPath, "");
@@ -109,12 +113,17 @@ export class PlannerService extends Planner {
     
                 for (var index = 0; index < planSteps.length; index++) {
                     var planStep = planSteps[index];
-                    planParser.appendLine(planStep["name"]);
+                    let fullActionName = (<string>planStep["name"]).replace('(','').replace(')', '');
+                    let planStepObj = new PlanStep(planStep["time"], fullActionName, planStep["duration"] != null, planStep["duration"] ? planStep["duration"] : that.epsilon, index);
+                    planParser.appendStep(planStepObj);
                 }
     
                 planParser.onPlanFinished();
     
                 let plans = planParser.getPlans();
+                if (plans.length > 0) parent.handleOutput(plans[0].getText() + '\n');
+                else parent.handleOutput('No plan found.');
+
                 parent.handleSuccess(responseBody.toString(), plans);
                 resolve(plans);
             });
