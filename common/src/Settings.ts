@@ -4,11 +4,6 @@
  * ------------------------------------------------------------------------------------------ */
 'use strict';
 
-// The settings interface describe the server relevant settings part
-export interface Settings {
-	pddlParser: PDDLParserSettings;
-}
-
 // These are the example settings we defined in the client's package.json
 // file
 export interface PDDLParserSettings {

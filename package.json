@@ -15,14 +15,14 @@
   },
   "scripts": {
     "install:common": "cd common && npm install && npm test && cd ..",
-    "install:server": "cd server && npm install && cd ..",
     "install:client": "cd client && npm install && cd ..",
-    "postinstall": "npm run install:common && npm run install:server && npm run install:client",
-    "compile:server": "cd server && npm run compile && cd ..",
-    "compile:client": "cd client && npm run compile && cd ..",
-    "compile": "npm run compile:server && npm run compile:client",
-    "watch:server": "cd server && npm run watch && cd ..",
-    "watch:client": "cd client && npm run watch && cd .."
+    "postinstall": "npm run install:common && npm run install:client",
+    "compile:client": "tsc -p ./client",
+    "compile:common": "tsc -p ./common",
+    "compile": "npm run compile:common && npm run compile:client",
+    "watch:client": "tsc -p ./client --watch",
+    "watch:common": "tsc -p ./common --watch",
+    "watch": "npm run watch:common && npm run watch:client"
   },
   "devDependencies": {
     "@types/node": "^6.0.88",

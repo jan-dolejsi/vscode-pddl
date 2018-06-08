@@ -1,7 +1,6 @@
 out
 node_modules
-client/server
 client/*.vsix
 npm-debug.log
 client/tsc.log
-.vscode/*.json
+.vscode/cSpell.json

@@ -30,6 +30,7 @@ import { PlanExporter } from './PlanExporter';
 import { PlanHappeningsExporter } from './PlanHappeningsExporter';
 
 export const PDDL_GENERATE_PLAN_REPORT = 'pddl.planReport';
+const PDDL_STOP_PLANNER = 'pddl.stopPlanner';
 export const PDDL_EXPORT_PLAN = 'pddl.exportPlan';
 const PDDL_CONVERT_PLAN_TO_HAPPENINGS = 'pddl.convertPlanToHappenings';
 
@@ -62,6 +63,8 @@ export class Planning implements PlanningHandler {
             })
         );
         
+        context.subscriptions.push(commands.registerCommand(PDDL_STOP_PLANNER, () => this.stopPlanner()));
+
         context.subscriptions.push(commands.registerCommand(PDDL_GENERATE_PLAN_REPORT, () => {
             let plans: Plan[] = this.getPlans();
             if (plans != null) {

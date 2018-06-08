@@ -1,6 +1,6 @@
 {
-  "name": "pddl-parser",
-  "description": "PDDL language server.",
+  "name": "pddl-common",
+  "description": "PDDL node module without dependency on the VS Code.",
   "license": "MIT",
   "version": "0.0.1",
   "repository": {

@@ -56,7 +56,7 @@ export class ValidatorService extends Validator {
             }
 
             if (httpResponse && httpResponse.statusCode != 200) {
-                let notificationMessage = `PDDL Language Validator Server returned code ${httpResponse.statusCode} ${httpResponse.statusMessage}`;
+                let notificationMessage = `PDDL Language Parser returned code ${httpResponse.statusCode} ${httpResponse.statusMessage}`;
                 //let notificationType = MessageType.Warning;
                 onError.apply(this, [notificationMessage]);
                 return;

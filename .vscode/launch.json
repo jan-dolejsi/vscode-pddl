@@ -3,7 +3,7 @@
 	// List of configurations. Add new configurations or edit existing ones.
 	"configurations": [
 		{
-			"name": "Launch Client",
+			"name": "Launch Extension",
 			"type": "extensionHost",
 			"request": "launch",
 			"runtimeExecutable": "${execPath}",
@@ -15,19 +15,7 @@
 			"outFiles": [
 				"${workspaceRoot}/client/out/**/*.js"
 			],
-			"preLaunchTask": "watch:client"
-		},
-		{
-			"name": "Attach to Server",
-			"type": "node",
-			"request": "attach",
-			"port": 6009,
-			"sourceMaps": true,
-			"outFiles": [
-				"${workspaceRoot}/client/server/**/*.js"
-			],
-			"protocol": "inspector",
-			"preLaunchTask": "watch:server"
+			"preLaunchTask": "compile"
 		}
 	]
 }

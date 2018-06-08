@@ -1,5 +1,17 @@
 # What's new
 
+## [Unreleased]
+
+### Bug-fixes
+
+Users that clicked "Never" on the prompt to submit feedback to the VS Code Extension Marketplace will now really _never_ see the prompt.
+
+### Technical debt
+
+Removed dead language-server code.
+
+Reverted _compile_ and _watch_ tasks in `tasks.json` and related scripts in `package.json` files to avoid VS Code reporting compilation errors in files that _do not exist_ (because they are reported with wrong relative path).
+
 ## [2.6.5] - 2018-06-07
 
 ### Plan and Plan Happenings support

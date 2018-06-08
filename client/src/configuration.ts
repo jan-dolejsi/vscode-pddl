@@ -69,7 +69,7 @@ export class PddlConfiguration {
 
             case setupParserNow:
                 this.askNewParserPath();
-                // if the above method call updates the configuration, the language server will be notified
+                // if the above method call updates the configuration, the parser will be notified
                 break;
 
             case setupParserLater:

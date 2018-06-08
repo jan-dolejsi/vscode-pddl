@@ -19,6 +19,10 @@ import { PddlConfiguration } from './configuration';
 
 enum TipResponse { Ok, Later, Next }
 
+const LATER = 'LATER';
+const NEVER = 'NEVER'
+const ACCEPTED = 'ACCEPTED';
+
 export class StartUp {
 
     private context: ExtensionContext;
@@ -32,7 +36,7 @@ export class StartUp {
         this.showTips();
         this.uninstallLegacyExtension(pddlConfiguration);
     }
-    
+
     NEXT_TIP_TO_SHOW = 'nextTipToShow';
     WHATS_NEW_SHOWN_FOR_VERSION = 'whatsNewShownForVersion';
     ACCEPTED_TO_WRITE_A_REVIEW = 'acceptedToWriteAReview';
@@ -46,7 +50,7 @@ export class StartUp {
         let shouldContinue = true;
         for (let index = nextTipToShow; index < tips.length && shouldContinue; index++) {
             const tip = tips[index];
-            
+
             // skip tips that were removed subsequently as obsolete
             if (tip.trim() == "") {
                 nextTipToShow++;
@@ -70,7 +74,7 @@ export class StartUp {
 
         if (nextTipToShow == tips.length) {
             this.askForReview();
-        } 
+        }
 
         this.context.globalState.update(this.NEXT_TIP_TO_SHOW, nextTipToShow);
 
@@ -102,41 +106,42 @@ export class StartUp {
         let currentVersion = thisExtension.packageJSON["version"];
         var lastValue = this.context.globalState.get(this.WHATS_NEW_SHOWN_FOR_VERSION, "0.0.0");
 
-        if(currentVersion != lastValue) {
+        if (currentVersion != lastValue) {
             //let changeLog = this.context.asAbsolutePath('CHANGELOG.md');
             let changeLog = 'https://marketplace.visualstudio.com/items/jan-dolejsi.pddl/changelog';
             commands.executeCommand('vscode.open', Uri.parse(changeLog));
-            
+
             this.context.globalState.update(this.WHATS_NEW_SHOWN_FOR_VERSION, currentVersion);
         }
     }
 
     async askForReview(): Promise<void> {
         // what was the user response last time? 
-        var accepted = this.context.globalState.get(this.ACCEPTED_TO_WRITE_A_REVIEW, "LATER");
+        var accepted = this.context.globalState.get(this.ACCEPTED_TO_WRITE_A_REVIEW, LATER);
 
-        if (accepted == "LATER") {
+        if (accepted == LATER) {
             let optionAccepted: MessageItem = { title: "OK, let's give feedback" };
             let optionLater: MessageItem = { title: "Remind me later" };
             let optionNever: MessageItem = { title: "Never" };
             let options: MessageItem[] = [optionAccepted, optionLater, optionNever];
-    
+
             let choice = await window.showInformationMessage('Are you finding the PDDL Extension useful? Do you want to boost our motivation? Please give us (5) stars or even write a review...', ...options);
-    
+
             switch (choice) {
-                case optionAccepted: 
+                case optionAccepted:
                     let reviewPage = 'https://marketplace.visualstudio.com/items?itemName=jan-dolejsi.pddl#review-details';
                     commands.executeCommand('vscode.open', Uri.parse(reviewPage));
-                    this.context.globalState.update(this.ACCEPTED_TO_WRITE_A_REVIEW, "ACCEPTED");
+                    this.context.globalState.update(this.ACCEPTED_TO_WRITE_A_REVIEW, ACCEPTED);
                     break;
-                case optionNever: 
-                    this.context.globalState.update(this.ACCEPTED_TO_WRITE_A_REVIEW, "NEVER");
+                case optionNever:
+                    this.context.globalState.update(this.ACCEPTED_TO_WRITE_A_REVIEW, NEVER);
+                    break;
                 case optionLater:
-                default: 
-                    this.context.globalState.update(this.ACCEPTED_TO_WRITE_A_REVIEW, "LATER");
+                default:
+                    this.context.globalState.update(this.ACCEPTED_TO_WRITE_A_REVIEW, LATER);
                     break;
             }
-                
+
         }
     }
 

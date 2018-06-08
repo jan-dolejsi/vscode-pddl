@@ -4,9 +4,7 @@
  * ------------------------------------------------------------------------------------------ */
 'use strict';
 
-import * as path from 'path';
 import { workspace, window, ExtensionContext, commands, Uri, ViewColumn, Range, TextDocument, languages } from 'vscode';
-import { LanguageClient, LanguageClientOptions, ServerOptions, TransportKind, State } from 'vscode-languageclient';
 
 import { Planning } from './planning/planning'
 
@@ -22,7 +20,6 @@ import { StartUp } from './StartUp'
 import { PTestExplorer } from './ptest/PTestExplorer';
 import { PlanValidator } from './diagnostics/PlanValidator';
 
-const PDDL_STOP_PLANNER = 'pddl.stopPlanner';
 const PDDL_CONFIGURE_PARSER = 'pddl.configureParser';
 const PDDL_LOGIN_PARSER_SERVICE = 'pddl.loginParserService';
 const PDDL_UPDATE_TOKENS_PARSER_SERVICE = 'pddl.updateTokensParserService';
@@ -32,39 +29,10 @@ const PDDL_UPDATE_TOKENS_PLANNER_SERVICE = 'pddl.updateTokensPlannerService';
 
 export function activate(context: ExtensionContext) {
 
-	// The server is implemented in node
-	let serverModule = context.asAbsolutePath(path.join('server', 'server', 'src', 'server.js'));
-	// The debug options for the server
-	let debugOptions = { execArgv: ["--nolazy", "--inspect=6009"] };
-
 	let pddlConfiguration = new PddlConfiguration(context);
 
 	// run start-up actions
 	new StartUp(context).atStartUp(pddlConfiguration);
-
-	// If the extension is launched in debug mode then the debug server options are used
-	// Otherwise the run options are used
-	let serverOptions: ServerOptions = {
-		run: { module: serverModule, transport: TransportKind.ipc },
-		debug: { module: serverModule, transport: TransportKind.ipc, options: debugOptions }
-	}
-
-	// Options to control the language client
-	let clientOptions: LanguageClientOptions = {
-		// Register the server for PDDL documents
-		documentSelector: [{ scheme: 'file', language: 'pddl' }],
-		synchronize: {
-			// Synchronize the setting section 'pddlParser' to the server
-			configurationSection: 'pddlParser',
-			// Notify the server about file changes to '.clientrc files contain in the workspace
-			fileEvents: workspace.createFileSystemWatcher('**/.clientrc')
-		}
-	}
-
-	// Create the language client and start the client.
-	let languageClient = new LanguageClient('pddlParser', 'PDDL Language Server', serverOptions, clientOptions);
-	// this is where the language server is disconnected:
-	// context.subscriptions.push(languageClient.start());
 
 	let pddlWorkspace = new PddlWorkspace(pddlConfiguration.getEpsilonTimeStep(), context);
 	let planning = new Planning(pddlWorkspace, pddlConfiguration, context);
@@ -73,8 +41,6 @@ export function activate(context: ExtensionContext) {
 	let revealActionCommand = commands.registerCommand('pddl.revealAction', (domainFileUri: Uri, actionName: String) => {
 		revealAction(<DomainInfo>pddlWorkspace.getFileInfo(domainFileUri.toString()), actionName);
 	});
-
-	let stopPlannerCommand = commands.registerCommand(PDDL_STOP_PLANNER, () => planning.stopPlanner());
 
 	let configureParserCommand = commands.registerCommand(PDDL_CONFIGURE_PARSER, () => {
 		pddlConfiguration.setupParserLater = false;
@@ -141,13 +107,6 @@ export function activate(context: ExtensionContext) {
 		});
 	});
 
-	// when the extension is done loading, subscribe to the client-server communication
-	let stateChangeHandler = languageClient.onDidChangeState((stateEvent) => {
-		if (stateEvent.newState == State.Running) languageClient.onRequest('pddl.configureParser', (showNever) => {
-			pddlConfiguration.suggestNewParserConfiguration(showNever);
-		});
-	});
-
 	let completionItemProvider = languages.registerCompletionItemProvider(PDDL, new AutoCompletion(pddlWorkspace), '(', ':', '-');
 
 	let renameProvider = languages.registerRenameProvider(PDDL, new SymbolRenameProvider(pddlWorkspace));
@@ -168,7 +127,7 @@ export function activate(context: ExtensionContext) {
 	// Push the disposables to the context's subscriptions so that the 
 	// client can be deactivated on extension deactivation
 	context.subscriptions.push(diagnostics, revealActionCommand,
-		stopPlannerCommand, stateChangeHandler, configureParserCommand, loginParserServiceCommand, updateTokensParserServiceCommand,
+		configureParserCommand, loginParserServiceCommand, updateTokensParserServiceCommand,
 		configurePlannerCommand, loginPlannerServiceCommand, updateTokensPlannerServiceCommand, completionItemProvider,
 		renameProvider, documentSymbolProvider, definitionProvider, referencesProvider, hoverProvider);
 }

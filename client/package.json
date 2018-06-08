@@ -29,6 +29,8 @@
   },
   "activationEvents": [
     "onLanguage:pddl",
+    "onLanguage:plan",
+    "onLanguage:happenings",
     "workspaceContains:**/*.pddl",
     "workspaceContains:**/*ptest.json",
     "onCommand:pddl.configureParser",
@@ -371,25 +373,14 @@
           "type": "number",
           "default": 3,
           "minimum": 1,
-          "description": "Delay in seconds the Language Server should wait after a PDDL file is modified before calls the parser."
+          "description": "Delay in seconds the extension should wait after a PDDL file is modified before calls the parser."
         },
         "pddlParser.maxNumberOfProblems": {
           "scope": "resource",
           "type": "number",
           "default": 100,
           "minimum": 1,
-          "description": "Controls the maximum number of problems produced by the server."
-        },
-        "pddlParser.trace.server": {
-          "scope": "window",
-          "type": "string",
-          "enum": [
-            "off",
-            "messages",
-            "verbose"
-          ],
-          "default": "off",
-          "description": "Traces the communication between VSCode and the language server."
+          "description": "Controls the maximum number of problems produced by the parser."
         },
         "pddlPlanner.executableOrService": {
           "scope": "window",

@@ -16,11 +16,6 @@ comments and brackets.
 - create a new file with a file name suffix matching your language
 - verify that syntax highlight works and that the language configuration settings are working
 
-## Debug the server
-
-- In the debug panel launch "Attach to Server"
-  - You should see the attach to server command running in the call stack
-
 ## Make changes
 
 - you can relaunch the extension from the debug toolbar after making changes to the files listed above
