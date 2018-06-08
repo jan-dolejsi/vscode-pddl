@@ -7,11 +7,13 @@
   "version": "2.6.5",
   "publisher": "jan-dolejsi",
   "engines": {
-    "vscode": "^1.22.0"
+    "vscode": "^1.22.0",
+		"node": "^7.9.0"
   },
   "categories": [
     "Snippets",
-    "Programming Languages"
+    "Programming Languages",
+    "Debuggers"
   ],
   "keywords": [
     "PDDL",
@@ -73,6 +75,11 @@
           ".happenings"
         ],
         "configuration": "./language-configuration.json"
+      }
+    ],
+    "breakpoints": [
+      {
+        "language": "happenings"
       }
     ],
     "grammars": [
@@ -493,7 +500,7 @@
           "description": "Enable/disable the preview of PDDL test explorer. Restart the editor for the change to take effect."
         },
         "pddlPlan.validatorPath": {
-          "type":"string",
+          "type": "string",
           "description": "Path of the 'validate' executable."
         }
       }
@@ -505,14 +512,72 @@
           "name": "PDDL Tests"
         }
       ]
-    }
+    },
+    "debuggers": [
+      {
+        "type": "pddl-plan",
+        "label": "PDDL Plan Debugger",
+        "program": "./out/debugger/debugAdapter.js",
+        "runtime": "node",
+        "configurationAttributes": {
+          "launch": {
+            "required": [
+              "program"
+            ],
+            "properties": {
+              "program": {
+                "type": "string",
+                "description": "Absolute path to a text file.",
+                "default": "${workspaceFolder}/${command:AskForProgramName}"
+              },
+              "stopOnEntry": {
+                "type": "boolean",
+                "description": "Automatically stop after launch.",
+                "default": true
+              },
+              "trace": {
+                "type": "boolean",
+                "description": "Enable logging of the Debug Adapter Protocol.",
+                "default": true
+              }
+            }
+          }
+        },
+        "initialConfigurations": [
+          {
+            "type": "mock",
+            "request": "launch",
+            "name": "Ask for file name",
+            "program": "${workspaceFolder}/${command:AskForProgramName}",
+            "stopOnEntry": true
+          }
+        ],
+        "configurationSnippets": [
+          {
+            "label": "Mock Debug: Launch",
+            "description": "A new configuration for 'debugging' a user selected markdown file.",
+            "body": {
+              "type": "mock",
+              "request": "launch",
+              "name": "Ask for file name",
+              "program": "^\"\\${workspaceFolder}/\\${command:AskForProgramName}\"",
+              "stopOnEntry": true
+            }
+          }
+        ],
+        "variables": {
+          "AskForProgramName": "extension.mock-debug.getProgramName"
+        }
+      }
+    ]
   },
   "scripts": {
     "postinstall": "node ./node_modules/vscode/bin/install",
     "compile": "tsc -p ./",
     "watch": "tsc -w -p ./",
     "vscode:prepublish": "npm run compile",
-    "update-vscode": "node ./node_modules/vscode/bin/install"
+    "update-vscode": "node ./node_modules/vscode/bin/install",
+    "package": "vsce package"
   },
   "dependencies": {
     "child-process-data": "^0.5.5",
@@ -526,12 +591,13 @@
     "tree-kill": "^1.2.0",
     "update": "^0.7.4",
     "util.promisify": "^1.0.0",
-    "vscode": "^1.1.17",
-    "vscode-languageclient": "^3.5.0"
+    "vscode-debugadapter": "1.27.0",
+    "vscode-debugprotocol": "1.27.0"
   },
   "devDependencies": {
+    "vscode": "^1.1.17",
     "@types/request": "^2.0.5",
     "@types/tmp": "^0.0.33",
-    "typescript": "^2.8.1"
+    "typescript": "^2.9.1"
   }
 }
