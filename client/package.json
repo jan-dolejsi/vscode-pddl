@@ -580,6 +580,7 @@
     "package": "vsce package"
   },
   "dependencies": {
+    "vscode-extension-telemetry": "^0.0.17",
     "child-process-data": "^0.5.5",
     "express": "^4.16.2",
     "npm": "^6.0.0",

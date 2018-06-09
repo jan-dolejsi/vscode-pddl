@@ -19,6 +19,7 @@ import { Diagnostics } from './diagnostics/Diagnostics';
 import { StartUp } from './StartUp'
 import { PTestExplorer } from './ptest/PTestExplorer';
 import { PlanValidator } from './diagnostics/PlanValidator';
+import { Telemetry } from './telemetry';
 
 const PDDL_CONFIGURE_PARSER = 'pddl.configureParser';
 const PDDL_LOGIN_PARSER_SERVICE = 'pddl.loginParserService';
@@ -27,8 +28,11 @@ const PDDL_CONFIGURE_PLANNER = 'pddl.configurePlanner';
 const PDDL_LOGIN_PLANNER_SERVICE = 'pddl.loginPlannerService';
 const PDDL_UPDATE_TOKENS_PLANNER_SERVICE = 'pddl.updateTokensPlannerService';
 
+var telemetry: Telemetry;
+
 export function activate(context: ExtensionContext) {
 
+	telemetry = new Telemetry(context)
 	let pddlConfiguration = new PddlConfiguration(context);
 
 	// run start-up actions
@@ -130,6 +134,11 @@ export function activate(context: ExtensionContext) {
 		configureParserCommand, loginParserServiceCommand, updateTokensParserServiceCommand,
 		configurePlannerCommand, loginPlannerServiceCommand, updateTokensPlannerServiceCommand, completionItemProvider,
 		renameProvider, documentSymbolProvider, definitionProvider, referencesProvider, hoverProvider);
+}
+
+export function deactivate() {
+	// This will ensure all pending events get flushed
+	telemetry.dispose();
 }
 
 function createAuthentication(pddlConfiguration: PddlConfiguration): Authentication {
