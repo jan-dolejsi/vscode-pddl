@@ -493,7 +493,7 @@
           "description": "Enable/disable the preview of PDDL test explorer. Restart the editor for the change to take effect."
         },
         "pddlPlan.validatorPath": {
-          "type":"string",
+          "type": "string",
           "description": "Path of the 'validate' executable."
         }
       }
@@ -515,6 +515,7 @@
     "update-vscode": "node ./node_modules/vscode/bin/install"
   },
   "dependencies": {
+    "vscode-extension-telemetry": "^0.0.17",
     "child-process-data": "^0.5.5",
     "express": "^4.16.2",
     "npm": "^6.0.0",
