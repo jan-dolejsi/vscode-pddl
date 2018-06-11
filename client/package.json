@@ -8,7 +8,7 @@
   "publisher": "jan-dolejsi",
   "engines": {
     "vscode": "^1.22.0",
-		"node": "^7.9.0"
+    "node": "^7.9.0"
   },
   "categories": [
     "Snippets",
@@ -197,6 +197,10 @@
       {
         "command": "pddl.plan.validate",
         "title": "PDDL: Validate plan"
+      },
+      {
+        "command": "pddl.happenings.debug",
+        "title": "PDDL: Debug plan happenings"
       }
     ],
     "menus": {
@@ -216,6 +220,10 @@
         {
           "command": "pddl.plan.validate",
           "when": "resourceLangId == plan"
+        },
+        {
+          "command": "pddl.happenings.debug",
+          "when": "resourceLangId == happenings"
         }
       ],
       "view/title": [
@@ -545,19 +553,19 @@
         },
         "initialConfigurations": [
           {
-            "type": "mock",
+            "type": "pddl-plan",
             "request": "launch",
-            "name": "Ask for file name",
+            "name": "Ask for PDDL Plan file name",
             "program": "${workspaceFolder}/${command:AskForProgramName}",
             "stopOnEntry": true
           }
         ],
         "configurationSnippets": [
           {
-            "label": "Mock Debug: Launch",
-            "description": "A new configuration for 'debugging' a user selected markdown file.",
+            "label": "PDDL Plan Debug: Launch",
+            "description": "A new configuration for debugging a user selected PDDL Plan file.",
             "body": {
-              "type": "mock",
+              "type": "pddl-plan",
               "request": "launch",
               "name": "Ask for file name",
               "program": "^\"\\${workspaceFolder}/\\${command:AskForProgramName}\"",
@@ -593,12 +601,15 @@
     "update": "^0.7.4",
     "util.promisify": "^1.0.0",
     "vscode-debugadapter": "1.27.0",
-    "vscode-debugprotocol": "1.27.0"
+    "vscode-debugprotocol": "1.27.0",
+    "await-notify": "1.0.1"
   },
   "devDependencies": {
     "vscode": "^1.1.17",
     "@types/request": "^2.0.5",
     "@types/tmp": "^0.0.33",
-    "typescript": "^2.9.1"
+    "typescript": "^2.9.1",
+    "tslint": "5.9.1",
+    "vsce": "1.37.5"
   }
 }
