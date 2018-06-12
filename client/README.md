@@ -171,6 +171,8 @@ There are several templating options supported out of the box:
 * Python script
 * Command-line command
 
+But there is a [wealth of templating libraries](https://en.wikipedia.org/wiki/Comparison_of_web_template_engines), including Razor [see RazorTemplates](https://github.com/volkovku/RazorTemplates), which is popular in asp.net, or [T4](https://msdn.microsoft.com/en-us/library/bb126445.aspx).
+
 Nunjucks and Jinja2 are two very similar templating engines, but differ in some important details. Nunjucks runs natively in Javascript and the file generation will not cause preceable delays, while Jinja2 needs to invoke Python and will slow down your development process somewhat.
 
 For the ultimate flexibility, here is how to configure a Python scriipt to do a custom pre-processing of the problem file:

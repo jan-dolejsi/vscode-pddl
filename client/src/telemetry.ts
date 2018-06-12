@@ -12,6 +12,9 @@ export class Telemetry {
 
     constructor(context: ExtensionContext) {
         let extension = extensions.getExtension("jan-dolejsi.pddl");
+        
+        if(!process.env.VSCODE_APPLICATION_INSIGHTS_ID) return;
+        
         // create telemetry reporter on extension activation
         this.reporter = 
             new TelemetryReporter(extension.id, <string>extension.packageJSON["version"], process.env.VSCODE_APPLICATION_INSIGHTS_ID);
@@ -25,6 +28,6 @@ export class Telemetry {
 
 	dispose(): any {
         // This will ensure all pending events get flushed
-        this.reporter.dispose();
+        if (this.reporter) this.reporter.dispose();
 	}
 }
