@@ -19,6 +19,7 @@ import { Diagnostics } from './diagnostics/Diagnostics';
 import { StartUp } from './StartUp'
 import { PTestExplorer } from './ptest/PTestExplorer';
 import { PlanValidator } from './diagnostics/PlanValidator';
+import { activateDebugging } from './debugger/debugging';
 import { Telemetry } from './telemetry';
 
 const PDDL_CONFIGURE_PARSER = 'pddl.configureParser';
@@ -126,6 +127,8 @@ export function activate(context: ExtensionContext) {
 
 	if(workspace.getConfiguration().get<boolean>("pddlTestExplorer.enabled")) new PTestExplorer(context, planning);
 
+	activateDebugging(context);
+	
 	subscribeToWorkspace(pddlWorkspace, pddlConfiguration, context);
 
 	// Push the disposables to the context's subscriptions so that the 
