@@ -5,12 +5,12 @@
 'use strict';
 
 import {
-    TextDocument, SaveDialogOptions, Uri, window, workspace, Position
+    TextDocument, SaveDialogOptions, Uri, window
 } from 'vscode';
 
 import { PlanExporter } from './PlanExporter';
 import { PddlPlanParser } from '../../../common/src/PddlPlanParser';
-import { existsSync } from 'fs';
+import { exportToAndShow } from './ExportUtil';
 
 export class PlanHappeningsExporter {
 
@@ -37,15 +37,7 @@ export class PlanHappeningsExporter {
             let uri = await window.showSaveDialog(options);
             if (uri == undefined) return; // canceled by user
 
-            let fileExists = await existsSync(uri.fsPath);
-            if (!fileExists) {
-                uri = uri.with({ scheme: 'untitled' });
-            }
-
-            let newDocument = await workspace.openTextDocument(uri);
-            let editor = await window.showTextDocument(newDocument);
-
-            await editor.edit(edit => edit.insert(new Position(0, 0), this.happeningsText));
+            await exportToAndShow(this.happeningsText, uri);
         } catch (ex) {
             window.showErrorMessage(`Cannot export plan to happenings: ${ex.message}`);
         }

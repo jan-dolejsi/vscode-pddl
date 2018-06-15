@@ -5,13 +5,13 @@
 'use strict';
 
 import {
-    Uri, SaveDialogOptions, window, workspace, Position
+    Uri, SaveDialogOptions, window
 } from 'vscode';
 
 import { Plan } from "../../../common/src/Plan";
 import { parse, format } from 'path';
 import { isNullOrUndefined } from 'util';
-import { existsSync } from 'fs'
+import { exportToAndShow } from './ExportUtil';
 
 export class PlanExporter {
             
@@ -34,14 +34,7 @@ export class PlanExporter {
             let uri = await window.showSaveDialog(options);
             if (uri == undefined) return; // canceled by user
 
-            let fileExists = await existsSync(uri.fsPath);
-            if (!fileExists) {
-                uri = uri.with({ scheme: 'untitled' });
-            }
-
-            let newDocument = await workspace.openTextDocument(uri);
-            let editor = await window.showTextDocument(newDocument);
-            await editor.edit(edit => edit.insert(new Position(0, 0), this.getPlanText(plan)));
+            await exportToAndShow(this.getPlanText(plan), uri);
         } catch (ex) {
             window.showErrorMessage(`Cannot export plan: ${ex.message}`);
         }

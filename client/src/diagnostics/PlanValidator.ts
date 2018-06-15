@@ -83,7 +83,7 @@ export class PlanValidator {
         folder.files.forEach((value: FileInfo) => {
             if (value instanceof ProblemInfo) {
                 let problemInfo = <ProblemInfo>value;
-                if (problemInfo.name == planInfo.problemName) {
+                if (problemInfo.name.toLowerCase() == planInfo.problemName.toLowerCase()) {
                     problemFileInfo = value;
                 }
             }
