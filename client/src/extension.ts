@@ -4,12 +4,12 @@
  * ------------------------------------------------------------------------------------------ */
 'use strict';
 
-import { workspace, window, ExtensionContext, commands, Uri, ViewColumn, Range, TextDocument, languages } from 'vscode';
+import { workspace, window, ExtensionContext, commands, Uri, ViewColumn, Range, languages } from 'vscode';
 
 import { Planning } from './planning/planning'
 
 import { PddlWorkspace } from '../../common/src/workspace-model';
-import { DomainInfo, PddlRange, PddlLanguage, PDDL, PLAN, toLanguageFromId } from '../../common/src/parser';
+import { DomainInfo, PddlRange, PDDL } from '../../common/src/parser';
 import { PddlConfiguration } from './configuration';
 import { Authentication } from '../../common/src/Authentication';
 import { AutoCompletion } from './completion/AutoCompletion';
@@ -19,8 +19,9 @@ import { Diagnostics } from './diagnostics/Diagnostics';
 import { StartUp } from './StartUp'
 import { PTestExplorer } from './ptest/PTestExplorer';
 import { PlanValidator } from './diagnostics/PlanValidator';
-import { activateDebugging } from './debugger/debugging';
+import { Debugging } from './debugger/debugging';
 import { Telemetry } from './telemetry';
+import { isPddl, isPlan, toLanguage } from './utils';
 
 const PDDL_CONFIGURE_PARSER = 'pddl.configureParser';
 const PDDL_LOGIN_PARSER_SERVICE = 'pddl.loginParserService';
@@ -127,7 +128,7 @@ export function activate(context: ExtensionContext) {
 
 	if(workspace.getConfiguration().get<boolean>("pddlTestExplorer.enabled")) new PTestExplorer(context, planning);
 
-	activateDebugging(context);
+	new Debugging(context, pddlWorkspace);
 	
 	subscribeToWorkspace(pddlWorkspace, pddlConfiguration, context);
 
@@ -191,16 +192,4 @@ function subscribeToWorkspace(pddlWorkspace: PddlWorkspace, pddlConfiguration: P
 	}));
 
 	workspace.onDidChangeConfiguration(_ => pddlWorkspace.epsilon = pddlConfiguration.getEpsilonTimeStep());
-}
-
-function isPddl(doc: TextDocument): boolean {
-	return doc.languageId == PDDL && doc.uri.scheme != "git";
-}
-
-function isPlan(doc: TextDocument): boolean {
-	return doc.languageId == PLAN && doc.uri.scheme != "git";
-}
-
-export function toLanguage(doc: TextDocument): PddlLanguage {
-	return toLanguageFromId(doc.languageId);
 }

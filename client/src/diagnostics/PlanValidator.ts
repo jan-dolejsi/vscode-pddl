@@ -11,11 +11,12 @@ import {
 import * as process from 'child_process';
 
 import { PddlWorkspace } from '../../../common/src/workspace-model';
-import { ProblemInfo, FileInfo, PlanInfo, PddlLanguage } from '../../../common/src/parser';
+import { PlanInfo, PddlLanguage, DomainInfo, ProblemInfo } from '../../../common/src/parser';
 import { PddlConfiguration, PDDL_PLAN, VALIDATION_PATH } from '../configuration';
 import { Util } from '../../../common/src/util';
 import { dirname } from 'path';
 import { PlanStep } from '../../../common/src/PlanStep';
+import { DomainAndProblem, getDomainAndProblemForPlan } from '../utils';
 
 export const PDDL_PLAN_VALIDATE = 'pddl.plan.validate';
 
@@ -77,38 +78,30 @@ export class PlanValidator {
         let epsilon = this.plannerConfiguration.getEpsilonTimeStep();
         let validatePath = this.plannerConfiguration.getValidatorPath();
 
-        let problemFileInfo: ProblemInfo;
+        let context: DomainAndProblem = null;
 
-        let folder = this.pddlWorkspace.getFolderOf(planInfo);
-        folder.files.forEach((value: FileInfo) => {
-            if (value instanceof ProblemInfo) {
-                let problemInfo = <ProblemInfo>value;
-                if (problemInfo.name == planInfo.problemName) {
-                    problemFileInfo = value;
-                }
-            }
-        });
-
-        if (!problemFileInfo) {
-            let outcome = PlanValidationOutcome.failed(planInfo, new Error(`No problem file with name '(problem ${planInfo.problemName}') and located in the same folder as the plan is not open in the editor.`));
+        try {
+            context = getDomainAndProblemForPlan(planInfo, this.pddlWorkspace);
+        } catch (err) {
+            let outcome = PlanValidationOutcome.failed(planInfo, err);
             onSuccess(outcome.getDiagnostics());
             return outcome;
         }
 
-        let domainFileInfo = this.pddlWorkspace.getDomainFileFor(problemFileInfo);
-
-        if (!domainFileInfo) {
-            let outcome = PlanValidationOutcome.failed(planInfo, new Error(`No domain file corresponding to problem '${problemFileInfo.name}' and located in the same folder is open in the editor.`));
-            onSuccess(outcome.getDiagnostics());
-            return outcome;
+        // are the actions in the plan declared in the domain?
+        let actionNameDiagnostics = this.validateActionNames(context.domain, context.problem, planInfo);
+        if (actionNameDiagnostics.length) {
+            let errorOutcome = PlanValidationOutcome.failedWithDiagnostics(planInfo, actionNameDiagnostics);
+            onSuccess(errorOutcome.getDiagnostics());
+            return errorOutcome;
         }
 
         // copy editor content to temp files to avoid using out-of-date content on disk
-        let domainFile = Util.toPddlFile('domain', domainFileInfo.text);
-        let problemFile = Util.toPddlFile('problem', problemFileInfo.text);
-        let planFile = Util.toPddlFile('plan', planInfo.text);
+        let domainFilePath = Util.toPddlFile('domain', context.domain.text);
+        let problemFilePath = Util.toPddlFile('problem', context.problem.text);
+        let planFilePath = Util.toPddlFile('plan', planInfo.text);
 
-        let args = ['-t', epsilon.toString(), '-v', domainFile, problemFile, planFile];
+        let args = ['-t', epsilon.toString(), '-v', domainFilePath, problemFilePath, planFilePath];
         let child = process.spawnSync(validatePath, args, { cwd: dirname(Uri.parse(planInfo.fileUri).fsPath) });
 
         if (showOutput) this.output.appendLine(validatePath + ' ' + args.join(' '));
@@ -169,6 +162,23 @@ export class PlanValidator {
 
         return PlanValidationOutcome.unknown(planInfo);
     }
+
+    /**
+     * Validate that plan steps match domain actions
+     * @param domain domain file
+     * @param problem problem file
+     * @param plan plan
+     */
+    validateActionNames(domain: DomainInfo, problem: ProblemInfo, plan: PlanInfo): Diagnostic[] {
+        return plan.getSteps()
+            .filter(step => !this.isDomainAction(domain, problem, step))
+            .map(step => new Diagnostic(createRangeFromLine(step.lineIndex), `Action ${step.actionName} not known by the domain ${domain.name}`, DiagnosticSeverity.Error));
+    }
+
+    private isDomainAction(domain: DomainInfo, problem: ProblemInfo, step: PlanStep): boolean {
+        problem;
+        return domain.actions.some(a => a.name.toLowerCase() == step.actionName.toLowerCase());
+    }
 }
 
 class PlanValidationOutcome {
@@ -215,10 +225,16 @@ class PlanValidationOutcome {
         return new PlanValidationOutcome(planInfo, diagnostics, message);
     }
 
+    static failedWithDiagnostics(planInfo: PlanInfo, diagnostics: Diagnostic[]) {
+        return new PlanValidationOutcome(planInfo, diagnostics);
+    }
+
     static failedAtTime(planInfo: PlanInfo, timeStamp: number, repairHints: string[]): PlanValidationOutcome {
         let errorLine = 0;
         let stepAtTimeStamp =
-            planInfo.getSteps().find(step => PlanStep.equalsWithin(step.getStartTime(), timeStamp, 1e-4));
+            planInfo.getSteps()
+                .find(step => PlanStep.equalsWithin(step.getStartTime(), timeStamp, 1e-4));
+
         if (stepAtTimeStamp) errorLine = stepAtTimeStamp.lineIndex;
 
         let diagnostics = repairHints.map(hint => new Diagnostic(createRangeFromLine(errorLine), hint, DiagnosticSeverity.Warning));

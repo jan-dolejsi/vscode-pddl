@@ -73,7 +73,7 @@ export class Parser {
         }
     }
 
-    parsePlan(fileUri: string, fileVersion: number, fileText: string, epsilon: number): PlanInfo {
+    parsePlanMeta(fileText: string): PlanMetaData {
         let problemName = 'unspecified';
         let problemMatch = fileText.match(/^;;\s*!problem:\s*([\w-]+)\s*$/m);
         if (problemMatch) {
@@ -85,8 +85,14 @@ export class Parser {
         if (domainMatch) {
             domainName = domainMatch[1];
         }
-        
-        let planInfo = new PlanInfo(fileUri, fileVersion, problemName, domainName, fileText);
+
+        return { domainName: domainName, problemName: problemName };
+    }
+
+    parsePlan(fileUri: string, fileVersion: number, fileText: string, epsilon: number): PlanInfo {
+        let meta = this.parsePlanMeta(fileText);
+
+        let planInfo = new PlanInfo(fileUri, fileVersion, meta.problemName, meta.domainName, fileText);
         let planBuilder = new PlanBuilder(epsilon);
         fileText.split('\n').forEach((planLine: string, index: number) => {
             let planStep = planBuilder.parse(planLine, index);
@@ -97,6 +103,23 @@ export class Parser {
         planInfo.setSteps(planBuilder.getSteps());
 
         return planInfo;
+    }
+
+    parseHappenings(fileUri: string, fileVersion: number, fileText: string, epsilon: number): HappeningsInfo {
+        let meta = this.parsePlanMeta(fileText);
+
+        let happeningsInfo = new HappeningsInfo(fileUri, fileVersion, meta.problemName, meta.domainName, fileText);
+        epsilon;
+        // let planBuilder = new PlanBuilder(epsilon);
+        // fileText.split('\n').forEach((planLine: string, index: number) => {
+        //     let planStep = planBuilder.parse(planLine, index);
+        //     if (planStep) {
+        //         planBuilder.add(planStep);
+        //     }
+        // });
+        // happeningsInfo.setSteps(planBuilder.getSteps());
+
+        return happeningsInfo;
     }
 
     getDomainStructure(domainText: string, domainInfo: DomainInfo): void {
@@ -574,6 +597,35 @@ export class PlanInfo extends FileInfo {
     }
 }
 
+/**
+ * Plan happenings file.
+ */
+export class HappeningsInfo extends FileInfo {
+
+    // steps: PlanStep[] = [];
+
+    constructor(fileUri: string, version: number, public problemName: string, public domainName: string, text: string) {
+        super(fileUri, version, problemName);
+        this.text = text;
+    }
+
+    getLanguage(): PddlLanguage {
+        return PddlLanguage.HAPPENINGS;
+    }
+
+    // setSteps(steps: PlanStep[]): void {
+    //     this.steps = steps;
+    // }
+
+    // getSteps(): PlanStep[] {
+    //     return this.steps;
+    // }
+
+    isHappenings(): boolean {
+        return true;
+    }
+}
+
 export class UnknownFileInfo extends FileInfo {
     constructor(fileUri: string, version: number) {
         super(fileUri, version, "");
@@ -794,19 +846,29 @@ export class PddlRange {
 }
 
 export enum PddlLanguage {
-    PDDL, PLAN
+    // domain or problem
+    PDDL, 
+    // plan (output of the planner)
+    PLAN, 
+    // plan happenings sequence (instantaneous happenings)
+    HAPPENINGS
 }
 
 // Language ID of Domain and Problem files
 export const PDDL = 'pddl';
 // Language ID of Plan files
 export const PLAN = 'plan';
+// Language ID of Happenings files
+export const HAPPENINGS = 'happenings';
 
 var languageMap = new Map<string, PddlLanguage>([
 	[PDDL, PddlLanguage.PDDL],
-	[PLAN, PddlLanguage.PLAN]
+	[PLAN, PddlLanguage.PLAN],
+	[HAPPENINGS, PddlLanguage.HAPPENINGS]
 ]);
 
 export function toLanguageFromId(languageId: string): PddlLanguage {
 	return languageMap.get(languageId);
 }
+
+interface PlanMetaData { domainName: string, problemName: string }

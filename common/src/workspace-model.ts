@@ -4,7 +4,7 @@
  * ------------------------------------------------------------------------------------------ */
 'use strict';
 
-import { Parser, FileInfo, DomainInfo, ProblemInfo, UnknownFileInfo, FileStatus, PddlLanguage } from './parser'
+import { Parser, FileInfo, DomainInfo, ProblemInfo, UnknownFileInfo, FileStatus, PddlLanguage, PlanInfo, HappeningsInfo } from './parser'
 import { Util } from './util';
 import { dirname, basename } from 'path';
 import { PddlExtensionContext } from './PddlExtensionContext';
@@ -36,6 +36,21 @@ class Folder {
 
     removeByUri(fileUri: string): boolean {
         return this.files.delete(fileUri);
+    }
+
+    getProblemFileWithName(problemName: string): ProblemInfo {
+        let problemFileInfo: ProblemInfo;
+
+        this.files.forEach((value: FileInfo) => {
+            if (value instanceof ProblemInfo) {
+                let problemInfo = <ProblemInfo>value;
+                if (problemInfo.name == problemName) {
+                    problemFileInfo = value;
+                }
+            }
+        });
+
+        return problemFileInfo
     }
 
     getProblemFilesFor(domainInfo: DomainInfo): ProblemInfo[] {
@@ -182,6 +197,9 @@ export class PddlWorkspace extends EventEmitter {
         else if (language == PddlLanguage.PLAN) {
             return this.parser.parsePlan(fileUri, fileVersion, fileText, this.epsilon);
         }
+        else if (language == PddlLanguage.HAPPENINGS) {
+            return this.parser.parseHappenings(fileUri, fileVersion, fileText, this.epsilon);
+        }
         else {
             throw Error("Unknown language: " + language);
         }
@@ -290,10 +308,32 @@ export class PddlWorkspace extends EventEmitter {
     getDomainFileFor(problemFile: ProblemInfo): DomainInfo {
         let folder = this.folders.get(PddlWorkspace.getFolderUri(problemFile.fileUri));
 
+        if (!folder) return null;
+
         // find domain files in the same folder that match the problem's domain name
         let domainFiles = folder.getDomainFilesFor(problemFile);
 
         return domainFiles.length == 1 ? domainFiles[0] : null;
+    }
+
+    getProblemFileForPlan(planInfo: PlanInfo): ProblemInfo {
+        let problemFileInfo: ProblemInfo;
+
+        let folder = this.getFolderOf(planInfo);
+        if (!folder) return null;
+        problemFileInfo = folder.getProblemFileWithName(planInfo.problemName);
+
+        return problemFileInfo;
+    }
+
+    getProblemFileForHappenings(happeningsInfo: HappeningsInfo): ProblemInfo {
+        let problemFileInfo: ProblemInfo;
+
+        let folder = this.getFolderOf(happeningsInfo);
+        if (!folder) return null;
+        problemFileInfo = folder.getProblemFileWithName(happeningsInfo.problemName);
+
+        return problemFileInfo;
     }
 
     getFolderOf(fileInfo: FileInfo): Folder {
