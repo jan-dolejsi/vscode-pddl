@@ -8,7 +8,9 @@ import * as vscode from 'vscode';
 import { WorkspaceFolder, DebugConfiguration, ProviderResult, CancellationToken, window, Uri } from 'vscode';
 import { PlanDebugSession } from './PlanDebugSession';
 import * as Net from 'net';
-import { FileInfo, HappeningsInfo, DomainInfo, ProblemInfo, HAPPENINGS } from '../../../common/src/parser';
+import { DomainInfo, ProblemInfo, HAPPENINGS } from '../../../common/src/parser';
+import { FileInfo } from '../../../common/src/FileInfo';
+import { HappeningsInfo } from "../../../common/src/HappeningsInfo";
 import { PddlWorkspace } from '../../../common/src/workspace-model';
 import { toLanguage, isHappenings, getDomainAndProblemForHappenings } from '../utils';
 

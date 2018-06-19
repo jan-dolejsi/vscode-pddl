@@ -5,8 +5,14 @@
 'use strict';
 
 import { TextDocument } from 'vscode';
-import { PddlLanguage, PDDL, PLAN, toLanguageFromId, HAPPENINGS, PlanInfo, ProblemInfo, DomainInfo, HappeningsInfo } from '../../common/src/parser';
+import { PDDL, PLAN, toLanguageFromId, HAPPENINGS, PlanInfo, ProblemInfo, DomainInfo } from '../../common/src/parser';
+import { PddlLanguage } from '../../common/src/FileInfo';
+import { HappeningsInfo } from "../../common/src/HappeningsInfo";
 import { PddlWorkspace } from '../../common/src/workspace-model';
+
+export function isAnyPddl(doc: TextDocument): boolean {
+    return isPddl(doc) || isPlan(doc) || isHappenings(doc);
+}
 
 export function isPddl(doc: TextDocument): boolean {
     return doc.languageId == PDDL && doc.uri.scheme != "git";

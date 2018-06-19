@@ -4,7 +4,9 @@
  * ------------------------------------------------------------------------------------------ */
 'use strict';
 
-import { Parser, FileInfo, DomainInfo, ProblemInfo, UnknownFileInfo, FileStatus, PddlLanguage, PlanInfo, HappeningsInfo } from './parser'
+import { Parser, DomainInfo, ProblemInfo, UnknownFileInfo, PlanInfo } from './parser'
+import { FileInfo, PddlLanguage, FileStatus } from './FileInfo';
+import { HappeningsInfo } from "./HappeningsInfo";
 import { Util } from './util';
 import { dirname, basename } from 'path';
 import { PddlExtensionContext } from './PddlExtensionContext';
@@ -169,7 +171,7 @@ export class PddlWorkspace extends EventEmitter {
         let folder = this.upsertFolder(folderUri);
 
         folder.remove(fileInfo);
-        fileInfo = this.parseFile(fileInfo.fileUri, fileInfo.getLanguage(), fileInfo.version, fileInfo.text);
+        fileInfo = this.parseFile(fileInfo.fileUri, fileInfo.getLanguage(), fileInfo.version, fileInfo.getText());
         folder.add(fileInfo);
         this.emit(PddlWorkspace.UPDATED, fileInfo);
 
@@ -191,7 +193,7 @@ export class PddlWorkspace extends EventEmitter {
             }
 
             let unknownFile = new UnknownFileInfo(fileUri, fileVersion);
-            unknownFile.text = fileText;
+            unknownFile.setText(fileText);
             return unknownFile;
         }
         else if (language == PddlLanguage.PLAN) {
@@ -259,7 +261,7 @@ export class PddlWorkspace extends EventEmitter {
         return problemFiles;
     }
 
-    getAllFilesIf<T extends FileInfo>(predicate: (fileInfo: T) => boolean) {
+    getAllFilesIf<T extends FileInfo>(predicate: (fileInfo: T) => boolean): T[] {
         let selectedFiles = new Array<FileInfo>();
 
         this.folders.forEach(folder => {
@@ -268,7 +270,7 @@ export class PddlWorkspace extends EventEmitter {
             });
         });
 
-        return selectedFiles;
+        return <T[]>selectedFiles;
     }
 
 

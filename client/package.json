@@ -502,14 +502,13 @@
           "type": "string",
           "description": "ValueSeq path - the tool that evaluates numeric values of functions at starts and ends of actions in the plan."
         },
-        "pddlTestExplorer.enabled": {
-          "type": "boolean",
-          "default": true,
-          "description": "Enable/disable the preview of PDDL test explorer. Restart the editor for the change to take effect."
-        },
-        "pddlPlan.validatorPath": {
+        "pddl.validatorPath": {
           "type": "string",
           "description": "Path of the 'validate' executable."
+        },
+        "pddl.valStepPath": {
+          "type": "string",
+          "description": "Path of the 'valstep' executable."
         }
       }
     },

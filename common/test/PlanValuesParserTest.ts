@@ -7,7 +7,7 @@
 import { PlanValuesParser } from '../src/PlanValuesParser';
 import { PlanStep } from '../src/PlanStep';
 import * as assert from 'assert';
-import { Variable, Parameter, ObjectInstance } from '../src/parser';
+import { Variable, Parameter, ObjectInstance } from '../src/FileInfo';
 
 describe('PlanValuesParser', () => {
 

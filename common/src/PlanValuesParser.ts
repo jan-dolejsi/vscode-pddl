@@ -5,7 +5,7 @@
 'use strict';
 
 import { PlanStep } from './PlanStep';
-import { Variable } from './parser';
+import { Variable } from './FileInfo';
 
 export class PlanValuesParser {
 

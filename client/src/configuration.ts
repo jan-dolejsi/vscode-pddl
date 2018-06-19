@@ -21,8 +21,9 @@ const PLANNER_SERVICE_AUTHENTICATION_ACCESS_TOKEN = PDDL_PLANNER + '.serviceAuth
 const PLANNER_SERVICE_AUTHENTICATION_S_TOKEN = PDDL_PLANNER + '.serviceAuthenticationSToken';
 const PLANNER_EPSILON_TIMESTEP = PDDL_PLANNER + '.epsilonTimeStep';
 export const PLANNER_VALUE_SEQ_PATH  = PDDL_PLANNER + ".valueSeqPath";
-export const PDDL_PLAN = 'pddlPlan';
+export const CONF_PDDL = 'pddl';
 export const VALIDATION_PATH = 'validatorPath';
+export const VAL_STEP_PATH = 'valStepPath';
 
 export class PddlConfiguration {
 
@@ -314,7 +315,11 @@ export class PddlConfiguration {
     }
 
     getValidatorPath(): string {
-        return vscode.workspace.getConfiguration(PDDL_PLAN).get(VALIDATION_PATH);
+        return vscode.workspace.getConfiguration(CONF_PDDL).get(VALIDATION_PATH);
+    }
+
+    getValStepPath(): string {
+        return vscode.workspace.getConfiguration(CONF_PDDL).get(VAL_STEP_PATH);
     }
 
     async askConfigurationScope(): Promise<ScopeQuickPickItem> {

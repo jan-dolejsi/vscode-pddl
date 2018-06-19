@@ -9,8 +9,8 @@ import {
 } from 'vscode';
 
 import { PddlWorkspace } from '../../common/src/workspace-model';
-
-import { Variable, PddlRange, toLanguageFromId } from '../../common/src/parser';
+import { toLanguageFromId } from '../../common/src/parser';
+import { Variable, PddlRange } from '../../common/src/FileInfo';
 
 export class SymbolUtils {
     constructor(public workspace: PddlWorkspace) { }

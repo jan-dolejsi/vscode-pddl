@@ -11,17 +11,18 @@ import {
 import * as process from 'child_process';
 
 import { PddlWorkspace } from '../../../common/src/workspace-model';
-import { PlanInfo, PddlLanguage, DomainInfo, ProblemInfo } from '../../../common/src/parser';
-import { PddlConfiguration, PDDL_PLAN, VALIDATION_PATH } from '../configuration';
+import { PlanInfo, DomainInfo, ProblemInfo } from '../../../common/src/parser';
+import { PddlLanguage } from '../../../common/src/FileInfo';
+import { PddlConfiguration, CONF_PDDL, VALIDATION_PATH } from '../configuration';
 import { Util } from '../../../common/src/util';
 import { dirname } from 'path';
 import { PlanStep } from '../../../common/src/PlanStep';
-import { DomainAndProblem, getDomainAndProblemForPlan } from '../utils';
+import { DomainAndProblem, getDomainAndProblemForPlan, isPlan } from '../utils';
 
 export const PDDL_PLAN_VALIDATE = 'pddl.plan.validate';
 
 /**
- * Delegate for handling requests to run the planner and visualize the plans.
+ * Delegate for parsing and validating plans..
  */
 export class PlanValidator {
 
@@ -29,7 +30,7 @@ export class PlanValidator {
 
         context.subscriptions.push(commands.registerCommand(PDDL_PLAN_VALIDATE,
             async () => {
-                if (window.activeTextEditor && window.activeTextEditor.document.languageId == "plan") {
+                if (window.activeTextEditor && isPlan(window.activeTextEditor.document)) {
                     if (!this.testConfiguration()) return;
                     try {
                         let outcome = await this.validateTextDocument(window.activeTextEditor.document);
@@ -50,7 +51,7 @@ export class PlanValidator {
     testConfiguration(): boolean {
         let validatePath = this.plannerConfiguration.getValidatorPath();
         if (validatePath.length == 0) {
-            window.showErrorMessage(`Set the 'validate' executable path to the '${PDDL_PLAN}.${VALIDATION_PATH}' setting.`);
+            window.showErrorMessage(`Set the 'validate' executable path to the '${CONF_PDDL}.${VALIDATION_PATH}' setting.`);
             return false;
         }
         else {
@@ -96,10 +97,18 @@ export class PlanValidator {
             return errorOutcome;
         }
 
+        // are the actions start times monotonically increasing?
+        let actionTimeDiagnostics = this.validateActionTimes(planInfo);
+        if (actionTimeDiagnostics.length) {
+            let errorOutcome = PlanValidationOutcome.failedWithDiagnostics(planInfo, actionTimeDiagnostics);
+            onSuccess(errorOutcome.getDiagnostics());
+            return errorOutcome;
+        }
+
         // copy editor content to temp files to avoid using out-of-date content on disk
-        let domainFilePath = Util.toPddlFile('domain', context.domain.text);
-        let problemFilePath = Util.toPddlFile('problem', context.problem.text);
-        let planFilePath = Util.toPddlFile('plan', planInfo.text);
+        let domainFilePath = Util.toPddlFile('domain', context.domain.getText());
+        let problemFilePath = Util.toPddlFile('problem', context.problem.getText());
+        let planFilePath = Util.toPddlFile('plan', planInfo.getText());
 
         let args = ['-t', epsilon.toString(), '-v', domainFilePath, problemFilePath, planFilePath];
         let child = process.spawnSync(validatePath, args, { cwd: dirname(Uri.parse(planInfo.fileUri).fsPath) });
@@ -172,12 +181,29 @@ export class PlanValidator {
     validateActionNames(domain: DomainInfo, problem: ProblemInfo, plan: PlanInfo): Diagnostic[] {
         return plan.getSteps()
             .filter(step => !this.isDomainAction(domain, problem, step))
-            .map(step => new Diagnostic(createRangeFromLine(step.lineIndex), `Action ${step.actionName} not known by the domain ${domain.name}`, DiagnosticSeverity.Error));
+            .map(step => new Diagnostic(createRangeFromLine(step.lineIndex), `Action '${step.actionName}' not known by the domain ${domain.name}`, DiagnosticSeverity.Error));
+    }
+
+    /**
+     * Validate that plan step times are monotonically increasing
+     * @param domain domain file
+     * @param problem problem file
+     * @param plan plan
+     */
+    validateActionTimes(plan: PlanInfo): Diagnostic[] {
+        return plan.getSteps()
+            .slice(1)
+            .filter((step: PlanStep, index: number) => !this.isTimeMonotonociallyIncreasing(plan.getSteps()[index], step))
+            .map(step => new Diagnostic(createRangeFromLine(step.lineIndex), `Action '${step.actionName}' time ${step.getStartTime()} is before the preceding action time`, DiagnosticSeverity.Error));
     }
 
     private isDomainAction(domain: DomainInfo, problem: ProblemInfo, step: PlanStep): boolean {
         problem;
         return domain.actions.some(a => a.name.toLowerCase() == step.actionName.toLowerCase());
+    }
+
+    private isTimeMonotonociallyIncreasing(first: PlanStep, second: PlanStep): boolean {
+        return first.getStartTime() <= second.getStartTime();
     }
 }
 
@@ -225,7 +251,7 @@ class PlanValidationOutcome {
         return new PlanValidationOutcome(planInfo, diagnostics, message);
     }
 
-    static failedWithDiagnostics(planInfo: PlanInfo, diagnostics: Diagnostic[]) {
+    static failedWithDiagnostics(planInfo: PlanInfo, diagnostics: Diagnostic[]): PlanValidationOutcome {
         return new PlanValidationOutcome(planInfo, diagnostics);
     }
 
@@ -247,10 +273,10 @@ class PlanValidationOutcome {
     }
 }
 
-function createRangeFromLine(errorLine: number): Range {
+export function createRangeFromLine(errorLine: number): Range {
     return new Range(errorLine, 0, errorLine, 100);
 }
 
-function createDiagnostic(errorLine: number, error: string, severity: DiagnosticSeverity): Diagnostic {
+export function createDiagnostic(errorLine: number, error: string, severity: DiagnosticSeverity): Diagnostic {
     return new Diagnostic(createRangeFromLine(errorLine), error, severity);
 }
