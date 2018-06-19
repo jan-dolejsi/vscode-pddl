@@ -268,7 +268,7 @@ Note for open source contributors: all notable changes to the "pddl" extension w
 Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
 
 [Unreleased]: https://github.com/jan-dolejsi/vscode-pddl/compare/v2.6.6...HEAD
-[2.6.5]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.6.5...v2.6.6
+[2.6.6]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.6.5...v2.6.6
 [2.6.5]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.6.4...v2.6.5
 [2.6.4]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.6.3...v2.6.4
 [2.6.3]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.6.2...v2.6.3
