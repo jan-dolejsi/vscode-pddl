@@ -492,7 +492,7 @@
           "default": true,
           "description": "Enable/disable the preview of PDDL test explorer. Restart the editor for the change to take effect."
         },
-        "pddlPlan.validatorPath": {
+        "pddl.validatorPath": {
           "type": "string",
           "description": "Path of the 'validate' executable."
         }

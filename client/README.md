@@ -245,9 +245,9 @@ If you have multiple python installations (e.g. 2.7, 3.5), there are several way
 
 A .plan file can be generated using an option in the Plan Visualization menu (&#x2630;), or using a _PDDL: Export plan to a file..._ command.
 
-All .plan files have a context menu option _PDDL: Validate plan_, which requires the `validate` executable path to be configured in the _pddlPlan.validatorPath_ setting. See [VAL](https://github.com/KCL-Planning/VAL) for more details.
+All .plan files have a context menu option _PDDL: Validate plan_, which requires the `validate` executable path to be configured in the _pddl.validatorPath_ setting. See [VAL](https://github.com/KCL-Planning/VAL) for more details.
 
-Sometimes it is more convenient to create a desired plan by hand and using the `validate` tool to find out what is wrong in the domain model. While manually modifying the .plan file, all parsing and validation problems are displayed in the Problems panel of VS Code as long as a corresponding problem and domain files (located in the same folder) are open in the editor and the `validate` executable location is configured via the _pddlPlan.validatorPath_ setting.
+Sometimes it is more convenient to create a desired plan by hand and using the `validate` tool to find out what is wrong in the domain model. While manually modifying the .plan file, all parsing and validation problems are displayed in the Problems panel of VS Code as long as a corresponding problem and domain files (located in the same folder) are open in the editor and the `validate` executable location is configured via the _pddl.validatorPath_ setting.
 
 ![Plan validation](https://raw.githubusercontent.com/wiki/jan-dolejsi/vscode-pddl/img/PDDL_plan_validation.gif)
 

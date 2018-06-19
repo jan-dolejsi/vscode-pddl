@@ -16,7 +16,7 @@ import { Validator } from './validator';
 import { ValidatorService } from './ValidatorService';
 import { ValidatorExecutable } from './ValidatorExecutable';
 import { PDDLParserSettings } from '../../../common/src/Settings';
-import { PddlConfiguration, PDDL_PARSER, VALIDATION_PATH, PDDL_PLAN } from '../configuration';
+import { PddlConfiguration, PDDL_PARSER, VALIDATION_PATH, CONF_PDDL } from '../configuration';
 import { PlanValidator } from './PlanValidator';
 
 export class Diagnostics extends Disposable {
@@ -42,7 +42,7 @@ export class Diagnostics extends Disposable {
 
         workspace.onDidChangeConfiguration(e => {
             if (e.affectsConfiguration(PDDL_PARSER)
-                || e.affectsConfiguration(PDDL_PLAN + '.' + VALIDATION_PATH)) {
+                || e.affectsConfiguration(CONF_PDDL + '.' + VALIDATION_PATH)) {
                 this.handleConfigurationChange();
             }
         });

@@ -2,9 +2,17 @@
 
 ## [Unreleased]
 
+Debugging plan happenings.
+
+## [2.6.6] - 2018-06-19
+
 ### Bug-fixes
 
+Fixed .plan and .happenings export to existing files.
+
 Users that clicked "Never" on the prompt to submit feedback to the VS Code Extension Marketplace will now really _never_ see the prompt.
+
+Renamed configuration key _pddlPlan.validatorPath_ to _pddl.validatorPath_. Existing settings must be updated manually.
 
 ### Technical debt
 
@@ -21,9 +29,9 @@ A .plan file can be generated using an option in the Plan Visualization menu (&#
 
 A context menu option in .plan file _PDDL: Convert plan to happenings..._ supports export to a .happenings file.
 
-Both plan formats are covered by syntax highlighting and .plan files have a context menu option _PDDL: Validate plan_, which requires the `validate` executable path to be configured in the _pddlPlan.validatorPath_ setting. See [VAL](https://github.com/KCL-Planning/VAL) for more details.
+Both plan formats are covered by syntax highlighting and .plan files have a context menu option _PDDL: Validate plan_, which requires the `validate` executable path to be configured in the _pddl.validatorPath_ setting. See [VAL](https://github.com/KCL-Planning/VAL) for more details.
 
-Problems in .plan files are displayed in the Problems panel of VS Code as long as a corresponding problem and domain files (located in the same folder) are open in the editor and the `validate` executable location is configured via the _pddlPlan.validatorPath_ setting.
+Problems in .plan files are displayed in the Problems panel of VS Code as long as a corresponding problem and domain files (located in the same folder) are open in the editor and the `validate` executable location is configured via the _pddl.validatorPath_ setting.
 
 ![Plan validation](https://raw.githubusercontent.com/wiki/jan-dolejsi/vscode-pddl/img/PDDL_plan_validation.gif)
 
@@ -259,7 +267,8 @@ Note for open source contributors: all notable changes to the "pddl" extension w
 
 Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
 
-[Unreleased]: https://github.com/jan-dolejsi/vscode-pddl/compare/v2.6.5...HEAD
+[Unreleased]: https://github.com/jan-dolejsi/vscode-pddl/compare/v2.6.6...HEAD
+[2.6.5]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.6.5...v2.6.6
 [2.6.5]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.6.4...v2.6.5
 [2.6.4]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.6.3...v2.6.4
 [2.6.3]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.6.2...v2.6.3

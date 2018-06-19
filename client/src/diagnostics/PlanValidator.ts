@@ -12,7 +12,7 @@ import * as process from 'child_process';
 
 import { PddlWorkspace } from '../../../common/src/workspace-model';
 import { ProblemInfo, FileInfo, PlanInfo, PddlLanguage } from '../../../common/src/parser';
-import { PddlConfiguration, PDDL_PLAN, VALIDATION_PATH } from '../configuration';
+import { PddlConfiguration, CONF_PDDL, VALIDATION_PATH } from '../configuration';
 import { Util } from '../../../common/src/util';
 import { dirname } from 'path';
 import { PlanStep } from '../../../common/src/PlanStep';
@@ -49,7 +49,7 @@ export class PlanValidator {
     testConfiguration(): boolean {
         let validatePath = this.plannerConfiguration.getValidatorPath();
         if (validatePath.length == 0) {
-            window.showErrorMessage(`Set the 'validate' executable path to the '${PDDL_PLAN}.${VALIDATION_PATH}' setting.`);
+            window.showErrorMessage(`Set the 'validate' executable path to the '${CONF_PDDL}.${VALIDATION_PATH}' setting.`);
             return false;
         }
         else {
