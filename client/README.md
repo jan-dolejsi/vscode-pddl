@@ -1,6 +1,7 @@
 # Planning Domain Description Language Support
 
 This extension makes VS Code a great place for modeling planning domains. Read more [about PDDL][PDDL].
+To exercise its features, clone this [vscode-pddl-samples](https://github.com/jan-dolejsi/vscode-pddl-samples) repository and open the folder in VS Code.
 
 ## Features
 
