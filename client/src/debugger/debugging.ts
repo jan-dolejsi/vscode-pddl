@@ -149,7 +149,7 @@ class PddlPlanDebugConfigurationProvider implements vscode.DebugConfigurationPro
 			}
 
 			// make VS Code connect to debug server instead of launching debug adapter
-			config.debugServer = this._server.address().port;
+			config.debugServer = (<Net.AddressInfo>this._server.address()).port;
 		}
 
 		return config;

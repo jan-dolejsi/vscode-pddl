@@ -4,7 +4,7 @@
   "description": "Planning Domain Description Language support",
   "author": "Jan Dolejsi",
   "license": "MIT",
-  "version": "2.6.5",
+  "version": "2.6.6",
   "publisher": "jan-dolejsi",
   "engines": {
     "vscode": "^1.22.0",
@@ -588,16 +588,13 @@
   },
   "dependencies": {
     "vscode-extension-telemetry": "^0.0.17",
-    "child-process-data": "^0.5.5",
-    "express": "^4.16.2",
-    "npm": "^6.0.0",
-    "nunjucks": "^3.1.2",
-    "opn": "^5.1.0",
-    "request": "^2.83.0",
+    "express": "^4.16.3",
+    "npm": "^6.1.0",
+    "nunjucks": "^3.1.3",
+    "opn": "^5.3.0",
+    "request": "^2.87.0",
     "tmp": "^0.0.33",
-    "to": "^0.2.9",
     "tree-kill": "^1.2.0",
-    "update": "^0.7.4",
     "util.promisify": "^1.0.0",
     "vscode-debugadapter": "1.27.0",
     "vscode-debugprotocol": "1.27.0",
@@ -605,9 +602,9 @@
   },
   "devDependencies": {
     "vscode": "^1.1.17",
-    "@types/request": "^2.0.5",
+    "@types/request": "^2.47.1",
     "@types/tmp": "^0.0.33",
-    "typescript": "^2.9.1",
+    "typescript": "^2.9.2",
     "tslint": "5.9.1",
     "vsce": "1.37.5"
   }
