@@ -202,25 +202,19 @@ export class PlanDebugSession extends LoggingDebugSession {
 		const id = this._variableHandles.get(args.variablesReference);
 		if (id !== null) {
 			variables.push({
-				name: id + "_i",
-				type: "integer",
-				value: "123",
+				name: "predicate1",
+				type: "boolean",
+				value: Math.random() > 0.5 ? "true": "false",
 				variablesReference: 0
 			});
 			variables.push({
-				name: id + "_f",
+				name: "function2",
 				type: "float",
-				value: "3.14",
+				value: `${Math.random()*10}`,
 				variablesReference: 0
 			});
 			variables.push({
-				name: id + "_s",
-				type: "string",
-				value: "hello world",
-				variablesReference: 0
-			});
-			variables.push({
-				name: id + "_o",
+				name: "object3",
 				type: "object",
 				value: "Object",
 				variablesReference: this._variableHandles.create("object_")
