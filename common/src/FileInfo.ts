@@ -64,7 +64,11 @@ export abstract class FileInfo {
         this.parsingProblems.push(parsingProblem);
     }
 
-    setProblems(parsingProblems: ParsingProblem[]): void {
+    /**
+     * Adds list of parsing problems.
+     * @param parsingProblems parsing problems
+     */
+    addProblems(parsingProblems: ParsingProblem[]): void {
         this.parsingProblems = parsingProblems;
     }
 
@@ -130,11 +134,12 @@ export abstract class FileInfo {
  */
 export class ParsingProblem {
     /**
-     * 
-     * @param lineIndex zero-based line index, where this problem was found.
+     * Constructs parsing problem.
      * @param problem problem description to display
+     * @param lineIndex zero-based line index, where this problem was found.
+     * @param columnIndex zero-based column index, where this problem was found. Default is zero.
      */
-    constructor(public lineIndex: number, public problem: string) { }
+    constructor(public problem: string, public lineIndex: number, public columnIndex: number = 0) { }
 }
 
 /**

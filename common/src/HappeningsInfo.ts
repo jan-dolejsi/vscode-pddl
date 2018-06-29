@@ -161,7 +161,7 @@ export class PlanHappeningsBuilder {
         if (happening) {
             this.add(happening);
         } else {
-            this.parsingProblems.push(new ParsingProblem(lineIndex, `Invalid happening syntax: ${planLine}`));
+            this.parsingProblems.push(new ParsingProblem(`Invalid happening syntax: ${planLine}`, lineIndex));
         }
     }
 
@@ -194,7 +194,7 @@ export class PlanHappeningsBuilder {
                     && happening1.belongsTo(happening)
                 );
                 if (alreadyExistingStart) {
-                    this.parsingProblems.push(new ParsingProblem(happening.lineIndex, `A happening matching ${happening.toString()} is already in the plan. Increase the #N counter.`));
+                    this.parsingProblems.push(new ParsingProblem(`A happening matching ${happening.toString()} is already in the plan. Increase the #N counter.`, happening.lineIndex));
                 }
                 this.openActions.push(happening);
                 break;
@@ -205,7 +205,7 @@ export class PlanHappeningsBuilder {
                     this.openActions.splice(this.openActions.indexOf(matchingStart), 1);
                 }
                 else {
-                    this.parsingProblems.push(new ParsingProblem(happening.lineIndex, `There is no start corresponding to ${happening.toString()}`));
+                    this.parsingProblems.push(new ParsingProblem(`There is no start corresponding to ${happening.toString()}`, happening.lineIndex));
                 }
                 break;
         }
@@ -215,14 +215,14 @@ export class PlanHappeningsBuilder {
             this.makespan = happening.getTime();
         }
         else if (this.makespan > happening.getTime()) {
-            this.parsingProblems.push(new ParsingProblem(happening.lineIndex, `Time must not go backwards.`));
+            this.parsingProblems.push(new ParsingProblem(`Time must not go backwards.`, happening.lineIndex));
         }
         this.happenings.push(happening);
     }
 
     validateOpenQueueIsEmpty(): void {
         let problems = this.openActions
-            .map(start => new ParsingProblem(start.lineIndex, `Missing end of ${start.toString()}`));
+            .map(start => new ParsingProblem(`Missing end of ${start.toString()}`, start.lineIndex));
 
         this.parsingProblems.push(...problems);
     }

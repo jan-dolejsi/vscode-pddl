@@ -12,7 +12,8 @@ import { PlanStep } from "./PlanStep";
 import { PlanBuilder } from "./PddlPlanParser";
 import { DirectionalGraph } from "./DirectionalGraph";
 import { HappeningsInfo, PlanHappeningsBuilder } from "./HappeningsInfo";
-import { FileInfo, stripComments, Variable, Parameter, PddlRange, PddlLanguage } from "./FileInfo";
+import { FileInfo, stripComments, Variable, Parameter, PddlRange, PddlLanguage, ParsingProblem } from "./FileInfo";
+import { PreProcessingError } from "./PreProcessors";
 
 export class Parser {
 
@@ -34,7 +35,16 @@ export class Parser {
         try {
             fileText = this.preProcessor.process(fileText, workingDirectory);
         } catch (ex) {
-            console.error(ex);
+            if (ex instanceof PreProcessingError) {
+                let problemInfo = new ProblemInfo(fileUri, fileVersion, "unknown", "unknown");
+                problemInfo.setText(fileText);
+                let parsingError = <PreProcessingError>ex;
+                problemInfo.addProblems([new ParsingProblem(parsingError.message, parsingError.line, parsingError.column)]);
+                return problemInfo;
+            }
+            else{
+                console.error(ex);
+            }
         }
 
         let pddlText = stripComments(fileText);
@@ -115,7 +125,7 @@ export class Parser {
         let planBuilder = new PlanHappeningsBuilder(epsilon);
         planBuilder.tryParseFile(fileText);
         happeningsInfo.setHappenings(planBuilder.getHappenings());
-        happeningsInfo.setProblems(planBuilder.getParsingProblems());
+        happeningsInfo.addProblems(planBuilder.getParsingProblems());
         planBuilder.validateOpenQueueIsEmpty();
 
         return happeningsInfo;

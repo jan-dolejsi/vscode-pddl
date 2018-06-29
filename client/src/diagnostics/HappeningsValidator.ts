@@ -80,7 +80,7 @@ export class HappeningsValidator {
     async validateAndReportDiagnostics(happeningsInfo: HappeningsInfo, showOutput: boolean, onSuccess: (diagnostics: Map<string, Diagnostic[]>) => void, onError: (error: string) => void): Promise<HappeningsValidationOutcome> {
         if (happeningsInfo.getParsingProblems().length > 0) {
             let diagnostics = happeningsInfo.getParsingProblems()
-                .map(problem => new Diagnostic(createRangeFromLine(problem.lineIndex), problem.problem));
+                .map(problem => new Diagnostic(createRangeFromLine(problem.lineIndex, problem.columnIndex), problem.problem));
             let outcome = HappeningsValidationOutcome.failedWithDiagnostics(happeningsInfo, diagnostics);
             onSuccess(outcome.getDiagnostics());
             return outcome;
@@ -234,7 +234,7 @@ class HappeningsValidationOutcome {
     static goalNotAttained(happeningsInfo: HappeningsInfo): HappeningsValidationOutcome {
         let errorLine = happeningsInfo.getHappenings().length > 0 ? happeningsInfo.getHappenings().slice(-1).pop().lineIndex + 1 : 0;
         let error = "Plan does not reach the goal.";
-        let diagnostics = [createDiagnostic(errorLine, error, DiagnosticSeverity.Warning)];
+        let diagnostics = [createDiagnostic(errorLine, 0, error, DiagnosticSeverity.Warning)];
         return new HappeningsValidationOutcome(happeningsInfo, diagnostics, error);
     }
 
@@ -243,7 +243,7 @@ class HappeningsValidationOutcome {
      */
     static invalidPlanDescription(happeningsInfo: HappeningsInfo): HappeningsValidationOutcome {
         let error = "Invalid plan description.";
-        let diagnostics = [createDiagnostic(0, error, DiagnosticSeverity.Error)];
+        let diagnostics = [createDiagnostic(0, 0, error, DiagnosticSeverity.Error)];
         return new HappeningsValidationOutcome(happeningsInfo, diagnostics, error);
     }
 
@@ -256,7 +256,7 @@ class HappeningsValidationOutcome {
 
     static failed(happeningsInfo: HappeningsInfo, error: Error): HappeningsValidationOutcome {
         let message = "Validate tool failed. " + error.message;
-        let diagnostics = [createDiagnostic(0, message, DiagnosticSeverity.Error)];
+        let diagnostics = [createDiagnostic(0, 0, message, DiagnosticSeverity.Error)];
         return new HappeningsValidationOutcome(happeningsInfo, diagnostics, message);
     }
 

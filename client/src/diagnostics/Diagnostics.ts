@@ -11,14 +11,14 @@ import {
 import { Authentication } from '../../../common/src/Authentication';
 import { PddlWorkspace } from '../../../common/src/workspace-model';
 import { DomainInfo, ProblemInfo, PlanInfo } from '../../../common/src/parser';
-import { FileInfo, FileStatus, stripComments } from '../../../common/src/FileInfo';
+import { FileInfo, FileStatus, stripComments, ParsingProblem } from '../../../common/src/FileInfo';
 
 import { Validator } from './validator';
 import { ValidatorService } from './ValidatorService';
 import { ValidatorExecutable } from './ValidatorExecutable';
 import { PDDLParserSettings } from '../../../common/src/Settings';
 import { PddlConfiguration, PDDL_PARSER, VALIDATION_PATH, CONF_PDDL } from '../configuration';
-import { PlanValidator } from './PlanValidator';
+import { PlanValidator, createDiagnostic } from './PlanValidator';
 import { HappeningsValidator } from './HappeningsValidator';
 import { HappeningsInfo } from '../HappeningsInfo';
 
@@ -36,7 +36,7 @@ export class Diagnostics extends Disposable {
 
     private defaultTimerDelayInSeconds = 3;
 
-    constructor(pddlWorkspace: PddlWorkspace, diagnosticCollection: DiagnosticCollection, configuration: PddlConfiguration, 
+    constructor(pddlWorkspace: PddlWorkspace, diagnosticCollection: DiagnosticCollection, configuration: PddlConfiguration,
         private planValidator: PlanValidator, private happeningsValidator: HappeningsValidator) {
         super(() => this.pddlWorkspace.removeAllListeners()); //todo: this is probably too harsh
         this.diagnosticCollection = diagnosticCollection;
@@ -147,7 +147,7 @@ export class Diagnostics extends Disposable {
 
     validatePlan(planInfo: PlanInfo, scheduleFurtherValidation: boolean): void {
         if (planInfo == null) return;
-        
+
         if (!this.planValidator.testConfiguration()) return;
 
         // mark the file as under validation
@@ -170,7 +170,7 @@ export class Diagnostics extends Disposable {
 
     validateHappenings(happeningsInfo: HappeningsInfo, scheduleFurtherValidation: boolean): void {
         if (happeningsInfo == null) return;
-        
+
         if (!this.happeningsValidator.testConfiguration()) return;
 
         // mark the file as under validation
@@ -196,6 +196,14 @@ export class Diagnostics extends Disposable {
         if (fileInfo == null) {
             console.log('File not found in the workspace.');
         }
+
+        // detect parsing and pre-processing issues
+        if (fileInfo.getParsingProblems().length > 0) {
+            let parsingProblems = new Map<string, Diagnostic[]>();
+            parsingProblems.set(fileInfo.fileUri, toDiagnostics(fileInfo.getParsingProblems()));
+            this.sendDiagnostics(parsingProblems);
+            return;
+        };
 
         if (fileInfo.isDomain()) {
             let domainInfo = <DomainInfo>fileInfo;
@@ -342,4 +350,12 @@ export class Diagnostics extends Disposable {
 
         fileInfo.setStatus(FileStatus.Validated);
     }
+}
+
+function toDiagnostics(problems: ParsingProblem[]): Diagnostic[] {
+    return problems.map(p => toDiagnostic(p));
+}
+
+function toDiagnostic(problem: ParsingProblem): Diagnostic {
+    return createDiagnostic(problem.lineIndex, problem.columnIndex, problem.problem, DiagnosticSeverity.Error);
 }

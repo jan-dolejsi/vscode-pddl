@@ -12,7 +12,7 @@ import * as process from 'child_process';
 
 import { PddlWorkspace } from '../../../common/src/workspace-model';
 import { PlanInfo, DomainInfo, ProblemInfo } from '../../../common/src/parser';
-import { PddlLanguage } from '../../../common/src/FileInfo';
+import { PddlLanguage, ParsingProblem } from '../../../common/src/FileInfo';
 import { PddlConfiguration, CONF_PDDL, VALIDATION_PATH } from '../configuration';
 import { Util } from '../../../common/src/util';
 import { dirname } from 'path';
@@ -225,7 +225,7 @@ class PlanValidationOutcome {
     static goalNotAttained(planInfo: PlanInfo): PlanValidationOutcome {
         let errorLine = planInfo.getSteps().length > 0 ? planInfo.getSteps().slice(-1).pop().lineIndex + 1 : 0;
         let error = "Plan does not reach the goal.";
-        let diagnostics = [createDiagnostic(errorLine, error, DiagnosticSeverity.Warning)];
+        let diagnostics = [createDiagnostic(errorLine, 0, error, DiagnosticSeverity.Warning)];
         return new PlanValidationOutcome(planInfo, diagnostics, error);
     }
 
@@ -234,7 +234,7 @@ class PlanValidationOutcome {
      */
     static invalidPlanDescription(planInfo: PlanInfo): PlanValidationOutcome {
         let error = "Invalid plan description.";
-        let diagnostics = [createDiagnostic(0, error, DiagnosticSeverity.Error)];
+        let diagnostics = [createDiagnostic(0, 0, error, DiagnosticSeverity.Error)];
         return new PlanValidationOutcome(planInfo, diagnostics, error);
     }
 
@@ -247,7 +247,7 @@ class PlanValidationOutcome {
 
     static failed(planInfo: PlanInfo, error: Error): PlanValidationOutcome {
         let message = "Validate tool failed. " + error.message;
-        let diagnostics = [createDiagnostic(0, message, DiagnosticSeverity.Error)];
+        let diagnostics = [createDiagnostic(0, 0, message, DiagnosticSeverity.Error)];
         return new PlanValidationOutcome(planInfo, diagnostics, message);
     }
 
@@ -273,10 +273,14 @@ class PlanValidationOutcome {
     }
 }
 
-export function createRangeFromLine(errorLine: number): Range {
-    return new Range(errorLine, 0, errorLine, 100);
+export function createRangeFromLine(errorLine: number, errorColumn: number = 0): Range {
+    return new Range(errorLine, errorColumn, errorLine, errorColumn + 100);
 }
 
-export function createDiagnostic(errorLine: number, error: string, severity: DiagnosticSeverity): Diagnostic {
-    return new Diagnostic(createRangeFromLine(errorLine), error, severity);
+export function createDiagnostic(errorLine: number, errorColumn: number, error: string, severity: DiagnosticSeverity): Diagnostic {
+    return new Diagnostic(createRangeFromLine(errorLine, errorColumn), error, severity);
+}
+
+export function createDiagnosticFromParsingProblem(problem: ParsingProblem, severity: DiagnosticSeverity): Diagnostic {
+    return new Diagnostic(createRangeFromLine(problem.lineIndex, problem.columnIndex), problem.problem, severity);
 }
