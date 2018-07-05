@@ -2,7 +2,13 @@
 
 ## [Unreleased]
 
-Debugging plan happenings.
+Interactive stepping through plans (aka debugging).
+
+## [2.6.7] - 2018-07-05
+
+### Documentation
+
+Getting started documentation was added thanks to feedback from fellow [ICAPS](http://icaps18.icaps-conference.org) attendees.
 
 ## [2.6.6] - 2018-06-19
 
@@ -267,7 +273,8 @@ Note for open source contributors: all notable changes to the "pddl" extension w
 
 Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
 
-[Unreleased]: https://github.com/jan-dolejsi/vscode-pddl/compare/v2.6.6...HEAD
+[Unreleased]: https://github.com/jan-dolejsi/vscode-pddl/compare/v2.6.7...HEAD
+[2.6.7]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.6.6...v2.6.7
 [2.6.6]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.6.5...v2.6.6
 [2.6.5]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.6.4...v2.6.5
 [2.6.4]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.6.3...v2.6.4
