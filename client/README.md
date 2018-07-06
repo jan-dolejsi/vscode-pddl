@@ -22,12 +22,16 @@ Simplest way to get started is to:
 1. open the _domain.pddl_ file and type ```domain```. The auto-completion suggests to insert the entire structure of the domain file. Use the <kbd>Tab</kbd> and <kbd>Enter</kbd> keys to skip through the placeholders and make your selections.
 1. open the _problem.pddl_ file and type ```problem```. The auto-completion suggests to insert the entire structure of the problem file. Make sure that the `(domain name)` here matches the name selected in the domain file.
 1. When prompted to configure a _PDDL Parser_, follow the instructions, or select _Later_ to postpone this if you do not have a PDDL parser handy. See [more info](https://github.com/jan-dolejsi/vscode-pddl/wiki/Configuring-the-PDDL-parser).
-1. When you are ready to run the planner on your domain and problem files (both must be open in the editor), invoke the planner via context menu on one of the file text content, or via the <kbd>Alt<kbd> + <kbd>P</kbd> shortcut. The [planning.domains](http://solver.planning.domains/) solver will be used, so do not send any confidential PDDL code.
+1. When you are ready to run the planner on your domain and problem files (both must be open in the editor), invoke the planner via context menu on one of the file text content, or via the <kbd>Alt</kbd> + <kbd>P</kbd> shortcut. The [planning.domains](http://solver.planning.domains/) solver will be used, so do not send any confidential PDDL code.
 1. Configure your own PDDL planner by following [instructions](https://github.com/jan-dolejsi/vscode-pddl/wiki/Configuring-the-PDDL-planner).
 
 ### Explore VS Code PDDL show-cases
 
-To exercise the features of this PDDL Extension, clone this [vscode-pddl-samples](vscode://vscode.git/clone?url=https%3A%2F%2Fgithub.com%2Fjan-dolejsi%2Fvscode-pddl-samples) repository and open the folder in VS Code. Follow the instructions and explanations in the [readme](https://github.com/jan-dolejsi/vscode-pddl-samples/blob/master/README.md).
+To exercise the features of this PDDL Extension, clone this [vscode-pddl-samples](https://github.com/jan-dolejsi/vscode-pddl-samples/) repository and open the folder in VS Code. Follow the instructions and explanations in the [readme](https://github.com/jan-dolejsi/vscode-pddl-samples/blob/master/README.md).
+
+> You can copy the following URL to your browser's address bar and open it, it will let you select where you want to clone the repo onto your local storage and opens it for you in VS Code - all automated: 
+
+> vscode://vscode.git/clone?url=https%3A%2F%2Fgithub.com%2Fjan-dolejsi%2Fvscode-pddl-samples
 
 ### Starting from existing PDDL models
 
