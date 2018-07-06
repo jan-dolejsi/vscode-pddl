@@ -39,7 +39,26 @@ export class Util {
      * @param searchValue value to replace
      * @param replaceValue replacement value
      */
-    static replaceAll(text: string, searchValue: string, replaceValue: string): any {
+    static replaceAll(text: string, searchValue: string, replaceValue: string): string {
         return text.split(searchValue).join(replaceValue);
+    }
+
+    /**
+     * Groups array by a key
+     * @param list list to be grouped
+     * @param keyGetter grouping key selector
+     */
+    static groupBy<K, V>(list: Array<V>, keyGetter: (value: V) => K): Map<K, V[]> {
+        const map = new Map();
+        list.forEach((item) => {
+            const key = keyGetter(item);
+            const collection = map.get(key);
+            if (!collection) {
+                map.set(key, [item]);
+            } else {
+                collection.push(item);
+            }
+        });
+        return map;
     }
 } 

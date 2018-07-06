@@ -5,7 +5,6 @@
 'use strict';
 
 import { FileInfo, PddlLanguage, ParsingProblem } from "./FileInfo";
-import { isNullOrUndefined } from "util";
 
 /**
  * Plan happenings file.
@@ -97,7 +96,7 @@ export class Happening {
      * It is decided by comparing the full action name and the counter.
      */
     belongsTo(other: Happening): boolean {
-        if (isNullOrUndefined(other)) return false;
+        if (other === null || other === undefined) return false;
 
         return this.fullActionName == other.fullActionName
             && this.counter == other.counter;

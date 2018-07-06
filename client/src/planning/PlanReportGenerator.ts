@@ -230,7 +230,7 @@ ${stepsInvolvingThisObject}
         }
         else {
             let revealActionUri = encodeURI('command:pddl.revealAction?' + JSON.stringify([plan.domain.fileUri, actionName]));
-            return `<a href="${revealActionUri}">${actionName}</a>`;
+            return `<a href="${revealActionUri}" title="Reveal '${actionName}' action in the domain file">${actionName}</a>`;
         }
     }
 

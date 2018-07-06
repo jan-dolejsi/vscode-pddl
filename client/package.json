@@ -200,7 +200,11 @@
       },
       {
         "command": "pddl.happenings.debug",
-        "title": "PDDL: Debug plan happenings"
+        "title": "PDDL: Debug plan happenings (mockup only)"
+      },
+      {
+        "command": "pddl.happenings.execute",
+        "title": "PDDL: Execute plan and show effects"
       }
     ],
     "menus": {
@@ -223,6 +227,10 @@
         },
         {
           "command": "pddl.happenings.debug",
+          "when": "resourceLangId == happenings"
+        },
+        {
+          "command": "pddl.happenings.execute",
           "when": "resourceLangId == happenings"
         }
       ],

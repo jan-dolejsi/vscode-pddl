@@ -131,7 +131,7 @@ export function activate(context: ExtensionContext) {
 
 	new PTestExplorer(context, planning);
 
-	new Debugging(context, pddlWorkspace);
+	new Debugging(context, pddlWorkspace, pddlConfiguration);
 	
 	subscribeToWorkspace(pddlWorkspace, pddlConfiguration, context);
 

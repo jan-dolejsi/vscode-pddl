@@ -13,13 +13,14 @@ import * as process from 'child_process';
 import { PddlWorkspace } from '../../../common/src/workspace-model';
 import { DomainInfo, ProblemInfo } from '../../../common/src/parser';
 import { PddlLanguage } from '../../../common/src/FileInfo';
-import { HappeningsInfo, Happening, HappeningType } from "../../../common/src/HappeningsInfo";
+import { HappeningsInfo, Happening } from "../../../common/src/HappeningsInfo";
 import { PddlConfiguration, CONF_PDDL, VAL_STEP_PATH } from '../configuration';
 import { Util } from '../../../common/src/util';
 import { dirname } from 'path';
 import { PlanStep } from '../../../common/src/PlanStep';
 import { DomainAndProblem, isHappenings, getDomainAndProblemForHappenings } from '../utils';
 import { createRangeFromLine, createDiagnostic } from './PlanValidator';
+import { HappeningsToValStep } from './HappeningsToValStep';
 
 export const PDDL_HAPPENINGS_VALIDATE = 'pddl.happenings.validate';
 
@@ -117,7 +118,9 @@ export class HappeningsValidator {
         // copy editor content to temp files to avoid using out-of-date content on disk
         let domainFilePath = Util.toPddlFile('domain', context.domain.getText());
         let problemFilePath = Util.toPddlFile('problem', context.problem.getText());
-        let valSteps = new HappeningsToValStep(happeningsInfo).getExportedText();
+        let happeningsConverter = new HappeningsToValStep();
+        happeningsConverter.convertAllHappenings(happeningsInfo);
+        let valSteps = happeningsConverter.getExportedText(true);
 
         let args = [domainFilePath, problemFilePath];
         let child = process.spawnSync(valStepPath, args, { cwd: dirname(Uri.parse(happeningsInfo.fileUri).fsPath), input: valSteps });
@@ -279,56 +282,5 @@ class HappeningsValidationOutcome {
     static unknown(happeningsInfo: HappeningsInfo): HappeningsValidationOutcome {
         let diagnostics = [new Diagnostic(createRangeFromLine(0), "Unknown error.", DiagnosticSeverity.Warning)];
         return new HappeningsValidationOutcome(happeningsInfo, diagnostics, "Unknown error.");
-    }
-}
-
-class HappeningsToValStep {
-    durativeActionCounter = 0;
-    durativeActionIndex = new Map<string, Number>();
-    valStepText: string[] = [];
-    makespan = -1;
-
-    constructor(happenings: HappeningsInfo) {
-        happenings.getHappenings()
-            .forEach(h => this.happeningToValStep(h));
-        this.valStepText.push('x');
-        this.valStepText.push('q');
-    }
-
-    getExportedText(): string {
-        return this.valStepText.join('\n');
-    }
-
-    happeningToValStep(h: Happening): void {
-        if (h.getTime() > this.makespan && this.makespan >= 0) {
-            this.valStepText.push('x');
-        }
-
-        switch (h.getType()) {
-            case HappeningType.START:
-            case HappeningType.INSTANTANEOUS:
-                this.durativeActionCounter += 1;
-                this.durativeActionIndex.set(this.toOrderedActionName(h), this.durativeActionCounter);
-                // ? start key_make_up_wellhead_running_tool casingrun1_sec1_well1 sec1_well1 @ 0
-                this.valStepText.push(`start ${h.getFullActionName()} @ ${h.getTime()}`);
-                break;
-
-            case HappeningType.END:
-                let index = this.durativeActionIndex.get(this.toOrderedActionName(h));
-                // ? end 3 @ 4.001
-                this.valStepText.push(`end ${index} @ ${h.getTime()}`);
-                break;
-
-            default:
-                this.valStepText.push('; error exporting: ' + h.toString());
-                break;
-        }
-
-        // update the plan makespan 
-        this.makespan = h.getTime();
-    }
-
-    toOrderedActionName(h: Happening): string {
-        return h.getFullActionName() + '#' + h.getCounter();
     }
 }

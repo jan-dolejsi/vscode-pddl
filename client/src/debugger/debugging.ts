@@ -1,3 +1,5 @@
+import { DebuggingSessionFiles } from './DebuggingSessionFiles';
+
 /* --------------------------------------------------------------------------------------------
  * Copyright (c) Jan Dolejsi. All rights reserved.
  * Licensed under the MIT License. See License.txt in the project root for license information.
@@ -8,11 +10,13 @@ import * as vscode from 'vscode';
 import { WorkspaceFolder, DebugConfiguration, ProviderResult, CancellationToken, window, Uri } from 'vscode';
 import { PlanDebugSession } from './PlanDebugSession';
 import * as Net from 'net';
-import { DomainInfo, ProblemInfo, HAPPENINGS } from '../../../common/src/parser';
+import { HAPPENINGS } from '../../../common/src/parser';
 import { FileInfo } from '../../../common/src/FileInfo';
 import { HappeningsInfo } from "../../../common/src/HappeningsInfo";
 import { PddlWorkspace } from '../../../common/src/workspace-model';
 import { toLanguage, isHappenings, getDomainAndProblemForHappenings } from '../utils';
+import { PddlConfiguration } from '../configuration';
+import { HappeningsExecutor } from './HappeningsExecutor';
 
 /*
  * Set the following compile time flag to true if the
@@ -23,7 +27,7 @@ const EMBED_DEBUG_ADAPTER = true;
 
 export class Debugging {
 
-	constructor(context: vscode.ExtensionContext, private pddlWorkspace: PddlWorkspace) {
+	constructor(context: vscode.ExtensionContext, private pddlWorkspace: PddlWorkspace, public plannerConfiguration: PddlConfiguration) {
 
 		context.subscriptions.push(vscode.commands.registerCommand('extension.mock-debug.getProgramName', config => {
 			config;
@@ -40,6 +44,11 @@ export class Debugging {
 
 		context.subscriptions.push(vscode.commands.registerCommand('pddl.happenings.debug', () => {
 			return this.startDebugging();
+		}));
+
+		context.subscriptions.push(vscode.commands.registerTextEditorCommand("pddl.happenings.execute", async (editor) => {
+			let context = await this.getActiveContext();
+			return new HappeningsExecutor(editor, context, this.plannerConfiguration).execute();
 		}));
 	}
 
@@ -98,12 +107,6 @@ export class Debugging {
 
 		await vscode.debug.startDebugging(folder, debugConfiguration);
 	}
-}
-
-interface DebuggingSessionFiles {
-	domain: DomainInfo,
-	problem: ProblemInfo,
-	happenings: HappeningsInfo
 }
 
 class PddlPlanDebugConfigurationProvider implements vscode.DebugConfigurationProvider {
