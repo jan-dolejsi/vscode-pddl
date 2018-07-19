@@ -60,6 +60,10 @@ export abstract class FileInfo {
         return this.status;
     }
 
+    /**
+     * Adds a parsing problem.
+     * @param parsingProblem parsing problems
+     */
     addProblem(parsingProblem: ParsingProblem): void {
         this.parsingProblems.push(parsingProblem);
     }

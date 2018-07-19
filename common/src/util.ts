@@ -61,4 +61,12 @@ export class Util {
         });
         return map;
     }
-} 
+
+    /**
+     * Equivalent of flatMap from other languages.
+     * @param arrayOfArrays array of arrays to be flattened to single dimentional array
+     */
+    static flatMap<T>(arrayOfArrays: Array<Array<T>>): Array<T> {
+        return [].concat.apply([], arrayOfArrays);
+    }
+}

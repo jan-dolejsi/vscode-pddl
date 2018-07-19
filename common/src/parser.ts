@@ -161,6 +161,9 @@ export class Parser {
         if (matchGroups) {
             let objectsText = matchGroups[6];
             problemInfo.setObjects(Parser.toTypeObjects(this.parseInheritance(objectsText)));
+
+            let initText = matchGroups[7];
+            problemInfo.setInits(this.parseInit(initText));
         }
     }
 
@@ -200,6 +203,55 @@ export class Parser {
         }
 
         return inheritance;
+    }
+
+    problemInitPattern = /(\(\s*=\s*\(([\w-]+(?: [\w-]+)*)\s*\)\s*([\d.]+)\s*\)\s*|\(([\w-]+(?: [\w-]+)*)\s*\)\s*|\(at ([\d.]+)\s*(\(\s*=\s*\(([\w-]+(?: [\w-]+)*)\s*\)\s*([\d.]+)\s*\)|\(([\w-]+(?: [\w-]+)*)\s*\)\s*\)\s*))/g;
+
+    /**
+     * Parses problem :init section.
+     * @param initText init section content
+     */
+    parseInit(initText: string): VariableValue[] {
+        const variableInitValues: VariableValue[] = [];
+        this.problemInitPattern.lastIndex = 0;
+        var match: RegExpExecArray;
+        while(match = this.problemInitPattern.exec(initText)) {
+            var time = 0;
+            var variableName: string;
+            var value: number | boolean;
+
+            if(match[1].startsWith('(at ')) {
+                // time initial...
+                time = parseInt(match[5]);
+
+                if(match[6].startsWith('(=')) {
+                    // time initial fluent
+                    variableName = match[7];
+                    value = parseFloat(match[8]);
+                } 
+                else {
+                    // time initial literal
+                    variableName = match[9];
+                    value = true;
+                }
+            }
+            else {
+                if(match[1].startsWith('(=')) {
+                    // initial fluent value
+                    variableName = match[2];
+                    value = parseFloat(match[3]);
+                } 
+                else {
+                    // initialiezed literal
+                    variableName = match[4];
+                    value = true;
+                }
+            }
+
+            variableInitValues.push(new VariableValue(time, variableName, value));
+        }
+
+        return variableInitValues;
     }
 
     static parsePredicatesOrFunctions(predicatesText: string): Variable[] {
@@ -304,6 +356,7 @@ export class Parser {
  */
 export class ProblemInfo extends FileInfo {
     objects: TypeObjects[] = [];
+    inits: VariableValue[] = [];
 
     constructor(fileUri: string, version: number, problemName: string, public domainName: string) {
         super(fileUri, version, problemName);
@@ -324,8 +377,53 @@ export class ProblemInfo extends FileInfo {
         else return thisTypesObjects.objects;
     }
 
+    /**
+     * Sets predicate/function initial values.
+     * @param inits initial values
+     */
+    setInits(inits: VariableValue[]): void {
+        this.inits = inits;
+    }
+
+    /**
+     * Returns variable initial values and time-initial literals/fluents. 
+     */
+    getInits(): VariableValue[] {
+        return this.inits;
+    }
+
     isProblem(): boolean {
         return true;
+    }
+}
+
+/**
+ * Variable value initialiation in the problem file.
+ */
+export class VariableValue {
+    constructor(private time: number, private variableName: string, private value: number | boolean) {
+
+    }
+
+    getTime(): number {
+        return this.time;
+    }
+
+    getVariableName(): string {
+        return this.variableName;
+    }
+
+    getValue(): number | boolean {
+        return this.value;
+    }
+
+    /**
+     * Updates this value.
+     * @param newValue new value
+     */
+    update(newValue: VariableValue): void {
+        this.time = newValue.time;
+        this.value = newValue.value;
     }
 }
 

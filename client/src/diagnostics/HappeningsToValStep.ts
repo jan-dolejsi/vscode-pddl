@@ -5,6 +5,7 @@
 'use strict';
 
 import { HappeningsInfo, Happening, HappeningType } from "../../../common/src/HappeningsInfo";
+import { Util } from "../../../common/src/util";
 
 export const PDDL_HAPPENINGS_VALIDATE = 'pddl.happenings.validate';
 
@@ -18,9 +19,12 @@ export class HappeningsToValStep {
         this.convert(happenings.getHappenings());
     }
 
-    convert(happenings: Happening[]) {
-        happenings.forEach(h => this.happeningToValStep(h));
-        this.valStepText.push('x');
+    convert(happenings: Happening[]): string {
+        const newSteps = happenings.map(h => this.happeningToValStep(h));
+        const newStepsFlatten = Util.flatMap(newSteps);
+        newStepsFlatten.push('x');
+        this.valStepText = this.valStepText.concat(newStepsFlatten);
+        return newStepsFlatten.join('\n') + '\n';
     }
 
     getExportedText(andQuit: boolean): string {
@@ -32,10 +36,8 @@ export class HappeningsToValStep {
         return this.valStepText.join('\n') + '\n';
     }
 
-    private happeningToValStep(h: Happening): void {
-        if (h.getTime() > this.makespan && this.makespan >= 0) {
-            this.valStepText.push('x');
-        }
+    private happeningToValStep(h: Happening): string[] {
+        const newValStepText: string[] = [];
 
         switch (h.getType()) {
             case HappeningType.START:
@@ -43,22 +45,24 @@ export class HappeningsToValStep {
                 this.durativeActionCounter += 1;
                 this.durativeActionIndex.set(this.toOrderedActionName(h), this.durativeActionCounter);
                 // ? start key_make_up_wellhead_running_tool casingrun1_sec1_well1 sec1_well1 @ 0
-                this.valStepText.push(`start ${h.getFullActionName()} @ ${h.getTime()}`);
+                newValStepText.push(`start ${h.getFullActionName()} @ ${h.getTime()}`);
                 break;
 
             case HappeningType.END:
                 let index = this.durativeActionIndex.get(this.toOrderedActionName(h));
                 // ? end 3 @ 4.001
-                this.valStepText.push(`end ${index} @ ${h.getTime()}`);
+                newValStepText.push(`end ${index} @ ${h.getTime()}`);
                 break;
 
             default:
-                this.valStepText.push('; error exporting: ' + h.toString());
+                newValStepText.push('; error exporting: ' + h.toString());
                 break;
         }
 
         // update the plan makespan 
         this.makespan = h.getTime();
+
+        return newValStepText;
     }
 
     toOrderedActionName(h: Happening): string {
