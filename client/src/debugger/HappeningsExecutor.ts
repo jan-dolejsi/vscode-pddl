@@ -13,15 +13,20 @@ import * as process from 'child_process';
 import { HappeningsToValStep } from '../diagnostics/HappeningsToValStep';
 import { DebuggingSessionFiles } from './DebuggingSessionFiles';
 import { Happening } from '../HappeningsInfo';
-import { VariableValue } from '../../../common/src/parser';
+import { TimedVariableValue, VariableValue } from '../../../common/src/parser';
+import { EventEmitter } from 'events';
 
 /**
  * Executes sequence of plan happenings and decorates the happenings file with action effects.
  */
-export class HappeningsExecutor {
+export class HappeningsExecutor extends EventEmitter {
 
     happeningsConvertor: HappeningsToValStep;
-    variableValues: VariableValue[];
+    variableValues: TimedVariableValue[];
+    outputBuffer: string = '';
+    decorations: vscode.TextEditorDecorationType[] = [];
+
+    public static HAPPENING_EFFECTS_EVALUATED = Symbol("HAPPENING_EFFECTS_EVALUATED");
 
     /**
      * Constructs the executor.
@@ -30,19 +35,20 @@ export class HappeningsExecutor {
      * @param pddlConfiguration user/workspace configuration
      */
     constructor(private editor: vscode.TextEditor, private context: DebuggingSessionFiles, private pddlConfiguration: PddlConfiguration) {
+        super();
         this.happeningsConvertor = new HappeningsToValStep();
-        this.variableValues = context.problem.getInits();
+        this.variableValues = context.problem.getInits().map(v => TimedVariableValue.copy(v));
     }
 
     /**
      * Executes all the happenings and decorates the happenings file with action effects.
      */
-    async execute(): Promise<boolean> {
+    async execute(): Promise<vscode.TextEditorDecorationType[]> {
 
         if (this.context.happenings.getParsingProblems().length > 0) {
             vscode.commands.executeCommand('workbench.action.problems.show');
             vscode.window.showErrorMessage('The plan happenings file contains syntactic errors. Fix those first.');
-            return false;
+            return [];
         }
 
         let valStepPath = this.pddlConfiguration.getValStepPath();
@@ -56,13 +62,22 @@ export class HappeningsExecutor {
         let cmd = valStepPath + ' ' + args.join(' ');
         let child = process.exec(cmd, { cwd: cwd });
 
+        // subscribe to the child process standard output stream and concatenate it till it is complete
+        child.stdout.on('data', output => {
+            this.outputBuffer += output;
+            if (this.isOutputComplete(this.outputBuffer)) {
+                const variableValues = this.parseEffects(this.outputBuffer);
+                this.outputBuffer = ''; // reset the output buffer
+                this.emit(HappeningsExecutor.HAPPENING_EFFECTS_EVALUATED, variableValues);
+            }
+        });
+
         let groupedHappenings = Util.groupBy(this.context.happenings.getHappenings(), h => h.getTime());
 
         for (const time of groupedHappenings.keys()) {
             const happeningGroup = groupedHappenings.get(time);
             try {
-                const outcome = await this.postHappenings(child, happeningGroup);
-                outcome;
+                await this.postHappenings(child, happeningGroup);
             } catch (err) {
                 console.log(err);
             }
@@ -70,7 +85,7 @@ export class HappeningsExecutor {
 
         child.stdin.write('q\n');
 
-        return true;
+        return this.decorations;
     }
 
     async postHappenings(childProcess: process.ChildProcess, happenings: Happening[]): Promise<boolean> {
@@ -79,18 +94,14 @@ export class HappeningsExecutor {
         let that = this;
 
         return new Promise<boolean>((resolve, reject) => {
-            let output = '';
-            let completed = false;
             let lastHappening = happenings[happenings.length - 1];
 
-            childProcess.stdout.on('data', data => {
-                if (completed) return;
-                output += data;
-                if (completed = this.isOutputComplete(output)) {
-                    let decoration = this.parseAndApplyEffects(lastHappening.getTime(), output);
-                    that.decorate(decoration, lastHappening);
-                    resolve(true);
-                }
+            // subscribe to the valstep child process updates
+            that.once(HappeningsExecutor.HAPPENING_EFFECTS_EVALUATED, (effectValues: VariableValue[]) => {
+                let newValues = effectValues.filter(v => that.applyIfNew(lastHappening.getTime(), v));
+                let decoration = this.createDecorationText(newValues);
+                that.decorate(decoration, lastHappening);
+                resolve(true);
             });
 
             if (!childProcess.stdin.write(valSteps))
@@ -98,15 +109,17 @@ export class HappeningsExecutor {
         });
     }
 
-    valStepOutputPattern = /^(?:(?:\? )?Posted action \d+\s+)*\? Seeing (\d+) changed lits\s*([\w\s-]*)\s+\?\s*$/m;
-    valStepLiteralsPattern = /([\w-]+(?: [\w-]+)*) - now (true|false|[\d.]+)/g;
+    valStepOutputPattern = /^(?:(?:\? )?Posted action \d+\s+)*\? Seeing (\d+) changed lits\s*([\s\S]*)\s+\?\s*$/m;
+    valStepLiteralsPattern = /([\w-]+(?: [\w-]+)*) - now (true|false|[-\d.]+)/g;
 
-    isOutputComplete(output: string) {
+    isOutputComplete(output: string): boolean {
         this.valStepOutputPattern.lastIndex = 0;
         var match = this.valStepOutputPattern.exec(output);
         if (match) {
             var expectedChangedLiterals = parseInt(match[1]);
             var changedLiterals = match[2];
+            
+            if (expectedChangedLiterals == 0) return true; // the happening did not have any effects
 
             this.valStepLiteralsPattern.lastIndex = 0;
             var actualChangedLiterals = changedLiterals.match(this.valStepLiteralsPattern).length;
@@ -118,11 +131,11 @@ export class HappeningsExecutor {
         }
     }
 
-    parseAndApplyEffects(time: number, output: string): string {
+    parseEffects(happeningsEffectText: string): VariableValue[] {
         const effectValues: VariableValue[] = [];
 
         this.valStepOutputPattern.lastIndex = 0;
-        var match = this.valStepOutputPattern.exec(output);
+        var match = this.valStepOutputPattern.exec(happeningsEffectText);
         if (match) {
             var changedLiterals = match[2];
 
@@ -143,21 +156,20 @@ export class HappeningsExecutor {
                     value = parseFloat(valueAsString);
                 }
 
-                effectValues.push(new VariableValue(time, variableName, value));
+                effectValues.push(new VariableValue(variableName, value));
             }
 
-            let newValues = effectValues.filter(v => this.applyIfNew(v));
-            return this.createDecoration(newValues);
+            return effectValues;
         }
         else {
-            throw new Error(`ValStep output does not parse: ${output}`);
+            throw new Error(`ValStep output does not parse: ${happeningsEffectText}`);
         }
     }
 
-    createDecoration(values: VariableValue[]): string {
+    createDecorationText(values: VariableValue[]): string {
         const positiveEffects = values.filter(v => v.getValue() === true).sort((a, b) => a.getVariableName().localeCompare(b.getVariableName()));
         const negativeEffects = values.filter(v => v.getValue() === false).sort((a, b) => a.getVariableName().localeCompare(b.getVariableName()));
-        const numericEffects = values.filter(v => v.getValue() != true && v.getValue() != false).sort((a, b) => a.getVariableName().localeCompare(b.getVariableName()));
+        const numericEffects = values.filter(v => v.getValue() !== true && v.getValue() !== false).sort((a, b) => a.getVariableName().localeCompare(b.getVariableName()));
 
         const decorations: string[] = [];
 
@@ -176,13 +188,13 @@ export class HappeningsExecutor {
             decorations.push(decoration);
         }
 
-        return decorations.join(', ');
+        return decorations.length > 0 ? decorations.join(', ') : 'Has no effects.';
     }
 
-    applyIfNew(value: VariableValue): boolean {
+    applyIfNew(time: number, value: VariableValue): boolean {
         let currentValue = this.variableValues.find(v => v.getVariableName().toLowerCase() === value.getVariableName().toLowerCase());
         if (currentValue === undefined) {
-            this.variableValues.push(value);
+            this.variableValues.push(TimedVariableValue.from(time, value));
             return true;
         }
         else {
@@ -190,7 +202,7 @@ export class HappeningsExecutor {
                 return false;
             }
             else {
-                currentValue.update(value);
+                currentValue.update(time, value);
                 return true;
             }
         }
@@ -208,5 +220,6 @@ export class HappeningsExecutor {
         let line = lastHappening.lineIndex;
         let range = new vscode.Range(line, 0, line, 100);
         this.editor.setDecorations(decorationType, [range]);
+        this.decorations.push(decorationType);
     }
 }

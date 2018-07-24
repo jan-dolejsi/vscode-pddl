@@ -27,6 +27,8 @@ const EMBED_DEBUG_ADAPTER = true;
 
 export class Debugging {
 
+	decorations = new Map<vscode.TextDocument, vscode.TextEditorDecorationType[]>();
+
 	constructor(context: vscode.ExtensionContext, private pddlWorkspace: PddlWorkspace, public plannerConfiguration: PddlConfiguration) {
 
 		context.subscriptions.push(vscode.commands.registerCommand('extension.mock-debug.getProgramName', config => {
@@ -47,9 +49,26 @@ export class Debugging {
 		}));
 
 		context.subscriptions.push(vscode.commands.registerTextEditorCommand("pddl.happenings.execute", async (editor) => {
+			this.clearDecorations(editor.document);
 			let context = await this.getActiveContext();
-			return new HappeningsExecutor(editor, context, this.plannerConfiguration).execute();
+			let decorations = await new HappeningsExecutor(editor, context, this.plannerConfiguration).execute();
+			this.saveDecorations(editor.document, decorations);
 		}));
+
+		// clear decorations, when document is updated/closed
+		vscode.workspace.onDidChangeTextDocument(evt => this.clearDecorations(evt.document));
+		vscode.workspace.onDidCloseTextDocument(d => this.clearDecorations(d));
+	}
+
+	clearDecorations(document: vscode.TextDocument): void {
+		let decorations = this.decorations.get(document);
+		if (decorations) decorations.forEach(d => d.dispose());
+		this.decorations.set(document, []);
+	}
+
+	saveDecorations(document: vscode.TextDocument, decorations: vscode.TextEditorDecorationType[]): void {
+		this.clearDecorations(document);
+		this.decorations.set(document, decorations);
 	}
 
 	async getActiveContext(): Promise<DebuggingSessionFiles> {

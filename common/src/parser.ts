@@ -211,8 +211,8 @@ export class Parser {
      * Parses problem :init section.
      * @param initText init section content
      */
-    parseInit(initText: string): VariableValue[] {
-        const variableInitValues: VariableValue[] = [];
+    parseInit(initText: string): TimedVariableValue[] {
+        const variableInitValues: TimedVariableValue[] = [];
         this.problemInitPattern.lastIndex = 0;
         var match: RegExpExecArray;
         while(match = this.problemInitPattern.exec(initText)) {
@@ -248,7 +248,7 @@ export class Parser {
                 }
             }
 
-            variableInitValues.push(new VariableValue(time, variableName, value));
+            variableInitValues.push(new TimedVariableValue(time, variableName, value));
         }
 
         return variableInitValues;
@@ -356,7 +356,7 @@ export class Parser {
  */
 export class ProblemInfo extends FileInfo {
     objects: TypeObjects[] = [];
-    inits: VariableValue[] = [];
+    inits: TimedVariableValue[] = [];
 
     constructor(fileUri: string, version: number, problemName: string, public domainName: string) {
         super(fileUri, version, problemName);
@@ -381,14 +381,14 @@ export class ProblemInfo extends FileInfo {
      * Sets predicate/function initial values.
      * @param inits initial values
      */
-    setInits(inits: VariableValue[]): void {
+    setInits(inits: TimedVariableValue[]): void {
         this.inits = inits;
     }
 
     /**
      * Returns variable initial values and time-initial literals/fluents. 
      */
-    getInits(): VariableValue[] {
+    getInits(): TimedVariableValue[] {
         return this.inits;
     }
 
@@ -398,11 +398,23 @@ export class ProblemInfo extends FileInfo {
 }
 
 /**
- * Variable value initialiation in the problem file.
+ * Variable value effective from certain time, e.g. initialiation of the variable in the problem file.
  */
-export class VariableValue {
+export class TimedVariableValue {
     constructor(private time: number, private variableName: string, private value: number | boolean) {
 
+    }
+
+    static from(time: number, value: VariableValue): TimedVariableValue {
+        return new TimedVariableValue(time, value.getVariableName(), value.getValue());
+    }
+
+    /**
+     * Makes a deep copy of the supplied value and returns a new instance
+     * @param value value to copy from
+     */
+    static copy(value: TimedVariableValue): TimedVariableValue {
+        return new TimedVariableValue(value.time, value.variableName, value.value);
     }
 
     getTime(): number {
@@ -421,9 +433,25 @@ export class VariableValue {
      * Updates this value.
      * @param newValue new value
      */
-    update(newValue: VariableValue): void {
-        this.time = newValue.time;
-        this.value = newValue.value;
+    update(time: number, newValue: VariableValue): void {
+        this.time = time;
+        this.value = newValue.getValue();
+    }
+}
+/**
+ * Variable value initialiation in the problem file.
+ */
+export class VariableValue {
+    constructor(private variableName: string, private value: number | boolean) {
+
+    }
+
+    getVariableName(): string {
+        return this.variableName;
+    }
+
+    getValue(): number | boolean {
+        return this.value;
     }
 }
 

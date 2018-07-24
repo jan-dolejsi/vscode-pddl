@@ -227,7 +227,7 @@
         },
         {
           "command": "pddl.happenings.debug",
-          "when": "resourceLangId == happenings"
+          "when": "resourceLangId == happenings && false"
         },
         {
           "command": "pddl.happenings.execute",
