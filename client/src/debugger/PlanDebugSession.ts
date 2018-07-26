@@ -48,7 +48,7 @@ export class PlanDebugSession extends LoggingDebugSession {
 	 * We configure the default implementation of a debug adapter here.
 	 */
 	public constructor() {
-		super("pddl-plan-debug.txt");
+		super("pddl-happenings-debug.txt");
 
 		// this debugger uses zero-based lines and columns
 		this.setDebuggerLinesStartAt1(false);

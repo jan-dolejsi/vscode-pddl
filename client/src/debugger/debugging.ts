@@ -12,7 +12,7 @@ import { HAPPENINGS } from '../../../common/src/parser';
 import { FileInfo } from '../../../common/src/FileInfo';
 import { HappeningsInfo } from "../../../common/src/HappeningsInfo";
 import { PddlWorkspace } from '../../../common/src/workspace-model';
-import { toLanguage, isHappenings, getDomainAndProblemForHappenings } from '../utils';
+import { toLanguage, isHappenings, getDomainAndProblemForHappenings, selectHappenings } from '../utils';
 import { PddlConfiguration } from '../configuration';
 import { HappeningsExecutor } from './HappeningsExecutor';
 import { DebuggingSessionFiles } from './DebuggingSessionFiles';
@@ -30,17 +30,14 @@ export class Debugging {
 
 	constructor(context: vscode.ExtensionContext, private pddlWorkspace: PddlWorkspace, public plannerConfiguration: PddlConfiguration) {
 
-		context.subscriptions.push(vscode.commands.registerCommand('extension.mock-debug.getProgramName', config => {
+		context.subscriptions.push(vscode.commands.registerCommand('pddl.selectAndActivateHappenings', async(config) => {
 			config;
-			return vscode.window.showInputBox({
-				placeHolder: "Please enter the name of a markdown file in the workspace folder",
-				value: "readme.md"
-			});
+			return await selectHappenings();
 		}));
 
-		// register a configuration provider for 'pddl-plan' debug type
+		// register a configuration provider for 'pddl-happenings' debug type
 		const provider = new PddlPlanDebugConfigurationProvider()
-		context.subscriptions.push(vscode.debug.registerDebugConfigurationProvider('pddl-plan', provider));
+		context.subscriptions.push(vscode.debug.registerDebugConfigurationProvider('pddl-happenings', provider));
 		context.subscriptions.push(provider);
 
 		context.subscriptions.push(vscode.commands.registerCommand('pddl.happenings.debug', () => {
@@ -121,7 +118,7 @@ export class Debugging {
 		let folder: WorkspaceFolder = undefined; // so far there is no configuration to resolve
 		let debugConfiguration: vscode.DebugConfiguration = {
 			"name": "PDDL Plan Happenings F5",
-			"type": "pddl-plan",
+			"type": "pddl-happenings",
 			"request": "launch",
 			"program": Uri.parse(context.happenings.fileUri).fsPath,
 			"domain": Uri.parse(context.domain.fileUri).fsPath,
@@ -146,8 +143,8 @@ class PddlPlanDebugConfigurationProvider implements vscode.DebugConfigurationPro
 		if (!config.type && !config.request && !config.name) {
 			const editor = vscode.window.activeTextEditor;
 			if (editor && editor.document.languageId === HAPPENINGS) {
-				config.type = 'pddl-plan';
-				config.name = 'Launch';
+				config.type = 'pddl-happenings';
+				config.name = 'PDDL: Plan Happenings (from context menu)';
 				config.request = 'launch';
 				config.program = '${file}';
 				config.domain = 'domain.pddl';
