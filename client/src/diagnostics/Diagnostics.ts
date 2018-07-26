@@ -10,15 +10,21 @@ import {
 
 import { Authentication } from '../../../common/src/Authentication';
 import { PddlWorkspace } from '../../../common/src/workspace-model';
-import { DomainInfo, ProblemInfo, FileInfo, FileStatus, Parser, PlanInfo } from '../../../common/src/parser';
+import { DomainInfo, ProblemInfo, PlanInfo } from '../../../common/src/parser';
+import { FileInfo, FileStatus, stripComments, ParsingProblem } from '../../../common/src/FileInfo';
 
 import { Validator } from './validator';
 import { ValidatorService } from './ValidatorService';
 import { ValidatorExecutable } from './ValidatorExecutable';
 import { PDDLParserSettings } from '../../../common/src/Settings';
 import { PddlConfiguration, PDDL_PARSER, VALIDATION_PATH, CONF_PDDL } from '../configuration';
-import { PlanValidator } from './PlanValidator';
+import { PlanValidator, createDiagnostic } from './PlanValidator';
+import { HappeningsValidator } from './HappeningsValidator';
+import { HappeningsInfo } from '../HappeningsInfo';
 
+/**
+ * Listens to updates to PDDL files and performs detailed parsing and syntactical analysis and report problems as `Diagnostics`.
+ */
 export class Diagnostics extends Disposable {
 
     pddlWorkspace: PddlWorkspace;
@@ -30,7 +36,8 @@ export class Diagnostics extends Disposable {
 
     private defaultTimerDelayInSeconds = 3;
 
-    constructor(pddlWorkspace: PddlWorkspace, diagnosticCollection: DiagnosticCollection, configuration: PddlConfiguration, private planValidator: PlanValidator) {
+    constructor(pddlWorkspace: PddlWorkspace, diagnosticCollection: DiagnosticCollection, configuration: PddlConfiguration,
+        private planValidator: PlanValidator, private happeningsValidator: HappeningsValidator) {
         super(() => this.pddlWorkspace.removeAllListeners()); //todo: this is probably too harsh
         this.diagnosticCollection = diagnosticCollection;
         this.pddlWorkspace = pddlWorkspace;
@@ -74,7 +81,6 @@ export class Diagnostics extends Disposable {
             let scheduleFurtherValidation = dirtyDomains.length > 1;
 
             this.validatePddlDocument(firstDirtyDomain, scheduleFurtherValidation);
-            return;
         }
 
         // find all dirty problems
@@ -95,10 +101,22 @@ export class Diagnostics extends Disposable {
         if (dirtyPlans.length > 0) {
             let firstDirtyPlan = <PlanInfo>dirtyPlans[0];
 
-            // if there was more than one domain schedule further validation
+            // if there was more than one dirty file, schedule further validation
             let scheduleFurtherValidation = dirtyPlans.length > 1;
 
             this.validatePlan(firstDirtyPlan, scheduleFurtherValidation);
+        }
+
+        // find all dirty happenings
+        let dirtyHappenings = this.pddlWorkspace.getAllFilesIf(fileInfo => fileInfo.isHappenings() && fileInfo.getStatus() == FileStatus.Parsed);
+
+        if (dirtyHappenings.length > 0) {
+            let firstDirtyHappenings = <HappeningsInfo>dirtyHappenings[0];
+
+            // if there was more than one dirty file, schedule further validation
+            let scheduleFurtherValidation = dirtyHappenings.length > 1;
+
+            this.validateHappenings(firstDirtyHappenings, scheduleFurtherValidation);
         }
     }
 
@@ -128,7 +146,7 @@ export class Diagnostics extends Disposable {
 
     validatePlan(planInfo: PlanInfo, scheduleFurtherValidation: boolean): void {
         if (planInfo == null) return;
-        
+
         if (!this.planValidator.testConfiguration()) return;
 
         // mark the file as under validation
@@ -139,6 +157,30 @@ export class Diagnostics extends Disposable {
         this.planValidator.validatePlanAndReportDiagnostics(planInfo, false, (diagnostics) => {
             // Send the computed diagnostics to VSCode.
             this.sendDiagnostics(diagnostics);
+            planInfo.setStatus(FileStatus.Validated);
+            if (scheduleFurtherValidation) this.scheduleValidation();
+        }, (err) => {
+            window.showErrorMessage(err);
+            console.warn(err);
+            // var showNever = false;
+            // this.pddlConfiguration.suggestNewValidatorConfiguration(showNever);
+        });
+    }
+
+    validateHappenings(happeningsInfo: HappeningsInfo, scheduleFurtherValidation: boolean): void {
+        if (happeningsInfo == null) return;
+
+        if (!this.happeningsValidator.testConfiguration()) return;
+
+        // mark the file as under validation
+        happeningsInfo.setStatus(FileStatus.Validating);
+
+        console.log(`Validating ${happeningsInfo.name} plan.`);
+
+        this.happeningsValidator.validateAndReportDiagnostics(happeningsInfo, false, (diagnostics) => {
+            // Send the computed diagnostics to VSCode.
+            this.sendDiagnostics(diagnostics);
+            happeningsInfo.setStatus(FileStatus.Validated);
             if (scheduleFurtherValidation) this.scheduleValidation();
         }, (err) => {
             window.showErrorMessage(err);
@@ -153,6 +195,14 @@ export class Diagnostics extends Disposable {
         if (fileInfo == null) {
             console.log('File not found in the workspace.');
         }
+
+        // detect parsing and pre-processing issues
+        if (fileInfo.getParsingProblems().length > 0) {
+            let parsingProblems = new Map<string, Diagnostic[]>();
+            parsingProblems.set(fileInfo.fileUri, toDiagnostics(fileInfo.getParsingProblems()));
+            this.sendDiagnostics(parsingProblems);
+            return;
+        };
 
         if (fileInfo.isDomain()) {
             let domainInfo = <DomainInfo>fileInfo;
@@ -288,8 +338,8 @@ export class Diagnostics extends Disposable {
     validateUnknownFile(fileInfo: FileInfo): void {
         fileInfo.setStatus(FileStatus.Validating);
 
-        if (fileInfo.text.length > 0) {
-            let firstLine = Parser.stripComments(fileInfo.text).replace(/^\s+/g, '').split('\n')[0];
+        if (fileInfo.getText().length > 0) {
+            let firstLine = stripComments(fileInfo.getText()).replace(/^\s+/g, '').split('\n')[0];
 
             this.sendDiagnostic(fileInfo.fileUri, `Cannot recognize whether this is a domain or problem: ${firstLine}`, DiagnosticSeverity.Error);
         }
@@ -299,4 +349,12 @@ export class Diagnostics extends Disposable {
 
         fileInfo.setStatus(FileStatus.Validated);
     }
+}
+
+function toDiagnostics(problems: ParsingProblem[]): Diagnostic[] {
+    return problems.map(p => toDiagnostic(p));
+}
+
+function toDiagnostic(problem: ParsingProblem): Diagnostic {
+    return createDiagnostic(problem.lineIndex, problem.columnIndex, problem.problem, DiagnosticSeverity.Error);
 }

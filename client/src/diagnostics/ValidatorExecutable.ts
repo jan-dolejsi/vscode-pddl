@@ -20,7 +20,7 @@ export class ValidatorExecutable extends Validator {
     constructor(path: string, public syntax: string, public customPattern: string) { super(path); }
 
     validate(domainInfo: DomainInfo, problemFiles: ProblemInfo[], onSuccess: (diagnostics: Map<string, Diagnostic[]>) => void, onError: (error: string) => void): void {
-        let domainFilePath = Util.toPddlFile("domain", domainInfo.text);
+        let domainFilePath = Util.toPddlFile("domain", domainInfo.getText());
 
         let diagnostics = this.createEmptyDiagnostics(domainInfo, problemFiles);
 
@@ -35,7 +35,7 @@ export class ValidatorExecutable extends Validator {
         }
         else {
             problemFiles.forEach(problemFile => {
-                let problemFilePath = Util.toPddlFile("problem", problemFile.text);
+                let problemFilePath = Util.toPddlFile("problem", problemFile.getText());
                 let pathToUriMap: [string, string][] = [[domainFilePath, domainInfo.fileUri], [problemFilePath, problemFile.fileUri]];
 
                 // todo: the issues in the domain file should only be output once, not as many times as there are problem files

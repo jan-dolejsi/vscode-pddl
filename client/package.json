@@ -4,14 +4,16 @@
   "description": "Planning Domain Description Language support",
   "author": "Jan Dolejsi",
   "license": "MIT",
-  "version": "2.6.7",
+  "version": "2.6.8",
   "publisher": "jan-dolejsi",
   "engines": {
-    "vscode": "^1.22.0"
+    "vscode": "^1.22.0",
+    "node": "^7.9.0"
   },
   "categories": [
     "Snippets",
-    "Programming Languages"
+    "Programming Languages",
+    "Debuggers"
   ],
   "keywords": [
     "PDDL",
@@ -73,6 +75,11 @@
           ".happenings"
         ],
         "configuration": "./language-configuration.json"
+      }
+    ],
+    "breakpoints": [
+      {
+        "language": "happenings"
       }
     ],
     "grammars": [
@@ -190,6 +197,14 @@
       {
         "command": "pddl.plan.validate",
         "title": "PDDL: Validate plan"
+      },
+      {
+        "command": "pddl.happenings.debug",
+        "title": "PDDL: Debug plan happenings (mockup only)"
+      },
+      {
+        "command": "pddl.happenings.execute",
+        "title": "PDDL: Execute plan and show effects"
       }
     ],
     "menus": {
@@ -209,6 +224,14 @@
         {
           "command": "pddl.plan.validate",
           "when": "resourceLangId == plan"
+        },
+        {
+          "command": "pddl.happenings.debug",
+          "when": "resourceLangId == happenings && false"
+        },
+        {
+          "command": "pddl.happenings.execute",
+          "when": "resourceLangId == happenings"
         }
       ],
       "view/title": [
@@ -487,14 +510,13 @@
           "type": "string",
           "description": "ValueSeq path - the tool that evaluates numeric values of functions at starts and ends of actions in the plan."
         },
-        "pddlTestExplorer.enabled": {
-          "type": "boolean",
-          "default": true,
-          "description": "Enable/disable the preview of PDDL test explorer. Restart the editor for the change to take effect."
-        },
         "pddl.validatorPath": {
           "type": "string",
           "description": "Path of the 'validate' executable."
+        },
+        "pddl.valStepPath": {
+          "type": "string",
+          "description": "Path of the 'valstep' executable."
         }
       }
     },
@@ -505,14 +527,72 @@
           "name": "PDDL Tests"
         }
       ]
-    }
+    },
+    "debuggers": [
+      {
+        "type": "pddl-happenings",
+        "label": "PDDL Plan Debugger",
+        "program": "./out/debugger/debugAdapter.js",
+        "runtime": "node",
+        "configurationAttributes": {
+          "launch": {
+            "required": [
+              "program"
+            ],
+            "properties": {
+              "program": {
+                "type": "string",
+                "description": "Absolute path to a plan happenings file path.",
+                "default": "${command:PddlPlanHappenings}"
+              },
+              "stopOnEntry": {
+                "type": "boolean",
+                "description": "Automatically stop after launch.",
+                "default": true
+              },
+              "trace": {
+                "type": "boolean",
+                "description": "Enable logging of the Debug Adapter Protocol.",
+                "default": true
+              }
+            }
+          }
+        },
+        "initialConfigurations": [
+          {
+            "type": "pddl-happenings",
+            "request": "launch",
+            "name": "PDDL: Plan Happenings",
+            "program": "${command:PddlPlanHappenings}",
+            "stopOnEntry": true
+          }
+        ],
+        "configurationSnippets": [
+          {
+            "label": "PDDL Plan Debug: Launch",
+            "description": "A new configuration for debugging a user selected PDDL Plan file.",
+            "body": {
+              "type": "pddl-happenings",
+              "request": "launch",
+              "name": "PDDL: Plan Happenings",
+              "program": "^\"\\${command:PddlPlanHappenings}\"",
+              "stopOnEntry": true
+            }
+          }
+        ],
+        "variables": {
+          "PddlPlanHappenings": "pddl.selectAndActivateHappenings"
+        }
+      }
+    ]
   },
   "scripts": {
     "postinstall": "node ./node_modules/vscode/bin/install",
     "compile": "tsc -p ./",
     "watch": "tsc -w -p ./",
     "vscode:prepublish": "npm run compile",
-    "update-vscode": "node ./node_modules/vscode/bin/install"
+    "update-vscode": "node ./node_modules/vscode/bin/install",
+    "package": "vsce package"
   },
   "dependencies": {
     "vscode-extension-telemetry": "^0.0.17",
@@ -524,11 +604,16 @@
     "request": "^2.87.0",
     "tree-kill": "^1.2.0",
     "util.promisify": "^1.0.0",
-    "vscode": "^1.1.17"
+    "vscode-debugadapter": "1.27.0",
+    "vscode-debugprotocol": "1.27.0",
+    "await-notify": "1.0.1"
   },
   "devDependencies": {
+    "vscode": "^1.1.17",
     "@types/request": "^2.47.1",
     "@types/tmp": "^0.0.33",
-    "typescript": "^2.9.2"
+    "typescript": "^2.9.2",
+    "tslint": "5.9.1",
+    "vsce": "1.37.5"
   }
 }

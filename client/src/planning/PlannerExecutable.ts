@@ -29,8 +29,8 @@ export class PlannerExecutable extends Planner {
 
     plan(domainFileInfo: DomainInfo, problemFileInfo: ProblemInfo, planParser: PddlPlanParser, parent: PlanningHandler): Promise<Plan[]> {
 
-        let domainFilePath = Util.toPddlFile("domain", domainFileInfo.text);
-        let problemFilePath = Util.toPddlFile("problem", problemFileInfo.text);
+        let domainFilePath = Util.toPddlFile("domain", domainFileInfo.getText());
+        let problemFilePath = Util.toPddlFile("problem", problemFileInfo.getText());
 
         let command = this.plannerSyntax.replace('$(planner)', this.plannerPath)
             .replace('$(options)', this.plannerOptions)

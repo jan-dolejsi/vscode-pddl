@@ -4,7 +4,7 @@
  * ------------------------------------------------------------------------------------------ */
 'use strict';
 
-import { Variable } from './parser';
+import { Variable } from './FileInfo';
 
 export class PlanTimeSeriesParser {
 

@@ -6,7 +6,7 @@
 
 import * as process from 'child_process';
 
-import { Variable } from '../../../common/src/parser';
+import { Variable } from '../../../common/src/FileInfo';
 import { Grounder } from '../../../common/src/Grounder';
 import { Plan } from "../../../common/src/Plan";
 import { Util } from '../../../common/src/util';
@@ -25,8 +25,8 @@ export class PlanFunctionEvaluator {
     }
 
     async evaluate(): Promise<Map<Variable, GroundedFunctionValues>> {
-        let domainFile = Util.toPddlFile("domain", this.plan.domain.text);
-        let problemFile = Util.toPddlFile("problem", this.plan.problem.text);
+        let domainFile = Util.toPddlFile("domain", this.plan.domain.getText());
+        let problemFile = Util.toPddlFile("problem", this.plan.problem.getText());
         let planFile = Util.toPddlFile("plan", this.plan.getText());
 
         let chartData = new Map<Variable, GroundedFunctionValues>();

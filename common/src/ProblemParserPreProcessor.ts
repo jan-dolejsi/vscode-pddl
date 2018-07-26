@@ -83,5 +83,3 @@ class ConsoleOutputAdaptor implements OutputAdaptor {
         // do nothing
     }
 }
-
-

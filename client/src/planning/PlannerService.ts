@@ -33,8 +33,8 @@ export class PlannerService extends Planner {
         }
         
         let requestBody = {
-            "domain": domainFileInfo.text,
-            "problem": problemFileInfo.text
+            "domain": domainFileInfo.getText(),
+            "problem": problemFileInfo.getText()
         }
         
         let that = this;

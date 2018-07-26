@@ -14,7 +14,8 @@ import * as path from 'path';
 import { PlanDocumentContentProvider } from './PlanDocumentContentProvider';
 
 import { PddlWorkspace } from '../../../common/src/workspace-model';
-import { DomainInfo, ProblemInfo, FileInfo, PddlLanguage } from '../../../common/src/parser';
+import { DomainInfo, ProblemInfo } from '../../../common/src/parser';
+import { FileInfo, PddlLanguage } from '../../../common/src/FileInfo';
 import { PddlConfiguration } from '../configuration';
 import { Plan } from '../../../common/src/Plan';
 import { PlanningHandler } from './plan';

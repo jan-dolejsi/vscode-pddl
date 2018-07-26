@@ -5,7 +5,8 @@
 'use strict';
 
 import { CompletionItem, CompletionItemKind, MarkdownString } from 'vscode';
-import { DomainInfo, TypeObjects, Variable } from '../../../common/src/parser';
+import { TypeObjects, DomainInfo } from '../../../common/src/parser';
+import { Variable } from '../../../common/src/FileInfo';
 
 export abstract class Delegate {
     

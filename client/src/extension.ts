@@ -4,12 +4,12 @@
  * ------------------------------------------------------------------------------------------ */
 'use strict';
 
-import { workspace, window, ExtensionContext, commands, Uri, ViewColumn, Range, TextDocument, languages } from 'vscode';
+import { workspace, window, ExtensionContext, commands, Uri, ViewColumn, Range, languages } from 'vscode';
 
 import { Planning } from './planning/planning'
-
 import { PddlWorkspace } from '../../common/src/workspace-model';
-import { DomainInfo, PddlRange, PddlLanguage, PDDL, PLAN, toLanguageFromId } from '../../common/src/parser';
+import { DomainInfo, PDDL } from '../../common/src/parser';
+import { PddlRange } from '../../common/src/FileInfo';
 import { PddlConfiguration } from './configuration';
 import { Authentication } from '../../common/src/Authentication';
 import { AutoCompletion } from './completion/AutoCompletion';
@@ -19,7 +19,10 @@ import { Diagnostics } from './diagnostics/Diagnostics';
 import { StartUp } from './StartUp'
 import { PTestExplorer } from './ptest/PTestExplorer';
 import { PlanValidator } from './diagnostics/PlanValidator';
+import { Debugging } from './debugger/debugging';
 import { Telemetry } from './telemetry';
+import { toLanguage, isAnyPddl } from './utils';
+import { HappeningsValidator } from './diagnostics/HappeningsValidator';
 
 const PDDL_CONFIGURE_PARSER = 'pddl.configureParser';
 const PDDL_LOGIN_PARSER_SERVICE = 'pddl.loginParserService';
@@ -41,6 +44,7 @@ export function activate(context: ExtensionContext) {
 	let pddlWorkspace = new PddlWorkspace(pddlConfiguration.getEpsilonTimeStep(), context);
 	let planning = new Planning(pddlWorkspace, pddlConfiguration, context);
 	let planValidator = new PlanValidator(planning.output, pddlWorkspace, pddlConfiguration, context);
+	let happeningsValidator = new HappeningsValidator(planning.output, pddlWorkspace, pddlConfiguration, context);
 
 	let revealActionCommand = commands.registerCommand('pddl.revealAction', (domainFileUri: Uri, actionName: String) => {
 		revealAction(<DomainInfo>pddlWorkspace.getFileInfo(domainFileUri.toString()), actionName);
@@ -122,10 +126,13 @@ export function activate(context: ExtensionContext) {
 	let referencesProvider = languages.registerReferenceProvider(PDDL, symbolInfoProvider);
 	let hoverProvider = languages.registerHoverProvider(PDDL, symbolInfoProvider);
 	let diagnosticCollection = languages.createDiagnosticCollection(PDDL);
-	let diagnostics = new Diagnostics(pddlWorkspace, diagnosticCollection,  pddlConfiguration, planValidator);
+	let diagnostics = new Diagnostics(pddlWorkspace, diagnosticCollection,  pddlConfiguration, 
+		planValidator, happeningsValidator);
 
-	if(workspace.getConfiguration().get<boolean>("pddlTestExplorer.enabled")) new PTestExplorer(context, planning);
+	new PTestExplorer(context, planning);
 
+	new Debugging(context, pddlWorkspace, pddlConfiguration);
+	
 	subscribeToWorkspace(pddlWorkspace, pddlConfiguration, context);
 
 	// Push the disposables to the context's subscriptions so that the 
@@ -163,41 +170,29 @@ function toRange(pddlRange: PddlRange): Range {
 function subscribeToWorkspace(pddlWorkspace: PddlWorkspace, pddlConfiguration: PddlConfiguration, context: ExtensionContext): void {
 	// add all open documents
 	workspace.textDocuments
-		.filter(textDoc => isPddl(textDoc) || isPlan(textDoc))
+		.filter(textDoc => isAnyPddl(textDoc))
 		.forEach(textDoc => {
 			pddlWorkspace.upsertFile(textDoc.uri.toString(), toLanguage(textDoc), textDoc.version, textDoc.getText());
 		});
 
 	// subscribe to document opening event
 	context.subscriptions.push(workspace.onDidOpenTextDocument(textDoc => { 
-		if (isPddl(textDoc) || isPlan(textDoc)) 
+		if (isAnyPddl(textDoc)) 
 			pddlWorkspace.upsertFile(textDoc.uri.toString(), toLanguage(textDoc), textDoc.version, textDoc.getText()) 
 		}
 	));
 
 	// subscribe to document changing event
 	context.subscriptions.push(workspace.onDidChangeTextDocument(docEvent => {
-		if (isPddl(docEvent.document) || isPlan(docEvent.document))
+		if (isAnyPddl(docEvent.document)) 
 			pddlWorkspace.upsertFile(docEvent.document.uri.toString(), toLanguage(docEvent.document), docEvent.document.version, docEvent.document.getText())
 		}
 	));
 
 	// subscribe to document closing event
 	context.subscriptions.push(workspace.onDidCloseTextDocument(textDoc => { 
-		if (isPddl(textDoc) || isPlan(textDoc)) pddlWorkspace.removeFile(textDoc.uri.toString()) 
+		if (isAnyPddl(textDoc)) pddlWorkspace.removeFile(textDoc.uri.toString()) 
 	}));
 
 	workspace.onDidChangeConfiguration(_ => pddlWorkspace.epsilon = pddlConfiguration.getEpsilonTimeStep());
-}
-
-function isPddl(doc: TextDocument): boolean {
-	return doc.languageId == PDDL && doc.uri.scheme != "git";
-}
-
-function isPlan(doc: TextDocument): boolean {
-	return doc.languageId == PLAN && doc.uri.scheme != "git";
-}
-
-export function toLanguage(doc: TextDocument): PddlLanguage {
-	return toLanguageFromId(doc.languageId);
 }

@@ -10,7 +10,7 @@ import {
 import { Test } from './Test';
 import { join, dirname, basename } from 'path';
 import { PddlWorkspace } from '../../../common/src/workspace-model';
-import { FileInfo } from '../../../common/src/parser';
+import { FileInfo } from '../../../common/src/FileInfo';
 
 export class GeneratedDocumentContentProvider implements TextDocumentContentProvider {
 

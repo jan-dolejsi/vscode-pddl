@@ -6,7 +6,7 @@
 
 import { CompletionItem, CompletionItemKind } from 'vscode';
 import { PddlWorkspace } from '../../../common/src/workspace-model';
-import { FileInfo } from '../../../common/src/parser';
+import { FileInfo } from '../../../common/src/FileInfo';
 import { Delegate } from './delegate';
 
 export class TypeDelegate extends Delegate {

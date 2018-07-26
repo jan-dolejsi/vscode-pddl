@@ -1,8 +1,8 @@
 /* --------------------------------------------------------------------------------------------
 * Copyright (c) Jan Dolejsi. All rights reserved.
 * Licensed under the MIT License. See License.txt in the project root for license information.
-'use strict';
 * ------------------------------------------------------------------------------------------ */
+'use strict';
 
 import { ProblemParserPreProcessor } from "./ProblemParserPreProcessor";
 import { dirname } from "path";
@@ -10,6 +10,10 @@ import { Util } from "./util";
 import { PddlExtensionContext } from "./PddlExtensionContext";
 import { PlanStep } from "./PlanStep";
 import { PlanBuilder } from "./PddlPlanParser";
+import { DirectionalGraph } from "./DirectionalGraph";
+import { HappeningsInfo, PlanHappeningsBuilder } from "./HappeningsInfo";
+import { FileInfo, stripComments, Variable, Parameter, PddlRange, PddlLanguage, ParsingProblem } from "./FileInfo";
+import { PreProcessingError } from "./PreProcessors";
 
 export class Parser {
 
@@ -31,10 +35,19 @@ export class Parser {
         try {
             fileText = this.preProcessor.process(fileText, workingDirectory);
         } catch (ex) {
-            console.error(ex);
+            if (ex instanceof PreProcessingError) {
+                let problemInfo = new ProblemInfo(fileUri, fileVersion, "unknown", "unknown");
+                problemInfo.setText(fileText);
+                let parsingError = <PreProcessingError>ex;
+                problemInfo.addProblems([new ParsingProblem(parsingError.message, parsingError.line, parsingError.column)]);
+                return problemInfo;
+            }
+            else{
+                console.error(ex);
+            }
         }
 
-        let pddlText = Parser.stripComments(fileText);
+        let pddlText = stripComments(fileText);
 
         this.problemPattern.lastIndex = 0;
         let matchGroups = this.problemPattern.exec(pddlText);
@@ -44,7 +57,7 @@ export class Parser {
             let domainName = matchGroups[2];
 
             let problemInfo = new ProblemInfo(fileUri, fileVersion, problemName, domainName);
-            problemInfo.text = fileText;
+            problemInfo.setText(fileText);
             this.getProblemStructure(pddlText, problemInfo);
             return problemInfo;
         }
@@ -55,7 +68,7 @@ export class Parser {
 
     tryDomain(fileUri: string, fileVersion: number, fileText: string): DomainInfo {
 
-        let pddlText = Parser.stripComments(fileText);
+        let pddlText = stripComments(fileText);
 
         this.domainPattern.lastIndex = 0;
         let matchGroups = this.domainPattern.exec(pddlText);
@@ -64,7 +77,7 @@ export class Parser {
             let domainName = matchGroups[1];
 
             let domainInfo = new DomainInfo(fileUri, fileVersion, domainName);
-            domainInfo.text = fileText;
+            domainInfo.setText(fileText);
             this.getDomainStructure(pddlText, domainInfo);
             return domainInfo;
         }
@@ -73,7 +86,7 @@ export class Parser {
         }
     }
 
-    parsePlan(fileUri: string, fileVersion: number, fileText: string, epsilon: number): PlanInfo {
+    parsePlanMeta(fileText: string): PlanMetaData {
         let problemName = 'unspecified';
         let problemMatch = fileText.match(/^;;\s*!problem:\s*([\w-]+)\s*$/m);
         if (problemMatch) {
@@ -85,8 +98,14 @@ export class Parser {
         if (domainMatch) {
             domainName = domainMatch[1];
         }
-        
-        let planInfo = new PlanInfo(fileUri, fileVersion, problemName, domainName, fileText);
+
+        return { domainName: domainName, problemName: problemName };
+    }
+
+    parsePlan(fileUri: string, fileVersion: number, fileText: string, epsilon: number): PlanInfo {
+        let meta = this.parsePlanMeta(fileText);
+
+        let planInfo = new PlanInfo(fileUri, fileVersion, meta.problemName, meta.domainName, fileText);
         let planBuilder = new PlanBuilder(epsilon);
         fileText.split('\n').forEach((planLine: string, index: number) => {
             let planStep = planBuilder.parse(planLine, index);
@@ -97,6 +116,19 @@ export class Parser {
         planInfo.setSteps(planBuilder.getSteps());
 
         return planInfo;
+    }
+
+    parseHappenings(fileUri: string, fileVersion: number, fileText: string, epsilon: number): HappeningsInfo {
+        let meta = this.parsePlanMeta(fileText);
+
+        let happeningsInfo = new HappeningsInfo(fileUri, fileVersion, meta.problemName, meta.domainName, fileText);
+        let planBuilder = new PlanHappeningsBuilder(epsilon);
+        planBuilder.tryParseFile(fileText);
+        happeningsInfo.setHappenings(planBuilder.getHappenings());
+        happeningsInfo.addProblems(planBuilder.getParsingProblems());
+        planBuilder.validateOpenQueueIsEmpty();
+
+        return happeningsInfo;
     }
 
     getDomainStructure(domainText: string, domainInfo: DomainInfo): void {
@@ -129,6 +161,9 @@ export class Parser {
         if (matchGroups) {
             let objectsText = matchGroups[6];
             problemInfo.setObjects(Parser.toTypeObjects(this.parseInheritance(objectsText)));
+
+            let initText = matchGroups[7];
+            problemInfo.setInits(this.parseInit(initText));
         }
     }
 
@@ -168,6 +203,55 @@ export class Parser {
         }
 
         return inheritance;
+    }
+
+    problemInitPattern = /(\(\s*=\s*\(([\w-]+(?: [\w-]+)*)\s*\)\s*([\d.]+)\s*\)\s*|\(([\w-]+(?: [\w-]+)*)\s*\)\s*|\(at ([\d.]+)\s*(\(\s*=\s*\(([\w-]+(?: [\w-]+)*)\s*\)\s*([\d.]+)\s*\)|\(([\w-]+(?: [\w-]+)*)\s*\)\s*\)\s*))/g;
+
+    /**
+     * Parses problem :init section.
+     * @param initText init section content
+     */
+    parseInit(initText: string): TimedVariableValue[] {
+        const variableInitValues: TimedVariableValue[] = [];
+        this.problemInitPattern.lastIndex = 0;
+        var match: RegExpExecArray;
+        while(match = this.problemInitPattern.exec(initText)) {
+            var time = 0;
+            var variableName: string;
+            var value: number | boolean;
+
+            if(match[1].match(/^\s*\(at\s+[\d.]+/)) {
+                // time initial...
+                time = parseInt(match[5]);
+
+                if(match[6].startsWith('(=')) {
+                    // time initial fluent
+                    variableName = match[7];
+                    value = parseFloat(match[8]);
+                } 
+                else {
+                    // time initial literal
+                    variableName = match[9];
+                    value = true;
+                }
+            }
+            else {
+                if(match[1].startsWith('(=')) {
+                    // initial fluent value
+                    variableName = match[2];
+                    value = parseFloat(match[3]);
+                } 
+                else {
+                    // initialiezed literal
+                    variableName = match[4];
+                    value = true;
+                }
+            }
+
+            variableInitValues.push(new TimedVariableValue(time, variableName, value));
+        }
+
+        return variableInitValues;
     }
 
     static parsePredicatesOrFunctions(predicatesText: string): Variable[] {
@@ -265,119 +349,6 @@ export class Parser {
 
         throw `Index ${index} is after the end of the document text.`
     }
-
-    static stripComments(pddlText: string): string {
-        let lines = pddlText.split(/\r?\n/g);
-
-        for (var i = 0; i < lines.length; i++) {
-            let line = lines[i];
-            let index = line.indexOf(';');
-            if (index > -1) {
-                lines[i] = line.substring(0, index);
-            }
-        }
-
-        return lines.join("\n");
-    }
-}
-
-export enum FileStatus { Parsed, Dirty, Validating, Validated }
-
-export abstract class FileInfo {
-    text: string;
-    private status: FileStatus = FileStatus.Parsed;
-
-    constructor(public fileUri: string, public version: number, public name: string) {
-    }
-
-    abstract getLanguage(): PddlLanguage;
-
-    isDomain(): boolean {
-        return false;
-    }
-    isProblem(): boolean {
-        return false;
-    }
-    isUnknownPddl(): boolean {
-        return false;
-    }
-    isPlan(): boolean {
-        return false;
-    }
-    isHappenings(): boolean {
-        return false;
-    }
-
-    update(version: number, text: string): boolean {
-        let isNewerVersion = version > this.version;
-        if (isNewerVersion) {
-            this.setStatus(FileStatus.Dirty);
-            this.version = version;
-            this.text = text;
-        }
-        return isNewerVersion;
-    }
-
-    setStatus(status: FileStatus): void {
-        this.status = status;
-    }
-
-    getStatus(): FileStatus {
-        return this.status;
-    }
-
-    getVariableReferences(variable: Variable): PddlRange[] {
-        let referenceLocations: PddlRange[] = [];
-
-        this.findVariableReferences(variable, (location) => {
-            referenceLocations.push(location);
-            return true; // continue searching
-        });
-
-        return referenceLocations;
-    }
-
-    getTypeReferences(typeName: string): PddlRange[] {
-        let referenceLocations: PddlRange[] = [];
-
-        let pattern = `-\\s+${typeName}\\b`;
-
-        let lines = Parser.stripComments(this.text).split('\n');
-
-        let regexp = new RegExp(pattern, "gi");
-        for (var lineIdx = 0; lineIdx < lines.length; lineIdx++) {
-            let line = lines[lineIdx];
-            regexp.lastIndex = 0;
-            let match = regexp.exec(line);
-            if (match) {
-                let range = new PddlRange(lineIdx, match.index + 2, lineIdx, match.index + match[0].length);
-                referenceLocations.push(range);
-            }
-        }
-
-        return referenceLocations;
-    }
-
-    protected findVariableReferences(variable: Variable, callback: (location: PddlRange, line: string) => boolean): void {
-        let lines = this.text.split('\n');
-        let pattern = "\\(\\s*" + variable.name + "( [^\\)]*)?\\)";
-        let regexp = new RegExp(pattern, "gi");
-        for (var lineIdx = 0; lineIdx < lines.length; lineIdx++) {
-            let line = lines[lineIdx];
-            regexp.lastIndex = 0;
-            let commentStartColumn = line.indexOf(';');
-            let match = regexp.exec(line);
-            if (match) {
-                if (commentStartColumn > -1 && match.index > commentStartColumn) continue;
-
-                let range = new PddlRange(lineIdx, match.index, lineIdx, match.index + match[0].length);
-                let shouldContinue = callback.apply(this, [range, line]);
-
-                if (!shouldContinue) return;
-            }
-        }
-    }
-
 }
 
 /**
@@ -385,6 +356,7 @@ export abstract class FileInfo {
  */
 export class ProblemInfo extends FileInfo {
     objects: TypeObjects[] = [];
+    inits: TimedVariableValue[] = [];
 
     constructor(fileUri: string, version: number, problemName: string, public domainName: string) {
         super(fileUri, version, problemName);
@@ -405,8 +377,81 @@ export class ProblemInfo extends FileInfo {
         else return thisTypesObjects.objects;
     }
 
+    /**
+     * Sets predicate/function initial values.
+     * @param inits initial values
+     */
+    setInits(inits: TimedVariableValue[]): void {
+        this.inits = inits;
+    }
+
+    /**
+     * Returns variable initial values and time-initial literals/fluents. 
+     */
+    getInits(): TimedVariableValue[] {
+        return this.inits;
+    }
+
     isProblem(): boolean {
         return true;
+    }
+}
+
+/**
+ * Variable value effective from certain time, e.g. initialiation of the variable in the problem file.
+ */
+export class TimedVariableValue {
+    constructor(private time: number, private variableName: string, private value: number | boolean) {
+
+    }
+
+    static from(time: number, value: VariableValue): TimedVariableValue {
+        return new TimedVariableValue(time, value.getVariableName(), value.getValue());
+    }
+
+    /**
+     * Makes a deep copy of the supplied value and returns a new instance
+     * @param value value to copy from
+     */
+    static copy(value: TimedVariableValue): TimedVariableValue {
+        return new TimedVariableValue(value.time, value.variableName, value.value);
+    }
+
+    getTime(): number {
+        return this.time;
+    }
+
+    getVariableName(): string {
+        return this.variableName;
+    }
+
+    getValue(): number | boolean {
+        return this.value;
+    }
+
+    /**
+     * Updates this value.
+     * @param newValue new value
+     */
+    update(time: number, newValue: VariableValue): void {
+        this.time = time;
+        this.value = newValue.getValue();
+    }
+}
+/**
+ * Variable value initialiation in the problem file.
+ */
+export class VariableValue {
+    constructor(private variableName: string, private value: number | boolean) {
+
+    }
+
+    getVariableName(): string {
+        return this.variableName;
+    }
+
+    getValue(): number | boolean {
+        return this.value;
     }
 }
 
@@ -485,7 +530,7 @@ export class DomainInfo extends FileInfo {
         let pattern = `\\b${type}\\b`;
         let regexp = new RegExp(pattern, "gi");
         let foundTypesStart = false;
-        let lines = this.text.split('\n');
+        let lines = this.getText().split('\n');
         for (var lineIdx = 0; lineIdx < lines.length; lineIdx++) {
             let line = lines[lineIdx];
             let lineWithoutComments = line.split(';')[0];
@@ -522,7 +567,7 @@ export class DomainInfo extends FileInfo {
             return false; // we do not continue the search after the first hit
         });
 
-        let lines = this.text.split('\n');
+        let lines = this.getText().split('\n');
         let pattern = "\\(\\s*" + variable.name + "( [^\\)]*)?\\)";
         let regexp = new RegExp(pattern, "gi");
         for (var lineIdx = 0; lineIdx < lines.length; lineIdx++) {
@@ -554,7 +599,7 @@ export class PlanInfo extends FileInfo {
 
     constructor(fileUri: string, version: number, public problemName: string, public domainName: string, text: string) {
         super(fileUri, version, problemName);
-        this.text = text;
+        this.setText(text);
     }
 
     getLanguage(): PddlLanguage {
@@ -574,6 +619,7 @@ export class PlanInfo extends FileInfo {
     }
 }
 
+
 export class UnknownFileInfo extends FileInfo {
     constructor(fileUri: string, version: number) {
         super(fileUri, version, "");
@@ -588,84 +634,6 @@ export class UnknownFileInfo extends FileInfo {
     }
 }
 
-/**
- * Simple directional graph.
- */
-export class DirectionalGraph {
-    // vertices and edges stemming from them
-    verticesAndEdges: [string, string[]][] = [];
-
-    constructor() {
-
-    }
-
-    /**
-     * Get all vertices.
-     */
-    getVertices(): string[] {
-        return this.verticesAndEdges.map(tuple => tuple[0]);
-    }
-
-    /**
-     * Get all edges.
-     */
-    getEdges(): [string, string][] {
-        let edges: [string, string][] = [];
-        this.verticesAndEdges.forEach(vertexEdges => {
-            let fromVertex = vertexEdges[0];
-            let connectedVertices = vertexEdges[1];
-            connectedVertices.forEach(toVertex => edges.push([fromVertex, toVertex]));
-        });
-        return edges;
-    }
-
-    addEdge(from: string, to: string): void {
-        let fromVertex = this.verticesAndEdges.find(vertex => vertex[0] == from);
-
-        if (fromVertex) {
-            let edgesAlreadyInserted = fromVertex[1];
-            if (to && !edgesAlreadyInserted.includes(to)) {
-                edgesAlreadyInserted.push(to);
-            }
-        }
-        else {
-            let edges = to ? [to] : [];
-            this.verticesAndEdges.push([from, edges]);
-        }
-
-        if (to) this.addEdge(to, null);
-    }
-
-    getVerticesWithEdgesFrom(vertex: string): string[] {
-        return this.verticesAndEdges.find(t => t[0] == vertex)[1];
-    }
-
-    getVerticesWithEdgesTo(vertex: string): string[] {
-        return this.verticesAndEdges
-            .filter(t => t[1].includes(vertex))
-            .map(t => t[0]);
-    }
-
-    getSubtreePointingTo(vertex: string): string[] {
-        let vertices = this.getVerticesWithEdgesTo(vertex);
-
-        let verticesSubTree = vertices
-            .map(childVertex => this.getSubtreePointingTo(childVertex))
-            .reduce((x, y) => x.concat(y), []);
-
-        return vertices.concat(verticesSubTree);
-    }
-
-    getSubtreePointingFrom(vertex: string): string[] {
-        let vertices = this.getVerticesWithEdgesFrom(vertex);
-
-        let verticesSubTree = vertices
-            .map(childVertex => this.getSubtreePointingFrom(childVertex))
-            .reduce((x, y) => x.concat(y), []);
-
-        return vertices.concat(verticesSubTree);
-    }
-}
 
 /**
  * Holds objects belonging to the same type.
@@ -700,81 +668,6 @@ export class TypeObjects {
 
 }
 
-export abstract class Term {
-    constructor(public type: string) { }
-
-    abstract toPddlString(): string;
-
-    abstract isGrounded(): boolean;
-}
-
-export class Parameter extends Term {
-    constructor(public name: string, type: string) {
-        super(type);
-    }
-
-    toPddlString(): string {
-        return `?${this.name} - ${this.type}`;
-    }
-
-    isGrounded() { return false; }
-}
-
-export class ObjectInstance extends Term {
-    constructor(public name: string, type: string) {
-        super(type);
-    }
-
-    toPddlString(): string {
-        return this.name;
-    }
-
-    isGrounded() { return true; }
-}
-export class Variable {
-    name: string;
-    declaredNameWithoutTypes: string;
-    location: PddlRange = null; // initialized lazily
-    private documentation = ''; // initialized lazily
-    private unit = ''; // initialized lazily
-
-    constructor(public declaredName: string, public parameters: Term[] = []) {
-        this.declaredNameWithoutTypes = declaredName.replace(/\s+-\s+[\w-_]+/gi, '');
-        this.name = declaredName.replace(/( .*)$/gi, '');
-    }
-
-    bind(objects: ObjectInstance[]): Variable {
-        if (this.parameters.length != objects.length) {
-            throw new Error(`Invalid objects ${objects} for function ${this.getFullName()} parameters ${this.parameters}.`);
-        }
-        return new Variable(this.name, objects);
-    }
-
-    getFullName(): string {
-        return this.name + this.parameters.map(par => " " + par.toPddlString()).join('');
-    }
-
-    isGrounded(): boolean {
-        return this.parameters.every(parameter => parameter.isGrounded());
-    }
-
-    setDocumentation(documentation: string): void {
-        this.documentation = documentation;
-        let match = documentation.match(/\[([^\]]*)\]/);
-        if (match) {
-            this.unit = match[1];
-        }
-    }
-
-    getDocumentation(): string {
-        return this.documentation;
-    }
-
-    getUnit(): string {
-        return this.unit;
-    }
-}
-
 export class Action {
     location: PddlRange = null; // initialized lazily
     documentation = ''; // initialized lazily
@@ -784,29 +677,21 @@ export class Action {
     }
 }
 
-/**
- * This is a local version of the vscode Range class, but because the parser is used in both the extension (client)
- * and the language server, where the Range class is defined separately, we need a single proprietary implementation,
- * which is converted to the VS Code class specific to the two distinct client/server environment. 
- */
-export class PddlRange {
-    constructor(public startLine: number, public startCharacter: number, public endLine: number, public endCharacter: number) { }
-}
-
-export enum PddlLanguage {
-    PDDL, PLAN
-}
-
 // Language ID of Domain and Problem files
 export const PDDL = 'pddl';
 // Language ID of Plan files
 export const PLAN = 'plan';
+// Language ID of Happenings files
+export const HAPPENINGS = 'happenings';
 
 var languageMap = new Map<string, PddlLanguage>([
 	[PDDL, PddlLanguage.PDDL],
-	[PLAN, PddlLanguage.PLAN]
+	[PLAN, PddlLanguage.PLAN],
+	[HAPPENINGS, PddlLanguage.HAPPENINGS]
 ]);
 
 export function toLanguageFromId(languageId: string): PddlLanguage {
 	return languageMap.get(languageId);
 }
+
+interface PlanMetaData { domainName: string, problemName: string }
