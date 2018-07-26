@@ -180,7 +180,7 @@ export class NunjucksPreProcessor extends PreProcessor {
             if (match) {
                 throw new PreProcessingError(match[1], parseInt(match[2]) - 1, parseInt(match[3]) - 1);
             } else {
-                throw error;
+                throw new PreProcessingError(error.message, 0, 0);
             }
         }
     }

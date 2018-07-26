@@ -220,7 +220,7 @@ export class Parser {
             var variableName: string;
             var value: number | boolean;
 
-            if(match[1].startsWith('(at ')) {
+            if(match[1].match(/^\s*\(at\s+[\d.]+/)) {
                 // time initial...
                 time = parseInt(match[5]);
 

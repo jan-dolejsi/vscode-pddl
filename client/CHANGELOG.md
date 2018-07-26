@@ -4,6 +4,19 @@
 
 Interactive stepping through plans (aka debugging).
 
+## [2.6.8] - 2018-07-27
+
+Any errors in templated problem generation are now reported as syntax errors and are therefore easier to find and fix.
+Add a `;;!pre-parsing:...` meta instruction to the top of the problem template and the pre-processing is executed before the problem file is examined by the PDDL parser.
+
+![Problem template errors](https://raw.githubusercontent.com/wiki/jan-dolejsi/vscode-pddl/img/PDDL_problem_template_errors.gif)
+
+More elaborate support for .happenings files now offers syntactic validation and in experimental mode also plan execution and decoration of the file with action effects. 
+
+![Plan Happenings effect evaluations](https://raw.githubusercontent.com/wiki/jan-dolejsi/vscode-pddl/img/PDDL_happenings_effect_evaluation.gif)
+
+For this to work, the setting `pddl.valStepPath` must be set with the location of the ValStep utility, which is currently not distributed with the extension.
+
 ## [2.6.7] - 2018-07-05
 
 ### Documentation
@@ -273,7 +286,8 @@ Note for open source contributors: all notable changes to the "pddl" extension w
 
 Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
 
-[Unreleased]: https://github.com/jan-dolejsi/vscode-pddl/compare/v2.6.7...HEAD
+[Unreleased]: https://github.com/jan-dolejsi/vscode-pddl/compare/v2.6.8...HEAD
+[2.6.8]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.6.7...v2.6.8
 [2.6.7]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.6.6...v2.6.7
 [2.6.6]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.6.5...v2.6.6
 [2.6.5]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.6.4...v2.6.5

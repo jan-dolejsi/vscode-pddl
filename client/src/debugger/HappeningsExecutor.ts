@@ -85,6 +85,8 @@ export class HappeningsExecutor extends EventEmitter {
 
         child.stdin.write('q\n');
 
+        this.decorations.push(this.seeNextLineDecoration);
+
         return this.decorations;
     }
 
@@ -100,7 +102,7 @@ export class HappeningsExecutor extends EventEmitter {
             that.once(HappeningsExecutor.HAPPENING_EFFECTS_EVALUATED, (effectValues: VariableValue[]) => {
                 let newValues = effectValues.filter(v => that.applyIfNew(lastHappening.getTime(), v));
                 let decoration = this.createDecorationText(newValues);
-                that.decorate(decoration, lastHappening);
+                that.decorate(decoration, happenings);
                 resolve(true);
             });
 
@@ -208,7 +210,15 @@ export class HappeningsExecutor extends EventEmitter {
         }
     }
 
-    decorate(decorationText: string, lastHappening: Happening): void {
+    seeNextLineDecoration = window.createTextEditorDecorationType({
+        after: {
+            contentText: '↓',
+            textDecoration: "; opacity: 0.5; font-size: 10px; margin-left: 5px"
+        }
+    });
+    seeNextLineRanges: vscode.Range[] = [];
+
+    decorate(decorationText: string, happenings: Happening[]): void {
         let decorationType = window.createTextEditorDecorationType({
             after: {
                 contentText: decorationText,
@@ -217,9 +227,21 @@ export class HappeningsExecutor extends EventEmitter {
             }
         });
 
-        let line = lastHappening.lineIndex;
-        let range = new vscode.Range(line, 0, line, 100);
+        let lastHappening = happenings[happenings.length - 1];
+
+        let range = this.createRange(lastHappening);
         this.editor.setDecorations(decorationType, [range]);
         this.decorations.push(decorationType);
+
+        for (let index = 0; index < happenings.length - 1; index++) {
+            let range = this.createRange(happenings[index]);
+            this.seeNextLineRanges.push(range);
+            this.editor.setDecorations(this.seeNextLineDecoration, this.seeNextLineRanges);
+        }
+    }
+
+    createRange(happening: Happening): vscode.Range {
+        let line = happening.lineIndex;
+        return new vscode.Range(line, 0, line, 100);
     }
 }

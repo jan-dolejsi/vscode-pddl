@@ -195,9 +195,11 @@ There are several templating options supported out of the box:
 
 But there is a [wealth of templating libraries](https://en.wikipedia.org/wiki/Comparison_of_web_template_engines), including Razor [see RazorTemplates](https://github.com/volkovku/RazorTemplates), which is popular in asp.net, or [T4](https://msdn.microsoft.com/en-us/library/bb126445.aspx).
 
-Nunjucks and Jinja2 are two very similar templating engines, but differ in some important details. Nunjucks runs natively in Javascript and the file generation will not cause preceable delays, while Jinja2 needs to invoke Python and will slow down your development process somewhat.
+Nunjucks and Jinja2 are two very similar templating engines, but differ in some important details. Nunjucks runs natively in Javascript and the file generation will not cause perceivable delays, while Jinja2 needs to invoke Python and will slow down your development process somewhat.
 
-For the ultimate flexibility, here is how to configure a Python scriipt to do a custom pre-processing of the problem file:
+![Problem template errors](https://raw.githubusercontent.com/wiki/jan-dolejsi/vscode-pddl/img/PDDL_problem_template_errors.gif)
+
+For the ultimate flexibility, here is how to configure a Python script to do a custom pre-processing of the problem file:
 
 ```JSON
 {
@@ -273,7 +275,7 @@ Sometimes it is more convenient to create a desired plan by hand and using the `
 
 ![Plan validation](https://raw.githubusercontent.com/wiki/jan-dolejsi/vscode-pddl/img/PDDL_plan_validation.gif)
 
-## Plan happenings listing (in preview)
+## Plan happenings validation
 
 A context menu option in .plan file _PDDL: Convert plan to happenings..._ supports export to a .happenings file. This shows the exact temporal sequence of action starts and ends.
 
@@ -291,6 +293,16 @@ This is the syntax supported by the preview:
 5.100: unset (final-approach p1)
 7.001: end (land p1 rw1)
 ```
+
+This notation is more convenient when checking temporal plans for correctness.
+
+## Plan Happenings effect evaluation
+
+Plan happenings (.happenings) files may be executed and action effects listed as decorations in the code editor.
+
+![Plan Happenings effect evaluations](https://raw.githubusercontent.com/wiki/jan-dolejsi/vscode-pddl/img/PDDL_happenings_effect_evaluation.gif)
+
+For this to work, the setting `pddl.valStepPath` must be set with the location of the ValStep utility, which is currently not distributed with the extension.
 
 ## Block folding in `:init` section of the problem file
 
