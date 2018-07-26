@@ -41,50 +41,24 @@ class Folder {
     }
 
     getProblemFileWithName(problemName: string): ProblemInfo {
-        let problemFileInfo: ProblemInfo;
-
-        this.files.forEach((value: FileInfo) => {
-            if (value instanceof ProblemInfo) {
-                let problemInfo = <ProblemInfo>value;
-                if (problemInfo.name == problemName) {
-                    problemFileInfo = value;
-                }
-            }
-        });
-
-        return problemFileInfo
+        return Array.from(this.files.values())
+            .filter(value => value.isProblem())
+            .map(value => <ProblemInfo>value)
+            .find(problemInfo => problemInfo.name == problemName);
     }
 
     getProblemFilesFor(domainInfo: DomainInfo): ProblemInfo[] {
-        let problemFiles: ProblemInfo[] = [];
-
-        this.files.forEach(value => {
-            if (value.isProblem()) {
-                let problemInfo = <ProblemInfo>value;
-
-                if (problemInfo.domainName == domainInfo.name) {
-                    problemFiles.push(problemInfo);
-                }
-            }
-        })
-
-        return problemFiles;
+        return Array.from(this.files.values())
+            .filter(value => value.isProblem())
+            .map(f => <ProblemInfo>f)
+            .filter(problemInfo => problemInfo.domainName == domainInfo.name);
     }
 
     getDomainFilesFor(problemInfo: ProblemInfo): DomainInfo[] {
-        let domainFiles: DomainInfo[] = [];
-
-        this.files.forEach(value => {
-            if (value.isDomain()) {
-                let domainInfo = <DomainInfo>value;
-
-                if (domainInfo.name == problemInfo.domainName) {
-                    domainFiles.push(domainInfo);
-                }
-            }
-        })
-
-        return domainFiles;
+        return Array.from(this.files.values())
+            .filter(value => value.isDomain())
+            .map(value => <DomainInfo>value)
+            .filter(domainInfo => domainInfo.name == problemInfo.domainName);
     }
 }
 
@@ -144,9 +118,33 @@ export class PddlWorkspace extends EventEmitter {
     private insertFile(folder: Folder, fileUri: string, language: PddlLanguage, fileVersion: number, fileText: string): FileInfo {
         let fileInfo = this.parseFile(fileUri, language, fileVersion, fileText);
         folder.add(fileInfo);
+
+        if (fileInfo.isDomain()) {
+            this.markProblemsAsDirty(<DomainInfo>fileInfo);
+        } else if (fileInfo.isProblem()) {
+            this.markPlansAsDirty(<ProblemInfo>fileInfo);
+        }
+
         this.emit(PddlWorkspace.UPDATED, fileInfo);
         this.emit(PddlWorkspace.INSERTED, fileInfo);
         return fileInfo;
+    }
+
+    invalidateDiagnostics(fileInfo: FileInfo): void {
+        fileInfo.setStatus(FileStatus.Parsed);
+        this.emit(PddlWorkspace.UPDATED, fileInfo);
+    }
+
+    markProblemsAsDirty(domainInfo: DomainInfo): void {
+        this.getProblemFiles(domainInfo).forEach(problemInfo => {
+            this.invalidateDiagnostics(problemInfo);
+            this.markPlansAsDirty(problemInfo);
+        });
+    }
+
+    markPlansAsDirty(problemInfo: ProblemInfo): void {
+        this.getPlanFiles(problemInfo).forEach(planInfo => this.invalidateDiagnostics(planInfo));
+        this.getHappeningsFiles(problemInfo).forEach(happeningsInfo => this.invalidateDiagnostics(happeningsInfo));
     }
 
     scheduleParsing(): void {
@@ -259,6 +257,26 @@ export class PddlWorkspace extends EventEmitter {
         let problemFiles = folder.getProblemFilesFor(domainInfo);
 
         return problemFiles;
+    }
+
+    getPlanFiles(problemInfo: ProblemInfo): PlanInfo[] {
+        let folder = this.folders.get(PddlWorkspace.getFolderUri(problemInfo.fileUri));
+
+        // find plan files in the same folder that match the domain and problem names
+        return Array.from(folder.files.values())
+            .filter(f => f.isPlan())
+            .map(f => <PlanInfo>f)
+            .filter(p => p.problemName === problemInfo.name && p.domainName === problemInfo.domainName)
+    }
+
+    getHappeningsFiles(problemInfo: ProblemInfo): HappeningsInfo[] {
+        let folder = this.folders.get(PddlWorkspace.getFolderUri(problemInfo.fileUri));
+
+        // find happenings files in the same folder that match the domain and problem names
+        return Array.from(folder.files.values())
+            .filter(f => f.isHappenings())
+            .map(f => <HappeningsInfo>f)
+            .filter(p => p.problemName === problemInfo.name && p.domainName === problemInfo.domainName)
     }
 
     getAllFilesIf<T extends FileInfo>(predicate: (fileInfo: T) => boolean): T[] {

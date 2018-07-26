@@ -87,14 +87,12 @@ export class HappeningsValidator {
             return outcome;
         }
 
-        let valStepPath = this.plannerConfiguration.getValStepPath();
-
         let context: DomainAndProblem = null;
 
         try {
             context = getDomainAndProblemForHappenings(happeningsInfo, this.pddlWorkspace);
         } catch (err) {
-            let outcome = HappeningsValidationOutcome.failed(happeningsInfo, err);
+            let outcome = HappeningsValidationOutcome.info(happeningsInfo, err);
             onSuccess(outcome.getDiagnostics());
             return outcome;
         }
@@ -113,6 +111,12 @@ export class HappeningsValidator {
             let errorOutcome = HappeningsValidationOutcome.failedWithDiagnostics(happeningsInfo, actionTimeDiagnostics);
             onSuccess(errorOutcome.getDiagnostics());
             return errorOutcome;
+        }
+
+        let valStepPath = this.plannerConfiguration.getValStepPath();
+
+        if (!valStepPath) {
+            onSuccess(HappeningsValidationOutcome.unknown(happeningsInfo).getDiagnostics());
         }
 
         // copy editor content to temp files to avoid using out-of-date content on disk
@@ -159,27 +163,7 @@ export class HappeningsValidator {
             return HappeningsValidationOutcome.failed(happeningsInfo, error);
         }
 
-        if (output.match("Plan failed to execute") || output.match("Goal not satisfied")) {
-            let failurePattern = /Checking next happening \(time (\d+.\d+)\)/g;
-            var result: RegExpExecArray;
-            var timeStamp = -1;
-            while ((result = failurePattern.exec(output)) !== null) {
-                timeStamp = parseFloat(result[1]);
-            }
-
-            let match = output.match(/Plan Repair Advice:([\s\S]+)Failed plans:/);
-            if (match) {
-                return HappeningsValidationOutcome.failedAtTime(happeningsInfo, timeStamp, match[1].trim().split('\n'));
-            } else {
-                return HappeningsValidationOutcome.failedAtTime(happeningsInfo, timeStamp, ["Unidentified error. Run the 'PDDL: Validate plan' command for more info."]);
-            }
-        }
-
-        if (output.match("Bad plan description!")) {
-            return HappeningsValidationOutcome.invalidPlanDescription(happeningsInfo);
-        } else if (output.match("Plan valid")) {
-            return HappeningsValidationOutcome.valid(happeningsInfo);
-        }
+        output;
 
         return HappeningsValidationOutcome.valid(happeningsInfo);
     }
@@ -260,6 +244,12 @@ class HappeningsValidationOutcome {
     static failed(happeningsInfo: HappeningsInfo, error: Error): HappeningsValidationOutcome {
         let message = "Validate tool failed. " + error.message;
         let diagnostics = [createDiagnostic(0, 0, message, DiagnosticSeverity.Error)];
+        return new HappeningsValidationOutcome(happeningsInfo, diagnostics, message);
+    }
+
+    static info(happeningsInfo: HappeningsInfo, error: Error): HappeningsValidationOutcome {
+        let message = error.message;
+        let diagnostics = [createDiagnostic(0, 0, message, DiagnosticSeverity.Information)];
         return new HappeningsValidationOutcome(happeningsInfo, diagnostics, message);
     }
 

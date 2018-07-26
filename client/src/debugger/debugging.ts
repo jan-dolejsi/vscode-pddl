@@ -1,5 +1,3 @@
-import { DebuggingSessionFiles } from './DebuggingSessionFiles';
-
 /* --------------------------------------------------------------------------------------------
  * Copyright (c) Jan Dolejsi. All rights reserved.
  * Licensed under the MIT License. See License.txt in the project root for license information.
@@ -17,6 +15,7 @@ import { PddlWorkspace } from '../../../common/src/workspace-model';
 import { toLanguage, isHappenings, getDomainAndProblemForHappenings } from '../utils';
 import { PddlConfiguration } from '../configuration';
 import { HappeningsExecutor } from './HappeningsExecutor';
+import { DebuggingSessionFiles } from './DebuggingSessionFiles';
 
 /*
  * Set the following compile time flag to true if the
@@ -49,10 +48,15 @@ export class Debugging {
 		}));
 
 		context.subscriptions.push(vscode.commands.registerTextEditorCommand("pddl.happenings.execute", async (editor) => {
-			this.clearDecorations(editor.document);
-			let context = await this.getActiveContext();
-			let decorations = await new HappeningsExecutor(editor, context, this.plannerConfiguration).execute();
-			this.saveDecorations(editor.document, decorations);
+			try {
+				this.clearDecorations(editor.document);
+				let context = await this.getActiveContext();
+				let decorations = await new HappeningsExecutor(editor, context, this.plannerConfiguration).execute();
+				this.saveDecorations(editor.document, decorations);
+			}
+			catch (ex) {
+				vscode.window.showErrorMessage(ex.message)
+			}
 		}));
 
 		// clear decorations, when document is updated/closed

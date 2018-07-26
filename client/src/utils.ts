@@ -33,7 +33,7 @@ export function toLanguage(doc: TextDocument): PddlLanguage {
 export function getDomainAndProblemForPlan(planInfo: PlanInfo, pddlWorkspace: PddlWorkspace): DomainAndProblem {
     let problemFileInfo = pddlWorkspace.getProblemFileForPlan(planInfo);
 
-    if (!problemFileInfo) throw new Error(`No problem file with name '(problem ${planInfo.problemName}') and located in the same folder as the plan is not open in the editor.`);
+    if (!problemFileInfo) throw new Error(`No problem file with name '(problem ${planInfo.problemName}') and located in the same folder as the plan is open in the editor.`);
     
     let domainFileInfo = pddlWorkspace.getDomainFileFor(problemFileInfo);
 
@@ -45,7 +45,7 @@ export function getDomainAndProblemForPlan(planInfo: PlanInfo, pddlWorkspace: Pd
 export function getDomainAndProblemForHappenings(happeningsInfo: HappeningsInfo, pddlWorkspace: PddlWorkspace): DomainAndProblem {
     let problemFileInfo = pddlWorkspace.getProblemFileForHappenings(happeningsInfo);
 
-    if (!problemFileInfo) throw new Error(`No problem file with name '(problem ${happeningsInfo.problemName}') and located in the same folder as the plan is not open in the editor.`);
+    if (!problemFileInfo) throw new Error(`No problem file with name '(problem ${happeningsInfo.problemName}') and located in the same folder as the plan is open in the editor.`);
     
     let domainFileInfo = pddlWorkspace.getDomainFileFor(problemFileInfo);
 

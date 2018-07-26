@@ -109,7 +109,7 @@ export class HappeningsExecutor extends EventEmitter {
         });
     }
 
-    valStepOutputPattern = /^(?:(?:\? )?Posted action \d+\s+)*\? Seeing (\d+) changed lits\s*([\s\S]*)\s+\?\s*$/m;
+    valStepOutputPattern = /^(?:(?:\? )?Posted action \d+\s+)*(?:\? )+Seeing (\d+) changed lits\s*([\s\S]*)\s+\?\s*$/m;
     valStepLiteralsPattern = /([\w-]+(?: [\w-]+)*) - now (true|false|[-\d.]+)/g;
 
     isOutputComplete(output: string): boolean {

@@ -81,7 +81,6 @@ export class Diagnostics extends Disposable {
             let scheduleFurtherValidation = dirtyDomains.length > 1;
 
             this.validatePddlDocument(firstDirtyDomain, scheduleFurtherValidation);
-            return;
         }
 
         // find all dirty problems
