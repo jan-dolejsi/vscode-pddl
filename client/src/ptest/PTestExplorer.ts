@@ -77,12 +77,14 @@ export class PTestExplorer {
     async openDefinition(node: PTestNode) {
         if (node.kind == PTestNodeKind.Test) {
             let test = Test.fromUri(node.resource, this.context);
-            let manifest = test.manifest;
+            let manifest = test.getManifest();
             let manifestDocument = await workspace.openTextDocument(manifest.uri);
 
-            if (test.label) {
+            // todo: try this node module: jsonc-parser - A scanner and fault tolerant parser to process JSON with or without comments.
+
+            if (test.getLabel()) {
                 let manifestText: string = await readFileAsync(manifest.path, { encoding: "utf8" });
-                let lineIdx = manifestText.split('\n').findIndex(line => new RegExp(`"label"\\s*:\\s*"${test.label}"`).test(line));
+                let lineIdx = manifestText.split('\n').findIndex(line => new RegExp(`"label"\\s*:\\s*"${test.getLabel()}"`).test(line));
 
                 await window.showTextDocument(manifestDocument.uri, { preview: true, viewColumn: ViewColumn.One, selection: new Range(lineIdx, 0, lineIdx, Number.MAX_SAFE_INTEGER) });
             }
@@ -150,7 +152,7 @@ export class PTestExplorer {
     async runTests(node: PTestNode) {
         if (node.kind == PTestNodeKind.Manifest) {
             let manifest = TestsManifest.load(node.resource.fsPath, this.context);
-            let testCount = manifest.tests.length;
+            let testCount = manifest.testCases.length;
 
             this.outputWindow.clear();
             this.outputWindow.appendLine(`Executing tests from ${basename(node.resource.fsPath)}.`);
@@ -162,14 +164,14 @@ export class PTestExplorer {
             }, (progress, token) => {
 
                 return new Promise(async (resolve, reject) => {
-                    for (let index = 0; index < manifest.tests.length; index++) {
+                    for (let index = 0; index < manifest.testCases.length; index++) {
                         if (token.isCancellationRequested) {
                             this.outputWindow.appendLine('Canceled by user.');
                             reject();
                             break;
                         }
 
-                        const test = manifest.tests[index];
+                        const test = manifest.testCases[index];
 
                         progress.report({ message: 'Test case: ' + test.getLabel(), increment: 100.0 / testCount });
 
@@ -261,7 +263,7 @@ export class PTestExplorer {
             });
 
             try {
-                await commands.executeCommand('pddl.planAndDisplayResult', test.getDomainUri(), problemUri, dirname(test.manifest.path), test.getOptions());
+                await commands.executeCommand('pddl.planAndDisplayResult', test.getDomainUri(), problemUri, dirname(test.getManifest().path), test.getOptions());
             } catch (e) {
                 this.setTestOutcome(test, TestOutcome.FAILED);
                 reject(e);

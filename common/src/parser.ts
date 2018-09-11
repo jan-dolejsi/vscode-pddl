@@ -398,7 +398,7 @@ export class ProblemInfo extends FileInfo {
 }
 
 /**
- * Variable value effective from certain time, e.g. initialiation of the variable in the problem file.
+ * Variable value effective from certain time, e.g. initialization of the variable in the problem file.
  */
 export class TimedVariableValue {
     constructor(private time: number, private variableName: string, private value: number | boolean) {

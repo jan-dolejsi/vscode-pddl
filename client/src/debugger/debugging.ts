@@ -16,6 +16,7 @@ import { toLanguage, isHappenings, getDomainAndProblemForHappenings, selectHappe
 import { PddlConfiguration } from '../configuration';
 import { HappeningsExecutor } from './HappeningsExecutor';
 import { DebuggingSessionFiles } from './DebuggingSessionFiles';
+import { HappeningsToPlanResumeCasesConvertor } from './HappeningsToPlanResumeCasesConvertor';
 
 /*
  * Set the following compile time flag to true if the
@@ -50,6 +51,16 @@ export class Debugging {
 				let context = await this.getActiveContext();
 				let decorations = await new HappeningsExecutor(editor, context, this.plannerConfiguration).execute();
 				this.saveDecorations(editor.document, decorations);
+			}
+			catch (ex) {
+				vscode.window.showErrorMessage(ex.message)
+			}
+		}));
+
+		context.subscriptions.push(vscode.commands.registerTextEditorCommand("pddl.happenings.generatePlanResumeCases", async () => {
+			try {
+				let context = await this.getActiveContext();
+				new HappeningsToPlanResumeCasesConvertor(context, this.plannerConfiguration).generate();
 			}
 			catch (ex) {
 				vscode.window.showErrorMessage(ex.message)

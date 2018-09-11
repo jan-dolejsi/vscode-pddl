@@ -12,52 +12,95 @@ import { PddlExtensionContext } from '../../../common/src/PddlExtensionContext';
 
 export enum TestOutcome { UNKNOWN, SUCCESS, FAILED, SKIPPED, IN_PROGRESS }
 
+const EXPECTED_PLANS = "expectedPlans";
+
+const LABEL = "label";
+const DESCRIPTION = "description";
+const DOMAIN = "domain";
+const PROBLEM = "problem";
+const OPTIONS = "options";
+const PRE_PROCESSOR = "preProcess";
+const PRE_PROCESSOR_KIND = "kind";
+const PRE_PROCESSOR_SCRIPT = "script";
+const PRE_PROCESSOR_DATA = "data";
+const PRE_PROCESSOR_ARGS = "args";
 /**
  * Test definitions
  */
 export class Test {
+    private manifest: TestsManifest;
+    private index: number;
+    private uri: Uri;
 
-    label: string;
-    description: string;
-    problem: string;
-    private domain: string;
-    private options: string;
-    private preProcessor: PreProcessor
-    private expectedPlans: string[];
-    uri: Uri;
+    constructor(private label: string,
+        private description: string,
+        private domain: string,
+        private problem: string,
+        private options: string,
+        private preProcessor: PreProcessor,
+        private expectedPlans: string[]) {
 
-    constructor(public manifest: TestsManifest, public index: number, readonly json: any, readonly context: PddlExtensionContext) {
-        this.label = json["label"];
-        this.description = json["description"];
-        this.domain = json["domain"];
-        this.problem = json["problem"];
-        this.options = json["options"];
-        this.expectedPlans = json["expectedPlans"] || [];
-        this.uri = this.manifest.uri.with({ fragment: index.toString() });
+        }
 
-        let preProcessSettings = json["preProcess"];
+    static fromJSON(json: any,  context: PddlExtensionContext): Test {
+        let label = json[LABEL];
+        let description = json[DESCRIPTION];
+        let domain = json[DOMAIN];
+        let problem = json[PROBLEM];
+        let options = json[OPTIONS];
+        let expectedPlans = json[EXPECTED_PLANS] || [];
+
+        let preProcessSettings = json[PRE_PROCESSOR];
+        let preProcessor: PreProcessor = null;
 
         if(preProcessSettings) {
-            let kind = preProcessSettings["kind"];
+            let kind = preProcessSettings[PRE_PROCESSOR_KIND];
 
             // get python location (if python extension si installed)
             let pythonPath = workspace.getConfiguration().get("python.pythonPath", "python");
 
             switch(kind){
                 case "command":
-                    this.preProcessor = CommandPreProcessor.fromJson(preProcessSettings);
+                    preProcessor = CommandPreProcessor.fromJson(preProcessSettings);
                     break;
                 case "python":
-                    this.preProcessor = new PythonPreProcessor(pythonPath, preProcessSettings["script"], preProcessSettings["args"]);
+                    preProcessor = new PythonPreProcessor(pythonPath, preProcessSettings[PRE_PROCESSOR_SCRIPT], preProcessSettings[PRE_PROCESSOR_ARGS]);
                     break;
                 case "nunjucks":
-                    this.preProcessor = new NunjucksPreProcessor(preProcessSettings["data"], undefined, false);
+                    preProcessor = new NunjucksPreProcessor(preProcessSettings[PRE_PROCESSOR_DATA], undefined, false);
                     break;
                 case "jinja2":
-                    this.preProcessor = new Jinja2PreProcessor(pythonPath, context.extensionPath, preProcessSettings["data"]);
+                    preProcessor = new Jinja2PreProcessor(pythonPath, context.extensionPath, preProcessSettings[PRE_PROCESSOR_DATA]);
                     break;
             }
         }
+
+        return new Test(label, description, domain, problem, options, preProcessor, expectedPlans);
+    }
+
+    toJSON(): any {
+        let json: any = {}
+
+        if (this.label) json[LABEL] = this.label;
+        if (this.description) json[DESCRIPTION] = this.description;
+        if (this.domain) json[DOMAIN] = this.domain;
+        if (this.problem) json[PROBLEM] = this.problem;
+        if (this.options)  json[OPTIONS] = this.options;
+        if (this.expectedPlans.length) json[EXPECTED_PLANS] = this.expectedPlans;
+
+        if (this.preProcessor) json[PRE_PROCESSOR] = { kind: "unsupported"}; // creating test cases with pre-processing is currently not supported
+
+        return json;
+    }
+
+    getManifest(): TestsManifest {
+        return this.manifest;
+    }
+
+    setManifest(manifest: TestsManifest): void {
+        this.index = manifest.testCases.length;
+        this.uri = manifest.uri.with({ fragment: this.index.toString() });
+        this.manifest = manifest;
     }
 
     getDomain(): string {
@@ -74,6 +117,10 @@ export class Test {
 
     getProblemUri(): Uri {
         return Uri.file(this.toAbsolutePath(this.getProblem()));
+    }
+
+    getUri(): Uri {
+        return this.uri;
     }
 
     getLabel(): string {
@@ -108,7 +155,7 @@ export class Test {
         let testIndex = parseInt(uri.fragment);
         if (testIndex != NaN) {
             let manifest = TestsManifest.load(uri.fsPath, context);
-            return manifest.tests[testIndex];
+            return manifest.testCases[testIndex];
         }
         else {
             return null;

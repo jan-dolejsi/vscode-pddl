@@ -75,7 +75,7 @@ export class HappeningsExecutor extends EventEmitter {
 
         // subscribe to the process exit event to be able to report possible crashes
         child.on("error", err => window.showErrorMessage(`Valstep failed with error ${err.name} and message ${err.message}`));
-        child.on("exit", (code, signal) => window.showInformationMessage(`Valstep exit code ${code} and signal ${signal}`));
+        child.on("exit", (code, signal) => {if (code != 0) window.showInformationMessage(`Valstep exit code ${code} and signal ${signal}`)});
 
         let groupedHappenings = Util.groupBy(this.context.happenings.getHappenings(), h => h.getTime());
 

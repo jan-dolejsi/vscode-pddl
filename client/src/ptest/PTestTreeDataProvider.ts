@@ -48,8 +48,8 @@ export class PTestTreeDataProvider implements TreeDataProvider<PTestNode> {
     }
 
     setTestOutcome(test: Test, testOutcome: TestOutcome) {
-        this.testResults.set(test.uri.toString(), testOutcome);
-        let node = this.findNodeByResource(test.uri);
+        this.testResults.set(test.getUri().toString(), testOutcome);
+        let node = this.findNodeByResource(test.getUri());
         this._onDidChange.fire(node);
     }
 
@@ -137,9 +137,9 @@ export class PTestTreeDataProvider implements TreeDataProvider<PTestNode> {
                 let manifest = this.tryLoadManifest(parentPath);
                 if (!manifest) return [];
 
-                return manifest.tests
+                return manifest.testCases
                     .map(test => this.cache({
-                        resource: test.uri,
+                        resource: test.getUri(),
                         kind: PTestNodeKind.Test,
                         label: test.getLabel(),
                         tooltip: test.getDescription()

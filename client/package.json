@@ -4,7 +4,7 @@
   "description": "Planning Domain Description Language support",
   "author": "Jan Dolejsi",
   "license": "MIT",
-  "version": "2.6.8",
+  "version": "2.6.9",
   "publisher": "jan-dolejsi",
   "engines": {
     "vscode": "^1.22.0",
@@ -205,6 +205,10 @@
       {
         "command": "pddl.happenings.execute",
         "title": "PDDL: Execute plan and show effects"
+      },
+      {
+        "command": "pddl.happenings.generatePlanResumeCases",
+        "title": "PDDL: Execute plan and generate plan resume test cases"
       }
     ],
     "menus": {
@@ -231,6 +235,10 @@
         },
         {
           "command": "pddl.happenings.execute",
+          "when": "resourceLangId == happenings"
+        },
+        {
+          "command": "pddl.happenings.generatePlanResumeCases",
           "when": "resourceLangId == happenings"
         }
       ],

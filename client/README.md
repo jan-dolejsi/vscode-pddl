@@ -308,6 +308,14 @@ Plan happenings (.happenings) files may be executed and action effects listed as
 
 For this to work, the setting `pddl.valStepPath` must be set with the location of the ValStep utility, which is currently not distributed with the extension.
 
+## Plan Happenings -> domain completeness test suite auto-generation
+
+To test robustness of your planning model, you can auto-generate a "plan resume" re-planning test suite. Open a _.happenings_ file and select `PDDL: Execute plan and generate plan resume test cases` from the context menu. This command executes the happenings and evaluates all intermediate states in the course of the plan. Then it generates a problem file for each of those states (treating them as new initial states) and the same goal. The command then also summarizes all those new problem files into a new test manifest named after the problem file `<problem_file_name>_re-planning.ptest.json`, which you can open in the Test Explorer and run as a test suite. This way you can test whether your domain model includes actions to recover from possible plan failures. You can then manually edit those generated problem files to model actual plan failure modes.
+
+![Plan Happenings to plan-resume re-planning test suite generation.](https://raw.githubusercontent.com/wiki/jan-dolejsi/vscode-pddl/img/PDDL_plan_resume_re-planning_test_suite_generation.gif)
+
+For this to work, the setting `pddl.valStepPath` must be set to the location of the ValStep utility, which is currently not distributed with the extension. There is a known issue with time-initial literals and fluents - they are not re-included into the generated problem files.
+
 ## Block folding in `:init` section of the problem file
 
 For large problem files, it is convenient to be able to fold blocks of statements between `;;(` and `;;)` comments lines.

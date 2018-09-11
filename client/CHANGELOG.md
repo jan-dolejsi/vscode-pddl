@@ -1,10 +1,16 @@
 # What's new
 
-## [Unreleased]
+## [2.6.9] - 2018-09-12
 
-Interactive stepping through plans (aka debugging).
 Fixes in the happenings effect evaluation for numbers output in a scientific notation.
+
 Added simple [Python-based problem file templating sample](https://github.com/jan-dolejsi/vscode-pddl-samples/tree/master/ScriptedTemplating)
+
+To test robustness of your planning model, you can auto-generate a "plan resume" re-planning test suite. Open a _.happenings_ file and select `PDDL: Execute plan and generate plan resume test cases` from the context menu. This command executes the happenings and evaluates all intermediate states in the course of the plan. Then it generates a problem file for each of those states (treating them as new initial states) and the same goal. The command then also summarizes all those new problem files into a new test manifest named after the problem file `<problem_file_name>_re-planning.ptest.json`, which you can open in the Test Explorer and run as a test suite. This way you can test whether your domain model includes actions to recover from possible plan failures. You can then manually edit those generated problem files to model actual plan failure modes.
+
+![Plan Happenings to plan-resume re-planning test suite generation.](https://raw.githubusercontent.com/wiki/jan-dolejsi/vscode-pddl/img/PDDL_plan_resume_re-planning_test_suite_generation.gif)
+
+For this to work, the setting `pddl.valStepPath` must be set to the location of the ValStep utility, which is currently not distributed with the extension. There is a known issue with time-initial literals and fluents - they are not re-included into the generated problem files.
 
 ## [2.6.8] - 2018-07-27
 
@@ -13,7 +19,7 @@ Add a `;;!pre-parsing:...` meta instruction to the top of the problem template a
 
 ![Problem template errors](https://raw.githubusercontent.com/wiki/jan-dolejsi/vscode-pddl/img/PDDL_problem_template_errors.gif)
 
-More elaborate support for .happenings files now offers syntactic validation and in experimental mode also plan execution and decoration of the file with action effects. 
+More elaborate support for .happenings files now offers syntactic validation and in experimental mode also plan execution and decoration of the file with action effects.
 
 ![Plan Happenings effect evaluations](https://raw.githubusercontent.com/wiki/jan-dolejsi/vscode-pddl/img/PDDL_happenings_effect_evaluation.gif)
 
@@ -256,7 +262,7 @@ Simplified snippets and added tabstops/placeholders to them, so they are easy to
 
 ### Added
 
-* missing PDDL requirements in syntax highlighting: `strips, typing, negative-preconditions, disjunctive-preconditions, equality, existential-preconditions, universal-preconditions, quantified-preconditions, conditional-effects, fluents, numeric-fluents, adl, durative-actions, duration-inequalities, continuous-effects, derived-predicates, timed-initial-literals, preferences, constraints, action-costs, timed-initial-fluents`
+- missing PDDL requirements in syntax highlighting: `strips, typing, negative-preconditions, disjunctive-preconditions, equality, existential-preconditions, universal-preconditions, quantified-preconditions, conditional-effects, fluents, numeric-fluents, adl, durative-actions, duration-inequalities, continuous-effects, derived-predicates, timed-initial-literals, preferences, constraints, action-costs, timed-initial-fluents`
 
 ### Changed
 
@@ -286,13 +292,18 @@ Simplified snippets and added tabstops/placeholders to them, so they are easy to
 - Add support for file stored in a session inside editor.planning.domains web interface
 - Add ['unused' warning](https://code.visualstudio.com/updates/v1_25#_diagnostictag)
 
+## [Unreleased]
+
+Interactive stepping through plans (aka debugging).
+
 ## Note to contributors
 
 Note for open source contributors: all notable changes to the "pddl" extension will be documented in this file.
 
 Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
 
-[Unreleased]: https://github.com/jan-dolejsi/vscode-pddl/compare/v2.6.8...HEAD
+[Unreleased]: https://github.com/jan-dolejsi/vscode-pddl/compare/v2.6.9...HEAD
+[2.6.9]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.6.8...v2.6.9
 [2.6.8]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.6.7...v2.6.8
 [2.6.7]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.6.6...v2.6.7
 [2.6.6]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.6.5...v2.6.6

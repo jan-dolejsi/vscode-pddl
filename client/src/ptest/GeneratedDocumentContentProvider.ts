@@ -35,14 +35,14 @@ export class GeneratedDocumentContentProvider implements TextDocumentContentProv
 
     mapUri(test: Test): Uri {
         let problemTemplatePath = test.getProblemUri().fsPath;
-        let testIdx = test.uri.fragment;
+        let testIdx = test.getUri().fragment;
 
         let problemPath: string;
 
         let problemTemplateWithoutExtension = problemTemplatePath.replace('.pddl', '');
 
-        if (test.label) {
-            problemPath = join(problemTemplateWithoutExtension + ` (${test.label}).pddl`);
+        if (test.getLabel()) {
+            problemPath = join(problemTemplateWithoutExtension + ` (${test.getLabel()}).pddl`);
         }
         else {
             problemPath = problemTemplateWithoutExtension + ` (${testIdx}).pddl`;
@@ -63,7 +63,7 @@ export class GeneratedDocumentContentProvider implements TextDocumentContentProv
         let documentText = problemDocument.getText();
 
         try {
-            return await test.getPreProcessor().transform(documentText, dirname(test.manifest.path), this.outputWindow);
+            return await test.getPreProcessor().transform(documentText, dirname(test.getManifest().path), this.outputWindow);
         } catch (ex) {
             window.showErrorMessage(`Cannot show problem file ${basename(uri.fsPath)}: ${ex}`);
             return Promise.reject(ex);
