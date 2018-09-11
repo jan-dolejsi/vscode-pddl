@@ -23,6 +23,7 @@ export class HappeningsExecutor extends EventEmitter {
 
     happeningsConvertor: HappeningsToValStep;
     variableValues: TimedVariableValue[];
+    valStepInput: string = '';
     outputBuffer: string = '';
     decorations: vscode.TextEditorDecorationType[] = [];
 
@@ -72,6 +73,10 @@ export class HappeningsExecutor extends EventEmitter {
             }
         });
 
+        // subscribe to the process exit event to be able to report possible crashes
+        child.on("error", err => window.showErrorMessage(`Valstep failed with error ${err.name} and message ${err.message}`));
+        child.on("exit", (code, signal) => window.showInformationMessage(`Valstep exit code ${code} and signal ${signal}`));
+
         let groupedHappenings = Util.groupBy(this.context.happenings.getHappenings(), h => h.getTime());
 
         for (const time of groupedHappenings.keys()) {
@@ -92,7 +97,7 @@ export class HappeningsExecutor extends EventEmitter {
 
     async postHappenings(childProcess: process.ChildProcess, happenings: Happening[]): Promise<boolean> {
         let valSteps = this.happeningsConvertor.convert(happenings);
-
+        this.valStepInput += valSteps;
         let that = this;
 
         return new Promise<boolean>((resolve, reject) => {
@@ -112,7 +117,7 @@ export class HappeningsExecutor extends EventEmitter {
     }
 
     valStepOutputPattern = /^(?:(?:\? )?Posted action \d+\s+)*(?:\? )+Seeing (\d+) changed lits\s*([\s\S]*)\s+\?\s*$/m;
-    valStepLiteralsPattern = /([\w-]+(?: [\w-]+)*) - now (true|false|[-\d.]+)/g;
+    valStepLiteralsPattern = /([\w-]+(?: [\w-]+)*) - now (true|false|[+-]?\d+\.?\d*(?:e[+-]?\d+)?)/g;
 
     isOutputComplete(output: string): boolean {
         this.valStepOutputPattern.lastIndex = 0;

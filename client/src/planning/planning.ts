@@ -77,6 +77,7 @@ export class Planning implements PlanningHandler {
         
         context.subscriptions.push(commands.registerCommand(PDDL_EXPORT_PLAN, selectedPlan => {
             let plans: Plan[] = this.getPlans();
+            if (selectedPlan === undefined && plans.length > 0) selectedPlan = 0;
             if (plans != null && selectedPlan < plans.length) {
                 new PlanExporter().export(plans[selectedPlan]);
             } else {

@@ -3,6 +3,8 @@
 ## [Unreleased]
 
 Interactive stepping through plans (aka debugging).
+Fixes in the happenings effect evaluation for numbers output in a scientific notation.
+Added simple [Python-based problem file templating sample](https://github.com/jan-dolejsi/vscode-pddl-samples/tree/master/ScriptedTemplating)
 
 ## [2.6.8] - 2018-07-27
 
@@ -276,9 +278,13 @@ Simplified snippets and added tabstops/placeholders to them, so they are easy to
 - Validate new symbol name while renaming using `prepareRename`
 - Rename parameters and objects
 - Auto-completion for constant/object names.
-- Plan debugger
-- Removal of the language server
 - More general matching of domain file to problem file across workspace folder structure
+- Support for [Outline view](https://code.visualstudio.com/updates/v1_25#_outline-view), [Document Symbols](https://code.visualstudio.com/updates/v1_25#_document-symbols)
+- Any other extensions to put into extensions.json?
+- Review the ViewColumn usage following the Grid View feature availability in VS Code
+- Add a file system provider (readonly) for the IPC community and adapt it to the test cases manifests for ease of use
+- Add support for file stored in a session inside editor.planning.domains web interface
+- Add ['unused' warning](https://code.visualstudio.com/updates/v1_25#_diagnostictag)
 
 ## Note to contributors
 
