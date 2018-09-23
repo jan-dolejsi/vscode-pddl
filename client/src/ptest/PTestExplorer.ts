@@ -46,6 +46,9 @@ export class PTestExplorer {
         context.subscriptions.push(commands.registerCommand('pddl.tests.viewExpectedPlans', node => this.openExpectedPlans(node)));
         context.subscriptions.push(commands.registerCommand('pddl.tests.problemSaveAs', () => this.saveProblemAs()));
 
+        context.subscriptions.push(commands.registerCommand('pddl.tests.reveal', nodeUri => 
+            this.pTestViewer.reveal(this.pTestTreeDataProvider.findNodeByResource(nodeUri), {select: true})));
+
         this.outputWindow = window.createOutputChannel("PDDL Test output");
 
         this.generatedDocumentContentProvider = new GeneratedDocumentContentProvider(this.outputWindow, planning.pddlWorkspace);

@@ -152,7 +152,7 @@
       },
       {
         "command": "pddl.tests.refresh",
-        "title": "Refresh",
+        "title": "PDDL: Refresh test cases",
         "icon": {
           "light": "images/light/refresh.svg",
           "dark": "images/dark/refresh.svg"

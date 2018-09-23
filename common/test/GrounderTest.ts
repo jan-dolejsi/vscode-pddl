@@ -4,7 +4,7 @@
  * ------------------------------------------------------------------------------------------ */
 'use strict';
 
-import { DomainInfo, ProblemInfo, TypeObjects } from '../src/parser'
+import { DomainInfo, ProblemInfo, TypeObjects } from '../src/parser';
 import { Variable, Parameter, ObjectInstance } from '../src/FileInfo';
 import * as assert from 'assert';
 import { Grounder } from '../src/Grounder';

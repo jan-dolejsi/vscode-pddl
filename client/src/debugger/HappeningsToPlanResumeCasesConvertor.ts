@@ -7,7 +7,7 @@
 import { Uri, commands, window } from 'vscode';
 import { PddlConfiguration } from '../configuration';
 import { Util } from '../../../common/src/util';
-import { dirname, relative } from 'path';
+import { dirname, relative, basename, join } from 'path';
 import * as process from 'child_process';
 import { HappeningsToValStep } from '../diagnostics/HappeningsToValStep';
 import { DebuggingSessionFiles } from './DebuggingSessionFiles';
@@ -51,7 +51,10 @@ export class HappeningsToPlanResumeCasesConvertor {
         let problemFilePath = Util.toPddlFile('problem', this.context.problem.getText());
 
         let args = [domainFilePath, problemFilePath];
-        let cwd = dirname(Uri.parse(this.context.happenings.fileUri).fsPath);
+        let outputFolderUris = await window.showOpenDialog({defaultUri: Uri.file(dirname(Uri.parse(this.context.problem.fileUri).fsPath)),  canSelectFiles: false, canSelectFolders: true, canSelectMany: false, openLabel: 'Select folder for problem files'});
+        if(!outputFolderUris || !outputFolderUris.length) return false;
+        let outputFolderUri = outputFolderUris[0];
+        let cwd = outputFolderUri.fsPath;
         let cmd = valStepPath + ' ' + args.join(' ');
 
         let groupedHappenings = Util.groupBy(this.context.happenings.getHappenings(), h => h.getTime());
@@ -61,19 +64,20 @@ export class HappeningsToPlanResumeCasesConvertor {
         let defaultDomain = relative(cwd, Uri.parse(this.context.domain.fileUri).fsPath);
         let defaultProblem = null;
         let options = "";
-        let manifestUri = Uri.parse(Uri.parse(this.context.problem.fileUri).fsPath + '_re-planning.ptest.json');
+        let manifestUri = Uri.file(join(cwd,  basename(Uri.parse(this.context.problem.fileUri).fsPath)+ '_re-planning.ptest.json'));
         let manifest = new TestsManifest(defaultDomain, defaultProblem, options, manifestUri);
 
         // add the original problem as a test case
-        let problemFileRelativePath = relative(cwd, Uri.parse(this.context.problem.fileUri).fsPath);
-        manifest.addCase(new Test(null, "Original problem file", null, problemFileRelativePath, "", null, []));
+        manifest.addCase(new Test(null, "Original problem file", null, relative(cwd, Uri.parse(this.context.problem.fileUri).fsPath), "", null, []));
+
+        let problemFileWithoutExt = basename(Uri.parse(this.context.problem.fileUri).fsPath, ".pddl");
 
         for (const time of groupedHappenings.keys()) {
             const happeningGroup = groupedHappenings.get(time);
             let valSteps = this.happeningsConvertor.convert(happeningGroup);
             valStepInput += valSteps;
             let lastHappening = happeningGroup[happeningGroup.length - 1];
-            let problemFileName = `${problemFileRelativePath}_${time}_${this.getHappeningFullName(lastHappening)}.pddl`;
+            let problemFileName = `${problemFileWithoutExt}_${time}_${this.getHappeningFullName(lastHappening)}.pddl`.split(' ').join('_');
             let testCaseLabel = `${time}: after (${lastHappening.getFullActionName()}) ${this.getHappeningSnapName(lastHappening)}`;
             let testCaseDescription = `Test case for planning from: \nTime point: ${time} and after the application of \nAction: ${lastHappening.getFullActionName()} ${this.getHappeningSnapName(lastHappening)}`;
             manifest.addCase(new Test(testCaseLabel, testCaseDescription, null, problemFileName, "", null, []));
@@ -85,6 +89,10 @@ export class HappeningsToPlanResumeCasesConvertor {
         try {
             let output = process.execSync(cmd, { cwd: cwd, input: valStepInput });
             output; // for inspection while debugging
+
+            await commands.executeCommand('workbench.view.extension.test');
+            await commands.executeCommand('pddl.tests.refresh');
+            await commands.executeCommand('pddl.tests.reveal', manifestUri);
 
             return true;
         } catch (err) {
