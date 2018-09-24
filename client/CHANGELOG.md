@@ -1,5 +1,19 @@
 # What's new
 
+## [2.6.10] - 2018-09-24
+
+### Added
+
+Normalized plan comparison. Plans from different planners are hard to compare due to different formatting of the output. Normalized diff re-formats the plan, removes all extra lines or comments, shifts plan times (by a convention plans start at time _epsilon_) and opens the Diff window.
+
+![Plan normalized diff](https://raw.githubusercontent.com/wiki/jan-dolejsi/vscode-pddl/img/PDDL_plan_diff.gif)
+
+### Modified
+
+When specifying command-line arguments for the planner, they were being acumulated in the history and re-used. But only exactly as previously specified. As the combinations of parameters get more complex and verbose, the inability to edit options from the history render the history useless. Now the previously used command-line options may be edited before re-submitting.
+
+The user experience of the plan resume/re-planning test case geneneration was improved. The user may select a folder for all the generated, so they are easy to git-ignore in the repository.
+
 ## [2.6.9] - 2018-09-12
 
 Fixes in the happenings effect evaluation for numbers output in a scientific notation.
@@ -302,7 +316,8 @@ Note for open source contributors: all notable changes to the "pddl" extension w
 
 Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
 
-[Unreleased]: https://github.com/jan-dolejsi/vscode-pddl/compare/v2.6.9...HEAD
+[Unreleased]: https://github.com/jan-dolejsi/vscode-pddl/compare/v2.6.10...HEAD
+[2.6.10]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.6.9...v2.6.10
 [2.6.9]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.6.8...v2.6.9
 [2.6.8]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.6.7...v2.6.8
 [2.6.7]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.6.6...v2.6.7

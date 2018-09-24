@@ -4,7 +4,7 @@
   "description": "Planning Domain Description Language support",
   "author": "Jan Dolejsi",
   "license": "MIT",
-  "version": "2.6.9",
+  "version": "2.6.10",
   "publisher": "jan-dolejsi",
   "engines": {
     "vscode": "^1.22.0",
@@ -195,6 +195,10 @@
         "title": "PDDL: Open as an editable problem file..."
       },
       {
+        "command": "pddl.plan.compareNormalized",
+        "title": "PDDL: Normalize and compare 2 plans"
+      },
+      {
         "command": "pddl.plan.validate",
         "title": "PDDL: Validate plan"
       },
@@ -274,6 +278,13 @@
           "command": "pddl.tests.viewExpectedPlans",
           "when": "view == PTestExplorer && viewItem == test",
           "group": "navigation"
+        }
+      ],
+      "explorer/context": [
+        {
+          "command": "pddl.plan.compareNormalized",
+          "when": "viewItem != folder && resourceLangId == plan",
+          "group": "3_compare"
         }
       ]
     },

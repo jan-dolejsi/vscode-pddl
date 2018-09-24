@@ -23,6 +23,7 @@ import { Debugging } from './debugger/debugging';
 import { Telemetry } from './telemetry';
 import { toLanguage, isAnyPddl } from './utils';
 import { HappeningsValidator } from './diagnostics/HappeningsValidator';
+import { PlanComparer } from './comparison/PlanComparer';
 
 const PDDL_CONFIGURE_PARSER = 'pddl.configureParser';
 const PDDL_LOGIN_PARSER_SERVICE = 'pddl.loginParserService';
@@ -133,6 +134,8 @@ export function activate(context: ExtensionContext) {
 
 	new Debugging(context, pddlWorkspace, pddlConfiguration);
 	
+	new PlanComparer(pddlWorkspace, pddlConfiguration, context);
+
 	subscribeToWorkspace(pddlWorkspace, pddlConfiguration, context);
 
 	// Push the disposables to the context's subscriptions so that the 

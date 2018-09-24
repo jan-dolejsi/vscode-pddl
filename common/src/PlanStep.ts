@@ -42,8 +42,8 @@ export class PlanStep {
     }
 
     toPddl(): string {
-        let output = `${this.time}: (${this.fullActionName})`;
-        if (this.isDurative) output += ` [${this.duration}]`;
+        let output = `${this.time.toFixed(4)}: (${this.fullActionName})`;
+        if (this.isDurative) output += ` [${this.duration.toFixed(4)}]`;
         return output;
     }
 }
