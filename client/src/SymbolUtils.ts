@@ -9,7 +9,7 @@ import {
 } from 'vscode';
 
 import { PddlWorkspace } from '../../common/src/workspace-model';
-import { toLanguageFromId } from '../../common/src/parser';
+import { toLanguageFromId, Action } from '../../common/src/parser';
 import { Variable, PddlRange } from '../../common/src/FileInfo';
 
 export class SymbolUtils {
@@ -51,6 +51,14 @@ export class SymbolUtils {
                     this.createHover(symbol.range, 'Derived predicate/function', this.brackets(derivedFound.declaredName), derivedFound.getDocumentation()),
                     new Location(this.toUri(domainInfo.fileUri), SymbolUtils.toRange(derivedFound.location)),
                     derivedFound
+                );
+            }
+            let actionFound = domainInfo.getActions().find(a => a.name == symbol.name);
+            if (actionFound) {
+                return new ActionInfo(
+                    this.createHover(symbol.range, 'Action', symbol.name, ''),
+                    new Location(this.toUri(domainInfo.fileUri), SymbolUtils.toRange(actionFound.location)),
+                    actionFound
                 );
             }
         }
@@ -236,6 +244,12 @@ export class VariableInfo extends SymbolInfo {
 
 export class TypeInfo extends SymbolInfo {
     constructor(public hover: Hover, public location: Location, public type: string) {
+        super(hover, location);
+    }
+}
+
+export class ActionInfo extends SymbolInfo {
+    constructor(public hover: Hover, public location: Location, public action: Action) {
         super(hover, location);
     }
 }

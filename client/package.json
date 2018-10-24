@@ -4,10 +4,10 @@
   "description": "Planning Domain Description Language support",
   "author": "Jan Dolejsi",
   "license": "MIT",
-  "version": "2.6.10",
+  "version": "2.6.11",
   "publisher": "jan-dolejsi",
   "engines": {
-    "vscode": "^1.22.0",
+    "vscode": "^1.28.1",
     "node": "^7.9.0"
   },
   "categories": [
@@ -151,6 +151,10 @@
         "title": "PDDL: Convert plan to happenings..."
       },
       {
+        "command": "pddl.convertHappeningsToPlan",
+        "title": "PDDL: Convert happenings to plan..."
+      },
+      {
         "command": "pddl.tests.refresh",
         "title": "PDDL: Refresh test cases",
         "icon": {
@@ -228,6 +232,10 @@
         {
           "command": "pddl.convertPlanToHappenings",
           "when": "resourceLangId == plan"
+        },
+        {
+          "command": "pddl.convertHappeningsToPlan",
+          "when": "resourceLangId == happenings"
         },
         {
           "command": "pddl.plan.validate",
@@ -614,25 +622,27 @@
     "package": "vsce package"
   },
   "dependencies": {
-    "vscode-extension-telemetry": "^0.0.18",
-    "express": "^4.16.3",
-    "npm": "^6.4.1",
-    "nunjucks": "^3.1.3",
-    "opn": "^5.3.0",
-    "tmp": "^0.0.33",
-    "request": "^2.88.0",
+    "vscode-extension-telemetry": "^0.0.22",
     "tree-kill": "^1.2.0",
     "util.promisify": "^1.0.0",
     "vscode-debugadapter": "1.31.0",
     "vscode-debugprotocol": "1.31.0",
-    "await-notify": "^1.0.1"
+    "await-notify": "^1.0.1",
+    "express": "^4.16.3",
+    "npm": "5.5.1",
+    "nunjucks": "^3.1.3",
+    "opn": "^5.3.0",
+    "tmp": "^0.0.33",
+    "request": "^2.88.0",
+    "body-parser": "^1.18.3",
+    "events": "^3.0.0"
   },
   "devDependencies": {
-    "vscode": "^1.1.17",
+    "vsce": "^1.48.0",
+    "vscode": "^1.1.21",
     "@types/request": "^2.47.1",
     "@types/tmp": "^0.0.33",
     "typescript": "^3.0.3",
-    "tslint": "^5.11.0",
-    "vsce": "^1.48.0"
+    "tslint": "^5.11.0"
   }
 }

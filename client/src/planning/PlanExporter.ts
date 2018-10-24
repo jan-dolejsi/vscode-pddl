@@ -13,13 +13,12 @@ import { parse, format } from 'path';
 import { isNullOrUndefined } from 'util';
 import { exportToAndShow } from './ExportUtil';
 
-export class PlanExporter {
-            
-    constructor() {}
 
-    public async export(plan: Plan) {
+export abstract class AbstractPlanExporter {
+
+    public async export() {
         
-        let defaultPlanPath = PlanExporter.replaceExtension(Uri.parse(plan.problem.fileUri).with({ scheme: 'file' }).fsPath, '.plan');
+        let defaultPlanPath = this.getDefaultPlanPath();
 
         let options: SaveDialogOptions = {
             saveLabel: "Save plan as...",
@@ -34,29 +33,20 @@ export class PlanExporter {
             let uri = await window.showSaveDialog(options);
             if (uri == undefined) return; // canceled by user
 
-            await exportToAndShow(this.getPlanText(plan), uri);
+            await exportToAndShow(this.getPlanText(), uri);
         } catch (ex) {
             window.showErrorMessage(`Cannot export plan: ${ex.message}`);
         }
     }
 
-    getPlanText(plan: Plan): string {
-        let planText = `;;!domain: ${plan.domain.name}
-;;!problem: ${plan.problem.name}
+    abstract getDefaultPlanPath(): string;
 
-${plan.getText()}
+    abstract getPlanText(): string;
 
-; Makespan: ${plan.makespan}`;
-
-        if (!isNullOrUndefined(plan.cost)){
-            planText += `\n; Cost: ${plan.cost}`;
-        }
-        
-        if (!isNullOrUndefined(plan.statesEvaluated)){
-            planText += `\n; States evaluated: ${plan.statesEvaluated}`;
-        }
-
-        return planText;
+    getPlanMeta(domainName: string, problemName: string): string {
+        return `;;!domain: ${domainName}
+;;!problem: ${problemName}
+`;
     }
 
     static replaceExtension(path: string, extension: string): string {
@@ -65,5 +55,34 @@ ${plan.getText()}
         pathObj.ext = extension;
         pathObj.base = pathObj.base.replace(new RegExp(origExt+'$'), pathObj.ext);
         return format(pathObj);
+    }
+}
+
+export class PlanExporter extends AbstractPlanExporter {
+            
+    constructor(private plan: Plan) {
+        super();
+    }
+
+    getDefaultPlanPath(): string {
+        return PlanExporter.replaceExtension(Uri.parse(this.plan.problem.fileUri).with({ scheme: 'file' }).fsPath, '.plan');
+    }
+
+    getPlanText(): string {
+        let planText = this.getPlanMeta(this.plan.domain.name, this.plan.problem.name) + 
+`
+${this.plan.getText()}
+
+; Makespan: ${this.plan.makespan}`;
+
+        if (!isNullOrUndefined(this.plan.cost)){
+            planText += `\n; Cost: ${this.plan.cost}`;
+        }
+        
+        if (!isNullOrUndefined(this.plan.statesEvaluated)){
+            planText += `\n; States evaluated: ${this.plan.statesEvaluated}`;
+        }
+
+        return planText;
     }
 }

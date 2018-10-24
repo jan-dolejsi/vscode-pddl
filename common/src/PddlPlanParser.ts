@@ -4,7 +4,7 @@
  * ------------------------------------------------------------------------------------------ */
 'use strict';
 
-import { Plan } from './plan';
+import { Plan } from './Plan';
 import { PlanStep } from './PlanStep';
 import { DomainInfo, ProblemInfo } from './parser';
 

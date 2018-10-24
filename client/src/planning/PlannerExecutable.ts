@@ -12,7 +12,7 @@ import * as process from 'child_process';
 const tree_kill = require('tree-kill');
 
 import { Planner } from './planner';
-import { PlanningHandler } from './plan';
+import { PlanningHandler } from './Plan';
 import { DomainInfo, ProblemInfo } from '../../../common/src/parser';
 import { Util } from '../../../common/src/util';
 import { PddlPlanParser } from '../../../common/src/PddlPlanParser';

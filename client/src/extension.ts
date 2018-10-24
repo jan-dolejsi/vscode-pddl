@@ -8,7 +8,7 @@ import { workspace, window, ExtensionContext, commands, Uri, ViewColumn, Range, 
 
 import { Planning } from './planning/planning'
 import { PddlWorkspace } from '../../common/src/workspace-model';
-import { DomainInfo, PDDL } from '../../common/src/parser';
+import { DomainInfo, PDDL, PLAN, HAPPENINGS } from '../../common/src/parser';
 import { PddlRange } from '../../common/src/FileInfo';
 import { PddlConfiguration } from './configuration';
 import { Authentication } from '../../common/src/Authentication';
@@ -130,6 +130,12 @@ export function activate(context: ExtensionContext) {
 	let diagnostics = new Diagnostics(pddlWorkspace, diagnosticCollection,  pddlConfiguration, 
 		planValidator, happeningsValidator);
 
+	let planDefinitionProvider = languages.registerDefinitionProvider(PLAN, symbolInfoProvider);
+	let planHoverProvider = languages.registerHoverProvider(PLAN, symbolInfoProvider);
+
+	let happeningsDefinitionProvider = languages.registerDefinitionProvider(HAPPENINGS, symbolInfoProvider);
+	let happeningsHoverProvider = languages.registerHoverProvider(HAPPENINGS, symbolInfoProvider);
+
 	new PTestExplorer(context, planning);
 
 	new Debugging(context, pddlWorkspace, pddlConfiguration);
@@ -143,7 +149,8 @@ export function activate(context: ExtensionContext) {
 	context.subscriptions.push(diagnostics, revealActionCommand,
 		configureParserCommand, loginParserServiceCommand, updateTokensParserServiceCommand,
 		configurePlannerCommand, loginPlannerServiceCommand, updateTokensPlannerServiceCommand, completionItemProvider,
-		renameProvider, documentSymbolProvider, definitionProvider, referencesProvider, hoverProvider);
+		renameProvider, documentSymbolProvider, definitionProvider, referencesProvider, hoverProvider, 
+		planHoverProvider, planDefinitionProvider, happeningsHoverProvider, happeningsDefinitionProvider);
 }
 
 export function deactivate() {

@@ -5,7 +5,7 @@
 'use strict';
 
 import { readFileSync } from 'fs';
-import { Test } from './test';
+import { Test } from './Test';
 import { Uri, window } from 'vscode';
 import { PddlExtensionContext } from '../../../common/src/PddlExtensionContext';
 

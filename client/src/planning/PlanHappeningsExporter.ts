@@ -177,14 +177,6 @@ class Happening {
     }
 }
 
-export class HappeningsParser {
-    static PATTERN = /^\s*((\d+|\d+\.\d+|\.\d+)\s*:)?\s*(start|end)?\s*\((.*)\)\s*(#\d+)?$/;
-
-    constructor() {
-
-    }
-}
-
 enum HappeningType {
     Start, End, Instantaneous
 }

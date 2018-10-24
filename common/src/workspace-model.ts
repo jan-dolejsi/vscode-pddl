@@ -317,6 +317,14 @@ export class PddlWorkspace extends EventEmitter {
         else if (fileInfo.isProblem()) {
             return this.getDomainFileFor(<ProblemInfo>fileInfo);
         }
+        else if (fileInfo.isPlan()) {
+            var problemFile = this.getProblemFileForPlan(<PlanInfo>fileInfo);
+            return this.getDomainFileFor(problemFile);
+        }
+        else if (fileInfo.isHappenings()) {
+            var problemFile = this.getProblemFileForHappenings(<HappeningsInfo>fileInfo);
+            return this.getDomainFileFor(problemFile);
+        }
         else return null;
     }
 

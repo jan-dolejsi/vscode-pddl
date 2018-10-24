@@ -122,6 +122,8 @@ Domain and problem files correspond to each other, if:
 
 ![planner](https://raw.githubusercontent.com/wiki/jan-dolejsi/vscode-pddl/img/PDDL_plan.gif)
 
+Control+click on action names in `.plan` files to jump to the action definition in the domain file.
+
 #### Hide actions from plan visualization
 
 Plan visualization details may be fine-tuned using an additional file `<domain>.planviz.json`, where `<domain>` refers to the domain file name without the `.pddl` extension, placed into the same folder as the domain file. Following syntax is supported:
@@ -271,7 +273,7 @@ If you have multiple python installations (e.g. 2.7, 3.5), there are several way
 
 ## Normalized plan comparison
 
-Plans from different planners are hard to compare due to different formatting of the output. Normalized diff re-formats the plan, removes all extra lines or comments, shifts plan times (by a convention plans start at time _epsilon_) and opens the Diff window.
+Plans from different planners are hard to compare due to different formatting of the output. Normalized diff re-formats the plan, removes all extra lines or comments, orders simultaneous actions alphabetically, shifts plan times (by a convention plans start at time _epsilon_) and opens the Diff window.
 Open file explorer pane, select two _.plan_ files, right-click and select _PDDL: Normalize and compare 2 plans_.
 
 ![Plan normalized diff](https://raw.githubusercontent.com/wiki/jan-dolejsi/vscode-pddl/img/PDDL_plan_diff.gif)
@@ -288,7 +290,10 @@ Sometimes it is more convenient to create a desired plan by hand and using the `
 
 ## Plan happenings validation
 
-A context menu option in .plan file _PDDL: Convert plan to happenings..._ supports export to a .happenings file. This shows the exact temporal sequence of action starts and ends.
+A context menu option in .plan file _PDDL: Convert plan to happenings..._ supports export to a `.happenings` file. This shows the exact temporal sequence of action starts and ends.
+This notation is more convenient when checking temporal plans for correctness.
+
+Control+click on action names in `.plan` or `.happenings` files to jump to the action definition in the domain file.
 
 This is the syntax supported by the preview:
 
@@ -303,9 +308,16 @@ This is the syntax supported by the preview:
 5.001: start (land p1 rw1)
 5.100: unset (final-approach p1)
 7.001: end (land p1 rw1)
+
+; re-occurring actions
+10.001: start (land p1 rw1) #2
+12.001: end (land p1 rw1) #2
 ```
 
-This notation is more convenient when checking temporal plans for correctness.
+All first occurrences of happenings are `#1` implicitly. Labeling the first occurrence as `#1` is optional.
+Instructions `start` and `end` label durative span actions. Instructions `set` and `unset` label timed-initial literals (TILs). Instruction `(= (function) value)` is for timed-initial fluents (TIFs).
+
+To convert `.happenings` back to `.plan`, right click on the happenings file and select the _PDDL: Convert happenings to plan..._ command.
 
 ## Plan Happenings effect evaluation
 

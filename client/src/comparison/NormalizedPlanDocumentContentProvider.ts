@@ -50,20 +50,32 @@ class PlanParserAndNormalizer {
     }
 
     parse(origText: string): string {
+        var compare = function(step1: PlanStep, step2: PlanStep): number {
+            if (step1.getStartTime() < step2.getStartTime()) return -1;
+            else if (step1.getStartTime() > step2.getStartTime()) return 1;
+            else {
+                if (step1.fullActionName < step2.fullActionName) return -1;
+                else if(step1.fullActionName > step2.fullActionName) return 1;
+                else return 0;
+            }
+        };
+
         let normalizedText = origText.split('\n')
-            .map((origLine, idx) => this.normalizeLine(origLine, idx))
-            .filter(line => line.length > 0)
+            .map((origLine, idx) => this.parseLine(origLine, idx))
+            .filter(step => step != null)
+            .sort(compare)
+            .map(step => step.toPddl())
             .join('\n');
 
         return normalizedText;
     }
 
-    normalizeLine(line: string, lineIdx: number): string {
+    parseLine(line: string, lineIdx: number): PlanStep {
         PddlPlanParser.planStepPattern.lastIndex = 0;
         let group = PddlPlanParser.planStepPattern.exec(line);
 
         if (!group) {
-            return '';
+            return null;
         } else {
             // this line is a plan step
             let time = group[2] ? parseFloat(group[2]) : this.makespan;
@@ -79,9 +91,7 @@ class PlanParserAndNormalizer {
             let isDurative = group[5] ? true : false;
             let duration = isDurative ? parseFloat(group[5]) : this.epsilon;
 
-            let step = new PlanStep(time - this.timeOffset, action, isDurative, duration, lineIdx);
-
-            return step.toPddl();
+            return new PlanStep(time - this.timeOffset, action, isDurative, duration, lineIdx);
         }
     }
 }

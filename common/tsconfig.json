@@ -4,6 +4,7 @@
 		"noUnusedParameters": true,
 		"noImplicitAny": true,
 		"noImplicitReturns": true,		
+		"forceConsistentCasingInFileNames": true,
 		"target": "es6",
 		"module": "commonjs",
 		"moduleResolution": "node",

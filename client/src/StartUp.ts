@@ -5,7 +5,7 @@
 'use strict';
 
 import {
-    window, extensions, ExtensionContext, MessageItem, Uri, commands
+    window, extensions, ExtensionContext, MessageItem, Uri, commands, ViewColumn
 } from 'vscode';
 
 import * as fs from 'fs';
@@ -101,18 +101,35 @@ export class StartUp {
         // The PDDL extension works best if you open VS Code in a specific folder. Use File > Open Folder ...
     }
 
-    showWhatsNew(): void {
+    async showWhatsNew(): Promise<boolean> {
         let thisExtension = extensions.getExtension("jan-dolejsi.pddl");
         let currentVersion = thisExtension.packageJSON["version"];
         var lastValue = this.context.globalState.get(this.WHATS_NEW_SHOWN_FOR_VERSION, "0.0.0");
 
         if (currentVersion != lastValue) {
-            //let changeLog = this.context.asAbsolutePath('CHANGELOG.md');
-            let changeLog = 'https://marketplace.visualstudio.com/items/jan-dolejsi.pddl/changelog';
-            commands.executeCommand('vscode.open', Uri.parse(changeLog));
 
+            let changeLog = this.context.asAbsolutePath('CHANGELOG.html');
+            let html = fs.readFileSync(changeLog, {encoding: "utf-8"});
+
+            let webViewPanel = window.createWebviewPanel(
+                "pddl.WhatsNew",
+                "PDDL: What's new?",
+                ViewColumn.Active,
+                {
+                    retainContextWhenHidden: true,
+                    enableFindWidget: true,
+                    enableCommandUris: false,
+                    enableScripts: true
+                }
+            );
+
+            webViewPanel.webview.html = html;
+
+            this.context.subscriptions.push(webViewPanel);
             this.context.globalState.update(this.WHATS_NEW_SHOWN_FOR_VERSION, currentVersion);
         }
+
+        return true;
     }
 
     async askForReview(): Promise<void> {

@@ -14,8 +14,8 @@
     "url": "https://github.com/jan-dolejsi/vscode-pddl"
   },
   "scripts": {
-    "install:common": "cd common && npm install && npm test && cd ..",
-    "install:client": "cd client && npm install && cd ..",
+    "install:common": "cd common && npm install --no-optional && npm test && cd ..",
+    "install:client": "cd client && npm install --no-optional && cd ..",
     "postinstall": "npm run install:common && npm run install:client",
     "compile:client": "tsc -p ./client",
     "compile:common": "tsc -p ./common",

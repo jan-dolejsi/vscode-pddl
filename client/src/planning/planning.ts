@@ -6,7 +6,7 @@
 
 import {
     window, workspace, commands, OutputChannel, Uri,
-    ViewColumn, MessageItem, ExtensionContext, ProgressLocation, TextDocument, EventEmitter, Event
+    ViewColumn, MessageItem, ExtensionContext, ProgressLocation, TextDocument, EventEmitter, Event, CancellationToken, Progress
 } from 'vscode';
 
 import * as path from 'path';
@@ -18,7 +18,7 @@ import { DomainInfo, ProblemInfo } from '../../../common/src/parser';
 import { FileInfo, PddlLanguage } from '../../../common/src/FileInfo';
 import { PddlConfiguration } from '../configuration';
 import { Plan } from '../../../common/src/Plan';
-import { PlanningHandler } from './plan';
+import { PlanningHandler } from './Plan';
 import { PlannerExecutable } from './PlannerExecutable';
 import { PlannerService } from './PlannerService';
 import { Planner } from './planner';
@@ -29,11 +29,13 @@ import { PlanningResult } from './PlanningResult';
 import { PlanReportGenerator } from './PlanReportGenerator';
 import { PlanExporter } from './PlanExporter';
 import { PlanHappeningsExporter } from './PlanHappeningsExporter';
+import { HappeningsPlanExporter } from './HappeningsPlanExporter';
 
 export const PDDL_GENERATE_PLAN_REPORT = 'pddl.planReport';
 const PDDL_STOP_PLANNER = 'pddl.stopPlanner';
 export const PDDL_EXPORT_PLAN = 'pddl.exportPlan';
 const PDDL_CONVERT_PLAN_TO_HAPPENINGS = 'pddl.convertPlanToHappenings';
+const PDDL_CONVERT_HAPPENINGS_TO_PLAN = 'pddl.convertHappeningsToPlan';
 
 /**
  * Delegate for handling requests to run the planner and visualize the plans.
@@ -79,7 +81,7 @@ export class Planning implements PlanningHandler {
             let plans: Plan[] = this.getPlans();
             if (selectedPlan === undefined && plans.length > 0) selectedPlan = 0;
             if (plans != null && selectedPlan < plans.length) {
-                new PlanExporter().export(plans[selectedPlan]);
+                new PlanExporter(plans[selectedPlan]).export();
             } else {
                 window.showErrorMessage("There is no plan open, or the selected plan does not exist.");
             }
@@ -90,7 +92,16 @@ export class Planning implements PlanningHandler {
                 let epsilon = plannerConfiguration.getEpsilonTimeStep();
                 new PlanHappeningsExporter(window.activeTextEditor.document, epsilon).export();
             } else {
-                window.showErrorMessage("There is no plan file open.");
+                window.showErrorMessage("Active document is not a plan.");
+            }
+        }));
+        
+        context.subscriptions.push(commands.registerCommand(PDDL_CONVERT_HAPPENINGS_TO_PLAN, async() => {
+            if (window.activeTextEditor && window.activeTextEditor.document.languageId == "happenings"){
+                let epsilon = plannerConfiguration.getEpsilonTimeStep();
+                new HappeningsPlanExporter(window.activeTextEditor.document, epsilon).export();
+            } else {
+                window.showErrorMessage("Active document is not a happening.");
             }
         }));
         
@@ -216,28 +227,32 @@ export class Planning implements PlanningHandler {
 
         this.planningProcessKilled = false;
 
-        let startTime: Date;
+        let progressUpdater: ElapsedTimeProgressUpdater;
 
         window.withProgress<Plan[]>({
             location: ProgressLocation.Notification,
-            title: `Searching for plans for domain ${domainFileInfo.name} and problem ${problemFileInfo.name}...`,
-            cancellable: true
+            title: `Searching for plans for domain ${domainFileInfo.name} and problem ${problemFileInfo.name}`,
+            cancellable: true,
+
         }, (progress, token) => {
-            progress;
             token.onCancellationRequested(() => {
                 this.planningProcessKilled = true;
                 this.stopPlanner();
             });
 
-            startTime = new Date();
+            progressUpdater = new ElapsedTimeProgressUpdater(progress, token);
             return this.planner.plan(domainFileInfo, problemFileInfo, planParser, this);
         })
         .then(plans => {
-                let elapsedTime = new Date().getTime() - startTime.getTime();
+                let elapsedTime = progressUpdater.getElapsedTimeInMilliSecs();
+                progressUpdater.setFinished();
                 let result = this.planningProcessKilled ? PlanningResult.killed() : PlanningResult.success(plans, elapsedTime);
                 this._onPlansFound.fire(result);
             },
-            reason => this._onPlansFound.fire(PlanningResult.failure(reason.toString()))
+            reason => {
+                progressUpdater.setFinished();
+                this._onPlansFound.fire(PlanningResult.failure(reason.toString()));
+            }
         );
 
         this.output.show(true);
@@ -302,7 +317,7 @@ export class Planning implements PlanningHandler {
     }
 
     handleSuccess(stdout: string, plans: Plan[]): void {
-        this.output.appendLine('Planner finished successfully.');
+        this.output.appendLine(`Planner found ${plans.length} plan(s).`);
         stdout.length; // just waste it, we did not need it here
 
         this.visualizePlans(plans);
@@ -356,4 +371,31 @@ class ProcessErrorMessageItem implements MessageItem {
     title: string;
     isCloseAffordance?: boolean;
     setPlanner: boolean;
+}
+
+class ElapsedTimeProgressUpdater {
+    startTime = new Date();
+    finished: boolean;
+
+    constructor(private progress: Progress<{ message?: string; increment?: number }>, 
+        private token: CancellationToken) {
+        this.reportProgress();
+    }
+
+    getElapsedTimeInMilliSecs(): number {
+        return new Date().getTime() - this.startTime.getTime();
+    }
+
+    reportProgress(): void {
+        if (this.token.isCancellationRequested || this.finished) return;
+        setTimeout(() => {
+            var elapsedTime = new Date(this.getElapsedTimeInMilliSecs());
+            this.progress.report({ message: "Elapsed time: " + elapsedTime.toISOString().substr(11, 8)});
+            this.reportProgress();
+        }, 1000);
+    }
+
+    setFinished(): void {
+        this.finished = true;
+    }
 }

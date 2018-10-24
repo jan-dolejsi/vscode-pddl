@@ -5,7 +5,7 @@
 'use strict';
 
 import { DomainInfo, ProblemInfo } from '../../../common/src/parser';
-import { PlanningHandler } from './plan';
+import { PlanningHandler } from './Plan';
 import { Plan } from '../../../common/src/Plan';
 import { PddlPlanParser } from '../../../common/src/PddlPlanParser';
 

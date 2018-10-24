@@ -86,7 +86,7 @@ export class Parser {
         }
     }
 
-    parsePlanMeta(fileText: string): PlanMetaData {
+    static parsePlanMeta(fileText: string): PlanMetaData {
         let problemName = 'unspecified';
         let problemMatch = fileText.match(/^;;\s*!problem:\s*([\w-]+)\s*$/m);
         if (problemMatch) {
@@ -103,7 +103,7 @@ export class Parser {
     }
 
     parsePlan(fileUri: string, fileVersion: number, fileText: string, epsilon: number): PlanInfo {
-        let meta = this.parsePlanMeta(fileText);
+        let meta = Parser.parsePlanMeta(fileText);
 
         let planInfo = new PlanInfo(fileUri, fileVersion, meta.problemName, meta.domainName, fileText);
         let planBuilder = new PlanBuilder(epsilon);
@@ -119,7 +119,7 @@ export class Parser {
     }
 
     parseHappenings(fileUri: string, fileVersion: number, fileText: string, epsilon: number): HappeningsInfo {
-        let meta = this.parsePlanMeta(fileText);
+        let meta = Parser.parsePlanMeta(fileText);
 
         let happeningsInfo = new HappeningsInfo(fileUri, fileVersion, meta.problemName, meta.domainName, fileText);
         let planBuilder = new PlanHappeningsBuilder(epsilon);
@@ -500,6 +500,10 @@ export class DomainInfo extends FileInfo {
 
     setActions(actions: Action[]): void {
         this.actions = actions;
+    }
+
+    getActions(): Action[] {
+        return this.actions;
     }
 
     setTypeInheritance(typeInheritance: DirectionalGraph): void {
