@@ -4,7 +4,7 @@
   "description": "Planning Domain Description Language support",
   "author": "Jan Dolejsi",
   "license": "MIT",
-  "version": "2.6.11",
+  "version": "2.6.12",
   "publisher": "jan-dolejsi",
   "engines": {
     "vscode": "^1.28.1",
@@ -622,7 +622,7 @@
     "package": "vsce package"
   },
   "dependencies": {
-    "vscode-extension-telemetry": "^0.0.22",
+    "vscode-extension-telemetry-wrapper": "^0.3.3",
     "tree-kill": "^1.2.0",
     "util.promisify": "^1.0.0",
     "vscode-debugadapter": "1.31.0",

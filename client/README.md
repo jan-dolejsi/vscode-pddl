@@ -319,6 +319,8 @@ Instructions `start` and `end` label durative span actions. Instructions `set` a
 
 To convert `.happenings` back to `.plan`, right click on the happenings file and select the _PDDL: Convert happenings to plan..._ command.
 
+![Happenings to Plan conversion and validation](https://raw.githubusercontent.com/wiki/jan-dolejsi/vscode-pddl/img/PDDL_happenings_to_plan.gif)
+
 ## Plan Happenings effect evaluation
 
 Plan happenings (.happenings) files may be executed and action effects listed as decorations in the code editor.

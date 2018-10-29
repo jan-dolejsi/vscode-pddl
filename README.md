@@ -10,6 +10,12 @@ This will ensure the extension dependencies are downloaded using the `--no-optio
 
 ## Packaging extension
 
+Install the VS Code extension packaging tool:
+
+```bash
+npm install -g vsce
+```
+
 The extension must be packaged on computers that have the `npm` version <= 5.5.1 installed globally. This is because of an issue with optional dependencies that `vsce` is wrongly enforcing via the `npm list --production --parsable --depth=99999` command.
 
 Extension packaging and publishing is automated by the `client/publish.cmd` script - obviously only defined for Windows.

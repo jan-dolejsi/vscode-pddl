@@ -12,7 +12,7 @@ import * as process from 'child_process';
 const tree_kill = require('tree-kill');
 
 import { Planner } from './planner';
-import { PlanningHandler } from './Plan';
+import { PlannerResponseHandler } from './PlannerResponseHandler';
 import { DomainInfo, ProblemInfo } from '../../../common/src/parser';
 import { Util } from '../../../common/src/util';
 import { PddlPlanParser } from '../../../common/src/PddlPlanParser';
@@ -27,7 +27,7 @@ export class PlannerExecutable extends Planner {
         super(plannerPath, plannerOptions);
     }
 
-    plan(domainFileInfo: DomainInfo, problemFileInfo: ProblemInfo, planParser: PddlPlanParser, parent: PlanningHandler): Promise<Plan[]> {
+    plan(domainFileInfo: DomainInfo, problemFileInfo: ProblemInfo, planParser: PddlPlanParser, parent: PlannerResponseHandler): Promise<Plan[]> {
 
         let domainFilePath = Util.toPddlFile("domain", domainFileInfo.getText());
         let problemFilePath = Util.toPddlFile("problem", problemFileInfo.getText());

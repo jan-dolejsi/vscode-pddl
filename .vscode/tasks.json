@@ -74,6 +74,12 @@
 				"isDefault": true
 			},
 			"problemMatcher": []
+		},
+		{
+			"type": "npm",
+			"script": "compile",
+			"path": "common/",
+			"problemMatcher": []
 		}
 	]
 }

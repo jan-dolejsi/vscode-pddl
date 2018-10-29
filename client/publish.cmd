@@ -17,7 +17,7 @@ call vsce package
 :: https://code.visualstudio.com/docs/editor/extension-gallery#_install-from-a-vsix
 echo Installing the extension locally...
 ::major minor patch 
-call code --install-extension pddl-2.6.11.vsix
+call code --install-extension pddl-2.6.12.vsix
 echo Test extension before you continue
 pause
-call vsce publish --packagePath pddl-2.6.11.vsix 
+call vsce publish --packagePath pddl-2.6.12.vsix 

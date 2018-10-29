@@ -1,10 +1,14 @@
 # What's new
 
-## [2.6.11] - 2018-10-24
+## [2.6.12] - 2018-10-29
+
+This is a fix of 2.6.11, because there were more extension activation issues on Linux.
 
 ### Added
 
 Added the ability to convert `.happenings` file back to `.plan`. This is useful, when you need to manually adjust a temporal plan, while gettign it annotated by the numeric effect values, and then you want to convert it back to a `.plan` format to get it validated. This feature is also useful, when your planner has the capability to output a planhead or relaxed plan in the `.happenings` format and you want to Diff it against a different plan to find the point where your planner takes an unexpected decision. To convert `.happenings` to `.plan`, right click on the happenings file and select the _PDDL: Convert happenings to plan..._ command.
+
+![Happenings to Plan conversion and validation](https://raw.githubusercontent.com/wiki/jan-dolejsi/vscode-pddl/img/PDDL_happenings_to_plan.gif)
 
 Control+click on action names in `.plan` or `.happenings` files to jump to the action definition in the domain file. Hovering over action names shows a simple hover pane.
 
@@ -334,8 +338,8 @@ Note for open source contributors: all notable changes to the "pddl" extension w
 
 Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
 
-[Unreleased]: https://github.com/jan-dolejsi/vscode-pddl/compare/v2.6.11...HEAD
-[2.6.11]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.6.10...v2.6.11
+[Unreleased]: https://github.com/jan-dolejsi/vscode-pddl/compare/v2.6.12...HEAD
+[2.6.12]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.6.10...v2.6.12
 [2.6.10]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.6.9...v2.6.10
 [2.6.9]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.6.8...v2.6.9
 [2.6.8]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.6.7...v2.6.8

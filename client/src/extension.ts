@@ -20,7 +20,7 @@ import { StartUp } from './StartUp'
 import { PTestExplorer } from './ptest/PTestExplorer';
 import { PlanValidator } from './diagnostics/PlanValidator';
 import { Debugging } from './debugger/debugging';
-import { Telemetry } from './telemetry';
+import { ExtensionInfo } from './ExtensionInfo';
 import { toLanguage, isAnyPddl } from './utils';
 import { HappeningsValidator } from './diagnostics/HappeningsValidator';
 import { PlanComparer } from './comparison/PlanComparer';
@@ -32,11 +32,21 @@ const PDDL_CONFIGURE_PLANNER = 'pddl.configurePlanner';
 const PDDL_LOGIN_PLANNER_SERVICE = 'pddl.loginPlannerService';
 const PDDL_UPDATE_TOKENS_PLANNER_SERVICE = 'pddl.updateTokensPlannerService';
 
-var telemetry: Telemetry;
+import { initialize, instrumentOperation } from "vscode-extension-telemetry-wrapper";
+import { KEY } from './TelemetryInstrumentation';
 
-export function activate(context: ExtensionContext) {
+export async function activate(context: ExtensionContext) {
 
-	telemetry = new Telemetry(context)
+	let extensionInfo = new ExtensionInfo();
+
+	// initialize the instrumentation wrapper
+	await initialize(extensionInfo.getId(), extensionInfo.getVersion(), KEY);
+
+	// activate the extension, but send instrumentation data
+	await instrumentOperation("activation", activateWithTelemetry)(context);
+}
+
+function activateWithTelemetry(_operationId: string, context: ExtensionContext) {
 	let pddlConfiguration = new PddlConfiguration(context);
 
 	// run start-up actions
@@ -154,8 +164,7 @@ export function activate(context: ExtensionContext) {
 }
 
 export function deactivate() {
-	// This will ensure all pending events get flushed
-	telemetry.dispose();
+	// nothing to do
 }
 
 function createAuthentication(pddlConfiguration: PddlConfiguration): Authentication {

@@ -6,7 +6,7 @@
 
 import * as request from 'request';
 import { Planner } from './planner';
-import { PlanningHandler } from './Plan';
+import { PlannerResponseHandler } from './PlannerResponseHandler';
 import { Plan } from '../../../common/src/Plan';
 import { DomainInfo, ProblemInfo } from '../../../common/src/parser';
 import { PddlPlanParser } from '../../../common/src/PddlPlanParser';
@@ -22,7 +22,7 @@ export class PlannerService extends Planner {
         super(plannerPath, "");
     }
 
-    plan(domainFileInfo: DomainInfo, problemFileInfo: ProblemInfo, planParser: PddlPlanParser, parent: PlanningHandler): Promise<Plan[]> {
+    plan(domainFileInfo: DomainInfo, problemFileInfo: ProblemInfo, planParser: PddlPlanParser, parent: PlannerResponseHandler): Promise<Plan[]> {
         parent.handleOutput(`Planning service: ${this.plannerPath}\nDomain: ${domainFileInfo.name}, Problem: ${problemFileInfo.name}\n`);
 
         let requestHeader: any = {};

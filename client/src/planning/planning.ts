@@ -18,7 +18,7 @@ import { DomainInfo, ProblemInfo } from '../../../common/src/parser';
 import { FileInfo, PddlLanguage } from '../../../common/src/FileInfo';
 import { PddlConfiguration } from '../configuration';
 import { Plan } from '../../../common/src/Plan';
-import { PlanningHandler } from './Plan';
+import { PlannerResponseHandler } from './PlannerResponseHandler';
 import { PlannerExecutable } from './PlannerExecutable';
 import { PlannerService } from './PlannerService';
 import { Planner } from './planner';
@@ -40,7 +40,7 @@ const PDDL_CONVERT_HAPPENINGS_TO_PLAN = 'pddl.convertHappeningsToPlan';
 /**
  * Delegate for handling requests to run the planner and visualize the plans.
  */
-export class Planning implements PlanningHandler {
+export class Planning implements PlannerResponseHandler {
     output: OutputChannel;
     epsilon = 1e-3;
 
