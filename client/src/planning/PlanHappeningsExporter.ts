@@ -12,6 +12,9 @@ import { PlanExporter } from './PlanExporter';
 import { PddlPlanParser } from '../../../common/src/PddlPlanParser';
 import { exportToAndShow } from './ExportUtil';
 
+/**
+ * Converts plan to happenings while preserving comments.
+ */
 export class PlanHappeningsExporter {
 
     decimals: number;
@@ -138,7 +141,7 @@ export class PlanHappeningsExporter {
 
     outputHappening(happening: Happening): void {
         let happeningQualifier = '';
-        
+
         switch(happening.type){
             case HappeningType.Start:
                 happeningQualifier = "start ";

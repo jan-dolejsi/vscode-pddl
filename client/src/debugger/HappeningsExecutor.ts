@@ -49,7 +49,7 @@ export class HappeningsExecutor {
         try {
             this.valStep.on(ValStep.NEW_HAPPENING_EFFECTS, (happenings, values) => this.showValues(happenings, values));
 
-            await this.valStep.execute(valStepPath, cwd, this.context.happenings);
+            await this.valStep.execute(valStepPath, cwd, this.context.happenings.getHappenings());
 
             this.decorations.push(this.seeNextLineDecoration);
         } catch(err) {

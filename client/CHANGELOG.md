@@ -10,9 +10,13 @@ Made plan parsing more robust with different whitespace (e.g. inside square brac
 
 Plan numeric value charts (experimental feature, because a separate executable is needed) now works regardless of upper/lower case function names by changing command line arguments to lower case. It also correctly shows step change functions.
 
-The _PDDL: Normalize and compare 2 plans_ command now shows the plan diff as before, but when those plans are modified afterwards, the normalized diff updates accordingly.
+The _PDDL: Normalize and compare 2 plans_ command now shows the plan diff as before, but when those plans are modified afterwards, the normalized diff updates accordingly. The diff now shows the final state values, so the diff can be used for plan equivalency check.
 
-Added the _PDDL: Show plan normalized_ command to expose in isolation the transformation used by the _PDDL: Normalize and compare 2 plans_ command. More work will follow to evaluate plan final state.
+Added the _PDDL: Show plan normalized_ command to expose in isolation the transformation used by the _PDDL: Normalize and compare 2 plans_ command.
+
+Extension now helps enabling `File > Auto save` during start-up.
+
+Valstep (experimental feature) utility can now be selected from the file system upon first usage.
 
 Good news. Starting from 2.6.12, the extension starts-up on Linux as well. Please raise an issue in GitHub, if you are still experiencing problems.
 

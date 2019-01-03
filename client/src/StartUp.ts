@@ -5,7 +5,7 @@
 'use strict';
 
 import {
-    window, extensions, ExtensionContext, MessageItem, Uri, commands, ViewColumn
+    window, extensions, ExtensionContext, MessageItem, Uri, commands, ViewColumn, workspace, ConfigurationTarget
 } from 'vscode';
 
 import * as fs from 'fs';
@@ -34,12 +34,15 @@ export class StartUp {
     atStartUp(pddlConfiguration: PddlConfiguration): void {
         this.showWhatsNew();
         this.showTips();
+        this.suggestFolderIsOpen();
+        this.suggestAutoSave();
         this.uninstallLegacyExtension(pddlConfiguration);
     }
 
     NEXT_TIP_TO_SHOW = 'nextTipToShow';
     WHATS_NEW_SHOWN_FOR_VERSION = 'whatsNewShownForVersion';
     ACCEPTED_TO_WRITE_A_REVIEW = 'acceptedToWriteAReview';
+    NEVER_AUTO_SAVE = 'neverAutoSave';
 
     async showTips(): Promise<boolean> {
         var tipsPath = this.context.asAbsolutePath('tips.txt');
@@ -101,12 +104,44 @@ export class StartUp {
         // The PDDL extension works best if you open VS Code in a specific folder. Use File > Open Folder ...
     }
 
+    async suggestAutoSave(): Promise<void> {
+        if (this.context.globalState.get(this.NEVER_AUTO_SAVE, false)) return;
+
+        let option = "files.autoSave";
+        if (workspace.getConfiguration().get(option) === "off") {
+            let changeConfigurationOption: MessageItem = { title: "Configure auto-save"};
+            let notNow: MessageItem = { title: "Not now" };
+            let never: MessageItem = { title: "Do not ask again" };
+            let options = [changeConfigurationOption, notNow, never];
+
+            let choice = await window.showInformationMessage("Switching on `File > Auto Save` saves you from constant file saving when working with command-line tools.", ...options);
+
+            switch(choice){
+                case changeConfigurationOption:
+                    workspace.getConfiguration().update(option, "afterDelay", ConfigurationTarget.Global);
+                    break;
+                case never:
+                    this.context.globalState.update(this.NEVER_AUTO_SAVE, true);
+                case notNow:
+                default:
+                    // do nothing
+                    break;
+            }
+        }
+    }
+
     async showWhatsNew(): Promise<boolean> {
         let thisExtension = extensions.getExtension("jan-dolejsi.pddl");
         let currentVersion = thisExtension.packageJSON["version"];
         var lastValue = this.context.globalState.get(this.WHATS_NEW_SHOWN_FOR_VERSION, "0.0.0");
 
         if (currentVersion != lastValue) {
+
+            let changeLogMd = this.context.asAbsolutePath('CHANGELOG.md');
+            commands.executeCommand('markdown.showPreview', Uri.file(changeLogMd), null, {
+              sideBySide: false,
+              locked: true
+            });
 
             let changeLog = this.context.asAbsolutePath('CHANGELOG.html');
             let html = fs.readFileSync(changeLog, {encoding: "utf-8"});

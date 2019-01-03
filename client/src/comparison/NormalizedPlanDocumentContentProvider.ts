@@ -4,13 +4,16 @@
  * ------------------------------------------------------------------------------------------ */
 'use strict';
 
-import {
-    Uri, TextDocumentContentProvider, Event, EventEmitter, CancellationToken, workspace
-} from 'vscode';
-
+import { CancellationToken, Event, EventEmitter, TextDocumentContentProvider, Uri, window, workspace } from 'vscode';
+import { Parser, UNSPECIFIED_DOMAIN } from '../../../common/src/parser';
 import { PddlPlanParser } from '../../../common/src/PddlPlanParser';
 import { PlanStep } from '../../../common/src/PlanStep';
+import { PddlWorkspace } from '../../../common/src/workspace-model';
 import { PddlConfiguration } from '../configuration';
+import { getDomainAndProblemForPlan } from '../utils';
+import { PlanEvaluator } from './PlanEvaluator';
+import { AbstractPlanExporter } from '../planning/PlanExporter';
+
 
 /**
  * Normalizes the plan at that URI and outputs the normal representation so it can be used for diffing. 
@@ -20,7 +23,8 @@ export class NormalizedPlanDocumentContentProvider implements TextDocumentConten
     private timeout: NodeJS.Timeout;
     private changingUris: Uri[] = [];
 
-    constructor(private configuration: PddlConfiguration) {
+    constructor(private pddlWorkspace: PddlWorkspace, private configuration: PddlConfiguration,
+        private includeFinalValues: boolean) {
     }
 
     get onDidChange(): Event<Uri> {
@@ -47,13 +51,48 @@ export class NormalizedPlanDocumentContentProvider implements TextDocumentConten
     provideTextDocumentContent(uri: Uri, token: CancellationToken): string | Thenable<string> {
         if (token.isCancellationRequested) return "Canceled";
 
-        let fileUri = uri.with({scheme: 'file'});
+        let fileUri = uri.with({ scheme: 'file' });
 
-        return workspace.openTextDocument(fileUri).then(document => document.getText()).then(documentText => this.normalize(documentText));
+        return workspace.openTextDocument(fileUri)
+            .then(document => document.getText())
+            .then(documentText => this.normalize(fileUri, documentText));
     }
 
-    normalize(origText: string): string {
-        return new PlanParserAndNormalizer(this.configuration.getEpsilonTimeStep()).parse(origText);
+    async normalize(uri: Uri, origText: string): Promise<string> {
+        let normalizedPlan = new PlanParserAndNormalizer(this.configuration.getEpsilonTimeStep()).normalize(origText);
+
+        if (this.includeFinalValues) {
+            try {
+                let planValuesAsText = await this.evaluate(uri, origText);
+                if (planValuesAsText)
+                    normalizedPlan = `${normalizedPlan}\n\n;; Modified state values:\n\n${planValuesAsText}`;
+            }
+            catch (err) {
+                window.showWarningMessage(err.message);
+            }
+        }
+
+        return normalizedPlan;
+    }
+
+    async evaluate(uri: Uri, origText: string): Promise<string> {
+        let planMetaData = Parser.parsePlanMeta(origText);
+        if (planMetaData.domainName !== UNSPECIFIED_DOMAIN && planMetaData.problemName !== UNSPECIFIED_DOMAIN) {
+            let planInfo = this.pddlWorkspace.parser.parsePlan(uri.toString(), -1, origText, this.configuration.getEpsilonTimeStep());
+
+            let context = getDomainAndProblemForPlan(planInfo, this.pddlWorkspace);
+            let planValues = await new PlanEvaluator(this.configuration).evaluate(context.domain, context.problem, planInfo);
+
+            let planValuesAsText = planValues
+                .sort((a, b) => a.getVariableName().localeCompare(b.getVariableName()))
+                .map(value => `; ${value.getVariableName()}: ${value.getValue()}`)
+                .join("\n");
+
+            return planValuesAsText;
+        }
+        else {
+            return "";
+        }
     }
 }
 
@@ -68,18 +107,18 @@ class PlanParserAndNormalizer {
 
     }
 
-    parse(origText: string): string {
-        var compare = function(step1: PlanStep, step2: PlanStep): number {
-            if (step1.getStartTime() < step2.getStartTime()) return -1;
-            else if (step1.getStartTime() > step2.getStartTime()) return 1;
-            else {
-                if (step1.fullActionName < step2.fullActionName) return -1;
-                else if(step1.fullActionName > step2.fullActionName) return 1;
-                else return 0;
-            }
+    normalize(origText: string): string {
+        var compare = function (step1: PlanStep, step2: PlanStep): number {
+            if (step1.getStartTime() != step2.getStartTime())
+                return step1.getStartTime() - step2.getStartTime();
+            else
+                return step1.fullActionName.localeCompare(step2.fullActionName);
         };
 
-        let normalizedText = origText.split('\n')
+        let planMeta = Parser.parsePlanMeta(origText);
+        let normalizedText = AbstractPlanExporter.getPlanMeta(planMeta.domainName, planMeta.problemName)
+            + "\n; Normalized plan:\n" 
+            + origText.split('\n')
             .map((origLine, idx) => this.parseLine(origLine, idx))
             .filter(step => step != null)
             .sort(compare)

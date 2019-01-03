@@ -4,6 +4,8 @@
  * ------------------------------------------------------------------------------------------ */
 'use strict';
 
+import { Happening, HappeningType } from "./HappeningsInfo";
+
 export class PlanStep {
     actionName: string;
     objects: string[];
@@ -33,7 +35,7 @@ export class PlanStep {
             }
         }
 
-        return PlanStep.equalsWithin(this.time, other.time, epsilon) 
+        return PlanStep.equalsWithin(this.time, other.time, epsilon)
             && this.fullActionName.toLowerCase() == other.fullActionName.toLowerCase();
     }
 
@@ -45,5 +47,19 @@ export class PlanStep {
         let output = `${this.time.toFixed(5)}: (${this.fullActionName})`;
         if (this.isDurative) output += ` [${this.duration.toFixed(5)}]`;
         return output;
+    }
+
+    getHappenings(priorSteps: PlanStep[]): Happening[] {
+        let count = priorSteps.filter(step => step.fullActionName === this.fullActionName).length;
+        let line = priorSteps.length;
+
+        if (this.isDurative) {
+            let start = new Happening(this.getStartTime(), HappeningType.START, this.fullActionName, count, line);
+            let end = new Happening(this.getEndTime(), HappeningType.END, this.fullActionName, count, line);
+            return [start, end];
+        } else {
+            let instant = new Happening(this.getStartTime(), HappeningType.INSTANTANEOUS, this.fullActionName, count, line);
+            return [instant];
+        }
     }
 }

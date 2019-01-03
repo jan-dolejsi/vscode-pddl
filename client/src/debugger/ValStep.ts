@@ -9,7 +9,7 @@ import { EventEmitter } from 'events';
 
 import { Util } from '../../../common/src/util';
 import { TimedVariableValue, VariableValue, ProblemInfo, DomainInfo } from '../../../common/src/parser';
-import { HappeningsInfo, Happening } from '../HappeningsInfo';
+import { Happening } from '../HappeningsInfo';
 import { HappeningsToValStep } from '../diagnostics/HappeningsToValStep';
 
 /**
@@ -18,6 +18,7 @@ import { HappeningsToValStep } from '../diagnostics/HappeningsToValStep';
 export class ValStep extends EventEmitter {
 
     variableValues: TimedVariableValue[];
+    initialValues: TimedVariableValue[];
     valStepInput: string = '';
     outputBuffer: string = '';
     happeningsConvertor: HappeningsToValStep;
@@ -28,10 +29,11 @@ export class ValStep extends EventEmitter {
     constructor(private domainInfo: DomainInfo, private problemInfo: ProblemInfo) {
         super();
         this.variableValues = problemInfo.getInits().map(v => TimedVariableValue.copy(v));
+        this.initialValues = this.variableValues.map(v => TimedVariableValue.copy(v));
         this.happeningsConvertor = new HappeningsToValStep();
     }
 
-    async execute(valStepPath: string, cwd: string, happeningsInfo: HappeningsInfo): Promise<void> {
+    async execute(valStepPath: string, cwd: string, happenings: Happening[]): Promise<TimedVariableValue[]> {
         // copy editor content to temp files to avoid using out-of-date content on disk
         let domainFilePath = Util.toPddlFile('domain', this.domainInfo.getText());
         let problemFilePath = Util.toPddlFile('problem', this.problemInfo.getText());
@@ -54,7 +56,7 @@ export class ValStep extends EventEmitter {
         child.on("error", err => this.throwValStepError(err));
         child.on("exit", (code, signal) => this.throwValStepExitCode(code, signal));
 
-        let groupedHappenings = Util.groupBy(happeningsInfo.getHappenings(), h => h.getTime());
+        let groupedHappenings = Util.groupBy(happenings, h => h.getTime());
 
         for (const time of groupedHappenings.keys()) {
             const happeningGroup = groupedHappenings.get(time);
@@ -66,6 +68,8 @@ export class ValStep extends EventEmitter {
         }
 
         child.stdin.write('q\n');
+
+        return this.variableValues;
     }
 
     async postHappenings(childProcess: process.ChildProcess, happenings: Happening[]): Promise<boolean> {
@@ -171,6 +175,15 @@ export class ValStep extends EventEmitter {
         else {
             throw new Error(`ValStep output does not parse: ${happeningsEffectText}`);
         }
+    }
+
+    getUpdatedValues(): TimedVariableValue[] {
+        return this.variableValues
+            .filter(value1 => this.changedFromInitial(value1));
+    }
+
+    changedFromInitial(value1: TimedVariableValue) {
+        return !this.initialValues.some(value2 => value1.sameValue(value2));
     }
 }
 

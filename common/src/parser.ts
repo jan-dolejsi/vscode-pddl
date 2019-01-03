@@ -11,7 +11,7 @@ import { PddlExtensionContext } from "./PddlExtensionContext";
 import { PlanStep } from "./PlanStep";
 import { PlanBuilder } from "./PddlPlanParser";
 import { DirectionalGraph } from "./DirectionalGraph";
-import { HappeningsInfo, PlanHappeningsBuilder } from "./HappeningsInfo";
+import { HappeningsInfo, PlanHappeningsBuilder, Happening } from "./HappeningsInfo";
 import { FileInfo, stripComments, Variable, Parameter, PddlRange, PddlLanguage, ParsingProblem } from "./FileInfo";
 import { PreProcessingError } from "./PreProcessors";
 
@@ -87,13 +87,13 @@ export class Parser {
     }
 
     static parsePlanMeta(fileText: string): PlanMetaData {
-        let problemName = 'unspecified';
+        let problemName = UNSPECIFIED_PROBLEM;
         let problemMatch = fileText.match(/^;;\s*!problem:\s*([\w-]+)\s*$/m);
         if (problemMatch) {
             problemName = problemMatch[1];
         }
 
-        let domainName = 'unspecified';
+        let domainName = UNSPECIFIED_DOMAIN;
         let domainMatch = fileText.match(/^;;\s*!domain:\s*([\w-]+)\s*$/m);
         if (domainMatch) {
             domainName = domainMatch[1];
@@ -437,6 +437,15 @@ export class TimedVariableValue {
         this.time = time;
         this.value = newValue.getValue();
     }
+
+    /**
+     * Determines whether the variable name and value are the same, ignoring the timestamp.
+     * @param other other timed variable value
+     */
+    sameValue(other: TimedVariableValue): boolean {
+        return this.getVariableName() === other.getVariableName()
+            && this.getValue() === other.getValue();
+    }
 }
 /**
  * Variable value initialiation in the problem file.
@@ -598,7 +607,6 @@ export class DomainInfo extends FileInfo {
  * Plan file.
  */
 export class PlanInfo extends FileInfo {
-
     steps: PlanStep[] = [];
 
     constructor(fileUri: string, version: number, public problemName: string, public domainName: string, text: string) {
@@ -621,6 +629,23 @@ export class PlanInfo extends FileInfo {
     isPlan(): boolean {
         return true;
     }
+
+    getHappenings(): Happening[] {
+        // todo: when flatMap is available, rewrite this...
+        let happenings: Happening[] = [];
+        this.getSteps()
+            .forEach((planStep, idx, allSteps) =>
+                happenings.push(...planStep.getHappenings(allSteps.slice(0, idx-1))));
+
+        var compare = function(happening1: Happening, happening2: Happening): number {
+            if (happening1.getTime() != happening2.getTime()) return happening1.getTime() - happening2.getTime();
+            else {
+                return happening1.getFullActionName().localeCompare(happening2.getFullActionName());
+            }
+        };
+
+        return happenings.sort(compare);
+    }
 }
 
 
@@ -628,7 +653,7 @@ export class UnknownFileInfo extends FileInfo {
     constructor(fileUri: string, version: number) {
         super(fileUri, version, "");
     }
-    
+
     getLanguage(): PddlLanguage {
         return PddlLanguage.PDDL;
     }
@@ -698,4 +723,7 @@ export function toLanguageFromId(languageId: string): PddlLanguage {
 	return languageMap.get(languageId);
 }
 
-interface PlanMetaData { domainName: string, problemName: string }
+export interface PlanMetaData { domainName: string, problemName: string }
+
+export const UNSPECIFIED_PROBLEM = 'unspecified';
+export const UNSPECIFIED_DOMAIN = 'unspecified';

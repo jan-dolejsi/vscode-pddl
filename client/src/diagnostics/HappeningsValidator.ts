@@ -14,7 +14,7 @@ import { PddlWorkspace } from '../../../common/src/workspace-model';
 import { DomainInfo, ProblemInfo } from '../../../common/src/parser';
 import { PddlLanguage } from '../../../common/src/FileInfo';
 import { HappeningsInfo, Happening } from "../../../common/src/HappeningsInfo";
-import { PddlConfiguration, CONF_PDDL, VAL_STEP_PATH } from '../configuration';
+import { PddlConfiguration } from '../configuration';
 import { Util } from '../../../common/src/util';
 import { dirname } from 'path';
 import { PlanStep } from '../../../common/src/PlanStep';

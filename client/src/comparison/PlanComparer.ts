@@ -30,7 +30,7 @@ export class PlanComparer implements Disposable {
 
     constructor(public pddlWorkspace: PddlWorkspace, pddlConfiguration: PddlConfiguration) {
 
-        this.provider = new NormalizedPlanDocumentContentProvider(pddlConfiguration);
+        this.provider = new NormalizedPlanDocumentContentProvider(pddlWorkspace, pddlConfiguration, true);
         this.disposables.push(workspace.registerTextDocumentContentProvider(this.normalizedPlanScheme, this.provider));
 
         this.disposables.push(commands.registerCommand("pddl.plan.compareNormalized",

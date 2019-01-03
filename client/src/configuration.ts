@@ -113,7 +113,7 @@ export class PddlConfiguration {
 
         if (newParserPath) {
             newParserPath = newParserPath.trim().replace(/\\/g, '/');
-            
+
             // todo: validate that this parser actually works by sending a dummy request to it
 
             let newParserScope = await this.askConfigurationScope();
@@ -154,7 +154,7 @@ export class PddlConfiguration {
 
         return newParserOptions;
     }
-    
+
     isPddlParserServiceAuthenticationEnabled() {
         return vscode.workspace.getConfiguration().get<boolean>(PDDL_PARSER + '.serviceAuthenticationEnabled');
     }
@@ -185,7 +185,7 @@ export class PddlConfiguration {
         configuration.update(PARSER_SERVICE_AUTHENTICATION_ACCESS_TOKEN, accesstoken, target);
         configuration.update(PARSER_SERVICE_AUTHENTICATION_S_TOKEN, stoken, target);
     }
-    
+
     isPddlPlannerServiceAuthenticationEnabled() {
         return vscode.workspace.getConfiguration().get<boolean>(PDDL_PLANNER + '.serviceAuthenticationEnabled');
     }
@@ -233,18 +233,18 @@ export class PddlConfiguration {
 
     async askNewPlannerPath() {
         let existingValue: string = vscode.workspace.getConfiguration().get(PLANNER_EXECUTABLE_OR_SERVICE);
-        
-        let newPlannerPath = await vscode.window.showInputBox({ 
-            prompt: "Enter PDDL planner path local command or web service URL", 
+
+        let newPlannerPath = await vscode.window.showInputBox({
+            prompt: "Enter PDDL planner path local command or web service URL",
             placeHolder: `planner.exe OR java -jar c:\\planner.jar OR http://solver.planning.domains/solve`,
             value: existingValue,
-            ignoreFocusOut: true 
+            ignoreFocusOut: true
         });
 
         if (newPlannerPath) {
 
             newPlannerPath = newPlannerPath.trim().replace(/\\/g, '/');
-            
+
             // todo: validate that this planner actually works by sending a dummy request to it
 
             let newPlannerScope = await this.askConfigurationScope();
@@ -325,8 +325,36 @@ export class PddlConfiguration {
         return vscode.workspace.getConfiguration(CONF_PDDL).get(VALIDATION_PATH);
     }
 
-    getValStepPath(): string {
-        return vscode.workspace.getConfiguration(CONF_PDDL).get(VAL_STEP_PATH);
+    getValStepPath(): Promise<string> {
+        return this.getOrAskPath(VAL_STEP_PATH, "ValStep executable");
+    }
+
+    async getOrAskPath(confiName: string, configFriendlyName: string): Promise<string> {
+        let configurationSection = vscode.workspace.getConfiguration(CONF_PDDL);
+        let configValue: string = configurationSection.get(confiName);
+        if (!configValue) {
+            let configureOption: vscode.MessageItem = { title: `Select ${configFriendlyName}...`};
+            let notNowOption: vscode.MessageItem = { title: "Not now", isCloseAffordance: true};
+
+            let choice = await vscode.window.showErrorMessage(
+                `${configFriendlyName} is not configured.`,
+                ...[configureOption, notNowOption]);
+
+            if (choice === configureOption) {
+                let seletedUris = await vscode.window.showOpenDialog({canSelectFiles: true, 
+                    canSelectFolders: false, canSelectMany: false, 
+                    openLabel: `Select ${configFriendlyName}`});
+
+                if (seletedUris) {
+                    configValue = seletedUris[0].fsPath;
+                    let scopeToUpdate = await this.askConfigurationScope();
+                    if (!scopeToUpdate) return null;
+                    configurationSection.update(confiName, configValue, scopeToUpdate.target);
+                }
+            }
+        }
+
+        return configValue;
     }
 
     async askConfigurationScope(): Promise<ScopeQuickPickItem> {
@@ -380,7 +408,7 @@ export class PddlConfiguration {
             return vscode.workspace.getConfiguration();
         }
     }
-    
+
     getParserSettings(): PDDLParserSettings {
         let configurationAny: any = vscode.workspace.getConfiguration(PDDL_PARSER);
         let configuration = <PDDLParserSettings>configurationAny;

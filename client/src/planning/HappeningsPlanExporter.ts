@@ -54,8 +54,8 @@ export class HappeningsPlanExporter extends AbstractPlanExporter {
 
         var meta = Parser.parsePlanMeta(happeningsText);
 
-        return this.getPlanMeta(meta.domainName, meta.problemName) 
-            + "\n" 
+        return AbstractPlanExporter.getPlanMeta(meta.domainName, meta.problemName)
+            + "\n"
             + planSteps.map(step => step.toPddl()).join("\n");
     }
 

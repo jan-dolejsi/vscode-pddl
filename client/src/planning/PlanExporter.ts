@@ -17,7 +17,7 @@ import { exportToAndShow } from './ExportUtil';
 export abstract class AbstractPlanExporter {
 
     public async export() {
-        
+
         let defaultPlanPath = this.getDefaultPlanPath();
 
         let options: SaveDialogOptions = {
@@ -43,7 +43,7 @@ export abstract class AbstractPlanExporter {
 
     abstract getPlanText(): string;
 
-    getPlanMeta(domainName: string, problemName: string): string {
+    static getPlanMeta(domainName: string, problemName: string): string {
         return `;;!domain: ${domainName}
 ;;!problem: ${problemName}
 `;
@@ -59,7 +59,7 @@ export abstract class AbstractPlanExporter {
 }
 
 export class PlanExporter extends AbstractPlanExporter {
-            
+
     constructor(private plan: Plan) {
         super();
     }
@@ -69,7 +69,7 @@ export class PlanExporter extends AbstractPlanExporter {
     }
 
     getPlanText(): string {
-        let planText = this.getPlanMeta(this.plan.domain.name, this.plan.problem.name) + 
+        let planText = AbstractPlanExporter.getPlanMeta(this.plan.domain.name, this.plan.problem.name) +
 `
 ${this.plan.getText()}
 
@@ -78,7 +78,7 @@ ${this.plan.getText()}
         if (!isNullOrUndefined(this.plan.cost)){
             planText += `\n; Cost: ${this.plan.cost}`;
         }
-        
+
         if (!isNullOrUndefined(this.plan.statesEvaluated)){
             planText += `\n; States evaluated: ${this.plan.statesEvaluated}`;
         }
