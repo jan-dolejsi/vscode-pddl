@@ -150,7 +150,7 @@ function activateWithTelemetry(_operationId: string, context: ExtensionContext) 
 
 	new Debugging(context, pddlWorkspace, pddlConfiguration);
 	
-	new PlanComparer(pddlWorkspace, pddlConfiguration, context);
+	context.subscriptions.push(new PlanComparer(pddlWorkspace, pddlConfiguration));
 
 	subscribeToWorkspace(pddlWorkspace, pddlConfiguration, context);
 

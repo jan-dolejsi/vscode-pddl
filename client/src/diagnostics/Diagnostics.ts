@@ -170,8 +170,6 @@ export class Diagnostics extends Disposable {
     validateHappenings(happeningsInfo: HappeningsInfo, scheduleFurtherValidation: boolean): void {
         if (happeningsInfo == null) return;
 
-        if (!this.happeningsValidator.testConfiguration()) return;
-
         // mark the file as under validation
         happeningsInfo.setStatus(FileStatus.Validating);
 
@@ -185,8 +183,6 @@ export class Diagnostics extends Disposable {
         }, (err) => {
             window.showErrorMessage(err);
             console.warn(err);
-            // var showNever = false;
-            // this.pddlConfiguration.suggestNewValidatorConfiguration(showNever);
         });
     }
 

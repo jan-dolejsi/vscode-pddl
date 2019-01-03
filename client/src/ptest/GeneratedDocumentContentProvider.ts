@@ -12,6 +12,9 @@ import { join, dirname, basename } from 'path';
 import { PddlWorkspace } from '../../../common/src/workspace-model';
 import { FileInfo } from '../../../common/src/FileInfo';
 
+/**
+ * Content provider for the problem file generated from a template.
+ */
 export class GeneratedDocumentContentProvider implements TextDocumentContentProvider {
 
     private _onDidChange: EventEmitter<Uri> = new EventEmitter<Uri>();

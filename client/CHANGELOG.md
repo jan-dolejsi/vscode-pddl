@@ -1,5 +1,21 @@
 # What's new
 
+## [2.6.13] - 2018-11-28
+
+Added support for passing optional switches to planner service when involing the planner via the _PDDL: Run the planner and display the plan_ command. For example: specify options `param1=value1` to pass them via URL query as `http://host:port/solve?param1=value1`.
+
+Added `forall` and `exists` into syntax highlighting.
+
+Made plan parsing more robust with different whitespace (e.g. inside square brackets).
+
+Plan numeric value charts (experimental feature, because a separate executable is needed) now works regardless of upper/lower case function names by changing command line arguments to lower case. It also correctly shows step change functions.
+
+The _PDDL: Normalize and compare 2 plans_ command now shows the plan diff as before, but when those plans are modified afterwards, the normalized diff updates accordingly.
+
+Added the _PDDL: Show plan normalized_ command to expose in isolation the transformation used by the _PDDL: Normalize and compare 2 plans_ command. More work will follow to evaluate plan final state.
+
+Good news. Starting from 2.6.12, the extension starts-up on Linux as well. Please raise an issue in GitHub, if you are still experiencing problems.
+
 ## [2.6.12] - 2018-10-29
 
 This is a fix of 2.6.11, because there were more extension activation issues on Linux.
@@ -34,7 +50,7 @@ Normalized plan comparison. Plans from different planners are hard to compare du
 
 When specifying command-line arguments for the planner, they were being acumulated in the history and re-used. But only exactly as previously specified. As the combinations of parameters get more complex and verbose, the inability to edit options from the history render the history useless. Now the previously used command-line options may be edited before re-submitting.
 
-The user experience of the plan resume/re-planning test case geneneration was improved. The user may select a folder for all the generated, so they are easy to git-ignore in the repository.
+The user experience of the plan-resume/re-planning test case geneneration was improved. The user may select a folder for all the generated, so they are easy to git-ignore in the repository.
 
 ## [2.6.9] - 2018-09-12
 
@@ -42,7 +58,7 @@ Fixes in the happenings effect evaluation for numbers output in a scientific not
 
 Added simple [Python-based problem file templating sample](https://github.com/jan-dolejsi/vscode-pddl-samples/tree/master/ScriptedTemplating)
 
-To test robustness of your planning model, you can auto-generate a "plan resume" re-planning test suite. Open a _.happenings_ file and select `PDDL: Execute plan and generate plan resume test cases` from the context menu. This command executes the happenings and evaluates all intermediate states in the course of the plan. Then it generates a problem file for each of those states (treating them as new initial states) and the same goal. The command then also summarizes all those new problem files into a new test manifest named after the problem file `<problem_file_name>_re-planning.ptest.json`, which you can open in the Test Explorer and run as a test suite. This way you can test whether your domain model includes actions to recover from possible plan failures. You can then manually edit those generated problem files to model actual plan failure modes.
+To test robustness of your planning model, you can auto-generate a "plan-resume" re-planning test suite. Open a _.happenings_ file and select `PDDL: Execute plan and generate plan-resume test cases` from the context menu. This command executes the happenings and evaluates all intermediate states in the course of the plan. Then it generates a problem file for each of those states (treating them as new initial states) and the same goal. The command then also summarizes all those new problem files into a new test manifest named after the problem file `<problem_file_name>_re-planning.ptest.json`, which you can open in the Test Explorer and run as a test suite. This way you can test whether your domain model includes actions to recover from possible plan failures. You can then manually edit those generated problem files to model actual plan failure modes.
 
 ![Plan Happenings to plan-resume re-planning test suite generation.](https://raw.githubusercontent.com/wiki/jan-dolejsi/vscode-pddl/img/PDDL_plan_resume_re-planning_test_suite_generation.gif)
 
@@ -338,7 +354,8 @@ Note for open source contributors: all notable changes to the "pddl" extension w
 
 Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
 
-[Unreleased]: https://github.com/jan-dolejsi/vscode-pddl/compare/v2.6.12...HEAD
+[Unreleased]: https://github.com/jan-dolejsi/vscode-pddl/compare/v2.6.13...HEAD
+[2.6.13]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.6.12...v2.6.13
 [2.6.12]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.6.10...v2.6.12
 [2.6.10]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.6.9...v2.6.10
 [2.6.9]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.6.8...v2.6.9

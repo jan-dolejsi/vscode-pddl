@@ -78,7 +78,7 @@ export class ValidatorExecutable extends Validator {
     }
 
     private validateOneProblem(domainFilePath: string, problemFilePath: string, onOutput: (output: string) => void, onError: (error: string) => void): void {
-        let command = this.syntax.replace('$(parser)', this.path)
+        let command = this.syntax.replace('$(parser)', Util.q(this.path))
             .replace('$(domain)', Util.q(domainFilePath))
             .replace('$(problem)', Util.q(problemFilePath));
 

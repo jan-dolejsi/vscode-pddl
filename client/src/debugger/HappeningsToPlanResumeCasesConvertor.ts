@@ -44,7 +44,8 @@ export class HappeningsToPlanResumeCasesConvertor {
             return false;
         }
 
-        let valStepPath = this.pddlConfiguration.getValStepPath();
+        let valStepPath = await this.pddlConfiguration.getValStepPath();
+        if (!valStepPath) return false;
 
         // copy editor content to temp files to avoid using out-of-date content on disk
         let domainFilePath = Util.toPddlFile('domain', this.context.domain.getText());
@@ -102,6 +103,7 @@ export class HappeningsToPlanResumeCasesConvertor {
             if (manifest) manifest.store();
         }
     }
+
     getHappeningSnapName(happening: Happening): string {
         let snap = '';
 

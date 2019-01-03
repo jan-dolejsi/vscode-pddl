@@ -32,18 +32,18 @@ export class PlannerExecutable extends Planner {
         let domainFilePath = Util.toPddlFile("domain", domainFileInfo.getText());
         let problemFilePath = Util.toPddlFile("problem", problemFileInfo.getText());
 
-        let command = this.plannerSyntax.replace('$(planner)', this.plannerPath)
+        let command = this.plannerSyntax.replace('$(planner)', Util.q(this.plannerPath))
             .replace('$(options)', this.plannerOptions)
             .replace('$(domain)', Util.q(domainFilePath))
             .replace('$(problem)', Util.q(problemFilePath));
-    
+
         parent.handleOutput(command + '\n');
-        
+
         let thisPlanner = this;
         super.planningProcessKilled = false;
 
         return new Promise<Plan[]>(function(resolve, reject) {
-            thisPlanner.child = process.exec(command, 
+            thisPlanner.child = process.exec(command,
                 { cwd: thisPlanner.workingDirectory },
                 (error, stdout, stderr) => {
                 planParser.onPlanFinished();
@@ -52,20 +52,20 @@ export class PlannerExecutable extends Planner {
                     parent.handleError(error, stderr);//todo: remove this and use Promise
                     reject(error);
                 }
-    
+
                 let plans = planParser.getPlans();
                 parent.handleSuccess(stdout, plans);//todo: remove this and use Promise
                 resolve(plans);
                 thisPlanner.child = null;
             });
-    
+
             thisPlanner.child.stdout.on('data', (data: any) => {
                 const dataString = data.toString();
                 parent.handleOutput(dataString);
                 planParser.appendBuffer(dataString);
             });
             thisPlanner.child.stderr.on('data', (data: any) => parent.handleOutput("Error: " + data));
-    
+
             thisPlanner.child.on("close", (code: any, signal: any) => {
                 if (code) console.log("Exit code: " + code);
                 if (signal) console.log("Exit Signal: " + signal);

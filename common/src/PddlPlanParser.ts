@@ -14,7 +14,7 @@ import { DomainInfo, ProblemInfo } from './parser';
 export class PddlPlanParser {
 
     plans: Plan[] = [];
-    public static planStepPattern = /^\s*((\d+|\d+\.\d+)\s*:)?\s*\((.*)\)\s*(\[(\d+|\d+\.\d+)\])?\s*$/gim;
+    public static planStepPattern = /^\s*((\d+|\d+\.\d+)\s*:)?\s*\((.*)\)\s*(\[\s*(\d+|\d+\.\d+)\s*\])?\s*$/gim;
     planStatesEvaluatedPattern = /^;\s*States evaluated[\w ]*:[ ]*(\d*)\s*$/i;
     planCostPattern = /[\w ]*(cost|metric)[\D :]*[ ]*(\d*|\d*\.\d*)\s*$/i
 

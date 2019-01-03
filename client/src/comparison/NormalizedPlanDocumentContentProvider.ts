@@ -17,7 +17,9 @@ import { PddlConfiguration } from '../configuration';
  */
 export class NormalizedPlanDocumentContentProvider implements TextDocumentContentProvider {
     private _onDidChange = new EventEmitter<Uri>();
-            
+    private timeout: NodeJS.Timeout;
+    private changingUris: Uri[] = [];
+
     constructor(private configuration: PddlConfiguration) {
     }
 
@@ -25,12 +27,29 @@ export class NormalizedPlanDocumentContentProvider implements TextDocumentConten
         return this._onDidChange.event;
     }
 
+    dispose() {
+        this._onDidChange.dispose();
+        if (this.timeout) clearTimeout(this.timeout);
+    }
+
+    planChanged(uri: Uri): void {
+        if (this.timeout) clearTimeout(this.timeout);
+        if (!this.changingUris.some(uri1 => uri1.toString() === uri.toString())) this.changingUris.push(uri);
+        this.timeout = setTimeout(() => this.updateChangedPlans(), 1000);
+    }
+
+    updateChangedPlans(): void {
+        this.timeout = null;
+        this.changingUris.forEach(uri => this._onDidChange.fire(uri));
+        this.changingUris = [];
+    }
+
     provideTextDocumentContent(uri: Uri, token: CancellationToken): string | Thenable<string> {
         if (token.isCancellationRequested) return "Canceled";
 
         let fileUri = uri.with({scheme: 'file'});
 
-        return workspace.openTextDocument(fileUri).then(document => document.getText()).then(documentText=> this.normalize(documentText));
+        return workspace.openTextDocument(fileUri).then(document => document.getText()).then(documentText => this.normalize(documentText));
     }
 
     normalize(origText: string): string {

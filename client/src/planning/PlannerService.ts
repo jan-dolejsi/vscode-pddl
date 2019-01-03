@@ -18,8 +18,8 @@ export class PlannerService extends Planner {
     // This epsilon is used only for the duration of instantaneous actions
     epsilon = 1e-3;
 
-    constructor(plannerPath: string, private useAuthentication: boolean, private authentication: Authentication) {
-        super(plannerPath, "");
+    constructor(plannerPath: string, plannerOptions: string, private useAuthentication: boolean, private authentication: Authentication) {
+        super(plannerPath, plannerOptions);
     }
 
     plan(domainFileInfo: DomainInfo, problemFileInfo: ProblemInfo, planParser: PddlPlanParser, parent: PlannerResponseHandler): Promise<Plan[]> {
@@ -31,22 +31,24 @@ export class PlannerService extends Planner {
                 "Authorization": "Bearer " + this.authentication.sToken
             }
         }
-        
+
         let requestBody = {
             "domain": domainFileInfo.getText(),
             "problem": problemFileInfo.getText()
         }
-        
+
         let that = this;
         return new Promise<Plan[]>(function(resolve, reject) {
-            request.post({ url: that.plannerPath, headers: requestHeader, body: requestBody, json: true }, (err, httpResponse, responseBody) => {
+            let url = that.plannerPath;
+            if (that.plannerOptions) url = `${url}?${that.plannerOptions}`;
+            request.post({ url: url, headers: requestHeader, body: requestBody, json: true }, (err, httpResponse, responseBody) => {
 
                 if (err != null) {
                     parent.handleError(err, "");
                     reject(err);
                     return;
                 }
-    
+
                 if(that.useAuthentication) {
                     if (httpResponse) {
                         if (httpResponse.statusCode == 400) {
@@ -65,7 +67,7 @@ export class PlannerService extends Planner {
                         }
                     }
                 }
-    
+
                 if (httpResponse && httpResponse.statusCode != 200) {
                     let notificationMessage = `PDDL Planning Service returned code ${httpResponse.statusCode} ${httpResponse.statusMessage}`;
                     //let notificationType = MessageType.Warning;
@@ -74,17 +76,17 @@ export class PlannerService extends Planner {
                     reject(error);
                     return;
                 }
-    
+
                 let status = responseBody["status"];
-    
+
                 if (status == "error") {
                     let result = responseBody["result"];
-    
+
                     let resultOutput = result["output"];
                     if (resultOutput) {
                         parent.handleOutput(resultOutput);
                     }
-    
+
                     let resultError = result["error"];
                     if (resultError) {
                         parent.handleOutput(resultError);
@@ -102,24 +104,24 @@ export class PlannerService extends Planner {
                     reject(new Error("Planner service failed."));
                     return;
                 }
-    
+
                 let result = responseBody["result"];
                 let resultOutput = result["output"];
                 if (resultOutput) {
                     parent.handleOutput(resultOutput);
                 }
-    
+
                 let planSteps = result['plan'];
-    
+
                 for (var index = 0; index < planSteps.length; index++) {
                     var planStep = planSteps[index];
                     let fullActionName = (<string>planStep["name"]).replace('(','').replace(')', '');
                     let planStepObj = new PlanStep(planStep["time"], fullActionName, planStep["duration"] != null, planStep["duration"] ? planStep["duration"] : that.epsilon, index);
                     planParser.appendStep(planStepObj);
                 }
-    
+
                 planParser.onPlanFinished();
-    
+
                 let plans = planParser.getPlans();
                 if (plans.length > 0) parent.handleOutput(plans[0].getText() + '\n');
                 else parent.handleOutput('No plan found.');
@@ -133,4 +135,4 @@ export class PlannerService extends Planner {
     stop(): void {
         super.stop();
     }
-} 
+}

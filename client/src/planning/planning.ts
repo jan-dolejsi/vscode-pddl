@@ -30,6 +30,7 @@ import { PlanReportGenerator } from './PlanReportGenerator';
 import { PlanExporter } from './PlanExporter';
 import { PlanHappeningsExporter } from './PlanHappeningsExporter';
 import { HappeningsPlanExporter } from './HappeningsPlanExporter';
+import { isHappenings, isPlan } from '../utils';
 
 export const PDDL_GENERATE_PLAN_REPORT = 'pddl.planReport';
 const PDDL_STOP_PLANNER = 'pddl.stopPlanner';
@@ -88,7 +89,7 @@ export class Planning implements PlannerResponseHandler {
         }));
         
         context.subscriptions.push(commands.registerCommand(PDDL_CONVERT_PLAN_TO_HAPPENINGS, async() => {
-            if (window.activeTextEditor && window.activeTextEditor.document.languageId == "plan"){
+            if (window.activeTextEditor && isPlan(window.activeTextEditor.document)){
                 let epsilon = plannerConfiguration.getEpsilonTimeStep();
                 new PlanHappeningsExporter(window.activeTextEditor.document, epsilon).export();
             } else {
@@ -97,7 +98,7 @@ export class Planning implements PlannerResponseHandler {
         }));
         
         context.subscriptions.push(commands.registerCommand(PDDL_CONVERT_HAPPENINGS_TO_PLAN, async() => {
-            if (window.activeTextEditor && window.activeTextEditor.document.languageId == "happenings"){
+            if (window.activeTextEditor && isHappenings(window.activeTextEditor.document)) {
                 let epsilon = plannerConfiguration.getEpsilonTimeStep();
                 new HappeningsPlanExporter(window.activeTextEditor.document, epsilon).export();
             } else {
@@ -266,7 +267,7 @@ export class Planning implements PlannerResponseHandler {
 
     /**
      * Creates the right planner wrapper according to the current configuration.
-     * 
+     *
      * @param workingDirectory directory where planner creates output files by default
      * @param options planner options
      * @returns `Planner` instance of the configured planning engine
@@ -274,6 +275,9 @@ export class Planning implements PlannerResponseHandler {
     async createPlanner(workingDirectory: string, options?: string): Promise<Planner> {
         let plannerPath = await this.plannerConfiguration.getPlannerPath();
         if (!plannerPath) return null;
+
+        let plannerOptions = options != undefined ? options : await this.plannerConfiguration.getPlannerOptions();
+        if (plannerOptions == null) return null;
 
         if (PddlConfiguration.isHttp(plannerPath)) {
             let useAuthentication = this.plannerConfiguration.isPddlPlannerServiceAuthenticationEnabled();
@@ -285,12 +289,9 @@ export class Planning implements PlannerResponseHandler {
                     configuration.tokensvcCodePath, configuration.tokensvcRefreshPath, configuration.tokensvcSvctkPath,
                     configuration.refreshToken, configuration.accessToken, configuration.sToken);
             }
-            return new PlannerService(plannerPath, useAuthentication, authentication);
+            return new PlannerService(plannerPath, plannerOptions, useAuthentication, authentication);
         }
         else {
-            let plannerOptions = options != undefined ? options : await this.plannerConfiguration.getPlannerOptions();
-            if (plannerOptions == null) return null;
-
             let plannerSyntax = await this.plannerConfiguration.getPlannerSyntax();
             if (plannerSyntax == null) return null;
 

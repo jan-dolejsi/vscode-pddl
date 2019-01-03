@@ -117,7 +117,7 @@
 				},
 				{
 					"name": "keyword.other.effects",
-					"match": "\\b(assign|increase|decrease)\\b"
+					"match": "\\b(assign|increase|decrease|forall|exists)\\b"
 				},
 				{
 					"name": "keyword.other.metric",

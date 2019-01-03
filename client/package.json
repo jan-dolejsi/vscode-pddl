@@ -203,6 +203,10 @@
         "title": "PDDL: Normalize and compare 2 plans"
       },
       {
+        "command": "pddl.plan.normalize",
+        "title": "PDDL: Show plan normalized"
+      },
+      {
         "command": "pddl.plan.validate",
         "title": "PDDL: Validate plan"
       },
@@ -216,7 +220,7 @@
       },
       {
         "command": "pddl.happenings.generatePlanResumeCases",
-        "title": "PDDL: Execute plan and generate plan resume test cases"
+        "title": "PDDL: Execute plan and generate plan-resume test cases"
       }
     ],
     "menus": {

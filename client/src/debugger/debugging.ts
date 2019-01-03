@@ -68,8 +68,8 @@ export class Debugging {
 		}));
 
 		// clear decorations, when document is updated/closed
-		vscode.workspace.onDidChangeTextDocument(evt => this.clearDecorations(evt.document));
-		vscode.workspace.onDidCloseTextDocument(d => this.clearDecorations(d));
+		context.subscriptions.push(vscode.workspace.onDidChangeTextDocument(evt => this.clearDecorations(evt.document)));
+		context.subscriptions.push(vscode.workspace.onDidCloseTextDocument(d => this.clearDecorations(d)));
 	}
 
 	clearDecorations(document: vscode.TextDocument): void {

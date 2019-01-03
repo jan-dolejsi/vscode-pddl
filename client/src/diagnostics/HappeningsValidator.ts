@@ -34,7 +34,6 @@ export class HappeningsValidator {
         context.subscriptions.push(commands.registerCommand(PDDL_HAPPENINGS_VALIDATE,
             async () => {
                 if (window.activeTextEditor && isHappenings(window.activeTextEditor.document)) {
-                    if (!this.testConfiguration()) return;
                     try {
                         let outcome = await this.validateTextDocument(window.activeTextEditor.document);
                         if (outcome.getError()) {
@@ -49,24 +48,6 @@ export class HappeningsValidator {
                     return;
                 }
             }));
-    }
-
-    testConfiguration(): boolean {
-        let validatePath = this.plannerConfiguration.getValStepPath();
-        if (validatePath.length == 0) {
-            window.showErrorMessage(`Set the 'valstep' executable path to the '${CONF_PDDL}.${VAL_STEP_PATH}' setting.`);
-            return false;
-        }
-        else {
-            return true;
-        }
-
-        // if (this.valStepPath == null || this.valStepPath == "") {
-        // suggest the user to update the settings
-        // var showNever = true;
-        // this.pddlConfiguration.suggestValStepConfiguration(showNever);
-        // return;
-        // }
     }
 
     async validateTextDocument(planDocument: TextDocument): Promise<HappeningsValidationOutcome> {
@@ -113,10 +94,10 @@ export class HappeningsValidator {
             return errorOutcome;
         }
 
-        let valStepPath = this.plannerConfiguration.getValStepPath();
+        let valStepPath = await this.plannerConfiguration.getValStepPath();
 
         if (!valStepPath) {
-            onSuccess(HappeningsValidationOutcome.unknown(happeningsInfo).getDiagnostics());
+            onSuccess(HappeningsValidationOutcome.unknown(happeningsInfo, "ValStep not configured.").getDiagnostics());
         }
 
         // copy editor content to temp files to avoid using out-of-date content on disk
@@ -269,8 +250,8 @@ class HappeningsValidationOutcome {
         return new HappeningsValidationOutcome(happeningsInfo, diagnostics);
     }
 
-    static unknown(happeningsInfo: HappeningsInfo): HappeningsValidationOutcome {
-        let diagnostics = [new Diagnostic(createRangeFromLine(0), "Unknown error.", DiagnosticSeverity.Warning)];
-        return new HappeningsValidationOutcome(happeningsInfo, diagnostics, "Unknown error.");
+    static unknown(happeningsInfo: HappeningsInfo, message = "Unknown error."): HappeningsValidationOutcome {
+        let diagnostics = [new Diagnostic(createRangeFromLine(0), message, DiagnosticSeverity.Warning)];
+        return new HappeningsValidationOutcome(happeningsInfo, diagnostics, message);
     }
 }

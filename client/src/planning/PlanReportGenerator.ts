@@ -5,7 +5,7 @@
 'use strict';
 
 import {
-    ExtensionContext, workspace
+    ExtensionContext, workspace, window
 } from 'vscode';
 
 import * as path from 'path';
@@ -19,7 +19,7 @@ import { PlanFunctionEvaluator } from './PlanFunctionEvaluator';
 import { PlanReportSettings } from './PlanReportSettings';
 import { PLANNER_VALUE_SEQ_PATH } from '../configuration';
 import { PDDL_GENERATE_PLAN_REPORT, PDDL_EXPORT_PLAN } from './planning';
-var opn = require('opn');   
+var opn = require('opn');
 var fs = require('fs')
 
 export class PlanReportGenerator {
@@ -52,7 +52,7 @@ export class PlanReportGenerator {
         let plansHtml = planHtmlArr.join("\n\n");
         let plansChartsScript = this.createPlansChartsScript(plans);
 
-        let html = `<!DOCTYPE html>        
+        let html = `<!DOCTYPE html>
         <head>
             <title>Plan report</title>
             ${this.includeStyle(this.asAbsolutePath('planview', 'plans.css'))}
@@ -149,6 +149,7 @@ ${objectsHtml}
                 });
             } catch (err) {
                 console.log(err);
+                window.showWarningMessage(err.message);
             }
         }
 
@@ -165,7 +166,7 @@ ${lineCharts}
     createPlansChartsScript(plans: Plan[]) {
         let selectedPlan = plans.length - 1;
         return `        <script>
-                google.charts.setOnLoadCallback(drawCharts);        
+                google.charts.setOnLoadCallback(drawCharts);
                 function drawCharts() {
                     drawPlan${selectedPlan}Charts();
                 }

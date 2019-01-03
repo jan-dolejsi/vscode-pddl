@@ -35,8 +35,8 @@ export class PlanFunctionEvaluator {
             .filter(liftedFunction => liftedFunction.parameters.length < 2);
 
         await Promise.all(simplyGroundableFunctions.map(async (liftedFunction) => {
-            await this.tryAddChartValues(domainFile, problemFile, planFile, liftedFunction, chartData);
-        }))
+            await this.addChartValues(domainFile, problemFile, planFile, liftedFunction, chartData);
+        }));
 
         return chartData;
     }
@@ -61,7 +61,8 @@ export class PlanFunctionEvaluator {
         let functions = groundedFunctions
             .map(f => f.parameters.length > 0 ? `"${f.getFullName()}"` : f.getFullName())
             .map(name => name.toLowerCase())
-            .join(' ');
+            .join(' ')
+            .toLowerCase();
 
         let child = await process.execSync(`${this.valueSeqPath} -T ${domainFile} ${problemFile} ${planFile} ${functions}`);
 
@@ -72,7 +73,7 @@ export class PlanFunctionEvaluator {
         let functionsValuesValues = parser.getFunctionData(liftedFunction);
         if (functionsValuesValues.isConstant()) return; // it is not interesting...
         let functionValues = new GroundedFunctionValues(liftedFunction, functionsValuesValues.values, functionsValuesValues.legend);
-        chartData.set(liftedFunction, functionValues);
+        chartData.set(liftedFunction, functionValues.adjustForStepFunctions());
     }
 
     ground(variable: Variable): Variable[] {
@@ -80,6 +81,9 @@ export class PlanFunctionEvaluator {
     }
 }
 
+/**
+ * Holds graph values for functions grounded from the same lifted function.
+ */
 class GroundedFunctionValues {
     values: number[][];
     constructor(public liftedVariable: Variable, values: number[][], public legend: string[]) {
@@ -88,5 +92,26 @@ class GroundedFunctionValues {
 
     undefinedToNull(value: number): number {
         return value == undefined ? null : value;
+    }
+
+    adjustForStepFunctions(): GroundedFunctionValues {
+        let adjustedValues: number[][] = [];
+        let previousTime = -1;
+
+        for (let index = 0; index < this.values.length; index++) {
+            let time = this.values[index][0];
+
+            if (previousTime > time) {
+                time = previousTime + 1e-10;
+            } else if (previousTime == time) {
+                time += 1e-10;
+            }
+
+            adjustedValues.push([time].concat(this.values[index].slice(1)));
+
+            previousTime = time;
+        }
+
+        return new GroundedFunctionValues(this.liftedVariable, adjustedValues, this.legend);
     }
 }

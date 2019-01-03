@@ -9,7 +9,13 @@ import { URL } from "url";
 
 
 export class Util {
-    
+
+    /**
+     * Wraps path with doublequotes, if it includes a space.
+     *
+     * This is necessary on Windows in order to handle spaces in file and directory names.
+     * @param path file system path
+     */
     static q(path: string): string {
         return path.includes(' ') ? `"${path}"` : path;
     }
