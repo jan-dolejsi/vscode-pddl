@@ -4,7 +4,7 @@
   "description": "Planning Domain Description Language support",
   "author": "Jan Dolejsi",
   "license": "MIT",
-  "version": "2.6.12",
+  "version": "2.7.0",
   "publisher": "jan-dolejsi",
   "engines": {
     "vscode": "^1.28.1",
@@ -204,7 +204,7 @@
       },
       {
         "command": "pddl.plan.normalize",
-        "title": "PDDL: Show plan normalized"
+        "title": "PDDL: Normalize and evaluate plan"
       },
       {
         "command": "pddl.plan.validate",
@@ -243,6 +243,10 @@
         },
         {
           "command": "pddl.plan.validate",
+          "when": "resourceLangId == plan"
+        },
+        {
+          "command": "pddl.plan.normalize",
           "when": "resourceLangId == plan"
         },
         {

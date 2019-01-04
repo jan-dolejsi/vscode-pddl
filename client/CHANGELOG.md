@@ -1,6 +1,6 @@
 # What's new
 
-## [2.6.13] - 2018-11-28
+## [2.7.0] - 2019-01-04
 
 Added support for passing optional switches to planner service when involing the planner via the _PDDL: Run the planner and display the plan_ command. For example: specify options `param1=value1` to pass them via URL query as `http://host:port/solve?param1=value1`.
 
@@ -8,11 +8,15 @@ Added `forall` and `exists` into syntax highlighting.
 
 Made plan parsing more robust with different whitespace (e.g. inside square brackets).
 
-Plan numeric value charts (experimental feature, because a separate executable is needed) now works regardless of upper/lower case function names by changing command line arguments to lower case. It also correctly shows step change functions.
+Plan numeric value charts (experimental feature, because a separate executable is needed) now works regardless of upper/lower case function names by changing command line arguments to lower case. It also correctly shows step change functions, functions with more than 1 parameter and is faster, because it first checks which functions are updated by the plan before asking the external utility for plot values.
 
 The _PDDL: Normalize and compare 2 plans_ command now shows the plan diff as before, but when those plans are modified afterwards, the normalized diff updates accordingly. The diff now shows the final state values, so the diff can be used for plan equivalency check.
 
-Added the _PDDL: Show plan normalized_ command to expose in isolation the transformation used by the _PDDL: Normalize and compare 2 plans_ command.
+![Normalized plan diff with final state values](https://raw.githubusercontent.com/wiki/jan-dolejsi/vscode-pddl/img/PDDL_plan_diff_with_values.gif)
+
+Added the _PDDL: Normalize and evaluate plan_ command to expose in isolation the transformation used by the _PDDL: Normalize and compare 2 plans_ command.
+
+![Normalize and evaluate plan](https://raw.githubusercontent.com/wiki/jan-dolejsi/vscode-pddl/img/PDDL_plan_final_state_values.gif)
 
 Extension now helps enabling `File > Auto save` during start-up.
 
@@ -358,8 +362,8 @@ Note for open source contributors: all notable changes to the "pddl" extension w
 
 Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
 
-[Unreleased]: https://github.com/jan-dolejsi/vscode-pddl/compare/v2.6.13...HEAD
-[2.6.13]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.6.12...v2.6.13
+[Unreleased]: https://github.com/jan-dolejsi/vscode-pddl/compare/v2.7.0...HEAD
+[2.7.0]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.6.12...v2.7.0
 [2.6.12]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.6.10...v2.6.12
 [2.6.10]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.6.9...v2.6.10
 [2.6.9]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.6.8...v2.6.9

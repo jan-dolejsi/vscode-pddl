@@ -17,7 +17,7 @@ import { Plan } from '../../../common/src/Plan';
 import { Util } from '../../../common/src/util';
 import { PlanFunctionEvaluator } from './PlanFunctionEvaluator';
 import { PlanReportSettings } from './PlanReportSettings';
-import { PLANNER_VALUE_SEQ_PATH } from '../configuration';
+import { VAL_STEP_PATH, CONF_PDDL, PDDL_PLANNER, VALUE_SEQ_PATH } from '../configuration';
 import { PDDL_GENERATE_PLAN_REPORT, PDDL_EXPORT_PLAN } from './planning';
 var opn = require('opn');
 var fs = require('fs')
@@ -129,7 +129,9 @@ ${objectsHtml}
         </table>
     </div>`;
 
-        let evaluator = new PlanFunctionEvaluator(workspace.getConfiguration().get(PLANNER_VALUE_SEQ_PATH), plan);
+        let valStepPath = workspace.getConfiguration(CONF_PDDL).get<string>(VAL_STEP_PATH);
+        let valueSeqPath = workspace.getConfiguration(PDDL_PLANNER).get<string>(VALUE_SEQ_PATH);
+        let evaluator = new PlanFunctionEvaluator(valueSeqPath, valStepPath, plan);
 
         let lineCharts = `    <div class="lineChart" plan="${planIndex}" style="display: ${styleDisplay};margin-top: 20px;">\n`;
         let lineChartScripts = '';

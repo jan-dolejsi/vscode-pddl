@@ -5,7 +5,7 @@
 'use strict';
 
 import {
-    window,  workspace, 
+    window,  workspace,
     commands, Uri,
     TextDocument, Disposable, ViewColumn,
 } from 'vscode';
@@ -40,7 +40,7 @@ export class PlanComparer implements Disposable {
                     return;
                 }
 
-                let leftFileUri = selectedFiles.find(otherFileUri => otherFileUri != rightPlanUri);
+                let leftFileUri = selectedFiles.find(otherFileUri => otherFileUri.toString() != rightPlanUri.toString());
                 let leftTextDocument = await workspace.openTextDocument(leftFileUri);
 
                 if (toLanguage(leftTextDocument) !== PddlLanguage.PLAN) {
@@ -54,7 +54,7 @@ export class PlanComparer implements Disposable {
                 this.compare(leftPlan, rightPlan);
             })
         );
-        
+
         this.disposables.push(commands.registerCommand("pddl.plan.normalize", async (uri: Uri) => {
             if (!uri && window.activeTextEditor) uri = window.activeTextEditor.document.uri;
             let planDoc = await workspace.openTextDocument(uri);
@@ -78,11 +78,11 @@ export class PlanComparer implements Disposable {
         let leftPlanNormalized = this.subscribeToNormalizedUri(leftPlan.uri);
         let rightPlanNormalized = this.subscribeToNormalizedUri(rightPlan.uri);
 
-        commands.executeCommand('vscode.diff', 
-            leftPlanNormalized, 
+        commands.executeCommand('vscode.diff',
+            leftPlanNormalized,
             rightPlanNormalized,
             title,
-            {viewColumn: ViewColumn.Beside});
+            {viewColumn: ViewColumn.Active});
     }
 
     subscribeToNormalizedUri(uri: Uri): Uri {

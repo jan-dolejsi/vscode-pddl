@@ -12,7 +12,7 @@ import { PlanStep } from "./PlanStep";
 import { PlanBuilder } from "./PddlPlanParser";
 import { DirectionalGraph } from "./DirectionalGraph";
 import { HappeningsInfo, PlanHappeningsBuilder, Happening } from "./HappeningsInfo";
-import { FileInfo, stripComments, Variable, Parameter, PddlRange, PddlLanguage, ParsingProblem } from "./FileInfo";
+import { FileInfo, stripComments, Variable, Parameter, PddlRange, PddlLanguage, ParsingProblem, ObjectInstance } from "./FileInfo";
 import { PreProcessingError } from "./PreProcessors";
 
 export class Parser {
@@ -499,6 +499,16 @@ export class DomainInfo extends FileInfo {
         this.functions = functions;
     }
 
+    getFunction(liftedVariableNeme: string): Variable {
+        return this.functions
+            .filter(variable => variable.name.toLocaleLowerCase() === liftedVariableNeme)
+            .find(_ => true);
+    }
+
+    getLiftedFunction(groundedVariable: Variable): Variable {
+        return this.getFunction(groundedVariable.name);
+    }
+
     getDerived(): Variable[] {
         return this.derived;
     }
@@ -630,10 +640,10 @@ export class PlanInfo extends FileInfo {
         return true;
     }
 
-    getHappenings(): Happening[] {
+    static getHappenings(planSteps: PlanStep[]): Happening[] {
         // todo: when flatMap is available, rewrite this...
         let happenings: Happening[] = [];
-        this.getSteps()
+        planSteps
             .forEach((planStep, idx, allSteps) =>
                 happenings.push(...planStep.getHappenings(allSteps.slice(0, idx-1))));
 
@@ -645,6 +655,10 @@ export class PlanInfo extends FileInfo {
         };
 
         return happenings.sort(compare);
+    }
+
+    getHappenings(): Happening[] {
+        return PlanInfo.getHappenings(this.getSteps());
     }
 }
 
@@ -676,6 +690,14 @@ export class TypeObjects {
         objects.forEach(o => this.objects.push(o));
 
         return this;
+    }
+
+    hasObject(objectName: string): boolean {
+        return this.objects.some(o => o.toLowerCase() === objectName.toLowerCase());
+    }
+
+    getObjectInstance(objectName: string): ObjectInstance {
+        return new ObjectInstance(objectName, this.type);
     }
 
     static concatObjects(constants: TypeObjects[], objects: TypeObjects[]): TypeObjects[] {

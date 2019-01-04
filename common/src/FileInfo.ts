@@ -188,7 +188,9 @@ export class Variable {
         if (this.parameters.length != objects.length) {
             throw new Error(`Invalid objects ${objects} for function ${this.getFullName()} parameters ${this.parameters}.`);
         }
-        return new Variable(this.name, objects);
+        let fullName = this.name;
+        if (objects) fullName += " " + objects.map(o => o.name).join(" ");
+        return new Variable(fullName, objects);
     }
 
     getFullName(): string {

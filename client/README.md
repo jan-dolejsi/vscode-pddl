@@ -278,6 +278,16 @@ Open file explorer pane, select two _.plan_ files, right-click and select _PDDL:
 
 ![Plan normalized diff](https://raw.githubusercontent.com/wiki/jan-dolejsi/vscode-pddl/img/PDDL_plan_diff.gif)
 
+If the valstep utility (experimental feature) is configured, the diff also includes the final state values. This is useful when you want to check that the plan leads to the exact same goal state despite some minor differences in the action sequence (e.g. different permutations or redundant actions).
+
+![Normalized plan diff with final state values](https://raw.githubusercontent.com/wiki/jan-dolejsi/vscode-pddl/img/PDDL_plan_diff_with_values.gif)
+
+### Plan final state evaluation
+
+The _PDDL: Normalize and evaluate plan_ command exposes in isolation the transformation used by the _PDDL: Normalize and compare 2 plans_ command. In addition, this is a live preview, which evaluates your plan changes on-the-fly.
+
+![Normalize and evaluate plan](https://raw.githubusercontent.com/wiki/jan-dolejsi/vscode-pddl/img/PDDL_plan_final_state_values.gif)
+
 ## Plan validation
 
 A .plan file can be generated using an option in the Plan Visualization menu (&#x2630;), or using a _PDDL: Export plan to a file..._ command.

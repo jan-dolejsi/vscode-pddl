@@ -137,30 +137,33 @@ export class StartUp {
 
         if (currentVersion != lastValue) {
 
-            let changeLogMd = this.context.asAbsolutePath('CHANGELOG.md');
-            commands.executeCommand('markdown.showPreview', Uri.file(changeLogMd), null, {
-              sideBySide: false,
-              locked: true
-            });
+            if (true) {
+                let changeLogMd = this.context.asAbsolutePath('CHANGELOG.md');
+                commands.executeCommand('markdown.showPreview', Uri.file(changeLogMd), null, {
+                    sideBySide: false,
+                    locked: true
+                });
+            }
+            else {
+                let changeLog = this.context.asAbsolutePath('CHANGELOG.html');
+                let html = fs.readFileSync(changeLog, { encoding: "utf-8" });
 
-            let changeLog = this.context.asAbsolutePath('CHANGELOG.html');
-            let html = fs.readFileSync(changeLog, {encoding: "utf-8"});
+                let webViewPanel = window.createWebviewPanel(
+                    "pddl.WhatsNew",
+                    "PDDL: What's new?",
+                    ViewColumn.Active,
+                    {
+                        retainContextWhenHidden: true,
+                        enableFindWidget: true,
+                        enableCommandUris: false,
+                        enableScripts: true
+                    }
+                );
 
-            let webViewPanel = window.createWebviewPanel(
-                "pddl.WhatsNew",
-                "PDDL: What's new?",
-                ViewColumn.Active,
-                {
-                    retainContextWhenHidden: true,
-                    enableFindWidget: true,
-                    enableCommandUris: false,
-                    enableScripts: true
-                }
-            );
+                webViewPanel.webview.html = html;
 
-            webViewPanel.webview.html = html;
-
-            this.context.subscriptions.push(webViewPanel);
+                this.context.subscriptions.push(webViewPanel);
+            }
             this.context.globalState.update(this.WHATS_NEW_SHOWN_FOR_VERSION, currentVersion);
         }
 

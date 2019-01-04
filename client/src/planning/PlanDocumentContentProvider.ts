@@ -16,7 +16,7 @@ export class PlanDocumentContentProvider implements TextDocumentContentProvider 
     private plans: Plan[]; // todo: this should not be a field, but a map against the Uri
 
     displayWidth = 200;
-            
+
     constructor(public context: ExtensionContext) {}
 
     get onDidChange(): Event<Uri> {

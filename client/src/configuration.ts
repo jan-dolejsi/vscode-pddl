@@ -13,17 +13,19 @@ const PARSER_SERVICE_AUTHENTICATION_REFRESH_TOKEN = PDDL_PARSER + '.serviceAuthe
 const PARSER_SERVICE_AUTHENTICATION_ACCESS_TOKEN = PDDL_PARSER + '.serviceAuthenticationAccessToken';
 const PARSER_SERVICE_AUTHENTICATION_S_TOKEN = PDDL_PARSER + '.serviceAuthenticationSToken';
 
-const PDDL_PLANNER = 'pddlPlanner';
+export const PDDL_PLANNER = 'pddlPlanner';
 const PLANNER_EXECUTABLE_OR_SERVICE = PDDL_PLANNER + '.executableOrService';
 const PLANNER_EXECUTABLE_OPTIONS = PDDL_PLANNER + '.executableOptions';
 const PLANNER_SERVICE_AUTHENTICATION_REFRESH_TOKEN = PDDL_PLANNER + '.serviceAuthenticationRefreshToken';
 const PLANNER_SERVICE_AUTHENTICATION_ACCESS_TOKEN = PDDL_PLANNER + '.serviceAuthenticationAccessToken';
 const PLANNER_SERVICE_AUTHENTICATION_S_TOKEN = PDDL_PLANNER + '.serviceAuthenticationSToken';
 const PLANNER_EPSILON_TIMESTEP = PDDL_PLANNER + '.epsilonTimeStep';
-export const PLANNER_VALUE_SEQ_PATH  = PDDL_PLANNER + ".valueSeqPath";
 export const CONF_PDDL = 'pddl';
 export const VALIDATION_PATH = 'validatorPath';
 export const VAL_STEP_PATH = 'valStepPath';
+export const VALUE_SEQ_PATH = 'valueSeqPath';
+export const PLANNER_VAL_STEP_PATH  = CONF_PDDL + "." + VAL_STEP_PATH;
+export const PLANNER_VALUE_SEQ_PATH  = PDDL_PLANNER + "." + VALUE_SEQ_PATH;
 
 export class PddlConfiguration {
 
