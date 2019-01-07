@@ -22,6 +22,7 @@ export class ValStep extends EventEmitter {
     valStepInput: string = '';
     outputBuffer: string = '';
     happeningsConvertor: HappeningsToValStep;
+    verbose = false;
 
     public static HAPPENING_EFFECTS_EVALUATED = Symbol("HAPPENING_EFFECTS_EVALUATED");
     public static NEW_HAPPENING_EFFECTS = Symbol("NEW_HAPPENING_EFFECTS");
@@ -44,6 +45,7 @@ export class ValStep extends EventEmitter {
 
         // subscribe to the child process standard output stream and concatenate it till it is complete
         child.stdout.on('data', output => {
+            if (this.verbose) console.log("ValStep <<<" + output);
             this.outputBuffer += output;
             if (this.isOutputComplete(this.outputBuffer)) {
                 const variableValues = this.parseEffects(this.outputBuffer);
@@ -60,11 +62,7 @@ export class ValStep extends EventEmitter {
 
         for (const time of groupedHappenings.keys()) {
             const happeningGroup = groupedHappenings.get(time);
-            try {
-                await this.postHappenings(child, happeningGroup);
-            } catch (err) {
-                console.log(err);
-            }
+            await this.postHappenings(child, happeningGroup);
         }
 
         child.stdin.write('q\n');
@@ -81,8 +79,16 @@ export class ValStep extends EventEmitter {
             let lastHappening = happenings[happenings.length - 1];
             const lastHappeningTime = lastHappening.getTime();
 
+            let timeOut = setTimeout(
+                lastHappeningTime1 => {
+                    childProcess.kill();
+                    reject(`ValStep did not respond to happenings @ ${lastHappeningTime1}`);
+                },
+                500, lastHappeningTime);
+
             // subscribe to the valstep child process updates
             that.once(ValStep.HAPPENING_EFFECTS_EVALUATED, (effectValues: VariableValue[]) => {
+                clearTimeout(timeOut);
                 let newValues = effectValues.filter(v => that.applyIfNew(lastHappeningTime, v));
                 if (newValues.length > 0)
                     this.emit(ValStep.NEW_HAPPENING_EFFECTS, happenings, newValues);
@@ -91,6 +97,7 @@ export class ValStep extends EventEmitter {
 
             if (!childProcess.stdin.write(valSteps))
                 reject('Cannot post happenings to valstep');
+            if (this.verbose) console.log("ValStep >>>" + valSteps);
         });
     }
 

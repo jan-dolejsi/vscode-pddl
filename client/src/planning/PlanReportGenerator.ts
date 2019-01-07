@@ -151,7 +151,7 @@ ${objectsHtml}
                 });
             } catch (err) {
                 console.log(err);
-                window.showWarningMessage(err.message);
+                window.showWarningMessage(err);
             }
         }
 

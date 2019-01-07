@@ -321,7 +321,13 @@ export class Planning implements PlannerResponseHandler {
         this.output.appendLine(`Planner found ${plans.length} plan(s).`);
         stdout.length; // just waste it, we did not need it here
 
-        this.visualizePlans(plans);
+        // new Promise((_1, _2) => {
+            // try {
+                this.visualizePlans(plans);
+            // }catch(ex){
+                // console.error(ex);
+            // }
+        // });
         this.planner = null;
     }
 

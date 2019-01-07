@@ -90,7 +90,4 @@ export class PlannerExecutable extends Planner {
     static toPath(uri: string): string {
         return workspace.textDocuments.find(doc => doc.uri.toString() == uri).fileName;
     }
-    static q(path: string): string {
-        return path.includes(' ') ? `"${path}"` : path;
-    }
 }

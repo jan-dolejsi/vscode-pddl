@@ -1,6 +1,6 @@
 # What's new
 
-## [2.7.0] - 2019-01-04
+## [2.7.1] - 2019-01-07
 
 Added support for passing optional switches to planner service when involing the planner via the _PDDL: Run the planner and display the plan_ command. For example: specify options `param1=value1` to pass them via URL query as `http://host:port/solve?param1=value1`.
 
@@ -362,8 +362,8 @@ Note for open source contributors: all notable changes to the "pddl" extension w
 
 Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
 
-[Unreleased]: https://github.com/jan-dolejsi/vscode-pddl/compare/v2.7.0...HEAD
-[2.7.0]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.6.12...v2.7.0
+[Unreleased]: https://github.com/jan-dolejsi/vscode-pddl/compare/v2.7.1...HEAD
+[2.7.1]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.6.12...v2.7.1
 [2.6.12]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.6.10...v2.6.12
 [2.6.10]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.6.9...v2.6.10
 [2.6.9]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.6.8...v2.6.9

@@ -446,7 +446,12 @@ export class TimedVariableValue {
         return this.getVariableName() === other.getVariableName()
             && this.getValue() === other.getValue();
     }
+
+    toString(): string {
+        return `${this.variableName}=${this.value} @ ${this.time}`;
+    }
 }
+
 /**
  * Variable value initialiation in the problem file.
  */
@@ -472,7 +477,7 @@ export class DomainInfo extends FileInfo {
     private functions: Variable[] = [];
     private derived: Variable[] = [];
     actions: Action[] = [];
-    typeInheritance: DirectionalGraph;
+    typeInheritance: DirectionalGraph = new DirectionalGraph();
     constants: TypeObjects[] = [];
 
     constructor(fileUri: string, version: number, domainName: string) {
@@ -501,7 +506,7 @@ export class DomainInfo extends FileInfo {
 
     getFunction(liftedVariableNeme: string): Variable {
         return this.functions
-            .filter(variable => variable.name.toLocaleLowerCase() === liftedVariableNeme)
+            .filter(variable => variable.name.toLocaleLowerCase() === liftedVariableNeme.toLocaleLowerCase())
             .find(_ => true);
     }
 
