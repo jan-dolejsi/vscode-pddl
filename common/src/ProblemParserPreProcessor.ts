@@ -10,7 +10,7 @@ import { PreProcessor, CommandPreProcessor, OutputAdaptor, NunjucksPreProcessor,
 import { PddlExtensionContext } from "./PddlExtensionContext";
 
 export class ProblemParserPreProcessor {
-    problemCompletePattern = /^;;\s*!pre-parsing:\s*{\s*type:\s*"(command|nunjucks|jinja2)"\s*,\s*(command:\s*"([\w:\-/\\\. ]+)"\s*(,\s*args:\s*\[([^\]]*)\])?|data:\s*"([\w:\-/\\\. ]+)")\s*}/gm;
+    problemCompletePattern = /^;;\s*!pre-parsing:\s*{\s*type:\s*"(command|nunjucks|jinja2|python)"\s*,\s*(command:\s*"([\w:\-/\\\. ]+)"\s*(,\s*args:\s*\[([^\]]*)\])?|data:\s*"([\w:\-/\\\. ]+)")\s*}/gm;
 
     constructor(private context: PddlExtensionContext) {
 
@@ -32,7 +32,7 @@ export class ProblemParserPreProcessor {
                     try {
                         let args1 = this.parseArgs(match[5]);
                         // todo: here we ignore the python.pythonPath configuration and just one the %path%
-                        preProcessor = new PythonPreProcessor("python", match[3], args1, match[0]);
+                        preProcessor = new PythonPreProcessor(this.context.pythonPath(), match[3], args1, match[0]);
                     } catch (err) {
                         console.log(err);
                     }
@@ -48,7 +48,7 @@ export class ProblemParserPreProcessor {
                     if (!this.context) break;
                     try {
                         // todo: here we ignore the python.pythonPath configuration and just one the %path%
-                        preProcessor = new Jinja2PreProcessor("python", this.context.extensionPath, match[6], match[0]);
+                        preProcessor = new Jinja2PreProcessor(this.context.pythonPath(), this.context.extensionPath, match[6], match[0]);
                     } catch (err) {
                         console.log(err);
                     }

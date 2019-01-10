@@ -5,7 +5,7 @@
 'use strict';
 
 import {
-    workspace, TreeView, ExtensionContext, window, commands, ViewColumn, Uri, OutputChannel, ProgressLocation, Range, SaveDialogOptions, Position
+    workspace, TreeView, window, commands, ViewColumn, Uri, OutputChannel, ProgressLocation, Range, SaveDialogOptions, Position
 } from 'vscode';
 import { dirname, basename } from 'path';
 import { existsSync, readFileSync, readFile } from 'fs';
@@ -18,6 +18,7 @@ import { Plan } from '../../../common/src/Plan';
 import { PddlPlanParser } from '../../../common/src/PddlPlanParser';
 import { TestsManifest } from './TestsManifest';
 import { PlanStep } from '../../../common/src/PlanStep';
+import { PddlExtensionContext } from '../../../common/src/PddlExtensionContext';
 
 const util = require('util');
 const readFileAsync = util.promisify(readFile);
@@ -32,7 +33,7 @@ export class PTestExplorer {
     private pTestTreeDataProvider: PTestTreeDataProvider;
     private outputWindow: OutputChannel;
 
-    constructor(private context: ExtensionContext, public planning: Planning) {
+    constructor(private context: PddlExtensionContext, public planning: Planning) {
         this.pTestTreeDataProvider = new PTestTreeDataProvider(context);
 
         this.pTestViewer = window.createTreeView('PTestExplorer', { treeDataProvider: this.pTestTreeDataProvider });

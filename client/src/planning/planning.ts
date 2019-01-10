@@ -211,6 +211,7 @@ export class Planning implements PlannerResponseHandler {
 
     private readonly _onPlansFound = new EventEmitter<PlanningResult>();
     public onPlansFound: Event<PlanningResult> = this._onPlansFound.event;
+    private progressUpdater: ElapsedTimeProgressUpdater;
 
     /**
      * Invokes the planner and visualize the plan(s).
@@ -228,8 +229,6 @@ export class Planning implements PlannerResponseHandler {
 
         this.planningProcessKilled = false;
 
-        let progressUpdater: ElapsedTimeProgressUpdater;
-
         window.withProgress<Plan[]>({
             location: ProgressLocation.Notification,
             title: `Searching for plans for domain ${domainFileInfo.name} and problem ${problemFileInfo.name}`,
@@ -241,17 +240,17 @@ export class Planning implements PlannerResponseHandler {
                 this.stopPlanner();
             });
 
-            progressUpdater = new ElapsedTimeProgressUpdater(progress, token);
+            this.progressUpdater = new ElapsedTimeProgressUpdater(progress, token);
             return this.planner.plan(domainFileInfo, problemFileInfo, planParser, this);
         })
         .then(plans => {
-                let elapsedTime = progressUpdater.getElapsedTimeInMilliSecs();
-                progressUpdater.setFinished();
+                let elapsedTime = this.progressUpdater.getElapsedTimeInMilliSecs();
+                this.progressUpdater.setFinished();
                 let result = this.planningProcessKilled ? PlanningResult.killed() : PlanningResult.success(plans, elapsedTime);
                 this._onPlansFound.fire(result);
             },
             reason => {
-                progressUpdater.setFinished();
+                this.progressUpdater.setFinished();
                 this._onPlansFound.fire(PlanningResult.failure(reason.toString()));
             }
         );
@@ -318,16 +317,10 @@ export class Planning implements PlannerResponseHandler {
     }
 
     handleSuccess(stdout: string, plans: Plan[]): void {
-        this.output.appendLine(`Planner found ${plans.length} plan(s).`);
+        this.output.appendLine(`Planner found ${plans.length} plan(s) in ${this.progressUpdater.getElapsedTimeInMilliSecs()/1000}secs.`);
         stdout.length; // just waste it, we did not need it here
 
-        // new Promise((_1, _2) => {
-            // try {
-                this.visualizePlans(plans);
-            // }catch(ex){
-                // console.error(ex);
-            // }
-        // });
+        this.visualizePlans(plans);
         this.planner = null;
     }
 

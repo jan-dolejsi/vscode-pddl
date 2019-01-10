@@ -4,11 +4,12 @@
  * ------------------------------------------------------------------------------------------ */
 'use strict';
 
-import { TextDocument, window, workspace, QuickPickItem, Uri } from 'vscode';
+import { TextDocument, window, workspace, QuickPickItem, Uri, ExtensionContext } from 'vscode';
 import { PDDL, PLAN, toLanguageFromId, HAPPENINGS, PlanInfo, ProblemInfo, DomainInfo } from '../../common/src/parser';
 import { PddlLanguage } from '../../common/src/FileInfo';
 import { HappeningsInfo } from "../../common/src/HappeningsInfo";
 import { PddlWorkspace } from '../../common/src/workspace-model';
+import { PddlExtensionContext } from '../../common/src/PddlExtensionContext';
 import { basename } from 'path';
 
 export function isAnyPddl(doc: TextDocument): boolean {
@@ -126,4 +127,14 @@ class UriQuickPickItem implements QuickPickItem {
     getUri(): Uri {
         return this.uri;
     }
+}
+
+export function createPddlExtensionContext(context: ExtensionContext): PddlExtensionContext {
+	return {
+		asAbsolutePath: context.asAbsolutePath,
+		extensionPath: context.extensionPath,
+        storagePath: context.storagePath,
+        subscriptions: context.subscriptions,
+		pythonPath: () => workspace.getConfiguration().get("python.pythonPath", "python")
+	};
 }

@@ -1,5 +1,20 @@
 # What's new
 
+## [2.7.2] - 2019-01-10
+
+New features
+
+- Elapsed time used by the planner is printed to the output window when the planner finishes.
+
+Bugfixes
+
+- Planners configured via path are double quoted if they contain spaces, unless the command already includes double quotes or it is a java -jar kind of a command.
+- Python pre-processing of problem files (transformation of the problem file before applied before PDDL parsing) is fixed. To test, use this syntax at the top of hte problem file:
+
+```;;!pre-parsing:{type: "python", command: "../../scripts/transform.py", args: ["../data.json"]}```
+
+- Python interpretter in the %path%, or as selected by the Python VS Code extension would be invoked.
+
 ## [2.7.1] - 2019-01-07
 
 Added support for passing optional switches to planner service when involing the planner via the _PDDL: Run the planner and display the plan_ command. For example: specify options `param1=value1` to pass them via URL query as `http://host:port/solve?param1=value1`.
@@ -362,7 +377,8 @@ Note for open source contributors: all notable changes to the "pddl" extension w
 
 Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
 
-[Unreleased]: https://github.com/jan-dolejsi/vscode-pddl/compare/v2.7.1...HEAD
+[Unreleased]: https://github.com/jan-dolejsi/vscode-pddl/compare/v2.7.2...HEAD
+[2.7.2]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.7.1...v2.7.2
 [2.7.1]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.6.12...v2.7.1
 [2.6.12]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.6.10...v2.6.12
 [2.6.10]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.6.9...v2.6.10

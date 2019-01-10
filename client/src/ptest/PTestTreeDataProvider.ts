@@ -5,12 +5,13 @@
 'use strict';
 
 import {
-    workspace, Uri, ExtensionContext, TreeDataProvider, Event, TreeItem, EventEmitter, TreeItemCollapsibleState, window
+    workspace, Uri, TreeDataProvider, Event, TreeItem, EventEmitter, TreeItemCollapsibleState, window
 } from 'vscode';
 import { basename, join } from 'path';
 import { readdirSync, statSync } from 'fs';
 import { TestsManifest } from './TestsManifest';
 import { TestOutcome, Test } from './Test';
+import { PddlExtensionContext } from '../../../common/src/PddlExtensionContext';
 
 export interface PTestNode {
     resource: Uri;
@@ -29,7 +30,7 @@ export class PTestTreeDataProvider implements TreeDataProvider<PTestNode> {
     private testResults: Map<string, TestOutcome> = new Map();
     private treeNodeCache: Map<string, PTestNode> = new Map();
 
-    constructor(private context: ExtensionContext) {
+    constructor(private context: PddlExtensionContext) {
 
     }
 

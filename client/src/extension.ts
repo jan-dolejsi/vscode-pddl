@@ -21,7 +21,7 @@ import { PTestExplorer } from './ptest/PTestExplorer';
 import { PlanValidator } from './diagnostics/PlanValidator';
 import { Debugging } from './debugger/debugging';
 import { ExtensionInfo } from './ExtensionInfo';
-import { toLanguage, isAnyPddl } from './utils';
+import { toLanguage, isAnyPddl, createPddlExtensionContext } from './utils';
 import { HappeningsValidator } from './diagnostics/HappeningsValidator';
 import { PlanComparer } from './comparison/PlanComparer';
 
@@ -52,7 +52,9 @@ function activateWithTelemetry(_operationId: string, context: ExtensionContext) 
 	// run start-up actions
 	new StartUp(context).atStartUp(pddlConfiguration);
 
-	let pddlWorkspace = new PddlWorkspace(pddlConfiguration.getEpsilonTimeStep(), context);
+	let pddlContext = createPddlExtensionContext(context);
+
+	let pddlWorkspace = new PddlWorkspace(pddlConfiguration.getEpsilonTimeStep(), pddlContext);
 	let planning = new Planning(pddlWorkspace, pddlConfiguration, context);
 	let planValidator = new PlanValidator(planning.output, pddlWorkspace, pddlConfiguration, context);
 	let happeningsValidator = new HappeningsValidator(planning.output, pddlWorkspace, pddlConfiguration, context);
@@ -146,10 +148,10 @@ function activateWithTelemetry(_operationId: string, context: ExtensionContext) 
 	let happeningsDefinitionProvider = languages.registerDefinitionProvider(HAPPENINGS, symbolInfoProvider);
 	let happeningsHoverProvider = languages.registerHoverProvider(HAPPENINGS, symbolInfoProvider);
 
-	new PTestExplorer(context, planning);
+	new PTestExplorer(pddlContext, planning);
 
 	new Debugging(context, pddlWorkspace, pddlConfiguration);
-	
+
 	context.subscriptions.push(new PlanComparer(pddlWorkspace, pddlConfiguration));
 
 	subscribeToWorkspace(pddlWorkspace, pddlConfiguration, context);

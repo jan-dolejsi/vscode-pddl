@@ -17,7 +17,7 @@ export class Util {
      * @param path file system path
      */
     static q(path: string): string {
-        return path.includes(' ') ? `"${path}"` : path;
+        return path.includes(' ') && !path.includes('"') && !path.includes(" -jar ") ? `"${path}"` : path;
     }
 
     static toFile(prefix: string, suffix: string, text: string): string {

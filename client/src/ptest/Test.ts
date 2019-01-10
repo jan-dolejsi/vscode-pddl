@@ -4,7 +4,7 @@
  * ------------------------------------------------------------------------------------------ */
 'use strict';
 
-import { Uri, workspace } from 'vscode';
+import { Uri } from 'vscode';
 import { join, dirname } from 'path';
 import { TestsManifest } from './TestsManifest';
 import { PreProcessor, CommandPreProcessor, NunjucksPreProcessor, PythonPreProcessor, Jinja2PreProcessor } from "../../../common/src/PreProcessors";
@@ -56,21 +56,18 @@ export class Test {
         if(preProcessSettings) {
             let kind = preProcessSettings[PRE_PROCESSOR_KIND];
 
-            // get python location (if python extension si installed)
-            let pythonPath = workspace.getConfiguration().get("python.pythonPath", "python");
-
             switch(kind){
                 case "command":
                     preProcessor = CommandPreProcessor.fromJson(preProcessSettings);
                     break;
                 case "python":
-                    preProcessor = new PythonPreProcessor(pythonPath, preProcessSettings[PRE_PROCESSOR_SCRIPT], preProcessSettings[PRE_PROCESSOR_ARGS]);
+                    preProcessor = new PythonPreProcessor(context.pythonPath(), preProcessSettings[PRE_PROCESSOR_SCRIPT], preProcessSettings[PRE_PROCESSOR_ARGS]);
                     break;
                 case "nunjucks":
                     preProcessor = new NunjucksPreProcessor(preProcessSettings[PRE_PROCESSOR_DATA], undefined, false);
                     break;
                 case "jinja2":
-                    preProcessor = new Jinja2PreProcessor(pythonPath, context.extensionPath, preProcessSettings[PRE_PROCESSOR_DATA]);
+                    preProcessor = new Jinja2PreProcessor(context.pythonPath(), context.extensionPath, preProcessSettings[PRE_PROCESSOR_DATA]);
                     break;
             }
         }
