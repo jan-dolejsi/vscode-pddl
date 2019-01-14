@@ -8,8 +8,8 @@ import * as process from 'child_process';
 import { EventEmitter } from 'events';
 
 import { Util } from '../../../common/src/util';
-import { TimedVariableValue, VariableValue, ProblemInfo, DomainInfo } from '../../../common/src/parser';
-import { Happening } from '../HappeningsInfo';
+import { TimedVariableValue, VariableValue, ProblemInfo, DomainInfo, Parser } from '../../../common/src/parser';
+import { Happening } from '../../../common/src/HappeningsInfo';
 import { HappeningsToValStep } from '../diagnostics/HappeningsToValStep';
 
 /**
@@ -35,13 +35,70 @@ export class ValStep extends EventEmitter {
     }
 
     async execute(valStepPath: string, cwd: string, happenings: Happening[]): Promise<TimedVariableValue[]> {
-        // copy editor content to temp files to avoid using out-of-date content on disk
-        let domainFilePath = Util.toPddlFile('domain', this.domainInfo.getText());
-        let problemFilePath = Util.toPddlFile('problem', this.problemInfo.getText());
+        let args = this.createValStepArgs();
 
-        let args = [domainFilePath, problemFilePath];
-        let cmd = Util.q(valStepPath) + ' ' + args.join(' ');
-        let child = process.exec(cmd, { cwd: cwd });
+        const that = this;
+
+        return new Promise<TimedVariableValue[]>(async (resolve, reject) => {
+            let child = process.execFile(valStepPath, args, { cwd: cwd, timeout: 2000, maxBuffer: 2 * 1024 * 1024 }, (error, stdout, stderr) => {
+                if (error) {
+                    reject(error.message);
+                }
+                if (that.verbose) {
+                    stdout;
+                    console.log(stderr);
+                }
+                let eventualProblem = that.outputBuffer;
+                let newValues = that.extractInitialState(eventualProblem);
+                resolve(newValues);
+            });
+
+            let outputtingProblem = false;
+
+            child.stdout.on('data', output => {
+                if (this.verbose) console.log("ValStep <<<" + output);
+                if (outputtingProblem) {
+                    this.outputBuffer += output;
+                } else if (output.indexOf('(define (problem') >= 0) {
+                    this.outputBuffer = output.substr(output.indexOf('(define (problem'));
+                    outputtingProblem = true;
+                }
+            });
+
+            let groupedHappenings = Util.groupBy(happenings, h => h.getTime());
+
+            for (const time of groupedHappenings.keys()) {
+                const happeningGroup = groupedHappenings.get(time);
+                let valSteps = this.happeningsConvertor.convert(happeningGroup);
+                this.valStepInput += valSteps;
+
+                try {
+                    if (!child.stdin.write(valSteps))
+                        reject('Cannot post happenings to valstep');
+                    if (this.verbose) console.log("ValStep >>>" + valSteps);
+                }
+                catch(err) {
+                    if (this.verbose) console.log("ValStep intput causing error: " + valSteps);
+                    reject('Cannot post happenings to valstep: ' + err);
+                }
+            }
+
+            child.stdin.write('q\n');
+        });
+
+    }
+
+    extractInitialState(problemText: string): TimedVariableValue[] {
+        let problemInfo = new Parser().tryProblem("eventual-problem://not-important", 0, problemText);
+
+        if (!problemInfo) return null;
+
+        return problemInfo.getInits().filter(value => this.applyIfNew(0, value.getVariableValue()));
+    }
+
+    async executeIncrementally(valStepPath: string, cwd: string, happenings: Happening[]): Promise<TimedVariableValue[]> {
+        let args = this.createValStepArgs();
+        let child = process.execFile(valStepPath, args, { cwd: cwd });
 
         // subscribe to the child process standard output stream and concatenate it till it is complete
         child.stdout.on('data', output => {
@@ -62,7 +119,7 @@ export class ValStep extends EventEmitter {
 
         for (const time of groupedHappenings.keys()) {
             const happeningGroup = groupedHappenings.get(time);
-            await this.postHappenings(child, happeningGroup);
+            await this.postHappeningsInteractively(child, happeningGroup);
         }
 
         child.stdin.write('q\n');
@@ -70,7 +127,16 @@ export class ValStep extends EventEmitter {
         return this.variableValues;
     }
 
-    async postHappenings(childProcess: process.ChildProcess, happenings: Happening[]): Promise<boolean> {
+    private createValStepArgs(): string[] {
+        // copy editor content to temp files to avoid using out-of-date content on disk
+        let domainFilePath = Util.toPddlFile('domain', this.domainInfo.getText());
+        let problemFilePath = Util.toPddlFile('problem', this.problemInfo.getText());
+
+        let args = [domainFilePath, problemFilePath];
+        return args;
+    }
+
+    private async postHappeningsInteractively(childProcess: process.ChildProcess, happenings: Happening[]): Promise<boolean> {
         let valSteps = this.happeningsConvertor.convert(happenings);
         this.valStepInput += valSteps;
         const that = this;
@@ -95,9 +161,15 @@ export class ValStep extends EventEmitter {
                 resolve(true);
             });
 
-            if (!childProcess.stdin.write(valSteps))
-                reject('Cannot post happenings to valstep');
-            if (this.verbose) console.log("ValStep >>>" + valSteps);
+            try {
+                if (!childProcess.stdin.write(valSteps))
+                    reject('Cannot post happenings to valstep');
+                if (this.verbose) console.log("ValStep >>>" + valSteps);
+            }
+            catch(err) {
+                if (this.verbose) console.log("ValStep intput causing error: " + valSteps);
+                reject('Cannot post happenings to valstep: ' + err);
+            }
         });
     }
 

@@ -49,7 +49,7 @@ export class HappeningsExecutor {
         try {
             this.valStep.on(ValStep.NEW_HAPPENING_EFFECTS, (happenings, values) => this.showValues(happenings, values));
 
-            await this.valStep.execute(valStepPath, cwd, this.context.happenings.getHappenings());
+            await this.valStep.executeIncrementally(valStepPath, cwd, this.context.happenings.getHappenings());
 
             this.decorations.push(this.seeNextLineDecoration);
         } catch(err) {
@@ -58,6 +58,9 @@ export class HappeningsExecutor {
             }
             else if (err instanceof ValStepExitCode) {
                 window.showInformationMessage(err.message);
+            }
+            else{
+                window.showErrorMessage(err);
             }
         }
 

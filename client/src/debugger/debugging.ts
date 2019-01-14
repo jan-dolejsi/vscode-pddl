@@ -53,7 +53,7 @@ export class Debugging {
 				this.saveDecorations(editor.document, decorations);
 			}
 			catch (ex) {
-				vscode.window.showErrorMessage(ex.message)
+				vscode.window.showErrorMessage(ex)
 			}
 		}));
 
@@ -63,7 +63,7 @@ export class Debugging {
 				new HappeningsToPlanResumeCasesConvertor(context, this.plannerConfiguration).generate();
 			}
 			catch (ex) {
-				vscode.window.showErrorMessage(ex.message)
+				vscode.window.showErrorMessage(ex)
 			}
 		}));
 
@@ -94,9 +94,6 @@ export class Debugging {
 			window.showErrorMessage('Active document is not debuggable.');
 			return null;
 		}
-
-		// ensure the current document is saved
-		await window.activeTextEditor.document.save();
 
 		let activeFileInfo = this.upsertAndParseFile(window.activeTextEditor.document);
 

@@ -35,7 +35,7 @@ export abstract class AbstractPlanExporter {
 
             await exportToAndShow(this.getPlanText(), uri);
         } catch (ex) {
-            window.showErrorMessage(`Cannot export plan: ${ex.message}`);
+            window.showErrorMessage(`Cannot export plan: ${ex}`);
         }
     }
 

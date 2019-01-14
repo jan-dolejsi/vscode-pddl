@@ -182,8 +182,8 @@ export class PTestTreeDataProvider implements TreeDataProvider<PTestNode> {
         try {
             return TestsManifest.load(manifestPath, this.context);
         } catch (error) {
-            window.showErrorMessage(`Unable to load test manifest from: ${manifestPath}
-${error.message}`);
+            window.showErrorMessage(`Unable to load test manifest from: ${manifestPath} 
+${error}`);
             return null;
         }
     }

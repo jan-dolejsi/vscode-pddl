@@ -25,7 +25,9 @@ export class Parser {
     preProcessor: ProblemParserPreProcessor;
 
     constructor(context?: PddlExtensionContext) {
-        this.preProcessor = new ProblemParserPreProcessor(context);
+        if (context) {
+            this.preProcessor = new ProblemParserPreProcessor(context);
+        }
     }
 
     tryProblem(fileUri: string, fileVersion: number, fileText: string): ProblemInfo {
@@ -33,7 +35,7 @@ export class Parser {
         let workingDirectory = dirname(filePath);
 
         try {
-            fileText = this.preProcessor.process(fileText, workingDirectory);
+            if (this.preProcessor) fileText = this.preProcessor.process(fileText, workingDirectory);
         } catch (ex) {
             if (ex instanceof PreProcessingError) {
                 let problemInfo = new ProblemInfo(fileUri, fileVersion, "unknown", "unknown");
@@ -445,6 +447,10 @@ export class TimedVariableValue {
     sameValue(other: TimedVariableValue): boolean {
         return this.getVariableName() === other.getVariableName()
             && this.getValue() === other.getValue();
+    }
+
+    getVariableValue(): VariableValue {
+        return new VariableValue(this.variableName, this.value);
     }
 
     toString(): string {

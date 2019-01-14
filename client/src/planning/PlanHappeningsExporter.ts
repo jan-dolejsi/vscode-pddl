@@ -42,7 +42,7 @@ export class PlanHappeningsExporter {
 
             await exportToAndShow(this.happeningsText, uri);
         } catch (ex) {
-            window.showErrorMessage(`Cannot export plan to happenings: ${ex.message}`);
+            window.showErrorMessage(`Cannot export plan to happenings: ${ex}`);
         }
     }
 

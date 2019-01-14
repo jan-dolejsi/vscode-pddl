@@ -68,7 +68,7 @@ export class NormalizedPlanDocumentContentProvider implements TextDocumentConten
                     normalizedPlan = `${normalizedPlan}\n\n;; Modified state values:\n\n${planValuesAsText}`;
             }
             catch (err) {
-                window.showWarningMessage(err.message);
+                window.showWarningMessage(err.toString());
             }
         }
 
