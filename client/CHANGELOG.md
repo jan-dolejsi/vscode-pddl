@@ -1,4 +1,18 @@
-# What's new
+# PDDL support - What's new?
+
+## [2.8.0] - 2019-01-23
+
+### Added
+
+- Overview page, which summarizes learning resources and centralizes configuration.
+- Exposed command to configure the VAL/validate tool.
+- Added a warning, when PDDL code is sent to a (remote) planning service for the first time. The user must give consent that they trust that service with their PDDL model.
+
+## [2.7.3] - 2019-01-14
+
+Bug fixes
+
+- more robust way of finding out which state variables does the plan affect. This now works for plans that contain hundreds of actions.
 
 ## [2.7.2] - 2019-01-10
 
@@ -6,7 +20,7 @@ New features
 
 - Elapsed time used by the planner is printed to the output window when the planner finishes.
 
-Bugfixes
+Bug fixes
 
 - Planners configured via path are double quoted if they contain spaces, unless the command already includes double quotes or it is a java -jar kind of a command.
 - Python pre-processing of problem files (transformation of the problem file before applied before PDDL parsing) is fixed. To test, use this syntax at the top of hte problem file:
@@ -377,8 +391,9 @@ Note for open source contributors: all notable changes to the "pddl" extension w
 
 Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
 
-[Unreleased]: https://github.com/jan-dolejsi/vscode-pddl/compare/v2.7.2...HEAD
-[2.7.2]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.7.1...v2.7.2
+[Unreleased]: https://github.com/jan-dolejsi/vscode-pddl/compare/v2.8.0...HEAD
+[2.8.0]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.7.3...v2.8.0
+[2.7.3]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.7.1...v2.7.3
 [2.7.1]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.6.12...v2.7.1
 [2.6.12]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.6.10...v2.6.12
 [2.6.10]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.6.9...v2.6.10

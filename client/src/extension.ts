@@ -16,7 +16,7 @@ import { AutoCompletion } from './completion/AutoCompletion';
 import { SymbolRenameProvider } from './SymbolRenameProvider';
 import { SymbolInfoProvider } from './SymbolInfoProvider';
 import { Diagnostics } from './diagnostics/Diagnostics';
-import { StartUp } from './StartUp'
+import { StartUp } from './init/StartUp'
 import { PTestExplorer } from './ptest/PTestExplorer';
 import { PlanValidator } from './diagnostics/PlanValidator';
 import { Debugging } from './debugger/debugging';
@@ -31,6 +31,8 @@ const PDDL_UPDATE_TOKENS_PARSER_SERVICE = 'pddl.updateTokensParserService';
 const PDDL_CONFIGURE_PLANNER = 'pddl.configurePlanner';
 const PDDL_LOGIN_PLANNER_SERVICE = 'pddl.loginPlannerService';
 const PDDL_UPDATE_TOKENS_PLANNER_SERVICE = 'pddl.updateTokensPlannerService';
+
+const PDDL_CONFIGURE_VALIDATOR = 'pddl.configureValidate';
 
 import { initialize, instrumentOperation } from "vscode-extension-telemetry-wrapper";
 import { KEY } from './TelemetryInstrumentation';
@@ -50,7 +52,7 @@ function activateWithTelemetry(_operationId: string, context: ExtensionContext) 
 	let pddlConfiguration = new PddlConfiguration(context);
 
 	// run start-up actions
-	new StartUp(context).atStartUp(pddlConfiguration);
+	new StartUp(context, pddlConfiguration).atStartUp();
 
 	let pddlContext = createPddlExtensionContext(context);
 
@@ -64,8 +66,7 @@ function activateWithTelemetry(_operationId: string, context: ExtensionContext) 
 	});
 
 	let configureParserCommand = commands.registerCommand(PDDL_CONFIGURE_PARSER, () => {
-		pddlConfiguration.setupParserLater = false;
-		pddlConfiguration.suggestNewParserConfiguration(false);
+		pddlConfiguration.askNewParserPath();
 	});
 
 	let loginParserServiceCommand = commands.registerCommand(PDDL_LOGIN_PARSER_SERVICE, () => {
@@ -128,6 +129,10 @@ function activateWithTelemetry(_operationId: string, context: ExtensionContext) 
 		});
 	});
 
+	context.subscriptions.push(commands.registerCommand(PDDL_CONFIGURE_VALIDATOR, () => {
+		pddlConfiguration.askNewValidatorPath();
+	}));
+
 	let completionItemProvider = languages.registerCompletionItemProvider(PDDL, new AutoCompletion(pddlWorkspace), '(', ':', '-');
 
 	let renameProvider = languages.registerRenameProvider(PDDL, new SymbolRenameProvider(pddlWorkspace));
@@ -139,7 +144,7 @@ function activateWithTelemetry(_operationId: string, context: ExtensionContext) 
 	let referencesProvider = languages.registerReferenceProvider(PDDL, symbolInfoProvider);
 	let hoverProvider = languages.registerHoverProvider(PDDL, symbolInfoProvider);
 	let diagnosticCollection = languages.createDiagnosticCollection(PDDL);
-	let diagnostics = new Diagnostics(pddlWorkspace, diagnosticCollection,  pddlConfiguration, 
+	let diagnostics = new Diagnostics(pddlWorkspace, diagnosticCollection,  pddlConfiguration,
 		planValidator, happeningsValidator);
 
 	let planDefinitionProvider = languages.registerDefinitionProvider(PLAN, symbolInfoProvider);
@@ -161,7 +166,7 @@ function activateWithTelemetry(_operationId: string, context: ExtensionContext) 
 	context.subscriptions.push(diagnostics, revealActionCommand,
 		configureParserCommand, loginParserServiceCommand, updateTokensParserServiceCommand,
 		configurePlannerCommand, loginPlannerServiceCommand, updateTokensPlannerServiceCommand, completionItemProvider,
-		renameProvider, documentSymbolProvider, definitionProvider, referencesProvider, hoverProvider, 
+		renameProvider, documentSymbolProvider, definitionProvider, referencesProvider, hoverProvider,
 		planHoverProvider, planDefinitionProvider, happeningsHoverProvider, happeningsDefinitionProvider);
 }
 

@@ -327,33 +327,56 @@ export class PddlConfiguration {
         return vscode.workspace.getConfiguration(CONF_PDDL).get(VALIDATION_PATH);
     }
 
+    askNewValidatorPath(): Promise<string> {
+        return this.askAndUpdatePath(VALIDATION_PATH, "Validate tool path");
+    }
+
     getValStepPath(): Promise<string> {
         return this.getOrAskPath(VAL_STEP_PATH, "ValStep executable");
     }
 
-    async getOrAskPath(confiName: string, configFriendlyName: string): Promise<string> {
+    async getOrAskPath(configName: string, configFriendlyName: string): Promise<string> {
         let configurationSection = vscode.workspace.getConfiguration(CONF_PDDL);
-        let configValue: string = configurationSection.get(confiName);
+        let configValue: string = configurationSection.get(configName);
         if (!configValue) {
-            let configureOption: vscode.MessageItem = { title: `Select ${configFriendlyName}...`};
-            let notNowOption: vscode.MessageItem = { title: "Not now", isCloseAffordance: true};
+            configValue = await this.askAndUpdatePath(configName, configFriendlyName);
+        }
 
-            let choice = await vscode.window.showErrorMessage(
-                `${configFriendlyName} is not configured.`,
-                ...[configureOption, notNowOption]);
+        return configValue;
+    }
 
-            if (choice === configureOption) {
-                let seletedUris = await vscode.window.showOpenDialog({canSelectFiles: true, 
-                    canSelectFolders: false, canSelectMany: false, 
-                    openLabel: `Select ${configFriendlyName}`});
+    async suggestUpdatingPath(configName: string, configFriendlyName: string): Promise<string> {
+        let configureOption: vscode.MessageItem = { title: `Select ${configFriendlyName}...` };
+        let notNowOption: vscode.MessageItem = { title: "Not now", isCloseAffordance: true };
 
-                if (seletedUris) {
-                    configValue = seletedUris[0].fsPath;
-                    let scopeToUpdate = await this.askConfigurationScope();
-                    if (!scopeToUpdate) return null;
-                    configurationSection.update(confiName, configValue, scopeToUpdate.target);
-                }
-            }
+        let choice = await vscode.window.showErrorMessage(
+            `${configFriendlyName} is not configured.`,
+            ...[configureOption, notNowOption]);
+
+        let configValue: string = undefined;
+
+        if (choice === configureOption) {
+            configValue = await this.askAndUpdatePath(configName, configFriendlyName);
+        }
+
+        return configValue;
+    }
+
+    async askAndUpdatePath(configName: string, configFriendlyName: string): Promise<string> {
+        let seletedUris = await vscode.window.showOpenDialog({
+            canSelectFiles: true,
+            canSelectFolders: false, canSelectMany: false,
+            openLabel: `Select ${configFriendlyName}`
+        });
+
+        let configValue: string = undefined;
+
+        if (seletedUris) {
+            configValue = seletedUris[0].fsPath;
+            let scopeToUpdate = await this.askConfigurationScope();
+            if (!scopeToUpdate) return null;
+            let configurationSection = vscode.workspace.getConfiguration(CONF_PDDL);
+            configurationSection.update(configName, configValue, scopeToUpdate.target);
         }
 
         return configValue;

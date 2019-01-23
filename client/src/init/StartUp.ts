@@ -8,14 +8,15 @@ import {
     window, extensions, ExtensionContext, MessageItem, Uri, commands, ViewColumn, workspace, ConfigurationTarget
 } from 'vscode';
 
+import { PddlConfiguration } from '../configuration';
+
 import * as fs from 'fs';
+import { OverviewPage, SHOULD_SHOW_OVERVIEW_PAGE } from './OverviewPage';
 
 const util = require('util');
 require('util.promisify').shim();
 
 const readFile = util.promisify(fs.readFile);
-
-import { PddlConfiguration } from './configuration';
 
 enum TipResponse { Ok, Later, Next }
 
@@ -25,18 +26,19 @@ const ACCEPTED = 'ACCEPTED';
 
 export class StartUp {
 
-    private context: ExtensionContext;
+    overviewPage: OverviewPage;
 
-    constructor(context: ExtensionContext) {
-        this.context = context;
+    constructor(private context: ExtensionContext, private pddlConfiguration: PddlConfiguration) {
+        this.overviewPage = new OverviewPage(context, this.pddlConfiguration);
     }
 
-    atStartUp(pddlConfiguration: PddlConfiguration): void {
+    atStartUp(): void {
+        this.showOverviewPage();
         this.showWhatsNew();
         this.showTips();
         this.suggestFolderIsOpen();
         this.suggestAutoSave();
-        this.uninstallLegacyExtension(pddlConfiguration);
+        this.uninstallLegacyExtension(this.pddlConfiguration);
     }
 
     NEXT_TIP_TO_SHOW = 'nextTipToShow';
@@ -197,6 +199,13 @@ export class StartUp {
                     break;
             }
 
+        }
+    }
+
+    showOverviewPage(): void {
+        var shouldShow = this.context.globalState.get<boolean>(SHOULD_SHOW_OVERVIEW_PAGE, true);
+        if (shouldShow) {
+            this.overviewPage.showWelcomePage();
         }
     }
 

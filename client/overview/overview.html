@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="overview.js"></script>
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>AI Planning and PDDL support in VS Code</title>
+    <style>
+        p, div, h1, h2, h3 {
+            font-weight: 400
+        }
+        img.fileIcon {width: 18px; vertical-align: text-bottom;}
+        input.config {
+            height: 16px;
+            min-width: 200px;
+            max-width: 500px;
+        }
+        a.button {
+            -webkit-appearance: button;
+            -moz-appearance: button;
+            appearance: button;
+
+            text-decoration: none;
+            color: initial;
+
+            height: 22px;
+            width: 22px;
+            vertical-align: inherit;
+            margin-left: 3px;
+            text-align: center;
+        }
+        div.hint {
+            color: gray
+        }
+    </style>
+</head>
+<body onload="populateWithTestData()">
+    <h1>AI Planning and PDDL support in VS Code</h1>
+
+    <table>
+        <tr style="vertical-align: top">
+            <td style="padding-right: 20px; white-space: nowrap">
+                <h2>Configuration</h2>
+                <h3>Planning engine</h3>
+                <input type="text" id="planner" class="config" readonly/>
+                <a href="command:pddl.configurePlanner" class="button" title="Confiure...">&#9881;</a><br/>
+                See <a href="https://github.com/jan-dolejsi/vscode-pddl/wiki/Configuring-the-PDDL-planner">more info about PDDL planners</a>
+
+                <h3>PDDL parser</h3>
+                <input type="text" id="parser" class="config" readonly/>
+                <a href="command:pddl.configureParser" class="button" title="Confiure...">&#9881;</a><br/>
+                See <a href="https://github.com/jan-dolejsi/vscode-pddl/wiki/Configuring-the-PDDL-parser">more info about PDDL parsers</a>
+
+                <h3>Plan Validator</h3>
+                <input type="text" id="validator" class="config" readonly/>
+                <a href="command:pddl.configureValidate" class="button" title="Confiure...">&#9881;</a><br/>
+                Clone and compile <a href="https://github.com/KCL-Planning/VAL">VAL from GitHub</a><br/>
+
+                <!-- files.autoSave -->
+            </td>
+            <td>
+                <h2>Resources</h2>
+                <a href="http://education.planning.domains/">Education resources</a><br/>
+                <a href="https://stackoverflow.com/questions/tagged/pddl">Ask a question on Stackoverflow</a><br/>
+                <a href="https://github.com/jan-dolejsi/vscode-pddl-samples/">See</a> or <a href="#" onclick="clonePddlSamples()" title="Select a local folder and samples will be downloaded.">clone PDDL samples</a><br/>
+                <a href="https://github.com/jan-dolejsi/vscode-pddl/blob/master/client/README.md">All features of PDDL support in VS Code</a><br/>
+                <a href="https://github.com/jan-dolejsi/vscode-pddl/blob/master/client/CHANGELOG.md">What's new in PDDL support</a>
+
+                <h2>Getting more productive</h2>
+                <!-- <a href="command:extension.open?%22robertohuertasm.vscode-icons%22" title="Install this extension to get better file icons.">VS Code Icons for PDDL files</a> e.g. 
+                <img src="file_type_pddl.svg" class="fileIcon">
+                <img src="file_type_pddl_plan.svg" class="fileIcon">
+                <img src="file_type_pddl_happenings.svg" class="fileIcon">
+                </br> -->
+                <a href="command:extension.open?%22joaompinto.vscode-graphviz%22" title="... if your planner outputs search graphs in .dot format.">GraphViz support</a><br/>
+
+                <a href="https://github.com/jan-dolejsi/vscode-pddl/wiki/Keyboard-shortcuts" title="Bookmark or print...">Keyboard shortcuts</a>
+
+                <h2>Giving feedback</h2>
+                <a href="https://github.com/jan-dolejsi/vscode-pddl/issues">Submit an issue</a><br/>
+                <a href="https://marketplace.visualstudio.com/items?itemName=jan-dolejsi.pddl#review-details">Write a review</a>
+            </td>
+        </tr>
+    </table>
+    <br/>
+    <input id="shouldShowOverview" type="checkbox" checked onchange="shouldShowOverviewChanged(this.checked)">Show overview page when using PDDL</input>
+    <div id="howToShowOverviewPage" class="hint">Use the <b>PDDL: Show overview page</b> command to display this page again.</div>
+</body>
+</html>

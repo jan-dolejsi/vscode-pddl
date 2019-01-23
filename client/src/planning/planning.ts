@@ -66,7 +66,7 @@ export class Planning implements PlannerResponseHandler {
                 }
             })
         );
-        
+
         context.subscriptions.push(commands.registerCommand(PDDL_STOP_PLANNER, () => this.stopPlanner()));
 
         context.subscriptions.push(commands.registerCommand(PDDL_GENERATE_PLAN_REPORT, () => {
@@ -77,7 +77,7 @@ export class Planning implements PlannerResponseHandler {
                 window.showErrorMessage("There is no plan to export.");
             }
         }));
-        
+
         context.subscriptions.push(commands.registerCommand(PDDL_EXPORT_PLAN, selectedPlan => {
             let plans: Plan[] = this.getPlans();
             if (selectedPlan === undefined && plans.length > 0) selectedPlan = 0;
@@ -87,17 +87,17 @@ export class Planning implements PlannerResponseHandler {
                 window.showErrorMessage("There is no plan open, or the selected plan does not exist.");
             }
         }));
-        
-        context.subscriptions.push(commands.registerCommand(PDDL_CONVERT_PLAN_TO_HAPPENINGS, async() => {
-            if (window.activeTextEditor && isPlan(window.activeTextEditor.document)){
+
+        context.subscriptions.push(commands.registerCommand(PDDL_CONVERT_PLAN_TO_HAPPENINGS, async () => {
+            if (window.activeTextEditor && isPlan(window.activeTextEditor.document)) {
                 let epsilon = plannerConfiguration.getEpsilonTimeStep();
                 new PlanHappeningsExporter(window.activeTextEditor.document, epsilon).export();
             } else {
                 window.showErrorMessage("Active document is not a plan.");
             }
         }));
-        
-        context.subscriptions.push(commands.registerCommand(PDDL_CONVERT_HAPPENINGS_TO_PLAN, async() => {
+
+        context.subscriptions.push(commands.registerCommand(PDDL_CONVERT_HAPPENINGS_TO_PLAN, async () => {
             if (window.activeTextEditor && isHappenings(window.activeTextEditor.document)) {
                 let epsilon = plannerConfiguration.getEpsilonTimeStep();
                 new HappeningsPlanExporter(window.activeTextEditor.document, epsilon).export();
@@ -105,7 +105,7 @@ export class Planning implements PlannerResponseHandler {
                 window.showErrorMessage("Active document is not a happening.");
             }
         }));
-        
+
         this.previewUri = Uri.parse('pddl-plan://authority/plan');
         this.provider = new PlanDocumentContentProvider(context);
         context.subscriptions.push(workspace.registerTextDocumentContentProvider('pddl-plan', this.provider));
@@ -243,17 +243,17 @@ export class Planning implements PlannerResponseHandler {
             this.progressUpdater = new ElapsedTimeProgressUpdater(progress, token);
             return this.planner.plan(domainFileInfo, problemFileInfo, planParser, this);
         })
-        .then(plans => {
+            .then(plans => {
                 let elapsedTime = this.progressUpdater.getElapsedTimeInMilliSecs();
                 this.progressUpdater.setFinished();
                 let result = this.planningProcessKilled ? PlanningResult.killed() : PlanningResult.success(plans, elapsedTime);
                 this._onPlansFound.fire(result);
             },
-            reason => {
-                this.progressUpdater.setFinished();
-                this._onPlansFound.fire(PlanningResult.failure(reason.toString()));
-            }
-        );
+                reason => {
+                    this.progressUpdater.setFinished();
+                    this._onPlansFound.fire(PlanningResult.failure(reason.toString()));
+                }
+            );
 
         this.output.show(true);
 
@@ -274,6 +274,8 @@ export class Planning implements PlannerResponseHandler {
     async createPlanner(workingDirectory: string, options?: string): Promise<Planner> {
         let plannerPath = await this.plannerConfiguration.getPlannerPath();
         if (!plannerPath) return null;
+
+        if (!await this.verifyConsentForSendingPddl(plannerPath)) return null;
 
         let plannerOptions = options != undefined ? options : await this.plannerConfiguration.getPlannerOptions();
         if (plannerOptions == null) return null;
@@ -298,6 +300,36 @@ export class Planning implements PlannerResponseHandler {
         }
     }
 
+    PLANNING_SERVICE_CONSENTS = "planningServiceConsents";
+
+    async verifyConsentForSendingPddl(plannerPath: string): Promise<boolean> {
+        if (PddlConfiguration.isHttp(plannerPath)) {
+            let consents: any = this.plannerConfiguration.context.globalState.get(this.PLANNING_SERVICE_CONSENTS, {});
+            if (consents[plannerPath]) {
+                return true;
+            }
+            else {
+                let answer = await window.showQuickPick(
+                    [
+                        "Yes, send my PDDL to this service.",
+                        "No, I do not want to send this PDDL to this service."
+                    ],
+                    {
+                        canPickMany: false,
+                        placeHolder: "Confirm you want to send this PDDL to " + plannerPath
+                    }
+                );
+                let consentGiven = answer && answer.toLowerCase().startsWith("yes");
+                consents[plannerPath] = consentGiven;
+                this.plannerConfiguration.context.globalState.update(this.PLANNING_SERVICE_CONSENTS, consents);
+                return consentGiven;
+            }
+        }
+        else {
+            return true;
+        }
+    }
+
     stopPlanner() {
         try {
             if (this.planner) {
@@ -317,7 +349,7 @@ export class Planning implements PlannerResponseHandler {
     }
 
     handleSuccess(stdout: string, plans: Plan[]): void {
-        this.output.appendLine(`Planner found ${plans.length} plan(s) in ${this.progressUpdater.getElapsedTimeInMilliSecs()/1000}secs.`);
+        this.output.appendLine(`Planner found ${plans.length} plan(s) in ${this.progressUpdater.getElapsedTimeInMilliSecs() / 1000}secs.`);
         stdout.length; // just waste it, we did not need it here
 
         this.visualizePlans(plans);
@@ -377,7 +409,7 @@ class ElapsedTimeProgressUpdater {
     startTime = new Date();
     finished: boolean;
 
-    constructor(private progress: Progress<{ message?: string; increment?: number }>, 
+    constructor(private progress: Progress<{ message?: string; increment?: number }>,
         private token: CancellationToken) {
         this.reportProgress();
     }
@@ -390,7 +422,7 @@ class ElapsedTimeProgressUpdater {
         if (this.token.isCancellationRequested || this.finished) return;
         setTimeout(() => {
             var elapsedTime = new Date(this.getElapsedTimeInMilliSecs());
-            this.progress.report({ message: "Elapsed time: " + elapsedTime.toISOString().substr(11, 8)});
+            this.progress.report({ message: "Elapsed time: " + elapsedTime.toISOString().substr(11, 8) });
             this.reportProgress();
         }, 1000);
     }

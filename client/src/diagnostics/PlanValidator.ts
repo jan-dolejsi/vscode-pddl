@@ -31,7 +31,7 @@ export class PlanValidator {
         context.subscriptions.push(commands.registerCommand(PDDL_PLAN_VALIDATE,
             async () => {
                 if (window.activeTextEditor && isPlan(window.activeTextEditor.document)) {
-                    if (!this.testConfiguration()) return;
+                    if (!await this.testConfiguration()) return;
                     try {
                         let outcome = await this.validateTextDocument(window.activeTextEditor.document);
                         if (outcome.getError()) {
@@ -48,22 +48,17 @@ export class PlanValidator {
             }));
     }
 
-    testConfiguration(): boolean {
+    async testConfiguration(): Promise<boolean> {
         let validatePath = this.plannerConfiguration.getValidatorPath();
         if (validatePath.length == 0) {
-            window.showErrorMessage(`Set the 'validate' executable path to the '${CONF_PDDL}.${VALIDATION_PATH}' setting.`);
+
+            let answer = await window.showWarningMessage(`The 'validate' executable path is not set up in '${CONF_PDDL}.${VALIDATION_PATH}'.`, "Configure 'validate' now...");
+            if (answer) commands.executeCommand('pddl.configureValidate');
             return false;
         }
         else {
             return true;
         }
-
-        // if (this.validatorPath == null || this.validatorPath == "") {
-        // suggest the user to update the settings
-        // var showNever = true;
-        // this.pddlConfiguration.suggestValidatorConfiguration(showNever);
-        // return;
-        // }
     }
 
     async validateTextDocument(planDocument: TextDocument): Promise<PlanValidationOutcome> {

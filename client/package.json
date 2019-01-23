@@ -4,7 +4,7 @@
   "description": "Planning Domain Description Language support",
   "author": "Jan Dolejsi",
   "license": "MIT",
-  "version": "2.7.2",
+  "version": "2.8.0",
   "publisher": "jan-dolejsi",
   "engines": {
     "vscode": "^1.28.1",
@@ -36,7 +36,8 @@
     "workspaceContains:**/*.pddl",
     "workspaceContains:**/*ptest.json",
     "onCommand:pddl.configureParser",
-    "onCommand:pddl.configurePlanner"
+    "onCommand:pddl.configurePlanner",
+    "onCommand:pddl.showOverview"
   ],
   "main": "./out/client/src/extension",
   "contributes": {
@@ -106,6 +107,10 @@
       }
     ],
     "commands": [
+      {
+        "command": "pddl.showOverview",
+        "title": "PDDL: Show overview page"
+      },
       {
         "command": "pddl.planAndDisplayResult",
         "title": "PDDL: Run the planner and display the plan"
@@ -221,6 +226,10 @@
       {
         "command": "pddl.happenings.generatePlanResumeCases",
         "title": "PDDL: Execute plan and generate plan-resume test cases"
+      },
+      {
+        "command": "pddl.configureValidate",
+        "title": "PDDL: Configure VAL/Validate tool"
       }
     ],
     "menus": {
