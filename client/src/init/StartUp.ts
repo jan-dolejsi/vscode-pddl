@@ -205,7 +205,7 @@ export class StartUp {
     showOverviewPage(): void {
         var shouldShow = this.context.globalState.get<boolean>(SHOULD_SHOW_OVERVIEW_PAGE, true);
         if (shouldShow) {
-            this.overviewPage.showWelcomePage();
+            this.overviewPage.showWelcomePage(false);
         }
     }
 

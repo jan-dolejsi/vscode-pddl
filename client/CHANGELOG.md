@@ -1,11 +1,11 @@
 # PDDL support - What's new?
 
-## [2.8.0] - 2019-01-23
+## [2.8.0] - 2019-01-28
 
 ### Added
 
-- Overview page, which summarizes learning resources and centralizes configuration.
-- Exposed command to configure the VAL/validate tool.
+- Added Overview page, which summarizes learning resources and centralizes configuration. The overview page shows up at most once per hour upon VS Code activation. If it does not come up (perhaps because it was permanently dismissed by the user), it may still be invoked using command _PDDL: Show overview page_.
+- Exposed command to configure the VAL/validate tool. Try invoking command _PDDL: Configure VAL/Validate tool_. It lets you select the executable, if you have it.
 - Added a warning, when PDDL code is sent to a (remote) planning service for the first time. The user must give consent that they trust that service with their PDDL model.
 
 ## [2.7.3] - 2019-01-14

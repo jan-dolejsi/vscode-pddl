@@ -20,26 +20,35 @@ const readFile = util.promisify(fs.readFile);
 const writeFile = util.promisify(fs.writeFile);
 
 export const SHOULD_SHOW_OVERVIEW_PAGE = 'shouldShowOverviewPage';
+export const LAST_SHOWN_OVERVIEW_PAGE = 'lastShownOverviewPage';
 
 export class OverviewPage {
 
     private webViewPanel: WebviewPanel
 
     constructor(private context: ExtensionContext, private pddlConfiguration: PddlConfiguration) {
-        commands.registerCommand("pddl.showOverview", () => this.showWelcomePage());
+        commands.registerCommand("pddl.showOverview", () => this.showWelcomePage(true));
         workspace.onDidChangeConfiguration(_ => this.updatePageConfiguration(), undefined, this.context.subscriptions);
     }
 
-    async showWelcomePage(): Promise<void> {
+    async showWelcomePage(showAnyway: boolean): Promise<void> {
         if (this.webViewPanel) {
             this.webViewPanel.reveal();
         }
         else {
-            this.createWelcomePage();
+            if (showAnyway || this.beenAWhile()) {
+                this.createWelcomePage(false);
+            }
         }
     }
 
-    async createWelcomePage(): Promise<void> {
+    beenAWhile(): boolean {
+        let lastTimeShown = this.context.globalState.get<string>(LAST_SHOWN_OVERVIEW_PAGE, new Date(2000, 0, 1).toString());
+        let minutesSinceLastShow = (Date.now() - Date.parse(lastTimeShown)) / 1000 / 60;
+        return minutesSinceLastShow > 60;
+    }
+
+    async createWelcomePage(showOnTop: boolean): Promise<void> {
         let html = await this.getHtml();
         let iconUri = this.context.asAbsolutePath('images/icon.png');
 
@@ -48,7 +57,7 @@ export class OverviewPage {
             "PDDL Overview",
             {
                 viewColumn: ViewColumn.Active,
-                // preserveFocus: showInBackground
+                preserveFocus: !showOnTop
             },
             {
                 retainContextWhenHidden: true,
@@ -70,6 +79,9 @@ export class OverviewPage {
 
         // set up the view with relevant data
         this.updatePageConfiguration();
+
+        // record the last date the page was shown on top
+        this.context.globalState.update(LAST_SHOWN_OVERVIEW_PAGE, new Date(Date.now()));
     }
 
     async handleMessage(message: any): Promise<void> {
