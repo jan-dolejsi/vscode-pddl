@@ -144,7 +144,7 @@ export class SymbolUtils {
     createSymbolMarkdownDocumentation(title: string, symbolName: string, documentation: string) {
         let markdownString = new MarkdownString(title ? `**${title}**` : undefined);
         markdownString.appendCodeblock(symbolName, 'pddl');
-        markdownString.appendMarkdown(`---
+        markdownString.appendText(`
 `);
         markdownString.appendMarkdown(documentation);
         return markdownString;

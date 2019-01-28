@@ -4,7 +4,7 @@
  * ------------------------------------------------------------------------------------------ */
 'use strict';
 
-import { TextDocument, CancellationToken, SymbolInformation, 
+import { TextDocument, CancellationToken, SymbolInformation,
     DocumentSymbolProvider, DefinitionProvider, ReferenceProvider, Position, ReferenceContext, Location, HoverProvider, Hover, SymbolKind } from 'vscode';
 import { PddlWorkspace } from './workspace-model';
 import { SymbolUtils } from './SymbolUtils';
@@ -50,22 +50,22 @@ export class SymbolInfoProvider implements DocumentSymbolProvider, DefinitionPro
         let fileUri = document.uri.toString();
 
         let fileInfo = this.pddlWorkspace.getFileInfo(fileUri);
-        
+
         if(!fileInfo.isDomain()) return [];
-        
+
         let domainInfo = <DomainInfo>fileInfo;
 
         let containerName = '';
 
-        let actionSymbols = domainInfo.actions.map(action => 
+        let actionSymbols = domainInfo.actions.map(action =>
             new SymbolInformation(action.name, SymbolKind.Module, containerName, SymbolUtils.toLocation(document, action.location)));
 
         domainInfo.getPredicates().forEach(p => domainInfo.findVariableLocation(p));
-        let predicateSymbols = domainInfo.getPredicates().map(variable => 
+        let predicateSymbols = domainInfo.getPredicates().map(variable =>
             new SymbolInformation(variable.declaredName, SymbolKind.Boolean, containerName, SymbolUtils.toLocation(document, variable.location)));
-        
+
         domainInfo.getFunctions().forEach(f => domainInfo.findVariableLocation(f));
-        let functionSymbols = domainInfo.getFunctions().map(variable => 
+        let functionSymbols = domainInfo.getFunctions().map(variable =>
             new SymbolInformation(variable.declaredName, SymbolKind.Function, containerName, SymbolUtils.toLocation(document, variable.location)));
 
         let symbols = actionSymbols.concat(predicateSymbols, functionSymbols);
