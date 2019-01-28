@@ -13,8 +13,8 @@
         img.fileIcon {width: 18px; vertical-align: text-bottom;}
         input.config {
             height: 16px;
-            min-width: 200px;
-            max-width: 500px;
+            min-width: 250px;
+            max-width: 600px;
         }
         a.button {
             -webkit-appearance: button;
@@ -38,9 +38,13 @@
 <body onload="populateWithTestData()">
     <h1>AI Planning and PDDL support in VS Code</h1>
 
-    <table>
+    <table style="width: 100%">
         <tr style="vertical-align: top">
             <td style="padding-right: 20px; white-space: nowrap">
+                <h2>Getting started</h2>
+                Try <a href="#" onclick="tryHelloWorld()" title="Creates the simplest PDDL example, invoke the planner and show the plan.">Hello World</a> example<br/>
+                <a href="https://github.com/jan-dolejsi/vscode-pddl-samples/">See</a> or <a href="#" onclick="clonePddlSamples()" title="Select a local folder and samples will be downloaded.">clone PDDL samples</a><br/>
+
                 <h2>Configuration</h2>
                 <h3>Planning engine</h3>
                 <input type="text" id="planner" class="config" readonly/>
@@ -57,13 +61,19 @@
                 <a href="command:pddl.configureValidate" class="button" title="Confiure...">&#9881;</a><br/>
                 Clone and compile <a href="https://github.com/KCL-Planning/VAL">VAL from GitHub</a><br/>
 
-                <!-- files.autoSave -->
+                <div id="autoSaveDiv">
+                    <h3>Auto-save files</h3>
+                    <div style="white-space:normal">
+                        <a href="command:workbench.action.toggleAutoSave" class="button" style="width: 150px">Enable auto-save</a>
+                        <br/>When processing files using command-line tools, it is simpler to enable file auto-saving.
+                        <br/>It is also recommended to go run the <i>Git: Initialize Repository</i> command to enjoy safety of version control and never miss a working version.
+                    </div>
+                </div>
             </td>
-            <td>
+            <td style="white-space: nowrap">
                 <h2>Resources</h2>
                 <a href="http://education.planning.domains/">Education resources</a><br/>
                 <a href="https://stackoverflow.com/questions/tagged/pddl">Ask a question on Stackoverflow</a><br/>
-                <a href="https://github.com/jan-dolejsi/vscode-pddl-samples/">See</a> or <a href="#" onclick="clonePddlSamples()" title="Select a local folder and samples will be downloaded.">clone PDDL samples</a><br/>
                 <a href="https://github.com/jan-dolejsi/vscode-pddl/blob/master/client/README.md">All features of PDDL support in VS Code</a><br/>
                 <a href="https://github.com/jan-dolejsi/vscode-pddl/blob/master/client/CHANGELOG.md">What's new in PDDL support</a>
 

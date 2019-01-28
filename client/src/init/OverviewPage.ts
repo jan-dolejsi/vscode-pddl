@@ -17,6 +17,7 @@ const util = require('util');
 require('util.promisify').shim();
 
 const readFile = util.promisify(fs.readFile);
+const writeFile = util.promisify(fs.writeFile);
 
 export const SHOULD_SHOW_OVERVIEW_PAGE = 'shouldShowOverviewPage';
 
@@ -71,14 +72,21 @@ export class OverviewPage {
         this.updatePageConfiguration();
     }
 
-    handleMessage(message: any): void {
+    async handleMessage(message: any): Promise<void> {
         console.log(`Message received from the webview: ${message.command}`);
 
         switch(message.command){
             case 'shouldShowOverview':
                 this.context.globalState.update(SHOULD_SHOW_OVERVIEW_PAGE, message.value);
                 break;
-
+            case 'tryHelloWorld':
+                try {
+                    await this.helloWorld();
+                }
+                catch(ex){
+                    window.showErrorMessage(ex);
+                }
+                break;
             case 'clonePddlSamples':
                 commands.executeCommand("git.clone", Uri.parse("https://github.com/jan-dolejsi/vscode-pddl-samples"));
                 break;
@@ -88,6 +96,40 @@ export class OverviewPage {
     }
 
     CONTENT_FOLDER = "overview";
+
+    async helloWorld(): Promise<void> {
+        let folder: Uri = undefined;
+
+        if (workspace.workspaceFolders.length == 0) {
+            let folders = await window.showOpenDialog({canSelectFiles: false, canSelectFolders: true, canSelectMany: false, openLabel: 'Select folder for hello world...'});
+            if (folders) {
+                folder = folders[0];
+            }
+        } else if (workspace.workspaceFolders.length == 1) {
+            folder = workspace.workspaceFolders[0].uri;
+        } else {
+            let selectedFolder = await window.showWorkspaceFolderPick({placeHolder: 'Select workspace folder for Hello World!'});
+            folder = selectedFolder.uri;
+        }
+
+        let domainResourcePath = this.context.asAbsolutePath('overview/domain.pddl');
+        let domainText = await readFile(domainResourcePath, { encoding: "utf-8" });
+        let domainPath = path.join(folder.fsPath, "domain.pddl");
+        if (fs.existsSync(domainPath)) throw new Error("File 'domain.pddl' already exists.");
+        await writeFile(domainPath, domainText, {encoding: "utf-8"});
+        let domainDocument = await workspace.openTextDocument(domainPath);
+        await window.showTextDocument(domainDocument, {viewColumn: ViewColumn.One, preview: false});
+
+        let problemResourcePath = this.context.asAbsolutePath('overview/problem.pddl');
+        let problemText = await readFile(problemResourcePath, { encoding: "utf-8" });
+        let problemPath = path.join(folder.fsPath, "problem.pddl");
+        if (fs.existsSync(problemPath)) throw new Error("File 'problem.pddl' already exists.");
+        await writeFile(problemPath, problemText, {encoding: "utf-8"});
+        let problemDocument = await workspace.openTextDocument(problemPath);
+        window.showTextDocument(problemDocument, {viewColumn: ViewColumn.Two, preview: false});
+
+        commands.executeCommand("pddl.planAndDisplayResult", domainDocument.uri, problemDocument.uri, folder.fsPath, "");
+    }
 
     async getHtml(): Promise<string> {
         let overviewHtmlPath = this.context.asAbsolutePath('overview/overview.html');
@@ -112,7 +154,8 @@ export class OverviewPage {
             planner: await this.pddlConfiguration.getPlannerPath(),
             parser: await this.pddlConfiguration.getParserPath(),
             validator: await this.pddlConfiguration.getValidatorPath(),
-            shouldShow: this.context.globalState.get<boolean>(SHOULD_SHOW_OVERVIEW_PAGE, true)
+            shouldShow: this.context.globalState.get<boolean>(SHOULD_SHOW_OVERVIEW_PAGE, true),
+            autoSave: workspace.getConfiguration().get<String>("files.autoSave")
         });
     }
 }

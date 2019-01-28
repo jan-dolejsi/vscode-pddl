@@ -12,15 +12,21 @@ window.addEventListener('message', event => {
 
     switch (message.command) {
         case 'updateConfiguration':
-            document.getElementById('planner').value = message.planner;
-            document.getElementById('parser').value = message.parser;
-            document.getElementById('validator').value = message.validator;
-            updateShowOverviewChanged(message.shouldShow);
+            updateConfiguration(message);
             break;
         default:
             console.log("Unexpected message: " + message.command);
     }
 })
+
+function updateConfiguration(message) {
+    document.getElementById('planner').value = message.planner;
+    document.getElementById('parser').value = message.parser;
+    document.getElementById('validator').value = message.validator;
+    document.getElementById('autoSaveDiv').style.display =
+        message.autoSave == "off" ? "unset" : "none";
+    updateShowOverviewChanged(message.shouldShow);
+}
 
 function shouldShowOverviewChanged(value) {
     showHowToShowOverview(value);
@@ -37,13 +43,19 @@ function updateShowOverviewChanged(value) {
 }
 
 function showHowToShowOverview(shouldShow) {
-    document.getElementById('howToShowOverviewPage').style.visibility =
-        (shouldShow ? 'collapse' : 'inherit');
+    document.getElementById('howToShowOverviewPage').style.display =
+        (shouldShow ? 'none' : 'unset');
 }
 
 function clonePddlSamples() {
     postMessage({
         command: 'clonePddlSamples'
+    })
+}
+
+function tryHelloWorld() {
+    postMessage({
+        command: 'tryHelloWorld'
     })
 }
 
@@ -54,9 +66,12 @@ function postMessage(message) {
 function populateWithTestData() {
     if (!vscode) {
         // for testing only
-        document.getElementById('planner').value = 'planner.exe';
-        document.getElementById('parser').value = 'parser.exe';
-        document.getElementById('validator').value = 'validate.exe';
-        updateShowOverviewChanged(true);
+        updateConfiguration({
+            planner: "planner.exe",
+            parser: "parser.exe",
+            validator: "validate.exe",
+            autoSave: "off",
+            shouldShow: true
+        });
     }
 }

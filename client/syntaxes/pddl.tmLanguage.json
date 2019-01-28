@@ -66,7 +66,7 @@
 			},
 			{
 				"name": "keyword.control.pddl.requirements",
-				"match": ":(strips|typing|negative-preconditions|disjunctive-preconditions|equality|existential-preconditions|universal-preconditions|quantified-preconditions|conditional-effects|fluents|numeric-fluents|adl|durative-actions|duration-inequalities|continuous-effects|derived-predicates|derived-functions|timed-initial-literals|preferences|constraints|action-costs|timed-initial-fluents)\\b"
+				"match": ":(strips|typing|negative-preconditions|disjunctive-preconditions|equality|existential-preconditions|universal-preconditions|quantified-preconditions|conditional-effects|fluents|numeric-fluents|adl|durative-actions|duration-inequalities|continuous-effects|derived-predicates|derived-functions|timed-initial-literals|timed-effects|preferences|constraints|action-costs|timed-initial-fluents)\\b"
 			},
 			{
 				"name": "keyword.control.pddl.global",
