@@ -17,7 +17,12 @@ export class Util {
      * @param path file system path
      */
     static q(path: string): string {
-        return path.includes(' ') && !path.includes('"') && !path.includes(" -jar ") ? `"${path}"` : path;
+        return this.shouldBeDoubleQuoted(path) ? `"${path}"` : path;
+    }
+
+    static shouldBeDoubleQuoted(path: string): boolean {
+        return path.includes(' ') && !path.includes('"')
+            && !path.includes(" -jar ") && !path.startsWith("node ");
     }
 
     static toFile(prefix: string, suffix: string, text: string): string {

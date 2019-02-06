@@ -1,5 +1,15 @@
 # PDDL support - What's new?
 
+## [2.8.1] - 2019-02-26
+
+### Added
+
+- added link to the [VS Code Icons Extension](https://marketplace.visualstudio.com/items?itemName=robertohuertasm.vscode-icons), which now provides icons for .pddl, .plan and .happenings files.
+
+### Bug fixes
+
+- planners and parsers implemented with node.js are correctly not double-quoted (same as `java -jar ...`)
+
 ## [2.8.0] - 2019-01-28
 
 ### Added

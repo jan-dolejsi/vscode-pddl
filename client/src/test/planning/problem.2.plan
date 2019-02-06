@@ -1,0 +1,14 @@
+;;!domain: domain1
+;;!problem: problem1
+
+; Makespan: 0.001
+; Cost: 0.001
+
+0.00100: (a)
+
+; Makespan: 0.002
+; Cost: 0.002
+
+0.00100: (a)
+0.00200: (a)
+

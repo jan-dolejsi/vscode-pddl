@@ -36,7 +36,7 @@ export class PddlPlanParser {
         let nextEndLine: number;
         while ((nextEndLine = textString.indexOf('\n', lastEndLine)) > -1) {
             let nextLine = textString.substring(lastEndLine, nextEndLine + 1);
-            this.appendLine(nextLine);
+            if (nextLine.trim()) this.appendLine(nextLine);
             lastEndLine = nextEndLine + 1;
         }
         if (textString.length > lastEndLine) {
