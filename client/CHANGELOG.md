@@ -1,6 +1,6 @@
 # PDDL support - What's new?
 
-## [2.8.1] - 2019-02-26
+## [2.8.1] - 2019-02-06
 
 ### Added
 
@@ -8,6 +8,7 @@
 
 ### Bug fixes
 
+- [Issue #16](https://github.com/jan-dolejsi/vscode-pddl/issues/16) Domain file and problem file shouldn't require to have case sensitive domain name identical
 - planners and parsers implemented with node.js are correctly not double-quoted (same as `java -jar ...`)
 
 ## [2.8.0] - 2019-01-28
@@ -401,7 +402,8 @@ Note for open source contributors: all notable changes to the "pddl" extension w
 
 Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
 
-[Unreleased]: https://github.com/jan-dolejsi/vscode-pddl/compare/v2.8.0...HEAD
+[Unreleased]: https://github.com/jan-dolejsi/vscode-pddl/compare/v2.8.1...HEAD
+[2.8.1]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.8.0...v2.8.1
 [2.8.0]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.7.3...v2.8.0
 [2.7.3]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.7.1...v2.7.3
 [2.7.1]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.6.12...v2.7.1

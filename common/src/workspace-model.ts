@@ -44,22 +44,28 @@ class Folder {
         return Array.from(this.files.values())
             .filter(value => value.isProblem())
             .map(value => <ProblemInfo>value)
-            .find(problemInfo => problemInfo.name == problemName);
+            .find(problemInfo => lowerCaseEquals(problemInfo.name, problemName));
     }
 
     getProblemFilesFor(domainInfo: DomainInfo): ProblemInfo[] {
         return Array.from(this.files.values())
             .filter(value => value.isProblem())
             .map(f => <ProblemInfo>f)
-            .filter(problemInfo => problemInfo.domainName == domainInfo.name);
+            .filter(problemInfo => lowerCaseEquals(problemInfo.domainName, domainInfo.name));
     }
 
     getDomainFilesFor(problemInfo: ProblemInfo): DomainInfo[] {
         return Array.from(this.files.values())
             .filter(value => value.isDomain())
             .map(value => <DomainInfo>value)
-            .filter(domainInfo => domainInfo.name == problemInfo.domainName);
+            .filter(domainInfo => lowerCaseEquals(domainInfo.name, problemInfo.domainName));
     }
+}
+
+function lowerCaseEquals(first: string, second: string): boolean {
+    if (first == null) return second == null;
+    else if (second == null) return first == null;
+    else return first.toLowerCase() === second.toLowerCase();
 }
 
 export class PddlWorkspace extends EventEmitter {
@@ -266,7 +272,8 @@ export class PddlWorkspace extends EventEmitter {
         return Array.from(folder.files.values())
             .filter(f => f.isPlan())
             .map(f => <PlanInfo>f)
-            .filter(p => p.problemName === problemInfo.name && p.domainName === problemInfo.domainName)
+            .filter(p => lowerCaseEquals(p.problemName, problemInfo.name) 
+                && lowerCaseEquals(p.domainName, problemInfo.domainName))
     }
 
     getHappeningsFiles(problemInfo: ProblemInfo): HappeningsInfo[] {
@@ -276,7 +283,8 @@ export class PddlWorkspace extends EventEmitter {
         return Array.from(folder.files.values())
             .filter(f => f.isHappenings())
             .map(f => <HappeningsInfo>f)
-            .filter(p => p.problemName === problemInfo.name && p.domainName === problemInfo.domainName)
+            .filter(p => lowerCaseEquals(p.problemName, problemInfo.name)
+                && lowerCaseEquals(p.domainName, problemInfo.domainName))
     }
 
     getAllFilesIf<T extends FileInfo>(predicate: (fileInfo: T) => boolean): T[] {
