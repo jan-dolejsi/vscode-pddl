@@ -4,7 +4,7 @@
   "description": "Planning Domain Description Language support",
   "author": "Jan Dolejsi",
   "license": "MIT",
-  "version": "2.8.1",
+  "version": "2.8.2",
   "publisher": "jan-dolejsi",
   "engines": {
     "vscode": "^1.28.1",
@@ -652,13 +652,15 @@
     "tmp": "^0.0.33",
     "request": "^2.88.0",
     "body-parser": "^1.18.3",
-    "events": "^3.0.0"
+    "events": "^3.0.0",
+    "semver": "^5.6.0"
   },
   "devDependencies": {
     "vsce": "^1.48.0",
     "vscode": "^1.1.28",
     "@types/request": "^2.47.1",
     "@types/tmp": "^0.0.33",
+    "@types/semver": "^5.5.0",
     "typescript": "^3.0.3",
     "tslint": "^5.11.0"
   }

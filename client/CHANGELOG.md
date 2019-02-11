@@ -1,5 +1,13 @@
 # PDDL support - What's new?
 
+## [2.8.2] - 2019-02-10
+
+### Fixes
+
+- Only displaying this page during start-up for major nd minor updates, not fixes.
+- Added PDDL Reference to overview page [https://github.com/nergmada/pddl-reference](https://github.com/nergmada/pddl-reference)
+- Fixed plan export, where actions at time 0 (zero) were printed without any time - violating valid PDDL format for plans
+
 ## [2.8.1] - 2019-02-06
 
 ### Added
@@ -402,7 +410,8 @@ Note for open source contributors: all notable changes to the "pddl" extension w
 
 Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
 
-[Unreleased]: https://github.com/jan-dolejsi/vscode-pddl/compare/v2.8.1...HEAD
+[Unreleased]: https://github.com/jan-dolejsi/vscode-pddl/compare/v2.8.2...HEAD
+[2.8.2]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.8.1...v2.8.2
 [2.8.1]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.8.0...v2.8.1
 [2.8.0]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.7.3...v2.8.0
 [2.7.3]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.7.1...v2.7.3

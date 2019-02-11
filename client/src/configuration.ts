@@ -37,13 +37,9 @@ export class PddlConfiguration {
     }
 
     async getParserPath(): Promise<string> {
-        let parserPath: string = vscode.workspace.getConfiguration().get(PARSER_EXECUTABLE_OR_SERVICE);
+        // this may be 'undefined'
+        return vscode.workspace.getConfiguration().get(PARSER_EXECUTABLE_OR_SERVICE);
 
-        if (!parserPath) {
-            parserPath = await this.askNewParserPath();
-        }
-
-        return parserPath; // this may be 'undefined'
     }
 
     NEVER_SETUP_PARSER = 'neverSetupParser';
@@ -328,7 +324,7 @@ export class PddlConfiguration {
     }
 
     askNewValidatorPath(): Promise<string> {
-        return this.askAndUpdatePath(VALIDATION_PATH, "Validate tool path");
+        return this.askAndUpdatePath(VALIDATION_PATH, "Validate tool");
     }
 
     getValStepPath(): Promise<string> {

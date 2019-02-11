@@ -11,6 +11,7 @@ import {
 import { PddlConfiguration } from '../configuration';
 
 import * as fs from 'fs';
+import {diff} from 'semver';
 import { OverviewPage, SHOULD_SHOW_OVERVIEW_PAGE } from './OverviewPage';
 
 const util = require('util');
@@ -137,7 +138,8 @@ export class StartUp {
         let currentVersion = thisExtension.packageJSON["version"];
         var lastValue = this.context.globalState.get(this.WHATS_NEW_SHOWN_FOR_VERSION, "0.0.0");
 
-        if (currentVersion != lastValue) {
+        let lastInstalledDiff = diff(currentVersion, lastValue);
+        if (['major', 'minor'].includes(lastInstalledDiff)) {
 
             if (true) {
                 let changeLogMd = this.context.asAbsolutePath('CHANGELOG.md');

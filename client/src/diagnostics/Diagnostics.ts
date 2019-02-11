@@ -190,6 +190,7 @@ export class Diagnostics extends Disposable {
 
         if (fileInfo == null) {
             console.log('File not found in the workspace.');
+            return;
         }
 
         // detect parsing and pre-processing issues

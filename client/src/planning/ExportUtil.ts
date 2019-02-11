@@ -17,7 +17,7 @@ export async function exportToAndShow(text: string, uri: Uri): Promise<boolean> 
     }
 
     let newDocument = await workspace.openTextDocument(uri);
-    let editor = await window.showTextDocument(newDocument, { viewColumn: ViewColumn.Three, preserveFocus: true });
+    let editor = await window.showTextDocument(newDocument, { viewColumn: ViewColumn.Active, preserveFocus: true });
     let fullRange = newDocument.validateRange(new Range(0, 0, newDocument.lineCount, 0));
     return editor.edit(edit => edit.replace(fullRange, text));
 }
