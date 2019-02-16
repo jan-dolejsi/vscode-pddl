@@ -116,7 +116,9 @@ export class PlannerService extends Planner {
                 for (var index = 0; index < planSteps.length; index++) {
                     var planStep = planSteps[index];
                     let fullActionName = (<string>planStep["name"]).replace('(','').replace(')', '');
-                    let planStepObj = new PlanStep(planStep["time"], fullActionName, planStep["duration"] != null, planStep["duration"] ? planStep["duration"] : that.epsilon, index);
+                    let time = planStep["time"];
+                    let duration = planStep["duration"] ? planStep["duration"] : that.epsilon;
+                    let planStepObj = new PlanStep(time, fullActionName, planStep["duration"] != null, duration, index);
                     planParser.appendStep(planStepObj);
                 }
 

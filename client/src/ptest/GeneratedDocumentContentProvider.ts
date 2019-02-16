@@ -61,7 +61,7 @@ export class GeneratedDocumentContentProvider implements TextDocumentContentProv
     async provideTextDocumentContent(uri: Uri, token: CancellationToken): Promise<string> {
         let test = this.uriMap.get(uri.toString());
         if (token.isCancellationRequested) return "";
-        
+
         let problemDocument = await workspace.openTextDocument(test.getProblemUri());
         let documentText = problemDocument.getText();
 

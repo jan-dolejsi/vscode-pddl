@@ -101,6 +101,11 @@ export class PddlPlanParser {
         if (this.onPlanReady) this.onPlanReady.apply(this, [this.plans]);
     }
 
+    /** Gets current plan's provisional makespan. */
+    getCurrentPlanMakespan(): number {
+        return this.planBuilder.getMakespan();
+    }
+
     /**
      * Gets all plans.
      */

@@ -65,7 +65,12 @@ export class PlanExporter extends AbstractPlanExporter {
     }
 
     getDefaultPlanPath(): string {
-        return PlanExporter.replaceExtension(Uri.parse(this.plan.problem.fileUri).with({ scheme: 'file' }).fsPath, '.plan');
+        let baseUri = Uri.parse(this.plan.problem.fileUri);
+        if (this.plan.problem.fileUri.startsWith('http')) {
+            baseUri = Uri.file(baseUri.path);
+        }
+
+        return PlanExporter.replaceExtension(baseUri.with({ scheme: 'file' }).fsPath, '.plan');
     }
 
     getPlanText(): string {

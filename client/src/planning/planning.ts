@@ -10,6 +10,7 @@ import {
 } from 'vscode';
 
 import * as path from 'path';
+import { existsSync } from 'fs';
 
 import { PlanDocumentContentProvider } from './PlanDocumentContentProvider';
 
@@ -224,6 +225,8 @@ export class Planning implements PlannerResponseHandler {
 
         let planParser = new PddlPlanParser(domainFileInfo, problemFileInfo, this.plannerConfiguration.getEpsilonTimeStep(), plans => this.visualizePlans(plans));
 
+        workingDirectory = this.adjustWorkingFolder(workingDirectory);
+
         this.planner = await this.createPlanner(workingDirectory, options);
         if (!this.planner) return false;
 
@@ -258,6 +261,21 @@ export class Planning implements PlannerResponseHandler {
         this.output.show(true);
 
         return true;
+    }
+
+    adjustWorkingFolder(workingDirectory: string): string {
+        // the working directory may be virtual, replace it
+        if (!existsSync(workingDirectory)) {
+            if (workspace.workspaceFolders.length) {
+                return workspace.workspaceFolders[0].uri.fsPath;
+            }
+            else {
+                return "";
+            }
+        }
+        else {
+            return workingDirectory;
+        }
     }
 
     getPlans(): Plan[] {

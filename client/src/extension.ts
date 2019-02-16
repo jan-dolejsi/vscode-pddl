@@ -24,6 +24,10 @@ import { ExtensionInfo } from './ExtensionInfo';
 import { toLanguage, isAnyPddl, createPddlExtensionContext } from './utils';
 import { HappeningsValidator } from './diagnostics/HappeningsValidator';
 import { PlanComparer } from './comparison/PlanComparer';
+import { Catalog } from './catalog/Catalog';
+
+import { initialize, instrumentOperation } from "vscode-extension-telemetry-wrapper";
+import { KEY } from './TelemetryInstrumentation';
 
 const PDDL_CONFIGURE_PARSER = 'pddl.configureParser';
 const PDDL_LOGIN_PARSER_SERVICE = 'pddl.loginParserService';
@@ -33,9 +37,6 @@ const PDDL_LOGIN_PLANNER_SERVICE = 'pddl.loginPlannerService';
 const PDDL_UPDATE_TOKENS_PLANNER_SERVICE = 'pddl.updateTokensPlannerService';
 
 const PDDL_CONFIGURE_VALIDATOR = 'pddl.configureValidate';
-
-import { initialize, instrumentOperation } from "vscode-extension-telemetry-wrapper";
-import { KEY } from './TelemetryInstrumentation';
 
 export async function activate(context: ExtensionContext) {
 
@@ -154,6 +155,8 @@ function activateWithTelemetry(_operationId: string, context: ExtensionContext) 
 	let happeningsHoverProvider = languages.registerHoverProvider(HAPPENINGS, symbolInfoProvider);
 
 	new PTestExplorer(pddlContext, planning);
+
+	new Catalog(context);
 
 	new Debugging(context, pddlWorkspace, pddlConfiguration);
 

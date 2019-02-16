@@ -353,6 +353,13 @@ For large problem files, it is convenient to be able to fold blocks of statement
 
 ![Init block folding](https://raw.githubusercontent.com/wiki/jan-dolejsi/vscode-pddl/img/PDDL_init_block_folding.gif)
 
+## Browsing the Planning.Domains PDDL collection
+
+The file explorer side bar includes a tree displaying the [Planning.Domains](http://planning.domains) PDDL collection.
+The domain, problem and plan files are downloaded and displayed as read-only files and the planner may be invoked on them as usual.
+
+![Planning.Domains PDDL collection browser](https://raw.githubusercontent.com/wiki/jan-dolejsi/vscode-pddl/img/PDDL_planning.domains_browsing.gif)
+
 ## Known Issues
 
 See unfixed issues and submit new ones [here][github pddl issues].

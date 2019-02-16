@@ -1,5 +1,13 @@
 # PDDL support - What's new?
 
+## [2.9.0] - 2019-02-16
+
+### Added
+
+Added tree view of the [Planning.Domains](http://planning.domains) PDDL collection. The domain, problem and plan files are downloaded and displayed as read-only files and the planner may be invoked on them as usual.
+
+![Planning.Domains PDDL collection browser](https://raw.githubusercontent.com/wiki/jan-dolejsi/vscode-pddl/img/PDDL_planning.domains_browsing.gif)
+
 ## [2.8.2] - 2019-02-10
 
 ### Fixes
@@ -410,7 +418,8 @@ Note for open source contributors: all notable changes to the "pddl" extension w
 
 Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
 
-[Unreleased]: https://github.com/jan-dolejsi/vscode-pddl/compare/v2.8.2...HEAD
+[Unreleased]: https://github.com/jan-dolejsi/vscode-pddl/compare/v2.9.0...HEAD
+[2.9.0]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.8.2...v2.9.0
 [2.8.2]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.8.1...v2.8.2
 [2.8.1]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.8.0...v2.8.1
 [2.8.0]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.7.3...v2.8.0
