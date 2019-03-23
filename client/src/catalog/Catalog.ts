@@ -3,7 +3,7 @@
  * Licensed under the MIT License. See License.txt in the project root for license information.
  * ------------------------------------------------------------------------------------------ */
 
-import { ExtensionContext, TreeDataProvider, EventEmitter, TreeItem, Event, window, TreeItemCollapsibleState, Uri, TextDocumentContentProvider, CancellationToken, workspace, commands, ViewColumn } from 'vscode';
+import { ExtensionContext, TreeDataProvider, EventEmitter, TreeItem, Event, window, TreeItemCollapsibleState, Uri, TextDocumentContentProvider, CancellationToken, workspace, commands, ViewColumn, TreeView } from 'vscode';
 
 import { CatalogEntry, CatalogEntryKind, Collection, Domain, Problem } from './CatalogEntry';
 import { PlanningDomains } from './PlanningDomains';
@@ -15,9 +15,12 @@ const HTTPDDL = 'httpddl'
 const HTTPLAN = 'httplan'
 
 export class Catalog {
+
+    treeView: TreeView<any>;
+
     constructor(context: ExtensionContext) {
         const catalogDataProvider = new CatalogDataProvider(context);
-        context.subscriptions.push(window.registerTreeDataProvider("pddl.planning.domains", catalogDataProvider));
+        this.treeView = window.createTreeView("pddl.planning.domains", { treeDataProvider: catalogDataProvider, showCollapseAll: true});
         const catalogContentProvider = new CatalogDomainProblemProvider();
         context.subscriptions.push(workspace.registerTextDocumentContentProvider(HTTPDDL, catalogContentProvider));
         context.subscriptions.push(workspace.registerTextDocumentContentProvider(HTTPLAN, new CatalogPlanProvider()));

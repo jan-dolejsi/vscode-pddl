@@ -5,7 +5,7 @@
 'use strict';
 
 import {
-    workspace
+    workspace, window
 } from 'vscode';
 
 import * as process from 'child_process';
@@ -42,22 +42,32 @@ export class PlannerExecutable extends Planner {
         let thisPlanner = this;
         super.planningProcessKilled = false;
 
-        return new Promise<Plan[]>(function(resolve, reject) {
+        if (workspace.getConfiguration("pddlPlanner").get("executionTarget") === "Terminal") {
+            return new Promise<Plan[]>((resolve, _reject) => {
+                let terminal = window.createTerminal({ name: "Planner output", cwd: thisPlanner.workingDirectory });
+                terminal.sendText(command, true);
+                terminal.show(true);
+                let plans: Plan[] = [];
+                resolve(plans);
+            });
+        }
+
+        return new Promise<Plan[]>(function (resolve, reject) {
             thisPlanner.child = process.exec(command,
                 { cwd: thisPlanner.workingDirectory },
                 (error, stdout, stderr) => {
-                planParser.onPlanFinished();
+                    planParser.onPlanFinished();
 
-                if (error && !thisPlanner.child.killed && !thisPlanner.planningProcessKilled) {
-                    parent.handleError(error, stderr);//todo: remove this and use Promise
-                    reject(error);
-                }
+                    if (error && !thisPlanner.child.killed && !thisPlanner.planningProcessKilled) {
+                        parent.handleError(error, stderr);//todo: remove this and use Promise
+                        reject(error);
+                    }
 
-                let plans = planParser.getPlans();
-                parent.handleSuccess(stdout, plans);//todo: remove this and use Promise
-                resolve(plans);
-                thisPlanner.child = null;
-            });
+                    let plans = planParser.getPlans();
+                    parent.handleSuccess(stdout, plans);//todo: remove this and use Promise
+                    resolve(plans);
+                    thisPlanner.child = null;
+                });
 
             thisPlanner.child.stdout.on('data', (data: any) => {
                 const dataString = data.toString();
@@ -85,9 +95,5 @@ export class PlannerExecutable extends Planner {
             // this.child.stdin.pause();
             tree_kill(this.child.pid);
         }
-    }
-
-    static toPath(uri: string): string {
-        return workspace.textDocuments.find(doc => doc.uri.toString() == uri).fileName;
     }
 }

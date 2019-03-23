@@ -5,7 +5,7 @@
 'use strict';
 
 import {
-    ExtensionContext, workspace, window
+    ExtensionContext, workspace, window, env, Uri
 } from 'vscode';
 
 import * as path from 'path';
@@ -18,16 +18,18 @@ import { Util } from '../../../common/src/util';
 import { PlanFunctionEvaluator } from './PlanFunctionEvaluator';
 import { PlanReportSettings } from './PlanReportSettings';
 import { VAL_STEP_PATH, CONF_PDDL, PDDL_PLANNER, VALUE_SEQ_PATH } from '../configuration';
-import { PDDL_GENERATE_PLAN_REPORT, PDDL_EXPORT_PLAN } from './planning';
-var opn = require('opn');
-var fs = require('fs')
+import * as fs from 'fs';
+const util = require('util');
+require('util.promisify').shim();
+
+const readFile = util.promisify(fs.readFile);
 
 export class PlanReportGenerator {
 
     planStepHeight = 20;
     settings: Map<Plan, PlanReportSettings> = new Map();
 
-    constructor(public context: ExtensionContext, public displayWidth: number, public selfContained: boolean) {
+    constructor(private context: ExtensionContext, private displayWidth: number, private selfContained: boolean) {
 
     }
 
@@ -36,7 +38,7 @@ export class PlanReportGenerator {
 
         let htmlFile = Util.toFile("plan-report", ".html", html);
 
-        opn("file://" + htmlFile);
+        env.openExternal(Uri.parse("file://" + htmlFile));
     }
 
     async generateHtml(plans: Plan[], planId: number = -1): Promise<string> {
@@ -55,12 +57,12 @@ export class PlanReportGenerator {
         let html = `<!DOCTYPE html>
         <head>
             <title>Plan report</title>
-            ${this.includeStyle(this.asAbsolutePath('planview', 'plans.css'))}
-            ${this.includeStyle(this.asAbsolutePath('planview', 'plan-resource-task.css'))}
-            ${this.includeStyle(this.asAbsolutePath('planview', 'menu.css'))}
-            ${this.includeScript(this.asAbsolutePath('planview', 'plans.js'))}
+            ${await this.includeStyle(this.asAbsolutePath('planview', 'plans.css'))}
+            ${await this.includeStyle(this.asAbsolutePath('planview', 'plan-resource-task.css'))}
+            ${await this.includeStyle(this.asAbsolutePath('planview', 'menu.css'))}
+            ${await this.includeScript(this.asAbsolutePath('planview', 'plans.js'))}
             <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
-            ${this.includeScript(this.asAbsolutePath('planview', 'charts.js'))}
+            ${await this.includeScript(this.asAbsolutePath('planview', 'charts.js'))}
         </head>
         <body onload="scrollPlanSelectorIntoView(${selectedPlan})">
             <div class="planSelectors" style="display: ${planSelectorsDisplayStyle};">${planSelectors}
@@ -72,8 +74,12 @@ export class PlanReportGenerator {
         return html;
     }
 
-    asAbsolutePath(...paths: string[]): string {
-        return this.context.asAbsolutePath(path.join(...paths));
+    asAbsolutePath(...paths: string[]): Uri {
+        let uri = Uri.file(this.context.asAbsolutePath(path.join(...paths)));
+        if (!this.selfContained) {
+            uri = uri.with({scheme: "vscode-resource"});
+        }
+        return uri;
     }
 
     renderPlanSelector(plan: Plan, planIndex: number, selectedPlan: number, maxCost: number): string {
@@ -245,21 +251,21 @@ ${stepsInvolvingThisObject}
         return `<table><tr><th colspan="2" class="actionToolTip">${step.actionName} ${step.objects.join(' ')}</th></tr><tr><td class="actionToolTip" style="width:50px">Start:</td><td class="actionToolTip">${step.getStartTime()}</td></tr>${durationRow}</table>`;
     }
 
-    includeStyle(path: string): string {
+    async includeStyle(uri: Uri): Promise<string> {
         if (this.selfContained) {
-            let styleText = fs.readFileSync(path, 'utf8');
+            let styleText = await readFile(uri.fsPath, { encoding: 'utf-8' });
             return `<style>\n${styleText}\n</style>`;
         } else {
-            return `<link rel = "stylesheet" type = "text/css" href = "${path}" />`;
+            return `<link rel = "stylesheet" type = "text/css" href = "${uri.toString()}" />`;
         }
     }
 
-    includeScript(path: string): string {
+    async includeScript(uri: Uri): Promise<string> {
         if (this.selfContained) {
-            let scriptText = fs.readFileSync(path, 'utf8');
+            let scriptText = await readFile(uri.fsPath, { encoding: 'utf-8' });
             return `<script>\n${scriptText}\n</script>`;
         } else {
-            return `<script src="${path}"></script>`;
+            return `<script src="${uri.toString()}"></script>`;
         }
     }
 
@@ -268,12 +274,10 @@ ${stepsInvolvingThisObject}
     }
 
     renderMenu(): string {
-        let generateReportUri = encodeURI('command:' + PDDL_GENERATE_PLAN_REPORT);
-        let exportPlanUri = encodeURI('command:' + PDDL_EXPORT_PLAN + '?' + JSON.stringify([0]));
         return `    <div class="menu">&#x2630;
         <span class="menutooltip">
-            <a href="${generateReportUri}">Generate plan report</a>
-            <a href="${exportPlanUri}" onClick="updatePlanExportHref(this)">Export as .plan file...</a>
+            <a href="#" onClick="openInBrowser()">Generate plan report</a>
+            <a href="#" onClick="savePlanToFile()">Export as .plan file...</a>
         </span>
     </div>`;
     }

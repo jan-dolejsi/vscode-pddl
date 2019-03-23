@@ -124,6 +124,11 @@ Domain and problem files correspond to each other, if:
 
 Control+click on action names in `.plan` files to jump to the action definition in the domain file.
 
+#### Running the planner interactively
+
+See configuration setting `pddlPlanner.executionTarget` to select where is the planner executable started. You can either direct planner executable output to a _Terminal_ window instead of the _Output window_.
+The _Terminal_ option is useful when the planner takes keyboard input while executing. In case of the _Terminal_, the plan(s) are not visualized. Planner could be stopped by _Ctrl+C_ (or equivalent).
+
 #### Hide actions from plan visualization
 
 Plan visualization details may be fine-tuned using an additional file `<domain>.planviz.json`, where `<domain>` refers to the domain file name without the `.pddl` extension, placed into the same folder as the domain file. Following syntax is supported:
@@ -145,6 +150,19 @@ The entries may use regular expression pattern. Note that backslashes in the reg
 Plan visualization displays a menu symbol &#x2630; in the top-right corner, which shows applicable commands. For example the _PDDL: Generate plan report_, which opens the plan report generated into a self-contained HTML file that you can save and share/email.
 
 ![Plan visualization menu](https://raw.githubusercontent.com/wiki/jan-dolejsi/vscode-pddl/img/PDDL_plan_viz_menu.jpg)
+
+#### Exporting plan to a file
+
+The Planner Output plan visualization pane displays a menu symbol &#x2630; in the top-right corner. One of the options is _Export as .plan file_. When this option is selected, the file name and location can be specified.
+
+#### Plan file visualization
+
+Right-clicking on any `.plan` file offers _PDDL: Preview plan_ command to visualize the plan. However, the plan must start with the meta data lines linking it to a domain and problem names:
+
+```pddl
+;;!domain: domain-name
+;;!problem: problem-name
+```
 
 ### Planning with command-line switches
 

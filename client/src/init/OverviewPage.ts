@@ -160,7 +160,8 @@ export class OverviewPage {
         return html;
     }
 
-    async updatePageConfiguration() {
+    async updatePageConfiguration(): Promise<void> {
+        if (!this.webViewPanel) return;
         this.webViewPanel.webview.postMessage({
             command: 'updateConfiguration',
             planner: await this.pddlConfiguration.getPlannerPath(),

@@ -57,8 +57,8 @@ export function getDomainAndProblemForHappenings(happeningsInfo: HappeningsInfo,
 }
 
 export interface DomainAndProblem {
-    domain: DomainInfo,
-    problem: ProblemInfo
+    readonly domain: DomainInfo,
+    readonly problem: ProblemInfo
 }
 
 export async function selectHappenings(): Promise<string> {

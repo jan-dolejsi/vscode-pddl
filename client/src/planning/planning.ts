@@ -6,13 +6,15 @@
 
 import {
     window, workspace, commands, OutputChannel, Uri,
-    ViewColumn, MessageItem, ExtensionContext, ProgressLocation, TextDocument, EventEmitter, Event, CancellationToken, Progress
+    MessageItem, ExtensionContext, ProgressLocation, TextDocument, EventEmitter, Event, CancellationToken, Progress
 } from 'vscode';
 
-import * as path from 'path';
-import { existsSync } from 'fs';
+const util = require('util');
+require('util.promisify').shim();
 
-import { PlanDocumentContentProvider } from './PlanDocumentContentProvider';
+import * as path from 'path';
+import * as fs from 'fs';
+const exists = util.promisify(fs.exists);
 
 import { PddlWorkspace } from '../../../common/src/workspace-model';
 import { DomainInfo, ProblemInfo } from '../../../common/src/parser';
@@ -32,10 +34,9 @@ import { PlanExporter } from './PlanExporter';
 import { PlanHappeningsExporter } from './PlanHappeningsExporter';
 import { HappeningsPlanExporter } from './HappeningsPlanExporter';
 import { isHappenings, isPlan } from '../utils';
+import { PlanView, PDDL_GENERATE_PLAN_REPORT, PDDL_EXPORT_PLAN } from './PlanView';
 
-export const PDDL_GENERATE_PLAN_REPORT = 'pddl.planReport';
 const PDDL_STOP_PLANNER = 'pddl.stopPlanner';
-export const PDDL_EXPORT_PLAN = 'pddl.exportPlan';
 const PDDL_CONVERT_PLAN_TO_HAPPENINGS = 'pddl.convertPlanToHappenings';
 const PDDL_CONVERT_HAPPENINGS_TO_PLAN = 'pddl.convertHappeningsToPlan';
 
@@ -46,17 +47,15 @@ export class Planning implements PlannerResponseHandler {
     output: OutputChannel;
     epsilon = 1e-3;
 
-    previewUri: Uri;
-    provider: PlanDocumentContentProvider;
-
     planner: Planner;
     plans: Plan[];
     planningProcessKilled: boolean;
-
-    extensionPath: string;
+    planView: PlanView;
 
     constructor(public pddlWorkspace: PddlWorkspace, public plannerConfiguration: PddlConfiguration, context: ExtensionContext) {
         this.output = window.createOutputChannel("Planner output");
+
+        context.subscriptions.push(this.planView = new PlanView(context, pddlWorkspace));
 
         context.subscriptions.push(commands.registerCommand('pddl.planAndDisplayResult',
             async (domainUri: Uri, problemUri: Uri, workingFolder: string, options: string) => {
@@ -70,20 +69,17 @@ export class Planning implements PlannerResponseHandler {
 
         context.subscriptions.push(commands.registerCommand(PDDL_STOP_PLANNER, () => this.stopPlanner()));
 
-        context.subscriptions.push(commands.registerCommand(PDDL_GENERATE_PLAN_REPORT, () => {
-            let plans: Plan[] = this.getPlans();
+        context.subscriptions.push(commands.registerCommand(PDDL_GENERATE_PLAN_REPORT, (plans: Plan[], selectedPlan: number) => {
             if (plans != null) {
-                new PlanReportGenerator(context, 1000, true).export(plans, plans.length - 1);
+                new PlanReportGenerator(context, 1000, true).export(plans, selectedPlan);
             } else {
                 window.showErrorMessage("There is no plan to export.");
             }
         }));
 
-        context.subscriptions.push(commands.registerCommand(PDDL_EXPORT_PLAN, selectedPlan => {
-            let plans: Plan[] = this.getPlans();
-            if (selectedPlan === undefined && plans.length > 0) selectedPlan = 0;
-            if (plans != null && selectedPlan < plans.length) {
-                new PlanExporter(plans[selectedPlan]).export();
+        context.subscriptions.push(commands.registerCommand(PDDL_EXPORT_PLAN, (plan: Plan) => {
+            if (plan) {
+                new PlanExporter(plan).export();
             } else {
                 window.showErrorMessage("There is no plan open, or the selected plan does not exist.");
             }
@@ -106,12 +102,6 @@ export class Planning implements PlannerResponseHandler {
                 window.showErrorMessage("Active document is not a happening.");
             }
         }));
-
-        this.previewUri = Uri.parse('pddl-plan://authority/plan');
-        this.provider = new PlanDocumentContentProvider(context);
-        context.subscriptions.push(workspace.registerTextDocumentContentProvider('pddl-plan', this.provider));
-
-        this.extensionPath = context.extensionPath;
     }
 
     /**
@@ -225,7 +215,7 @@ export class Planning implements PlannerResponseHandler {
 
         let planParser = new PddlPlanParser(domainFileInfo, problemFileInfo, this.plannerConfiguration.getEpsilonTimeStep(), plans => this.visualizePlans(plans));
 
-        workingDirectory = this.adjustWorkingFolder(workingDirectory);
+        workingDirectory = await this.adjustWorkingFolder(workingDirectory);
 
         this.planner = await this.createPlanner(workingDirectory, options);
         if (!this.planner) return false;
@@ -251,6 +241,7 @@ export class Planning implements PlannerResponseHandler {
                 this.progressUpdater.setFinished();
                 let result = this.planningProcessKilled ? PlanningResult.killed() : PlanningResult.success(plans, elapsedTime);
                 this._onPlansFound.fire(result);
+                this.planner = null;
             },
                 reason => {
                     this.progressUpdater.setFinished();
@@ -263,9 +254,9 @@ export class Planning implements PlannerResponseHandler {
         return true;
     }
 
-    adjustWorkingFolder(workingDirectory: string): string {
+    async adjustWorkingFolder(workingDirectory: string): Promise<string> {
         // the working directory may be virtual, replace it
-        if (!existsSync(workingDirectory)) {
+        if (!await exists(workingDirectory)) {
             if (workspace.workspaceFolders.length) {
                 return workspace.workspaceFolders[0].uri.fsPath;
             }
@@ -368,7 +359,7 @@ export class Planning implements PlannerResponseHandler {
 
     handleSuccess(stdout: string, plans: Plan[]): void {
         this.output.appendLine(`Planner found ${plans.length} plan(s) in ${this.progressUpdater.getElapsedTimeInMilliSecs() / 1000}secs.`);
-        stdout.length; // just waste it, we did not need it here
+        stdout; // just waste it, we did not need it here
 
         this.visualizePlans(plans);
         this.planner = null;
@@ -388,19 +379,9 @@ export class Planning implements PlannerResponseHandler {
         });
     }
 
-    static toPath(uri: string): string {
-        return workspace.textDocuments.find(doc => doc.uri.toString() == uri).fileName;
-    }
-
     visualizePlans(plans: Plan[]): void {
         this.plans = plans;
-        this.provider.update(this.previewUri, plans);
-
-        let usesViewColumnTwo = window.visibleTextEditors.some(editor => editor.viewColumn == ViewColumn.Two);
-        let targetColumn = usesViewColumnTwo ? ViewColumn.Three : ViewColumn.Two;
-
-        commands.executeCommand('vscode.previewHtml', this.previewUri, targetColumn, 'Plan')
-            .then((_) => { }, (reason) => window.showErrorMessage(reason));
+        this.planView.setPlannerOutput(plans);
     }
 
     static getFolderPath(documentPath: string): string {

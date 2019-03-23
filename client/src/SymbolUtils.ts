@@ -26,7 +26,8 @@ export class SymbolUtils {
         if (!symbol) return null;
 
         if (symbol.isPrefixedBy('(')) {
-            let predicateFound = domainInfo.getPredicates().find(p => p.name == symbol.name);
+            let symbolName = symbol.name.toLowerCase();
+            let predicateFound = domainInfo.getPredicates().find(p => p.name.toLowerCase() === symbolName);
             if (predicateFound) {
                 domainInfo.findVariableLocation(predicateFound);
                 return new VariableInfo(
@@ -35,7 +36,7 @@ export class SymbolUtils {
                     predicateFound,
                 );
             }
-            let functionFound = domainInfo.getFunctions().find(f => f.name == symbol.name);
+            let functionFound = domainInfo.getFunctions().find(f => f.name.toLowerCase() === symbolName);
             if (functionFound) {
                 domainInfo.findVariableLocation(functionFound);
                 return new VariableInfo(
@@ -44,7 +45,7 @@ export class SymbolUtils {
                     functionFound
                 );
             }
-            let derivedFound = domainInfo.getDerived().find(d => d.name == symbol.name);
+            let derivedFound = domainInfo.getDerived().find(d => d.name.toLowerCase() === symbolName);
             if (derivedFound) {
                 // todo: refresh the documentation string
                 return new VariableInfo(
@@ -53,10 +54,12 @@ export class SymbolUtils {
                     derivedFound
                 );
             }
-            let actionFound = domainInfo.getActions().find(a => a.name == symbol.name);
+            let actionFound = domainInfo.getActions().find(a => a.name.toLowerCase() === symbolName);
             if (actionFound) {
+                let label = 'Action';
+                if (actionFound.isDurative) label = 'Durative ' + label;
                 return new ActionInfo(
-                    this.createHover(symbol.range, 'Action', symbol.name, ''),
+                    this.createHover(symbol.range, label, actionFound.name, actionFound.documentation || ''),
                     new Location(this.toUri(domainInfo.fileUri), SymbolUtils.toRange(actionFound.location)),
                     actionFound
                 );

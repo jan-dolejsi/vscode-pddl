@@ -1,5 +1,14 @@
 # PDDL support - What's new?
 
+## [2.9.1] - 2019-02-??
+
+Relaxed the extension activation to be postponed till a .pddl, .plan, .happenings file is open, not just present in the workspace. The extension is also activated when the Test pane or Planning.Domains file tree is open, as well as when several key commands are invoked by the user. This results in faster start-up of VS Code in the context of projects that have a mixture of code and PDDL models.
+Moved plan visualization from deprecated `vscode.previewHtml` command to `WebView` API.
+Added _PDDL: Preview plan_ command to visualize any `.plan` file.
+Added `pddlPlanner.executionTarget` configuration option to direct planner executable output to a _terminal_ window instead of the _output_ window.
+The _Terminal_ option is useful when the planner takes keyboard input while executing. In case of the _Terminal_, the plan(s) are not visualized. Planner could be stopped by _Ctrl+C_ (or equivalent).
+Fixed issues caused by case-sensitive action/predicate/function/type name matching, which resulted in missing hover-over and jumping to definition options.
+
 ## [2.9.0] - 2019-02-16
 
 ### Added
@@ -20,7 +29,7 @@ Added tree view of the [Planning.Domains](http://planning.domains) PDDL collecti
 
 ### Added
 
-- added link to the [VS Code Icons Extension](https://marketplace.visualstudio.com/items?itemName=robertohuertasm.vscode-icons), which now provides icons for .pddl, .plan and .happenings files.
+- added link to the [VS Code Icons Extension](https://marketplace.visualstudio.com/items?itemName=vscode-icons-team.vscode-icons), which now provides icons for .pddl, .plan and .happenings files.
 
 ### Bug fixes
 
@@ -411,6 +420,11 @@ Simplified snippets and added tabstops/placeholders to them, so they are easy to
 ## [Unreleased]
 
 Interactive stepping through plans (aka debugging).
+Node.js update: https://code.visualstudio.com/updates/v1_31#_nodejs-update
+Icons: https://code.visualstudio.com/updates/v1_31#_updated-octicons
+Use vscode-uri package in the Common module.
+CodeAction to add/remove requirements, declare predicate/functions, etc..
+Gray out unused declarations.
 
 ## Note to contributors
 

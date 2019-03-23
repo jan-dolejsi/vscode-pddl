@@ -7,7 +7,7 @@
   "version": "2.9.0",
   "publisher": "jan-dolejsi",
   "engines": {
-    "vscode": "^1.28.1",
+    "vscode": "^1.31.0",
     "node": "^7.9.0"
   },
   "categories": [
@@ -33,11 +33,11 @@
     "onLanguage:pddl",
     "onLanguage:plan",
     "onLanguage:happenings",
-    "workspaceContains:**/*.pddl",
-    "workspaceContains:**/*ptest.json",
     "onCommand:pddl.configureParser",
     "onCommand:pddl.configurePlanner",
     "onCommand:pddl.showOverview",
+    "onView:pddl.planning.domains",
+    "onView:pddl.tests.explorer",
     "onView:pddl.planning.domains"
   ],
   "main": "./out/client/src/extension",
@@ -209,6 +209,10 @@
         "title": "PDDL: Normalize and compare 2 plans"
       },
       {
+        "command": "pddl.plan.preview",
+        "title": "PDDL: Preview plan"
+      },
+      {
         "command": "pddl.plan.normalize",
         "title": "PDDL: Normalize and evaluate plan"
       },
@@ -244,65 +248,77 @@
           "when": "resourceLangId == pddl && resourceScheme == tpddl"
         },
         {
+          "command": "pddl.plan.preview",
+          "when": "resourceLangId == plan",
+          "group": "pddl"
+        },
+        {
           "command": "pddl.convertPlanToHappenings",
-          "when": "resourceLangId == plan"
+          "when": "resourceLangId == plan",
+          "group": "pddl"
         },
         {
           "command": "pddl.convertHappeningsToPlan",
-          "when": "resourceLangId == happenings"
+          "when": "resourceLangId == happenings",
+          "group": "pddl"
         },
         {
           "command": "pddl.plan.validate",
-          "when": "resourceLangId == plan"
+          "when": "resourceLangId == plan",
+          "group": "pddl"
         },
         {
           "command": "pddl.plan.normalize",
-          "when": "resourceLangId == plan"
+          "when": "resourceLangId == plan",
+          "group": "pddl"
         },
         {
           "command": "pddl.happenings.debug",
-          "when": "resourceLangId == happenings && false"
+          "when": "resourceLangId == happenings && false",
+          "group": "pddl"
         },
         {
           "command": "pddl.happenings.execute",
-          "when": "resourceLangId == happenings"
+          "when": "resourceLangId == happenings",
+          "group": "pddl"
         },
         {
           "command": "pddl.happenings.generatePlanResumeCases",
-          "when": "resourceLangId == happenings"
+          "when": "resourceLangId == happenings",
+          "group": "pddl"
         }
       ],
       "view/title": [
         {
           "command": "pddl.tests.refresh",
-          "when": "view == PTestExplorer",
+          "when": "view == pddl.tests.explorer",
           "group": "navigation"
         }
       ],
       "view/item/context": [
         {
           "command": "pddl.tests.run",
-          "when": "view == PTestExplorer && viewItem == test",
+          "when": "view == pddl.tests.explorer && viewItem == test",
           "group": "execution"
         },
         {
           "command": "pddl.tests.runAll",
-          "when": "view == PTestExplorer && viewItem == manifest",
+          "when": "view == pddl.tests.explorer && viewItem == manifest",
           "group": "execution"
         },
         {
           "command": "pddl.tests.view",
-          "when": "view == PTestExplorer && viewItem == test",
+          "when": "view == pddl.tests.explorer && viewItem == test",
           "group": "navigation"
         },
         {
           "command": "pddl.tests.viewDefinition",
-          "when": "view == PTestExplorer && viewItem != folder",
+          "when": "view == pddl.tests.explorer && viewItem != folder",
           "group": "navigation"
         },
         {
           "command": "pddl.tests.viewExpectedPlans",
-          "when": "view == PTestExplorer && viewItem == test",
+          "when": "view == pddl.tests.explorer && viewItem == test",
           "group": "navigation"
         }
       ],
@@ -464,6 +480,18 @@
           "pattern": "^\\$\\(planner\\).+\\$\\(options\\).+\\$\\(domain\\).+\\$\\(problem\\).*$",
           "default": "$(planner) $(options) $(domain) $(problem)"
         },
+        "pddlPlanner.executionTarget": {
+          "scope": "window",
+          "enum": [
+            "Output window",
+            "Terminal"
+          ],
+          "default": "Output window",
+          "enumDescriptions": [
+            "Planner output is displayed in the VS Code Output Window 'Planner output'.",
+            "Planner is executed in a terminal window. Plan is not displayed visually. Use this to interact with the planner."
+          ]
+        },
         "pddlPlanner.serviceAuthenticationEnabled": {
           "scope": "resource",
           "type": "boolean",
@@ -568,7 +596,7 @@
     "views": {
       "test": [
         {
-          "id": "PTestExplorer",
+          "id": "pddl.tests.explorer",
           "name": "PDDL Tests"
         }
       ],
@@ -646,16 +674,16 @@
     "package": "vsce package"
   },
   "dependencies": {
-    "vscode-extension-telemetry-wrapper": "^0.3.3",
-    "tree-kill": "^1.2.0",
+    "vscode-extension-telemetry-wrapper": "^0.3.9",
+    "tree-kill": "^1.2.1",
     "util.promisify": "^1.0.0",
-    "vscode-debugadapter": "1.31.0",
-    "vscode-debugprotocol": "1.31.0",
+    "vscode-debugadapter": "1.34.0",
+    "vscode-debugprotocol": "1.34.0",
     "await-notify": "^1.0.1",
-    "express": "^4.16.3",
+    "express": "^4.16.4",
     "npm": "5.5.1",
     "nunjucks": "^3.1.3",
-    "opn": "^5.3.0",
+    "opn": "^5.5.0",
     "tmp": "^0.0.33",
     "request": "^2.88.0",
     "body-parser": "^1.18.3",
@@ -663,12 +691,12 @@
     "semver": "^5.6.0"
   },
   "devDependencies": {
-    "vsce": "^1.48.0",
-    "vscode": "^1.1.28",
-    "@types/request": "^2.47.1",
-    "@types/tmp": "^0.0.33",
+    "vsce": "^1.58.0",
+    "vscode": "^1.1.30",
+    "@types/request": "^2.48.1",
+    "@types/tmp": "^0.0.34",
     "@types/semver": "^5.5.0",
     "typescript": "^3.0.3",
-    "tslint": "^5.11.0"
+    "tslint": "^5.14.0"
   }
 }

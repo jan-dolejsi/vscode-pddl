@@ -36,7 +36,7 @@ export class PTestExplorer {
     constructor(private context: PddlExtensionContext, public planning: Planning) {
         this.pTestTreeDataProvider = new PTestTreeDataProvider(context);
 
-        this.pTestViewer = window.createTreeView('PTestExplorer', { treeDataProvider: this.pTestTreeDataProvider });
+        this.pTestViewer = window.createTreeView('pddl.tests.explorer', { treeDataProvider: this.pTestTreeDataProvider, showCollapseAll: true });
         context.subscriptions.push(this.pTestViewer);
 
         context.subscriptions.push(commands.registerCommand('pddl.tests.refresh', () => this.pTestTreeDataProvider.refresh()));

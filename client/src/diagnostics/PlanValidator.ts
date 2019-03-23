@@ -188,7 +188,7 @@ export class PlanValidator {
     validateActionTimes(plan: PlanInfo): Diagnostic[] {
         return plan.getSteps()
             .slice(1)
-            .filter((step: PlanStep, index: number) => !this.isTimeMonotonociallyIncreasing(plan.getSteps()[index], step))
+            .filter((step: PlanStep, index: number) => !this.isTimeMonotonicallyIncreasing(plan.getSteps()[index], step))
             .map(step => new Diagnostic(createRangeFromLine(step.lineIndex), `Action '${step.actionName}' time ${step.getStartTime()} is before the preceding action time`, DiagnosticSeverity.Error));
     }
 
@@ -197,7 +197,7 @@ export class PlanValidator {
         return domain.actions.some(a => a.name.toLowerCase() == step.actionName.toLowerCase());
     }
 
-    private isTimeMonotonociallyIncreasing(first: PlanStep, second: PlanStep): boolean {
+    private isTimeMonotonicallyIncreasing(first: PlanStep, second: PlanStep): boolean {
         return first.getStartTime() <= second.getStartTime();
     }
 }
