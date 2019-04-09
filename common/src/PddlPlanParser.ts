@@ -21,7 +21,7 @@ export class PddlPlanParser {
     planBuilder: PlanBuilder;
     endOfBufferToBeParsedNextTime = '';
 
-    constructor(public domain: DomainInfo, public problem: ProblemInfo, public epsilon: number, public onPlanReady?: (plans: Plan[]) => void) {
+    constructor(private domain: DomainInfo, private problem: ProblemInfo, private epsilon: number, private onPlanReady?: (plans: Plan[]) => void) {
         this.planBuilder = new PlanBuilder(epsilon);
     }
 

@@ -42,7 +42,7 @@
         <tr style="vertical-align: top">
             <td style="padding-right: 20px; white-space: nowrap">
                 <h2>Getting started</h2>
-                Try <a href="#" onclick="tryHelloWorld()" title="Creates the simplest PDDL example, invoke the planner and show the plan.">Hello World</a> example<br/>
+                Try <a href="#" onclick="tryHelloWorld()" title="Creates the simplest PDDL example, invokes the planner and displays the plan.">Hello World</a> example<br/>
                 <a href="https://github.com/jan-dolejsi/vscode-pddl-samples/">See</a> or <a href="#" onclick="clonePddlSamples()" title="Select a local folder and samples will be downloaded.">clone PDDL samples</a><br/>
 
                 <h2>Configuration</h2>
@@ -50,6 +50,14 @@
                 <input type="text" id="planner" class="config" readonly/>
                 <a href="command:pddl.configurePlanner" class="button" title="Configure...">&#9881;</a><br/>
                 See <a href="https://github.com/jan-dolejsi/vscode-pddl/wiki/Configuring-the-PDDL-planner">more info about PDDL planners</a>
+
+                <br/>
+                <form action="#" onchange="return onPlannerOutputTargetChanged();">Output into
+                    <input type="radio" name="planner_output_target" value="Output window" id="planner_output_target_output_window"/>
+                    <label for="planner_output_target_output_window">Output window</label>
+                    <input type="radio" name="planner_output_target" value="Terminal" title="Does not visualize plans!" id="planner_output_target_terminal"/>
+                    <label for="planner_output_target_terminal">Terminal</label>
+                </form>
 
                 <h3>PDDL parser</h3>
                 <input type="text" id="parser" class="config" readonly/>

@@ -59,6 +59,7 @@ export class PlanView extends Disposable {
         let plannerOutputPanel = this.getPlannerOutputPanel();
         plannerOutputPanel.setPlans(plans);
         this.resetTimeout();
+        if (plans.length > 0) plannerOutputPanel.reveal();
     }
 
     getPlannerOutputPanel(): PlanPreviewPanel {
@@ -123,12 +124,6 @@ export class PlanView extends Disposable {
         else {
             previewPanel = this.createPreviewPanelForDocument(doc, displayColumn);
             this.webviewPanels.set(doc.uri, previewPanel);
-            // when the user closes the tab, remove the panel
-            previewPanel.getPanel().onDidDispose(() => this.webviewPanels.delete(doc.uri), undefined, this.context.subscriptions);
-            // when the pane becomes visible again, refresh it
-            previewPanel.getPanel().onDidChangeViewState(_ => this.rebuild());
-
-            previewPanel.getPanel().webview.onDidReceiveMessage(e => this.handleMessage(previewPanel, e), undefined, this.context.subscriptions);
         }
 
         this.setNeedsRebuild(doc);
@@ -151,7 +146,16 @@ export class PlanView extends Disposable {
 
         webViewPanel.iconPath = Uri.file(this.context.asAbsolutePath("overview/file_type_pddl_plan.svg"));
 
-        return new PlanPreviewPanel(uri, webViewPanel);
+        let previewPanel = new PlanPreviewPanel(uri, webViewPanel);
+
+        // when the user closes the tab, remove the panel
+        previewPanel.getPanel().onDidDispose(() => this.webviewPanels.delete(uri), undefined, this.context.subscriptions);
+        // when the pane becomes visible again, refresh it
+        previewPanel.getPanel().onDidChangeViewState(_ => this.rebuild());
+
+        previewPanel.getPanel().webview.onDidReceiveMessage(e => this.handleMessage(previewPanel, e), undefined, this.context.subscriptions);
+
+        return previewPanel;
     }
 
     private async getPreviewHtml(previewPanel: PlanPreviewPanel): Promise<string> {
@@ -185,8 +189,11 @@ export class PlanView extends Disposable {
                 commands.executeCommand(PDDL_EXPORT_PLAN, previewPanel.getSelectedPlan());
                 break;
             case 'openInBrowser':
-                commands.executeCommand(PDDL_GENERATE_PLAN_REPORT, previewPanel.getPlans(), previewPanel.getSelectedPlan());
+                commands.executeCommand(PDDL_GENERATE_PLAN_REPORT, previewPanel.getPlans(), previewPanel.getSelectedPlanIndex());
                 break;
+            case 'selectPlan':
+                let planIndex: number = message.planIndex;
+                previewPanel.setSelectedPlanIndex(planIndex);
             default:
                 console.warn('Unexpected command: ' + message.command);
         }
@@ -210,7 +217,7 @@ class PlanPreviewPanel {
 
     needsRebuild: boolean;
     width: number;
-    selectedPlanIndex: number;
+    selectedPlanIndex = 0;
     plans: Plan[];
     error: Error;
 
@@ -239,6 +246,7 @@ class PlanPreviewPanel {
 
     setPlans(plans: Plan[]): void {
         this.plans = plans;
+        this.selectedPlanIndex = plans ? plans.length -1 : 0;
         this.error = null;
         this.setNeedsRebuild(true);
     }
@@ -255,7 +263,7 @@ class PlanPreviewPanel {
         return this.plans;
     }
 
-    reveal(displayColumn: ViewColumn): void {
+    reveal(displayColumn?: ViewColumn): void {
         this.panel.reveal(displayColumn);
     }
 

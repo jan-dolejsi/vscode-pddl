@@ -55,16 +55,14 @@ export class PlannerExecutable extends Planner {
         return new Promise<Plan[]>(function (resolve, reject) {
             thisPlanner.child = process.exec(command,
                 { cwd: thisPlanner.workingDirectory },
-                (error, stdout, stderr) => {
+                (error, _stdout, _stderr) => {
                     planParser.onPlanFinished();
 
                     if (error && !thisPlanner.child.killed && !thisPlanner.planningProcessKilled) {
-                        parent.handleError(error, stderr);//todo: remove this and use Promise
                         reject(error);
                     }
 
                     let plans = planParser.getPlans();
-                    parent.handleSuccess(stdout, plans);//todo: remove this and use Promise
                     resolve(plans);
                     thisPlanner.child = null;
                 });

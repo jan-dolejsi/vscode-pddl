@@ -29,8 +29,8 @@ Simplest way to get started is to:
 
 To exercise the features of this PDDL Extension, clone this [vscode-pddl-samples](https://github.com/jan-dolejsi/vscode-pddl-samples/) repository and open the folder in VS Code. Follow the instructions and explanations in the [readme](https://github.com/jan-dolejsi/vscode-pddl-samples/blob/master/README.md).
 
-> You can copy the following URL to your browser's address bar and open it, it will let you select where you want to clone the repo onto your local storage and opens it for you in VS Code - all automated: 
-
+> You can copy the following URL to your browser's address bar and open it, it will let you select where you want to clone the repo onto your local storage and opens it for you in VS Code - all automated:
+>
 > vscode://vscode.git/clone?url=https%3A%2F%2Fgithub.com%2Fjan-dolejsi%2Fvscode-pddl-samples
 
 ### Starting from existing PDDL models
@@ -110,8 +110,8 @@ The planner can be invoked in the context of a currently edited PDDL file. There
 There are multiple scenarios supported:
 
 * if command is invoked on the domain file,
-    - and if single corresponding problem file is open, the planner will run without asking further questions
-    - and if multiple corresponding problem files are open, the list of applicable problem files will appear and the user will select one.
+  - and if single corresponding problem file is open, the planner will run without asking further questions
+  - and if multiple corresponding problem files are open, the list of applicable problem files will appear and the user will select one.
 * if command is invoked on a problem file, the domain file (if open in the editor) will be selected automatically.
 
 Domain and problem files correspond to each other, if:
@@ -126,7 +126,7 @@ Control+click on action names in `.plan` files to jump to the action definition 
 
 #### Running the planner interactively
 
-See configuration setting `pddlPlanner.executionTarget` to select where is the planner executable started. You can either direct planner executable output to a _Terminal_ window instead of the _Output window_.
+See configuration setting `pddlPlanner.executionTarget` to select where is the planner executable started. You can either direct planner executable output to a _Terminal_ window instead of the _Output window_. This can be configured on the _Overview page_.
 The _Terminal_ option is useful when the planner takes keyboard input while executing. In case of the _Terminal_, the plan(s) are not visualized. Planner could be stopped by _Ctrl+C_ (or equivalent).
 
 #### Hide actions from plan visualization
@@ -202,7 +202,7 @@ To add a test case, create a file named `*.ptest.json` anywhere in the workspace
 }
 ```
 
-Use other JSON properties like `expecedPlans` to define the test assertion or `options` to specify command-line options to use.
+Use other JSON properties like `expectedPlans` to define the test assertion or `options` to specify command-line options to use.
 
 Interesting by-product of this feature is that it can be used to give effective demos. Right click on the _Open PDDL domain and test problem_ and both files open side-by-side in the editor. This lends itself well to switching between different models during a presentation/meeting/review.
 

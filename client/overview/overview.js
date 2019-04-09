@@ -25,7 +25,15 @@ function updateConfiguration(message) {
     document.getElementById('validator').value = message.validator;
     document.getElementById('autoSaveDiv').style.display =
         message.autoSave == "off" ? "unset" : "none";
+    updatePlannerOutputTarget(message.plannerOutputTarget);
     updateShowOverviewChanged(message.shouldShow);
+}
+
+function updatePlannerOutputTarget(value) {
+    var radioButtons = document.getElementsByName("planner_output_target");
+    for(var i = 0; i < radioButtons.length; i++) {
+        radioButtons[i].checked = value == radioButtons[i].value;
+    }
 }
 
 function shouldShowOverviewChanged(value) {
@@ -45,6 +53,24 @@ function updateShowOverviewChanged(value) {
 function showHowToShowOverview(shouldShow) {
     document.getElementById('howToShowOverviewPage').style.display =
         (shouldShow ? 'none' : 'unset');
+}
+
+function onPlannerOutputTargetChanged() {
+
+    var selectedValue = undefined;
+
+    var radioButtons = document.getElementsByName("planner_output_target");
+    for(var i = 0; i < radioButtons.length; i++) {
+        if(radioButtons[i].checked == true) {
+            selectedValue = radioButtons[i].value;
+            break;
+        }
+    }
+
+    postMessage({
+        command: 'plannerOutputTarget',
+        value: selectedValue
+    });
 }
 
 function clonePddlSamples() {

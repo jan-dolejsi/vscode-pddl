@@ -44,7 +44,6 @@ export class PlannerService extends Planner {
             request.post({ url: url, headers: requestHeader, body: requestBody, json: true }, (err, httpResponse, responseBody) => {
 
                 if (err != null) {
-                    parent.handleError(err, "");
                     reject(err);
                     return;
                 }
@@ -54,14 +53,12 @@ export class PlannerService extends Planner {
                         if (httpResponse.statusCode == 400) {
                             let message = "Authentication failed. Please login or update tokens."
                             let error = new Error(message);
-                            parent.handleError(error, message);
                             reject(error);
                             return;
                         }
                         else if (httpResponse.statusCode == 401) {
                             let message = "Invalid token. Please update tokens."
                             let error = new Error(message);
-                            parent.handleError(error, message);
                             reject(error);
                             return;
                         }
@@ -72,7 +69,6 @@ export class PlannerService extends Planner {
                     let notificationMessage = `PDDL Planning Service returned code ${httpResponse.statusCode} ${httpResponse.statusMessage}`;
                     //let notificationType = MessageType.Warning;
                     let error = new Error(notificationMessage);
-                    parent.handleError(error, notificationMessage);
                     reject(error);
                     return;
                 }
@@ -90,17 +86,14 @@ export class PlannerService extends Planner {
                     let resultError = result["error"];
                     if (resultError) {
                         parent.handleOutput(resultError);
-                        parent.handleSuccess("", []);
                         resolve([]);
                     }
                     else {
-                        parent.handleError(new Error(result), "");
                         reject(new Error(result));
                     }
                     return;
                 }
                 else if (status != "ok") {
-                    parent.handleError(new Error("Planner service failed."), "");
                     reject(new Error("Planner service failed."));
                     return;
                 }
@@ -128,7 +121,6 @@ export class PlannerService extends Planner {
                 if (plans.length > 0) parent.handleOutput(plans[0].getText() + '\n');
                 else parent.handleOutput('No plan found.');
 
-                parent.handleSuccess(responseBody.toString(), plans);
                 resolve(plans);
             });
         });

@@ -15,6 +15,7 @@ function postMessage(message) {
 function showPlan(planIndex) {
     // remember the index of the plan that is being shown for later manipulation
     selectedPlan = planIndex;
+    postMessage({ "command": "selectPlan", "planIndex": planIndex});
     document.querySelectorAll("div.gantt").forEach(div => showPlanDiv(planIndex, div));
     document.querySelectorAll("div.resourceUtilization").forEach(div => showPlanDiv(planIndex, div));
     document.querySelectorAll("div.lineChart").forEach(div => showPlanDiv(planIndex, div));

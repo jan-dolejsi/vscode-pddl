@@ -111,14 +111,14 @@ export class Planning implements PlannerResponseHandler {
      * @param workingFolder working folder
      * @param options planner options
      */
-    async planByUri(domainUri: Uri, problemUri: Uri, workingFolder: string, options?: string): Promise<boolean> {
+    async planByUri(domainUri: Uri, problemUri: Uri, workingFolder: string, options?: string): Promise<void> {
         let domainDocument = await workspace.openTextDocument(domainUri);
         let problemDocument = await workspace.openTextDocument(problemUri);
 
         let domainInfo = <DomainInfo>this.upsertFile(domainDocument);
         let problemInfo = <ProblemInfo>this.upsertFile(problemDocument);
 
-        return this.planExplicit(domainInfo, problemInfo, workingFolder, options);
+        this.planExplicit(domainInfo, problemInfo, workingFolder, options);
     }
 
     private upsertFile(doc: TextDocument): FileInfo {
@@ -128,11 +128,11 @@ export class Planning implements PlannerResponseHandler {
     /**
      * Invokes the planner in the context of the currently opened files in the workspace.
      */
-    async plan(): Promise<boolean> {
+    async plan(): Promise<void> {
 
         if (this.planner) {
-            window.showErrorMessage("Planner is already running. Stop it using the Cancel button in the progress notification or wait for it to finish.");
-            return false;
+            window.showErrorMessage("Planner is already running. Stop it using the Cancel button in the progress notification, or using the PDDL: Stop planner command or wait for it to finish.");
+            return;
         }
 
         this.output.clear();
@@ -161,15 +161,15 @@ export class Planning implements PlannerResponseHandler {
 
                 const domainFileName = await window.showQuickPick(domainFileCandidates, { placeHolder: "Select domain file:" });
 
-                if (!domainFileName) return false; // was canceled
+                if (!domainFileName) return; // was canceled
 
-                const domainFilePath = path.join(Planning.getFolderPath(activeFilePath), domainFileName);
+                const domainFilePath = path.join(dirname(activeFilePath), domainFileName);
                 let domainFileUri = Uri.file(domainFilePath);
 
                 domainFileInfo = domainFiles.find(doc => doc.fileUri == domainFileUri.toString());
             } else {
                 window.showInformationMessage(`Ensure a domain '${problemFileInfo.domainName}' from the same folder is open in the editor.`);
-                return false;
+                return;
             }
         }
         else if (activeFileInfo.isDomain()) {
@@ -184,20 +184,20 @@ export class Planning implements PlannerResponseHandler {
 
                 const selectedProblemFileName = await window.showQuickPick(problemFileNames, { placeHolder: "Select problem file:" });
 
-                if (!selectedProblemFileName) return false; // was canceled
+                if (!selectedProblemFileName) return; // was canceled
 
                 problemFileInfo = problemFiles.find(fileInfo => fileInfo.fileUri.endsWith('/' + selectedProblemFileName));
             } else {
                 window.showInformationMessage("Ensure a corresponding problem file is open in the editor.");
-                return false;
+                return;
             }
         }
         else {
             window.showInformationMessage("Selected file does not appear to be a valid PDDL domain or problem file.");
-            return false;
+            return;
         }
 
-        return this.planExplicit(domainFileInfo, problemFileInfo, Planning.getFolderPath(activeDocument.fileName));
+        this.planExplicit(domainFileInfo, problemFileInfo, dirname(activeDocument.fileName));
     }
 
     private readonly _onPlansFound = new EventEmitter<PlanningResult>();
@@ -211,14 +211,14 @@ export class Planning implements PlannerResponseHandler {
      * @param workingDirectory workflow folder for auxiliary output files
      * @param options planner options
      */
-    async planExplicit(domainFileInfo: DomainInfo, problemFileInfo: ProblemInfo, workingDirectory: string, options?: string): Promise<boolean> {
+    async planExplicit(domainFileInfo: DomainInfo, problemFileInfo: ProblemInfo, workingDirectory: string, options?: string): Promise<void> {
 
         let planParser = new PddlPlanParser(domainFileInfo, problemFileInfo, this.plannerConfiguration.getEpsilonTimeStep(), plans => this.visualizePlans(plans));
 
         workingDirectory = await this.adjustWorkingFolder(workingDirectory);
 
         this.planner = await this.createPlanner(workingDirectory, options);
-        if (!this.planner) return false;
+        if (!this.planner) return;
 
         this.planningProcessKilled = false;
 
@@ -236,22 +236,37 @@ export class Planning implements PlannerResponseHandler {
             this.progressUpdater = new ElapsedTimeProgressUpdater(progress, token);
             return this.planner.plan(domainFileInfo, problemFileInfo, planParser, this);
         })
-            .then(plans => {
-                let elapsedTime = this.progressUpdater.getElapsedTimeInMilliSecs();
-                this.progressUpdater.setFinished();
-                let result = this.planningProcessKilled ? PlanningResult.killed() : PlanningResult.success(plans, elapsedTime);
-                this._onPlansFound.fire(result);
-                this.planner = null;
-            },
-                reason => {
-                    this.progressUpdater.setFinished();
-                    this._onPlansFound.fire(PlanningResult.failure(reason.toString()));
-                }
-            );
+            .then(plans => this.onPlannerFinished(plans), reason => this.onPlannerFailed(reason));
 
         this.output.show(true);
+    }
 
-        return true;
+    onPlannerFinished(plans: Plan[]): void {
+        let elapsedTime = this.progressUpdater.getElapsedTimeInMilliSecs();
+        this.progressUpdater.setFinished();
+        let result = this.planningProcessKilled ? PlanningResult.killed() : PlanningResult.success(plans, elapsedTime);
+        this._onPlansFound.fire(result);
+        this.planner = null;
+
+        this.output.appendLine(`Planner found ${plans.length} plan(s) in ${this.progressUpdater.getElapsedTimeInMilliSecs() / 1000}secs.`);
+        this.visualizePlans(plans);
+    }
+
+    onPlannerFailed(reason: any): void {
+        this.progressUpdater.setFinished();
+        this._onPlansFound.fire(PlanningResult.failure(reason.toString()));
+
+        this.planner = null;
+        console.error(reason);
+
+        window.showErrorMessage<ProcessErrorMessageItem>(reason.message,
+            { title: "Re-configure the planner", setPlanner: true },
+            { title: "Ignore", setPlanner: false, isCloseAffordance: true }
+        ).then(selection => {
+            if (selection && selection.setPlanner) {
+                this.plannerConfiguration.askNewPlannerPath();
+            }
+        });
     }
 
     async adjustWorkingFolder(workingDirectory: string): Promise<string> {
@@ -357,35 +372,14 @@ export class Planning implements PlannerResponseHandler {
         this.output.append(outputText);
     }
 
-    handleSuccess(stdout: string, plans: Plan[]): void {
-        this.output.appendLine(`Planner found ${plans.length} plan(s) in ${this.progressUpdater.getElapsedTimeInMilliSecs() / 1000}secs.`);
-        stdout; // just waste it, we did not need it here
-
-        this.visualizePlans(plans);
-        this.planner = null;
-    }
-
-    handleError(error: Error, stderr: string): void {
-        stderr.length;
-        this.planner = null;
-
-        window.showErrorMessage<ProcessErrorMessageItem>(error.message,
-            { title: "Re-configure the planner", setPlanner: true },
-            { title: "Ignore", setPlanner: false, isCloseAffordance: true }
-        ).then(selection => {
-            if (selection && selection.setPlanner) {
-                this.plannerConfiguration.askNewPlannerPath();
-            }
-        });
+    handlePlan(_plan: Plan): void {
+        // todo: this shall be implemented, when the planning service can return multiple plans
+        throw new Error("Method not implemented.");
     }
 
     visualizePlans(plans: Plan[]): void {
         this.plans = plans;
         this.planView.setPlannerOutput(plans);
-    }
-
-    static getFolderPath(documentPath: string): string {
-        return dirname(documentPath);
     }
 
     // copied from the Workspace class

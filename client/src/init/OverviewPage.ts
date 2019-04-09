@@ -5,7 +5,7 @@
 'use strict';
 
 import {
-    window, ExtensionContext, Uri, ViewColumn, WebviewPanel, commands, workspace
+    window, ExtensionContext, Uri, ViewColumn, WebviewPanel, commands, workspace, ConfigurationTarget
 } from 'vscode';
 
 import { PddlConfiguration } from '../configuration';
@@ -102,6 +102,9 @@ export class OverviewPage {
             case 'clonePddlSamples':
                 commands.executeCommand("git.clone", Uri.parse("https://github.com/jan-dolejsi/vscode-pddl-samples"));
                 break;
+            case 'plannerOutputTarget':
+                workspace.getConfiguration("pddlPlanner").update("executionTarget", message.value, ConfigurationTarget.Global);
+                break;
             default:
                 console.warn('Unexpected command: ' + message.command);
         }
@@ -162,13 +165,15 @@ export class OverviewPage {
 
     async updatePageConfiguration(): Promise<void> {
         if (!this.webViewPanel) return;
-        this.webViewPanel.webview.postMessage({
+        let message = {
             command: 'updateConfiguration',
             planner: await this.pddlConfiguration.getPlannerPath(),
+            plannerOutputTarget: await workspace.getConfiguration("pddlPlanner").get<String>("executionTarget"),
             parser: await this.pddlConfiguration.getParserPath(),
             validator: await this.pddlConfiguration.getValidatorPath(),
             shouldShow: this.context.globalState.get<boolean>(SHOULD_SHOW_OVERVIEW_PAGE, true),
             autoSave: workspace.getConfiguration().get<String>("files.autoSave")
-        });
+        };
+        this.webViewPanel.webview.postMessage(message);
     }
 }

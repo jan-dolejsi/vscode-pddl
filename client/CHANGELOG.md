@@ -1,12 +1,16 @@
 # PDDL support - What's new?
 
-## [2.9.1] - 2019-02-??
+## [2.9.1] - 2019-04-09
 
-Relaxed the extension activation to be postponed till a .pddl, .plan, .happenings file is open, not just present in the workspace. The extension is also activated when the Test pane or Planning.Domains file tree is open, as well as when several key commands are invoked by the user. This results in faster start-up of VS Code in the context of projects that have a mixture of code and PDDL models.
-Moved plan visualization from deprecated `vscode.previewHtml` command to `WebView` API.
+The extension activation is now postponed till a .pddl, .plan, .happenings file is open, not just present in the workspace. The extension is also activated when the Test pane or Planning.Domains file tree is open, as well as when several key commands are invoked by the user. This results in faster start-up of VS Code in the context of projects that have a mixture of code and PDDL models.
+
+Refactored the plan visualization from deprecated `vscode.previewHtml` command to `WebView` API.
+
 Added _PDDL: Preview plan_ command to visualize any `.plan` file.
-Added `pddlPlanner.executionTarget` configuration option to direct planner executable output to a _terminal_ window instead of the _output_ window.
+
+Added `pddlPlanner.executionTarget` configuration option to direct planner executable output to a _terminal_ window instead of the _output_ window. This can be configured on the _Overview page_.
 The _Terminal_ option is useful when the planner takes keyboard input while executing. In case of the _Terminal_, the plan(s) are not visualized. Planner could be stopped by _Ctrl+C_ (or equivalent).
+
 Fixed issues caused by case-sensitive action/predicate/function/type name matching, which resulted in missing hover-over and jumping to definition options.
 
 ## [2.9.0] - 2019-02-16
@@ -432,7 +436,8 @@ Note for open source contributors: all notable changes to the "pddl" extension w
 
 Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
 
-[Unreleased]: https://github.com/jan-dolejsi/vscode-pddl/compare/v2.9.0...HEAD
+[Unreleased]: https://github.com/jan-dolejsi/vscode-pddl/compare/v2.9.1...HEAD
+[2.9.1]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.9.0...v2.9.1
 [2.9.0]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.8.2...v2.9.0
 [2.8.2]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.8.1...v2.8.2
 [2.8.1]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.8.0...v2.8.1
