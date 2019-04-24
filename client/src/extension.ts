@@ -28,6 +28,7 @@ import { Catalog } from './catalog/Catalog';
 
 import { initialize, instrumentOperation } from "vscode-extension-telemetry-wrapper";
 import { KEY } from './TelemetryInstrumentation';
+import { SearchDebugger } from './searchDebugger/SearchDebugger';
 
 const PDDL_CONFIGURE_PARSER = 'pddl.configureParser';
 const PDDL_LOGIN_PARSER_SERVICE = 'pddl.loginParserService';
@@ -69,6 +70,8 @@ function activateWithTelemetry(_operationId: string, context: ExtensionContext) 
 	let configureParserCommand = commands.registerCommand(PDDL_CONFIGURE_PARSER, () => {
 		pddlConfiguration.askNewParserPath();
 	});
+
+	new SearchDebugger(context, pddlConfiguration);
 
 	let loginParserServiceCommand = commands.registerCommand(PDDL_LOGIN_PARSER_SERVICE, () => {
 		let scopePromise = pddlConfiguration.askConfigurationScope();

@@ -13,11 +13,7 @@ import { PddlConfiguration } from '../configuration';
 import * as path from 'path';
 
 import * as fs from 'fs';
-const util = require('util');
-require('util.promisify').shim();
-
-const readFile = util.promisify(fs.readFile);
-const writeFile = util.promisify(fs.writeFile);
+import { getWebViewHtml, writeFile, readFile } from '../utils';
 
 export const SHOULD_SHOW_OVERVIEW_PAGE = 'shouldShowOverviewPage';
 export const LAST_SHOWN_OVERVIEW_PAGE = 'lastShownOverviewPage';
@@ -147,19 +143,7 @@ export class OverviewPage {
     }
 
     async getHtml(): Promise<string> {
-        let overviewHtmlPath = this.context.asAbsolutePath('overview/overview.html');
-        let html = await readFile(overviewHtmlPath, { encoding: "utf-8" });
-
-        html = html.replace(/<(script|img) src="([^"]+)"/g, (sourceElement: string, elementName: string, srcPath: string) => {
-            sourceElement;
-            let resource=Uri.file(
-                path.join(this.context.extensionPath,
-                    this.CONTENT_FOLDER,
-                    srcPath))
-                    .with({scheme: "vscode-resource"});
-            return `<${elementName} src="${resource}"`;
-        })
-
+        let html = getWebViewHtml(this.context, this.CONTENT_FOLDER, 'overview.html');
         return html;
     }
 

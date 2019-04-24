@@ -118,7 +118,7 @@ export class Happening {
     }
 }
 
-export enum HappeningType { START, END, INSTANTANEOUS } // todo: , TIF, TIL 
+export enum HappeningType { START, END, INSTANTANEOUS, TIMED } 
 
 /**
  * Builds the list of happenings while validating the sequence.

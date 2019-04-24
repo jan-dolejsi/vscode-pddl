@@ -205,6 +205,18 @@
         "title": "PDDL: Open as an editable problem file..."
       },
       {
+        "command": "pddl.searchDebugger.start",
+        "title": "PDDL: Start search debugger"
+      },
+      {
+        "command": "pddl.searchDebugger.stop",
+        "title": "PDDL: Stop search debugger"
+      },
+      {
+        "command": "pddl.searchDebugger.mock",
+        "title": "PDDL: Mock search progress to test debugger"
+      },
+      {
         "command": "pddl.plan.compareNormalized",
         "title": "PDDL: Normalize and compare 2 plans"
       },
@@ -590,6 +602,16 @@
         "pddl.valStepPath": {
           "type": "string",
           "description": "Path of the 'valstep' executable."
+        },
+        "pddlSearchDebugger.stateLogPattern": {
+          "type": "string",
+          "description": "Pattern to find the line in the state log file pertaining to the selected state.",
+          "default": "^\\s*State Hash:\\s*(.*)\\s*$"
+        },
+        "pddlSearchDebugger.plannerCommandLine": {
+          "type": "string",
+          "description": "Command-line switch to configure planning engine to work with the Search Debugger pane.",
+          "default": "--search-tree-dump=http://localhost:$(port)"
         }
       }
     },
@@ -691,12 +713,13 @@
     "semver": "^5.6.0"
   },
   "devDependencies": {
-    "vsce": "^1.58.0",
-    "vscode": "^1.1.30",
+    "@types/express": "^4.16.1",
     "@types/request": "^2.48.1",
-    "@types/tmp": "^0.0.34",
     "@types/semver": "^5.5.0",
+    "@types/tmp": "^0.0.34",
+    "tslint": "^5.14.0",
     "typescript": "^3.0.3",
-    "tslint": "^5.14.0"
+    "vsce": "^1.59.0",
+    "vscode": "^1.1.30"
   }
 }

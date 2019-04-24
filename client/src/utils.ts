@@ -10,7 +10,15 @@ import { PddlLanguage } from '../../common/src/FileInfo';
 import { HappeningsInfo } from "../../common/src/HappeningsInfo";
 import { PddlWorkspace } from '../../common/src/workspace-model';
 import { PddlExtensionContext } from '../../common/src/PddlExtensionContext';
-import { basename } from 'path';
+import { basename, join } from 'path';
+
+import * as fs from 'fs';
+const util = require('util');
+require('util.promisify').shim();
+
+export const readFile = util.promisify(fs.readFile);
+export const writeFile = util.promisify(fs.writeFile);
+export const exists = util.promisify(fs.exists);
 
 export function isAnyPddl(doc: TextDocument): boolean {
     return isPddl(doc) || isPlan(doc) || isHappenings(doc);
@@ -137,4 +145,27 @@ export function createPddlExtensionContext(context: ExtensionContext): PddlExten
         subscriptions: context.subscriptions,
 		pythonPath: () => workspace.getConfiguration().get("python.pythonPath", "python")
 	};
+}
+
+export async function getWebViewHtml(extensionContext: ExtensionContext, relativePath: string, htmlFileName: string) {
+    let overviewHtmlPath = extensionContext.asAbsolutePath(join(relativePath, htmlFileName));
+    let html = await readFile(overviewHtmlPath, { encoding: "utf-8" });
+
+    html = html.replace(/<(script|img|link) +(src|href)="([^"]+)"/g, (sourceElement: string, elementName: string, attribName: string, attribValue: string) => {
+        if (attribValue.startsWith('http')) {
+            return sourceElement;
+        }
+        let resource=Uri.file(
+            extensionContext.asAbsolutePath(join(relativePath, attribValue)))
+                .with({scheme: "vscode-resource"});
+        return `<${elementName} ${attribName}="${resource}"`;
+    })
+
+    return html;
+}
+
+export function sleep(ms: number): Promise<void>{
+    return new Promise(resolve=>{
+        setTimeout(resolve, ms)
+    })
 }

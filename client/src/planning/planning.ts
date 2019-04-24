@@ -9,12 +9,7 @@ import {
     MessageItem, ExtensionContext, ProgressLocation, TextDocument, EventEmitter, Event, CancellationToken, Progress
 } from 'vscode';
 
-const util = require('util');
-require('util.promisify').shim();
-
 import * as path from 'path';
-import * as fs from 'fs';
-const exists = util.promisify(fs.exists);
 
 import { PddlWorkspace } from '../../../common/src/workspace-model';
 import { DomainInfo, ProblemInfo } from '../../../common/src/parser';
@@ -33,7 +28,7 @@ import { PlanReportGenerator } from './PlanReportGenerator';
 import { PlanExporter } from './PlanExporter';
 import { PlanHappeningsExporter } from './PlanHappeningsExporter';
 import { HappeningsPlanExporter } from './HappeningsPlanExporter';
-import { isHappenings, isPlan } from '../utils';
+import { isHappenings, isPlan, exists } from '../utils';
 import { PlanView, PDDL_GENERATE_PLAN_REPORT, PDDL_EXPORT_PLAN } from './PlanView';
 
 const PDDL_STOP_PLANNER = 'pddl.stopPlanner';

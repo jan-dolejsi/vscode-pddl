@@ -395,6 +395,10 @@ See [CHANGELOG](CHANGELOG.md).
 * See other [useful keyboard shortcuts for working with PDDL in VS Code](https://github.com/jan-dolejsi/vscode-pddl/wiki/keyboard-shortcuts).
 * Read more about [PDDL][PDDL]
 
+## Credits
+
+Icons made by [Pixel perfect](https://www.flaticon.com/authors/pixel-perfect) from [www.flaticon.com](https://www.flaticon.com/) is licensed by [CC 3.0 BY](http://creativecommons.org/licenses/by/3.0/).
+
 **Enjoy!**
 
 [PDDL]: https://en.wikipedia.org/wiki/Planning_Domain_Definition_Language

@@ -10,14 +10,9 @@ import {
 
 import { PddlConfiguration } from '../configuration';
 
-import * as fs from 'fs';
 import {diff} from 'semver';
 import { OverviewPage, SHOULD_SHOW_OVERVIEW_PAGE } from './OverviewPage';
-
-const util = require('util');
-require('util.promisify').shim();
-
-const readFile = util.promisify(fs.readFile);
+import { readFile } from '../utils';
 
 enum TipResponse { Ok, Later, Next }
 
@@ -150,7 +145,7 @@ export class StartUp {
             }
             else {
                 let changeLog = this.context.asAbsolutePath('CHANGELOG.html');
-                let html = fs.readFileSync(changeLog, { encoding: "utf-8" });
+                let html = readFile(changeLog, { encoding: "utf-8" });
 
                 let webViewPanel = window.createWebviewPanel(
                     "pddl.WhatsNew",

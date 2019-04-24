@@ -18,7 +18,7 @@ export class PlanFunctionEvaluator {
 
     grounder: Grounder;
 
-    constructor(public valueSeqPath: string, public valStepPath: string, public plan: Plan) {
+    constructor(private valueSeqPath: string, private valStepPath: string, private plan: Plan) {
         this.grounder = new Grounder(this.plan.domain, this.plan.problem);
     }
 

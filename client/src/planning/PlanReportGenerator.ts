@@ -13,16 +13,15 @@ import * as path from 'path';
 import { DomainInfo, TypeObjects } from '../../../common/src/parser';
 import { SwimLane } from '../../../common/src/SwimLane';
 import { PlanStep } from '../../../common/src/PlanStep';
-import { Plan } from '../../../common/src/Plan';
+import { HappeningType } from '../../../common/src/HappeningsInfo';
+import { Plan, HelpfulAction } from '../../../common/src/Plan';
 import { Util } from '../../../common/src/util';
 import { PlanFunctionEvaluator } from './PlanFunctionEvaluator';
 import { PlanReportSettings } from './PlanReportSettings';
 import { VAL_STEP_PATH, CONF_PDDL, PDDL_PLANNER, VALUE_SEQ_PATH } from '../configuration';
-import * as fs from 'fs';
-const util = require('util');
-require('util.promisify').shim();
+import { readFile } from '../utils';
 
-const readFile = util.promisify(fs.readFile);
+const DIGITS = 4;
 
 export class PlanReportGenerator {
 
@@ -77,7 +76,7 @@ export class PlanReportGenerator {
     asAbsolutePath(...paths: string[]): Uri {
         let uri = Uri.file(this.context.asAbsolutePath(path.join(...paths)));
         if (!this.selfContained) {
-            uri = uri.with({scheme: "vscode-resource"});
+            uri = uri.with({ scheme: "vscode-resource" });
         }
         return uri;
     }
@@ -95,39 +94,56 @@ export class PlanReportGenerator {
     }
 
     shouldDisplay(planStep: PlanStep, plan: Plan): boolean {
-        if(this.settings.has(plan)){
+        if (this.settings.has(plan)) {
             return this.settings.get(plan).shouldDisplay(planStep);
         }
         else return true;
     }
 
     async renderPlan(plan: Plan, planIndex: number, selectedPlan: number): Promise<string> {
-        this.settings.set(plan, new PlanReportSettings(plan.domain.fileUri));
+        if (plan.domain) {
+            this.settings.set(plan, new PlanReportSettings(plan.domain.fileUri));
+        }
 
         let stepsToDisplay = plan.steps
             .filter(step => this.shouldDisplay(step, plan));
 
-        let displayedStepsCount = stepsToDisplay.length;
+        // split this to two batches and insert helpful actions in between
+        let planHeadSteps = stepsToDisplay
+            .filter(step => this.isPlanHeadStep(step, plan));
+        let relaxedPlanSteps = stepsToDisplay
+            .filter(step => !this.isPlanHeadStep(step, plan));
 
-        let planHtml = stepsToDisplay
-            .map((step, stepIndex) => this.renderPlanStep(step, stepIndex, plan, planIndex)).join("\n");
+        let oneIfHelpfulActionsPresent = (plan.hasHelpfulActions() ? 1 : 0);
+        let relaxedPlanStepIndexOffset = planHeadSteps.length + oneIfHelpfulActionsPresent;
 
-        let allTypeObjects = TypeObjects.concatObjects(plan.domain.constants, plan.problem.objects);
+        let ganttChartHtml = planHeadSteps
+            .map((step, stepIndex) => this.renderGanttStep(step, stepIndex, plan, planIndex)).join("\n")
+            + this.renderHelpfulActions(plan, planHeadSteps.length) + '\n'
+            + relaxedPlanSteps
+                .map((step, stepIndex) => this.renderGanttStep(step, stepIndex + relaxedPlanStepIndexOffset, plan, planIndex)).join("\n");
+
+        let ganttChartHeight = (stepsToDisplay.length + oneIfHelpfulActionsPresent) * this.planStepHeight;
 
         let styleDisplay = planIndex == selectedPlan ? "block" : "none";
 
-        let objectsHtml = plan.domain.getTypes()
-            .filter(type => type != "object")
-            .map(type => {
-                let typeObjects = allTypeObjects.find(to => to.type == type);
-                return typeObjects
-                    ? this.renderTypeSwimLanes(type, typeObjects.objects, plan)
-                    : '';
-            }).join("\n");
+        let ganttChart = `    <div class="gantt" plan="${planIndex}" style="margin: 5px; height: ${ganttChartHeight}px; display: ${styleDisplay};">
+    ${ganttChartHtml}
+        </div>`;
 
-        let ganttChart = `    <div class="gantt" plan="${planIndex}" style="margin: 5px; height: ${displayedStepsCount * this.planStepHeight}px; display: ${styleDisplay};">
-${planHtml}
-    </div>`;
+        let objectsHtml = '';
+        if (plan.domain && plan.problem) {
+            let allTypeObjects = TypeObjects.concatObjects(plan.domain.constants, plan.problem.objects);
+
+            objectsHtml = plan.domain.getTypes()
+                .filter(type => type != "object")
+                .map(type => {
+                    let typeObjects = allTypeObjects.find(to => to.type == type);
+                    return typeObjects
+                        ? this.renderTypeSwimLanes(type, typeObjects.objects, plan)
+                        : '';
+                }).join("\n");
+        }
 
         let swimLanes = `    <div class="resourceUtilization" plan="${planIndex}" style="display: ${styleDisplay};">
         <table>
@@ -137,30 +153,32 @@ ${objectsHtml}
 
         let valStepPath = workspace.getConfiguration(CONF_PDDL).get<string>(VAL_STEP_PATH);
         let valueSeqPath = workspace.getConfiguration(PDDL_PLANNER).get<string>(VALUE_SEQ_PATH);
-        let evaluator = new PlanFunctionEvaluator(valueSeqPath, valStepPath, plan);
 
         let lineCharts = `    <div class="lineChart" plan="${planIndex}" style="display: ${styleDisplay};margin-top: 20px;">\n`;
         let lineChartScripts = '';
 
-        if (evaluator.isAvailable()) {
+        if (plan.domain && plan.problem) {
+            let evaluator = new PlanFunctionEvaluator(valueSeqPath, valStepPath, plan);
 
-            try {
+            if (evaluator.isAvailable()) {
 
-                let functionValues = await evaluator.evaluate();
+                try {
 
-                functionValues.forEach((values, liftedVariable) => {
-                    let chartDivId = `chart_${planIndex}_${liftedVariable.name}`;
-                    lineCharts += `        <div id="${chartDivId}" style="width: ${this.displayWidth + 100}px; height: ${Math.round(this.displayWidth / 2)}px"></div>\n`;
-                    let chartTitleWithUnit = liftedVariable.name;
-                    if (liftedVariable.getUnit()) chartTitleWithUnit += ` [${liftedVariable.getUnit()}]`;
-                    lineChartScripts += `        drawChart('${chartDivId}', '${chartTitleWithUnit}', '', ${JSON.stringify(values.legend)}, ${JSON.stringify(values.values)}, ${this.displayWidth});\n`;
-                });
-            } catch (err) {
-                console.log(err);
-                window.showWarningMessage(err);
+                    let functionValues = await evaluator.evaluate();
+
+                    functionValues.forEach((values, liftedVariable) => {
+                        let chartDivId = `chart_${planIndex}_${liftedVariable.name}`;
+                        lineCharts += `        <div id="${chartDivId}" style="width: ${this.displayWidth + 100}px; height: ${Math.round(this.displayWidth / 2)}px"></div>\n`;
+                        let chartTitleWithUnit = liftedVariable.name;
+                        if (liftedVariable.getUnit()) chartTitleWithUnit += ` [${liftedVariable.getUnit()}]`;
+                        lineChartScripts += `        drawChart('${chartDivId}', '${chartTitleWithUnit}', '', ${JSON.stringify(values.legend)}, ${JSON.stringify(values.values)}, ${this.displayWidth});\n`;
+                    });
+                } catch (err) {
+                    console.log(err);
+                    window.showWarningMessage(err);
+                }
             }
         }
-
         lineCharts += `\n    </div>`;
 
         return `${this.selfContained ? '' : this.renderMenu()}
@@ -169,6 +187,38 @@ ${swimLanes}
 ${lineCharts}
         <script>function drawPlan${planIndex}Charts(){\n${lineChartScripts}}</script>
 `;
+    }
+
+    renderHelpfulActions(plan: Plan, planHeadLength: number): string {
+        if (plan.hasHelpfulActions()) {
+            let fromTop = planHeadLength * this.planStepHeight;
+            let fromLeft = this.toViewCoordinates(plan.now, plan);
+            let text = plan.helpfulActions.map((helpfulAction, index) => this.renderHelpfulAction(index, helpfulAction)).join(', ');
+            return `\n        <div class="planstep" style="top: ${fromTop}px; left: ${fromLeft}px; margin-top: 3px">▶${text}</div>`;
+        }
+        else {
+            return '';
+        }
+    }
+
+    renderHelpfulAction(index: number, helpfulAction: HelpfulAction): string {
+        let suffix = PlanReportGenerator.getActionSuffix(helpfulAction);
+        let beautifiedName = `${helpfulAction.actionName}<sub>${suffix}</sub>`;
+        return `${index + 1}. <a href="#" onclick="navigateToChildOfSelectedState('${helpfulAction.actionName}')">${beautifiedName}</a>`;
+    }
+
+    static getActionSuffix(helpfulAction: HelpfulAction): string {
+        switch (helpfulAction.kind) {
+            case HappeningType.START:
+                return '├';
+            case HappeningType.END:
+                return '┤';
+        }
+        return '';
+    }
+
+    isPlanHeadStep(step: PlanStep, plan: Plan): boolean {
+        return plan.now === undefined || step.getStartTime() <= plan.now;
     }
 
     createPlansChartsScript(plans: Plan[]) {
@@ -195,7 +245,7 @@ ${lineCharts}
         let stepsInvolvingThisObject = plan.steps
             .filter(step => this.shouldDisplay(step, plan))
             .filter(step => step.objects.includes(obj.toLowerCase()))
-            .map(step => this.renderStep(step, plan, obj, subLanes))
+            .map(step => this.renderSwimLameStep(step, plan, obj, subLanes))
             .join('\n');
 
         return `            <tr>
@@ -207,7 +257,7 @@ ${stepsInvolvingThisObject}
 `;
     }
 
-    renderStep(step: PlanStep, plan: Plan, thisObj: string, swimLanes: SwimLane): string {
+    renderSwimLameStep(step: PlanStep, plan: Plan, thisObj: string, swimLanes: SwimLane): string {
         let actionColor = this.getActionColor(step, plan.domain);
         let leftOffset = this.computeLeftOffset(step, plan);
         let width = this.computeWidth(step, plan);
@@ -216,25 +266,27 @@ ${stepsInvolvingThisObject}
             .join(' ');
 
         let availableLane = swimLanes.placeNext(leftOffset, width);
+        let fromTop = availableLane * this.planStepHeight + 1;
 
         return `
-                    <div class="resourceTaskTooltip" style="background-color: ${actionColor}; left: ${leftOffset}px; width: ${width}px; top: ${availableLane * this.planStepHeight + 1}px;">${step.actionName} ${objects}<span class="resourceTaskTooltipText">${this.toActionTooltip(step)}</span></div>`;
+                    <div class="resourceTaskTooltip" style="background-color: ${actionColor}; left: ${leftOffset}px; width: ${width}px; top: ${fromTop}px;">${step.actionName} ${objects}<span class="resourceTaskTooltipText">${this.toActionTooltip(step)}</span></div>`;
     };
 
-    renderPlanStep(step: PlanStep, index: number, plan: Plan, planIndex: number): string {
+    renderGanttStep(step: PlanStep, index: number, plan: Plan, planIndex: number): string {
         let actionLink = this.toActionLink(step.actionName, plan);
 
         let fromTop = index * this.planStepHeight;
         let fromLeft = this.computeLeftOffset(step, plan);
         let width = this.computeWidth(step, plan);
+        let widthRelaxed = this.computeRelaxedWidth(step, plan);
 
-        let actionColor = this.getActionColor(step, plan.domain);
+        let actionColor = plan.domain ? this.getActionColor(step, plan.domain) : 'gray';
 
-        return `        <div class="planstep" id="plan${planIndex}step${index}" style="left: ${fromLeft}px; top: ${fromTop}px; "><div class="planstep-bar" style="width: ${width}px; background-color: ${actionColor}"></div>${actionLink} ${step.objects.join(' ')}</div>`;
+        return `        <div class="planstep" id="plan${planIndex}step${index}" style="left: ${fromLeft}px; top: ${fromTop}px; "><div class="planstep-bar" title="${this.toActionTooltipPlain(step)}" style="width: ${width}px; background-color: ${actionColor}"></div><div class="planstep-bar-relaxed whitecarbon" style="width: ${widthRelaxed}px;"></div>${actionLink} ${step.objects.join(' ')}</div>`;
     }
 
     toActionLink(actionName: string, plan: Plan): string {
-        if (this.selfContained) {
+        if (this.selfContained || !plan.domain) {
             return actionName;
         }
         else {
@@ -245,10 +297,17 @@ ${stepsInvolvingThisObject}
 
     toActionTooltip(step: PlanStep): string {
         let durationRow = step.isDurative ?
-            `<tr><td class="actionToolTip">Duration: </td><td class="actionToolTip">${step.getDuration()}</td></tr>
-            <tr><td class="actionToolTip">End: </td><td class="actionToolTip">${step.getEndTime()}</td></tr>` :
+            `<tr><td class="actionToolTip">Duration: </td><td class="actionToolTip">${step.getDuration().toFixed(DIGITS)}</td></tr>
+            <tr><td class="actionToolTip">End: </td><td class="actionToolTip">${step.getEndTime().toFixed(DIGITS)}</td></tr>` :
             '';
-        return `<table><tr><th colspan="2" class="actionToolTip">${step.actionName} ${step.objects.join(' ')}</th></tr><tr><td class="actionToolTip" style="width:50px">Start:</td><td class="actionToolTip">${step.getStartTime()}</td></tr>${durationRow}</table>`;
+        return `<table><tr><th colspan="2" class="actionToolTip">${step.actionName}.toFixed(DIGITS) ${step.objects.join(' ')}</th></tr><tr><td class="actionToolTip" style="width:50px">Start:</td><td class="actionToolTip">${step.getStartTime().toFixed(DIGITS)}</td></tr>${durationRow}</table>`;
+    }
+
+    toActionTooltipPlain(step: PlanStep): string {
+        let durationRow = step.isDurative ?
+            `Duration: ${step.getDuration().toFixed(DIGITS)}, End: ${step.getEndTime().toFixed(DIGITS)}` :
+            '';
+        return `${step.actionName} ${step.objects.join(' ')}, Start: ${step.getStartTime().toFixed(DIGITS)} ${durationRow}`;
     }
 
     async includeStyle(uri: Uri): Promise<string> {
@@ -270,7 +329,7 @@ ${stepsInvolvingThisObject}
     }
 
     computeLeftOffset(step: PlanStep, plan: Plan): number {
-        return step.getStartTime() / plan.makespan * this.displayWidth;
+        return this.toViewCoordinates(step.getStartTime(), plan);
     }
 
     renderMenu(): string {
@@ -282,8 +341,29 @@ ${stepsInvolvingThisObject}
     </div>`;
     }
 
+    computePlanHeadDuration(step: PlanStep, plan: Plan): number {
+        if (plan.now === undefined) return step.getDuration();
+        else if (step.getEndTime() < plan.now) return step.getDuration();
+        else if (step.getStartTime() >= plan.now) return 0;
+        else return Math.min(step.getDuration(), plan.now - step.getStartTime());
+    }
+
     computeWidth(step: PlanStep, plan: Plan): number {
-        return Math.max(1, step.getDuration() / plan.makespan * this.displayWidth);
+        // remove the part of the planStep duration that belongs to the relaxed plan
+        let planHeadDuration = this.computePlanHeadDuration(step, plan);
+        return Math.max(1, this.toViewCoordinates(planHeadDuration, plan));
+    }
+
+    computeRelaxedWidth(step: PlanStep, plan: Plan): number {
+        let planHeadDuration = this.computePlanHeadDuration(step, plan);
+        // remove the part of the planStep duration that belongs to the planhead part
+        let relaxedDuration = step.getDuration() - planHeadDuration;
+        return this.toViewCoordinates(relaxedDuration, plan);
+    }
+
+    /** Converts the _time_ argument to view coordinates */
+    toViewCoordinates(time: number, plan: Plan): number {
+        return time / plan.makespan * this.displayWidth;
     }
 
     getActionColor(step: PlanStep, domain: DomainInfo): string {
