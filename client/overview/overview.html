@@ -11,6 +11,7 @@
             font-weight: 400
         }
         img.fileIcon {width: 18px; vertical-align: text-bottom;}
+        img.configIcon {vertical-align: text-bottom;}
         input.config {
             height: 16px;
             min-width: 250px;
@@ -48,7 +49,7 @@
                 <h2>Configuration</h2>
                 <h3>Planning engine</h3>
                 <input type="text" id="planner" class="config" readonly/>
-                <a href="command:pddl.configurePlanner" class="button" title="Configure...">&#9881;</a><br/>
+                <a href="command:pddl.configurePlanner" class="button" title="Configure..."><img src="gear.svg" class="configIcon"/></a><br/>
                 See <a href="https://github.com/jan-dolejsi/vscode-pddl/wiki/Configuring-the-PDDL-planner">more info about PDDL planners</a>
 
                 <br/>
@@ -61,12 +62,12 @@
 
                 <h3>PDDL parser</h3>
                 <input type="text" id="parser" class="config" readonly/>
-                <a href="command:pddl.configureParser" class="button" title="Configure...">&#9881;</a><br/>
+                <a href="command:pddl.configureParser" class="button" title="Configure..."><img src="gear.svg" class="configIcon"/></a><br/>
                 See <a href="https://github.com/jan-dolejsi/vscode-pddl/wiki/Configuring-the-PDDL-parser">more info about PDDL parsers</a>
 
                 <h3>Plan Validator</h3>
                 <input type="text" id="validator" class="config" readonly/>
-                <a href="command:pddl.configureValidate" class="button" title="Configure...">&#9881;</a><br/>
+                <a href="command:pddl.configureValidate" class="button" title="Configure..."><img src="gear.svg" class="configIcon"/></a><br/>
                 Clone and compile <a href="https://github.com/KCL-Planning/VAL">VAL from GitHub</a><br/>
 
                 <div id="autoSaveDiv">

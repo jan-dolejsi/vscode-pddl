@@ -57,6 +57,9 @@
             font-size: 28px;
             color: gray";
         }
+        .help {
+            color: gray
+        }
     </style>
 </head>
 <body onload="initialize()">
@@ -64,15 +67,16 @@
         <img src="no-signal_gray.svg" onclick="startSearchDebugger()" id="startDebuggerButton" style="width: 20px;" title="Search engine listener is not running. Click here to start it." >
         <img src="signal_gray.svg" onclick="stopSearchDebugger()" id="stopDebuggerButton" style="width: 20px;" title="Search engine listener is running. Click here to stop it." >
         <a href="#" onclick="restartSearchDebugger()" id="restartDebuggerButton" class="toolbarButton" title="Clear debugger view and re-start search engine listener.">⟳</a>
-        <a href="#" id="toggleStateLogButton" onclick="toggleStateLog()" class="toolbarButton" title="Open and synchronize navigation through state log file.">&#128441;</a>
+        <a href="#" id="toggleStateLogButton" onclick="toggleStateLog()" class="toolbarButton" title="Open and synchronize navigation through state log file.">🗎</a>
     </div>
 
     <div class="left">
-        <button onclick="addMock()">Add</button>
+        <!-- <button onclick="addMock()">Add</button>
         <button onclick="updateMock()">Update</button>
-        <button onclick="clearStates()">Clear</button>
+        <button onclick="clearStates()">Clear</button> -->
         <div id="chart_div"></div>
         <div id="network" style="overflow: scroll"></div>
+        <div class="help">⌨: ← → ↑ ↓ to navigate graph, Shift ← → to navigate graph</div>
     </div>
     <div class="right">
         <div id="statePlan"/>

@@ -4,7 +4,7 @@
  * ------------------------------------------------------------------------------------------ */
 'use strict';
 
-import { ExtensionContext, commands, window } from "vscode";
+import { ExtensionContext, commands, window, workspace, StatusBarItem, StatusBarAlignment } from "vscode";
 
 import * as express from 'express';
 import bodyParser = require('body-parser')
@@ -14,46 +14,93 @@ import { MessageParser } from "./MessageParser";
 import { MockSearch } from "./MockSearch";
 import { SearchDebuggerView } from "./SearchDebuggerView";
 import { PddlConfiguration } from "../configuration";
+import { PlannerOptionsProvider, PlanningRequestContext } from "../planning/PlannerOptionsProvider";
 
-export class SearchDebugger {
+export class SearchDebugger implements PlannerOptionsProvider {
 
-    server: http.Server;
-    search: Search;
-    port = 8899; //todo: randomize port
-    view: SearchDebuggerView;
-    messageParser: MessageParser;
+    private server: http.Server;
+    private search: Search;
+    private port = 0; //port is randomized
+    private view: SearchDebuggerView;
+    private messageParser: MessageParser;
+    private statusBarItem: StatusBarItem;
+    static readonly TOGGLE_COMMAND = "pddl.searchDebugger.toggle";
 
     constructor(private context: ExtensionContext, private pddlConfiguration: PddlConfiguration) {
         this.context.subscriptions.push(commands.registerCommand("pddl.searchDebugger.start", () => this.tryStart()));
         this.context.subscriptions.push(commands.registerCommand("pddl.searchDebugger.stop", () => this.tryStop()));
+        this.context.subscriptions.push(commands.registerCommand("pddl.searchDebugger.reset", () => this.reset()));
         this.context.subscriptions.push(commands.registerCommand("pddl.searchDebugger.mock", () => this.mock()));
 
         this.view = new SearchDebuggerView(this.context, this.pddlConfiguration);
     }
 
+    providePlannerOptions(context: PlanningRequestContext): string {
+        if (this.isRunning()) {
+            this.reset();
+            if (this.view) {
+                this.view.setDomainAndProblem(context.domain, context.problem);
+            }
+
+            let commandLine = workspace.getConfiguration("pddlSearchDebugger").get<string>("plannerCommandLine");
+            return commandLine.replace('$(port)', this.port.toString());
+        }
+        else {
+            return "";
+        }
+    }
+
+    reset(): void {
+        if (this.search) this.search.clear();
+        if (this.messageParser) this.messageParser.clear();
+        if (this.view) this.view.clear();
+    }
+
     tryStart(): void {
         try {
-            this.start();
+            this.startAndShow();
         }
         catch (ex) {
             window.showErrorMessage("Error starting search debug listener: " + ex);
         }
     }
 
-    start(): void {
-        this.view.showDebugView(true);
-        if (this.server != null) window.showErrorMessage("Search debugger is already running");
+    isRunning(): boolean {
+        return this.server != null;
+    }
 
-        this.search = new Search();
-        this.messageParser = new MessageParser(this.search);
-        this.view.observe(this.search);
+    startAndShow(): void {
+        if (!this.isRunning()) {
+            this.startServer();
+        }
+        this.view.showDebugView(this.isRunning());
+        this.showStatusBarItem();
+    }
 
-        if (this.server != null) window.showErrorMessage("Search debugger is already running");
+    private startServer(): void {
+        if (!this.search) {
+            this.search = new Search();
+            this.messageParser = new MessageParser(this.search);
+            this.view.observe(this.search);
+        }
+
         var app: express.Application = this.createApplication();
 
+        let defaultPort = workspace.getConfiguration("pddlSearchDebugger").get<number>("defaultPort");
+
+        this.port = defaultPort > 0 ? defaultPort : 8000 + Math.floor(Math.random() * 1000);
+        let retryCount = defaultPort > 0 ? 1 : 100;
         this.server = http.createServer(app);
         this.server.on('error', e => window.showErrorMessage(e.message));
-        this.server.listen(this.port);
+        for (; retryCount > 0; retryCount--) {
+            try {
+                this.server.listen(this.port);
+                break;
+            }catch(ex){
+                console.log(`Cannot listen to port ${this.port}: ` + ex);
+                this.port--;
+            }
+        }
         console.log("Search debugger listening at port " + this.port);
     }
 
@@ -78,8 +125,8 @@ export class SearchDebugger {
             serviceDebugger.search.addState(serviceDebugger.messageParser.parseState(req.body));
             res.status(201).end();
         });
-        // todo: the next one should be a 'patch'
-        app.post('/state/h', function (req: express.Request, res: express.Response, _next: express.NextFunction) {
+        // todo: the next one should be a 'patch' verb for '/state' path
+        app.post('/state/heuristic', function (req: express.Request, res: express.Response, _next: express.NextFunction) {
             serviceDebugger.search.update(serviceDebugger.messageParser.parseEvaluatedState(req.body));
             res.status(200).end();
         });
@@ -100,18 +147,44 @@ export class SearchDebugger {
             this.server.close();
             this.server = null;
         }
-        this.view.showDebuggerState(false);
+        this.view.showDebuggerState(this.isRunning());
+        this.showStatusBarItem();
+    }
+
+    toggle(): void {
+        if (this.isRunning()) {
+            this.tryStop();
+        } else {
+            this.tryStart();
+        }
     }
 
     mock(): void {
         try {
             this.view.clear();
             this.stop();
-            this.start();
+            this.startAndShow();
             new MockSearch(this.port).run();
         }
         catch (ex) {
-            window.showErrorMessage("Error starting mock search: " + ex);
+            window.showErrorMessage("Error starting the mock search: " + ex);
         }
+    }
+
+    showStatusBarItem() {
+        if (!this.statusBarItem) {
+            // create it and show it the first time the search debugger is used
+            this.statusBarItem = window.createStatusBarItem(StatusBarAlignment.Right);
+            this.context.subscriptions.push(this.statusBarItem);
+
+            this.context.subscriptions.push(commands.registerCommand(SearchDebugger.TOGGLE_COMMAND, () => this.toggle()));
+            this.statusBarItem.command = SearchDebugger.TOGGLE_COMMAND;
+            this.statusBarItem.show();
+        }
+
+        let statusIcon = this.isRunning() ? '$(radio-tower)' : '$(x)';
+        let status = this.isRunning() ? `ON (on port ${this.port}). Click here to stop it.` : 'OFF. Click here to start it.';
+        this.statusBarItem.text = `$(bug)${statusIcon}`;
+        this.statusBarItem.tooltip = `PDDL Search debugger is ${status}.`;
     }
 }

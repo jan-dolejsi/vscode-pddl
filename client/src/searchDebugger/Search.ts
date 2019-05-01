@@ -8,6 +8,7 @@ import { State } from "./State";
 import { EventEmitter, Event } from "vscode";
 import { StateResolver } from "./StateResolver";
 
+/** Represents the running/completed search and notifies when new states are added or evaluated. */
 export class Search implements StateResolver {
     private _onStateAdded: EventEmitter<State> = new EventEmitter<State>();
     private _onStateUpdated: EventEmitter<State> = new EventEmitter<State>();
@@ -15,6 +16,11 @@ export class Search implements StateResolver {
 
     private states = new Map<number, State>();
     private bestStateHeuristic = Number.MAX_VALUE;
+
+    clear() {
+        this.states.clear();
+        this.bestStateHeuristic = Number.MAX_VALUE;
+    }
 
     get onStateAdded(): Event<State> {
         return this._onStateAdded.event;
@@ -59,5 +65,9 @@ export class Search implements StateResolver {
 
     getState(stateId: number): State {
         return this.states.get(stateId);
+    }
+
+    getStates(): State[] {
+        return [...this.states.values()];
     }
 }

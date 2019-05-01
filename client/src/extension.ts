@@ -46,8 +46,13 @@ export async function activate(context: ExtensionContext) {
 	// initialize the instrumentation wrapper
 	await initialize(extensionInfo.getId(), extensionInfo.getVersion(), KEY);
 
-	// activate the extension, but send instrumentation data
-	await instrumentOperation("activation", activateWithTelemetry)(context);
+	try {
+		// activate the extension, but send instrumentation data
+		await instrumentOperation("activation", activateWithTelemetry)(context);
+	}
+	catch(ex) {
+		window.showErrorMessage("There was an error starting the PDDL extension: " + ex);
+	}
 }
 
 function activateWithTelemetry(_operationId: string, context: ExtensionContext) {
@@ -71,7 +76,8 @@ function activateWithTelemetry(_operationId: string, context: ExtensionContext) 
 		pddlConfiguration.askNewParserPath();
 	});
 
-	new SearchDebugger(context, pddlConfiguration);
+	let searchDebugger = new SearchDebugger(context, pddlConfiguration);
+	planning.addOptionsProvider(searchDebugger);
 
 	let loginParserServiceCommand = commands.registerCommand(PDDL_LOGIN_PARSER_SERVICE, () => {
 		let scopePromise = pddlConfiguration.askConfigurationScope();

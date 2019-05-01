@@ -163,7 +163,7 @@ export class PlanView extends Disposable {
             return previewPanel.getError().message;
         }
         else {
-            return new PlanReportGenerator(this.context, this.displayWidth, false)
+            return new PlanReportGenerator(this.context, { displayWidth: this.displayWidth, selfContained: false })
                 .generateHtml(previewPanel.getPlans());
         }
     }

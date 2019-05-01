@@ -37,6 +37,8 @@ export class PlannerExecutable extends Planner {
             .replace('$(domain)', Util.q(domainFilePath))
             .replace('$(problem)', Util.q(problemFilePath));
 
+        command += ' ' + parent.providePlannerOptions({ domain: domainFileInfo, problem: problemFileInfo });
+
         parent.handleOutput(command + '\n');
 
         let thisPlanner = this;

@@ -5,12 +5,16 @@
 'use strict';
 
 import { State } from "./State";
+import { DomainInfo, ProblemInfo } from '../../../common/src/parser';
 import { Plan } from '../../../common/src/Plan';
 import { PlanStep } from "../../../common/src/PlanStep";
 import { HappeningType } from "../../../common/src/HappeningsInfo";
 import { SearchHappening } from "./SearchHappening";
 
 export class StateToPlan {
+
+    constructor(private domain: DomainInfo, private problem: ProblemInfo) { }
+
     convert(state: State): Plan {
 
         let totalPlan = state.getTotalPlan();
@@ -29,7 +33,7 @@ export class StateToPlan {
 
         let helpfulActions = state.helpfulActions ? state.helpfulActions : [];
 
-        return new Plan(planSteps, null, null, state.earliestTime, helpfulActions);
+        return new Plan(planSteps, this.domain, this.problem, state.earliestTime, helpfulActions);
     }
 
     static associate(endHappening: SearchHappening, planSteps: PlanStepBuilder[]): void {

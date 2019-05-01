@@ -15,4 +15,6 @@ export interface StateResolver {
     onBetterState: Event<State>;
 
     getState(stateId: number): State;
+
+    getStates(): State[];
 }

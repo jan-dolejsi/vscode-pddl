@@ -30,6 +30,7 @@ import { PlanHappeningsExporter } from './PlanHappeningsExporter';
 import { HappeningsPlanExporter } from './HappeningsPlanExporter';
 import { isHappenings, isPlan, exists } from '../utils';
 import { PlanView, PDDL_GENERATE_PLAN_REPORT, PDDL_EXPORT_PLAN } from './PlanView';
+import { PlannerOptionsProvider, PlanningRequestContext } from './PlannerOptionsProvider';
 
 const PDDL_STOP_PLANNER = 'pddl.stopPlanner';
 const PDDL_CONVERT_PLAN_TO_HAPPENINGS = 'pddl.convertPlanToHappenings';
@@ -46,6 +47,7 @@ export class Planning implements PlannerResponseHandler {
     plans: Plan[];
     planningProcessKilled: boolean;
     planView: PlanView;
+    optionProviders: PlannerOptionsProvider[] = [];
 
     constructor(public pddlWorkspace: PddlWorkspace, public plannerConfiguration: PddlConfiguration, context: ExtensionContext) {
         this.output = window.createOutputChannel("Planner output");
@@ -66,7 +68,7 @@ export class Planning implements PlannerResponseHandler {
 
         context.subscriptions.push(commands.registerCommand(PDDL_GENERATE_PLAN_REPORT, (plans: Plan[], selectedPlan: number) => {
             if (plans != null) {
-                new PlanReportGenerator(context, 1000, true).export(plans, selectedPlan);
+                new PlanReportGenerator(context, { displayWidth: 1000, selfContained: true }).export(plans, selectedPlan);
             } else {
                 window.showErrorMessage("There is no plan to export.");
             }
@@ -97,6 +99,14 @@ export class Planning implements PlannerResponseHandler {
                 window.showErrorMessage("Active document is not a happening.");
             }
         }));
+    }
+
+    addOptionsProvider(optionsProvider: PlannerOptionsProvider) {
+		this.optionProviders.push(optionsProvider);
+	}
+
+    providePlannerOptions(context: PlanningRequestContext): string {
+        return this.optionProviders.map(provider => provider.providePlannerOptions(context)).join(' ');
     }
 
     /**

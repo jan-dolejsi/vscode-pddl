@@ -15,10 +15,10 @@ window.addEventListener('message', event => {
     console.log("Message: " + message);
     switch (message.command) {
         case 'stateAdded':
-            add(message.state);
+            add(message.state, false);
             break;
         case 'stateUpdated':
-            update(message.state);
+            update(message.state, false);
             break;
         case 'debuggerState':
             showDebuggerOn(message.state == 'on');
@@ -28,6 +28,9 @@ window.addEventListener('message', event => {
             break;
         case 'clear':
             clearStates();
+            break;
+        case 'showAllStates':
+            showAllStates(message.state);
             break;
         case 'stateLog':
             showStateLogButton(message.state);
@@ -92,9 +95,9 @@ function updateMock() {
     update(state);
 }
 
-function add(newState) {
-    addStateToTree(newState);
-    addStateToChart(newState);
+function add(newState, batch) {
+    addStateToTree(newState, batch);
+    addStateToChart(newState, batch);
     states[newState.id]=newState;
 }
 
@@ -105,6 +108,19 @@ function update(state) {
     if (selectedStateId == state.id) {
         selectChartRow(state.id);
     }
+}
+
+function showAllStates(states) {
+    clearStates();
+    for (const state of states) {
+        add(state, true);
+    }
+    endBatch();
+}
+
+function endBatch() {
+    endChartBatch()
+    endTreeBatch();
 }
 
 function onStateSelected(stateId) {
@@ -138,8 +154,31 @@ function initialize() {
     });
 
     initializeChart();
-    google.visualization.events.addListener(chart, 'select', function() {
+    subscribeToChartEvents();
+
+    window.document.addEventListener('keydown', function(event) {
+        navigate(event);
+    })
+
+    window.onresize = function() {
+        unsubscribeChartEvents();
+        reSizeChart();
+        subscribeToChartEvents();
+    }
+
+    if (!vscode) {
+        showDebuggerOn(false);
+    }
+}
+
+var chartSelectEvent;
+
+function subscribeToChartEvents() {
+    console.log("subscribing to chart select event for ");console.log(chart);
+    chartSelectEvent = google.visualization.events.addListener(chart, 'select', function() {
+        console.log("chart selection changed");
         var selection = chart.getSelection();
+        console.log(selection);
         if (selection && selection.length > 0) {
             onStateSelected(selection[0].row);
         }
@@ -147,18 +186,11 @@ function initialize() {
             onStateSelected(null);
         }
     });
+}
 
-    window.document.addEventListener('keydown', function(event) {
-        navigate(event);
-    })
-
-    window.onresize = function() {
-        reSizeChart();
-    }
-
-    if (!vscode) {
-        showDebuggerOn(false);
-    }
+function unsubscribeChartEvents() {
+    if (chartSelectEvent && chart)
+        google.visualization.events.removeListener(chartSelectEvent);
 }
 
 function clearStates() {
@@ -178,10 +210,9 @@ function stopSearchDebugger() {
 }
 
 function restartSearchDebugger() {
-    postMessage({command: 'stopDebugger'});
+    postMessage({command: 'reset'});
     showStatePlan("");
     clearStates();
-    postMessage({command: 'startDebugger'});
 }
 
 function showDebuggerOn(on) {

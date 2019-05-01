@@ -84,8 +84,14 @@ function selectChartRow(stateId) {
     }
 }
 
-function addStateToChart(newState) {
-    chartData.addRow([newState.id, newState.earliestTime, sanitizeNumber(newState.totalMakespan), sanitizeNumber(newState.h)]);
+function addStateToChart(newState, batch) {
+    if (chartData) {
+        chartData.addRow([newState.id, newState.earliestTime, sanitizeNumber(newState.totalMakespan), sanitizeNumber(newState.h)]);
+        if (!batch) reDrawChart();
+    }
+}
+
+function endChartBatch() {
     reDrawChart();
 }
 

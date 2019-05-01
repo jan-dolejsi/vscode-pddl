@@ -36,6 +36,7 @@
     "onCommand:pddl.configureParser",
     "onCommand:pddl.configurePlanner",
     "onCommand:pddl.showOverview",
+    "onCommand:pddl.searchDebugger.start",
     "onView:pddl.planning.domains",
     "onView:pddl.tests.explorer",
     "onView:pddl.planning.domains"
@@ -211,6 +212,10 @@
       {
         "command": "pddl.searchDebugger.stop",
         "title": "PDDL: Stop search debugger"
+      },
+      {
+        "command": "pddl.searchDebugger.reset",
+        "title": "PDDL: Reset search debugger"
       },
       {
         "command": "pddl.searchDebugger.mock",
@@ -603,6 +608,11 @@
           "type": "string",
           "description": "Path of the 'valstep' executable."
         },
+        "pddlSearchDebugger.defaultPort": {
+          "type": "integer",
+          "description": "Search debugger static port. If not specified (or set to zero, the port is randomized for security reasons).",
+          "default": 0
+        },
         "pddlSearchDebugger.stateLogPattern": {
           "type": "string",
           "description": "Pattern to find the line in the state log file pertaining to the selected state.",
@@ -610,7 +620,7 @@
         },
         "pddlSearchDebugger.plannerCommandLine": {
           "type": "string",
-          "description": "Command-line switch to configure planning engine to work with the Search Debugger pane.",
+          "description": "Command-line switch to configure planning engine to work with the Search Debugger pane. The '$(port)' part gets replaced by actual port number.",
           "default": "--search-tree-dump=http://localhost:$(port)"
         }
       }

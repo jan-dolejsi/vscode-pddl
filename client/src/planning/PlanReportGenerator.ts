@@ -28,7 +28,7 @@ export class PlanReportGenerator {
     planStepHeight = 20;
     settings: Map<Plan, PlanReportSettings> = new Map();
 
-    constructor(private context: ExtensionContext, private displayWidth: number, private selfContained: boolean) {
+    constructor(private context: ExtensionContext, private options: PlanReportOptions) {
 
     }
 
@@ -75,7 +75,7 @@ export class PlanReportGenerator {
 
     asAbsolutePath(...paths: string[]): Uri {
         let uri = Uri.file(this.context.asAbsolutePath(path.join(...paths)));
-        if (!this.selfContained) {
+        if (!this.options.selfContained) {
             uri = uri.with({ scheme: "vscode-resource" });
         }
         return uri;
@@ -132,7 +132,7 @@ export class PlanReportGenerator {
         </div>`;
 
         let objectsHtml = '';
-        if (plan.domain && plan.problem) {
+        if (!this.options.disableSwimLaneView && plan.domain && plan.problem) {
             let allTypeObjects = TypeObjects.concatObjects(plan.domain.constants, plan.problem.objects);
 
             objectsHtml = plan.domain.getTypes()
@@ -157,7 +157,7 @@ ${objectsHtml}
         let lineCharts = `    <div class="lineChart" plan="${planIndex}" style="display: ${styleDisplay};margin-top: 20px;">\n`;
         let lineChartScripts = '';
 
-        if (plan.domain && plan.problem) {
+        if (!this.options.disableLinePlots && plan.domain && plan.problem) {
             let evaluator = new PlanFunctionEvaluator(valueSeqPath, valStepPath, plan);
 
             if (evaluator.isAvailable()) {
@@ -168,10 +168,10 @@ ${objectsHtml}
 
                     functionValues.forEach((values, liftedVariable) => {
                         let chartDivId = `chart_${planIndex}_${liftedVariable.name}`;
-                        lineCharts += `        <div id="${chartDivId}" style="width: ${this.displayWidth + 100}px; height: ${Math.round(this.displayWidth / 2)}px"></div>\n`;
+                        lineCharts += `        <div id="${chartDivId}" style="width: ${this.options.displayWidth + 100}px; height: ${Math.round(this.options.displayWidth / 2)}px"></div>\n`;
                         let chartTitleWithUnit = liftedVariable.name;
                         if (liftedVariable.getUnit()) chartTitleWithUnit += ` [${liftedVariable.getUnit()}]`;
-                        lineChartScripts += `        drawChart('${chartDivId}', '${chartTitleWithUnit}', '', ${JSON.stringify(values.legend)}, ${JSON.stringify(values.values)}, ${this.displayWidth});\n`;
+                        lineChartScripts += `        drawChart('${chartDivId}', '${chartTitleWithUnit}', '', ${JSON.stringify(values.legend)}, ${JSON.stringify(values.values)}, ${this.options.displayWidth});\n`;
                     });
                 } catch (err) {
                     console.log(err);
@@ -181,7 +181,7 @@ ${objectsHtml}
         }
         lineCharts += `\n    </div>`;
 
-        return `${this.selfContained ? '' : this.renderMenu()}
+        return `${this.options.selfContained ? '' : this.renderMenu()}
 ${ganttChart}
 ${swimLanes}
 ${lineCharts}
@@ -194,7 +194,7 @@ ${lineCharts}
             let fromTop = planHeadLength * this.planStepHeight;
             let fromLeft = this.toViewCoordinates(plan.now, plan);
             let text = plan.helpfulActions.map((helpfulAction, index) => this.renderHelpfulAction(index, helpfulAction)).join(', ');
-            return `\n        <div class="planstep" style="top: ${fromTop}px; left: ${fromLeft}px; margin-top: 3px">▶${text}</div>`;
+            return `\n        <div class="planstep" style="top: ${fromTop}px; left: ${fromLeft}px; margin-top: 3px">▶ ${text}</div>`;
         }
         else {
             return '';
@@ -234,7 +234,7 @@ ${lineCharts}
     renderTypeSwimLanes(type: string, objects: string[], plan: Plan): string {
         return `            <tr>
                 <th>${type}</th>
-                <th style="width: ${this.displayWidth}px"></th>
+                <th style="width: ${this.options.displayWidth}px"></th>
             </tr>
 `
             + objects.map(obj => this.renderObjectSwimLane(obj, plan)).join('\n');
@@ -286,7 +286,7 @@ ${stepsInvolvingThisObject}
     }
 
     toActionLink(actionName: string, plan: Plan): string {
-        if (this.selfContained || !plan.domain) {
+        if (this.options.selfContained || !plan.domain) {
             return actionName;
         }
         else {
@@ -311,7 +311,7 @@ ${stepsInvolvingThisObject}
     }
 
     async includeStyle(uri: Uri): Promise<string> {
-        if (this.selfContained) {
+        if (this.options.selfContained) {
             let styleText = await readFile(uri.fsPath, { encoding: 'utf-8' });
             return `<style>\n${styleText}\n</style>`;
         } else {
@@ -320,7 +320,7 @@ ${stepsInvolvingThisObject}
     }
 
     async includeScript(uri: Uri): Promise<string> {
-        if (this.selfContained) {
+        if (this.options.selfContained) {
             let scriptText = await readFile(uri.fsPath, { encoding: 'utf-8' });
             return `<script>\n${scriptText}\n</script>`;
         } else {
@@ -363,7 +363,7 @@ ${stepsInvolvingThisObject}
 
     /** Converts the _time_ argument to view coordinates */
     toViewCoordinates(time: number, plan: Plan): number {
-        return time / plan.makespan * this.displayWidth;
+        return time / plan.makespan * this.options.displayWidth;
     }
 
     getActionColor(step: PlanStep, domain: DomainInfo): string {
@@ -374,5 +374,11 @@ ${stepsInvolvingThisObject}
     }
 
     colors = ['#ff0000', '#ff4000', '#ff8000', '#ffbf00', '#ffff00', '#bfff00', '#80ff00', '#40ff00', '#00ff00', '#00ff40', '#00ff80', '#00ffbf', '#00ffff', '#00bfff', '#0080ff', '#0040ff', '#0000ff', '#4000ff', '#8000ff', '#bf00ff', '#ff00ff', '#ff00bf', '#ff0080', '#ff0040'];
+}
 
+export interface PlanReportOptions {
+    displayWidth: number,
+    selfContained?: boolean,
+    disableSwimLaneView?: boolean,
+    disableLinePlots?: boolean
 }

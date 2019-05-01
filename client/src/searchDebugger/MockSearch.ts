@@ -60,7 +60,7 @@ export class MockSearch {
                 break;
             case 'patch':
                 // this should really be a 'patch' verb, but the clients have more trouble making it work
-                return await this.post('/state/h', mockEvent.toWireMessage());
+                return await this.post('/state/heuristic', mockEvent.toWireMessage());
                 break;
             default:
                 console.log("Unsupported mock event: " + mockEvent.operation);
@@ -174,7 +174,7 @@ class MockStateContextEvent extends MockEvent {
             parentId: this.stateContext.parentId,
             g: this.stateContext.g,
             earliestTime: this.stateContext.earliestTime,
-            planHead: this.stateContext.planHead
+            planHead: this.stateContext.planHead.map(h => toWireSearchHappening(h))
         };
     }
 }
@@ -189,9 +189,25 @@ class MockStateSearchContextEvent extends MockEvent {
             id: this.stateSearchContext.stateContext.state.id,
             totalMakespan: this.stateSearchContext.totalMakespan,
             h: this.stateSearchContext.h,
-            helpfulActions: this.stateSearchContext.helpfulActions,
-            relaxedPlan: this.stateSearchContext.relaxedPlan
+            helpfulActions: this.stateSearchContext.helpfulActions.map(a => toWireHelpfulAction(a)),
+            relaxedPlan: this.stateSearchContext.relaxedPlan.map(h => toWireSearchHappening(h))
         };
+    }
+}
+
+function toWireSearchHappening(happening: SearchHappening): any {
+    return {
+        earliestTime: happening.earliestTime,
+        actionName: happening.actionName,
+        shotCounter: happening.shotCounter,
+        kind: HappeningType[happening.kind]
+    };
+}
+
+function toWireHelpfulAction(action: HelpfulAction): any {
+    return {
+        actionName: action.actionName,
+        kind: HappeningType[action.kind]
     }
 }
 

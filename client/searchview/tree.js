@@ -49,7 +49,7 @@ function createTree() {
             }
         },
         edges: {
-            font: {align: 'top'}
+            font: { align: 'top' }
         }
     };
     network = new vis.Network(container, treeData, options);
@@ -57,24 +57,25 @@ function createTree() {
     return network;
 }
 
-function addStateToTree(newState) {
+function addStateToTree(newState, batch) {
     nodes.add(toNode(newState));
-    if (newState.parentId !== undefined) {
-        if (newState.actionName == undefined) {
-            console.log("Undefined action name! " + newState + newState.parentId);
-        }
+    if (newState.parentId != null && newState.actionName) {
         var undecoratedActionName = newState.actionName.replace(/[├┤]$/, "").trim();
-        edges.add({ from: newState.parentId, to: newState.id, actionName: undecoratedActionName, label: newState.actionName.split(' ').join('\n')});
+        edges.add({ from: newState.parentId, to: newState.id, actionName: undecoratedActionName, label: newState.actionName.split(' ').join('\n') });
     }
+    if (!batch) network.fit();
+}
+
+function endTreeBatch() {
     network.fit();
 }
 
 function toNode(newState) {
-    var label = 'O: '+newState.id;
+    var label = 'O: ' + newState.id;
     if (newState.h != null) {
         label += '\nH: ' + newState.h;
     }
-    var node = {id: newState.id, label: label};
+    var node = { id: newState.id, label: label };
     if (newState.h != null && !Number.isFinite(newState.h)) {
         // dead-end state
         node['color'] = { background: 'brown' };
@@ -87,7 +88,7 @@ function updateStateOnTree(state) {
 }
 
 function selectTreeNode(id) {
-    if (id !== null){
+    if (id !== null) {
         network.selectNodes([id]);
     }
     else {

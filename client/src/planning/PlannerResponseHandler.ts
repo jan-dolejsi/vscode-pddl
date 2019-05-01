@@ -5,8 +5,9 @@
 'use strict';
 
 import { Plan } from "../../../common/src/Plan";
+import { PlannerOptionsProvider } from "./PlannerOptionsProvider";
 
-export interface PlannerResponseHandler {
+export interface PlannerResponseHandler extends PlannerOptionsProvider {
     handleOutput(outputText: string): void;
     handlePlan(plan: Plan): void;
 }
