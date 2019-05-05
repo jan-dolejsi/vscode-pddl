@@ -55,11 +55,11 @@ export class PlanView extends Disposable {
 
     }
 
-    setPlannerOutput(plans: Plan[]): void {
+    setPlannerOutput(plans: Plan[], reveal: boolean): void {
         let plannerOutputPanel = this.getPlannerOutputPanel();
         plannerOutputPanel.setPlans(plans);
         this.resetTimeout();
-        if (plans.length > 0) plannerOutputPanel.reveal();
+        if (plans.length > 0 && reveal) plannerOutputPanel.reveal();
     }
 
     getPlannerOutputPanel(): PlanPreviewPanel {

@@ -227,6 +227,13 @@ export class Planning implements PlannerResponseHandler {
 
         this.planningProcessKilled = false;
 
+        if (!this.isSearchDebugger()) {
+            this.output.show(true);
+        }
+        else {
+            commands.executeCommand('pddl.searchDebugger.start');
+        }
+
         window.withProgress<Plan[]>({
             location: ProgressLocation.Notification,
             title: `Searching for plans for domain ${domainFileInfo.name} and problem ${problemFileInfo.name}`,
@@ -242,8 +249,10 @@ export class Planning implements PlannerResponseHandler {
             return this.planner.plan(domainFileInfo, problemFileInfo, planParser, this);
         })
             .then(plans => this.onPlannerFinished(plans), reason => this.onPlannerFailed(reason));
+    }
 
-        this.output.show(true);
+    isSearchDebugger(): boolean {
+        return workspace.getConfiguration("pddlPlanner").get("executionTarget") === "Search debugger";
     }
 
     onPlannerFinished(plans: Plan[]): void {
@@ -384,7 +393,7 @@ export class Planning implements PlannerResponseHandler {
 
     visualizePlans(plans: Plan[]): void {
         this.plans = plans;
-        this.planView.setPlannerOutput(plans);
+        this.planView.setPlannerOutput(plans, !this.isSearchDebugger());
     }
 
     // copied from the Workspace class

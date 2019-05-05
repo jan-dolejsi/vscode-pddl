@@ -193,7 +193,7 @@ export class SearchDebuggerView {
         let state = this.search.getState(stateId);
         let statePlan = new StateToPlan(this.domain, this.problem).convert(state);
         let planHtml = await new PlanReportGenerator(this.context,
-            { displayWidth: 200, selfContained: false, disableLinePlots: true, disableSwimLaneView: true })
+            { displayWidth: 200, selfContained: false, disableLinePlots: true, disableSwimLaneView: true, disableHamburgerMenu: true })
             .generateHtml([statePlan]);
         this.postMessage({ command: 'showPlan', state: planHtml });
     }

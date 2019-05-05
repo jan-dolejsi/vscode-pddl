@@ -181,7 +181,7 @@ ${objectsHtml}
         }
         lineCharts += `\n    </div>`;
 
-        return `${this.options.selfContained ? '' : this.renderMenu()}
+        return `${this.options.selfContained || this.options.disableHamburgerMenu ? '' : this.renderMenu()}
 ${ganttChart}
 ${swimLanes}
 ${lineCharts}
@@ -218,7 +218,7 @@ ${lineCharts}
     }
 
     isPlanHeadStep(step: PlanStep, plan: Plan): boolean {
-        return plan.now === undefined || step.getStartTime() <= plan.now;
+        return plan.now === undefined || step.getStartTime() < plan.now;
     }
 
     createPlansChartsScript(plans: Plan[]) {
@@ -300,7 +300,7 @@ ${stepsInvolvingThisObject}
             `<tr><td class="actionToolTip">Duration: </td><td class="actionToolTip">${step.getDuration().toFixed(DIGITS)}</td></tr>
             <tr><td class="actionToolTip">End: </td><td class="actionToolTip">${step.getEndTime().toFixed(DIGITS)}</td></tr>` :
             '';
-        return `<table><tr><th colspan="2" class="actionToolTip">${step.actionName}.toFixed(DIGITS) ${step.objects.join(' ')}</th></tr><tr><td class="actionToolTip" style="width:50px">Start:</td><td class="actionToolTip">${step.getStartTime().toFixed(DIGITS)}</td></tr>${durationRow}</table>`;
+        return `<table><tr><th colspan="2" class="actionToolTip">${step.actionName} ${step.objects.join(' ')}</th></tr><tr><td class="actionToolTip" style="width:50px">Start:</td><td class="actionToolTip">${step.getStartTime().toFixed(DIGITS)}</td></tr>${durationRow}</table>`;
     }
 
     toActionTooltipPlain(step: PlanStep): string {
@@ -380,5 +380,6 @@ export interface PlanReportOptions {
     displayWidth: number,
     selfContained?: boolean,
     disableSwimLaneView?: boolean,
-    disableLinePlots?: boolean
+    disableLinePlots?: boolean,
+    disableHamburgerMenu?: boolean
 }

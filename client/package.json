@@ -501,12 +501,14 @@
           "scope": "window",
           "enum": [
             "Output window",
-            "Terminal"
+            "Terminal",
+            "Search debugger"
           ],
           "default": "Output window",
           "enumDescriptions": [
             "Planner output is displayed in the VS Code Output Window 'Planner output'.",
-            "Planner is executed in a terminal window. Plan is not displayed visually. Use this to interact with the planner."
+            "Planner is executed in a terminal window. Plan is not displayed visually. Use this to interact with the planner.",
+            "Same as the 'Output window' option, but the output window and resulting plan are not revealed in order to keep the Search debugger in the forefront."
           ]
         },
         "pddlPlanner.serviceAuthenticationEnabled": {

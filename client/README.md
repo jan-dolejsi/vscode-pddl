@@ -365,6 +365,35 @@ To test robustness of your planning model, you can auto-generate a "plan-resume"
 
 For this to work, the setting `pddl.valStepPath` must be set to the location of the ValStep utility, which is currently not distributed with the extension. There is a known issue with time-initial literals and fluents - they are not re-included into the generated problem files.
 
+## Search Debugging
+
+Search Debugging is the _ultimate_ AI Planning educational tool and a powerful search debugger tool at the same time. It explains how the heuristic function guides the search and at the same time it can be used to understand why the planner has hard time finding the plan for given planning problem and where does the domain model need to be tightened.
+
+Start the Search Debugger using the _PDDL: Start search debugger_ command. Stop it by the _PDDL: Stop search debugger_ or pressing the _cell phone signal_ icon. While the search debugger is active, it listens to the planner messages and visualizes the progress of the plan search in several ways:
+
+1. line plot of state heuristic value and estimate of makespan
+1. search tree
+1. best-state-so-far is visualized in terms of planhead, helpful actions and relaxed plan.
+
+![PDDL Search Visualization](https://raw.githubusercontent.com/wiki/jan-dolejsi/vscode-pddl/img/PDDL_search_debugger.gif)
+
+When the search stops, the states may be navigated and explored in three ways:
+
+1. using keyboard up, down, left, right buttons to navigate states in the search tree
+1. using keyboard shift+left and shift+right to navigate all states in order of discovery as layed out on the line plot
+1. by clicking on helpful actions to jump to the child state that expands that action (if actually created)
+
+While the Search Debugger is active, any planning _PDDL: Run the planner and display the plan_ requests are instrumented to send search progress info to the Search Debugger. This is achieved by appending a switch to the command line options. The switch may be configured using the `pddlSearchDebugger.plannerCommandLine` setting.
+
+The search debugger may be enabled/disabled by clicking on the bug-like icon in the status bar.
+For even smoother experience, the execution target setting may be switched to _Search debugger_ too to keep the Search debugger window in the forefront.
+
+The search debugger may be enabled/disabled by clicking on the bug-like icon in the status bar.
+
+If the planner outputs even more detailed log for every state, the log file could be synchronously navigated (scrolled to the same state). Select the log file that corresponds to the search being debugged by pressing the 🗎 icon. The log entry that corresponds to the state is matched using the regular expression pattern configurable by the  `pddlSearchDebugger.stateLogPattern` setting.
+
+To participate in this visual search debugging the planning engine must implement a HTTP client. An example of what data is expected may be found in the [mock search](https://github.com/jan-dolejsi/vscode-pddl/blob/master/client/src/searchDebugger/MockSearch.ts).
+
 ## Block folding in `:init` section of the problem file
 
 For large problem files, it is convenient to be able to fold blocks of statements between `;;(` and `;;)` comments lines.
