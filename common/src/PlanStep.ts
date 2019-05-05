@@ -10,7 +10,9 @@ export class PlanStep {
     actionName: string;
     objects: string[];
 
-    constructor(private time: number, public fullActionName: string, public isDurative: boolean, private duration: number, public lineIndex: number | undefined) {
+    constructor(private readonly time: number, public readonly fullActionName: string,
+        public readonly isDurative: boolean, private readonly duration: number,
+        public readonly lineIndex: number | undefined, public readonly commitment?: PlanStepCommitment) {
         let nameFragments = fullActionName.split(' ');
         this.actionName = nameFragments[0];
         this.objects = nameFragments.slice(1);
@@ -64,4 +66,10 @@ export class PlanStep {
             return [instant];
         }
     }
+}
+
+export enum PlanStepCommitment {
+    Committed,
+    EndsInRelaxedPlan,
+    StartsInRelaxedPlan
 }

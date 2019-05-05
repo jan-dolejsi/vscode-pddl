@@ -258,7 +258,7 @@ class MockStateContext {
     apply(actionName: string, shotCounter: number, kind: HappeningType, timeIncrement: number): MockStateContext {
         let id = ++MockState.lastStateId;
         let earliestTime = this.earliestTime + timeIncrement;
-        let newPlanHead = this.planHead.concat([new MockSearchHappening(earliestTime, actionName, shotCounter, kind)]);
+        let newPlanHead = this.planHead.concat([new MockSearchHappening(earliestTime, actionName, shotCounter, kind, false)]);
         return new MockStateContext(new MockState(id.toString()), this.g + 1, earliestTime, newPlanHead, this.state.id);
     }
 
@@ -306,13 +306,13 @@ class RelaxedPlanBuilder {
 
     start(actionName: string): RelaxedPlanBuilder {
         let time = this.time += EPSILON;
-        this.happenings.push(new MockSearchHappening(time, actionName, 0, HappeningType.START));
+        this.happenings.push(new MockSearchHappening(time, actionName, 0, HappeningType.START, true));
         return this;
     }
 
     end(timeOffset: number, actionName: string): RelaxedPlanBuilder {
         let time = this.time += timeOffset;
-        this.happenings.push(new MockSearchHappening(time, actionName, 0, HappeningType.END));
+        this.happenings.push(new MockSearchHappening(time, actionName, 0, HappeningType.END, true));
         return this;
     }
 

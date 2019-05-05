@@ -7,7 +7,7 @@
 import { State } from "./State";
 import { DomainInfo, ProblemInfo } from '../../../common/src/parser';
 import { Plan } from '../../../common/src/Plan';
-import { PlanStep } from "../../../common/src/PlanStep";
+import { PlanStep, PlanStepCommitment } from "../../../common/src/PlanStep";
 import { HappeningType } from "../../../common/src/HappeningsInfo";
 import { SearchHappening } from "./SearchHappening";
 
@@ -47,6 +47,7 @@ export class StateToPlan {
     }
 }
 
+/** Helps pairing corresponding start and end happenings. */
 class PlanStepBuilder {
     end: SearchHappening;
 
@@ -58,10 +59,18 @@ class PlanStepBuilder {
         return new PlanStepBuilder(happening);
     }
 
+    /**
+     * Sets corresponding end happening.
+     * @param endHappening corresponding end happening
+     */
     setEnd(endHappening: SearchHappening) {
         this.end = endHappening;
     }
 
+    /**
+     * Checks whether the given endHappening corresponds to this start.
+     * @param endHappening end happening to test
+     */
     correspondsToEnd(endHappening: SearchHappening): boolean {
         if (endHappening.shotCounter == -1) {
             return this.start.actionName == endHappening.actionName
@@ -74,7 +83,7 @@ class PlanStepBuilder {
 
     static readonly EPSILON = 1e-3;
 
-    toPalStep(maxTime: number): PlanStep {
+    toPalStep(stateTime: number): PlanStep {
         let isDurative = this.start.kind == HappeningType.START;
 
         var duration = PlanStepBuilder.EPSILON;
@@ -83,10 +92,19 @@ class PlanStepBuilder {
                 duration = this.end.earliestTime - this.start.earliestTime;
             }
             else {
-                duration = maxTime - this.start.earliestTime + maxTime * .1;
+                // the end was not set yet (perhaps this was a dead end state and there was no relaxed plan at all)
+                duration = stateTime - this.start.earliestTime + stateTime * .1;
             }
         }
 
-        return new PlanStep(this.start.earliestTime, this.start.actionName, isDurative, duration, -1);
+        let commitment = this.getCommitment();
+
+        return new PlanStep(this.start.earliestTime, this.start.actionName, isDurative, duration, -1, commitment);
+    }
+
+    private getCommitment(): PlanStepCommitment {
+        if (this.end && !this.end.isRelaxed) return PlanStepCommitment.Committed;
+        else if (!this.start.isRelaxed) return PlanStepCommitment.EndsInRelaxedPlan;
+        else return PlanStepCommitment.StartsInRelaxedPlan;
     }
 }

@@ -12,7 +12,7 @@ import * as path from 'path';
 
 import { DomainInfo, TypeObjects } from '../../../common/src/parser';
 import { SwimLane } from '../../../common/src/SwimLane';
-import { PlanStep } from '../../../common/src/PlanStep';
+import { PlanStep, PlanStepCommitment } from '../../../common/src/PlanStep';
 import { HappeningType } from '../../../common/src/HappeningsInfo';
 import { Plan, HelpfulAction } from '../../../common/src/Plan';
 import { Util } from '../../../common/src/util';
@@ -218,7 +218,9 @@ ${lineCharts}
     }
 
     isPlanHeadStep(step: PlanStep, plan: Plan): boolean {
-        return plan.now === undefined || step.getStartTime() < plan.now;
+        return plan.now === undefined ||
+        step.commitment === PlanStepCommitment.Committed ||
+        step.commitment === PlanStepCommitment.EndsInRelaxedPlan;
     }
 
     createPlansChartsScript(plans: Plan[]) {

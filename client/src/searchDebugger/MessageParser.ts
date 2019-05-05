@@ -40,7 +40,7 @@ export class MessageParser {
         }
         let parentId = this.stateIdToOrder.get(state.parentId);
 
-        let planHead = state.planHead.map((h: any) => this.parseSearchHappening(h));
+        let planHead = state.planHead.map((h: any) => this.parseSearchHappening(h, false));
 
         let actionName = this.createActionName(planHead);
 
@@ -81,18 +81,19 @@ export class MessageParser {
         let stateFound = this.search.getState(assignedStateId);
         if (!stateFound) throw new Error(`State with id ${state.id} not found.`);
 
-        let relaxedPlan = state.relaxedPlan.map((h: any) => this.parseSearchHappening(h));
+        let relaxedPlan = state.relaxedPlan.map((h: any) => this.parseSearchHappening(h, true));
         let helpfulActions = state.helpfulActions.map((a: any) => this.parseHelpfulAction(a));
 
         return stateFound.evaluate(state.h, state.totalMakespan, helpfulActions, relaxedPlan);
     }
 
-    parseSearchHappening(happening: any): SearchHappening {
+    parseSearchHappening(happening: any, isRelaxed: boolean): SearchHappening {
         return {
             actionName: happening.actionName,
             earliestTime: happening.earliestTime,
             shotCounter: happening.shotCounter,
-            kind: this.parseHappeningType(happening.kind)
+            kind: this.parseHappeningType(happening.kind),
+            isRelaxed: isRelaxed
         }
     }
 

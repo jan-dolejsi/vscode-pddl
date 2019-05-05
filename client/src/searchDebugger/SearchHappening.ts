@@ -12,14 +12,17 @@ export interface SearchHappening {
     actionName: string;
     shotCounter: number;
     kind: HappeningType;
+    isRelaxed: boolean;
 }
 
 export class MockSearchHappening implements SearchHappening{
     constructor(public readonly earliestTime: number, public readonly actionName: string,
-        public readonly shotCounter: number, public readonly kind: HappeningType) { }
+        public readonly shotCounter: number, public readonly kind: HappeningType, 
+        public readonly isRelaxed: boolean) { }
 
     toString(): string {
-        return `${this.earliestTime}: ${this.actionName}[${this.shotCounter}] ${this.kind}`;
+        let relaxed = this.isRelaxed ? '*' : '';
+        return `${this.earliestTime}: ${this.actionName}[${this.shotCounter}] ${this.kind}${relaxed}`;
     }
 }
 
