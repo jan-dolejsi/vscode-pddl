@@ -44,7 +44,8 @@ function createTree() {
         nodes: {
             color: {
                 highlight: {
-                    background: 'red'
+                    background: 'red',
+                    border: 'red'
                 }
             }
         },
