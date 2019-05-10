@@ -42,32 +42,22 @@ export class MessageParser {
 
         let planHead = state.planHead.map((h: any) => this.parseSearchHappening(h, false));
 
-        let actionName = this.createActionName(planHead);
+        let actionName = state.appliedAction ? this.createActionName(this.parseSearchHappening(state.appliedAction, false)) : null;
 
         return new State(assignedStateId, state.id, state.g, state.earliestTime, planHead,
             parentId, actionName);
     }
 
-    createActionName(planHead: SearchHappening[]): string {
-        var actionName = 'Undefined?';
-
-        if (planHead.length > 0) {
-            let lastHappening = planHead[planHead.length - 1];
-
-            actionName = lastHappening.actionName;
-            if (lastHappening.shotCounter > 0) actionName += `[${lastHappening.shotCounter}]`;
-            switch (lastHappening.kind) {
-                case HappeningType.START:
-                    actionName += '├';
-                    break;
-                case HappeningType.END:
-                    actionName += ' ┤';
-                    break;
-            }
-
-            return actionName;
-        } else {
-            console.log("No plan head!!");
+    createActionName(lastHappening: SearchHappening): string {
+        let actionName = lastHappening.actionName;
+        if (lastHappening.shotCounter > 0) actionName += `[${lastHappening.shotCounter}]`;
+        switch (lastHappening.kind) {
+            case HappeningType.START:
+                actionName += '├';
+                break;
+            case HappeningType.END:
+                actionName += ' ┤';
+                break;
         }
 
         return actionName;

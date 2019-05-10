@@ -64,7 +64,7 @@ function addStateToTree(newState, batch) {
         var undecoratedActionName = newState.actionName.replace(/[├┤]$/, "").trim();
         edges.add({ from: newState.parentId, to: newState.id, actionName: undecoratedActionName, label: newState.actionName.split(' ').join('\n') });
     }
-    if (!batch) network.fit();
+    if (!batch && nodes.length < 100) network.fit();
 }
 
 function endTreeBatch() {
@@ -77,9 +77,13 @@ function toNode(newState) {
         label += '\nH: ' + newState.h;
     }
     var node = { id: newState.id, label: label };
-    if (newState.h != null && !Number.isFinite(newState.h)) {
+    if (newState.h != null) {
+        if(!Number.isFinite(newState.h)) {
         // dead-end state
         node['color'] = { background: 'brown' };
+        } else if (newState.h == 0) {
+            node['color'] = { background: 'green', border: 'green' };
+        }
     }
     return node;
 }

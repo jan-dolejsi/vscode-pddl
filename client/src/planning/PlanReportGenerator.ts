@@ -345,9 +345,23 @@ ${stepsInvolvingThisObject}
 
     computePlanHeadDuration(step: PlanStep, plan: Plan): number {
         if (plan.now === undefined) return step.getDuration();
-        else if (step.getEndTime() < plan.now) return step.getDuration();
+        else if (step.getEndTime() < plan.now) {
+            if (step.commitment == PlanStepCommitment.Committed) return step.getDuration();
+            else return 0; // the end was not committed yet
+        }
         else if (step.getStartTime() >= plan.now) return 0;
-        else return Math.min(step.getDuration(), plan.now - step.getStartTime());
+        else {
+            switch (step.commitment) {
+                case PlanStepCommitment.Committed:
+                    return step.getDuration();
+                case PlanStepCommitment.EndsInRelaxedPlan:
+                    return 0;
+                case PlanStepCommitment.StartsInRelaxedPlan:
+                    return plan.now - step.getStartTime();
+                default:
+                    return 0; // should not happen
+            }
+        }
     }
 
     computeWidth(step: PlanStep, plan: Plan): number {

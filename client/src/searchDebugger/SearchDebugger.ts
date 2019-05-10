@@ -130,6 +130,11 @@ export class SearchDebugger implements PlannerOptionsProvider {
             serviceDebugger.search.update(serviceDebugger.messageParser.parseEvaluatedState(req.body));
             res.status(200).end();
         });
+
+        app.post('/plan', function (req: express.Request, res: express.Response, _next: express.NextFunction) {
+            serviceDebugger.search.setPlan(serviceDebugger.messageParser.parseState(req.body));
+            res.status(200).end();
+        });
         return app;
     }
 

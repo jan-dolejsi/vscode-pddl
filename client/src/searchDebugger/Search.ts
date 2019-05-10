@@ -63,6 +63,13 @@ export class Search implements StateResolver {
         }
     }
 
+    setPlan(state: State) {
+        console.log('Plan found: ' + state);
+        let goalState = state.evaluate(0, state.earliestTime, [], []);
+
+        this.update(goalState);
+    }
+
     getState(stateId: number): State {
         return this.states.get(stateId);
     }
