@@ -1,6 +1,6 @@
 # PDDL support - What's new?
 
-## [2.10.0] - 2019-01-06
+## [2.10.0] - 2019-05-11
 
 This version introduces the _ultimate_ AI Planning educational tool and a powerful search debugger tool at the same time. It explains how the heuristic function guides the search and at the same time it can be used to understand why the planner has hard time finding the plan for given planning problem and where does the domain model need to be tightened.
 
