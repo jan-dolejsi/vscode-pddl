@@ -19,21 +19,23 @@ require('util.promisify').shim();
 export const readFile = util.promisify(fs.readFile);
 export const writeFile = util.promisify(fs.writeFile);
 export const exists = util.promisify(fs.exists);
+export const readdir = util.promisify(fs.readdir);
+export const unlink = util.promisify(fs.unlink);
 
 export function isAnyPddl(doc: TextDocument): boolean {
     return isPddl(doc) || isPlan(doc) || isHappenings(doc);
 }
 
 export function isPddl(doc: TextDocument): boolean {
-    return doc.languageId == PDDL && doc.uri.scheme != "git";
+    return doc.languageId === PDDL && doc.uri.scheme !== "git";
 }
 
 export function isPlan(doc: TextDocument): boolean {
-    return doc.languageId == PLAN && doc.uri.scheme != "git";
+    return doc.languageId === PLAN && doc.uri.scheme !== "git";
 }
 
 export function isHappenings(doc: TextDocument): boolean {
-    return doc.languageId == HAPPENINGS && doc.uri.scheme != "git";
+    return doc.languageId === HAPPENINGS && doc.uri.scheme !== "git";
 }
 
 export function toLanguage(doc: TextDocument): PddlLanguage {
@@ -43,11 +45,11 @@ export function toLanguage(doc: TextDocument): PddlLanguage {
 export function getDomainAndProblemForPlan(planInfo: PlanInfo, pddlWorkspace: PddlWorkspace): DomainAndProblem {
     let problemFileInfo = pddlWorkspace.getProblemFileForPlan(planInfo);
 
-    if (!problemFileInfo) throw new Error(`No problem file with name '(problem ${planInfo.problemName}') and located in the same folder as the plan is open in the editor.`);
+    if (!problemFileInfo) { throw new Error(`No problem file with name '(problem ${planInfo.problemName}') and located in the same folder as the plan is open in the editor.`); }
 
     let domainFileInfo = pddlWorkspace.getDomainFileFor(problemFileInfo);
 
-    if (!domainFileInfo) throw new Error(`No domain file corresponding to problem '${problemFileInfo.name}' and located in the same folder is open in the editor.`);
+    if (!domainFileInfo) { throw new Error(`No domain file corresponding to problem '${problemFileInfo.name}' and located in the same folder is open in the editor.`); }
 
     return { problem: problemFileInfo, domain: domainFileInfo };
 }
@@ -55,18 +57,22 @@ export function getDomainAndProblemForPlan(planInfo: PlanInfo, pddlWorkspace: Pd
 export function getDomainAndProblemForHappenings(happeningsInfo: HappeningsInfo, pddlWorkspace: PddlWorkspace): DomainAndProblem {
     let problemFileInfo = pddlWorkspace.getProblemFileForHappenings(happeningsInfo);
 
-    if (!problemFileInfo) throw new Error(`No problem file with name '(problem ${happeningsInfo.problemName}') and located in the same folder as the plan is open in the editor.`);
+    if (!problemFileInfo) {
+        throw new Error(`No problem file with name '(problem ${happeningsInfo.problemName}') and located in the same folder as the plan is open in the editor.`);
+    }
 
     let domainFileInfo = pddlWorkspace.getDomainFileFor(problemFileInfo);
 
-    if (!domainFileInfo) throw new Error(`No domain file corresponding to problem '${problemFileInfo.name}' and located in the same folder is open in the editor.`);
+    if (!domainFileInfo) {
+        throw new Error(`No domain file corresponding to problem '${problemFileInfo.name}' and located in the same folder is open in the editor.`);
+    }
 
     return { problem: problemFileInfo, domain: domainFileInfo };
 }
 
 export interface DomainAndProblem {
-    readonly domain: DomainInfo,
-    readonly problem: ProblemInfo
+    readonly domain: DomainInfo;
+    readonly problem: ProblemInfo;
 }
 
 export async function selectHappenings(): Promise<string> {
@@ -99,11 +105,11 @@ export async function selectHappenings(): Promise<string> {
 
     // else select a file from the disk
 
-    let workspaceFolder =  workspace.workspaceFolders.find(_ => true);
+    let workspaceFolder = workspace.workspaceFolders.find(_ => true);
     let defaultUri = workspaceFolder ? workspaceFolder.uri : undefined;
     let selectedHappeningsUris = await window.showOpenDialog({ defaultUri: defaultUri, canSelectFiles: true, canSelectFolders: false, canSelectMany: false, openLabel: 'Start debugging', filters: { 'PDDL Plan Happenings': ['happenings'] } });
 
-    if (selectedHappeningsUris && selectedHappeningsUris.length > 0){
+    if (selectedHappeningsUris && selectedHappeningsUris.length > 0) {
         window.showTextDocument(selectedHappeningsUris[0]);
         return selectedHappeningsUris[0].fsPath;
     }
@@ -126,7 +132,7 @@ class TextDocumentQuickPickItem implements QuickPickItem {
 
 class UriQuickPickItem implements QuickPickItem {
     label: string;
-    description: string
+    description: string;
     constructor(private uri: Uri) {
         this.label = basename(uri.fsPath);
         this.description = uri.fsPath;
@@ -138,13 +144,13 @@ class UriQuickPickItem implements QuickPickItem {
 }
 
 export function createPddlExtensionContext(context: ExtensionContext): PddlExtensionContext {
-	return {
-		asAbsolutePath: context.asAbsolutePath,
-		extensionPath: context.extensionPath,
+    return {
+        asAbsolutePath: context.asAbsolutePath,
+        extensionPath: context.extensionPath,
         storagePath: context.storagePath,
         subscriptions: context.subscriptions,
-		pythonPath: () => workspace.getConfiguration().get("python.pythonPath", "python")
-	};
+        pythonPath: () => workspace.getConfiguration().get("python.pythonPath", "python")
+    };
 }
 
 export async function getWebViewHtml(extensionContext: ExtensionContext, relativePath: string, htmlFileName: string) {
@@ -155,17 +161,78 @@ export async function getWebViewHtml(extensionContext: ExtensionContext, relativ
         if (attribValue.startsWith('http')) {
             return sourceElement;
         }
-        let resource=Uri.file(
+        let resource = Uri.file(
             extensionContext.asAbsolutePath(join(relativePath, attribValue)))
-                .with({scheme: "vscode-resource"});
+            .with({ scheme: "vscode-resource" });
         return `<${elementName} ${attribName}="${resource}"`;
-    })
+    });
 
     return html;
 }
 
-export function sleep(ms: number): Promise<void>{
-    return new Promise(resolve=>{
-        setTimeout(resolve, ms)
-    })
+export function sleep(ms: number): Promise<void> {
+    return new Promise(resolve => {
+        setTimeout(resolve, ms);
+    });
+}
+
+export function firstIndex<T>(array: T[], fn: (t: T) => boolean): number {
+    for (let i = 0; i < array.length; i++) {
+        if (fn(array[i])) {
+            return i;
+        }
+    }
+
+    return -1;
+}
+
+export function compareMaps(map1: Map<string, string>, map2: Map<string, string>) {
+    var testVal;
+    if (map1.size !== map2.size) {
+        return false;
+    }
+    for (var [key, val] of map1) {
+        testVal = map2.get(key);
+        // in cases of an undefined value, make sure the key
+        // actually exists on the object so there are no false positives
+        if (testVal !== val || (testVal === undefined && !map2.has(key))) {
+            return false;
+        }
+    }
+    return true;
+}
+
+/**
+ * Relative fuzzy time in a human readable form.
+ * @param time date time
+ */
+export function toFuzzyRelativeTime(time: number): string {
+    var delta = Math.round((+new Date - time) / 1000);
+
+    var minute = 60,
+        hour = minute * 60,
+        day = hour * 24;
+
+    var fuzzy;
+
+    if (delta < 30) {
+        fuzzy = 'just now';
+    } else if (delta < minute) {
+        fuzzy = delta + ' seconds ago';
+    } else if (delta < 2 * minute) {
+        fuzzy = 'a minute ago';
+    } else if (delta < hour) {
+        fuzzy = Math.floor(delta / minute) + ' minutes ago';
+    } else if (Math.floor(delta / hour) === 1) {
+        fuzzy = '1 hour ago';
+    } else if (delta < day) {
+        fuzzy = Math.floor(delta / hour) + ' hours ago';
+    } else if (delta < day * 2) {
+        fuzzy = 'yesterday';
+    }
+    else {
+        fuzzy = Math.floor(delta / day) + ' days ago';
+    }
+
+    return fuzzy;
 }

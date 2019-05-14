@@ -22,7 +22,7 @@ export class PlanningDomains {
 
     async getCollections(): Promise<CatalogEntry[]> {
         let url = PlanningDomains.URL + "collections";
-        let json_output = await this.get(url);
+        let json_output = await PlanningDomains.get(url);
         return json_output
             .map((collection_json: any) => this.parseCollection(collection_json));
     }
@@ -37,7 +37,7 @@ export class PlanningDomains {
 
     async getDomains(collection: Collection): Promise<CatalogEntry[]> {
         let url = PlanningDomains.URL + "domains/" + collection.id;
-        let json_output = await this.get(url);
+        let json_output = await PlanningDomains.get(url);
         return json_output
             .map((domain_json: any) => this.parseDomain(domain_json))
             .sort(compareCatalogEntry);
@@ -54,20 +54,20 @@ export class PlanningDomains {
 
     async getProblems(domain: Domain): Promise<CatalogEntry[]> {
         let url = PlanningDomains.URL + "problems/" + domain.id;
-        let json_output = await this.get(url);
+        let json_output = await PlanningDomains.get(url);
         return json_output
             .map((problem_json: any) => this.parseProblem(problem_json))
             .sort(compareCatalogEntry);
     }
 
-    get(url: string): Promise<any> {
+    static get(url: string): Promise<any> {
         return new Promise<any>((resolve, reject) => {
             request.get(url, { json: true }, (error: any, httpResponse: request.Response, body: any) => {
                 if (error) {
                     reject(error);
                 }
                 else {
-                    if (httpResponse && httpResponse.statusCode != 200) {
+                    if (httpResponse && httpResponse.statusCode !== 200) {
                         reject("HTTP status code " + httpResponse.statusCode);
                     }
                     else {
@@ -77,12 +77,34 @@ export class PlanningDomains {
             });
         });
     }
+
+    static getText(url: string): string | PromiseLike<string> {
+        return new Promise<string>((resolve, reject) => {
+            request.get(url, (error: any, httpResponse: request.Response, body: any) => {
+                if (error) {
+                    reject(error);
+                }
+                else {
+                    if (httpResponse && httpResponse.statusCode !== 200) {
+                        reject("HTTP status code " + httpResponse.statusCode);
+                    }
+                    else {
+                        resolve(body);
+                    }
+                }
+            });
+        });
+    }
+
 }
 
 function compareCatalogEntry(a: CatalogEntry, b: CatalogEntry) {
-    if (a.label < b.label)
+    if (a.label < b.label) {
         return -1;
-    if (a.label > b.label)
+    } else if (a.label > b.label) {
         return 1;
-    return 0;
+    }
+    else {
+        return 0;
+    }
 }

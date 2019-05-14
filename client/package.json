@@ -4,7 +4,7 @@
   "description": "Planning Domain Description Language support",
   "author": "Jan Dolejsi",
   "license": "MIT",
-  "version": "2.10.0",
+  "version": "2.10.1",
   "publisher": "jan-dolejsi",
   "engines": {
     "vscode": "^1.31.0",
@@ -37,9 +37,12 @@
     "onCommand:pddl.configurePlanner",
     "onCommand:pddl.showOverview",
     "onCommand:pddl.searchDebugger.start",
+    "onCommand:pddl.planning.domains.session.load",
+    "onCommand:pddl.planning.domains.session.edit.load",
+    "workspaceContains:.planning.domains.session.json",
     "onView:pddl.planning.domains",
     "onView:pddl.tests.explorer",
-    "onView:pddl.planning.domains"
+    "onUri"
   ],
   "main": "./out/client/src/extension",
   "contributes": {
@@ -252,7 +255,47 @@
       {
         "command": "pddl.configureValidate",
         "title": "PDDL: Configure VAL/Validate tool"
-      }
+      },
+      {
+        "command": "pddl.planning.domains.session.load",
+        "title": "PDDL: Load Planning.domains read-only session"
+      },
+      {
+        "command": "pddl.planning.domains.session.edit.load",
+        "title": "PDDL: Load Planning.domains read/write session"
+      },
+      {
+        "command": "pddl.planning.domains.session.refresh",
+        "title": "PDDL: Refresh Planning.domains session",
+        "icon": {
+          "light": "images/light/refresh.svg",
+          "dark": "images/dark/refresh.svg"
+        }
+      },
+			{
+				"command": "pddl.planning.domains.session.commit",
+				"title": "PDDL: Commit local changes to Planning.Domains session",
+				"icon": {
+					"light": "images/light/check.svg",
+					"dark": "images/dark/check.svg"
+				}
+			},
+			{
+				"command": "pddl.planning.domains.session.discard",
+				"title": "PDDL: Discards local changes to the Planning.Domains session",
+				"icon": {
+					"light": "images/light/discard.svg",
+					"dark": "images/dark/discard.svg"
+				}
+			},
+			{
+				"command": "pddl.planning.domains.session.checkout",
+				"title": "PDDL: Checkout another version of this Planning.Domains session",
+				"icon": {
+					"light": "images/light/refresh.svg",
+					"dark": "images/dark/refresh.svg"
+				}
+			}
     ],
     "menus": {
       "editor/context": [
@@ -345,7 +388,24 @@
           "when": "viewItem != folder && resourceLangId == plan",
           "group": "3_compare"
         }
-      ]
+      ],
+      "scm/title": [
+				{
+					"command": "pddl.planning.domains.session.commit",
+					"group": "navigation",
+					"when": "scmProvider == planningDomainsSession"
+				},
+				{
+					"command": "pddl.planning.domains.session.discard",
+					"group": "navigation",
+					"when": "scmProvider == planningDomainsSession"
+				},
+				{
+					"command": "pddl.planning.domains.session.refresh",
+					"group": "navigation",
+					"when": "scmProvider == planningDomainsSession"
+				}
+			]
     },
     "keybindings": [
       {

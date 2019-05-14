@@ -1,5 +1,27 @@
 # PDDL support - What's new?
 
+## [2.10.1] - 2019-05-14
+
+### Bug fixes
+
+- [Issue #23](https://github.com/jan-dolejsi/vscode-pddl/issues/23) Planner or parser that is configured as  `java -javaagent ...` are now not surrounded by double-quotes.
+
+### Preview features
+
+#### Planning.Domains sessions
+
+The online [Planning.Domains](http://editor.planning.domains) editor has a concept of a session.
+The session files may be open in VS Code now. There are two ways to get started:
+
+1. Using a command:
+   - _PDDL: Load Planning.domains read-only session_ or
+   - _PDDL: Load Planning.domains read/write session_.
+1. Using by navigating to this URL in your favorite web browser:
+   - vscode://jan-dolejsi.pddl/planning.domains/session/_readOnlyHash_ or
+   - vscode://jan-dolejsi.pddl/planning.domains/session/edit/_readWriteHash_.
+
+The session files are downloaded into a dedicated workspace folder and may be interacted with via the Source Control pane.
+
 ## [2.10.0] - 2019-05-11
 
 This version introduces the _ultimate_ AI Planning educational tool and a powerful search debugger tool at the same time. It explains how the heuristic function guides the search and at the same time it can be used to understand why the planner has hard time finding the plan for given planning problem and where does the domain model need to be tightened.
@@ -463,7 +485,8 @@ Note for open source contributors: all notable changes to the "pddl" extension w
 
 Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
 
-[Unreleased]: https://github.com/jan-dolejsi/vscode-pddl/compare/v2.10.0...HEAD
+[Unreleased]: https://github.com/jan-dolejsi/vscode-pddl/compare/v2.10.1...HEAD
+[2.10.1]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.10.0...v2.10.1
 [2.10.0]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.9.1...v2.10.0
 [2.9.1]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.9.0...v2.9.1
 [2.9.0]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.8.2...v2.9.0

@@ -10,7 +10,6 @@ import {
 
 import { Plan } from "../../../common/src/Plan";
 import { parse, format } from 'path';
-import { isNullOrUndefined } from 'util';
 import { exportToAndShow } from './ExportUtil';
 
 
@@ -31,7 +30,7 @@ export abstract class AbstractPlanExporter {
 
         try {
             let uri = await window.showSaveDialog(options);
-            if (uri == undefined) return; // canceled by user
+            if (uri === undefined) { return; } // canceled by user
 
             await exportToAndShow(this.getPlanText(), uri);
         } catch (ex) {
@@ -80,11 +79,11 @@ ${this.plan.getText()}
 
 ; Makespan: ${this.plan.makespan}`;
 
-        if (!isNullOrUndefined(this.plan.cost)){
+        if (this.plan.cost !== null && this.plan.cost !== undefined){
             planText += `\n; Cost: ${this.plan.cost}`;
         }
 
-        if (!isNullOrUndefined(this.plan.statesEvaluated)){
+        if (this.plan.statesEvaluated !== null && this.plan.statesEvaluated !== undefined){
             planText += `\n; States evaluated: ${this.plan.statesEvaluated}`;
         }
 

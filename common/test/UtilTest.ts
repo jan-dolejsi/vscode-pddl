@@ -54,5 +54,10 @@ describe('Util', () => {
             let path = 'java -jar asfdsdfasdfasd.jar';
             assert.equal(Util.q(path), path)
         })
+
+        it('should not enclose java -javaagent path', () => {
+            let path = 'java -javaagent:d:/pddl4j/build/libs/pddl4j-3.8.3.jar -server -Xms2048m -Xmx2048m fr.uga.pddl4j.parser.Parser';
+            assert.equal(Util.q(path), path);
+        })
     })
 })

@@ -22,7 +22,9 @@ export class Util {
 
     static shouldBeDoubleQuoted(path: string): boolean {
         return path.includes(' ') && !path.includes('"')
-            && !path.includes(" -jar ") && !path.startsWith("node ");
+            && !path.includes(" -jar ")
+            && !path.includes(" -javaagent:")
+            && !path.startsWith("node ");
     }
 
     static toFile(prefix: string, suffix: string, text: string): string {
