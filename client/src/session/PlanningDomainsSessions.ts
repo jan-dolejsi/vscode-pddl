@@ -78,8 +78,12 @@ export class PlanningDomainsSessions {
 
         // todo: when/if the SourceControl exposes a 'selected' property, use that instead
 
-        if (this.sessionSourceControlRegister.size === 0) { return undefined; }
-        else if (this.sessionSourceControlRegister.size === 1) { return [...this.sessionSourceControlRegister.values()][0]; }
+        if (this.sessionSourceControlRegister.size === 0) {
+            return undefined;
+        }
+        else if (this.sessionSourceControlRegister.size === 1) {
+            return [...this.sessionSourceControlRegister.values()][0];
+        }
         else {
 
             let picks = [...this.sessionSourceControlRegister.values()].map(fsc => new RepositoryPick(fsc));
@@ -121,7 +125,7 @@ export class PlanningDomainsSessions {
             sessionId = (await window.showInputBox({ prompt: 'Paste Planning.Domains session hash', placeHolder: 'hash e.g. XOacXgN1V7', value: 'XOacXgN1V7' })) || '';
         }
 
-        let mode: SessionMode = await checkSession(sessionId);
+        let mode: SessionMode = (await checkSession(sessionId))[0];
 
         // show the file explorer with the new files
         commands.executeCommand("workbench.view.explorer");
@@ -130,28 +134,33 @@ export class PlanningDomainsSessions {
 
         if (!workspaceFolder) { return; } // canceled by user
 
+        // unregister previous source control for this folder, if any
+        this.unregisterSessionSourceControl(workspaceFolder.uri);
+
         // register source control
         let sessionSourceControl = await SessionSourceControl.fromSessionId(sessionId, mode, context, workspaceFolder, true);
 
         this.registerSessionSourceControl(sessionSourceControl, context);
     }
 
-    registerSessionSourceControl(sessionSourceControl: SessionSourceControl, context: ExtensionContext) {
+    registerSessionSourceControl(sessionSourceControl: SessionSourceControl, context: ExtensionContext): void {
         // update the session document content provider with the latest content
         this.sessionDocumentContentProvider.updated(sessionSourceControl.getSession());
 
         // every time the repository is updated with new session version, notify the content provider
         sessionSourceControl.onRepositoryChange(session => this.sessionDocumentContentProvider.updated(session));
 
-        if (this.sessionSourceControlRegister.has(sessionSourceControl.getWorkspaceFolder().uri)) {
-            // the folder was already under source control
-            const previousSourceControl = this.sessionSourceControlRegister.get(sessionSourceControl.getWorkspaceFolder().uri)!;
-            previousSourceControl.dispose();
-        }
-
         this.sessionSourceControlRegister.set(sessionSourceControl.getWorkspaceFolder().uri, sessionSourceControl);
 
         context.subscriptions.push(sessionSourceControl);
+    }
+
+    unregisterSessionSourceControl(folderUri: Uri): void {
+        if (this.sessionSourceControlRegister.has(folderUri)) {
+            // the folder was already under source control
+            const previousSourceControl = this.sessionSourceControlRegister.get(folderUri)!;
+            previousSourceControl.dispose();
+        }
     }
 
     /**
@@ -181,6 +190,7 @@ export class PlanningDomainsSessions {
         var selectedFolder: WorkspaceFolder | undefined;
         var workspaceFolderUri: Uri | undefined;
         var workspaceFolderIndex: number | undefined;
+        var folderOpeningMode: FolderOpeningMode;
 
         const sessionConfiguration = toSessionConfiguration(sessionId, mode);
 
@@ -202,25 +212,41 @@ export class PlanningDomainsSessions {
             }
         }
 
-        if (!workspaceFolderUri && workspace.workspaceFolders && workspace.workspaceFolders.length > 0) {
-            let folderPicks = workspace.workspaceFolders
-                .map(folder => new WorkspaceFolderPick(folder))
-                .concat([newWorkspaceFolderPick]);
+        if (!workspaceFolderUri) {
 
-            let selectedFolderPick: WorkspaceFolderPick = await window.showQuickPick(folderPicks, { canPickMany: false, placeHolder: 'Pick workspace folder to create files in.' });
+            var folderPicks: WorkspaceFolderPick[] = [newFolderPick];
+
+            if (workspace.workspaceFolders && workspace.workspaceFolders.length > 0) {
+                folderPicks.push(newWorkspaceFolderPick);
+
+                for (const wf of workspace.workspaceFolders) {
+                    let content = await afs.readdir(wf.uri.fsPath);
+                    folderPicks.push(new ExistingWorkspaceFolderPick(wf, content));
+                }
+            }
+
+            let selectedFolderPick: WorkspaceFolderPick =
+                folderPicks.length === 1 ?
+                    folderPicks[0] :
+                    await window.showQuickPick(folderPicks, {
+                        canPickMany: false, ignoreFocusOut: true, placeHolder: 'Pick workspace folder to create files in.'
+                    });
+
             if (!selectedFolderPick) { return null; }
 
-            if (selectedFolderPick !== newWorkspaceFolderPick) {
+            if (selectedFolderPick instanceof ExistingWorkspaceFolderPick) {
                 selectedFolder = selectedFolderPick.workspaceFolder;
                 workspaceFolderIndex = selectedFolder.index;
                 workspaceFolderUri = selectedFolder.uri;
             }
+
+            folderOpeningMode = selectedFolderPick.folderOpeningMode;
         }
 
         if (!workspaceFolderUri && !selectedFolder) {
             let folderUris = await window.showOpenDialog({ canSelectFolders: true, canSelectFiles: false, canSelectMany: false, openLabel: 'Select folder' });
             if (!folderUris) {
-                return undefined;
+                return null;
             }
 
             workspaceFolderUri = folderUris[0];
@@ -228,24 +254,28 @@ export class PlanningDomainsSessions {
             workspaceFolderIndex = workspace.workspaceFolders && firstIndex(workspace.workspaceFolders, (folder1: any) => folder1.uri.toString() === workspaceFolderUri!.toString());
         }
 
-        await this.clearWorkspaceFolder(workspaceFolderUri);
+        if (! await this.clearWorkspaceFolder(workspaceFolderUri)) { return null; }
 
         // save folder configuration
         await saveConfiguration(workspaceFolderUri, sessionConfiguration);
 
+        if (folderOpeningMode === FolderOpeningMode.AddToWorkspace) {
+            let workSpacesToReplace = typeof workspaceFolderIndex === 'number' && workspaceFolderIndex > -1 ? 1 : 0;
+            if (workspaceFolderIndex === undefined || workspaceFolderIndex < 0) { workspaceFolderIndex = 0; }
 
-        let workSpacesToReplace = typeof workspaceFolderIndex === 'number' && workspaceFolderIndex > -1 ? 1 : 0;
-        if (workspaceFolderIndex === undefined || workspaceFolderIndex < 0) { workspaceFolderIndex = 0; }
-
-        // replace or insert the workspace
-        if (workspaceFolderUri) {
-            workspace.updateWorkspaceFolders(workspaceFolderIndex, workSpacesToReplace, { uri: workspaceFolderUri });
+            // replace or insert the workspace
+            if (workspaceFolderUri) {
+                workspace.updateWorkspaceFolders(workspaceFolderIndex, workSpacesToReplace, { uri: workspaceFolderUri });
+            }
+        }
+        else if (folderOpeningMode === FolderOpeningMode.OpenFolder) {
+            commands.executeCommand("vscode.openFolder", workspaceFolderUri);
         }
 
         return selectedFolder;
     }
 
-    async clearWorkspaceFolder(workspaceFolderUri: Uri): Promise<void> {
+    async clearWorkspaceFolder(workspaceFolderUri: Uri): Promise<boolean> {
 
         if (!workspaceFolderUri) { return undefined; }
 
@@ -254,7 +284,7 @@ export class PlanningDomainsSessions {
         if (existingWorkspaceFiles.length > 0) {
             let answer = await window.showQuickPick(["Yes", "No"],
                 { placeHolder: `Remove ${existingWorkspaceFiles.length} file(s) from the folder ${workspaceFolderUri.fsPath} before cloning the remote repository?` });
-            if (!answer) { return null; }
+            if (!answer) { return false; }
 
             if (answer === "Yes") {
                 existingWorkspaceFiles
@@ -262,6 +292,8 @@ export class PlanningDomainsSessions {
                         await afs.unlink(path.join(workspaceFolderUri.fsPath, filename)));
             }
         }
+
+        return true;
     }
 
     async openDocumentInColumn(fileName: string, column: ViewColumn): Promise<void> {
@@ -308,13 +340,37 @@ class RepositoryPick implements QuickPickItem {
     }
 }
 
-class WorkspaceFolderPick implements QuickPickItem {
+abstract class WorkspaceFolderPick implements QuickPickItem {
+    label: string;
+    constructor(public folderOpeningMode: FolderOpeningMode) { }
+}
 
-    constructor(public readonly workspaceFolder: WorkspaceFolder) { }
+class ExistingWorkspaceFolderPick extends WorkspaceFolderPick {
+
+    constructor(public readonly workspaceFolder: WorkspaceFolder, private content: string[]) {
+        super(FolderOpeningMode.AddToWorkspace);
+    }
 
     get label(): string {
-        return this.workspaceFolder ? this.workspaceFolder.name : "Create new folder...";
+        return this.workspaceFolder.name;
+    }
+
+    get description(): string {
+        return this.workspaceFolder.uri.fsPath;
+    }
+
+    get detail(): string {
+        return this.content.length ? `${this.content.length} files/directories may need to be removed..` : null;
     }
 }
 
-const newWorkspaceFolderPick = new WorkspaceFolderPick(null);
+class NewWorkspaceFolderPick extends WorkspaceFolderPick {
+    constructor(public label: string, folderOpeningMode: FolderOpeningMode) {
+        super(folderOpeningMode);
+    }
+}
+
+enum FolderOpeningMode { AddToWorkspace, OpenFolder }
+
+const newWorkspaceFolderPick = new NewWorkspaceFolderPick("Select/create a local folder to add to this workspace...", FolderOpeningMode.AddToWorkspace);
+const newFolderPick = new NewWorkspaceFolderPick("Select/create a local folder...", FolderOpeningMode.OpenFolder);

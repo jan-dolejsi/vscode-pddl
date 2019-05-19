@@ -22,6 +22,10 @@ export class SessionContent implements SessionConfiguration {
 	canCommit(): boolean {
 		return this.writeHash !== null && this.writeHash !== undefined;
 	}
+
+	getHash() {
+		return this.writeHash || this.hash;
+	}
 }
 
 export function areIdentical(first: Map<string, string>, second: Map<string, string>): boolean {
@@ -66,21 +70,29 @@ const SESSION_URL = "http://editor.planning.domains/session/";
 const SESSION_TABS_PATTERN = /"save-tabs"\s*:\s*{\s*"url"\s*:\s*"[\w:/.-]+"\s*,\s*"settings"\s*:\s*({[^}]*})/;
 const SESSION_DETAILS_PATTERN = /window\.session_details\s*=\s*{\s*(?:readwrite_hash:\s*"(\w+)"\s*,\s*)?read_hash:\s*"(\w+)"\s*,\s*last_change:\s*"([\w: \(\)\+]+)",?\s*};/;
 
-export async function checkSession(sessionId: string): Promise<SessionMode> {
+export async function checkSession(sessionId: string): Promise<[SessionMode, number]> {
 	let url = `${SESSION_URL}check/${sessionId}`;
 
 	let response = await getJson(url);
 
 	checkResponseForError(response);
 
-	switch (response["type"]) {
+	var sessionMode: SessionMode;
+	switch ((<string>response["type"]).toLowerCase()) {
 		case "read":
-			return SessionMode.READ_ONLY;
+			sessionMode = SessionMode.READ_ONLY;
+			break;
 		case "readwrite":
-			return SessionMode.READ_WRITE;
+			sessionMode = SessionMode.READ_WRITE;
+			break;
 		default:
 			throw new Error("Unexpected session type: " + response["type"]);
 	}
+
+	// last_change contains last session change time
+	let sessionVersionDate: number = Date.parse(response["last_change"]);
+
+	return [sessionMode, sessionVersionDate];
 }
 
 export async function getSession(sessionConfiguration: SessionConfiguration): Promise<SessionContent> {

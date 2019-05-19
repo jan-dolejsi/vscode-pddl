@@ -301,7 +301,7 @@
       },
       {
         "command": "pddl.planning.domains.session.duplicate",
-        "title": "PDDL: Duplicate a Planning.Domains session"
+        "title": "PDDL: Duplicate a Planning.Domains session as writable"
       },
       {
           "command": "pddl.planning.domains.session.open",

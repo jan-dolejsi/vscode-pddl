@@ -4,7 +4,7 @@
  * ------------------------------------------------------------------------------------------ */
 
 import * as vscode from 'vscode';
-import { SessionRepository, getSession, SessionContent, uploadSession, duplicateSession } from './SessionRepository';
+import { SessionRepository, getSession, SessionContent, uploadSession, duplicateSession, checkSession } from './SessionRepository';
 import * as path from 'path';
 import { toFuzzyRelativeTime } from '../utils';
 import * as afs from '../asyncfs';
@@ -42,8 +42,7 @@ export class SessionSourceControl implements vscode.Disposable {
 	private isRefreshing: boolean;
 
 	constructor(context: vscode.ExtensionContext, private readonly workspaceFolder: vscode.WorkspaceFolder, session: SessionContent, overwrite: boolean) {
-		//todo: should the previous source control that maps onto the same folder uri be disposed first?
-		this.sessionScm = vscode.scm.createSourceControl('planningDomainsSession', 'Session #' + session.hash, workspaceFolder.uri);
+		this.sessionScm = vscode.scm.createSourceControl('planningDomainsSession', 'Session #' + session.getHash(), workspaceFolder.uri);
 		this.changedResources = this.sessionScm.createResourceGroup('workingTree', 'Changes');
 		this.sessionRepository = new SessionRepository(workspaceFolder, session);
 		this.sessionScm.quickDiffProvider = this.sessionRepository;
@@ -232,8 +231,8 @@ export class SessionSourceControl implements vscode.Disposable {
 		this.refreshStatusBar();
 
 		try {
-			let latestSession = await getSession(this.session);
-			this.latestSessionVersionDate = latestSession.versionDate;
+			let sessionCheckResult = await checkSession(this.session.getHash());
+			this.latestSessionVersionDate = sessionCheckResult[1];
 		} catch (ex) {
 			// typically the ex.statusCode == 404, when there is no further version
 		}
@@ -384,7 +383,7 @@ export class SessionSourceControl implements vscode.Disposable {
 		} catch (ex) {
 			vscode.window.showErrorMessage("Failed creating duplicate session in Planning.Domains session. " + ex.message);
 		}
-}
+	}
 
 	dispose() {
 		this._onRepositoryChange.dispose();

@@ -46,26 +46,20 @@ export class PddlConfiguration {
     setupParserLater = false;
 
     async suggestNewParserConfiguration(showNever: boolean) {
-        if (await this.copyFromLegacyParserConfig()) return;
+        if (await this.copyFromLegacyParserConfig()) { return; }
 
-        if (this.setupParserLater || this.context.globalState.get(this.NEVER_SETUP_PARSER)) return;
+        if (this.setupParserLater || this.context.globalState.get(this.NEVER_SETUP_PARSER)) { return; }
 
-        let moreInfo: vscode.MessageItem = { title: "More info..." };
         let setupParserNow: vscode.MessageItem = { title: "Setup now..." };
         let setupParserNever: vscode.MessageItem = { title: "Never" };
         let setupParserLater: vscode.MessageItem = { title: "Later", isCloseAffordance: true };
-        let options: vscode.MessageItem[] = [moreInfo, setupParserNow, setupParserLater];
-        if (showNever) options.splice(2, 0, setupParserNever);
+        let options: vscode.MessageItem[] = [setupParserNow, setupParserLater];
+        if (showNever) { options.splice(2, 0, setupParserNever); }
         let choice = await vscode.window.showInformationMessage(
-            "Setup a PDDL parser in order to enable detailed syntactic analysis.",
+            'Setup a [PDDL parser](https://github.com/jan-dolejsi/vscode-pddl/wiki/Configuring-the-PDDL-parser "Read more about PDDL parsers") in order to enable detailed syntactic analysis.',
             ...options);
 
         switch (choice) {
-            case moreInfo:
-                vscode.commands.executeCommand('vscode.open', vscode.Uri.parse('https://github.com/jan-dolejsi/vscode-pddl/wiki/Configuring-the-PDDL-parser'));
-                this.suggestNewParserConfiguration(showNever);
-                break;
-
             case setupParserNow:
                 this.askNewParserPath();
                 // if the above method call updates the configuration, the parser will be notified
@@ -290,20 +284,20 @@ export class PddlConfiguration {
         let optionsSelected = await vscode.window.showQuickPick(this.optionsHistory,
             { placeHolder: 'Optionally specify planner switches or press ENTER to use default planner configuration.' });
 
-        if (!optionsSelected) return null; // operation canceled by the user by pressing Escape
+        if (!optionsSelected) { return null; } // operation canceled by the user by pressing Escape
         else if (optionsSelected.newValue) {
             let optionsEntered = await vscode.window.showInputBox({ placeHolder: 'Specify planner options.' });
-            if (!optionsEntered) return null;
+            if (!optionsEntered) { return null; }
             optionsSelected = { label: optionsEntered, options: optionsEntered, description: '' };
         }
         else if (optionsSelected !== this.NO_OPTIONS) {
             // a previous option was selected - lets allow the user to edit it before continuing
             let optionsEntered = await vscode.window.showInputBox({value: optionsSelected.options, placeHolder: 'Specify planner options.', prompt: 'Adjust the options, if needed and press Enter to continue.'});
-            if (!optionsEntered) return null; // canceled by the user
+            if (!optionsEntered) { return null; } // canceled by the user
             optionsSelected = { label: optionsEntered, options: optionsEntered, description: '' };
         }
 
-        let indexOf = this.optionsHistory.findIndex(option => option.options == optionsSelected.options);
+        let indexOf = this.optionsHistory.findIndex(option => option.options === optionsSelected.options);
         if (indexOf > -1) {
             this.optionsHistory.splice(indexOf, 1);
         }
