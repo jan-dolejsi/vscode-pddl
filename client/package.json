@@ -4,7 +4,7 @@
   "description": "Planning Domain Description Language support",
   "author": "Jan Dolejsi",
   "license": "MIT",
-  "version": "2.10.1",
+  "version": "2.10.2",
   "publisher": "jan-dolejsi",
   "engines": {
     "vscode": "^1.31.0",
@@ -38,7 +38,6 @@
     "onCommand:pddl.showOverview",
     "onCommand:pddl.searchDebugger.start",
     "onCommand:pddl.planning.domains.session.load",
-    "onCommand:pddl.planning.domains.session.edit.load",
     "workspaceContains:.planning.domains.session.json",
     "onView:pddl.planning.domains",
     "onView:pddl.tests.explorer",
@@ -258,11 +257,7 @@
       },
       {
         "command": "pddl.planning.domains.session.load",
-        "title": "PDDL: Load Planning.domains read-only session"
-      },
-      {
-        "command": "pddl.planning.domains.session.edit.load",
-        "title": "PDDL: Load Planning.domains read/write session"
+        "title": "PDDL: Download Planning.domains session"
       },
       {
         "command": "pddl.planning.domains.session.refresh",
@@ -272,12 +267,20 @@
           "dark": "images/dark/refresh.svg"
         }
       },
+      {
+        "command": "pddl.planning.domains.session.refresh_all",
+        "title": "PDDL: Refresh all Planning.domains sessions",
+        "icon": {
+          "light": "images/light/refresh.svg",
+          "dark": "images/dark/refresh.svg"
+        }
+      },
 			{
 				"command": "pddl.planning.domains.session.commit",
 				"title": "PDDL: Commit local changes to Planning.Domains session",
 				"icon": {
-					"light": "images/light/check.svg",
-					"dark": "images/dark/check.svg"
+					"light": "images/light/cloud-upload.svg",
+					"dark": "images/dark/cloud-upload.svg"
 				}
 			},
 			{
@@ -295,7 +298,15 @@
 					"light": "images/light/refresh.svg",
 					"dark": "images/dark/refresh.svg"
 				}
-			}
+      },
+      {
+        "command": "pddl.planning.domains.session.duplicate",
+        "title": "PDDL: Duplicate a Planning.Domains session"
+      },
+      {
+          "command": "pddl.planning.domains.session.open",
+					"title": "PDDL: Open a Planning.Domains session in the browser"
+      }
     ],
     "menus": {
       "editor/context": [
@@ -404,7 +415,15 @@
 					"command": "pddl.planning.domains.session.refresh",
 					"group": "navigation",
 					"when": "scmProvider == planningDomainsSession"
-				}
+        },
+        {
+          "command": "pddl.planning.domains.session.duplicate",
+					"when": "scmProvider == planningDomainsSession"
+        },
+        {
+          "command": "pddl.planning.domains.session.open",
+					"when": "scmProvider == planningDomainsSession"
+        }
 			]
     },
     "keybindings": [

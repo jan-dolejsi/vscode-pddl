@@ -11,16 +11,15 @@ import {
 import { PddlConfiguration } from '../configuration';
 
 import * as path from 'path';
-
-import * as fs from 'fs';
-import { getWebViewHtml, writeFile, readFile } from '../utils';
+import { getWebViewHtml } from '../utils';
+import * as afs from '../asyncfs';
 
 export const SHOULD_SHOW_OVERVIEW_PAGE = 'shouldShowOverviewPage';
 export const LAST_SHOWN_OVERVIEW_PAGE = 'lastShownOverviewPage';
 
 export class OverviewPage {
 
-    private webViewPanel: WebviewPanel
+    private webViewPanel: WebviewPanel;
 
     constructor(private context: ExtensionContext, private pddlConfiguration: PddlConfiguration) {
         commands.registerCommand("pddl.showOverview", () => this.showWelcomePage(true));
@@ -111,12 +110,12 @@ export class OverviewPage {
     async helloWorld(): Promise<void> {
         let folder: Uri = undefined;
 
-        if (workspace.workspaceFolders.length == 0) {
+        if (workspace.workspaceFolders.length === 0) {
             let folders = await window.showOpenDialog({canSelectFiles: false, canSelectFolders: true, canSelectMany: false, openLabel: 'Select folder for hello world...'});
             if (folders) {
                 folder = folders[0];
             }
-        } else if (workspace.workspaceFolders.length == 1) {
+        } else if (workspace.workspaceFolders.length === 1) {
             folder = workspace.workspaceFolders[0].uri;
         } else {
             let selectedFolder = await window.showWorkspaceFolderPick({placeHolder: 'Select workspace folder for Hello World!'});
@@ -124,18 +123,18 @@ export class OverviewPage {
         }
 
         let domainResourcePath = this.context.asAbsolutePath('overview/domain.pddl');
-        let domainText = await readFile(domainResourcePath, { encoding: "utf-8" });
+        let domainText = await afs.readFile(domainResourcePath, { encoding: "utf-8" });
         let domainPath = path.join(folder.fsPath, "domain.pddl");
-        if (fs.existsSync(domainPath)) throw new Error("File 'domain.pddl' already exists.");
-        await writeFile(domainPath, domainText, {encoding: "utf-8"});
+        if (await afs.exists(domainPath)) { throw new Error("File 'domain.pddl' already exists."); }
+        await afs.writeFile(domainPath, domainText, {encoding: "utf-8"});
         let domainDocument = await workspace.openTextDocument(domainPath);
         await window.showTextDocument(domainDocument, {viewColumn: ViewColumn.One, preview: false});
 
         let problemResourcePath = this.context.asAbsolutePath('overview/problem.pddl');
-        let problemText = await readFile(problemResourcePath, { encoding: "utf-8" });
+        let problemText = await afs.readFile(problemResourcePath, { encoding: "utf-8" });
         let problemPath = path.join(folder.fsPath, "problem.pddl");
-        if (fs.existsSync(problemPath)) throw new Error("File 'problem.pddl' already exists.");
-        await writeFile(problemPath, problemText, {encoding: "utf-8"});
+        if (await afs.exists(problemPath)) { throw new Error("File 'problem.pddl' already exists."); }
+        await afs.writeFile(problemPath, problemText, {encoding: "utf-8"});
         let problemDocument = await workspace.openTextDocument(problemPath);
         window.showTextDocument(problemDocument, {viewColumn: ViewColumn.Two, preview: false});
 
@@ -148,7 +147,7 @@ export class OverviewPage {
     }
 
     async updatePageConfiguration(): Promise<void> {
-        if (!this.webViewPanel) return;
+        if (!this.webViewPanel) { return; }
         let message = {
             command: 'updateConfiguration',
             planner: await this.pddlConfiguration.getPlannerPath(),

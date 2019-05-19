@@ -6,8 +6,9 @@
 import { QuickDiffProvider, Uri, CancellationToken, ProviderResult, WorkspaceFolder, workspace } from "vscode";
 import * as path from 'path';
 import { compareMaps } from "../utils";
-import { PlanningDomains } from "../catalog/PlanningDomains";
-import { SessionConfiguration } from "./SessionConfiguration";
+import { SessionConfiguration, strMapToObj, SessionMode } from "./SessionConfiguration";
+import { getText, postJson, getJson } from "../httpUtils";
+import { checkResponseForError } from "../catalog/PlanningDomains";
 
 /** Represents one Planning.Domains session and meta-data. */
 export class SessionContent implements SessionConfiguration {
@@ -62,23 +63,103 @@ export class SessionRepository implements QuickDiffProvider {
 }
 
 const SESSION_URL = "http://editor.planning.domains/session/";
-const SESSION_TABS_PATTERN = /"save-tabs"\s*:\s*{\s*"url"\s*:\s*"[\w:/.-]+"\s*,\s*"settings"\s*:\s*{([^}]*)/;
-const SESSION_DETAILS_PATTERN = /window\.session_details\s*=\s*{\s*(?:readwrite_hash:\s*"(\w+)"\s*,\s*)?read_hash:\s*"(\w+)"\s*,\s*last_change:\s*"([\w: \(\)\+]+)",?\s*}/;
+const SESSION_TABS_PATTERN = /"save-tabs"\s*:\s*{\s*"url"\s*:\s*"[\w:/.-]+"\s*,\s*"settings"\s*:\s*({[^}]*})/;
+const SESSION_DETAILS_PATTERN = /window\.session_details\s*=\s*{\s*(?:readwrite_hash:\s*"(\w+)"\s*,\s*)?read_hash:\s*"(\w+)"\s*,\s*last_change:\s*"([\w: \(\)\+]+)",?\s*};/;
+
+export async function checkSession(sessionId: string): Promise<SessionMode> {
+	let url = `${SESSION_URL}check/${sessionId}`;
+
+	let response = await getJson(url);
+
+	checkResponseForError(response);
+
+	switch (response["type"]) {
+		case "read":
+			return SessionMode.READ_ONLY;
+		case "readwrite":
+			return SessionMode.READ_WRITE;
+		default:
+			throw new Error("Unexpected session type: " + response["type"]);
+	}
+}
 
 export async function getSession(sessionConfiguration: SessionConfiguration): Promise<SessionContent> {
+	let rawSession = await getRawSession(sessionConfiguration);
+	let savedTabsJson = JSON.parse(rawSession.domainFilesAsString);
+
+	let fileNames = Object.keys(savedTabsJson);
+	let sessionFiles = new Map<string, string>();
+	fileNames.forEach(fileName => sessionFiles.set(fileName, savedTabsJson[fileName]));
+
+	return new SessionContent(rawSession.readOnlyHash, rawSession.readWriteHash, rawSession.sessionDate, sessionFiles);
+}
+
+export async function uploadSession(session: SessionContent): Promise<SessionContent> {
+	if (!session.writeHash) { throw new Error("Check if the session is writable first."); }
+
+	let rawLatestSession = await getRawSession(session);
+
+	// replace the session files
+	let newFilesAsString = JSON.stringify(strMapToObj(session.files), null, 4);
+	let newContent = rawLatestSession.sessionContent
+		.replace(rawLatestSession.sessionDetails, '') // strip the window.session.details= assignment
+		.replace(rawLatestSession.domainFilesAsString, newFilesAsString);
+
+	var postBody = Object.create(null);
+	postBody["content"] = newContent;
+	postBody["read_hash"] = session.hash;
+	postBody["readwrite_hash"] = session.writeHash;
+
+	let url = `${SESSION_URL}${session.writeHash}`;
+
+	let postResult = await postJson(url, postBody);
+
+	if (postResult["error"]) {
+		throw new Error(postResult["message"]);
+	}
+
+	// get the latest session
+	return getSession(session);
+}
+
+export async function duplicateSession(session: SessionContent): Promise<string> {
+	let rawLatestOrigSession = await getRawSession(session);
+
+	// replace the session files
+	let newFilesAsString = JSON.stringify(strMapToObj(session.files), null, 4);
+	let newContent = rawLatestOrigSession.sessionContent
+		.replace(rawLatestOrigSession.sessionDetails, '') // strip the window.session.details= assignment
+		.replace(rawLatestOrigSession.domainFilesAsString, newFilesAsString);
+
+	var postBody = Object.create(null);
+	postBody["content"] = newContent;
+
+	let postResult = await postJson(SESSION_URL, postBody);
+
+	if (postResult["error"]) {
+		throw new Error(postResult["message"]);
+	}
+
+	// get the latest session
+	return postResult["result"]["readwrite_hash"];
+}
+
+async function getRawSession(sessionConfiguration: SessionConfiguration): Promise<RawSession> {
 	let url = sessionConfiguration.writeHash ?
 		`${SESSION_URL}edit/${sessionConfiguration.writeHash}` :
 		`${SESSION_URL}${sessionConfiguration.hash}`;
 
-	let session_content = await PlanningDomains.getText(url);
+	let sessionContent = await getText(url);
 
+	var sessionDetails: string;
 	var sessionDate: number;
 	var readWriteHash: string;
 	var readOnlyHash: string;
 
 	SESSION_DETAILS_PATTERN.lastIndex = 0;
-	let matchDetails = SESSION_DETAILS_PATTERN.exec(session_content);
+	let matchDetails = SESSION_DETAILS_PATTERN.exec(sessionContent);
 	if (matchDetails) {
+		sessionDetails = matchDetails[0];
 		readWriteHash = matchDetails[1];
 		readOnlyHash = matchDetails[2];
 		sessionDate = Date.parse(matchDetails[3]);
@@ -87,21 +168,33 @@ export async function getSession(sessionConfiguration: SessionConfiguration): Pr
 		throw new Error("Malformed saved session. Could not extract session date.");
 	}
 
+	var domainFilesString: string;
+
 	SESSION_TABS_PATTERN.lastIndex = 0;
-	let matchTabs = SESSION_TABS_PATTERN.exec(session_content);
+	let matchTabs = SESSION_TABS_PATTERN.exec(sessionContent);
 
 	if (matchTabs) {
-		let domainFilesString = matchTabs[1];
-
-		let sessionJson = JSON.parse(`{${domainFilesString}}`);
-
-		let fileNames = Object.keys(sessionJson);
-		let sessionFiles = new Map<string, string>();
-		fileNames.forEach(fileName => sessionFiles.set(fileName, sessionJson[fileName]));
-
-		return new SessionContent(readOnlyHash, readWriteHash, sessionDate, sessionFiles);
+		domainFilesString = matchTabs[1];
 	}
 	else {
-		throw new Error("Session saved tabs could not be parsed.");
+		throw new Error("Saved session contains no saved tabs.");
 	}
+
+	return {
+		sessionDetails: sessionDetails,
+		sessionContent: sessionContent,
+		sessionDate: sessionDate,
+		readOnlyHash: readOnlyHash,
+		readWriteHash: readWriteHash,
+		domainFilesAsString: domainFilesString
+	};
+}
+
+interface RawSession {
+	readonly sessionDetails: string;
+	readonly sessionContent: string;
+	readonly sessionDate: number;
+	readonly readWriteHash: string;
+	readonly readOnlyHash: string;
+	readonly domainFilesAsString: string;
 }

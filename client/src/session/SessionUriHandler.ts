@@ -3,7 +3,7 @@
  * Licensed under the MIT License. See License.txt in the project root for license information.
  * ------------------------------------------------------------------------------------------ */
 import { Uri, commands, UriHandler } from 'vscode';
-import { SESSION_COMMAND_LOAD, SESSION_EDIT_COMMAND_LOAD } from './SessionSourceControl';
+import { SESSION_COMMAND_LOAD } from './SessionSourceControl';
 
 /** Handles system-wide URI requests. Note that each session can register only one UriHandler! */
 export class SessionUriHandler implements UriHandler {
@@ -56,6 +56,6 @@ class ReadOnlySessionUriHandler extends SingleArgumentUriHandler {
 
 class ReadWriteSessionUriHandler extends SingleArgumentUriHandler {
     constructor() {
-        super(/\/planning.domains\/session\/edit\/(\w+)$/i, SESSION_EDIT_COMMAND_LOAD);
+        super(/\/planning.domains\/session\/edit\/(\w+)$/i, SESSION_COMMAND_LOAD);
     }
 }

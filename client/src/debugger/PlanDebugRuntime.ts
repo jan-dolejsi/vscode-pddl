@@ -215,7 +215,7 @@ export class PlanDebugRuntime extends EventEmitter {
 		// if 'log(...)' found in source -> send argument to debug console
 		const matches = /log\((.*)\)/.exec(line);
 		if (matches && matches.length === 2) {
-			this.sendEvent('output', matches[1], this._sourceFile, ln, matches.index)
+			this.sendEvent('output', matches[1], this._sourceFile, ln, matches.index);
 		}
 
 		// if word 'exception' found in source -> throw exception

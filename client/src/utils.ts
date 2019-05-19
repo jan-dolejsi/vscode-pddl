@@ -11,16 +11,7 @@ import { HappeningsInfo } from "../../common/src/HappeningsInfo";
 import { PddlWorkspace } from '../../common/src/workspace-model';
 import { PddlExtensionContext } from '../../common/src/PddlExtensionContext';
 import { basename, join } from 'path';
-
-import * as fs from 'fs';
-const util = require('util');
-require('util.promisify').shim();
-
-export const readFile = util.promisify(fs.readFile);
-export const writeFile = util.promisify(fs.writeFile);
-export const exists = util.promisify(fs.exists);
-export const readdir = util.promisify(fs.readdir);
-export const unlink = util.promisify(fs.unlink);
+import * as afs from './asyncfs';
 
 export function isAnyPddl(doc: TextDocument): boolean {
     return isPddl(doc) || isPlan(doc) || isHappenings(doc);
@@ -155,7 +146,7 @@ export function createPddlExtensionContext(context: ExtensionContext): PddlExten
 
 export async function getWebViewHtml(extensionContext: ExtensionContext, relativePath: string, htmlFileName: string) {
     let overviewHtmlPath = extensionContext.asAbsolutePath(join(relativePath, htmlFileName));
-    let html = await readFile(overviewHtmlPath, { encoding: "utf-8" });
+    let html = await afs.readFile(overviewHtmlPath, { encoding: "utf-8" });
 
     html = html.replace(/<(script|img|link) +(src|href)="([^"]+)"/g, (sourceElement: string, elementName: string, attribName: string, attribValue: string) => {
         if (attribValue.startsWith('http')) {

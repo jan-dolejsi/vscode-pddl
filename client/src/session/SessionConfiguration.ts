@@ -4,7 +4,7 @@
  * ------------------------------------------------------------------------------------------ */
 
 import { WorkspaceFolder, Uri } from "vscode";
-import { exists, readFile, writeFile } from "../utils";
+import * as afs from '../asyncfs';
 import * as path from 'path';
 
 export const CONFIGURATION_FILE = '.planning.domains.session.json';
@@ -40,12 +40,12 @@ function toConfigurationFilePath(folder: WorkspaceFolder): string {
 
 export async function isSessionFolder(folder: WorkspaceFolder): Promise<boolean> {
 	const configurationPath = toConfigurationFilePath(folder);
-	return exists(configurationPath);
+	return afs.exists(configurationPath);
 }
 
 export async function readSessionConfiguration(folder: WorkspaceFolder): Promise<SessionConfiguration> {
 	const configurationPath = toConfigurationFilePath(folder);
-	let data = await readFile(configurationPath, { flag: 'r' });
+	let data = await afs.readFile(configurationPath, { flag: 'r' });
 	return <SessionConfiguration>JSON.parse(data.toString("utf-8"), (key, value) => {
 		if (key === "files") {
 			return objToStrMap(value);
@@ -72,10 +72,10 @@ export async function saveConfiguration(workspaceFolderUri: Uri, sessionConfigur
 		}
 	}, 4);
 
-	return writeFile(path.join(workspaceFolderUri.fsPath, CONFIGURATION_FILE), sessionConfigurationString);
+	return afs.writeFile(path.join(workspaceFolderUri.fsPath, CONFIGURATION_FILE), sessionConfigurationString);
 }
 
-function strMapToObj(strMap: Map<string, any>): any {
+export function strMapToObj(strMap: Map<string, any>): any {
     let obj = Object.create(null);
     for (let [k,v] of strMap) {
         obj[k] = v;

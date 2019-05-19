@@ -19,8 +19,7 @@ import { Util } from '../../../common/src/util';
 import { PlanFunctionEvaluator } from './PlanFunctionEvaluator';
 import { PlanReportSettings } from './PlanReportSettings';
 import { VAL_STEP_PATH, CONF_PDDL, PDDL_PLANNER, VALUE_SEQ_PATH } from '../configuration';
-import { readFile } from '../utils';
-
+import * as afs from '../asyncfs';
 const DIGITS = 4;
 
 export class PlanReportGenerator {
@@ -83,7 +82,7 @@ export class PlanReportGenerator {
 
     renderPlanSelector(plan: Plan, planIndex: number, selectedPlan: number, maxCost: number): string {
         let className = "planSelector";
-        if (planIndex == selectedPlan) className += " planSelector-selected";
+        if (planIndex === selectedPlan) { className += " planSelector-selected"; }
 
         let normalizedCost = plan.cost / maxCost * 100;
 
@@ -97,7 +96,7 @@ export class PlanReportGenerator {
         if (this.settings.has(plan)) {
             return this.settings.get(plan).shouldDisplay(planStep);
         }
-        else return true;
+        else { return true; }
     }
 
     async renderPlan(plan: Plan, planIndex: number, selectedPlan: number): Promise<string> {
@@ -125,7 +124,7 @@ export class PlanReportGenerator {
 
         let ganttChartHeight = (stepsToDisplay.length + oneIfHelpfulActionsPresent) * this.planStepHeight;
 
-        let styleDisplay = planIndex == selectedPlan ? "block" : "none";
+        let styleDisplay = planIndex === selectedPlan ? "block" : "none";
 
         let ganttChart = `    <div class="gantt" plan="${planIndex}" style="margin: 5px; height: ${ganttChartHeight}px; display: ${styleDisplay};">
     ${ganttChartHtml}
@@ -136,9 +135,9 @@ export class PlanReportGenerator {
             let allTypeObjects = TypeObjects.concatObjects(plan.domain.constants, plan.problem.objects);
 
             objectsHtml = plan.domain.getTypes()
-                .filter(type => type != "object")
+                .filter(type => type !== "object")
                 .map(type => {
-                    let typeObjects = allTypeObjects.find(to => to.type == type);
+                    let typeObjects = allTypeObjects.find(to => to.type === type);
                     return typeObjects
                         ? this.renderTypeSwimLanes(type, typeObjects.objects, plan)
                         : '';
@@ -170,7 +169,7 @@ ${objectsHtml}
                         let chartDivId = `chart_${planIndex}_${liftedVariable.name}`;
                         lineCharts += `        <div id="${chartDivId}" style="width: ${this.options.displayWidth + 100}px; height: ${Math.round(this.options.displayWidth / 2)}px"></div>\n`;
                         let chartTitleWithUnit = liftedVariable.name;
-                        if (liftedVariable.getUnit()) chartTitleWithUnit += ` [${liftedVariable.getUnit()}]`;
+                        if (liftedVariable.getUnit()) { chartTitleWithUnit += ` [${liftedVariable.getUnit()}]`; }
                         lineChartScripts += `        drawChart('${chartDivId}', '${chartTitleWithUnit}', '', ${JSON.stringify(values.legend)}, ${JSON.stringify(values.values)}, ${this.options.displayWidth});\n`;
                     });
                 } catch (err) {
@@ -264,7 +263,7 @@ ${stepsInvolvingThisObject}
         let leftOffset = this.computeLeftOffset(step, plan);
         let width = this.computeWidth(step, plan);
         let objects = step.objects
-            .map(obj => obj.toLowerCase() == thisObj.toLowerCase() ? '@' : obj)
+            .map(obj => obj.toLowerCase() === thisObj.toLowerCase() ? '@' : obj)
             .join(' ');
 
         let availableLane = swimLanes.placeNext(leftOffset, width);
@@ -272,7 +271,7 @@ ${stepsInvolvingThisObject}
 
         return `
                     <div class="resourceTaskTooltip" style="background-color: ${actionColor}; left: ${leftOffset}px; width: ${width}px; top: ${fromTop}px;">${step.actionName} ${objects}<span class="resourceTaskTooltipText">${this.toActionTooltip(step)}</span></div>`;
-    };
+    }
 
     renderGanttStep(step: PlanStep, index: number, plan: Plan, planIndex: number): string {
         let actionLink = this.toActionLink(step.actionName, plan);
@@ -314,7 +313,7 @@ ${stepsInvolvingThisObject}
 
     async includeStyle(uri: Uri): Promise<string> {
         if (this.options.selfContained) {
-            let styleText = await readFile(uri.fsPath, { encoding: 'utf-8' });
+            let styleText = await afs.readFile(uri.fsPath, { encoding: 'utf-8' });
             return `<style>\n${styleText}\n</style>`;
         } else {
             return `<link rel = "stylesheet" type = "text/css" href = "${uri.toString()}" />`;
@@ -323,7 +322,7 @@ ${stepsInvolvingThisObject}
 
     async includeScript(uri: Uri): Promise<string> {
         if (this.options.selfContained) {
-            let scriptText = await readFile(uri.fsPath, { encoding: 'utf-8' });
+            let scriptText = await afs.readFile(uri.fsPath, { encoding: 'utf-8' });
             return `<script>\n${scriptText}\n</script>`;
         } else {
             return `<script src="${uri.toString()}"></script>`;
@@ -344,12 +343,12 @@ ${stepsInvolvingThisObject}
     }
 
     computePlanHeadDuration(step: PlanStep, plan: Plan): number {
-        if (plan.now === undefined) return step.getDuration();
+        if (plan.now === undefined) { return step.getDuration(); }
         else if (step.getEndTime() < plan.now) {
-            if (step.commitment == PlanStepCommitment.Committed) return step.getDuration();
-            else return 0; // the end was not committed yet
+            if (step.commitment === PlanStepCommitment.Committed) { return step.getDuration(); }
+            else { return 0; } // the end was not committed yet
         }
-        else if (step.getStartTime() >= plan.now) return 0;
+        else if (step.getStartTime() >= plan.now) { return 0; }
         else {
             switch (step.commitment) {
                 case PlanStepCommitment.Committed:
@@ -383,7 +382,7 @@ ${stepsInvolvingThisObject}
     }
 
     getActionColor(step: PlanStep, domain: DomainInfo): string {
-        let actionIndex = domain.actions.findIndex(action => action.name.toLowerCase() == step.actionName.toLowerCase());
+        let actionIndex = domain.actions.findIndex(action => action.name.toLowerCase() === step.actionName.toLowerCase());
         let actionColor = this.colors[actionIndex * 7 % this.colors.length];
 
         return actionColor;
@@ -393,9 +392,9 @@ ${stepsInvolvingThisObject}
 }
 
 export interface PlanReportOptions {
-    displayWidth: number,
-    selfContained?: boolean,
-    disableSwimLaneView?: boolean,
-    disableLinePlots?: boolean,
-    disableHamburgerMenu?: boolean
+    displayWidth: number;
+    selfContained?: boolean;
+    disableSwimLaneView?: boolean;
+    disableLinePlots?: boolean;
+    disableHamburgerMenu?: boolean;
 }

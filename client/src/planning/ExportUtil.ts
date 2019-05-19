@@ -4,14 +4,11 @@
  * ------------------------------------------------------------------------------------------ */
 'use strict';
 
-import {
-    Uri, window, workspace, Range, ViewColumn
-} from 'vscode';
-
-import { exists } from '../utils';
+import { Uri, window, workspace, Range, ViewColumn } from 'vscode';
+import * as afs from '../asyncfs';
 
 export async function exportToAndShow(text: string, uri: Uri): Promise<boolean> {
-    let fileExists = await exists(uri.fsPath);
+    let fileExists = await afs.exists(uri.fsPath);
     if (!fileExists) {
         uri = uri.with({ scheme: 'untitled' });
     }

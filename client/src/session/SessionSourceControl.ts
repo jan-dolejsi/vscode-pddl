@@ -4,15 +4,29 @@
  * ------------------------------------------------------------------------------------------ */
 
 import * as vscode from 'vscode';
-import { SessionRepository, getSession, SessionContent } from './SessionRepository';
+import { SessionRepository, getSession, SessionContent, uploadSession, duplicateSession } from './SessionRepository';
 import * as path from 'path';
-import { existsSync } from 'fs';
-import { writeFile, toFuzzyRelativeTime } from '../utils';
-import { SessionConfiguration, saveConfiguration, SessionMode, toSessionConfiguration } from './SessionConfiguration';
+import { toFuzzyRelativeTime } from '../utils';
+import * as afs from '../asyncfs';
+import { SessionConfiguration, saveConfiguration, SessionMode, toSessionConfiguration, CONFIGURATION_FILE } from './SessionConfiguration';
 
+/**
+ * Command for cloning a session to the local storage.
+ * Arguments: sessionId?, localWorkspaceUri?
+ */
 export const SESSION_COMMAND_LOAD = 'pddl.planning.domains.session.load';
-export const SESSION_EDIT_COMMAND_LOAD = 'pddl.planning.domains.session.edit.load';
+/**
+ * Command for downloading the latest version of the session to the local storage.
+ */
 export const SESSION_COMMAND_CHECKOUT = 'pddl.planning.domains.session.checkout';
+
+export const SESSION_COMMAND_REFRESH_ALL = 'pddl.planning.domains.session.refresh_all';
+
+enum ChangedResourceState {
+	New,
+	Deleted,
+	Dirty
+}
 
 /** Handles the version control for session files. */
 export class SessionSourceControl implements vscode.Disposable {
@@ -25,13 +39,15 @@ export class SessionSourceControl implements vscode.Disposable {
 	private _onRepositoryChange = new vscode.EventEmitter<SessionContent>();
 	private timeout?: NodeJS.Timer;
 	private session!: SessionContent;
-	//todo: should the previous source control that maps onto the same folder uri be disposed first?
+	private isRefreshing: boolean;
+
 	constructor(context: vscode.ExtensionContext, private readonly workspaceFolder: vscode.WorkspaceFolder, session: SessionContent, overwrite: boolean) {
+		//todo: should the previous source control that maps onto the same folder uri be disposed first?
 		this.sessionScm = vscode.scm.createSourceControl('planningDomainsSession', 'Session #' + session.hash, workspaceFolder.uri);
 		this.changedResources = this.sessionScm.createResourceGroup('workingTree', 'Changes');
 		this.sessionRepository = new SessionRepository(workspaceFolder, session);
 		this.sessionScm.quickDiffProvider = this.sessionRepository;
-		this.sessionScm.inputBox.placeholder = session.canCommit() ? 'Saving back is not yet supported :-(' : 'Read-only session!';
+		this.sessionScm.inputBox.placeholder = session.canCommit() ? '' : 'Read-only session!';
 
 		let fileSystemWatcher = vscode.workspace.createFileSystemWatcher(new vscode.RelativePattern(workspaceFolder, "*.*"));
 		fileSystemWatcher.onDidChange(uri => this.onResourceChange(uri), context.subscriptions);
@@ -59,18 +75,29 @@ export class SessionSourceControl implements vscode.Disposable {
 
 	private refreshStatusBar() {
 
-		let title = `↕ ${this.session.hash} ${toFuzzyRelativeTime(this.session.versionDate)}`;
+		let title = "$(repo) " + toFuzzyRelativeTime(this.session.versionDate);
 
 		if (this.session.versionDate < this.latestSessionVersionDate) {
-			title += ' (stale)';
+			title = `$(cloud-download) ${title} (stale)`;
 		}
+
+		if (this.getSourceControl().count) {
+			title += " $(primitive-dot)";
+		}
+
+		var refreshTitle = `$(sync${this.isRefreshing ? '~spin' : ''})`;
 
 		this.sessionScm.statusBarCommands = [
 			{
 				"command": SESSION_COMMAND_CHECKOUT,
 				"arguments": [this],
 				"title": title,
-				"tooltip": "Fetch latest version of the session files.",
+				"tooltip": "Fetch latest version of the session files."
+			},
+			{
+				"command": SESSION_COMMAND_REFRESH_ALL,
+				"title": refreshTitle,
+				"tooltip": "Refresh status of all Planning.domains sessions"
 			}
 		];
 	}
@@ -82,7 +109,7 @@ export class SessionSourceControl implements vscode.Disposable {
 		}
 
 		if (!this.session.canCommit()) {
-			vscode.window.showErrorMessage("This session was open as read-only!");
+			vscode.window.showErrorMessage("This session was open as read-only! Save it using the Clone command.");
 			return;
 		}
 
@@ -92,19 +119,27 @@ export class SessionSourceControl implements vscode.Disposable {
 			vscode.window.showErrorMessage("Checkout the latest session version before committing your changes.");
 		}
 		else {
-			// todo: get all workspace files, upload them back to the server when there is an endpoint
-			// here we assume nobody updated the Session on the server since we refreshed the list of versions
-			vscode.window.showErrorMessage("Writing session files back is not supported yet.");
-			return;
 			try {
-				let newSessionContent: SessionContent = null;
-				if (!newSessionContent) { return; }
+				let currentSession = await this.getCurrentSession();
+				let newSessionContent: SessionContent = await uploadSession(currentSession);
+
 				await this.setSession(newSessionContent, false);
 				this.sessionScm.inputBox.value = '';
 			} catch (ex) {
 				vscode.window.showErrorMessage("Cannot commit changes to Planning.Domains session. " + ex.message);
 			}
 		}
+	}
+
+	async getCurrentSession(): Promise<SessionContent> {
+		let newFiles = new Map<string, string>();
+
+		let localFileNames = await this.getLocalFileNames();
+
+		for (const fileName of localFileNames) {
+			newFiles.set(fileName, await this.getFileContent(fileName));
+		}
+		return new SessionContent(this.session.hash, this.session.writeHash, this.session.versionDate, newFiles);
 	}
 
 	/**
@@ -117,7 +152,13 @@ export class SessionSourceControl implements vscode.Disposable {
 	/** Resets the given local file content to the checked-out version. */
 	private async resetFile(fileName: string, fileContent: string): Promise<void> {
 		let filePath = this.sessionRepository.createLocalResourcePath(fileName);
-		await writeFile(filePath, fileContent);
+		await afs.writeFile(filePath, fileContent);
+	}
+
+	private async getFileContent(fileName: string): Promise<string> {
+		let filePath = this.sessionRepository.createLocalResourcePath(fileName);
+		let document = await vscode.workspace.openTextDocument(vscode.Uri.file(filePath));
+		return document.getText();
 	}
 
 	async tryCheckout(newVersion: number | undefined): Promise<void> {
@@ -156,6 +197,7 @@ export class SessionSourceControl implements vscode.Disposable {
 		if (overwrite) { this.resetFilesToCheckedOutVersion(); } // overwrite local file content
 		this._onRepositoryChange.fire(this.session);
 		this.refreshStatusBar();
+		this.updateChangedGroup();
 
 		await this.saveCurrentConfiguration();
 	}
@@ -186,6 +228,9 @@ export class SessionSourceControl implements vscode.Disposable {
 	 * For example another user updates the session files online.
 	 */
 	async refresh(): Promise<void> {
+		this.isRefreshing = true;
+		this.refreshStatusBar();
+
 		try {
 			let latestSession = await getSession(this.session);
 			this.latestSessionVersionDate = latestSession.versionDate;
@@ -193,6 +238,9 @@ export class SessionSourceControl implements vscode.Disposable {
 			// typically the ex.statusCode == 404, when there is no further version
 		}
 
+		this.updateChangedGroup();
+
+		this.isRefreshing = false;
 		this.refreshStatusBar();
 	}
 
@@ -214,33 +262,55 @@ export class SessionSourceControl implements vscode.Disposable {
 		}
 	}
 
+	/** Refreshes the list of changed resources under this version control. */
 	async updateChangedGroup(): Promise<void> {
 		// for simplicity we ignore which document was changed in this event and scan all of them
 		let changedResources: vscode.SourceControlResourceState[] = [];
 
 		let uris = this.sessionRepository.provideSourceControlledResources();
 
-		for (const uri of uris) {
-			let isDirty: boolean;
-			let wasDeleted: boolean;
+		let otherFolderFiles: string[] = await this.getLocalFileNames();
 
-			if (existsSync(uri.fsPath)) {
+		for (const uri of uris) {
+			let state: ChangedResourceState = null;
+
+			if (await afs.exists(uri.fsPath)) {
 				let document = await vscode.workspace.openTextDocument(uri);
-				isDirty = this.isDirty(document);
-				wasDeleted = false;
+				if (this.isDirty(document)) {
+					state = ChangedResourceState.Dirty;
+				}
+				otherFolderFiles.splice(otherFolderFiles.indexOf(path.basename(uri.fsPath)));
 			}
 			else {
-				isDirty = true;
-				wasDeleted = true;
+				state = ChangedResourceState.Deleted;
 			}
 
-			if (isDirty) {
-				let resourceState = this.toSourceControlResourceState(uri, wasDeleted);
+			if (state) {
+				let resourceState = this.toSourceControlResourceState(uri, state);
 				changedResources.push(resourceState);
 			}
 		}
 
+		for (const otherFile of otherFolderFiles) {
+			let resourcePath = path.join(this.getWorkspaceFolder().uri.fsPath, otherFile);
+			let fileStats = await afs.stat(resourcePath);
+			if (fileStats.isDirectory()) { continue; }
+
+			// add this file as a new file to the session changed resources
+			let resourceUri = vscode.Uri.file(resourcePath);
+			let resourceState = this.toSourceControlResourceState(resourceUri, ChangedResourceState.New);
+			changedResources.push(resourceState);
+		}
+
 		this.changedResources.resourceStates = changedResources;
+		this.sessionScm.count = this.changedResources.resourceStates.length;
+	}
+
+	async getLocalFileNames(): Promise<string[]> {
+		let localFileNames: string[] = await afs.readdir(this.getWorkspaceFolder().uri.fsPath);
+		return localFileNames
+			// exclude the config file
+			.filter(fileName => fileName !== CONFIGURATION_FILE);
 	}
 
 	/** Determines whether the resource is different, regardless of line endings. */
@@ -249,32 +319,72 @@ export class SessionSourceControl implements vscode.Disposable {
 		return originalText.replace('\r', '') !== doc.getText().replace('\r', '');
 	}
 
-	toSourceControlResourceState(docUri: vscode.Uri, deleted: boolean): vscode.SourceControlResourceState {
+	toSourceControlResourceState(docUri: vscode.Uri, state: ChangedResourceState): vscode.SourceControlResourceState {
 
 		let repositoryUri = this.sessionRepository.provideOriginalResource(docUri, null);
 
 		const fileName = path.basename(docUri.fsPath);
 
-		let command: vscode.Command = !deleted
-			? {
-				title: "Show changes",
-				command: "vscode.diff",
-				arguments: [repositoryUri, docUri, `Session#${this.session.hash}:${fileName} ↔ Local changes`],
-				tooltip: "Diff your changes"
-			}
-			: null;
+		let command: vscode.Command;
+		let tooltip: string;
+
+		switch (state) {
+			case ChangedResourceState.Dirty:
+				command = {
+					title: "Show changes",
+					command: "vscode.diff",
+					arguments: [repositoryUri, docUri, `Session#${this.session.hash}:${fileName} ↔ Local changes`],
+					tooltip: "Diff your changes"
+				};
+				break;
+			case ChangedResourceState.New:
+				command = {
+					title: "Show document",
+					command: 'vscode.open',
+					arguments: [docUri]
+				};
+				tooltip = 'File will be added to the session.';
+				break;
+			case ChangedResourceState.Deleted:
+				command = {
+					title: "Show content of the removed document",
+					command: 'vscode.open',
+					arguments: [repositoryUri]
+				};
+				tooltip = 'File was locally deleted and will be removed from the session.';
+				break;
+			default:
+				throw new Error("Unexpected resource state: " + state);
+		}
 
 		let resourceState: vscode.SourceControlResourceState = {
 			resourceUri: docUri,
 			command: command,
 			decorations: {
-				strikeThrough: deleted,
-				tooltip: 'File was locally deleted.'
+				strikeThrough: state === ChangedResourceState.Deleted,
+				faded: state === ChangedResourceState.New,
+				tooltip: tooltip
 			}
 		};
 
 		return resourceState;
 	}
+
+	/**
+	 * Creates a copy of the current session on the server and requests it to be cloned to the targetLocalFolder.
+	 * @param targetLocalFolder local folder uri, where the session should be cloned
+	 */
+	async duplicateAsWritable(targetLocalFolder: vscode.Uri) {
+		try {
+			let currentSession = await this.getCurrentSession();
+			let newSessionWriteHash: string = await duplicateSession(currentSession);
+
+			// trigger the command to download the new session
+			vscode.commands.executeCommand(SESSION_COMMAND_LOAD, newSessionWriteHash, targetLocalFolder);
+		} catch (ex) {
+			vscode.window.showErrorMessage("Failed creating duplicate session in Planning.Domains session. " + ex.message);
+		}
+}
 
 	dispose() {
 		this._onRepositoryChange.dispose();

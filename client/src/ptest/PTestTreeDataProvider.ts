@@ -9,6 +9,7 @@ import {
 } from 'vscode';
 import { basename, join } from 'path';
 import { readdirSync, statSync } from 'fs';
+import * as afs from '../asyncfs';
 import { TestsManifest } from './TestsManifest';
 import { TestOutcome, Test } from './Test';
 import { PddlExtensionContext } from '../../../common/src/PddlExtensionContext';
@@ -66,12 +67,12 @@ export class PTestTreeDataProvider implements TreeDataProvider<PTestNode> {
     getTreeItem(element: PTestNode): TreeItem | Thenable<TreeItem> {
 
         let icon: string;
-        let contextValue: string
+        let contextValue: string;
 
-        if (element.kind == PTestNodeKind.Directory) {
+        if (element.kind === PTestNodeKind.Directory) {
             icon = 'folder_16x' + '.svg';
             contextValue = 'folder';
-        } else if (element.kind == PTestNodeKind.Manifest) {
+        } else if (element.kind === PTestNodeKind.Manifest) {
             icon = 'file_type_test' + '.svg';
             contextValue = 'manifest';
         } else {
@@ -99,7 +100,7 @@ export class PTestTreeDataProvider implements TreeDataProvider<PTestNode> {
             contextValue = 'test';
         }
 
-        let isCollapsible = element.kind == PTestNodeKind.Directory || element.kind == PTestNodeKind.Manifest;
+        let isCollapsible = element.kind === PTestNodeKind.Directory || element.kind === PTestNodeKind.Manifest;
 
         return {
             id: element.resource.toString(),
@@ -113,11 +114,11 @@ export class PTestTreeDataProvider implements TreeDataProvider<PTestNode> {
     }
 
     getIcon(fileName: string): any {
-        if (!fileName) return null;
+        if (!fileName) { return null; }
         return {
             light: this.context.asAbsolutePath(join('images', 'light', fileName)),
             dark: this.context.asAbsolutePath(join('images', 'dark', fileName))
-        }
+        };
     }
 
     async getChildren(element?: PTestNode): Promise<PTestNode[]> {
@@ -136,7 +137,7 @@ export class PTestTreeDataProvider implements TreeDataProvider<PTestNode> {
 
             if (PTestTreeDataProvider.isTestManifest(parentPath)) {
                 let manifest = this.tryLoadManifest(parentPath);
-                if (!manifest) return [];
+                if (!manifest) { return []; }
 
                 return manifest.testCases
                     .map(test => this.cache({
@@ -148,34 +149,38 @@ export class PTestTreeDataProvider implements TreeDataProvider<PTestNode> {
             }
             else {
                 let children: string[] = [];
-                children = await readdirSync(parentPath);
-                return children
+                children = await afs.readdir(parentPath);
+                return Promise.all(children
                     .map(child => join(parentPath, child))
                     .filter(childPath => PTestTreeDataProvider.isOrHasTests(childPath))
-                    .map(childPath => {
-                        let kind = this.filePathToNodeKind(childPath);
-                        if(kind == PTestNodeKind.Manifest){
-                            let label = childPath;
-                            let baseName = basename(childPath);
-                            if(baseName.length == PTestTreeDataProvider.PTEST_SUFFIX.length){
-                                label = 'Test cases';
-                            } else {
-                                label = baseName.substring(0, baseName.length - PTestTreeDataProvider.PTEST_SUFFIX.length);
-                            }
-                            return this.cache({
-                                resource: Uri.file(childPath),
-                                kind: kind,
-                                label: label
-                            });
-                    }
-                        return this.cache({
-                            resource: Uri.file(childPath),
-                            kind: kind
-                        })
-                    }
-                    );
+                    .map(childPath => this.toCachedNode(childPath)));
             }
         }
+    }
+
+    toCachedNode(childPath: string): PTestNode {
+
+        let kind = this.filePathToNodeKind(childPath);
+        if (kind === PTestNodeKind.Manifest) {
+            let label = childPath;
+            let baseName = basename(childPath);
+
+            if (baseName.length === PTestTreeDataProvider.PTEST_SUFFIX.length) {
+                label = 'Test cases';
+            } else {
+                label = baseName.substring(0, baseName.length - PTestTreeDataProvider.PTEST_SUFFIX.length);
+            }
+            return this.cache({
+                resource: Uri.file(childPath),
+                kind: kind,
+                label: label
+            });
+        }
+
+        return this.cache({
+            resource: Uri.file(childPath),
+            kind: kind
+        });
     }
 
     tryLoadManifest(manifestPath: string): TestsManifest {
@@ -208,7 +213,9 @@ ${error}`);
     static isOrHasTests(childPath: string): boolean {
         if (statSync(childPath).isDirectory()) {
             return PTestTreeDataProvider.getAllChildrenFiles(childPath).some(filePath => this.isTestManifest(filePath));
-        } else return this.isTestManifest(childPath);
+        } else {
+            return this.isTestManifest(childPath);
+        }
     }
 
     static PTEST_SUFFIX = '.ptest.json';
@@ -218,8 +225,9 @@ ${error}`);
     }
 
     static getAllChildrenFiles(dir: string): string[] {
-        return readdirSync(dir)
-            .filter(file => file != ".git")
+        let fileNames: string[] = readdirSync(dir);
+        return fileNames
+            .filter(file => file !== ".git")
             .reduce((files: string[], file: string) => {
                 let filePath = join(dir, file);
                 return statSync(filePath).isDirectory() ?

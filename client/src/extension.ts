@@ -77,7 +77,7 @@ function activateWithTelemetry(_operationId: string, context: ExtensionContext) 
 		pddlConfiguration.askNewParserPath();
 	});
 
-	let searchDebugger = new SearchDebugger(context, pddlConfiguration);
+	let searchDebugger = new SearchDebugger(context);
 	planning.addOptionsProvider(searchDebugger);
 
 	let loginParserServiceCommand = commands.registerCommand(PDDL_LOGIN_PARSER_SERVICE, () => {

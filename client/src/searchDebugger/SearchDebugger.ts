@@ -7,13 +7,12 @@
 import { ExtensionContext, commands, window, workspace, StatusBarItem, StatusBarAlignment } from "vscode";
 
 import * as express from 'express';
-import bodyParser = require('body-parser')
+import bodyParser = require('body-parser');
 import http = require('http');
 import { Search } from "./Search";
 import { MessageParser } from "./MessageParser";
 import { MockSearch } from "./MockSearch";
 import { SearchDebuggerView } from "./SearchDebuggerView";
-import { PddlConfiguration } from "../configuration";
 import { PlannerOptionsProvider, PlanningRequestContext } from "../planning/PlannerOptionsProvider";
 
 export class SearchDebugger implements PlannerOptionsProvider {
@@ -26,13 +25,13 @@ export class SearchDebugger implements PlannerOptionsProvider {
     private statusBarItem: StatusBarItem;
     static readonly TOGGLE_COMMAND = "pddl.searchDebugger.toggle";
 
-    constructor(private context: ExtensionContext, private pddlConfiguration: PddlConfiguration) {
+    constructor(private context: ExtensionContext) {
         this.context.subscriptions.push(commands.registerCommand("pddl.searchDebugger.start", () => this.tryStart()));
         this.context.subscriptions.push(commands.registerCommand("pddl.searchDebugger.stop", () => this.tryStop()));
         this.context.subscriptions.push(commands.registerCommand("pddl.searchDebugger.reset", () => this.reset()));
         this.context.subscriptions.push(commands.registerCommand("pddl.searchDebugger.mock", () => this.mock()));
 
-        this.view = new SearchDebuggerView(this.context, this.pddlConfiguration);
+        this.view = new SearchDebuggerView(this.context);
     }
 
     providePlannerOptions(context: PlanningRequestContext): string {
@@ -51,9 +50,9 @@ export class SearchDebugger implements PlannerOptionsProvider {
     }
 
     reset(): void {
-        if (this.search) this.search.clear();
-        if (this.messageParser) this.messageParser.clear();
-        if (this.view) this.view.clear();
+        if (this.search) { this.search.clear(); }
+        if (this.messageParser) { this.messageParser.clear(); }
+        if (this.view) { this.view.clear(); }
     }
 
     tryStart(): void {
@@ -66,14 +65,14 @@ export class SearchDebugger implements PlannerOptionsProvider {
     }
 
     isRunning(): boolean {
-        return this.server != null;
+        return this.server !== null && this.server !== undefined;
     }
 
     startAndShow(): void {
         if (!this.isRunning()) {
             this.startServer();
         }
-        this.view.showDebugView(this.isRunning());
+        this.view.showDebugView(this.isRunning(), this.port);
         this.showStatusBarItem();
     }
 
@@ -94,9 +93,9 @@ export class SearchDebugger implements PlannerOptionsProvider {
         this.server.on('error', e => window.showErrorMessage(e.message));
         for (; retryCount > 0; retryCount--) {
             try {
-                this.server.listen(this.port);
+                this.server.listen(this.port, "127.0.0.1"); // listen to the local loop-back IP address
                 break;
-            }catch(ex){
+            } catch (ex) {
                 console.log(`Cannot listen to port ${this.port}: ` + ex);
                 this.port--;
             }
@@ -152,7 +151,7 @@ export class SearchDebugger implements PlannerOptionsProvider {
             this.server.close();
             this.server = null;
         }
-        this.view.showDebuggerState(this.isRunning());
+        this.view.showDebuggerState(this.isRunning(), this.port);
         this.showStatusBarItem();
     }
 

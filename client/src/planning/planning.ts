@@ -28,7 +28,9 @@ import { PlanReportGenerator } from './PlanReportGenerator';
 import { PlanExporter } from './PlanExporter';
 import { PlanHappeningsExporter } from './PlanHappeningsExporter';
 import { HappeningsPlanExporter } from './HappeningsPlanExporter';
-import { isHappenings, isPlan, exists } from '../utils';
+import { isHappenings, isPlan } from '../utils';
+import * as afs from '../asyncfs';
+
 import { PlanView, PDDL_GENERATE_PLAN_REPORT, PDDL_EXPORT_PLAN } from './PlanView';
 import { PlannerOptionsProvider, PlanningRequestContext } from './PlannerOptionsProvider';
 
@@ -67,7 +69,7 @@ export class Planning implements PlannerResponseHandler {
         context.subscriptions.push(commands.registerCommand(PDDL_STOP_PLANNER, () => this.stopPlanner()));
 
         context.subscriptions.push(commands.registerCommand(PDDL_GENERATE_PLAN_REPORT, (plans: Plan[], selectedPlan: number) => {
-            if (plans != null) {
+            if (plans !== null) {
                 new PlanReportGenerator(context, { displayWidth: 1000, selfContained: true }).export(plans, selectedPlan);
             } else {
                 window.showErrorMessage("There is no plan to export.");
@@ -158,7 +160,7 @@ export class Planning implements PlannerResponseHandler {
             // find domain files in the same folder that match the problem's domain name
             let domainFiles = folder.getDomainFilesFor(problemFileInfo);
 
-            if (domainFiles.length == 1) {
+            if (domainFiles.length === 1) {
                 domainFileInfo = domainFiles[0];
             } else if (domainFiles.length > 1) {
                 const domainFileCandidates = domainFiles
@@ -166,12 +168,12 @@ export class Planning implements PlannerResponseHandler {
 
                 const domainFileName = await window.showQuickPick(domainFileCandidates, { placeHolder: "Select domain file:" });
 
-                if (!domainFileName) return; // was canceled
+                if (!domainFileName) { return; } // was canceled
 
                 const domainFilePath = path.join(dirname(activeFilePath), domainFileName);
                 let domainFileUri = Uri.file(domainFilePath);
 
-                domainFileInfo = domainFiles.find(doc => doc.fileUri == domainFileUri.toString());
+                domainFileInfo = domainFiles.find(doc => doc.fileUri === domainFileUri.toString());
             } else {
                 window.showInformationMessage(`Ensure a domain '${problemFileInfo.domainName}' from the same folder is open in the editor.`);
                 return;
@@ -182,14 +184,14 @@ export class Planning implements PlannerResponseHandler {
 
             let problemFiles = this.pddlWorkspace.getProblemFiles(domainFileInfo);
 
-            if (problemFiles.length == 1) {
+            if (problemFiles.length === 1) {
                 problemFileInfo = problemFiles[0];
             } else if (problemFiles.length > 1) {
                 const problemFileNames = problemFiles.map(info => Planning.getFileName(info.fileUri));
 
                 const selectedProblemFileName = await window.showQuickPick(problemFileNames, { placeHolder: "Select problem file:" });
 
-                if (!selectedProblemFileName) return; // was canceled
+                if (!selectedProblemFileName) { return; }// was canceled
 
                 problemFileInfo = problemFiles.find(fileInfo => fileInfo.fileUri.endsWith('/' + selectedProblemFileName));
             } else {
@@ -223,7 +225,7 @@ export class Planning implements PlannerResponseHandler {
         workingDirectory = await this.adjustWorkingFolder(workingDirectory);
 
         this.planner = await this.createPlanner(workingDirectory, options);
-        if (!this.planner) return;
+        if (!this.planner) { return; }
 
         this.planningProcessKilled = false;
 
@@ -285,7 +287,7 @@ export class Planning implements PlannerResponseHandler {
 
     async adjustWorkingFolder(workingDirectory: string): Promise<string> {
         // the working directory may be virtual, replace it
-        if (!await exists(workingDirectory)) {
+        if (!await afs.exists(workingDirectory)) {
             if (workspace.workspaceFolders.length) {
                 return workspace.workspaceFolders[0].uri.fsPath;
             }
@@ -311,18 +313,18 @@ export class Planning implements PlannerResponseHandler {
      */
     async createPlanner(workingDirectory: string, options?: string): Promise<Planner> {
         let plannerPath = await this.plannerConfiguration.getPlannerPath();
-        if (!plannerPath) return null;
+        if (!plannerPath) { return null; }
 
-        if (!await this.verifyConsentForSendingPddl(plannerPath)) return null;
+        if (!await this.verifyConsentForSendingPddl(plannerPath)) { return null; }
 
-        let plannerOptions = options != undefined ? options : await this.plannerConfiguration.getPlannerOptions();
-        if (plannerOptions == null) return null;
+        let plannerOptions = options !== undefined ? options : await this.plannerConfiguration.getPlannerOptions();
+        if (plannerOptions === null) { return null; }
 
         if (PddlConfiguration.isHttp(plannerPath)) {
             let useAuthentication = this.plannerConfiguration.isPddlPlannerServiceAuthenticationEnabled();
             let authentication = null;
             if (useAuthentication) {
-                let configuration = this.plannerConfiguration.getPddlPlannerServiceAuthenticationConfiguration()
+                let configuration = this.plannerConfiguration.getPddlPlannerServiceAuthenticationConfiguration();
                 authentication = new Authentication(configuration.url, configuration.requestEncoded, configuration.clientId, configuration.callbackPort, configuration.timeoutInMs,
                     configuration.tokensvcUrl, configuration.tokensvcApiKey, configuration.tokensvcAccessPath, configuration.tokensvcValidatePath,
                     configuration.tokensvcCodePath, configuration.tokensvcRefreshPath, configuration.tokensvcSvctkPath,
@@ -332,7 +334,7 @@ export class Planning implements PlannerResponseHandler {
         }
         else {
             let plannerSyntax = await this.plannerConfiguration.getPlannerSyntax();
-            if (plannerSyntax == null) return null;
+            if (plannerSyntax === null) { return null; }
 
             return new PlannerExecutable(plannerPath, plannerOptions, plannerSyntax, workingDirectory);
         }
@@ -426,7 +428,7 @@ class ElapsedTimeProgressUpdater {
     }
 
     reportProgress(): void {
-        if (this.token.isCancellationRequested || this.finished) return;
+        if (this.token.isCancellationRequested || this.finished) { return; }
         setTimeout(() => {
             var elapsedTime = new Date(this.getElapsedTimeInMilliSecs());
             this.progress.report({ message: "Elapsed time: " + elapsedTime.toISOString().substr(11, 8) });

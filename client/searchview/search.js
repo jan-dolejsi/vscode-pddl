@@ -21,7 +21,7 @@ window.addEventListener('message', event => {
             update(message.state, false);
             break;
         case 'debuggerState':
-            showDebuggerOn(message.state == 'on');
+            showDebuggerOn(message.state.running == 'on', message.state.port);
             break;
         case 'showPlan':
             showStatePlan(message.state);
@@ -215,13 +215,15 @@ function restartSearchDebugger() {
     clearStates();
 }
 
-function showDebuggerOn(on) {
+function showDebuggerOn(on, port) {
     stopDisplay = on ? 'inherit' : 'none';
     startDisplay = on ? 'none' : 'inherit';
 
     window.document.getElementById("startDebuggerButton").style.display = startDisplay;
     window.document.getElementById("stopDebuggerButton").style.display = stopDisplay;
     window.document.getElementById("restartDebuggerButton").style.display = stopDisplay;
+
+    window.document.getElementById("stopDebuggerButton").title="Search engine listener is running on port "+port+". Click here to stop it."
 }
 
 function showStatePlan(statePlanHtml) {

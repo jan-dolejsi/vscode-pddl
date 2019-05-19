@@ -58,7 +58,7 @@ export class PTestExplorer {
 
     async saveProblemAs() {
         let generatedDocument = window.activeTextEditor.document;
-        if (!generatedDocument) return;
+        if (!generatedDocument) { return; }
         let options: SaveDialogOptions = {
             saveLabel: "Save as PDDL problem",
             filters: {
@@ -79,7 +79,7 @@ export class PTestExplorer {
     }
 
     async openDefinition(node: PTestNode) {
-        if (node.kind == PTestNodeKind.Test) {
+        if (node.kind === PTestNodeKind.Test) {
             let test = Test.fromUri(node.resource, this.context);
             let manifest = test.getManifest();
             let manifestDocument = await workspace.openTextDocument(manifest.uri);
@@ -95,24 +95,24 @@ export class PTestExplorer {
             else {
                 await window.showTextDocument(manifestDocument.uri, { preview: true, viewColumn: ViewColumn.One });
             }
-        } else if (node.kind == PTestNodeKind.Manifest) {
+        } else if (node.kind === PTestNodeKind.Manifest) {
             let manifestDocument = await workspace.openTextDocument(node.resource);
             await window.showTextDocument(manifestDocument.uri, { preview: true, viewColumn: ViewColumn.One });
         }
     }
 
     async openExpectedPlans(node: PTestNode) {
-        if (node.kind == PTestNodeKind.Test) {
+        if (node.kind === PTestNodeKind.Test) {
             let test = Test.fromUri(node.resource, this.context);
 
             // assert that everything exists
-            if (!test) return;
+            if (!test) { return; }
             this.assertValid(test);
 
             if (!test.hasExpectedPlans()) {
-                await window.showInformationMessage("Test has no expected plans defined.")
+                await window.showInformationMessage("Test has no expected plans defined.");
             } else {
-                const previewOnly = test.getExpectedPlans().length == 1;
+                const previewOnly = test.getExpectedPlans().length === 1;
 
                 test.getExpectedPlans().forEach(async (expectedPlan) => {
                     let path = test.toAbsolutePath(expectedPlan);
@@ -124,11 +124,11 @@ export class PTestExplorer {
     }
 
     async openTest(node: PTestNode) {
-        if (node.kind == PTestNodeKind.Test) {
+        if (node.kind === PTestNodeKind.Test) {
             let test = Test.fromUri(node.resource, this.context);
 
             // assert that everything exists
-            if (!test) return;
+            if (!test) { return; }
             this.assertValid(test);
 
             let domainDocument = await workspace.openTextDocument(test.getDomainUri());
@@ -154,7 +154,7 @@ export class PTestExplorer {
     }
 
     async runTests(node: PTestNode) {
-        if (node.kind == PTestNodeKind.Manifest) {
+        if (node.kind === PTestNodeKind.Manifest) {
             let manifest = TestsManifest.load(node.resource.fsPath, this.context);
             let testCount = manifest.testCases.length;
 
@@ -189,17 +189,17 @@ export class PTestExplorer {
 
                     this.outputWindow.appendLine(`Finished executing tests from ${basename(node.resource.fsPath)}.`);
                     this.outputWindow.show(true);
-                })
+                });
             });
         }
     }
 
     async runTest(node: PTestNode) {
-        if (node.kind == PTestNodeKind.Test) {
+        if (node.kind === PTestNodeKind.Test) {
             let test = Test.fromUri(node.resource, this.context);
 
             // assert that everything exists
-            if (!test) return;
+            if (!test) { return; }
 
             try {
                 await this.executeTest(test);
@@ -233,15 +233,15 @@ export class PTestExplorer {
             let resultSubscription = this.planning.onPlansFound(result => {
                 resultSubscription.dispose();
 
-                if (result.outcome == PlanningOutcome.FAILURE) {
+                if (result.outcome === PlanningOutcome.FAILURE) {
                     this.outputTestResult(test, TestOutcome.FAILED, result.elapsedTime, result.error);
                     reject(new Error(result.error));
                     return;
-                } else if (result.outcome == PlanningOutcome.KILLED) {
+                } else if (result.outcome === PlanningOutcome.KILLED) {
                     this.outputTestResult(test, TestOutcome.SKIPPED, result.elapsedTime, 'Killed by the user.');
                     resolve(false);
                     return;
-                } else if (result.plans.length == 0){
+                } else if (result.plans.length === 0){
                     this.outputTestResult(test, TestOutcome.FAILED, result.elapsedTime, 'No plan found.');
                     resolve(false);
                     return;
@@ -304,7 +304,7 @@ export class PTestExplorer {
 
         this.outputWindow.appendLine(outputMessage);
 
-        if (outcome == TestOutcome.FAILED) {
+        if (outcome === TestOutcome.FAILED) {
             this.outputWindow.show(true);
         }
 
@@ -316,18 +316,18 @@ export class PTestExplorer {
     }
 
     areSame(actualPlan: Plan, expectedPlan: Plan): boolean {
-        if (actualPlan.steps.length != expectedPlan.steps.length) return false;
-        if (actualPlan.steps.length == 0) return true;
+        if (actualPlan.steps.length !== expectedPlan.steps.length) { return false; }
+        if (actualPlan.steps.length === 0) { return true; }
 
         let epsilon = workspace.getConfiguration().get<number>("pddlPlanner.epsilonTimeStep");
 
-        if (!PlanStep.equalsWithin(actualPlan.makespan, expectedPlan.makespan, epsilon)) return false;
+        if (!PlanStep.equalsWithin(actualPlan.makespan, expectedPlan.makespan, epsilon)) { return false; }
 
         for (let index = 0; index < actualPlan.steps.length; index++) {
             const actualStep = actualPlan.steps[index];
             const expectedStep = expectedPlan.steps[index];
 
-            if (!expectedStep.equals(actualStep, epsilon)) return false
+            if (!expectedStep.equals(actualStep, epsilon)) { return false; }
         }
 
         return true;
@@ -340,7 +340,7 @@ export class PTestExplorer {
         parser.appendBuffer(expectedPlanText);
         parser.onPlanFinished();
         let plans = parser.getPlans();
-        if (plans.length == 1) {
+        if (plans.length === 1) {
             return plans[0];
         }
         else {

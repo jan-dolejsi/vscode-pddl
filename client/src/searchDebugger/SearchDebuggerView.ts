@@ -8,8 +8,6 @@ import {
     window, ExtensionContext, Uri, ViewColumn, WebviewPanel, commands, Disposable, workspace, TextEditorRevealType, TextEditor, Range
 } from 'vscode';
 
-import { PddlConfiguration } from '../configuration';
-
 import { getWebViewHtml } from '../utils';
 import { State } from './State';
 import { PlanReportGenerator } from '../planning/PlanReportGenerator';
@@ -18,7 +16,7 @@ import { StateResolver } from './StateResolver';
 import { DomainInfo, ProblemInfo } from '../../../common/src/parser';
 
 export class SearchDebuggerView {
-    private webViewPanel: WebviewPanel
+    private webViewPanel: WebviewPanel;
     private subscriptions: Disposable[] = [];
     private search: StateResolver;
     private stateChangedWhileViewHidden: boolean;
@@ -31,9 +29,9 @@ export class SearchDebuggerView {
 
     // cached values
     private debuggerState: boolean;
+    private port: number;
 
-    constructor(private context: ExtensionContext, private pddlConfiguration: PddlConfiguration) {
-        this.pddlConfiguration;
+    constructor(private context: ExtensionContext) {
     }
 
     isVisible(): boolean {
@@ -56,7 +54,7 @@ export class SearchDebuggerView {
         this.problem = problem;
     }
 
-    async showDebugView(debuggerListening: boolean): Promise<void> {
+    async showDebugView(debuggerListening: boolean, port: number): Promise<void> {
         if (this.webViewPanel) {
             this.webViewPanel.reveal();
         }
@@ -64,7 +62,7 @@ export class SearchDebuggerView {
             await this.createDebugView(false);
         }
 
-        this.showDebuggerState(debuggerListening);
+        this.showDebuggerState(debuggerListening, port);
     }
 
     async createDebugView(showOnTop: boolean): Promise<void> {
@@ -99,7 +97,7 @@ export class SearchDebuggerView {
 
     changedViewState(webViewPanel: WebviewPanel): any {
         if (webViewPanel.visible) {
-            this.showDebuggerState(this.debuggerState);
+            this.showDebuggerState(this.debuggerState, this.port);
             if (this.stateChangedWhileViewHidden) {
                 // re-send all states
                 this.showAllStates();
@@ -148,9 +146,10 @@ export class SearchDebuggerView {
         return html;
     }
 
-    showDebuggerState(on: boolean): void {
+    showDebuggerState(on: boolean, port: number): void {
         this.debuggerState = on;
-        this.postMessage({ command: "debuggerState", state: on ? 'on' : 'off' });
+        this.port = port;
+        this.postMessage({ command: "debuggerState", state: { running: on ? 'on' : 'off', port: port}});
     }
 
     addState(newState: State): void {
@@ -188,8 +187,8 @@ export class SearchDebuggerView {
     }
 
     async showStatePlan(stateId: number): Promise<void> {
-        if (!this.search) return void 0;
-        if (stateId == null) return void 0;
+        if (!this.search) { return void 0; }
+        if (stateId === null) { return void 0; }
         let state = this.search.getState(stateId);
         let statePlan = new StateToPlan(this.domain, this.problem).convert(state);
         let planHtml = await new PlanReportGenerator(this.context,
@@ -211,7 +210,7 @@ export class SearchDebuggerView {
         }
         else {
             let selectedUri = await window.showOpenDialog({ canSelectMany: false, defaultUri: this.stateLogFile, canSelectFolders: false });
-            if (!selectedUri) return;
+            if (!selectedUri) { return; }
             this.stateLogFile = selectedUri[0];
             this.stateLogEditor = await window.showTextDocument(await workspace.openTextDocument(this.stateLogFile), { preserveFocus: true, viewColumn: ViewColumn.Beside });
             this.postMessage({ command: 'stateLog', state: this.stateLogFile.fsPath });
@@ -220,9 +219,9 @@ export class SearchDebuggerView {
     }
 
     async scrollStateLog(stateId: number): Promise<void> {
-        if (!this.stateLogFileEnabled || !this.stateLogEditor) return;
+        if (!this.stateLogFileEnabled || !this.stateLogEditor) { return; }
         let state = this.search.getState(stateId);
-        if (!state) return;
+        if (!state) { return; }
 
         if (this.stateLogEditor.document.isClosed) {
             this.stateLogEditor = await window.showTextDocument(this.stateLogEditor.document, ViewColumn.Beside);
@@ -239,7 +238,7 @@ export class SearchDebuggerView {
         for (let lineIdx = 0; lineIdx < this.stateLogEditor.document.lineCount; lineIdx++) {
             const logLine = this.stateLogEditor.document.lineAt(lineIdx);
             let patternMatch = logLine.text.match(new RegExp(pattern));
-            if (patternMatch && patternMatch[1] == state.origId) {
+            if (patternMatch && patternMatch[1] === state.origId) {
                 this.stateLogEditor.revealRange(logLine.range, TextEditorRevealType.AtTop);
                 this.stateLogLineCache.set(state.origId, lineIdx);
                 break;

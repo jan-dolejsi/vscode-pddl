@@ -45,7 +45,7 @@ export class HappeningsToPlanResumeCasesConvertor {
         }
 
         let valStepPath = await this.pddlConfiguration.getValStepPath();
-        if (!valStepPath) return false;
+        if (!valStepPath) { return false; }
 
         // copy editor content to temp files to avoid using out-of-date content on disk
         let domainFilePath = Util.toPddlFile('domain', this.context.domain.getText());
@@ -53,7 +53,7 @@ export class HappeningsToPlanResumeCasesConvertor {
 
         let args = [domainFilePath, problemFilePath];
         let outputFolderUris = await window.showOpenDialog({defaultUri: Uri.file(dirname(Uri.parse(this.context.problem.fileUri).fsPath)),  canSelectFiles: false, canSelectFolders: true, canSelectMany: false, openLabel: 'Select folder for problem files'});
-        if(!outputFolderUris || !outputFolderUris.length) return false;
+        if(!outputFolderUris || !outputFolderUris.length) { return false; }
         let outputFolderUri = outputFolderUris[0];
         let cwd = outputFolderUri.fsPath;
         let cmd = valStepPath + ' ' + args.join(' ');
@@ -100,7 +100,7 @@ export class HappeningsToPlanResumeCasesConvertor {
             window.showErrorMessage("Error running valstep: " + err);
             return false;
         } finally {
-            if (manifest) manifest.store();
+            if (manifest) { manifest.store(); }
         }
     }
 
@@ -123,8 +123,8 @@ export class HappeningsToPlanResumeCasesConvertor {
         let output = happening.getFullActionName().split(' ').join('_');
         let snap = this.getHappeningSnapName(happening);
 
-        if (snap.length) output = `${output}_${snap}`;
+        if (snap.length) { output = `${output}_${snap}`; }
 
         return output;
     }
-};
+}
