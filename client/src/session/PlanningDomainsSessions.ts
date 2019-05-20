@@ -22,6 +22,9 @@ export class PlanningDomainsSessions {
     /** There may be multiple sessions in one workspace stored in different workspace folders.  */
     private sessionSourceControlRegister = new Map<Uri, SessionSourceControl>();
 
+    /** Triggers update of the labels in the status bar, so the relative fuzzy time keeps accurate. */
+    private refreshTimer: NodeJS.Timeout;
+
     constructor(private context: ExtensionContext) {
         this.sessionDocumentContentProvider = new SessionDocumentContentProvider();
 
@@ -161,14 +164,20 @@ export class PlanningDomainsSessions {
 
     registerSessionSourceControl(sessionSourceControl: SessionSourceControl, context: ExtensionContext): void {
         // update the session document content provider with the latest content
-        this.sessionDocumentContentProvider.updated(sessionSourceControl.getSession());
+        this.sessionDocumentContentProvider.updated(sessionSourceControl.getWorkspaceFolder(), sessionSourceControl.getSession());
 
         // every time the repository is updated with new session version, notify the content provider
-        sessionSourceControl.onRepositoryChange(session => this.sessionDocumentContentProvider.updated(session));
+        sessionSourceControl.onRepositoryChange(session =>
+            this.sessionDocumentContentProvider.updated(sessionSourceControl.getWorkspaceFolder(), session)
+        );
 
         this.sessionSourceControlRegister.set(sessionSourceControl.getWorkspaceFolder().uri, sessionSourceControl);
 
         context.subscriptions.push(sessionSourceControl);
+
+        if (!this.refreshTimer) {
+            this.refreshTimer = setInterval(() => this.updateStatusBar(), 60_000);
+        }
     }
 
     unregisterSessionSourceControl(folderUri: Uri): void {
@@ -179,6 +188,21 @@ export class PlanningDomainsSessions {
 
             this.sessionSourceControlRegister.delete(folderUri);
         }
+
+        if (this.sessionSourceControlRegister.size === 0 && this.refreshTimer) {
+            clearInterval(this.refreshTimer);
+            this.refreshTimer = null;
+        }
+    }
+
+    private updateStatusBar(): void {
+        this.sessionSourceControlRegister.forEach(sourceControl => {
+            try {
+                sourceControl.refreshStatusBar();
+            } catch (ex) {
+                console.log(ex);
+            }
+        });
     }
 
     /**

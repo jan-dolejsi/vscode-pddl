@@ -39,15 +39,19 @@ export class SessionRepository implements QuickDiffProvider {
 
 	sessionHash: string;
 
-	constructor(private readonly workspaceFolder: WorkspaceFolder, session: SessionContent) { 
+	constructor(private readonly workspaceFolder: WorkspaceFolder, session: SessionContent) {
 		this.sessionHash = session.hash;
 	}
 
 	provideOriginalResource?(uri: Uri, _: CancellationToken): ProviderResult<Uri> {
 		// converts the local file uri to planning.domains.session:sessionId/file.ext
-		let relativePath = workspace.asRelativePath(uri.fsPath);
-		let fileName = path.basename(relativePath);
-		return Uri.parse(`${SESSION_SCHEME}:${this.sessionHash}/${fileName}`);
+		let workspaceFolder = workspace.getWorkspaceFolder(uri);
+		let fileName = workspace.asRelativePath(uri, false);
+		return SessionRepository.createDocumentUri(workspaceFolder.uri, fileName);
+	}
+
+	static createDocumentUri(workspaceFolder: Uri, fileName: string): Uri {
+		return workspaceFolder.with({ scheme: SESSION_SCHEME, query: fileName});
 	}
 
 	/**
@@ -85,7 +89,7 @@ export async function checkSession(sessionId: string): Promise<[SessionMode, num
 	}
 
 	// last_change contains last session change time (round it down to seconds)
-	let sessionVersionDate: number = Math.floor(Date.parse(response["last_change"])/1000) * 1000;
+	let sessionVersionDate: number = Math.floor(Date.parse(response["last_change"]) / 1000) * 1000;
 
 	return [sessionMode, sessionVersionDate];
 }

@@ -72,9 +72,15 @@ export class SessionSourceControl implements vscode.Disposable {
 		return new SessionSourceControl(context, workspaceFolder, session, overwrite);
 	}
 
-	private refreshStatusBar() {
+	refreshStatusBar() {
 
-		let title = "$(repo) " + toFuzzyRelativeTime(this.session.versionDate);
+		var title = "$(repo) ";
+
+		if (this.session.canCommit()) {
+			title += '$(pencil)';
+		}
+
+		title += toFuzzyRelativeTime(this.session.versionDate);
 
 		if (this.session.versionDate < this.latestSessionVersionDate) {
 			title = `$(cloud-download) ${title} (stale)`;
@@ -195,8 +201,7 @@ export class SessionSourceControl implements vscode.Disposable {
 		this.session = newSession;
 		if (overwrite) { this.resetFilesToCheckedOutVersion(); } // overwrite local file content
 		this._onRepositoryChange.fire(this.session);
-		this.refreshStatusBar();
-		this.updateChangedGroup();
+		await this.updateChangedGroup();
 
 		await this.saveCurrentConfiguration();
 	}
@@ -227,8 +232,7 @@ export class SessionSourceControl implements vscode.Disposable {
 	 * For example another user updates the session files online.
 	 */
 	async refresh(): Promise<void> {
-		this.isRefreshing = true;
-		this.refreshStatusBar();
+		this.setRefreshing(true);
 
 		try {
 			let sessionCheckResult = await checkSession(this.session.getHash());
@@ -237,10 +241,9 @@ export class SessionSourceControl implements vscode.Disposable {
 			// typically the ex.statusCode == 404, when there is no further version
 		}
 
-		this.updateChangedGroup();
+		await this.updateChangedGroup();
 
-		this.isRefreshing = false;
-		this.refreshStatusBar();
+		this.setRefreshing(false);
 	}
 
 	get onRepositoryChange(): vscode.Event<SessionContent> {
@@ -303,6 +306,9 @@ export class SessionSourceControl implements vscode.Disposable {
 
 		this.changedResources.resourceStates = changedResources;
 		this.sessionScm.count = this.changedResources.resourceStates.length;
+
+		// force refreshing of the status-bar commands
+		this.refreshStatusBar();
 	}
 
 	/**
@@ -325,6 +331,11 @@ export class SessionSourceControl implements vscode.Disposable {
 	isDirty(doc: vscode.TextDocument): boolean {
 		let originalText = this.session.files.get(path.basename(doc.uri.fsPath));
 		return originalText.replace('\r', '') !== doc.getText().replace('\r', '');
+	}
+
+	setRefreshing(isRefreshing: boolean): void {
+		this.isRefreshing = isRefreshing;
+		this.refreshStatusBar();
 	}
 
 	toSourceControlResourceState(docUri: vscode.Uri, state: ChangedResourceState): vscode.SourceControlResourceState {

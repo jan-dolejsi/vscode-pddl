@@ -3,16 +3,18 @@
  * Licensed under the MIT License. See License.txt in the project root for license information.
  * ------------------------------------------------------------------------------------------ */
 
- import { CancellationToken, ProviderResult, TextDocumentContentProvider, Event, Uri, EventEmitter, Disposable } from "vscode";
-import { SESSION_SCHEME, SessionContent } from "./SessionRepository";
-import { basename, dirname } from "path";
+ import { CancellationToken, ProviderResult, TextDocumentContentProvider, Event, Uri, EventEmitter, Disposable, WorkspaceFolder } from "vscode";
+import { SessionContent, SessionRepository } from "./SessionRepository";
+import { basename } from "path";
 
 /**
- * Provides the content of the Planning.Domains session documents as fetched from the server i.e.  without the local edits.
+ * Provides the content of the Planning.Domains session documents as fetched from the server i.e. without the local edits.
  * This is used for the source control diff.
  */
 export class SessionDocumentContentProvider implements TextDocumentContentProvider, Disposable {
 	private _onDidChange = new EventEmitter<Uri>();
+
+	// map of workspace folders (key is Uri::toString()) and the checked-out sessions content
 	private sessions = new Map<string, SessionContent>();
 
 	get onDidChange(): Event<Uri> {
@@ -23,23 +25,23 @@ export class SessionDocumentContentProvider implements TextDocumentContentProvid
 		this._onDidChange.dispose();
 	}
 
-	updated(newSession: SessionContent): void {
-		this.sessions.set(newSession.hash, newSession);
+	updated(folder: WorkspaceFolder, newSession: SessionContent): void {
+		this.sessions.set(folder.uri.toString(), newSession);
 
 		// let's assume all documents actually changed and notify the quick-diff
 		newSession.files.forEach((_, fileName) => {
-			this._onDidChange.fire(Uri.parse(`${SESSION_SCHEME}:${newSession.hash}/${fileName}`));
+			let uri = SessionRepository.createDocumentUri(folder.uri, fileName);
+			this._onDidChange.fire(uri);
 		});
 	}
 
 	provideTextDocumentContent(uri: Uri, token: CancellationToken): ProviderResult<string> {
 		if (token.isCancellationRequested) { return "Canceled"; }
 
-		let sessionId = dirname(uri.fsPath);
-		let fileName = basename(uri.fsPath);
-		// strip off the file extension
+		let folderUri = Uri.parse(uri.path);
+		let fileName = basename(uri.query);
 
-		let session = this.sessions.get(sessionId);
+		let session = this.sessions.get(folderUri.toString());
 		if (!session) { return "Resource not found: " + uri.toString(); }
 
 		return session.files.get(fileName);

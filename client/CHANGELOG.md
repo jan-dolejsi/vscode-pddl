@@ -1,17 +1,17 @@
 # PDDL support - What's new?
 
-## [2.11.0] - 2019-05-20
+## [2.11.1] - 2019-05-20
 
 ## New features
 
 ### Planning.Domains sessions
 
-The online [Planning.Domains](http://editor.planning.domains) editor has a concept of a session. Session _details_ pane shows links to open the session online / offline. The _offline_ links are handled by VS Code, if installed.
+The online [Planning.Domains](http://editor.planning.domains) editor has a concept of a session. _Session Details_ pane shows links to open the session online / offline. The _offline_ links are handled by VS Code, if installed.
 
-The session files may be seamlessly open in VS Code now. There are two ways to get started:
+There are two ways to get started:
 
 1. Using a command:
-   - _PDDL: Download Planning.domains session_
+   - _PDDL: Download Planning.domains session_ and pasting the _Session Unique ID_
 1. By navigating to this URL in your favorite web browser:
    - vscode://jan-dolejsi.pddl/planning.domains/session/_readOnlyHash_ or
    - vscode://jan-dolejsi.pddl/planning.domains/session/edit/_readWriteHash_.
@@ -20,14 +20,36 @@ The session files are downloaded into a selected workspace folder and may be int
 
 ![Planning.Domains Editor Session in VS Code](https://raw.githubusercontent.com/wiki/jan-dolejsi/vscode-pddl/img/Planning.Domains_sessions_in_VSCode.gif)
 
-Session files may be deleted, renamed as well as added. The _Source Control_ pane shows the diff as usual.
+Session files may be deleted, renamed as well as added. The _Source Control_ pane shows the diff as usual. To open _Source Control_ select the `View > SCM` menu.
 
-Session may be duplicated, which is useful when the session was open as read-only.
-Session may be open in the default browser, or shared via email, if default email client is installed to handle `mailto:` protocol.
+The _Source Control_ pane has icons for:
 
-Using the _duplicate session_ and _share via email_ commands, a teacher may create a session for everyone in the classroom and monitor progress of all students from VS Code.
+- uploading changes to Planning.Domains,
+- discarding local changes and
+- checking if a new version of the session is available.
+
+The [...] menu contains three more options:
+
+- Session may be duplicated (as a new writable session), which is useful when the session was open as read-only.
+- Session may be open in the default browser, or
+- shared via email, if default email client is installed to handle the `mailto:` protocol.
+
+Using the _duplicate session_ and _share via email_ commands, a teacher can create a session for everyone in the classroom and monitor progress of all students from VS Code.
 
 ![Planning.Domains Sessions for classroom](https://raw.githubusercontent.com/wiki/jan-dolejsi/vscode-pddl/img/Planning.Domains_classroom_in_VSCode.gif)
+
+The status bar of VS Code shows the state of the session. If multiple session folders are included in the VS Code workspace, the session of interest may be selected using the top part of the _Source Control_ pane.
+
+![Source control status](https://raw.githubusercontent.com/wiki/jan-dolejsi/vscode-pddl/img/Planning.Domains_SCM_status.gif)
+
+This is what the different symbols in the status bar mean:
+
+1. cloud download icon - shows if a new version of the session is available for download
+1. repository icon - helps distinguishing Planning.Domain sessions from other types of source control e.g. Git
+1. pencil icon - is displayed if the session is in read/write mode
+1. time info - how long ago was the currently checked-out version saved to the server (clicking it opens up the list of versions to select)
+1. dot icon - is displayed if the session was modified locally
+1. two circular arrows icon - when clicked, VS Code checks whether a new version of the session(s) is available on the server.
 
 ## [2.10.2] - 2019-05-17
 
@@ -503,8 +525,8 @@ Note for open source contributors: all notable changes to the "pddl" extension w
 
 Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
 
-[Unreleased]: https://github.com/jan-dolejsi/vscode-pddl/compare/v2.11.0...HEAD
-[2.11.0]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.10.2...v2.11.0
+[Unreleased]: https://github.com/jan-dolejsi/vscode-pddl/compare/v2.11.1...HEAD
+[2.11.1]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.10.2...v2.11.1
 [2.10.2]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.10.0...v2.10.2
 [2.10.0]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.9.1...v2.10.0
 [2.9.1]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.9.0...v2.9.1

@@ -110,8 +110,8 @@ The planner can be invoked in the context of a currently edited PDDL file. There
 There are multiple scenarios supported:
 
 * if command is invoked on the domain file,
-  - and if single corresponding problem file is open, the planner will run without asking further questions
-  - and if multiple corresponding problem files are open, the list of applicable problem files will appear and the user will select one.
+  * and if single corresponding problem file is open, the planner will run without asking further questions
+  * and if multiple corresponding problem files are open, the list of applicable problem files will appear and the user will select one.
 * if command is invoked on a problem file, the domain file (if open in the editor) will be selected automatically.
 
 Domain and problem files correspond to each other, if:
@@ -400,12 +400,61 @@ For large problem files, it is convenient to be able to fold blocks of statement
 
 ![Init block folding](https://raw.githubusercontent.com/wiki/jan-dolejsi/vscode-pddl/img/PDDL_init_block_folding.gif)
 
-## Browsing the Planning.Domains PDDL collection
+## Planning.Domains integration
+
+### Browsing the Planning.Domains PDDL collection
 
 The file explorer side bar includes a tree displaying the [Planning.Domains](http://planning.domains) PDDL collection.
 The domain, problem and plan files are downloaded and displayed as read-only files and the planner may be invoked on them as usual.
 
 ![Planning.Domains PDDL collection browser](https://raw.githubusercontent.com/wiki/jan-dolejsi/vscode-pddl/img/PDDL_planning.domains_browsing.gif)
+
+### Planning.Domains sessions
+
+The online [Planning.Domains](http://editor.planning.domains) editor has a concept of a session. _Session Details_ pane shows links to open the session online / offline. The _offline_ links are handled by VS Code, if installed.
+
+There are two ways to get started:
+
+1. Using a command:
+   * _PDDL: Download Planning.domains session_ and pasting the _Session Unique ID_
+1. By navigating to this URL in your favorite web browser:
+   * vscode://jan-dolejsi.pddl/planning.domains/session/_readOnlyHash_ or
+   * vscode://jan-dolejsi.pddl/planning.domains/session/edit/_readWriteHash_.
+
+The session files are downloaded into a selected workspace folder and may be interacted with via the _Source Control_ pane.
+
+![Planning.Domains Editor Session in VS Code](https://raw.githubusercontent.com/wiki/jan-dolejsi/vscode-pddl/img/Planning.Domains_sessions_in_VSCode.gif)
+
+Session files may be deleted, renamed as well as added. The _Source Control_ pane shows the diff as usual. To open _Source Control_ select the `View > SCM` menu.
+
+The _Source Control_ pane has icons for:
+
+* uploading changes to Planning.Domains,
+* discarding local changes and
+* checking if a new version of the session is available.
+
+The [...] menu contains three more options:
+
+* Session may be duplicated (as a new writable session), which is useful when the session was open as read-only.
+* Session may be open in the default browser, or
+* shared via email, if default email client is installed to handle the `mailto:` protocol.
+
+Using the _duplicate session_ and _share via email_ commands, a teacher can create a session for everyone in the classroom and monitor progress of all students from VS Code.
+
+![Planning.Domains Sessions for classroom](https://raw.githubusercontent.com/wiki/jan-dolejsi/vscode-pddl/img/Planning.Domains_classroom_in_VSCode.gif)
+
+The status bar of VS Code shows the state of the session. If multiple session folders are included in the VS Code workspace, the session of interest may be selected using the top part of the _Source Control_ pane.
+
+![Source control status](https://raw.githubusercontent.com/wiki/jan-dolejsi/vscode-pddl/img/Planning.Domains_SCM_status.gif)
+
+This is what the different symbols in the status bar mean:
+
+1. cloud download icon - shows if a new version of the session is available for download
+1. repository icon - helps distinguishing Planning.Domain sessions from other types of source control e.g. Git
+1. pencil icon - is displayed if the session is in read/write mode
+1. time info - how long ago was the currently checked-out version saved to the server (clicking it opens up the list of versions to select)
+1. dot icon - is displayed if the session was modified locally
+1. two circular arrows icon - when clicked, VS Code checks whether a new version of the session(s) is available on the server.
 
 ## Known Issues
 

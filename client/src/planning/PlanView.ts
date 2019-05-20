@@ -51,7 +51,7 @@ export class PlanView extends Disposable {
             if (doc.languageId === PLAN) {
                 this.setNeedsRebuild(doc);
             }
-        }))
+        }));
 
     }
 
@@ -59,7 +59,7 @@ export class PlanView extends Disposable {
         let plannerOutputPanel = this.getPlannerOutputPanel();
         plannerOutputPanel.setPlans(plans);
         this.resetTimeout();
-        if (plans.length > 0 && reveal) plannerOutputPanel.reveal();
+        if (plans.length > 0 && reveal) { plannerOutputPanel.reveal(); }
     }
 
     getPlannerOutputPanel(): PlanPreviewPanel {
@@ -240,8 +240,8 @@ class PlanPreviewPanel {
     }
 
     getSelectedPlan(): Plan {
-        if (this.plans.length > 0) return this.plans[this.selectedPlanIndex];
-        else return undefined;
+        if (this.plans.length > 0) { return this.plans[this.selectedPlanIndex]; }
+        else { return undefined; }
     }
 
     setPlans(plans: Plan[]): void {
@@ -252,7 +252,7 @@ class PlanPreviewPanel {
     }
 
     setError(ex: Error): void {
-        this.error = ex;;
+        this.error = ex;
     }
 
     getError(): Error {
