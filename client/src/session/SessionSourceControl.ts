@@ -266,7 +266,7 @@ export class SessionSourceControl implements vscode.Disposable {
 		// for simplicity we ignore which document was changed in this event and scan all of them
 		let changedResources: vscode.SourceControlResourceState[] = [];
 
-		let uris = this.sessionRepository.provideSourceControlledResources();
+		let uris = this.provideSourceControlledResources();
 
 		let otherFolderFiles: string[] = await this.getLocalFileNames();
 
@@ -278,7 +278,7 @@ export class SessionSourceControl implements vscode.Disposable {
 				if (this.isDirty(document)) {
 					state = ChangedResourceState.Dirty;
 				}
-				otherFolderFiles.splice(otherFolderFiles.indexOf(path.basename(uri.fsPath)));
+				otherFolderFiles.splice(otherFolderFiles.indexOf(path.basename(uri.fsPath)), 1);
 			}
 			else {
 				state = ChangedResourceState.Deleted;
@@ -303,6 +303,15 @@ export class SessionSourceControl implements vscode.Disposable {
 
 		this.changedResources.resourceStates = changedResources;
 		this.sessionScm.count = this.changedResources.resourceStates.length;
+	}
+
+	/**
+	 * Enumerates the resources under source control.
+	 */
+	provideSourceControlledResources(): vscode.Uri[] {
+		return [...this.session.files.keys()]
+			.map(fileName => this.sessionRepository.createLocalResourcePath(fileName))
+			.map(filePath => vscode.Uri.file(filePath));
 	}
 
 	async getLocalFileNames(): Promise<string[]> {

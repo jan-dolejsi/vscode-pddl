@@ -37,22 +37,17 @@ export const SESSION_SCHEME = 'planning.domains.session';
 /** This binds the local and remote repository. */
 export class SessionRepository implements QuickDiffProvider {
 
-	constructor(private workspaceFolder: WorkspaceFolder, private session: SessionContent) { }
+	sessionHash: string;
+
+	constructor(private readonly workspaceFolder: WorkspaceFolder, session: SessionContent) { 
+		this.sessionHash = session.hash;
+	}
 
 	provideOriginalResource?(uri: Uri, _: CancellationToken): ProviderResult<Uri> {
 		// converts the local file uri to planning.domains.session:sessionId/file.ext
 		let relativePath = workspace.asRelativePath(uri.fsPath);
 		let fileName = path.basename(relativePath);
-		return Uri.parse(`${SESSION_SCHEME}:${this.session.hash}/${fileName}`);
-	}
-
-	/**
-	 * Enumerates the resources under source control.
-	 */
-	provideSourceControlledResources(): Uri[] {
-		return [...this.session.files.keys()]
-			.map(fileName => this.createLocalResourcePath(fileName))
-			.map(filePath => Uri.file(filePath));
+		return Uri.parse(`${SESSION_SCHEME}:${this.sessionHash}/${fileName}`);
 	}
 
 	/**
@@ -89,8 +84,8 @@ export async function checkSession(sessionId: string): Promise<[SessionMode, num
 			throw new Error("Unexpected session type: " + response["type"]);
 	}
 
-	// last_change contains last session change time
-	let sessionVersionDate: number = Date.parse(response["last_change"]);
+	// last_change contains last session change time (round it down to seconds)
+	let sessionVersionDate: number = Math.floor(Date.parse(response["last_change"])/1000) * 1000;
 
 	return [sessionMode, sessionVersionDate];
 }

@@ -25,7 +25,7 @@ export class PlanningDomainsSessions {
     constructor(private context: ExtensionContext) {
         this.sessionDocumentContentProvider = new SessionDocumentContentProvider();
 
-        this.initializeFromConfigurationFile(context);
+        this.scanWorkspaceFoldersForConfigurationFiles(context);
 
         this.subscribe(window.registerUriHandler(new SessionUriHandler()));
 
@@ -63,6 +63,22 @@ export class PlanningDomainsSessions {
         this.subscribe(commands.registerCommand("pddl.planning.domains.session.duplicate", async (sourceControlPane: SourceControl) => {
             let sourceControl = await this.pickSourceControl(sourceControlPane);
             if (sourceControl) { this.duplicateAsWritable(sourceControl); }
+        }));
+        this.subscribe(commands.registerCommand("pddl.planning.domains.session.share", async (sourceControlPane: SourceControl) => {
+            let sourceControl = await this.pickSourceControl(sourceControlPane);
+            if (sourceControl) { this.shareByEmail(sourceControl.getSession()); }
+        }));
+
+        this.subscribe(workspace.onDidChangeWorkspaceFolders(e => {
+            // initialize new source control for manually added workspace folders
+            e.added.forEach(wf => {
+                this.initializeFromConfigurationFile(wf, context);
+            });
+
+            // dispose source control for removed workspace folders
+            e.removed.forEach(wf => {
+                this.unregisterSessionSourceControl(wf.uri);
+            });
         }));
     }
 
@@ -160,6 +176,8 @@ export class PlanningDomainsSessions {
             // the folder was already under source control
             const previousSourceControl = this.sessionSourceControlRegister.get(folderUri)!;
             previousSourceControl.dispose();
+
+            this.sessionSourceControlRegister.delete(folderUri);
         }
     }
 
@@ -167,23 +185,28 @@ export class PlanningDomainsSessions {
      * When the extension is loaded for a workspace that contains the session source control configuration file, initialize the source control.
      * @param context extension context
      */
-    initializeFromConfigurationFile(context: ExtensionContext): void {
+    scanWorkspaceFoldersForConfigurationFiles(context: ExtensionContext): void {
         if (!workspace.workspaceFolders) { return; }
 
         workspace.workspaceFolders
             .sort((f1, f2) => f1.name.localeCompare(f2.name))
             .forEach(async folder => {
-                let sessionFolder = await isSessionFolder(folder);
-                if (sessionFolder) {
-                    try {
-                        let sessionConfiguration = await readSessionConfiguration(folder);
-                        let sessionSourceControl = await SessionSourceControl.fromConfiguration(sessionConfiguration, folder, context, sessionConfiguration.versionDate === undefined);
-                        this.registerSessionSourceControl(sessionSourceControl, context);
-                    } catch (err) {
-                        window.showErrorMessage(err);
-                    }
-                }
+                await this.initializeFromConfigurationFile(folder, context);
             });
+    }
+
+    private async initializeFromConfigurationFile(folder: WorkspaceFolder, context: ExtensionContext) {
+        let sessionFolder = await isSessionFolder(folder);
+        if (sessionFolder) {
+            try {
+                let sessionConfiguration = await readSessionConfiguration(folder);
+                let sessionSourceControl = await SessionSourceControl.fromConfiguration(sessionConfiguration, folder, context, sessionConfiguration.versionDate === undefined);
+                this.registerSessionSourceControl(sessionSourceControl, context);
+            }
+            catch (err) {
+                window.showErrorMessage(err);
+            }
+        }
     }
 
     async selectWorkspaceFolder(folderUri: Uri, sessionId: string, mode: SessionMode): Promise<WorkspaceFolder | undefined> {
@@ -259,7 +282,7 @@ export class PlanningDomainsSessions {
         // save folder configuration
         await saveConfiguration(workspaceFolderUri, sessionConfiguration);
 
-        if (folderOpeningMode === FolderOpeningMode.AddToWorkspace) {
+        if (folderOpeningMode === FolderOpeningMode.AddToWorkspace || folderOpeningMode === undefined) {
             let workSpacesToReplace = typeof workspaceFolderIndex === 'number' && workspaceFolderIndex > -1 ? 1 : 0;
             if (workspaceFolderIndex === undefined || workspaceFolderIndex < 0) { workspaceFolderIndex = 0; }
 
@@ -306,14 +329,41 @@ export class PlanningDomainsSessions {
     }
 
     openInBrowser(session: SessionContent): void {
-        var sessionUri = "http://editor.planning.domains/";
-        if (session.writeHash) {
-            sessionUri += "#edit_session=" + session.writeHash;
-        } else {
-            sessionUri += "#read_session=" + session.hash;
-        }
+        var sessionUri = this.createBrowserUri(session, true);
 
         env.openExternal(Uri.parse(sessionUri));
+    }
+
+    shareByEmail(session: SessionContent): void {
+        let subject = `Planning.Domains session ${session.hash}`;
+        let body = `Open session in your browser: ${this.createBrowserUri(session, false)}
+Open session in Visual Studio Code: ${this.createVSCodeUri(session, false)}`;
+
+        let mailTo = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body).replace('%23', '#')}`;
+
+        env.openExternal(Uri.parse(mailTo));
+    }
+
+    private createBrowserUri(session: SessionContent, readWrite: boolean): string {
+        var sessionUri = "http://editor.planning.domains/";
+        if (session.writeHash && readWrite) {
+            sessionUri += "#edit_session=" + session.writeHash;
+        }
+        else {
+            sessionUri += "#read_session=" + session.hash;
+        }
+        return sessionUri;
+    }
+
+    private createVSCodeUri(session: SessionContent, readWrite: boolean): string {
+        var sessionUri = "vscode://jan-dolejsi.pddl/planning.domains/session/";
+        if (session.writeHash && readWrite) {
+            sessionUri += "edit/" + session.writeHash;
+        }
+        else {
+            sessionUri += session.hash;
+        }
+        return sessionUri;
     }
 
     async duplicateAsWritable(sourceControl: SessionSourceControl): Promise<void> {

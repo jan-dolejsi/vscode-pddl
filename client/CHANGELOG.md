@@ -1,5 +1,34 @@
 # PDDL support - What's new?
 
+## [2.11.0] - 2019-05-20
+
+## New features
+
+### Planning.Domains sessions
+
+The online [Planning.Domains](http://editor.planning.domains) editor has a concept of a session. Session _details_ pane shows links to open the session online / offline. The _offline_ links are handled by VS Code, if installed.
+
+The session files may be seamlessly open in VS Code now. There are two ways to get started:
+
+1. Using a command:
+   - _PDDL: Download Planning.domains session_
+1. By navigating to this URL in your favorite web browser:
+   - vscode://jan-dolejsi.pddl/planning.domains/session/_readOnlyHash_ or
+   - vscode://jan-dolejsi.pddl/planning.domains/session/edit/_readWriteHash_.
+
+The session files are downloaded into a selected workspace folder and may be interacted with via the _Source Control_ pane.
+
+![Planning.Domains Editor Session in VS Code](https://raw.githubusercontent.com/wiki/jan-dolejsi/vscode-pddl/img/Planning.Domains_sessions_in_VSCode.gif)
+
+Session files may be deleted, renamed as well as added. The _Source Control_ pane shows the diff as usual.
+
+Session may be duplicated, which is useful when the session was open as read-only.
+Session may be open in the default browser, or shared via email, if default email client is installed to handle `mailto:` protocol.
+
+Using the _duplicate session_ and _share via email_ commands, a teacher may create a session for everyone in the classroom and monitor progress of all students from VS Code.
+
+![Planning.Domains Sessions for classroom](https://raw.githubusercontent.com/wiki/jan-dolejsi/vscode-pddl/img/Planning.Domains_classroom_in_VSCode.gif)
+
 ## [2.10.2] - 2019-05-17
 
 ### Bug fixes
@@ -10,25 +39,6 @@
 
 Search debugger only listens to local http traffic via 127.0.0.1.
 Search debugger view shows the port number in the tooltip of the _signal_ icon.
-
-### Preview features
-
-#### Planning.Domains sessions
-
-The online [Planning.Domains](http://editor.planning.domains) editor has a concept of a session.
-The session files may be open in VS Code now. There are two ways to get started:
-
-1. Using a command:
-   - _PDDL: Download Planning.domains session_
-1. Using by navigating to this URL in your favorite web browser:
-   - vscode://jan-dolejsi.pddl/planning.domains/session/_readOnlyHash_ or
-   - vscode://jan-dolejsi.pddl/planning.domains/session/edit/_readWriteHash_.
-
-The session files are downloaded into a dedicated workspace folder and may be interacted with via the _Source Control_ pane.
-Session files may be deleted, renamed as well as added. The _Source Control_ pane.
-
-Session may be cloned, which is useful  when the session was open as read-only.
-Session may be open in the default browser.
 
 ## [2.10.0] - 2019-05-11
 
@@ -493,7 +503,8 @@ Note for open source contributors: all notable changes to the "pddl" extension w
 
 Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
 
-[Unreleased]: https://github.com/jan-dolejsi/vscode-pddl/compare/v2.10.2...HEAD
+[Unreleased]: https://github.com/jan-dolejsi/vscode-pddl/compare/v2.11.0...HEAD
+[2.11.0]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.10.2...v2.11.0
 [2.10.2]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.10.0...v2.10.2
 [2.10.0]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.9.1...v2.10.0
 [2.9.1]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.9.0...v2.9.1

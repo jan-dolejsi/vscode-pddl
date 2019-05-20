@@ -4,7 +4,7 @@
   "description": "Planning Domain Description Language support",
   "author": "Jan Dolejsi",
   "license": "MIT",
-  "version": "2.10.2",
+  "version": "2.11.0",
   "publisher": "jan-dolejsi",
   "engines": {
     "vscode": "^1.31.0",
@@ -306,6 +306,10 @@
       {
           "command": "pddl.planning.domains.session.open",
 					"title": "PDDL: Open a Planning.Domains session in the browser"
+      },
+      {
+          "command": "pddl.planning.domains.session.share",
+					"title": "PDDL: Share a Planning.Domains session via email"
       }
     ],
     "menus": {
@@ -422,6 +426,10 @@
         },
         {
           "command": "pddl.planning.domains.session.open",
+					"when": "scmProvider == planningDomainsSession"
+        },
+        {
+          "command": "pddl.planning.domains.session.share",
 					"when": "scmProvider == planningDomainsSession"
         }
 			]
