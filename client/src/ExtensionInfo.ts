@@ -19,7 +19,7 @@ export class ExtensionInfo {
     getId(): string {
         return this.extensionId;
     }
-    
+
     getVersion(): string {
         return this.extensionVersion;
     }

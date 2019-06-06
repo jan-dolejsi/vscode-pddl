@@ -1,5 +1,39 @@
 # PDDL support - What's new?
 
+## [2.11.2] - 2019-05-28
+
+## New features
+
+### Search Debugger
+
+Following keyboard shortcuts are available to navigate or manipulate the search tree view:
+
+- Typing a number using <kbd>0</kbd>-<kbd>9</kbd> selects the state with the matching Order ID.
+- Change shape of a state to highlight states of interest using:
+  - <kbd>b</kbd>: box,
+  - <kbd>d</kbd>: diamond,
+  - <kbd>s</kbd>: star,
+  - <kbd>t</kbd>: triangle,
+  - <kbd>h</kbd>: hexagon,
+  - <kbd>q</kbd>: square,
+  - <kbd>e</kbd>: ellipse (default)
+- Toggle auto-fitting of the tree to the viewport using <kbd>f</kbd> to avoid losing focus, while search is progressing
+- <kbd>Shift</kbd>+<kbd>F</kbd> to fit search tree to viewport
+
+Dead-end states are visualized with brown color.
+Tree branches(s) leading to goal state(s) are painted in green color.
+
+The Search Debugger may now be configured (see the `pddlSearchDebugger.stateIdPattern` configuration setting) with a pattern to parse the state ID.
+The visualization then respects the IDs assigned by the planner rather than using its own numbering scheme
+(which is used if the received state ID does not respect the pattern).
+
+Both tree nodes and edges now show an informative tooltip when mouse hover-over.
+
+## Fixes
+
+Search Debugger may be re-used without resetting and the line plot will handle gracefully that states are added with assorted Order IDs. It maintains mapping between the state order ID and and its dataset row ID.
+The tree/chart was not responding to clicking on the Search Debugger helpful actions inside the Gantt chart. It was the case of actions occurring in the planhead more than once.
+
 ## [2.11.1] - 2019-05-20
 
 ## New features
@@ -525,7 +559,8 @@ Note for open source contributors: all notable changes to the "pddl" extension w
 
 Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
 
-[Unreleased]: https://github.com/jan-dolejsi/vscode-pddl/compare/v2.11.1...HEAD
+[Unreleased]: https://github.com/jan-dolejsi/vscode-pddl/compare/v2.11.2...HEAD
+[2.11.2]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.11.1...v2.11.2
 [2.11.1]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.10.2...v2.11.1
 [2.10.2]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.10.0...v2.10.2
 [2.10.0]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.9.1...v2.10.0

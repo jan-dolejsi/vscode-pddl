@@ -72,14 +72,18 @@
 
     <div class="left">
         <!-- <button onclick="addMock()">Add</button>
-        <button onclick="updateMock()">Update</button>
+        <button onclick="evaluateMock()">Evaluate</button>
+        <button onclick="deadEndMock()">Dead-end</button>
         <button onclick="clearStates()">Clear</button> -->
         <div id="chart_div"></div>
         <div id="network" style="overflow: scroll"></div>
-        <div class="help">⌨: ← → ↑ ↓ to navigate graph, Shift ← → to navigate graph</div>
+        <div class="help">⌨: Press <b>← → ↑ ↓</b> to navigate the tree, <b>Shift</b> + <b>← →</b> to navigate graph, <b>0-9</b> to select state by "O: " value<br/>
+            Change shape: <b>b</b>: box, <b>d</b>: diamond, <b>s</b>: star, <b>t</b>: triangle, <b>h</b>: hexagon, <b>q</b>: square, <b>e</b>: ellipse (default)<br/>
+            <b>f</b>: toggle auto-fitting tree, <b>F</b>: fit tree
+        </div>
     </div>
     <div class="right">
-        <div id="statePlan"></div>
+        <div id="statePlan" style="overflow-x: scroll"></div>
         <div class="help">Legend: <br/>
             <table>
                 <tr><td><div class="planstep-bar" style="width: 15px; height: 15px; white-space: nowrap"></div></td><td> plan-head action, </td></tr>

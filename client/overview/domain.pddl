@@ -15,9 +15,9 @@
 (:action say-hello
     :parameters (?t - thing)
     :precondition (and
-        ; we only ever need to great once
+        ; we only ever need to greet once
         (not (said_hello_to ?t))
-        ; only great someone if they are near
+        ; only greet someone if they are near
         (can_hear ?t)
     )
     :effect (and

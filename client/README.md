@@ -392,6 +392,28 @@ The search debugger may be enabled/disabled by clicking on the bug-like icon in 
 
 If the planner outputs even more detailed log for every state, the log file could be synchronously navigated (scrolled to the same state). Select the log file that corresponds to the search being debugged by pressing the 🗎 icon. The log entry that corresponds to the state is matched using the regular expression pattern configurable by the  `pddlSearchDebugger.stateLogPattern` setting.
 
+Following keyboard shortcuts are available to navigate or manipulate the search tree view:
+
+- Typing a number using <kbd>0</kbd>-<kbd>9</kbd> selects the state with the matching Order ID.
+- Change shape of a state to highlight states of interest using:
+  - <kbd>b</kbd>: box,
+  - <kbd>d</kbd>: diamond,
+  - <kbd>s</kbd>: star,
+  - <kbd>t</kbd>: triangle,
+  - <kbd>h</kbd>: hexagon,
+  - <kbd>q</kbd>: square,
+  - <kbd>e</kbd>: ellipse (default)
+- Toggle auto-fitting of the tree to the viewport using <kbd>f</kbd> to avoid losing focus, while search is progressing
+
+Dead-end states are visualized with brown color.
+Tree branches(s) leading to goal state(s) are painted in green color.
+
+The Search Debugger may now be configured (see the `pddlSearchDebugger.stateIdPattern` configuration setting) with a pattern to parse the state ID.
+The visualization then respects the IDs assigned by the planner rather than using its own numbering scheme
+(which is used if the received state ID does not respect the pattern).
+
+Both tree nodes and edges now show an informative tooltip when mouse hover-over.
+
 To participate in this visual search debugging the planning engine must implement a HTTP client. An example of what data is expected may be found in the [mock search](https://github.com/jan-dolejsi/vscode-pddl/blob/master/client/src/searchDebugger/MockSearch.ts).
 
 ## Block folding in `:init` section of the problem file

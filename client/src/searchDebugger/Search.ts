@@ -13,6 +13,7 @@ export class Search implements StateResolver {
     private _onStateAdded: EventEmitter<State> = new EventEmitter<State>();
     private _onStateUpdated: EventEmitter<State> = new EventEmitter<State>();
     private _onBetterState: EventEmitter<State> = new EventEmitter<State>();
+    private _onPlanFound: EventEmitter<State[]> = new EventEmitter<State[]>();
 
     private states = new Map<number, State>();
     private bestStateHeuristic = Number.MAX_VALUE;
@@ -34,6 +35,10 @@ export class Search implements StateResolver {
         return this._onBetterState.event;
     }
 
+    get onPlanFound(): Event<State[]> {
+        return this._onPlanFound.event;
+    }
+
     addInitialState(state: State) {
         console.log('Added initial: ' + state);
         this.states.set(state.id, state);
@@ -52,7 +57,7 @@ export class Search implements StateResolver {
         }
     }
 
-    update(state: State) {
+    update(state: State): void {
         console.log('Updated: ' + state);
         this.states.set(state.id, state);
         this._onStateUpdated.fire(state);
@@ -63,11 +68,23 @@ export class Search implements StateResolver {
         }
     }
 
+    showPlan(goalState: State): void {
+        let plan: State[] = [];
+        var state = goalState;
+        while(state !== null) {
+            state.isPlan = true;
+            plan.push(state);
+            state = state.parentId !== undefined ? this.states.get(state.parentId) : null;
+        }
+        this._onPlanFound.fire(plan);
+    }
+
     setPlan(state: State) {
         console.log('Plan found: ' + state);
         let goalState = state.evaluate(0, state.earliestTime, [], []);
 
         this.update(goalState);
+        this.showPlan(goalState);
     }
 
     getState(stateId: number): State {

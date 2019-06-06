@@ -79,7 +79,8 @@ export class SearchDebugger implements PlannerOptionsProvider {
     private startServer(): void {
         if (!this.search) {
             this.search = new Search();
-            this.messageParser = new MessageParser(this.search);
+            var stateIdPattern: RegExp = this.getStateIdPattern();
+            this.messageParser = new MessageParser(this.search, stateIdPattern);
             this.view.observe(this.search);
         }
 
@@ -101,6 +102,18 @@ export class SearchDebugger implements PlannerOptionsProvider {
             }
         }
         console.log("Search debugger listening at port " + this.port);
+    }
+
+    private getStateIdPattern() {
+        let stateIdPatternAsString = workspace.getConfiguration("pddlSearchDebugger").get<string>("stateIdPattern");
+        var stateIdPattern: RegExp = null;
+        try {
+            stateIdPattern = new RegExp(stateIdPatternAsString);
+        }
+        catch (ex) {
+            console.log("Invalid stateIdPattern regular expression: " + ex);
+        }
+        return stateIdPattern;
     }
 
     private createApplication() {

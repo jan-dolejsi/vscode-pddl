@@ -1,5 +1,6 @@
 // see vis.js documentation at
 // http://visjs.org/docs/network/#Events
+// http://visjs.org/docs/data/dataset.html
 // http://visjs.org/examples/network/data/datasets.html
 
 // create an array with nodes
@@ -14,6 +15,7 @@ var treeData = {
 };
 
 var network;
+var autoFitEnabled = true;
 
 function createTree() {
     // create the network
@@ -50,7 +52,28 @@ function createTree() {
             }
         },
         edges: {
-            font: { align: 'top' }
+            font: { align: 'top' },
+            arrows: { to: { enabled: true, scaleFactor: 0.5 } }
+        },
+        groups: {
+            plan: {
+                color: {
+                    background: 'lightgreen'
+                },
+                borderWidth: 0
+            },
+            deadEnd: {
+                color: {
+                    background: 'brown'
+                },
+                borderWidth: 0
+            },
+            goal: {
+                color: {
+                    background: 'green'
+                },
+                borderWidth: 0
+            }
         }
     };
     network = new vis.Network(container, treeData, options);
@@ -61,10 +84,69 @@ function createTree() {
 function addStateToTree(newState, batch) {
     nodes.add(toNode(newState));
     if (newState.parentId != null && newState.actionName) {
-        var undecoratedActionName = newState.actionName.replace(/[├┤]$/, "").trim();
-        edges.add({ from: newState.parentId, to: newState.id, actionName: undecoratedActionName, label: newState.actionName.split(' ').join('\n') });
+        addStateEdge(newState);
     }
-    if (!batch && nodes.length < 100) network.fit();
+    if (!batch && nodes.length < 100 && autoFitEnabled) network.fit();
+}
+
+function addStateEdge(newState) {
+    var undecoratedActionName = newState.actionName.replace(/[├┤]$/, "").replace(/\[\d+\]/, "").trim();
+
+    var actionLabel = createActionLabel(newState.actionName);
+
+    var actionTitle = createActionTooltip(newState.actionName);
+
+    var edge = {
+        from: newState.parentId,
+        to: newState.id,
+        actionName: undecoratedActionName,
+        label: actionLabel,
+        title: actionTitle
+    };
+    edges.add(edge);
+}
+
+var snapActionLegend = new Map();
+snapActionLegend['├'] = "Action start";
+snapActionLegend['┤'] = "Action end";
+
+/**
+ * Constructs edge tooltip
+ * @param {string} fullActionName full action name
+ */
+function createActionTooltip(fullActionName) {
+    counter = 0;
+    var counterMatch = fullActionName.match(/\[(\d+)\]/);
+    if (counterMatch) {
+        counter = parseInt(counterMatch[1]);
+    }
+
+    var tooltip = fullActionName.replace(/\[\d+\]/, "").replace(/[├┤]$/, " $&").split(' ')
+        .filter(fragment => fragment != ' ')
+        .map(fragment => fragment in snapActionLegend ? snapActionLegend[fragment] : fragment)
+        .join('<br/>');
+
+    if (counter > 0) {
+        tooltip += '<br/>Shot counter: ' + counter;
+    }
+
+    return tooltip;
+}
+
+/**
+ * Constructs edge label
+ * @param {string} fullActionName full action name
+ */
+function createActionLabel(fullActionName) {
+    var fragments = fullActionName.replace(/\[\d+\]/, "").split(' ');
+
+    var maxLineLength = 19;
+    var label = fragments.reduce((prevValue, currentValue) => {
+        var separator = prevValue.length + currentValue.length > maxLineLength ? '\n' : ' ';
+        return prevValue + separator + currentValue;
+    });
+
+    return label;
 }
 
 function endTreeBatch() {
@@ -72,24 +154,68 @@ function endTreeBatch() {
 }
 
 function toNode(newState) {
-    var label = 'O: ' + newState.id;
-    if (newState.h != null) {
-        label += '\nH: ' + newState.h;
+    var label = toNodeLabel(newState);
+    var title = toNodeTitle(newState);
+
+    var node = { id: newState.id, label: label, title: title };
+
+    if (newState.isPlan) {
+        node['group'] = 'plan';
     }
-    var node = { id: newState.id, label: label };
-    if (newState.h != null) {
-        if(!Number.isFinite(newState.h)) {
-        // dead-end state
-        node['color'] = { background: 'brown' };
+    if (newState.h !== undefined) {
+        if (newState.isDeadEnd) {
+            node['group'] = 'deadEnd';
         } else if (newState.h == 0) {
-            node['color'] = { background: 'green', border: 'green' };
+            node['group'] = 'goal';
         }
     }
     return node;
 }
 
+function toNodeLabel(newState) {
+    var label = 'O: ' + newState.id;
+    if (newState.h !== undefined) {
+        label += '\nH: ' + (newState.isDeadEnd ? 'Infinite' : newState.h);
+    }
+    return label;
+}
+
+function toNodeTitle(newState) {
+
+    var title = 'Order: ' + newState.id;
+    if (newState.id != newState.origId) {
+        title += ' (' + newState.origId + ')';
+    }
+
+    title += '\nGeneration: ' + newState.g
+        + '\nEarliest time: ' + newState.earliestTime;
+
+    if (newState.h !== undefined) {
+        title += '\nHeuristic value: ' + (newState.isDeadEnd ? 'Infinite' : newState.h);
+    }
+
+    if (newState.totalMakespan) {
+        title += '\nTotal makespan: ' + newState.totalMakespan
+    }
+
+    if (newState.helpfulActions) {
+        title += '\nHelpful actions: ' + newState.helpfulActions.length
+    }
+
+    title = title.split('\n').join('<br/>');
+    return title;
+}
+
 function updateStateOnTree(state) {
     nodes.update([toNode(state)]);
+}
+
+/**
+ * Re-paints all states on the plan branch
+ * @param {State[]} planStates intermediate states in the plan and the goal state
+ */
+function showPlanOnTree(planStates) {
+    planStates.forEach(state => updateStateOnTree(state));
 }
 
 function selectTreeNode(id) {
@@ -136,6 +262,11 @@ function navigateTreeDown() {
     return selectedNode;
 }
 
+/**
+ * Navigating to +1 moves to the next sibling to the right.
+ * Offset -2 navigates two sibling states to the left.
+ * @param {int} offset direction and distance of navigation
+ */
 function navigateTreeSiblings(offset) {
     var selectedNodes = network.getSelectedNodes();
     if (selectedNodes.length == 0) return null;
@@ -200,6 +331,20 @@ function navigateToChildState(parentStateId, actionName) {
     } else {
         return null;
     }
+}
+
+/**
+ * Changes selected node shape
+ * @param {string} shape shape name; supported are: diamond, dot, star, triangle, triangleDown, hexagon, square and icon
+ */
+function changeSelectedNodeShape(shape) {
+    var selectedNodes = network.getSelectedNodes();
+    if (selectedNodes.length == 0) return null;
+
+    var selectedNodeId = selectedNodes[0];
+    var selectedNode = nodes.get(selectedNodeId);
+    selectedNode.shape = shape;
+    nodes.update(selectedNode);
 }
 
 // todo: support for context menu: http://jsbin.com/qeyumiwepo/5/edit?html,output

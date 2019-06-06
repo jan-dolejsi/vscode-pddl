@@ -47,6 +47,7 @@ export class SearchDebuggerView {
         this.subscriptions.push(search.onStateAdded(newState => this.addState(newState)));
         this.subscriptions.push(search.onStateUpdated(newState => this.update(newState)));
         this.subscriptions.push(search.onBetterState(betterState => this.displayBetterState(betterState)));
+        this.subscriptions.push(search.onPlanFound(planStates => this.displayPlan(planStates)));
     }
 
     setDomainAndProblem(domain: DomainInfo, problem: ProblemInfo) {
@@ -176,6 +177,11 @@ export class SearchDebuggerView {
         }
     }
 
+    displayPlan(planStates: State[]): void {
+        new Promise(_ => this.postMessage({ command: 'showPlan', state: planStates }))
+            .catch(reason => console.log(reason));
+    }
+
     private postMessage(message: { command: string; state: any; }) {
         if (this.webViewPanel) {
             this.webViewPanel.webview.postMessage(message);
@@ -192,9 +198,9 @@ export class SearchDebuggerView {
         let state = this.search.getState(stateId);
         let statePlan = new StateToPlan(this.domain, this.problem).convert(state);
         let planHtml = await new PlanReportGenerator(this.context,
-            { displayWidth: 200, selfContained: false, disableLinePlots: true, disableSwimLaneView: true, disableHamburgerMenu: true })
+            { displayWidth: 200, selfContained: false, disableLinePlots: true, disableSwimLaneView: false, disableHamburgerMenu: true })
             .generateHtml([statePlan]);
-        this.postMessage({ command: 'showPlan', state: planHtml });
+        this.postMessage({ command: 'showStatePlan', state: planHtml });
     }
 
     clear() {

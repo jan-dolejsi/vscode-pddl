@@ -15,7 +15,7 @@ export class MessageParser {
     private lastStateOrder = -1;
     private stateIdToOrder = new Map<string, number>();
 
-    constructor(private readonly search: StateResolver) {
+    constructor(private readonly search: StateResolver, private readonly stateIdPattern: RegExp) {
 
     }
 
@@ -24,9 +24,28 @@ export class MessageParser {
         this.lastStateOrder = -1;
     }
 
+    parseStateId(origId: string): number {
+        var assignedStateId: number;
+        if (this.stateIdPattern) {
+            this.stateIdPattern.lastIndex = 0;
+            var match: RegExpMatchArray;
+            if (match = origId.match(this.stateIdPattern)) {
+                assignedStateId = parseInt(match[1]);
+            }
+            else {
+                console.log("State ID does not conform to the pattern. Assigning own ID.");
+                assignedStateId = ++this.lastStateOrder;
+            }
+        }
+        else {
+            assignedStateId = ++this.lastStateOrder;
+        }
+        this.stateIdToOrder.set(origId, assignedStateId);
+        return assignedStateId;
+    }
+
     parseInitialState(state: any): State {
-        if (this.stateIdToOrder.size > 0 || this.lastStateOrder > -1) throw new Error("Search debugger must be cleared before re-starting the search.");
-        let assignedStateId = ++this.lastStateOrder;
+        let assignedStateId = this.parseStateId(state.id);
         this.stateIdToOrder.set(state.id, assignedStateId);
 
         return new State(assignedStateId, state.id, state.g, state.earliestTime, []);
@@ -35,8 +54,7 @@ export class MessageParser {
     parseState(state: any): State {
         let assignedStateId = this.stateIdToOrder.get(state.id);
         if (assignedStateId === undefined) {
-            assignedStateId = ++this.lastStateOrder;
-            this.stateIdToOrder.set(state.id, assignedStateId);
+            assignedStateId = this.parseStateId(state.id);
         }
         let parentId = this.stateIdToOrder.get(state.parentId);
 
@@ -50,7 +68,9 @@ export class MessageParser {
 
     createActionName(lastHappening: SearchHappening): string {
         let actionName = lastHappening.actionName;
-        if (lastHappening.shotCounter > 0) actionName += `[${lastHappening.shotCounter}]`;
+        if (lastHappening.shotCounter > 0) {
+            actionName += `[${lastHappening.shotCounter}]`;
+        }
         switch (lastHappening.kind) {
             case HappeningType.START:
                 actionName += '├';
@@ -69,12 +89,20 @@ export class MessageParser {
             throw new Error(`State with id ${state.id} is unknown`);
         }
         let stateFound = this.search.getState(assignedStateId);
-        if (!stateFound) throw new Error(`State with id ${state.id} not found.`);
+        if (!stateFound) {
+            throw new Error(`State with id ${state.id} not found.`);
+        }
 
-        let relaxedPlan = state.relaxedPlan.map((h: any) => this.parseSearchHappening(h, true));
-        let helpfulActions = state.helpfulActions.map((a: any) => this.parseHelpfulAction(a));
+        if (!state.hasOwnProperty('h')) {
+            return stateFound.deadEnd();
+        }
+        else {
 
-        return stateFound.evaluate(state.h, state.totalMakespan, helpfulActions, relaxedPlan);
+            let relaxedPlan = state.relaxedPlan.map((h: any) => this.parseSearchHappening(h, true));
+            let helpfulActions = state.helpfulActions.map((a: any) => this.parseHelpfulAction(a));
+
+            return stateFound.evaluate(state.h, state.totalMakespan, helpfulActions, relaxedPlan);
+        }
     }
 
     parseSearchHappening(happening: any, isRelaxed: boolean): SearchHappening {
@@ -84,7 +112,7 @@ export class MessageParser {
             shotCounter: happening.shotCounter,
             kind: this.parseHappeningType(happening.kind),
             isRelaxed: isRelaxed
-        }
+        };
     }
 
     parseHelpfulAction(action: any): HelpfulAction {
