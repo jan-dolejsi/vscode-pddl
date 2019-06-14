@@ -41,7 +41,7 @@ export class Val {
 
     private async downloadAndConfigure(): Promise<void> {
 
-        let buildId = 10;
+        let buildId = 12; //todo: pick it up from configuration
         let artifactName = Val.getArtifactName();
         if (!artifactName) {
             this.unsupportedOperatingSystem();
