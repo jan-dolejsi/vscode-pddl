@@ -275,41 +275,41 @@
           "dark": "images/dark/refresh.svg"
         }
       },
-			{
-				"command": "pddl.planning.domains.session.commit",
-				"title": "PDDL: Commit local changes to Planning.Domains session",
-				"icon": {
-					"light": "images/light/cloud-upload.svg",
-					"dark": "images/dark/cloud-upload.svg"
-				}
-			},
-			{
-				"command": "pddl.planning.domains.session.discard",
-				"title": "PDDL: Discards local changes to the Planning.Domains session",
-				"icon": {
-					"light": "images/light/discard.svg",
-					"dark": "images/dark/discard.svg"
-				}
-			},
-			{
-				"command": "pddl.planning.domains.session.checkout",
-				"title": "PDDL: Checkout another version of this Planning.Domains session",
-				"icon": {
-					"light": "images/light/refresh.svg",
-					"dark": "images/dark/refresh.svg"
-				}
+      {
+        "command": "pddl.planning.domains.session.commit",
+        "title": "PDDL: Commit local changes to Planning.Domains session",
+        "icon": {
+          "light": "images/light/cloud-upload.svg",
+          "dark": "images/dark/cloud-upload.svg"
+        }
+      },
+      {
+        "command": "pddl.planning.domains.session.discard",
+        "title": "PDDL: Discards local changes to the Planning.Domains session",
+        "icon": {
+          "light": "images/light/discard.svg",
+          "dark": "images/dark/discard.svg"
+        }
+      },
+      {
+        "command": "pddl.planning.domains.session.checkout",
+        "title": "PDDL: Checkout another version of this Planning.Domains session",
+        "icon": {
+          "light": "images/light/refresh.svg",
+          "dark": "images/dark/refresh.svg"
+        }
       },
       {
         "command": "pddl.planning.domains.session.duplicate",
         "title": "PDDL: Duplicate a Planning.Domains session as writable"
       },
       {
-          "command": "pddl.planning.domains.session.open",
-					"title": "PDDL: Open a Planning.Domains session in the browser"
+        "command": "pddl.planning.domains.session.open",
+        "title": "PDDL: Open a Planning.Domains session in the browser"
       },
       {
-          "command": "pddl.planning.domains.session.share",
-					"title": "PDDL: Share a Planning.Domains session via email"
+        "command": "pddl.planning.domains.session.share",
+        "title": "PDDL: Share a Planning.Domains session via email"
       },
       {
         "command": "pddl.planning.domains.session.generateClassroom",
@@ -409,34 +409,34 @@
         }
       ],
       "scm/title": [
-				{
-					"command": "pddl.planning.domains.session.commit",
-					"group": "navigation",
-					"when": "scmProvider == planningDomainsSession"
-				},
-				{
-					"command": "pddl.planning.domains.session.discard",
-					"group": "navigation",
-					"when": "scmProvider == planningDomainsSession"
-				},
-				{
-					"command": "pddl.planning.domains.session.refresh",
-					"group": "navigation",
-					"when": "scmProvider == planningDomainsSession"
+        {
+          "command": "pddl.planning.domains.session.commit",
+          "group": "navigation",
+          "when": "scmProvider == planningDomainsSession"
+        },
+        {
+          "command": "pddl.planning.domains.session.discard",
+          "group": "navigation",
+          "when": "scmProvider == planningDomainsSession"
+        },
+        {
+          "command": "pddl.planning.domains.session.refresh",
+          "group": "navigation",
+          "when": "scmProvider == planningDomainsSession"
         },
         {
           "command": "pddl.planning.domains.session.duplicate",
-					"when": "scmProvider == planningDomainsSession"
+          "when": "scmProvider == planningDomainsSession"
         },
         {
           "command": "pddl.planning.domains.session.open",
-					"when": "scmProvider == planningDomainsSession"
+          "when": "scmProvider == planningDomainsSession"
         },
         {
           "command": "pddl.planning.domains.session.share",
-					"when": "scmProvider == planningDomainsSession"
+          "when": "scmProvider == planningDomainsSession"
         }
-			]
+      ]
     },
     "keybindings": [
       {
