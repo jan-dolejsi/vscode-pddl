@@ -30,6 +30,7 @@ import { initialize, instrumentOperation } from "vscode-extension-telemetry-wrap
 import { KEY } from './TelemetryInstrumentation';
 import { SearchDebugger } from './searchDebugger/SearchDebugger';
 import { PlanningDomainsSessions } from './session/PlanningDomainsSessions';
+import { Val } from './validation/Val';
 
 const PDDL_CONFIGURE_PARSER = 'pddl.configureParser';
 const PDDL_LOGIN_PARSER_SERVICE = 'pddl.loginParserService';
@@ -177,6 +178,9 @@ function activateWithTelemetry(_operationId: string, context: ExtensionContext) 
 	new Debugging(context, pddlWorkspace, pddlConfiguration);
 
 	context.subscriptions.push(new PlanComparer(pddlWorkspace, pddlConfiguration));
+
+	// tslint:disable-next-line:no-unused-expression
+	new Val(context);
 
 	subscribeToWorkspace(pddlWorkspace, pddlConfiguration, context);
 

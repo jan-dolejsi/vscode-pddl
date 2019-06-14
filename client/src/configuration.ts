@@ -25,7 +25,7 @@ export const VALIDATION_PATH = 'validatorPath';
 export const VAL_STEP_PATH = 'valStepPath';
 export const VALUE_SEQ_PATH = 'valueSeqPath';
 export const PLANNER_VAL_STEP_PATH  = CONF_PDDL + "." + VAL_STEP_PATH;
-export const PLANNER_VALUE_SEQ_PATH  = PDDL_PLANNER + "." + VALUE_SEQ_PATH;
+export const PLANNER_VALUE_SEQ_PATH  = CONF_PDDL + "." + VALUE_SEQ_PATH;
 
 export class PddlConfiguration {
 

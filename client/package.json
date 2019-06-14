@@ -275,45 +275,49 @@
           "dark": "images/dark/refresh.svg"
         }
       },
-			{
-				"command": "pddl.planning.domains.session.commit",
-				"title": "PDDL: Commit local changes to Planning.Domains session",
-				"icon": {
-					"light": "images/light/cloud-upload.svg",
-					"dark": "images/dark/cloud-upload.svg"
-				}
-			},
-			{
-				"command": "pddl.planning.domains.session.discard",
-				"title": "PDDL: Discards local changes to the Planning.Domains session",
-				"icon": {
-					"light": "images/light/discard.svg",
-					"dark": "images/dark/discard.svg"
-				}
-			},
-			{
-				"command": "pddl.planning.domains.session.checkout",
-				"title": "PDDL: Checkout another version of this Planning.Domains session",
-				"icon": {
-					"light": "images/light/refresh.svg",
-					"dark": "images/dark/refresh.svg"
-				}
+      {
+        "command": "pddl.planning.domains.session.commit",
+        "title": "PDDL: Commit local changes to Planning.Domains session",
+        "icon": {
+          "light": "images/light/cloud-upload.svg",
+          "dark": "images/dark/cloud-upload.svg"
+        }
+      },
+      {
+        "command": "pddl.planning.domains.session.discard",
+        "title": "PDDL: Discards local changes to the Planning.Domains session",
+        "icon": {
+          "light": "images/light/discard.svg",
+          "dark": "images/dark/discard.svg"
+        }
+      },
+      {
+        "command": "pddl.planning.domains.session.checkout",
+        "title": "PDDL: Checkout another version of this Planning.Domains session",
+        "icon": {
+          "light": "images/light/refresh.svg",
+          "dark": "images/dark/refresh.svg"
+        }
       },
       {
         "command": "pddl.planning.domains.session.duplicate",
         "title": "PDDL: Duplicate a Planning.Domains session as writable"
       },
       {
-          "command": "pddl.planning.domains.session.open",
-					"title": "PDDL: Open a Planning.Domains session in the browser"
+        "command": "pddl.planning.domains.session.open",
+        "title": "PDDL: Open a Planning.Domains session in the browser"
       },
       {
-          "command": "pddl.planning.domains.session.share",
-					"title": "PDDL: Share a Planning.Domains session via email"
+        "command": "pddl.planning.domains.session.share",
+        "title": "PDDL: Share a Planning.Domains session via email"
       },
       {
         "command": "pddl.planning.domains.session.generateClassroom",
         "title": "PDDL: Generate Planning.Domains sessions from template for classroom"
+      },
+      {
+        "command": "pddl.downloadVal",
+        "title": "PDDL: Download VAL tools"
       }
     ],
     "menus": {
@@ -409,34 +413,34 @@
         }
       ],
       "scm/title": [
-				{
-					"command": "pddl.planning.domains.session.commit",
-					"group": "navigation",
-					"when": "scmProvider == planningDomainsSession"
-				},
-				{
-					"command": "pddl.planning.domains.session.discard",
-					"group": "navigation",
-					"when": "scmProvider == planningDomainsSession"
-				},
-				{
-					"command": "pddl.planning.domains.session.refresh",
-					"group": "navigation",
-					"when": "scmProvider == planningDomainsSession"
+        {
+          "command": "pddl.planning.domains.session.commit",
+          "group": "navigation",
+          "when": "scmProvider == planningDomainsSession"
+        },
+        {
+          "command": "pddl.planning.domains.session.discard",
+          "group": "navigation",
+          "when": "scmProvider == planningDomainsSession"
+        },
+        {
+          "command": "pddl.planning.domains.session.refresh",
+          "group": "navigation",
+          "when": "scmProvider == planningDomainsSession"
         },
         {
           "command": "pddl.planning.domains.session.duplicate",
-					"when": "scmProvider == planningDomainsSession"
+          "when": "scmProvider == planningDomainsSession"
         },
         {
           "command": "pddl.planning.domains.session.open",
-					"when": "scmProvider == planningDomainsSession"
+          "when": "scmProvider == planningDomainsSession"
         },
         {
           "command": "pddl.planning.domains.session.share",
-					"when": "scmProvider == planningDomainsSession"
+          "when": "scmProvider == planningDomainsSession"
         }
-			]
+      ]
     },
     "keybindings": [
       {
@@ -689,7 +693,7 @@
           "title": "Default epsilon time step used by your planner.",
           "description": "Default epsilon time step used by your planner. This is used when interpreting/visualizing the plan. "
         },
-        "pddlPlanner.valueSeqPath": {
+        "pddl.valueSeqPath": {
           "type": "string",
           "description": "ValueSeq path - the tool that evaluates numeric values of functions at starts and ends of actions in the plan."
         },
@@ -818,6 +822,7 @@
     "request": "^2.88.0",
     "body-parser": "^1.18.3",
     "events": "^3.0.0",
+    "adm-zip": "^0.4.13",
     "semver": "^5.6.0"
   },
   "devDependencies": {
@@ -825,6 +830,7 @@
     "@types/request": "^2.48.1",
     "@types/semver": "^5.5.0",
     "@types/tmp": "^0.0.34",
+    "@types/adm-zip": "^0.4.32",
     "tslint": "^5.14.0",
     "typescript": "^3.0.3",
     "vsce": "^1.59.0",
