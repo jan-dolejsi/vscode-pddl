@@ -187,7 +187,8 @@ ${objectsHtml}
                         }
                     }
                     else {
-                    window.showWarningMessage(err);
+                        window.showWarningMessage(err);
+                    }
                 }
             }
         }
