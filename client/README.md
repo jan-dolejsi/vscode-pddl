@@ -404,6 +404,7 @@ Following keyboard shortcuts are available to navigate or manipulate the search 
   - <kbd>q</kbd>: square,
   - <kbd>e</kbd>: ellipse (default)
 - Toggle auto-fitting of the tree to the viewport using <kbd>f</kbd> to avoid losing focus, while search is progressing
+- Fit the entire tree into the viewport by <kbd>F</kbd>
 
 Dead-end states are visualized with brown color.
 Tree branches(s) leading to goal state(s) are painted in green color.

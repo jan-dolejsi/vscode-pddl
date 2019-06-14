@@ -46,12 +46,12 @@ export class TestsManifest {
 
     store() {
         let obj: any = {};
-        if (this.defaultDomain !== null) obj["defaultDomain"] = this.defaultDomain;
-        if (this.defaultProblem !== null) obj["defaultProblem"] = this.defaultProblem;
-        if (this.defaultOptions !== null) obj["defaultOptions"] = this.defaultOptions;
+        if (this.defaultDomain !== null) { obj["defaultDomain"] = this.defaultDomain; }
+        if (this.defaultProblem !== null) { obj["defaultProblem"] = this.defaultProblem; }
+        if (this.defaultOptions !== null) { obj["defaultOptions"] = this.defaultOptions; }
         let cases: Test[] = [];
         this.testCases.forEach(test => cases.push(test.toJSON()));
-        if (cases.length > 0) obj["cases"] = cases;
+        if (cases.length > 0) { obj["cases"] = cases; }
 
         var json = JSON.stringify(obj, null, 2);
         var fs = require('fs');

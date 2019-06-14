@@ -1,5 +1,13 @@
 # PDDL support - What's new?
 
+## [2.11.??] - 2019-06-??
+
+- valstep errors are now reporting the input data to be sent as a bug report
+- more async I/O
+- tslint warnings addressed
+- search debugger: fit tree with "F"
+- Planning.Domains session support file renaming
+
 ## [2.11.2] - 2019-05-28
 
 ## New features

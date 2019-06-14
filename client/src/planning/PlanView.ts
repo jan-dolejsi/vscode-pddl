@@ -204,7 +204,7 @@ async function getDotDocument(dotDocumentUri: Uri | undefined): Promise<TextDocu
     if (dotDocumentUri) {
         return await workspace.openTextDocument(dotDocumentUri);
     } else {
-        if (window.activeTextEditor != null && isPlan(window.activeTextEditor.document)) {
+        if (window.activeTextEditor !== null && isPlan(window.activeTextEditor.document)) {
             return window.activeTextEditor.document;
         }
         else {

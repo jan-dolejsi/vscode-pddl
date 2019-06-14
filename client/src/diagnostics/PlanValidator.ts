@@ -31,7 +31,7 @@ export class PlanValidator {
         context.subscriptions.push(commands.registerCommand(PDDL_PLAN_VALIDATE,
             async () => {
                 if (window.activeTextEditor && isPlan(window.activeTextEditor.document)) {
-                    if (!await this.testConfiguration()) return;
+                    if (!await this.testConfiguration()) { return; }
                     try {
                         let outcome = await this.validateTextDocument(window.activeTextEditor.document);
                         if (outcome.getError()) {
@@ -50,10 +50,10 @@ export class PlanValidator {
 
     async testConfiguration(): Promise<boolean> {
         let validatePath = this.plannerConfiguration.getValidatorPath();
-        if (validatePath.length == 0) {
+        if (validatePath.length === 0) {
 
             let answer = await window.showWarningMessage(`The 'validate' executable path is not set up in '${CONF_PDDL}.${VALIDATION_PATH}'.`, "Configure 'validate' now...");
-            if (answer) commands.executeCommand('pddl.configureValidate');
+            if (answer) { commands.executeCommand('pddl.configureValidate'); }
             return false;
         }
         else {
@@ -65,7 +65,7 @@ export class PlanValidator {
 
         let planFileInfo = <PlanInfo>this.pddlWorkspace.upsertAndParseFile(planDocument.uri.toString(), PddlLanguage.PLAN, planDocument.version, planDocument.getText());
 
-        if (!planFileInfo) return PlanValidationOutcome.failed(null, new Error("Cannot open or parse plan file."));
+        if (!planFileInfo) { return PlanValidationOutcome.failed(null, new Error("Cannot open or parse plan file.")); }
 
         return this.validatePlanAndReportDiagnostics(planFileInfo, true, _ => { }, _ => { });
     }
@@ -101,20 +101,20 @@ export class PlanValidator {
         }
 
         // copy editor content to temp files to avoid using out-of-date content on disk
-        let domainFilePath = Util.toPddlFile('domain', context.domain.getText());
-        let problemFilePath = Util.toPddlFile('problem', context.problem.getText());
-        let planFilePath = Util.toPddlFile('plan', planInfo.getText());
+        let domainFilePath = await Util.toPddlFile('domain', context.domain.getText());
+        let problemFilePath = await Util.toPddlFile('problem', context.problem.getText());
+        let planFilePath = await Util.toPddlFile('plan', planInfo.getText());
 
         let args = ['-t', epsilon.toString(), '-v', domainFilePath, problemFilePath, planFilePath];
         let child = process.spawnSync(validatePath, args, { cwd: dirname(Uri.parse(planInfo.fileUri).fsPath) });
 
-        if (showOutput) this.output.appendLine(validatePath + ' ' + args.join(' '));
+        if (showOutput) { this.output.appendLine(validatePath + ' ' + args.join(' ')); }
 
         let output = child.stdout.toString();
 
-        if (showOutput) this.output.appendLine(output);
+        if (showOutput) { this.output.appendLine(output); }
 
-        if (showOutput && child.stderr) {
+        if (showOutput && child.stderr && child.stderr.length) {
             this.output.append('Error:');
             this.output.appendLine(child.stderr.toString());
         }
@@ -122,7 +122,9 @@ export class PlanValidator {
         let outcome = this.analyzeOutput(planInfo, child.error, output);
 
         if (child.error) {
-            if (showOutput) this.output.appendLine(`Error: name=${child.error.name}, message=${child.error.message}`);
+            if (showOutput) {
+                this.output.appendLine(`Error: name=${child.error.name}, message=${child.error.message}`);
+            }
             onError(child.error.name);
         }
         else {
@@ -194,7 +196,7 @@ export class PlanValidator {
 
     private isDomainAction(domain: DomainInfo, problem: ProblemInfo, step: PlanStep): boolean {
         problem;
-        return domain.actions.some(a => a.name.toLowerCase() == step.actionName.toLowerCase());
+        return domain.actions.some(a => a.name.toLowerCase() === step.actionName.toLowerCase());
     }
 
     private isTimeMonotonicallyIncreasing(first: PlanStep, second: PlanStep): boolean {
@@ -256,7 +258,7 @@ class PlanValidationOutcome {
             planInfo.getSteps()
                 .find(step => PlanStep.equalsWithin(step.getStartTime(), timeStamp, 1e-4));
 
-        if (stepAtTimeStamp) errorLine = stepAtTimeStamp.lineIndex;
+        if (stepAtTimeStamp) { errorLine = stepAtTimeStamp.lineIndex; }
 
         let diagnostics = repairHints.map(hint => new Diagnostic(createRangeFromLine(errorLine), hint, DiagnosticSeverity.Warning));
         return new PlanValidationOutcome(planInfo, diagnostics);

@@ -290,15 +290,19 @@ function navigate(e) {
         case "f":
             autoFitEnabled = !autoFitEnabled;
             break;
+        case "F":
+            fitTree();
+            break;
     }
 
     if (e.key in shapeMap) {
         changeSelectedNodeShape(shapeMap[e.key]);
     }
 
-    if (e.keyCode > 95 && e.keyCode < 106) {
+    if (Number.isFinite(parseInt(e.key))) {
         // digits are being typed
-        findingStateWithDigit(e.keyCode - 96);
+        var digit = parseInt(e.key);
+        findingStateWithDigit(digit);
     }
 }
 

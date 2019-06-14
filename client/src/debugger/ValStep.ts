@@ -8,6 +8,9 @@ import * as process from 'child_process';
 import { EventEmitter } from 'events';
 
 import { Util } from '../../../common/src/util';
+import * as atmp from '../../../common/src/asynctmp';
+import * as afs from '../../../common/src/asyncfs';
+import * as path from 'path';
 import { TimedVariableValue, VariableValue, ProblemInfo, DomainInfo, Parser } from '../../../common/src/parser';
 import { Happening } from '../../../common/src/HappeningsInfo';
 import { HappeningsToValStep } from '../diagnostics/HappeningsToValStep';
@@ -34,18 +37,26 @@ export class ValStep extends EventEmitter {
         this.happeningsConvertor = new HappeningsToValStep();
     }
 
+    /**
+     * Executes series of plan happenings.
+     * @param valStepPath valstep path from configuration
+     * @param cwd current working directory
+     * @param happenings plan happenings to play
+     * @returns final variable values, or null in case the tool fails
+     */
     async execute(valStepPath: string, cwd: string, happenings: Happening[]): Promise<TimedVariableValue[]> {
-        let args = this.createValStepArgs();
+        let args = await this.createValStepArgs();
 
         const that = this;
 
         return new Promise<TimedVariableValue[]>(async (resolve, reject) => {
             let child = process.execFile(valStepPath, args, { cwd: cwd, timeout: 2000, maxBuffer: 2 * 1024 * 1024 }, (error, stdout, stderr) => {
                 if (error) {
-                    reject(error.message);
+                    reject(new ValStepError(error.message, this.domainInfo, this.problemInfo, this.valStepInput));
+                    return;
                 }
                 if (that.verbose) {
-                    stdout;
+                    console.log(stdout);
                     console.log(stderr);
                 }
                 let eventualProblem = that.outputBuffer;
@@ -56,7 +67,7 @@ export class ValStep extends EventEmitter {
             let outputtingProblem = false;
 
             child.stdout.on('data', output => {
-                if (this.verbose) console.log("ValStep <<<" + output);
+                if (this.verbose) { console.log("ValStep <<<" + output); }
                 if (outputtingProblem) {
                     this.outputBuffer += output;
                 } else if (output.indexOf('(define (problem') >= 0) {
@@ -73,36 +84,51 @@ export class ValStep extends EventEmitter {
                 this.valStepInput += valSteps;
 
                 try {
-                    if (!child.stdin.write(valSteps))
-                        reject('Cannot post happenings to valstep');
-                    if (this.verbose) console.log("ValStep >>>" + valSteps);
+                    if (!child.stdin.write(valSteps)) {
+                        reject('Cannot post happenings to valstep');return;
+                    }
+                    if (this.verbose) {
+                        console.log("ValStep >>>" + valSteps);
+                    }
                 }
-                catch(err) {
-                    if (this.verbose) console.log("ValStep intput causing error: " + valSteps);
-                    reject('Cannot post happenings to valstep: ' + err);
+                catch (err) {
+                    if (this.verbose) {
+                        console.log("ValStep input causing error: " + valSteps);
+                    }
+                    reject('Cannot post happenings to valstep: ' + err);return;
                 }
             }
 
-            child.stdin.write('q\n');
+            const quitInstruction = 'q\n';
+            this.valStepInput += quitInstruction;
+            if (this.verbose) {
+                console.log("ValStep >>> " + quitInstruction);
+            }
+            child.stdin.write(quitInstruction);
         });
 
     }
 
-    extractInitialState(problemText: string): TimedVariableValue[] {
+    /**
+     * Parses the problem file and extracts the initial state.
+     * @param problemText problem file content output by ValStep
+     * @returns variable values array, or null if the tool failed
+     */
+    private extractInitialState(problemText: string): TimedVariableValue[] {
         let problemInfo = new Parser().tryProblem("eventual-problem://not-important", 0, problemText);
 
-        if (!problemInfo) return null;
+        if (!problemInfo) { return null; }
 
         return problemInfo.getInits().filter(value => this.applyIfNew(0, value.getVariableValue()));
     }
 
     async executeIncrementally(valStepPath: string, cwd: string, happenings: Happening[]): Promise<TimedVariableValue[]> {
-        let args = this.createValStepArgs();
+        let args = await this.createValStepArgs();
         let child = process.execFile(valStepPath, args, { cwd: cwd });
 
         // subscribe to the child process standard output stream and concatenate it till it is complete
         child.stdout.on('data', output => {
-            if (this.verbose) console.log("ValStep <<<" + output);
+            if (this.verbose) { console.log("ValStep <<<" + output); }
             this.outputBuffer += output;
             if (this.isOutputComplete(this.outputBuffer)) {
                 const variableValues = this.parseEffects(this.outputBuffer);
@@ -127,10 +153,10 @@ export class ValStep extends EventEmitter {
         return this.variableValues;
     }
 
-    private createValStepArgs(): string[] {
+    private async createValStepArgs(): Promise<string[]> {
         // copy editor content to temp files to avoid using out-of-date content on disk
-        let domainFilePath = Util.toPddlFile('domain', this.domainInfo.getText());
-        let problemFilePath = Util.toPddlFile('problem', this.problemInfo.getText());
+        let domainFilePath = await Util.toPddlFile('domain', this.domainInfo.getText());
+        let problemFilePath = await Util.toPddlFile('problem', this.problemInfo.getText());
 
         let args = [domainFilePath, problemFilePath];
         return args;
@@ -149,6 +175,7 @@ export class ValStep extends EventEmitter {
                 lastHappeningTime1 => {
                     childProcess.kill();
                     reject(`ValStep did not respond to happenings @ ${lastHappeningTime1}`);
+                    return;
                 },
                 500, lastHappeningTime);
 
@@ -156,18 +183,20 @@ export class ValStep extends EventEmitter {
             that.once(ValStep.HAPPENING_EFFECTS_EVALUATED, (effectValues: VariableValue[]) => {
                 clearTimeout(timeOut);
                 let newValues = effectValues.filter(v => that.applyIfNew(lastHappeningTime, v));
-                if (newValues.length > 0)
+                if (newValues.length > 0) {
                     this.emit(ValStep.NEW_HAPPENING_EFFECTS, happenings, newValues);
+                }
                 resolve(true);
             });
 
             try {
-                if (!childProcess.stdin.write(valSteps))
+                if (!childProcess.stdin.write(valSteps)) {
                     reject('Cannot post happenings to valstep');
-                if (this.verbose) console.log("ValStep >>>" + valSteps);
+                }
+                if (this.verbose) { console.log("ValStep >>>" + valSteps); }
             }
-            catch(err) {
-                if (this.verbose) console.log("ValStep intput causing error: " + valSteps);
+            catch (err) {
+                if (this.verbose) { console.log("ValStep intput causing error: " + valSteps); }
                 reject('Cannot post happenings to valstep: ' + err);
             }
         });
@@ -191,12 +220,13 @@ export class ValStep extends EventEmitter {
     }
 
     throwValStepExitCode(code: number, signal: string): void {
-        if (code != 0)
-            throw new ValStepExitCode(`Valstep exit code ${code} and signal ${signal}`);
+        if (code !== 0) {
+            throw new ValStepExitCode(`ValStep exit code ${code} and signal ${signal}`);
+        }
     }
 
     throwValStepError(err: Error): void {
-        throw new ValStepError(`Valstep failed with error ${err.name} and message ${err.message}`);
+        throw new ValStepError(`ValStep failed with error ${err.name} and message ${err.message}`, this.domainInfo, this.problemInfo, this.valStepInput);
     }
 
     valStepOutputPattern = /^(?:(?:\? )?Posted action \d+\s+)*(?:\? )+Seeing (\d+) changed lits\s*([\s\S]*)\s+\?\s*$/m;
@@ -209,7 +239,7 @@ export class ValStep extends EventEmitter {
             var expectedChangedLiterals = parseInt(match[1]);
             var changedLiterals = match[2];
 
-            if (expectedChangedLiterals == 0) return true; // the happening did not have any effects
+            if (expectedChangedLiterals === 0) { return true; } // the happening did not have any effects
 
             this.valStepLiteralsPattern.lastIndex = 0;
             var actualChangedLiterals = changedLiterals.match(this.valStepLiteralsPattern).length;
@@ -264,10 +294,25 @@ export class ValStep extends EventEmitter {
     changedFromInitial(value1: TimedVariableValue) {
         return !this.initialValues.some(value2 => value1.sameValue(value2));
     }
+
+    static async storeError(err: ValStepError): Promise<string> {
+        let tempDir = await atmp.dir(0o644);
+        const domainFile = "domain.pddl";
+        const problemFile = "problem.pddl";
+        const inputFile = "happenings.valsteps";
+        await afs.writeFile(path.join(tempDir, domainFile), err.domain.getText(), {encoding: "utf-8"});
+        await afs.writeFile(path.join(tempDir, problemFile), err.problem.getText(), {encoding: "utf-8"});
+        await afs.writeFile(path.join(tempDir, inputFile), err.valStepInput, {encoding: "utf-8"});
+
+        let command = `type ${inputFile} | valstep ${domainFile} ${problemFile}`;
+        await afs.writeFile(path.join(tempDir, "run.cmd"), command, {encoding: "utf-8"});
+        return tempDir;
+    }
 }
 
 export class ValStepError extends Error {
-    constructor(message: string) {
+    constructor(public readonly message: string, public readonly domain: DomainInfo,
+        public readonly problem: ProblemInfo, public readonly valStepInput: string) {
         super(message);
     }
 }

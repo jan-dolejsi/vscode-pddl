@@ -8,6 +8,7 @@ import { SessionRepository, getSession, SessionContent, uploadSession, duplicate
 import * as path from 'path';
 import { toFuzzyRelativeTime } from '../utils';
 import * as afs from '../asyncfs';
+import * as fs from 'fs';
 import { SessionConfiguration, saveConfiguration, SessionMode, toSessionConfiguration, CONFIGURATION_FILE } from './SessionConfiguration';
 
 /**
@@ -321,10 +322,25 @@ export class SessionSourceControl implements vscode.Disposable {
 	}
 
 	async getLocalFileNames(): Promise<string[]> {
-		let localFileNames: string[] = await afs.readdir(this.getWorkspaceFolder().uri.fsPath);
-		return localFileNames
-			// exclude the config file
-			.filter(fileName => fileName !== CONFIGURATION_FILE);
+		// todo: when upgraded to Node.js 10+, use { withFileTypes: true }
+		let fileNames: string[] = await afs.readdir(this.getWorkspaceFolder().uri.fsPath);
+		return fileNames
+			// keep only files, not directories
+			.filter(fileName => this.isFile(fileName))
+			// keep only pddl files, exclude the config file
+			.filter(fileName => fileName !== CONFIGURATION_FILE)
+			// keep only pddl files, exclude VS Code workspace file
+			.filter(fileName => !fileName.endsWith('.code-workspace'));
+	}
+
+	/**
+	 * Returns true if the fileName represents a file, false if it is a directory, or something else.
+	 * @param fileName file name in the workspace
+	 */
+	private isFile(fileName: string): boolean {
+		let fileStats = fs.statSync(path.join(this.getWorkspaceFolder().uri.fsPath, fileName));
+
+		return fileStats.isFile();
 	}
 
 	/** Determines whether the resource is different, regardless of line endings. */
@@ -393,16 +409,20 @@ export class SessionSourceControl implements vscode.Disposable {
 	 * Creates a copy of the current session on the server and requests it to be cloned to the targetLocalFolder.
 	 * @param targetLocalFolder local folder uri, where the session should be cloned
 	 */
-	async duplicateAsWritable(targetLocalFolder: vscode.Uri) {
+	async duplicateAsWritable(targetLocalFolder: vscode.Uri): Promise<string> {
 		try {
 			let currentSession = await this.getCurrentSession();
 			let newSessionWriteHash: string = await duplicateSession(currentSession);
 
 			// trigger the command to download the new session
 			vscode.commands.executeCommand(SESSION_COMMAND_LOAD, newSessionWriteHash, targetLocalFolder);
+
+			return newSessionWriteHash;
 		} catch (ex) {
 			vscode.window.showErrorMessage("Failed creating duplicate session in Planning.Domains session. " + ex.message);
 		}
+
+		return null;
 	}
 
 	dispose() {

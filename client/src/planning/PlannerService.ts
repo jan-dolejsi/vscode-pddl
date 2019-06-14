@@ -40,24 +40,26 @@ export class PlannerService extends Planner {
         let that = this;
         return new Promise<Plan[]>(function(resolve, reject) {
             let url = that.plannerPath;
-            if (that.plannerOptions) url = `${url}?${that.plannerOptions}`;
+            if (that.plannerOptions) {
+                url = `${url}?${that.plannerOptions}`;
+            }
             request.post({ url: url, headers: requestHeader, body: requestBody, json: true }, (err, httpResponse, responseBody) => {
 
-                if (err != null) {
+                if (err !== null) {
                     reject(err);
                     return;
                 }
 
                 if(that.useAuthentication) {
                     if (httpResponse) {
-                        if (httpResponse.statusCode == 400) {
-                            let message = "Authentication failed. Please login or update tokens."
+                        if (httpResponse.statusCode === 400) {
+                            let message = "Authentication failed. Please login or update tokens.";
                             let error = new Error(message);
                             reject(error);
                             return;
                         }
-                        else if (httpResponse.statusCode == 401) {
-                            let message = "Invalid token. Please update tokens."
+                        else if (httpResponse.statusCode === 401) {
+                            let message = "Invalid token. Please update tokens.";
                             let error = new Error(message);
                             reject(error);
                             return;
@@ -65,7 +67,7 @@ export class PlannerService extends Planner {
                     }
                 }
 
-                if (httpResponse && httpResponse.statusCode != 200) {
+                if (httpResponse && httpResponse.statusCode !== 200) {
                     let notificationMessage = `PDDL Planning Service returned code ${httpResponse.statusCode} ${httpResponse.statusMessage}`;
                     //let notificationType = MessageType.Warning;
                     let error = new Error(notificationMessage);
@@ -75,7 +77,7 @@ export class PlannerService extends Planner {
 
                 let status = responseBody["status"];
 
-                if (status == "error") {
+                if (status === "error") {
                     let result = responseBody["result"];
 
                     let resultOutput = result["output"];
@@ -93,7 +95,7 @@ export class PlannerService extends Planner {
                     }
                     return;
                 }
-                else if (status != "ok") {
+                else if (status !== "ok") {
                     reject(new Error("Planner service failed."));
                     return;
                 }
@@ -118,8 +120,8 @@ export class PlannerService extends Planner {
                 planParser.onPlanFinished();
 
                 let plans = planParser.getPlans();
-                if (plans.length > 0) parent.handleOutput(plans[0].getText() + '\n');
-                else parent.handleOutput('No plan found.');
+                if (plans.length > 0) { parent.handleOutput(plans[0].getText() + '\n'); }
+                else { parent.handleOutput('No plan found.'); }
 
                 resolve(plans);
             });

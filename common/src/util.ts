@@ -3,8 +3,10 @@
  * Licensed under the MIT License. See License.txt in the project root for license information.
  * ------------------------------------------------------------------------------------------ */
 
+import * as atmp from './asynctmp';
 import * as tmp from 'tmp';
 import fs = require('fs');
+import * as afs from './asyncfs';
 import { URL } from "url";
 
 
@@ -27,13 +29,23 @@ export class Util {
             && !path.startsWith("node ");
     }
 
-    static toFile(prefix: string, suffix: string, text: string): string {
+    static toFileSync(prefix: string, suffix: string, text: string): string {
         var tempFile = tmp.fileSync({ mode: 0o644, prefix: prefix + '-', postfix: suffix });
         fs.writeSync(tempFile.fd, text, 0, 'utf8');
         return tempFile.name;
     }
 
-    static toPddlFile(prefix: string, text: string): string {
+    static async toFile(prefix: string, suffix: string, text: string): Promise<string> {
+        var tempFile = await atmp.file(0o644, prefix + '-', suffix);
+        await afs.write(tempFile.fd, text, 0, 'utf8');
+        return tempFile.path;
+    }
+
+    static toPddlFileSync(prefix: string, text: string): string {
+        return Util.toFileSync(prefix, '.pddl', text);
+    }
+
+    static async toPddlFile(prefix: string, text: string): Promise<string> {
         return Util.toFile(prefix, '.pddl', text);
     }
 

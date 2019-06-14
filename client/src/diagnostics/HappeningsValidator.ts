@@ -54,7 +54,9 @@ export class HappeningsValidator {
 
         let planFileInfo = <HappeningsInfo>this.pddlWorkspace.upsertAndParseFile(planDocument.uri.toString(), PddlLanguage.PLAN, planDocument.version, planDocument.getText());
 
-        if (!planFileInfo) return HappeningsValidationOutcome.failed(null, new Error("Cannot open or parse plan file."));
+        if (!planFileInfo) {
+            return HappeningsValidationOutcome.failed(null, new Error("Cannot open or parse plan file."));
+        }
 
         return this.validateAndReportDiagnostics(planFileInfo, true, _ => { }, _ => { });
     }
@@ -101,8 +103,8 @@ export class HappeningsValidator {
         }
 
         // copy editor content to temp files to avoid using out-of-date content on disk
-        let domainFilePath = Util.toPddlFile('domain', context.domain.getText());
-        let problemFilePath = Util.toPddlFile('problem', context.problem.getText());
+        let domainFilePath = await Util.toPddlFile('domain', context.domain.getText());
+        let problemFilePath = await Util.toPddlFile('problem', context.problem.getText());
         let happeningsConverter = new HappeningsToValStep();
         happeningsConverter.convertAllHappenings(happeningsInfo);
         let valSteps = happeningsConverter.getExportedText(true);
@@ -110,13 +112,13 @@ export class HappeningsValidator {
         let args = [domainFilePath, problemFilePath];
         let child = process.spawnSync(valStepPath, args, { cwd: dirname(Uri.parse(happeningsInfo.fileUri).fsPath), input: valSteps });
 
-        if (showOutput) this.output.appendLine(valStepPath + ' ' + args.join(' '));
+        if (showOutput) { this.output.appendLine(valStepPath + ' ' + args.join(' ')); }
 
         let output = child.stdout.toString();
 
-        if (showOutput) this.output.appendLine(output);
+        if (showOutput) { this.output.appendLine(output); }
 
-        if (showOutput && child.stderr) {
+        if (showOutput && child.stderr && child.stderr.length) {
             this.output.append('Error:');
             this.output.appendLine(child.stderr.toString());
         }
@@ -124,7 +126,7 @@ export class HappeningsValidator {
         let outcome = this.analyzeOutput(happeningsInfo, child.error, output);
 
         if (child.error) {
-            if (showOutput) this.output.appendLine(`Error: name=${child.error.name}, message=${child.error.message}`);
+            if (showOutput) { this.output.appendLine(`Error: name=${child.error.name}, message=${child.error.message}`); }
             onError(child.error.name);
         }
         else {
@@ -244,7 +246,7 @@ class HappeningsValidationOutcome {
             happeningsInfo.getHappenings()
                 .find(happening => PlanStep.equalsWithin(happening.getTime(), timeStamp, 1e-4));
 
-        if (stepAtTimeStamp) errorLine = stepAtTimeStamp.lineIndex;
+        if (stepAtTimeStamp) { errorLine = stepAtTimeStamp.lineIndex; }
 
         let diagnostics = repairHints.map(hint => new Diagnostic(createRangeFromLine(errorLine), hint, DiagnosticSeverity.Warning));
         return new HappeningsValidationOutcome(happeningsInfo, diagnostics);

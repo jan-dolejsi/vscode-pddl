@@ -48,8 +48,8 @@ export class HappeningsToPlanResumeCasesConvertor {
         if (!valStepPath) { return false; }
 
         // copy editor content to temp files to avoid using out-of-date content on disk
-        let domainFilePath = Util.toPddlFile('domain', this.context.domain.getText());
-        let problemFilePath = Util.toPddlFile('problem', this.context.problem.getText());
+        let domainFilePath = await Util.toPddlFile('domain', this.context.domain.getText());
+        let problemFilePath = await Util.toPddlFile('problem', this.context.problem.getText());
 
         let args = [domainFilePath, problemFilePath];
         let outputFolderUris = await window.showOpenDialog({defaultUri: Uri.file(dirname(Uri.parse(this.context.problem.fileUri).fsPath)),  canSelectFiles: false, canSelectFolders: true, canSelectMany: false, openLabel: 'Select folder for problem files'});

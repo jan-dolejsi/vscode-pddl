@@ -25,15 +25,15 @@ export class GeneratedDocumentContentProvider implements TextDocumentContentProv
         pddlWorkspace.on(PddlWorkspace.UPDATED, (fileInfo: FileInfo) => {
             // if the URI corresponds one that was already rendered from template, fire event
             this.uriMap.forEach((testCase: Test, uri: string) => {
-                if (testCase.getProblemUri().toString() == fileInfo.fileUri) {
+                if (testCase.getProblemUri().toString() === fileInfo.fileUri) {
                     this.changed(Uri.parse(uri));
                 }
-            })
+            });
         });
     }
 
     changed(uri: Uri): void {
-        this._onDidChange.fire(uri)
+        this._onDidChange.fire(uri);
     }
 
     mapUri(test: Test): Uri {
@@ -60,7 +60,7 @@ export class GeneratedDocumentContentProvider implements TextDocumentContentProv
 
     async provideTextDocumentContent(uri: Uri, token: CancellationToken): Promise<string> {
         let test = this.uriMap.get(uri.toString());
-        if (token.isCancellationRequested) return "";
+        if (token.isCancellationRequested) { return ""; }
 
         let problemDocument = await workspace.openTextDocument(test.getProblemUri());
         let documentText = problemDocument.getText();

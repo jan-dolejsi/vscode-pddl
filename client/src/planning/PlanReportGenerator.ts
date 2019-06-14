@@ -20,6 +20,7 @@ import { PlanFunctionEvaluator } from './PlanFunctionEvaluator';
 import { PlanReportSettings } from './PlanReportSettings';
 import { VAL_STEP_PATH, CONF_PDDL, PDDL_PLANNER, VALUE_SEQ_PATH } from '../configuration';
 import * as afs from '../asyncfs';
+import { ValStepError, ValStep } from '../debugger/ValStep';
 const DIGITS = 4;
 
 export class PlanReportGenerator {
@@ -31,12 +32,12 @@ export class PlanReportGenerator {
 
     }
 
-    async export(plans: Plan[], planId: number) {
+    async export(plans: Plan[], planId: number): Promise<boolean> {
         let html = await this.generateHtml(plans, planId);
 
-        let htmlFile = Util.toFile("plan-report", ".html", html);
+        let htmlFile = await Util.toFile("plan-report", ".html", html);
 
-        env.openExternal(Uri.parse("file://" + htmlFile));
+        return env.openExternal(Uri.parse("file://" + htmlFile));
     }
 
     async generateHtml(plans: Plan[], planId: number = -1): Promise<string> {
@@ -174,6 +175,18 @@ ${objectsHtml}
                     });
                 } catch (err) {
                     console.log(err);
+                    if (err instanceof ValStepError) {
+                        try {
+                            let choice = await window.showErrorMessage("ValStep failed to evaluate the plan values.", "Show", "Ignore");
+                            if (choice === "Show") {
+                                let path = await ValStep.storeError(err);
+                                env.openExternal(Uri.file(path));
+                            }
+                        } catch (err1) {
+                            console.log(err1);
+                        }
+                    }
+                    else {
                     window.showWarningMessage(err);
                 }
             }
@@ -261,7 +274,7 @@ ${stepsInvolvingThisObject}
     renderSwimLameStep(step: PlanStep, plan: Plan, thisObj: string, swimLanes: SwimLane): string {
         let actionColor = this.getActionColor(step, plan.domain);
         let leftOffset = this.computeLeftOffset(step, plan);
-        let width = this.computeWidth(step, plan);
+        let width = this.computeWidth(step, plan) + this.computeRelaxedWidth(step, plan);
         let objects = step.objects
             .map(obj => obj.toLowerCase() === thisObj.toLowerCase() ? '@' : obj)
             .join(' ');

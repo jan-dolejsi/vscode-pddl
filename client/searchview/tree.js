@@ -232,6 +232,10 @@ function clearTree() {
     edges.clear();
 }
 
+function fitTree() {
+    network.fit();
+}
+
 function navigateTreeUp() {
     var selectedNodes = network.getSelectedNodes();
     if (selectedNodes.length == 0) return null;

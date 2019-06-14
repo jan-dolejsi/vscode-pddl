@@ -39,7 +39,6 @@ export class PddlConfiguration {
     async getParserPath(): Promise<string> {
         // this may be 'undefined'
         return vscode.workspace.getConfiguration().get(PARSER_EXECUTABLE_OR_SERVICE);
-
     }
 
     NEVER_SETUP_PARSER = 'neverSetupParser';
@@ -110,7 +109,7 @@ export class PddlConfiguration {
 
             let newParserScope = await this.askConfigurationScope();
 
-            if (!newParserScope) return null;
+            if (!newParserScope) { return null; }
 
             let configurationToUpdate = this.getConfigurationForScope(newParserScope);
 
@@ -169,7 +168,7 @@ export class PddlConfiguration {
             refreshToken: configuration.get<string>(PARSER_SERVICE_AUTHENTICATION_REFRESH_TOKEN),
             accessToken: configuration.get<string>(PARSER_SERVICE_AUTHENTICATION_ACCESS_TOKEN),
             sToken: configuration.get<string>(PARSER_SERVICE_AUTHENTICATION_S_TOKEN),
-        }
+        };
     }
 
     async savePddlParserAuthenticationTokens(configuration: vscode.WorkspaceConfiguration, refreshtoken: string, accesstoken: string, stoken: string, target: vscode.ConfigurationTarget) {
@@ -200,7 +199,7 @@ export class PddlConfiguration {
             refreshToken: configuration.get<string>(PLANNER_SERVICE_AUTHENTICATION_REFRESH_TOKEN),
             accessToken: configuration.get<string>(PLANNER_SERVICE_AUTHENTICATION_ACCESS_TOKEN),
             sToken: configuration.get<string>(PLANNER_SERVICE_AUTHENTICATION_S_TOKEN),
-        }
+        };
     }
 
     async savePddlPlannerAuthenticationTokens(configuration: vscode.WorkspaceConfiguration, refreshtoken: string, accesstoken: string, stoken: string, target: vscode.ConfigurationTarget) {
@@ -241,7 +240,7 @@ export class PddlConfiguration {
 
             let newPlannerScope = await this.askConfigurationScope();
 
-            if (!newPlannerScope) return null;
+            if (!newPlannerScope) { return null; }
             let configurationToUpdate = this.getConfigurationForScope(newPlannerScope);
 
             if (!PddlConfiguration.isHttp(newPlannerPath)) {
@@ -364,7 +363,7 @@ export class PddlConfiguration {
         if (seletedUris) {
             configValue = seletedUris[0].fsPath;
             let scopeToUpdate = await this.askConfigurationScope();
-            if (!scopeToUpdate) return null;
+            if (!scopeToUpdate) { return null; }
             let configurationSection = vscode.workspace.getConfiguration(CONF_PDDL);
             configurationSection.update(configName, configValue, scopeToUpdate.target);
         }
@@ -385,7 +384,7 @@ export class PddlConfiguration {
         // todo: need to support folders?
         //{ label: 'Just one workspace folder', description: 'Selected tool will be used just for one workspace folder...', target: vscode.ConfigurationTarget.WorkspaceFolder }
 
-        let selectedScope = availableScopes.length == 1 ? availableScopes[0] : await vscode.window.showQuickPick(availableScopes,
+        let selectedScope = availableScopes.length === 1 ? availableScopes[0] : await vscode.window.showQuickPick(availableScopes,
             { placeHolder: 'Select the target scope for which this setting should be applied' });
 
         return selectedScope;
@@ -396,10 +395,13 @@ export class PddlConfiguration {
 
         let target: vscode.ConfigurationTarget;
 
-        if (legacyConfig.workspaceFolderValue) target = vscode.ConfigurationTarget.WorkspaceFolder;
-        else if (legacyConfig.workspaceValue) target = vscode.ConfigurationTarget.Workspace;
-        else if (legacyConfig.globalValue) target = vscode.ConfigurationTarget.Global;
-        else if (legacyConfig.defaultValue) {
+        if (legacyConfig.workspaceFolderValue) { 
+            target = vscode.ConfigurationTarget.WorkspaceFolder;
+        } else if (legacyConfig.workspaceValue) {
+            target = vscode.ConfigurationTarget.Workspace;
+        } else if (legacyConfig.globalValue) {
+            target = vscode.ConfigurationTarget.Global;
+        } else if (legacyConfig.defaultValue) {
             await configuration.update(configName, legacyConfig.defaultValue, vscode.ConfigurationTarget.Global);
         }
         if (target) {
@@ -410,7 +412,7 @@ export class PddlConfiguration {
 
     getConfigurationForScope(scope: ScopeQuickPickItem): vscode.WorkspaceConfiguration {
 
-        if (scope.target == vscode.ConfigurationTarget.WorkspaceFolder) {
+        if (scope.target === vscode.ConfigurationTarget.WorkspaceFolder) {
             // let workspaceFolder = await vscode.window.showWorkspaceFolderPick({ placeHolder: 'Pick Workspace Folder to which this setting should be applied' })
             // if (workspaceFolder) {
 

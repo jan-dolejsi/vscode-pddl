@@ -27,9 +27,9 @@ export class PlanFunctionEvaluator {
     }
 
     async evaluate(): Promise<Map<Variable, GroundedFunctionValues>> {
-        let domainFile = Util.toPddlFile("domain", this.plan.domain.getText());
-        let problemFile = Util.toPddlFile("problem", this.plan.problem.getText());
-        let planFile = Util.toPddlFile("plan", this.plan.getText());
+        let domainFile = await Util.toPddlFile("domain", this.plan.domain.getText());
+        let problemFile = await Util.toPddlFile("problem", this.plan.problem.getText());
+        let planFile = await Util.toPddlFile("plan", this.plan.getText());
 
         let chartData = new Map<Variable, GroundedFunctionValues>();
 
@@ -54,8 +54,9 @@ export class PlanFunctionEvaluator {
             let lifted = this.plan.domain.getLiftedFunction(var1);
             let grounded = grouped.get(lifted);
 
-            if (grounded) grounded.push(var1);
-            else {
+            if (grounded) {
+                grounded.push(var1);
+            } else {
                 grouped.set(lifted, [var1]);
             }
         });
@@ -68,6 +69,8 @@ export class PlanFunctionEvaluator {
 
         let finalStateValues = await new ValStep(this.plan.domain, this.plan.problem).execute(this.valStepPath, "", happenings);
 
+        if (finalStateValues === null) { return []; }
+
         return finalStateValues
             .map(value => this.getFunction(value.getVariableName()))
             .filter(variable => variable); // filter out null values
@@ -77,10 +80,10 @@ export class PlanFunctionEvaluator {
         let variableNameFragments = variableName.split(" ");
         let liftedVariableName = variableNameFragments[0];
         let liftedVariable = this.plan.domain.getFunction(liftedVariableName);
-        if (!liftedVariable) return liftedVariable;
+        if (!liftedVariable) { return liftedVariable; }
         let allConstantsAndObjects = TypeObjects.concatObjects(this.plan.domain.constants, this.plan.problem.objects);
         let objects = variableNameFragments.slice(1)
-            .map(objectName => allConstantsAndObjects.find(typeObj => typeObj.hasObject(objectName)).getObjectInstance(objectName))
+            .map(objectName => allConstantsAndObjects.find(typeObj => typeObj.hasObject(objectName)).getObjectInstance(objectName));
         return liftedVariable.bind(objects);
     }
 
@@ -97,7 +100,7 @@ export class PlanFunctionEvaluator {
         // this forces the variable unit of measure to be parsed
         this.plan.domain.findVariableLocation(liftedFunction);
 
-        if (groundedFunctions.length == 0) return;
+        if (groundedFunctions.length === 0) { return; }
 
         let functions = groundedFunctions
             .map(f => f.parameters.length > 0 ? `"${f.getFullName()}"` : f.getFullName())
@@ -105,14 +108,17 @@ export class PlanFunctionEvaluator {
             .join(' ')
             .toLowerCase();
 
-        let child = await process.execSync(`${Util.q(this.valueSeqPath)} -T ${domainFile} ${problemFile} ${planFile} ${functions}`);
+        const valueSeqCommand = `${Util.q(this.valueSeqPath)} -T ${domainFile} ${problemFile} ${planFile} ${functions}`;
+        console.log(valueSeqCommand);
+        let child = await process.execSync(valueSeqCommand);
 
         let csv = child.toString();
+        console.log(csv);
 
         let parser = new PlanTimeSeriesParser(groundedFunctions, csv);
 
         let functionsValuesValues = parser.getFunctionData(liftedFunction);
-        if (functionsValuesValues.isConstant()) return; // it is not interesting...
+        if (functionsValuesValues.isConstant()) { return; } // it is not interesting...
         let functionValues = new GroundedFunctionValues(liftedFunction, functionsValuesValues.values, functionsValuesValues.legend);
         chartData.set(liftedFunction, functionValues.adjustForStepFunctions());
     }
@@ -132,7 +138,7 @@ class GroundedFunctionValues {
     }
 
     undefinedToNull(value: number): number {
-        return value == undefined ? null : value;
+        return value === undefined ? null : value;
     }
 
     adjustForStepFunctions(): GroundedFunctionValues {
@@ -144,7 +150,7 @@ class GroundedFunctionValues {
 
             if (previousTime > time) {
                 time = previousTime + 1e-10;
-            } else if (previousTime == time) {
+            } else if (previousTime === time) {
                 time += 1e-10;
             }
 

@@ -5,6 +5,7 @@
 'use strict';
 
 import * as request from 'request';
+import * as fs from 'fs';
 
 export function getJson(url: string): Promise<any> {
     return new Promise<any>((resolve, reject) => {
@@ -21,6 +22,22 @@ export function getJson(url: string): Promise<any> {
                 }
             }
         });
+    });
+}
+
+export function getFile(url: string, localFilePath: string): Promise<void> {
+    var localFile = fs.createWriteStream(localFilePath);
+
+    return new Promise<void>((resolve, reject) => {
+        request.get(url)
+            .on('response', function (response) {
+                console.log("Downloading %s. Content-type: %s, Status code: %d", url, response.headers['content-type'], response.statusCode);
+            })
+            .on('error', function (err) {
+                reject(err);
+            })
+            .pipe(localFile)
+            .on("close", () => resolve());
     });
 }
 

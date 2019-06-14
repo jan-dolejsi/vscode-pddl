@@ -64,6 +64,7 @@ export class CommandPreProcessor extends PreProcessor {
                         outputWindow.appendLine(error.message)
                         outputWindow.show();
                         reject(error);
+                        return;
                     }
 
                     resolve(that.removeMetaDataLine(stdout));

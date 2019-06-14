@@ -271,6 +271,7 @@ export class PTestExplorer {
             } catch (e) {
                 this.setTestOutcome(test, TestOutcome.FAILED);
                 reject(e);
+                return;
             }
         });
     }

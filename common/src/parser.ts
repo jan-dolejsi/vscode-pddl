@@ -226,11 +226,11 @@ export class Parser {
                 // time initial...
                 time = parseInt(match[5]);
 
-                if(match[6].startsWith('(=')) {
+                if(match[6] && match[6].startsWith('(=')) {
                     // time initial fluent
                     variableName = match[7];
                     value = parseFloat(match[8]);
-                } 
+                }
                 else {
                     // time initial literal
                     variableName = match[9];
@@ -242,9 +242,9 @@ export class Parser {
                     // initial fluent value
                     variableName = match[2];
                     value = parseFloat(match[3]);
-                } 
+                }
                 else {
-                    // initialiezed literal
+                    // initialized literal
                     variableName = match[4];
                     value = true;
                 }

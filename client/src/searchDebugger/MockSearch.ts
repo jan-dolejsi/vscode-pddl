@@ -20,11 +20,13 @@ export class MockSearch {
         let helloWorld = await new Promise<string>((resolve, reject) => {
             request.get(this.url + '/about', (error, httpResponse, httpBody) => {
                 if (error) {
-                    reject(error)
+                    reject(error);
+                    return;
                 }
                 else {
                     if (httpResponse && httpResponse.statusCode > 204) {
                         reject("HTTP status code " + httpResponse.statusCode);
+                        return;
                     }
                     else {
                         resolve(httpBody);
@@ -72,10 +74,12 @@ export class MockSearch {
             request.post(this.url + path, { json: content }, (error, httpResponse, _httpBody) => {
                 if (error) {
                     reject(error);
+                    return;
                 }
                 else {
                     if (httpResponse && httpResponse.statusCode > 204) {
                         reject('HTTP status code ' + httpResponse.statusCode);
+                        return;
                     }
                     else {
                         resolve(void 0);
@@ -243,7 +247,9 @@ class MockStateContext {
     }
 
     getLastHappening(): SearchHappening {
-        if (this.isInitialState()) throw new Error("Check if this is an initial state first..");
+        if (this.isInitialState()) {
+            throw new Error("Check if this is an initial state first..");
+        }
         return this.planHead[this.planHead.length - 1];
     }
 
