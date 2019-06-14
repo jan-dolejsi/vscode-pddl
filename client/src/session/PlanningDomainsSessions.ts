@@ -2,6 +2,8 @@
  * Copyright (c) Jan Dolejsi. All rights reserved.
  * Licensed under the MIT License. See License.txt in the project root for license information.
  * ------------------------------------------------------------------------------------------ */
+'use strict';
+
 import { ExtensionContext, window, Uri, commands, workspace, Disposable, WorkspaceFolder, QuickPickItem, ViewColumn, SourceControl, env } from 'vscode';
 import { firstIndex } from '../utils';
 import * as afs from '../asyncfs';
@@ -9,8 +11,10 @@ import * as path from 'path';
 import { SessionDocumentContentProvider } from './SessionDocumentContentProvider';
 import { SessionSourceControl, SESSION_COMMAND_LOAD, SESSION_COMMAND_CHECKOUT, SESSION_COMMAND_REFRESH_ALL } from './SessionSourceControl';
 import { SESSION_SCHEME, SessionContent, checkSession } from './SessionRepository';
-import { isSessionFolder, readSessionConfiguration, saveConfiguration, SessionMode, toSessionConfiguration } from './SessionConfiguration';
+import { isSessionFolder, readSessionConfiguration, saveConfiguration, SessionMode, toSessionConfiguration, SessionConfiguration } from './SessionConfiguration';
 import { SessionUriHandler } from './SessionUriHandler';
+import { StudentNameParser } from './StudentNameParser';
+import { Classroom, StudentSession } from './Classroom';
 
 /**
  * Handles the life-cycle of the planning-domains sessions.
@@ -69,7 +73,12 @@ export class PlanningDomainsSessions {
         }));
         this.subscribe(commands.registerCommand("pddl.planning.domains.session.share", async (sourceControlPane: SourceControl) => {
             let sourceControl = await this.pickSourceControl(sourceControlPane);
-            if (sourceControl) { this.shareByEmail(sourceControl.getSession()); }
+            if (sourceControl) { this.shareByEmail(sourceControl.getSession(), '', false); }
+        }));
+
+        this.subscribe(commands.registerCommand("pddl.planning.domains.session.generateClassroom", async (sourceControlPane: SourceControl) => {
+            let sourceControl = await this.pickSourceControl(sourceControlPane);
+            if (sourceControl) { this.generateClassroom(sourceControl); }
         }));
 
         this.subscribe(workspace.onDidChangeWorkspaceFolders(e => {
@@ -358,17 +367,17 @@ export class PlanningDomainsSessions {
         env.openExternal(Uri.parse(sessionUri));
     }
 
-    shareByEmail(session: SessionContent): void {
-        let subject = `Planning.Domains session ${session.hash}`;
-        let body = `Open session in your browser: ${this.createBrowserUri(session, false)}
-Open session in Visual Studio Code: ${this.createVSCodeUri(session, false)}`;
+    async shareByEmail(session: SessionConfiguration, email: string, readWrite: boolean): Promise<boolean> {
+        let subject = `Planning.Domains session ${readWrite ? session.writeHash : session.hash}`;
+        let body = `Open session in your browser: ${this.createBrowserUri(session, readWrite)}
+Open session in Visual Studio Code: ${this.createVSCodeUri(session, readWrite)}`;
 
-        let mailTo = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body).replace('%23', '#')}`;
+        let mailTo = `mailto:${email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body).replace('%23', '#')}`;
 
-        env.openExternal(Uri.parse(mailTo));
+        return env.openExternal(Uri.parse(mailTo));
     }
 
-    private createBrowserUri(session: SessionContent, readWrite: boolean): string {
+    private createBrowserUri(session: SessionConfiguration, readWrite: boolean): string {
         var sessionUri = "http://editor.planning.domains/";
         if (session.writeHash && readWrite) {
             sessionUri += "#edit_session=" + session.writeHash;
@@ -379,7 +388,7 @@ Open session in Visual Studio Code: ${this.createVSCodeUri(session, false)}`;
         return sessionUri;
     }
 
-    private createVSCodeUri(session: SessionContent, readWrite: boolean): string {
+    private createVSCodeUri(session: SessionConfiguration, readWrite: boolean): string {
         var sessionUri = "vscode://jan-dolejsi.pddl/planning.domains/session/";
         if (session.writeHash && readWrite) {
             sessionUri += "edit/" + session.writeHash;
@@ -398,6 +407,35 @@ Open session in Visual Studio Code: ${this.createVSCodeUri(session, false)}`;
 
         sourceControl.duplicateAsWritable(folderUris[0]);
     }
+
+    async generateClassroom(templateSourceControl: SessionSourceControl): Promise<void> {
+        let studentNameParser = new StudentNameParser();
+
+        let studentNameInput = await window.showInputBox({
+            ignoreFocusOut: true, prompt: 'List the student names/emails',
+            placeHolder: 'Example: Student1; name@domain.com; Student2 <name@domain.com>',
+            validateInput: input => studentNameParser.validateClassroomNames(input)
+        });
+
+        if (!studentNameInput) { return; }
+
+        let studentNames = studentNameParser.parse(studentNameInput);
+
+        let studentSessions = studentNames
+            // todo: duplicate the session, the code just mocks the new sessions by using the template many times
+            .map(name => new StudentSession(name, toSessionConfiguration(templateSourceControl.getSession().getHash(), SessionMode.READ_WRITE)));
+
+        let workspacePath = await new Classroom(templateSourceControl, studentSessions).createWorkspace();
+
+        let emailPromises = studentSessions
+            .filter(studentSession => studentSession.identity.email)
+            .map(session => this.shareByEmail(session.sessionConfiguration, session.identity.email, true));
+
+        Promise.all(emailPromises);
+
+        commands.executeCommand('vscode.openFolder', Uri.file(workspacePath));
+    }
+
 }
 
 
