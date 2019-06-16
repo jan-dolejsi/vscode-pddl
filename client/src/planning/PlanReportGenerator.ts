@@ -187,7 +187,8 @@ ${objectsHtml}
                         }
                     }
                     else {
-                    window.showWarningMessage(err);
+                        window.showWarningMessage(err);
+                    }
                 }
             }
         }
@@ -231,8 +232,8 @@ ${lineCharts}
 
     isPlanHeadStep(step: PlanStep, plan: Plan): boolean {
         return plan.now === undefined ||
-        step.commitment === PlanStepCommitment.Committed ||
-        step.commitment === PlanStepCommitment.EndsInRelaxedPlan;
+            step.commitment === PlanStepCommitment.Committed ||
+            step.commitment === PlanStepCommitment.EndsInRelaxedPlan;
     }
 
     createPlansChartsScript(plans: Plan[]) {

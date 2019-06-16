@@ -313,7 +313,7 @@
       },
       {
         "command": "pddl.planning.domains.session.generateClassroom",
-        "title": "PDDL: Generate Planning.Domains sessions from template for classroom"
+        "title": "PDDL: Generate Planning.Domains classroom sessions from this template..."
       }
     ],
     "menus": {
@@ -434,6 +434,10 @@
         },
         {
           "command": "pddl.planning.domains.session.share",
+					"when": "scmProvider == planningDomainsSession"
+        },
+        {
+          "command": "pddl.planning.domains.session.generateClassroom",
 					"when": "scmProvider == planningDomainsSession"
         }
 			]

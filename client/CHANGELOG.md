@@ -6,7 +6,13 @@
 - more async I/O
 - tslint warnings addressed
 - search debugger: fit tree with "F"
-- Planning.Domains session support file renaming
+- Planning.Domains session supports file renaming
+- Planning.Domains session may be used as a template for a classroom.
+
+The command _PDDL: Generate Planning.Domains classroom sessions from this template..._ automate the duplication of this session into any number of student sessions. A prompt pops up to submit student names and/or email addresses in a semi-colon separated list. If email address is included, the default email client pops up with a prepared message for each student.
+When all sessions are created, a dedicated VS Code workspace is created for the classroom and VS Code automatically opens it.
+
+![Planning.Domains classroom generation](https://raw.githubusercontent.com/wiki/jan-dolejsi/vscode-pddl/img/Planning.Domains_classroom.gif)
 
 ## [2.11.2] - 2019-05-28
 

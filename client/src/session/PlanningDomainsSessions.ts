@@ -13,7 +13,7 @@ import { SessionSourceControl, SESSION_COMMAND_LOAD, SESSION_COMMAND_CHECKOUT, S
 import { SESSION_SCHEME, SessionContent, checkSession } from './SessionRepository';
 import { isSessionFolder, readSessionConfiguration, saveConfiguration, SessionMode, toSessionConfiguration, SessionConfiguration } from './SessionConfiguration';
 import { SessionUriHandler } from './SessionUriHandler';
-import { StudentNameParser } from './StudentNameParser';
+import { StudentNameParser, StudentName } from './StudentNameParser';
 import { Classroom, StudentSession } from './Classroom';
 
 /**
@@ -405,7 +405,7 @@ Open session in Visual Studio Code: ${this.createVSCodeUri(session, readWrite)}`
             return undefined;
         }
 
-        sourceControl.duplicateAsWritable(folderUris[0]);
+        await sourceControl.duplicateAsWritable(folderUris[0], true);
     }
 
     async generateClassroom(templateSourceControl: SessionSourceControl): Promise<void> {
@@ -419,11 +419,12 @@ Open session in Visual Studio Code: ${this.createVSCodeUri(session, readWrite)}`
 
         if (!studentNameInput) { return; }
 
-        let studentNames = studentNameParser.parse(studentNameInput);
+        let students = studentNameParser.parse(studentNameInput);
 
-        let studentSessions = studentNames
-            // todo: duplicate the session, the code just mocks the new sessions by using the template many times
-            .map(name => new StudentSession(name, toSessionConfiguration(templateSourceControl.getSession().getHash(), SessionMode.READ_WRITE)));
+        let studentSessionsPromises = students
+            .map(async student => await this.duplicateClassroomSession(templateSourceControl, student));
+
+        let studentSessions = await Promise.all(studentSessionsPromises);
 
         let workspacePath = await new Classroom(templateSourceControl, studentSessions).createWorkspace();
 
@@ -431,11 +432,17 @@ Open session in Visual Studio Code: ${this.createVSCodeUri(session, readWrite)}`
             .filter(studentSession => studentSession.identity.email)
             .map(session => this.shareByEmail(session.sessionConfiguration, session.identity.email, true));
 
-        Promise.all(emailPromises);
+        await Promise.all(emailPromises);
 
         commands.executeCommand('vscode.openFolder', Uri.file(workspacePath));
     }
 
+    /** duplicate the session, the code just mocks the new sessions by using the template many times */
+    async duplicateClassroomSession(templateSourceControl: SessionSourceControl, student: StudentName): Promise<StudentSession> {
+        let sessionPath = Classroom.getSessionPath(templateSourceControl, student);
+        let studentSessionHash = await templateSourceControl.duplicateAsWritable(Uri.file(sessionPath), false);
+        return new StudentSession(student, toSessionConfiguration(studentSessionHash, SessionMode.READ_WRITE));
+    }
 }
 
 

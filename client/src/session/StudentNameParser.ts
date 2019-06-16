@@ -4,6 +4,7 @@
  * ------------------------------------------------------------------------------------------ */
 'use strict';
 
+/** Parses student email, name or both  */
 export class StudentNameParser {
 
     parse(input: string): StudentName[] {
@@ -63,6 +64,9 @@ export class StudentName {
         return this.name;
     }
 
+    /**
+     * Returns sanitized student name, so a folder may be created from it.
+     */
     getEffectivePath(): string {
         return this.name.replace(' ', '_').replace('@', '_at_');
     }
