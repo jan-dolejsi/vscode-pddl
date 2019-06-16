@@ -434,11 +434,11 @@
         },
         {
           "command": "pddl.planning.domains.session.share",
-					"when": "scmProvider == planningDomainsSession"
+          "when": "scmProvider == planningDomainsSession"
         },
         {
           "command": "pddl.planning.domains.session.generateClassroom",
-					"when": "scmProvider == planningDomainsSession"
+          "when": "scmProvider == planningDomainsSession"
         }
       ]
     },
