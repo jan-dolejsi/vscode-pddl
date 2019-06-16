@@ -1,12 +1,26 @@
 # PDDL support - What's new?
 
-## [2.11.??] - 2019-06-??
+## [2.11.3] - 2019-06-17
 
-- valstep errors are now reporting the input data to be sent as a bug report
+### Planning.Domains classroom generation from a template session
+
+Planning.Domains session may be used as a template for an entire classroom bulk creation.
+
+The command _PDDL: Generate Planning.Domains classroom sessions from this template..._ automate the duplication of this session into any number of student sessions. A prompt pops up to submit student names and/or email addresses in a semi-colon separated list. If email address is included, the default email client pops up with a prepared message for each student.
+When all sessions are created, a dedicated VS Code workspace is created for the classroom and VS Code automatically opens it.
+
+![Planning.Domains classroom generation](https://raw.githubusercontent.com/wiki/jan-dolejsi/vscode-pddl/img/Planning.Domains_classroom.gif)
+
+### Other improvements
+
+- Search Debugger: fit tree to available viewport with "F"
+- Planning.Domains session supports file renaming
+- ValStep errors reporting was enhanced to be able to send  the input data as a bug report
+
+### Codebase engineering work
+
 - more async I/O
 - tslint warnings addressed
-- search debugger: fit tree with "F"
-- Planning.Domains session support file renaming
 
 ## [2.11.2] - 2019-05-28
 
@@ -567,7 +581,8 @@ Note for open source contributors: all notable changes to the "pddl" extension w
 
 Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
 
-[Unreleased]: https://github.com/jan-dolejsi/vscode-pddl/compare/v2.11.2...HEAD
+[Unreleased]: https://github.com/jan-dolejsi/vscode-pddl/compare/v2.11.3...HEAD
+[2.11.3]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.11.2...v2.11.3
 [2.11.2]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.11.1...v2.11.2
 [2.11.1]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.10.2...v2.11.1
 [2.10.2]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.10.0...v2.10.2

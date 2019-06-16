@@ -408,18 +408,22 @@ export class SessionSourceControl implements vscode.Disposable {
 	/**
 	 * Creates a copy of the current session on the server and requests it to be cloned to the targetLocalFolder.
 	 * @param targetLocalFolder local folder uri, where the session should be cloned
+	 * @param downloadIt if _true_, session files are downloaded after the session is duplicated
+	 * @returns new session hash
 	 */
-	async duplicateAsWritable(targetLocalFolder: vscode.Uri): Promise<string> {
+	async duplicateAsWritable(targetLocalFolder: vscode.Uri, downloadIt: boolean): Promise<string> {
 		try {
 			let currentSession = await this.getCurrentSession();
 			let newSessionWriteHash: string = await duplicateSession(currentSession);
 
-			// trigger the command to download the new session
-			vscode.commands.executeCommand(SESSION_COMMAND_LOAD, newSessionWriteHash, targetLocalFolder);
+			if (downloadIt) {
+				// trigger the command to download the new session
+				vscode.commands.executeCommand(SESSION_COMMAND_LOAD, newSessionWriteHash, targetLocalFolder);
+			}
 
 			return newSessionWriteHash;
 		} catch (ex) {
-			vscode.window.showErrorMessage("Failed creating duplicate session in Planning.Domains session. " + ex.message);
+			vscode.window.showErrorMessage("Failed creating duplicate session in Planning.Domains. " + ex.message);
 		}
 
 		return null;

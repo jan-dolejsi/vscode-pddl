@@ -456,15 +456,25 @@ The _Source Control_ pane has icons for:
 * discarding local changes and
 * checking if a new version of the session is available.
 
-The [...] menu contains three more options:
+The [...] menu contains more options:
 
 * Session may be duplicated (as a new writable session), which is useful when the session was open as read-only.
-* Session may be open in the default browser, or
-* shared via email, if default email client is installed to handle the `mailto:` protocol.
+* Session may be open in the default browser,
+* Session may be shared via email, if default email client is installed to handle the `mailto:` protocol, or
+* Session may be used as a template to generate entire classroom of sessions, while emailing every student a link to theri session using the _PDDL: Generate Planning.Domains classroom sessions from this template..._ command.
 
 Using the _duplicate session_ and _share via email_ commands, a teacher can create a session for everyone in the classroom and monitor progress of all students from VS Code.
 
 ![Planning.Domains Sessions for classroom](https://raw.githubusercontent.com/wiki/jan-dolejsi/vscode-pddl/img/Planning.Domains_classroom_in_VSCode.gif)
+
+The command _PDDL: Generate Planning.Domains classroom sessions from this template..._ automate the duplication of this session into any number of student sessions. A prompt pops up to submit student names and/or email addresses in a semi-colon separated list. If email address is included, the default email client pops up with a prepared message for each student.
+When all sessions are created, a dedicated VS Code workspace is created for the classroom and VS Code automatically opens it.
+
+![Planning.Domains classroom generation](https://raw.githubusercontent.com/wiki/jan-dolejsi/vscode-pddl/img/Planning.Domains_classroom.gif)
+
+#### Working with multiple-sessions in VS Code
+
+The support for multiple sessions or even the entire classroom of sessions per student is built using the VS Code Workspace Folders facility. Each workspace folder in this case is its own Source Control root. The Source Control panel lets you select the session you want to interact with and the status bar starts from the left with a version indicator pertaining to the selected (or first) workspace folder.
 
 The status bar of VS Code shows the state of the session. If multiple session folders are included in the VS Code workspace, the session of interest may be selected using the top part of the _Source Control_ pane.
 
