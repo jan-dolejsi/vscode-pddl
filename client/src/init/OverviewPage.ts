@@ -82,7 +82,7 @@ export class OverviewPage {
     async handleMessage(message: any): Promise<void> {
         console.log(`Message received from the webview: ${message.command}`);
 
-        switch(message.command){
+        switch (message.command) {
             case 'shouldShowOverview':
                 this.context.globalState.update(SHOULD_SHOW_OVERVIEW_PAGE, message.value);
                 break;
@@ -90,12 +90,12 @@ export class OverviewPage {
                 try {
                     await this.helloWorld();
                 }
-                catch(ex){
-                    window.showErrorMessage(ex);
+                catch (ex) {
+                    window.showErrorMessage(ex.message);
                 }
                 break;
             case 'clonePddlSamples':
-                commands.executeCommand("git.clone", Uri.parse("https://github.com/jan-dolejsi/vscode-pddl-samples"));
+                commands.executeCommand("git.clone", "https://github.com/jan-dolejsi/vscode-pddl-samples.git");
                 break;
             case 'plannerOutputTarget':
                 workspace.getConfiguration("pddlPlanner").update("executionTarget", message.value, ConfigurationTarget.Global);
@@ -110,33 +110,33 @@ export class OverviewPage {
     async helloWorld(): Promise<void> {
         let folder: Uri = undefined;
 
-        if (workspace.workspaceFolders.length === 0) {
-            let folders = await window.showOpenDialog({canSelectFiles: false, canSelectFolders: true, canSelectMany: false, openLabel: 'Select folder for hello world...'});
+        if (!workspace.workspaceFolders || workspace.workspaceFolders.length === 0) {
+            let folders = await window.showOpenDialog({ canSelectFiles: false, canSelectFolders: true, canSelectMany: false, openLabel: 'Select folder for hello world...' });
             if (folders) {
                 folder = folders[0];
             }
         } else if (workspace.workspaceFolders.length === 1) {
             folder = workspace.workspaceFolders[0].uri;
         } else {
-            let selectedFolder = await window.showWorkspaceFolderPick({placeHolder: 'Select workspace folder for Hello World!'});
+            let selectedFolder = await window.showWorkspaceFolderPick({ placeHolder: 'Select workspace folder for Hello World!' });
             folder = selectedFolder.uri;
         }
 
         let domainResourcePath = this.context.asAbsolutePath('overview/domain.pddl');
         let domainText = await afs.readFile(domainResourcePath, { encoding: "utf-8" });
-        let domainPath = path.join(folder.fsPath, "domain.pddl");
-        if (await afs.exists(domainPath)) { throw new Error("File 'domain.pddl' already exists."); }
-        await afs.writeFile(domainPath, domainText, {encoding: "utf-8"});
+        let domainPath = path.join(folder.fsPath, "helloWorldDomain.pddl");
+        if (await afs.exists(domainPath)) { throw new Error("File 'helloWorldDomain.pddl' already exists."); }
+        await afs.writeFile(domainPath, domainText, { encoding: "utf-8" });
         let domainDocument = await workspace.openTextDocument(domainPath);
-        await window.showTextDocument(domainDocument, {viewColumn: ViewColumn.One, preview: false});
+        await window.showTextDocument(domainDocument, { viewColumn: ViewColumn.One, preview: false });
 
         let problemResourcePath = this.context.asAbsolutePath('overview/problem.pddl');
         let problemText = await afs.readFile(problemResourcePath, { encoding: "utf-8" });
-        let problemPath = path.join(folder.fsPath, "problem.pddl");
-        if (await afs.exists(problemPath)) { throw new Error("File 'problem.pddl' already exists."); }
-        await afs.writeFile(problemPath, problemText, {encoding: "utf-8"});
+        let problemPath = path.join(folder.fsPath, "helloWorldProblem.pddl");
+        if (await afs.exists(problemPath)) { throw new Error("File 'helloWorldProblem.pddl' already exists."); }
+        await afs.writeFile(problemPath, problemText, { encoding: "utf-8" });
         let problemDocument = await workspace.openTextDocument(problemPath);
-        window.showTextDocument(problemDocument, {viewColumn: ViewColumn.Two, preview: false});
+        window.showTextDocument(problemDocument, { viewColumn: ViewColumn.Two, preview: false });
 
         commands.executeCommand("pddl.planAndDisplayResult", domainDocument.uri, problemDocument.uri, folder.fsPath, "");
     }

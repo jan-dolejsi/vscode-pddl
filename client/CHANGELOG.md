@@ -1,5 +1,14 @@
 # PDDL support - What's new?
 
+## [2.11.4] - 2019-06-19
+
+### Fixes
+
+#### PDDL Overview Page
+
+- Hello World example command on the Overview Page now works even when no workspace folder was selected, and properly shows error messages when files with conflicting names are already present.
+- PDDL Sample git repo cloning is fixed (the command no longer accepts _Uri_, but string)
+
 ## [2.11.3] - 2019-06-17
 
 ### Planning.Domains classroom generation from a template session
@@ -553,7 +562,6 @@ Simplified snippets and added tabstops/placeholders to them, so they are easy to
 
 ## Future work
 
-- Port custom html views to webview API
 - Review configuration properties scope - which properties should be moved to 'application' scope?
 - Validate new symbol name while renaming using `prepareRename`
 - Rename parameters and objects
@@ -563,7 +571,6 @@ Simplified snippets and added tabstops/placeholders to them, so they are easy to
 - Any other extensions to put into extensions.json?
 - Review the ViewColumn usage following the Grid View feature availability in VS Code
 - Add a file system provider (readonly) for the IPC community and adapt it to the test cases manifests for ease of use
-- Add support for file stored in a session inside editor.planning.domains web interface
 - Add ['unused' warning](https://code.visualstudio.com/updates/v1_25#_diagnostictag)
 
 ## [Unreleased]
@@ -581,7 +588,8 @@ Note for open source contributors: all notable changes to the "pddl" extension w
 
 Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
 
-[Unreleased]: https://github.com/jan-dolejsi/vscode-pddl/compare/v2.11.3...HEAD
+[Unreleased]: https://github.com/jan-dolejsi/vscode-pddl/compare/v2.11.4...HEAD
+[2.11.4]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.11.3...v2.11.4
 [2.11.3]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.11.2...v2.11.3
 [2.11.2]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.11.1...v2.11.2
 [2.11.1]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.10.2...v2.11.1
