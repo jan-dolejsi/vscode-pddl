@@ -11,7 +11,7 @@ import { HappeningsInfo } from "../../common/src/HappeningsInfo";
 import { PddlWorkspace } from '../../common/src/workspace-model';
 import { PddlExtensionContext } from '../../common/src/PddlExtensionContext';
 import { basename, join } from 'path';
-import * as afs from './asyncfs';
+import * as afs from '../../common/src/asyncfs';
 
 export function isAnyPddl(doc: TextDocument): boolean {
     return isPddl(doc) || isPlan(doc) || isHappenings(doc);

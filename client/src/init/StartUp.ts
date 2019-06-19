@@ -12,7 +12,7 @@ import { PddlConfiguration } from '../configuration';
 
 import {diff} from 'semver';
 import { OverviewPage, SHOULD_SHOW_OVERVIEW_PAGE } from './OverviewPage';
-import * as afs from '../asyncfs';
+import * as afs from '../../../common/src/asyncfs';
 
 enum TipResponse { Ok, Later, Next }
 

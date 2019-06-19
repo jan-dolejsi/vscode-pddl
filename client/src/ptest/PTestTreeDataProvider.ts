@@ -9,7 +9,7 @@ import {
 } from 'vscode';
 import { basename, join } from 'path';
 import { readdirSync, statSync } from 'fs';
-import * as afs from '../asyncfs';
+import * as afs from '../../../common/src/asyncfs';
 import { TestsManifest } from './TestsManifest';
 import { TestOutcome, Test } from './Test';
 import { PddlExtensionContext } from '../../../common/src/PddlExtensionContext';

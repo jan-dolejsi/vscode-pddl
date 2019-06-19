@@ -5,7 +5,7 @@
 'use strict';
 
 import { Uri, window, workspace, Range, ViewColumn } from 'vscode';
-import * as afs from '../asyncfs';
+import * as afs from '../../../common/src/asyncfs';
 
 export async function exportToAndShow(text: string, uri: Uri): Promise<boolean> {
     let fileExists = await afs.exists(uri.fsPath);

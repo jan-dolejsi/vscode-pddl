@@ -7,7 +7,7 @@ import * as vscode from 'vscode';
 import { SessionRepository, getSession, SessionContent, uploadSession, duplicateSession, checkSession } from './SessionRepository';
 import * as path from 'path';
 import { toFuzzyRelativeTime } from '../utils';
-import * as afs from '../asyncfs';
+import * as afs from '../../../common/src/asyncfs';
 import * as fs from 'fs';
 import { SessionConfiguration, saveConfiguration, SessionMode, toSessionConfiguration, CONFIGURATION_FILE } from './SessionConfiguration';
 

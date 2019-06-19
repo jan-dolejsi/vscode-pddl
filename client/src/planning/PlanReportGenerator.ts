@@ -19,7 +19,7 @@ import { Util } from '../../../common/src/util';
 import { PlanFunctionEvaluator } from './PlanFunctionEvaluator';
 import { PlanReportSettings } from './PlanReportSettings';
 import { VAL_STEP_PATH, CONF_PDDL, PDDL_PLANNER, VALUE_SEQ_PATH } from '../configuration';
-import * as afs from '../asyncfs';
+import * as afs from '../../../common/src/asyncfs';
 import { ValStepError, ValStep } from '../debugger/ValStep';
 const DIGITS = 4;
 
@@ -322,7 +322,12 @@ ${stepsInvolvingThisObject}
         let durationRow = step.isDurative ?
             `Duration: ${step.getDuration().toFixed(DIGITS)}, End: ${step.getEndTime().toFixed(DIGITS)}` :
             '';
-        return `${step.actionName} ${step.objects.join(' ')}, Start: ${step.getStartTime().toFixed(DIGITS)} ${durationRow}`;
+
+        let startTime = step.getStartTime() !== undefined ?
+            `, Start: ${step.getStartTime().toFixed(DIGITS)}` :
+            '';
+
+        return `${step.actionName} ${step.objects.join(' ')}${startTime} ${durationRow}`;
     }
 
     async includeStyle(uri: Uri): Promise<string> {
