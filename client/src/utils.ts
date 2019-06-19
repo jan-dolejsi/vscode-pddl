@@ -148,14 +148,14 @@ export async function getWebViewHtml(extensionContext: ExtensionContext, relativ
     let overviewHtmlPath = extensionContext.asAbsolutePath(join(relativePath, htmlFileName));
     let html = await afs.readFile(overviewHtmlPath, { encoding: "utf-8" });
 
-    html = html.replace(/<(script|img|link) +(src|href)="([^"]+)"/g, (sourceElement: string, elementName: string, attribName: string, attribValue: string) => {
+    html = html.replace(/<(script|img|link) ([^>]*)(src|href)="([^"]+)"/g, (sourceElement: string, elementName: string, middleBits: string, attribName: string, attribValue: string) => {
         if (attribValue.startsWith('http')) {
             return sourceElement;
         }
         let resource = Uri.file(
             extensionContext.asAbsolutePath(join(relativePath, attribValue)))
             .with({ scheme: "vscode-resource" });
-        return `<${elementName} ${attribName}="${resource}"`;
+        return `<${elementName} ${middleBits}${attribName}="${resource}"`;
     });
 
     return html;

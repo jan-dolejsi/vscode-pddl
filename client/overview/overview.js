@@ -23,10 +23,41 @@ function updateConfiguration(message) {
     document.getElementById('planner').value = message.planner;
     document.getElementById('parser').value = message.parser;
     document.getElementById('validator').value = message.validator;
-    document.getElementById('autoSaveDiv').style.display =
-        message.autoSave == "off" ? "unset" : "none";
+    setStyleDisplay('installIconsAlert', message.showInstallIconsAlert, "list-item");
+    setStyleDisplay('enableIconsAlert', message.showEnableIconsAlert, "list-item");
+    setStyleDisplay('enableAutoSaveAlert', message.autoSave == "off", "list-item")
+    setStyleDisplay('alertList', hasAnyChildrenToDisplay('alertList'), "block");
     updatePlannerOutputTarget(message.plannerOutputTarget);
     updateShowOverviewChanged(message.shouldShow);
+}
+
+/**
+ * Converts a boolean to a display style
+ * @param {string} elementId element ID
+ * @param {boolean} shouldDisplay true if the element should display
+ * @param {string} displayStyle style display value, if the element should be shown
+ */
+function setStyleDisplay(elementId, shouldDisplay, displayStyle) {
+    const element = document.getElementById(elementId);
+    const style = shouldDisplay ? displayStyle : "none";
+    element.style.display = style;
+}
+
+/**
+ * Returns true if at least one element has not-"none" display style
+ * @param {string} elementId html element ID
+ */
+function hasAnyChildrenToDisplay(elementId) {
+    const parent = document.getElementById(elementId);
+    for (let index = 0; index < parent.childElementCount; index++) {
+        const child = parent.children.item(index);
+        if (child.nodeType != Node.ELEMENT_NODE) continue;
+
+        if (child.style.display != "none") {
+            return true;
+        }
+    }
+    return false;
 }
 
 function updatePlannerOutputTarget(value) {
@@ -85,6 +116,17 @@ function tryHelloWorld() {
     })
 }
 
+function installIcons() {
+    postMessage({
+        command: 'installIcons'
+    })
+}
+
+function enableIcons() {
+    postMessage({
+        command: 'enableIcons'
+    })
+}
 function postMessage(message) {
     if (vscode) vscode.postMessage(message);
 }
@@ -97,7 +139,9 @@ function populateWithTestData() {
             parser: "parser.exe",
             validator: "validate.exe",
             autoSave: "off",
-            shouldShow: true
+            shouldShow: true,
+            showInstallIconsAlert: true,
+            showEnableIconsAlert: true,
         });
     }
 }
