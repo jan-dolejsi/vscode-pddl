@@ -26,6 +26,7 @@ function updateConfiguration(message) {
     setStyleDisplay('installIconsAlert', message.showInstallIconsAlert, "list-item");
     setStyleDisplay('enableIconsAlert', message.showEnableIconsAlert, "list-item");
     setStyleDisplay('enableAutoSaveAlert', message.autoSave == "off", "list-item")
+    setStyleDisplay('downloadValAlert', message.downloadValAlert, "list-item")
     setStyleDisplay('alertList', hasAnyChildrenToDisplay('alertList'), "block");
     updatePlannerOutputTarget(message.plannerOutputTarget);
     updateShowOverviewChanged(message.shouldShow);

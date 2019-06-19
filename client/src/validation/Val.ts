@@ -5,12 +5,9 @@
 'use strict';
 
 import { commands, ExtensionContext, window, ProgressLocation, workspace, ConfigurationTarget } from 'vscode';
-// var http = require('http');
-// import * as fs from 'fs';
-// var fs = require('fs');
 import * as path from 'path';
 import { getFile } from '../httpUtils';
-import { mkdirIfDoesNotExist, writeFile, unlink } from '../asyncfs';
+import { mkdirIfDoesNotExist, writeFile, unlink } from '../../../common/src/asyncfs';
 import * as os from 'os';
 import * as AdmZip from 'adm-zip';
 

@@ -179,6 +179,7 @@ export class OverviewPage {
             autoSave: workspace.getConfiguration().get<String>("files.autoSave"),
             showInstallIconsAlert: !this.iconsInstalled,
             showEnableIconsAlert: this.iconsInstalled && workspace.getConfiguration().get<String>("workbench.iconTheme") !== "vscode-icons",
+            downloadValAlert: !this.pddlConfiguration.getValidatorPath(),
         };
         this.webViewPanel.webview.postMessage(message);
     }
