@@ -8,12 +8,13 @@ import { readFileSync } from 'fs';
 import { Test } from './Test';
 import { Uri, window } from 'vscode';
 import { PddlExtensionContext } from '../../../common/src/PddlExtensionContext';
+import { writeFile } from '../../../common/src/asyncfs';
 
 /**
  * Tests manifest
  */
 export class TestsManifest {
-    
+
     path: string;
     testCases: Test[] = [];
 
@@ -44,7 +45,7 @@ export class TestsManifest {
         return TestsManifest.fromJSON(path, json, context);
     }
 
-    store() {
+    async store(): Promise<void> {
         let obj: any = {};
         if (this.defaultDomain !== null) { obj["defaultDomain"] = this.defaultDomain; }
         if (this.defaultProblem !== null) { obj["defaultProblem"] = this.defaultProblem; }
@@ -54,10 +55,11 @@ export class TestsManifest {
         if (cases.length > 0) { obj["cases"] = cases; }
 
         var json = JSON.stringify(obj, null, 2);
-        var fs = require('fs');
-        fs.writeFile(this.uri.fsPath, json, 'utf8', (err: Error, data: string) => {
-            if (err) window.showErrorMessage(`Error saving test case manifest ${err.name}: ${err.message}`);
-            data;
-        });
+        try {
+            await writeFile(this.uri.fsPath, json, 'utf8');
+        }
+        catch(err) {
+            window.showErrorMessage(`Error saving test case manifest ${err.name}: ${err.message}`);
+        }
     }
 }
