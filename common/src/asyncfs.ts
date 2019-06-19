@@ -6,7 +6,6 @@
 
 import * as fs from 'fs';
 const util = require('util');
-require('util.promisify').shim();
 
 export const readFile = util.promisify(fs.readFile);
 export const writeFile = util.promisify(fs.writeFile);

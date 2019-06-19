@@ -6,7 +6,8 @@
 
 import * as fs from 'fs';
 const util = require('util');
-require('util.promisify').shim();
+
+// this file is deprecated. Import from the same file in the 'common' module.
 
 export const readFile = util.promisify(fs.readFile);
 export const writeFile = util.promisify(fs.writeFile);
