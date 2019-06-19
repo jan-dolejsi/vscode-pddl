@@ -6,10 +6,6 @@ start CHANGELOG.html
 echo Check the CHANGELOG file that just opened in your favorit browser before you continue.
 pause
 
-:: must use NPM 5.5.1, because later versions have this issue:
-:: https://github.com/Microsoft/vscode-vsce/issues/246
-call npm install -g npm@5.5.1
-
 call vsce ls
 echo Review the files included before you continue
 pause
