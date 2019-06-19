@@ -5,7 +5,7 @@
 'use strict';
 
 import {
-    window, ExtensionContext, Uri, ViewColumn, WebviewPanel, commands, workspace, ConfigurationTarget
+    window, ExtensionContext, Uri, ViewColumn, WebviewPanel, commands, workspace, ConfigurationTarget, extensions
 } from 'vscode';
 
 import { PddlConfiguration } from '../configuration';
@@ -20,10 +20,15 @@ export const LAST_SHOWN_OVERVIEW_PAGE = 'lastShownOverviewPage';
 export class OverviewPage {
 
     private webViewPanel: WebviewPanel;
+    private iconsInstalled: boolean;
+
+    private readonly ICONS_EXTENSION_NAME = "vscode-icons-team.vscode-icons";
 
     constructor(private context: ExtensionContext, private pddlConfiguration: PddlConfiguration) {
         commands.registerCommand("pddl.showOverview", () => this.showWelcomePage(true));
         workspace.onDidChangeConfiguration(_ => this.updatePageConfiguration(), undefined, this.context.subscriptions);
+        extensions.onDidChange(() => this.updateIconsAlerts(), this.context.subscriptions);
+        this.updateIconsAlerts();
     }
 
     async showWelcomePage(showAnyway: boolean): Promise<void> {
@@ -100,6 +105,17 @@ export class OverviewPage {
             case 'plannerOutputTarget':
                 workspace.getConfiguration("pddlPlanner").update("executionTarget", message.value, ConfigurationTarget.Global);
                 break;
+            case 'installIcons':
+                try {
+                    await commands.executeCommand("workbench.extensions.installExtension", this.ICONS_EXTENSION_NAME);
+                }
+                catch (err) {
+                    window.showErrorMessage("Could not install the VS Code Icons extension: " + err);
+                }
+                break;
+            case 'enableIcons':
+                    await workspace.getConfiguration().update("workbench.iconTheme", "vscode-icons", ConfigurationTarget.Global);
+                break;
             default:
                 console.warn('Unexpected command: ' + message.command);
         }
@@ -146,6 +162,11 @@ export class OverviewPage {
         return html;
     }
 
+    updateIconsAlerts(): void {
+        this.iconsInstalled = extensions.getExtension(this.ICONS_EXTENSION_NAME) !== undefined;
+        this.updatePageConfiguration();
+    }
+
     async updatePageConfiguration(): Promise<void> {
         if (!this.webViewPanel) { return; }
         let message = {
@@ -155,7 +176,9 @@ export class OverviewPage {
             parser: await this.pddlConfiguration.getParserPath(),
             validator: await this.pddlConfiguration.getValidatorPath(),
             shouldShow: this.context.globalState.get<boolean>(SHOULD_SHOW_OVERVIEW_PAGE, true),
-            autoSave: workspace.getConfiguration().get<String>("files.autoSave")
+            autoSave: workspace.getConfiguration().get<String>("files.autoSave"),
+            showInstallIconsAlert: !this.iconsInstalled,
+            showEnableIconsAlert: this.iconsInstalled && workspace.getConfiguration().get<String>("workbench.iconTheme") !== "vscode-icons",
         };
         this.webViewPanel.webview.postMessage(message);
     }

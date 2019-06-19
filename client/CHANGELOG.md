@@ -1,5 +1,11 @@
 # PDDL support - What's new?
 
+## [2.11.5] - 2019-06-??
+
+Overview Page shows non-intrusive alerts when the extension configuration is not optimal.
+
+![Overview Page shows alerts](https://raw.githubusercontent.com/wiki/jan-dolejsi/vscode-pddl/img/OverviewPage.jpg)
+
 ## [2.11.4] - 2019-06-19
 
 ### Fixes

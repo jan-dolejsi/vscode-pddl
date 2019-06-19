@@ -1,113 +1,129 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script src="overview.js"></script>
+    <link rel="stylesheet" type="text/css" href="overview.css">
+    </link>
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
     <title>AI Planning and PDDL support in VS Code</title>
-    <style>
-        p, div, h1, h2, h3 {
-            font-weight: 400
-        }
-        img.fileIcon {width: 18px; vertical-align: text-bottom;}
-        img.configIcon {vertical-align: text-bottom;}
-        input.config {
-            height: 16px;
-            min-width: 250px;
-            max-width: 600px;
-        }
-        a.button {
-            -webkit-appearance: button;
-            -moz-appearance: button;
-            appearance: button;
-
-            text-decoration: none;
-            color: initial;
-
-            height: 22px;
-            width: 22px;
-            vertical-align: inherit;
-            margin-left: 3px;
-            text-align: center;
-        }
-        div.hint {
-            color: gray
-        }
-    </style>
 </head>
+
 <body onload="populateWithTestData()">
     <h1>AI Planning and PDDL support in VS Code</h1>
+
+    <ul id="alertList" class="alertList">
+        <li id="installIconsAlert" class="alert">Improve usability by installing the <a
+                href="command:extension.open?%22vscode-icons-team.vscode-icons%22"
+                title="Extension that brings clearer file icons.">VS Code Icons for PDDL files</a> to quickly
+            distinguish PDDL files
+            <button onclick="installIcons()">Install icons e.g.
+                <img src="file_type_pddl.svg" class="fileIcon" title="Icon of domain and problem files." />
+                <img src="file_type_pddl_plan.svg" class="fileIcon" title="Icon for plan files." />
+                <img src="file_type_pddl_happenings.svg" class="fileIcon" title="Icon for happenings files." />
+            </button>
+        </li>
+        <li id="enableIconsAlert" class="alert">Enable VS Code Icons extension to quickly distinguish PDDL files
+            <button onclick="enableIcons()" class="button">Enable icons e.g.
+                <img src="file_type_pddl.svg" class="fileIcon" title="Icon of domain and problem files." />
+                <img src="file_type_pddl_plan.svg" class="fileIcon" title="Icon for plan files." />
+                <img src="file_type_pddl_happenings.svg" class="fileIcon" title="Icon for happenings files." />
+            </button>
+        </li>
+        <li id="enableAutoSaveAlert" class="alert">When processing files using command-line tools, it is simpler to enable file auto-saving. <a href="command:workbench.action.toggleAutoSave" class="button" style="width: 150px">Enable auto-save</a>
+            <br />It is also recommended to go run the <i>Git: Initialize Repository</i> command to enjoy safety of
+            version control and never miss a working version.
+        </li>
+    </ul>
 
     <table style="width: 100%">
         <tr style="vertical-align: top">
             <td style="padding-right: 20px; white-space: nowrap">
                 <h2>Getting started</h2>
-                Try <a href="#" onclick="tryHelloWorld()" title="Creates the simplest PDDL example, invokes the planner and displays the plan.">Hello World</a> example<br/>
-                <a href="https://github.com/jan-dolejsi/vscode-pddl-samples/">See</a> or <a href="#" onclick="clonePddlSamples()" title="Select a local folder and samples will be downloaded.">clone PDDL samples</a><br/>
+                Try <a href="#" onclick="tryHelloWorld()"
+                    title="Creates the simplest PDDL example, invokes the planner and displays the plan.">Hello
+                    World</a> example<br />
+                <a href="https://github.com/jan-dolejsi/vscode-pddl-samples/">See</a> or <a href="#"
+                    onclick="clonePddlSamples()" title="Select a local folder and samples will be downloaded.">clone
+                    PDDL samples</a><br />
 
                 <h2>Configuration</h2>
                 <h3>Planning engine</h3>
-                <input type="text" id="planner" class="config" readonly/>
-                <a href="command:pddl.configurePlanner" class="button" title="Configure..."><img src="gear.svg" class="configIcon"/></a><br/>
-                See <a href="https://github.com/jan-dolejsi/vscode-pddl/wiki/Configuring-the-PDDL-planner">more info about PDDL planners</a>
+                <input type="text" id="planner" class="config" readonly />
+                <a href="command:pddl.configurePlanner" class="button" title="Configure..."><img src="gear.svg"
+                        class="configIcon" /></a><br />
+                See <a href="https://github.com/jan-dolejsi/vscode-pddl/wiki/Configuring-the-PDDL-planner">more info
+                    about PDDL planners</a>
 
-                <br/>
+                <br />
                 <form action="#" onchange="return onPlannerOutputTargetChanged();">Output into
-                    <input type="radio" name="planner_output_target" value="Output window" id="planner_output_target_output_window"/>
+                    <input type="radio" name="planner_output_target" value="Output window"
+                        id="planner_output_target_output_window" />
                     <label for="planner_output_target_output_window">Output window</label>
-                    <input type="radio" name="planner_output_target" value="Terminal" title="Does not visualize plans!" id="planner_output_target_terminal"/>
+                    <input type="radio" name="planner_output_target" value="Terminal" title="Does not visualize plans!"
+                        id="planner_output_target_terminal" />
                     <label for="planner_output_target_terminal">Terminal</label>
-                    <input type="radio" name="planner_output_target" value="Search debugger" title="Keeps Search debugger in the forefront." id="planner_output_target_search_debugger"/>
+                    <input type="radio" name="planner_output_target" value="Search debugger"
+                        title="Keeps Search debugger in the forefront." id="planner_output_target_search_debugger" />
                     <label for="planner_output_target_search_debugger">Search debugger</label>
                 </form>
 
                 <h3>PDDL parser</h3>
-                <input type="text" id="parser" class="config" readonly/>
-                <a href="command:pddl.configureParser" class="button" title="Configure..."><img src="gear.svg" class="configIcon"/></a><br/>
-                See <a href="https://github.com/jan-dolejsi/vscode-pddl/wiki/Configuring-the-PDDL-parser">more info about PDDL parsers</a>
+                <input type="text" id="parser" class="config" readonly />
+                <a href="command:pddl.configureParser" class="button" title="Configure..."><img src="gear.svg"
+                        class="configIcon" /></a><br />
+                See <a href="https://github.com/jan-dolejsi/vscode-pddl/wiki/Configuring-the-PDDL-parser">more info
+                    about PDDL parsers</a>
 
                 <h3>Plan Validator</h3>
-                <input type="text" id="validator" class="config" readonly/>
-                <a href="command:pddl.configureValidate" class="button" title="Configure..."><img src="gear.svg" class="configIcon"/></a><br/>
-                <a href="command:pddl.downloadVal" title="Click to initiate download. You will be able to see what is being downloaded and from where...">Download</a> plan validation tools<br/>
-
-                <div id="autoSaveDiv">
-                    <h3>Auto-save files</h3>
-                    <div style="white-space:normal">
-                        <a href="command:workbench.action.toggleAutoSave" class="button" style="width: 150px">Enable auto-save</a>
-                        <br/>When processing files using command-line tools, it is simpler to enable file auto-saving.
-                        <br/>It is also recommended to go run the <i>Git: Initialize Repository</i> command to enjoy safety of version control and never miss a working version.
-                    </div>
-                </div>
+                <input type="text" id="validator" class="config" readonly />
+                <a href="command:pddl.configureValidate" class="button" title="Configure..."><img src="gear.svg"
+                        class="configIcon" /></a><br />
+                        Clone and compile <a href="https://github.com/KCL-Planning/VAL">VAL from GitHub</a> or...<br/>
+                        <a href="command:pddl.downloadVal"
+                    title="Click to initiate download. You will be able to see what is being downloaded and from where...">Download</a>
+                plan validation tools
             </td>
             <td style="white-space: nowrap">
                 <h2>Resources</h2>
-                <a href="http://education.planning.domains/">Education resources</a><br/>
-                Explore <a href="command:pddl.planning.domains.focus" title="Open explorer tree with the Planning.domains PDDL collection.">Planning.domains</a> PDDL examples<br/>
-                <a href="https://stackoverflow.com/questions/tagged/pddl">Ask a question on Stackoverflow</a><br/>
-                <a href="https://github.com/nergmada/pddl-reference">PDDL Reference</a><br/>
-                <a href="https://github.com/jan-dolejsi/vscode-pddl/blob/master/client/README.md">All features of PDDL support in VS Code</a><br/>
-                <a href="https://github.com/jan-dolejsi/vscode-pddl/blob/master/client/CHANGELOG.md">What's new in PDDL support</a>
+                <a href="http://education.planning.domains/">Education resources</a><br />
+                Explore <a href="command:pddl.planning.domains.focus"
+                    title="Open explorer tree with the Planning.domains PDDL collection.">Planning.domains</a> PDDL
+                examples<br />
+                <a href="https://stackoverflow.com/questions/tagged/pddl">Ask a question on Stackoverflow</a><br />
+                <a href="https://github.com/nergmada/pddl-reference">PDDL Reference</a><br />
+                <a href="https://github.com/jan-dolejsi/vscode-pddl/blob/master/client/README.md">All features of PDDL
+                    support in VS Code</a><br />
+                <a href="https://github.com/jan-dolejsi/vscode-pddl/blob/master/client/CHANGELOG.md">What's new in PDDL
+                    support</a>
 
                 <h2>Getting more productive</h2>
-                <a href="command:extension.open?%22vscode-icons-team.vscode-icons%22" title="Install this extension to get better file icons.">VS Code Icons for PDDL files</a>  e.g. 
-                <img src="file_type_pddl.svg" class="fileIcon" title="Icon of domain and problem files."/>
-                <img src="file_type_pddl_plan.svg" class="fileIcon" title="Icon for plan files."/>
-                <img src="file_type_pddl_happenings.svg" class="fileIcon" title="Icon for happenings files."/> 
+                <a href="command:extension.open?%22vscode-icons-team.vscode-icons%22"
+                    title="Install this extension to get better file icons.">VS Code Icons for PDDL files</a> e.g.
+                <img src="file_type_pddl.svg" class="fileIcon" title="Icon of domain and problem files." />
+                <img src="file_type_pddl_plan.svg" class="fileIcon" title="Icon for plan files." />
+                <img src="file_type_pddl_happenings.svg" class="fileIcon" title="Icon for happenings files." />
                 </br>
-                <a href="command:extension.open?%22joaompinto.vscode-graphviz%22" title="... if your planner outputs search graphs in .dot format.">GraphViz support</a><br/>
+                <a href="command:extension.open?%22joaompinto.vscode-graphviz%22"
+                    title="... if your planner outputs search graphs in .dot format.">GraphViz support</a><br />
 
-                <a href="https://github.com/jan-dolejsi/vscode-pddl/wiki/Keyboard-shortcuts" title="Bookmark or print...">Keyboard shortcuts</a>
+                <a href="https://github.com/jan-dolejsi/vscode-pddl/wiki/Keyboard-shortcuts"
+                    title="Bookmark or print...">Keyboard shortcuts</a>
 
                 <h2>Giving feedback</h2>
-                <a href="https://github.com/jan-dolejsi/vscode-pddl/issues">Submit an issue</a><br/>
-                <a href="https://marketplace.visualstudio.com/items?itemName=jan-dolejsi.pddl#review-details">Write a review</a>
+                <a href="https://github.com/jan-dolejsi/vscode-pddl/issues">Submit an issue</a><br />
+                <a href="https://marketplace.visualstudio.com/items?itemName=jan-dolejsi.pddl#review-details">Write a
+                    review</a>
             </td>
         </tr>
     </table>
-    <br/>
-    <input id="shouldShowOverview" type="checkbox" checked onchange="shouldShowOverviewChanged(this.checked)">Show overview page when using PDDL</input>
-    <div id="howToShowOverviewPage" class="hint"><br/>Use the <b>PDDL: Show overview page</b> command to display this page again.</div>
+    <br />
+    <input id="shouldShowOverview" type="checkbox" checked onchange="shouldShowOverviewChanged(this.checked)">Show
+    overview page when using PDDL</input>
+    <div id="howToShowOverviewPage" class="hint"><br />Use the <b>PDDL: Show overview page</b> command to display this
+        page again.</div>
 </body>
+
 </html>
