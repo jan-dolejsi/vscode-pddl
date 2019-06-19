@@ -9,7 +9,7 @@ import express = require('express');
 import request = require('request');
 import bodyParser = require('body-parser')
 import http = require('http');
-import opn = require('opn');
+import opn = require('open');
 
 export class Authentication {
     constructor(private authUrl: string, private authRequestEncoded: string, private clientId: string, private callbackPort: number, private timeoutInMs: number,

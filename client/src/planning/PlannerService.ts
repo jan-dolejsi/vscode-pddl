@@ -29,13 +29,13 @@ export class PlannerService extends Planner {
         if(this.useAuthentication) {
             requestHeader = {
                 "Authorization": "Bearer " + this.authentication.sToken
-            }
+            };
         }
 
         let requestBody = {
             "domain": domainFileInfo.getText(),
             "problem": problemFileInfo.getText()
-        }
+        };
 
         let that = this;
         return new Promise<Plan[]>(function(resolve, reject) {
@@ -111,9 +111,9 @@ export class PlannerService extends Planner {
                 for (var index = 0; index < planSteps.length; index++) {
                     var planStep = planSteps[index];
                     let fullActionName = (<string>planStep["name"]).replace('(','').replace(')', '');
-                    let time = planStep["time"];
-                    let duration = planStep["duration"] ? planStep["duration"] : that.epsilon;
-                    let planStepObj = new PlanStep(time, fullActionName, planStep["duration"] != null, duration, index);
+                    let time = planStep["time"] || (index+1)*that.epsilon;
+                    let duration = planStep["duration"] || that.epsilon;
+                    let planStepObj = new PlanStep(time, fullActionName, planStep["duration"] !== null, duration, index);
                     planParser.appendStep(planStepObj);
                 }
 

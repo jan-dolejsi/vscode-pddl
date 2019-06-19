@@ -15,6 +15,9 @@ import { TestsManifest } from '../ptest/TestsManifest';
 import { Test } from '../ptest/Test';
 import { Happening, HappeningType } from '../../../common/src/HappeningsInfo';
 
+// const util = require('util');
+// const execAsync = util.promisify(require('child_process').exec);
+
 /**
  * Executes sequence of plan happenings and generates suite of test cases to attempt planning from any intermediate state.
  */
@@ -52,8 +55,8 @@ export class HappeningsToPlanResumeCasesConvertor {
         let problemFilePath = await Util.toPddlFile('problem', this.context.problem.getText());
 
         let args = [domainFilePath, problemFilePath];
-        let outputFolderUris = await window.showOpenDialog({defaultUri: Uri.file(dirname(Uri.parse(this.context.problem.fileUri).fsPath)),  canSelectFiles: false, canSelectFolders: true, canSelectMany: false, openLabel: 'Select folder for problem files'});
-        if(!outputFolderUris || !outputFolderUris.length) { return false; }
+        let outputFolderUris = await window.showOpenDialog({ defaultUri: Uri.file(dirname(Uri.parse(this.context.problem.fileUri).fsPath)), canSelectFiles: false, canSelectFolders: true, canSelectMany: false, openLabel: 'Select folder for problem files' });
+        if (!outputFolderUris || !outputFolderUris.length) { return false; }
         let outputFolderUri = outputFolderUris[0];
         let cwd = outputFolderUri.fsPath;
         let cmd = valStepPath + ' ' + args.join(' ');
@@ -65,7 +68,7 @@ export class HappeningsToPlanResumeCasesConvertor {
         let defaultDomain = relative(cwd, Uri.parse(this.context.domain.fileUri).fsPath);
         let defaultProblem = null;
         let options = "";
-        let manifestUri = Uri.file(join(cwd,  basename(Uri.parse(this.context.problem.fileUri).fsPath)+ '_re-planning.ptest.json'));
+        let manifestUri = Uri.file(join(cwd, basename(Uri.parse(this.context.problem.fileUri).fsPath) + '_re-planning.ptest.json'));
         let manifest = new TestsManifest(defaultDomain, defaultProblem, options, manifestUri);
 
         // add the original problem as a test case
@@ -89,18 +92,18 @@ export class HappeningsToPlanResumeCasesConvertor {
 
         try {
             let output = process.execSync(cmd, { cwd: cwd, input: valStepInput });
-            output; // for inspection while debugging
+            console.log(output.toLocaleString()); // for inspection while debugging
 
             await commands.executeCommand('workbench.view.extension.test');
-            await commands.executeCommand('pddl.tests.refresh');
             await commands.executeCommand('pddl.tests.reveal', manifestUri);
+            await commands.executeCommand('pddl.tests.refresh');
 
             return true;
         } catch (err) {
             window.showErrorMessage("Error running valstep: " + err);
             return false;
         } finally {
-            if (manifest) { manifest.store(); }
+            if (manifest) { await manifest.store(); }
         }
     }
 
