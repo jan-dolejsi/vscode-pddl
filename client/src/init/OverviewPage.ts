@@ -12,7 +12,7 @@ import { PddlConfiguration } from '../configuration';
 
 import * as path from 'path';
 import { getWebViewHtml } from '../utils';
-import * as afs from '../asyncfs';
+import * as afs from '../../../common/src/asyncfs';
 
 export const SHOULD_SHOW_OVERVIEW_PAGE = 'shouldShowOverviewPage';
 export const LAST_SHOWN_OVERVIEW_PAGE = 'lastShownOverviewPage';

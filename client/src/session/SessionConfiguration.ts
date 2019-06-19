@@ -4,7 +4,7 @@
  * ------------------------------------------------------------------------------------------ */
 
 import { WorkspaceFolder, Uri } from "vscode";
-import * as afs from '../asyncfs';
+import * as afs from '../../../common/src/asyncfs';
 import * as path from 'path';
 
 export const CONFIGURATION_FILE = '.planning.domains.session.json';

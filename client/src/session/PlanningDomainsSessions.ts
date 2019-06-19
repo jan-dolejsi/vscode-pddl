@@ -6,7 +6,7 @@
 
 import { ExtensionContext, window, Uri, commands, workspace, Disposable, WorkspaceFolder, QuickPickItem, ViewColumn, SourceControl, env } from 'vscode';
 import { firstIndex } from '../utils';
-import * as afs from '../asyncfs';
+import * as afs from '../../../common/src/asyncfs';
 import * as path from 'path';
 import { SessionDocumentContentProvider } from './SessionDocumentContentProvider';
 import { SessionSourceControl, SESSION_COMMAND_LOAD, SESSION_COMMAND_CHECKOUT, SESSION_COMMAND_REFRESH_ALL } from './SessionSourceControl';

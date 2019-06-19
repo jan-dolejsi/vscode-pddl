@@ -5,7 +5,7 @@
 'use strict';
 
 import * as path from 'path';
-import * as afs from '../asyncfs';
+import * as afs from '../../../common/src/asyncfs';
 import { StudentName } from "./StudentNameParser";
 import { SessionSourceControl } from "./SessionSourceControl";
 import { saveConfiguration, SessionConfiguration } from './SessionConfiguration';
