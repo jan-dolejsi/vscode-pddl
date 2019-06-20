@@ -175,20 +175,7 @@ ${objectsHtml}
                     });
                 } catch (err) {
                     console.log(err);
-                    if (err instanceof ValStepError) {
-                        try {
-                            let choice = await window.showErrorMessage("ValStep failed to evaluate the plan values.", "Show", "Ignore");
-                            if (choice === "Show") {
-                                let path = await ValStep.storeError(err);
-                                env.openExternal(Uri.file(path));
-                            }
-                        } catch (err1) {
-                            console.log(err1);
-                        }
-                    }
-                    else {
-                        window.showWarningMessage(err);
-                    }
+                    this.handleValStepError(err);
                 }
             }
         }
@@ -200,6 +187,24 @@ ${swimLanes}
 ${lineCharts}
         <script>function drawPlan${planIndex}Charts(){\n${lineChartScripts}}</script>
 `;
+    }
+
+    private async handleValStepError(err: any) {
+        if (err instanceof ValStepError) {
+            try {
+                let choice = await window.showErrorMessage("ValStep failed to evaluate the plan values.", "Show", "Ignore");
+                if (choice === "Show") {
+                    let path = await ValStep.storeError(err);
+                    env.openExternal(Uri.file(path));
+                }
+            }
+            catch (err1) {
+                console.log(err1);
+            }
+        }
+        else {
+            window.showWarningMessage(err);
+        }
     }
 
     renderHelpfulActions(plan: Plan, planHeadLength: number): string {

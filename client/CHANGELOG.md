@@ -2,9 +2,34 @@
 
 ## [2.11.5] - 2019-06-??
 
+### Configuration alerts on Overview Page
+
 Overview Page shows non-intrusive alerts when the extension configuration is not optimal.
 
 ![Overview Page shows alerts](https://raw.githubusercontent.com/wiki/jan-dolejsi/vscode-pddl/img/OverviewPage.jpg)
+
+### Planning.Domains session
+
+#### Plugin configuration support
+
+Planning.Domains Editor Sessions use plug-ins that save their own configuration.
+The `solver` plugin's configuration (i.e. the URL of the solver service) is now replicated into the workspace folder's settings. This is stored in `.vscode/settings.json` file:
+
+```json
+{
+    "pddlPlanner.executableOrService": "http://localhost:8087/solve"
+}
+```
+
+When local session changes are committed back to the server, the solver URL is *not* included.
+
+#### Allowing checkout when untracked local files exist
+
+Untracked local files are no longer preventing session update to latest server-side version. This means the user may deal with version conflicts by renaming files and merging using the VS Code Diff. Manually.
+
+### Clean-up
+
+Removed traces a legacy configuration from predecessor VS Code extension.
 
 ## [2.11.4] - 2019-06-19
 

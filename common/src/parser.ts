@@ -35,7 +35,7 @@ export class Parser {
         let workingDirectory = dirname(filePath);
 
         try {
-            if (this.preProcessor) fileText = this.preProcessor.process(fileText, workingDirectory);
+            if (this.preProcessor) { fileText = this.preProcessor.process(fileText, workingDirectory); }
         } catch (ex) {
             if (ex instanceof PreProcessingError) {
                 let problemInfo = new ProblemInfo(fileUri, fileVersion, "unknown", "unknown");
@@ -174,7 +174,7 @@ export class Parser {
         let typeObjects: TypeObjects[] = Array.from(typeSet).map(type => new TypeObjects(type));
 
         graph.getVertices().forEach(obj => {
-            graph.getVerticesWithEdgesFrom(obj).forEach(type => typeObjects.find(to => to.type == type).objects.push(obj));
+            graph.getVerticesWithEdgesFrom(obj).forEach(type => typeObjects.find(to => to.type === type).objects.push(obj));
         });
 
         return typeObjects;
@@ -185,7 +185,7 @@ export class Parser {
         // the inheritance graph is captured as a two dimensional array, where the first index is the types themselves, the second is the parent type they inherit from (PDDL supports multiple inheritance)
         let inheritance = new DirectionalGraph();
 
-        if (!declarationText) return inheritance;
+        if (!declarationText) { return inheritance; }
 
         // if there are root types that do not inherit from 'object', add the 'object' inheritance.
         // it will make the following regex work
@@ -304,7 +304,7 @@ export class Parser {
             let documentation = group[4];
 
             let derived = new Variable(fullSymbolName, parameters);
-            if (documentation) derived.setDocumentation(documentation);
+            if (documentation) { derived.setDocumentation(documentation); }
             derived.location = Parser.toRange(domainText, group.index, 0);
             derivedVariables.push(derived);
         }
@@ -349,7 +349,7 @@ export class Parser {
             totalCharactersSoFar += lineLength;
         }
 
-        throw `Index ${index} is after the end of the document text.`
+        throw new Error(`Index ${index} is after the end of the document text.`);
     }
 }
 
@@ -373,10 +373,10 @@ export class ProblemInfo extends FileInfo {
     }
 
     getObjects(type: string): string[] {
-        let thisTypesObjects = this.objects.find(to => to.type == type);
+        let thisTypesObjects = this.objects.find(to => to.type === type);
 
-        if (!thisTypesObjects) return [];
-        else return thisTypesObjects.objects;
+        if (!thisTypesObjects) { return []; }
+        else { return thisTypesObjects.objects; }
     }
 
     /**
@@ -541,13 +541,13 @@ export class DomainInfo extends FileInfo {
     }
 
     setConstants(constants: TypeObjects[]): void {
-        if (constants == undefined) throw new Error("Constants must be defined or empty.")
+        if (constants === undefined || constants === null) { throw new Error("Constants must be defined or empty."); }
         this.constants = constants;
     }
 
     getTypes(): string[] {
         return this.typeInheritance.getVertices()
-            .filter(t => t != "object");
+            .filter(t => t !== "object");
     }
 
     isDomain(): boolean {
@@ -589,7 +589,7 @@ export class DomainInfo extends FileInfo {
     }
 
     findVariableLocation(variable: Variable): void {
-        if (variable.location) return;//already initialized
+        if (variable.location) { return; } //already initialized
 
         super.findVariableReferences(variable, (location, line) => {
             let commentStartColumn = line.indexOf(';');
@@ -610,7 +610,7 @@ export class DomainInfo extends FileInfo {
             let commentStartColumn = line.indexOf(';');
             let match = regexp.exec(line);
             if (match) {
-                if (commentStartColumn > -1 && match.index > commentStartColumn) continue;
+                if (commentStartColumn > -1 && match.index > commentStartColumn) { continue; }
 
                 variable.location = new PddlRange(lineIdx, match.index, lineIdx, match.index + match[0].length);
 
@@ -659,7 +659,7 @@ export class PlanInfo extends FileInfo {
                 happenings.push(...planStep.getHappenings(allSteps.slice(0, idx-1))));
 
         var compare = function(happening1: Happening, happening2: Happening): number {
-            if (happening1.getTime() != happening2.getTime()) return happening1.getTime() - happening2.getTime();
+            if (happening1.getTime() !== happening2.getTime()) { return happening1.getTime() - happening2.getTime(); }
             else {
                 return happening1.getFullActionName().localeCompare(happening2.getFullActionName());
             }
@@ -715,7 +715,7 @@ export class TypeObjects {
         let mergedObjects: TypeObjects[] = [];
 
         constants.concat(objects).forEach(typeObj => {
-            let typeFound = mergedObjects.find(to1 => to1.type == typeObj.type);
+            let typeFound = mergedObjects.find(to1 => to1.type === typeObj.type);
 
             if (!typeFound) {
                 typeFound = new TypeObjects(typeObj.type);
@@ -756,7 +756,10 @@ export function toLanguageFromId(languageId: string): PddlLanguage {
 	return languageMap.get(languageId);
 }
 
-export interface PlanMetaData { domainName: string, problemName: string }
+export interface PlanMetaData { 
+    readonly domainName: string;
+    readonly problemName: string;
+}
 
 export const UNSPECIFIED_PROBLEM = 'unspecified';
 export const UNSPECIFIED_DOMAIN = 'unspecified';

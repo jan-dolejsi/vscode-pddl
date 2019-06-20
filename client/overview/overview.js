@@ -60,6 +60,10 @@ function hasAnyChildrenToDisplay(elementId) {
     return false;
 }
 
+/**
+ * Reflects the planner output target from configuration to the UI state.
+ * @param {string} value target is output/terminal/search-debugger.
+ */
 function updatePlannerOutputTarget(value) {
     var radioButtons = document.getElementsByName("planner_output_target");
     for(var i = 0; i < radioButtons.length; i++) {
@@ -67,6 +71,10 @@ function updatePlannerOutputTarget(value) {
     }
 }
 
+/**
+ * Notifies the view-model that the should-show selection has changed.
+ * @param {boolean} value true if hte overview page should show next time
+ */
 function shouldShowOverviewChanged(value) {
     showHowToShowOverview(value);
 
@@ -76,6 +84,10 @@ function shouldShowOverviewChanged(value) {
     })
 }
 
+/**
+ * Updates the UI according to the configuration.
+ * @param {boolean} value true if hte overview page should show next time
+ */
 function updateShowOverviewChanged(value) {
     showHowToShowOverview(value);
     document.getElementById('shouldShowOverview').checked = value;

@@ -10,6 +10,7 @@ import { toFuzzyRelativeTime } from '../utils';
 import * as afs from '../../../common/src/asyncfs';
 import * as fs from 'fs';
 import { SessionConfiguration, saveConfiguration, SessionMode, toSessionConfiguration, CONFIGURATION_FILE } from './SessionConfiguration';
+import { PDDL_PLANNER, EXECUTABLE_OR_SERVICE } from '../configuration';
 
 /**
  * Command for cloning a session to the local storage.
@@ -137,6 +138,7 @@ export class SessionSourceControl implements vscode.Disposable {
 		}
 	}
 
+	/** Constructs a session instance from the current set of files in the workspace. */
 	async getCurrentSession(): Promise<SessionContent> {
 		let newFiles = new Map<string, string>();
 
@@ -145,7 +147,7 @@ export class SessionSourceControl implements vscode.Disposable {
 		for (const fileName of localFileNames) {
 			newFiles.set(fileName, await this.getFileContent(fileName));
 		}
-		return new SessionContent(this.session.hash, this.session.writeHash, this.session.versionDate, newFiles);
+		return new SessionContent(this.session.hash, this.session.writeHash, this.session.versionDate, newFiles, new Map());
 	}
 
 	/**
@@ -184,17 +186,38 @@ export class SessionSourceControl implements vscode.Disposable {
 
 		if (newVersion === this.session.versionDate) { return; } // the same version was selected
 
-		if (this.changedResources.resourceStates.length) {
+		let localUntrackedResources = this.changedResources.resourceStates.filter(resource => resource.decorations.faded);
+		if (this.changedResources.resourceStates.length - localUntrackedResources.length) {
 			vscode.window.showErrorMessage(`There is one or more changed resources. Discard your local changes before checking out another version.`);
 		}
 		else {
 			try {
 				let newSession = await getSession(this.session);
-				await this.setSession(newSession, true);
+
+				// check if any of the local untracked files conflict with files in the new session
+				let conflictingUntrackedResources = localUntrackedResources
+					.filter(resource => newSession.files.has(path.basename(resource.resourceUri.fsPath)));
+
+				if (conflictingUntrackedResources.length > 0) {
+					let conflictingUntrackedResourceNames = conflictingUntrackedResources
+						.map(resource => this.toOpenFileNotificationLink(resource.resourceUri))
+						.join(", ");
+					vscode.window.showErrorMessage(`Merge conflict: delete/rename your local version of following session file(s): ${conflictingUntrackedResourceNames} before checking out the session content.`);
+				} else {
+					await this.setSession(newSession, true);
+				}
 			} catch (ex) {
 				vscode.window.showErrorMessage(ex);
 			}
 		}
+	}
+
+	toOpenFileNotificationLink(resourceUri: vscode.Uri): string {
+		return `[${path.basename(resourceUri.fsPath)}](${this.toOpenFileCommand(resourceUri)})`;
+	}
+
+	toOpenFileCommand(resourceUri: vscode.Uri): string {
+		return encodeURI('command:vscode.open?' + JSON.stringify([resourceUri.toString()]));
 	}
 
 	private async setSession(newSession: SessionContent, overwrite: boolean): Promise<void> {
@@ -203,6 +226,7 @@ export class SessionSourceControl implements vscode.Disposable {
 		if (overwrite) { this.resetFilesToCheckedOutVersion(); } // overwrite local file content
 		this._onRepositoryChange.fire(this.session);
 		await this.updateChangedGroup();
+		await this.saveWorkspaceSettings();
 
 		await this.saveCurrentConfiguration();
 	}
@@ -226,6 +250,20 @@ export class SessionSourceControl implements vscode.Disposable {
 	/** save configuration for later VS Code sessions */
 	private async saveCurrentConfiguration(): Promise<void> {
 		return await saveConfiguration(this.workspaceFolder.uri, this.session);
+	}
+
+	private static readonly SOLVER_PLUGIN = "solver";
+
+	/** Saves setting of eligible session plugins to workspace configuration. */
+	async saveWorkspaceSettings(): Promise<void> {
+		if (this.session.plugins.has(SessionSourceControl.SOLVER_PLUGIN)) {
+			let solver = this.session.plugins.get(SessionSourceControl.SOLVER_PLUGIN);
+			if (solver.url !== "/plugins/solver.js") { return; }
+
+			let solverUrl = solver.settings["url"];
+
+			await vscode.workspace.getConfiguration(PDDL_PLANNER, this.workspaceFolder.uri).update(EXECUTABLE_OR_SERVICE, solverUrl + "/solve", vscode.ConfigurationTarget.WorkspaceFolder);
+		}
 	}
 
 	/**

@@ -38,7 +38,11 @@ export class SessionDocumentContentProvider implements TextDocumentContentProvid
 	provideTextDocumentContent(uri: Uri, token: CancellationToken): ProviderResult<string> {
 		if (token.isCancellationRequested) { return "Canceled"; }
 
-		let folderUri = Uri.parse(uri.path);
+		let folderUri = Uri.file(uri.path);
+
+		// if the file is in a sub-folder, it is not member of the session
+		if (uri.query.includes('/')) { return undefined; }
+
 		let fileName = basename(uri.query);
 
 		let session = this.sessions.get(folderUri.toString());

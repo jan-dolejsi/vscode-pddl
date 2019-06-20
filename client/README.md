@@ -434,7 +434,7 @@ The domain, problem and plan files are downloaded and displayed as read-only fil
 
 ### Planning.Domains sessions
 
-The online [Planning.Domains](http://editor.planning.domains) editor has a concept of a session. _Session Details_ pane shows links to open the session online / offline. The _offline_ links are handled by VS Code, if installed.
+The online [Planning.Domains editor](http://editor.planning.domains) has a concept of a session. _Session Details_ pane shows links to open the session online / offline. The _offline_ links are handled by VS Code, if installed.
 
 There are two ways to get started:
 
@@ -447,6 +447,17 @@ There are two ways to get started:
 The session files are downloaded into a selected workspace folder and may be interacted with via the _Source Control_ pane.
 
 ![Planning.Domains Editor Session in VS Code](https://raw.githubusercontent.com/wiki/jan-dolejsi/vscode-pddl/img/Planning.Domains_sessions_in_VSCode.gif)
+
+Planning.Domains Editor Sessions use plug-ins that save their own configuration.
+The `solver` plugin's configuration (i.e. the URL of the solver service) is now replicated into the workspace folder's settings. This is stored in `.vscode/settings.json` file:
+
+```json
+{
+    "pddlPlanner.executableOrService": "http://localhost:8087/solve"
+}
+```
+
+When local session changes are committed back to the server, the solver URL is *not* included.
 
 Session files may be deleted, renamed as well as added. The _Source Control_ pane shows the diff as usual. To open _Source Control_ select the `View > SCM` menu.
 
