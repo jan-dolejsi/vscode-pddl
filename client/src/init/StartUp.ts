@@ -34,7 +34,6 @@ export class StartUp {
         this.showTips();
         this.suggestFolderIsOpen();
         this.suggestAutoSave();
-        this.uninstallLegacyExtension(this.pddlConfiguration);
     }
 
     NEXT_TIP_TO_SHOW = 'nextTipToShow';
@@ -203,15 +202,6 @@ export class StartUp {
         var shouldShow = this.context.globalState.get<boolean>(SHOULD_SHOW_OVERVIEW_PAGE, true);
         if (shouldShow) {
             this.overviewPage.showWelcomePage(false);
-        }
-    }
-
-    uninstallLegacyExtension(pddlConfiguration: PddlConfiguration): void {
-        let extension = extensions.getExtension("jan-dolejsi.pddl-parser");
-
-        if (extension) {
-            pddlConfiguration.copyFromLegacyParserConfig();
-            window.showWarningMessage(`The internal preview extension 'PDDL SL8 Only' is now obsolete. Please uninstall it, or it will interfere with functionality of the PDDL extension.`);
         }
     }
 }

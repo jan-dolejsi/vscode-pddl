@@ -43,7 +43,7 @@ export class HappeningsExecutor {
         }
 
         let valStepPath = await this.pddlConfiguration.getValStepPath();
-        if (!valStepPath) return [];
+        if (!valStepPath) { return []; }
         let cwd = dirname(Uri.parse(this.context.happenings.fileUri).fsPath);
 
         try {

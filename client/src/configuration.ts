@@ -5,16 +5,16 @@
 import * as vscode from 'vscode';
 import { PDDLParserSettings } from './Settings';
 
+export const EXECUTABLE_OR_SERVICE = 'executableOrService';
 export const PDDL_PARSER = 'pddlParser';
-const PARSER_EXECUTABLE_OR_SERVICE = PDDL_PARSER + '.executableOrService';
+const PARSER_EXECUTABLE_OR_SERVICE = PDDL_PARSER + '.' + EXECUTABLE_OR_SERVICE;
 const PARSER_EXECUTABLE_OPTIONS = PDDL_PARSER + '.executableOptions';
-const PARSER_LEGACY_LOCATION = PDDL_PARSER + '.pddlParserService';
 const PARSER_SERVICE_AUTHENTICATION_REFRESH_TOKEN = PDDL_PARSER + '.serviceAuthenticationRefreshToken';
 const PARSER_SERVICE_AUTHENTICATION_ACCESS_TOKEN = PDDL_PARSER + '.serviceAuthenticationAccessToken';
 const PARSER_SERVICE_AUTHENTICATION_S_TOKEN = PDDL_PARSER + '.serviceAuthenticationSToken';
 
 export const PDDL_PLANNER = 'pddlPlanner';
-const PLANNER_EXECUTABLE_OR_SERVICE = PDDL_PLANNER + '.executableOrService';
+export const PLANNER_EXECUTABLE_OR_SERVICE = PDDL_PLANNER + '.' + EXECUTABLE_OR_SERVICE;
 const PLANNER_EXECUTABLE_OPTIONS = PDDL_PLANNER + '.executableOptions';
 const PLANNER_SERVICE_AUTHENTICATION_REFRESH_TOKEN = PDDL_PLANNER + '.serviceAuthenticationRefreshToken';
 const PLANNER_SERVICE_AUTHENTICATION_ACCESS_TOKEN = PDDL_PLANNER + '.serviceAuthenticationAccessToken';
@@ -45,8 +45,6 @@ export class PddlConfiguration {
     setupParserLater = false;
 
     async suggestNewParserConfiguration(showNever: boolean) {
-        if (await this.copyFromLegacyParserConfig()) { return; }
-
         if (this.setupParserLater || this.context.globalState.get(this.NEVER_SETUP_PARSER)) { return; }
 
         let setupParserNow: vscode.MessageItem = { title: "Setup now..." };
@@ -73,22 +71,6 @@ export class PddlConfiguration {
 
             default:
                 break;
-        }
-    }
-
-    async copyFromLegacyParserConfig(): Promise<string> {
-        let configuration = vscode.workspace.getConfiguration();
-
-        // first try to salvage configuration from a deprecated configuration field
-        let legacyParserUrl: string = configuration.get(PARSER_LEGACY_LOCATION);
-
-        if (legacyParserUrl) {
-
-            await this.moveConfiguration(configuration, PARSER_LEGACY_LOCATION, PARSER_EXECUTABLE_OR_SERVICE);
-            return legacyParserUrl;
-        }
-        else {
-            return null;
         }
     }
 
@@ -213,7 +195,7 @@ export class PddlConfiguration {
     }
 
     async getPlannerPath(): Promise<string> {
-        let plannerPath: string = vscode.workspace.getConfiguration().get(PLANNER_EXECUTABLE_OR_SERVICE);
+        let plannerPath: string = vscode.workspace.getConfiguration(null).get(PLANNER_EXECUTABLE_OR_SERVICE);
 
         if (!plannerPath) {
             plannerPath = await this.askNewPlannerPath();
@@ -223,7 +205,7 @@ export class PddlConfiguration {
     }
 
     async askNewPlannerPath() {
-        let existingValue: string = vscode.workspace.getConfiguration().get(PLANNER_EXECUTABLE_OR_SERVICE);
+        let existingValue: string = vscode.workspace.getConfiguration(null).get(PLANNER_EXECUTABLE_OR_SERVICE);
 
         let newPlannerPath = await vscode.window.showInputBox({
             prompt: "Enter PDDL planner path local command or web service URL",

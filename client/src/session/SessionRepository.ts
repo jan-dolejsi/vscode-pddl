@@ -12,11 +12,11 @@ import { checkResponseForError } from "../catalog/PlanningDomains";
 
 /** Represents one Planning.Domains session and meta-data. */
 export class SessionContent implements SessionConfiguration {
-	constructor(public hash: string, public writeHash: string, public versionDate: number,
-		public files: Map<string, string>) { }
+	constructor(public readonly hash: string, public readonly writeHash: string, public readonly versionDate: number,
+		public readonly files: Map<string, string>, public readonly plugins: Map<string, RawSessionPlugin>) { }
 
 	static from(configuration: SessionConfiguration): SessionContent {
-		return new SessionContent(configuration.hash, configuration.writeHash, configuration.versionDate, configuration.files);
+		return new SessionContent(configuration.hash, configuration.writeHash, configuration.versionDate, configuration.files, new Map());
 	}
 
 	canCommit(): boolean {
@@ -51,7 +51,7 @@ export class SessionRepository implements QuickDiffProvider {
 	}
 
 	static createDocumentUri(workspaceFolder: Uri, fileName: string): Uri {
-		return workspaceFolder.with({ scheme: SESSION_SCHEME, query: fileName});
+		return workspaceFolder.with({ scheme: SESSION_SCHEME, query: fileName });
 	}
 
 	/**
@@ -66,9 +66,14 @@ export class SessionRepository implements QuickDiffProvider {
 }
 
 const SESSION_URL = "http://editor.planning.domains/session/";
-const SESSION_TABS_PATTERN = /"save-tabs"\s*:\s*{\s*"url"\s*:\s*"[\w:/.-]+"\s*,\s*"settings"\s*:\s*({[^}]*})/;
+const SESSION_PLUGIN_PATTERN = /"([\w-]+)"\s*:\s*{\s*"url"\s*:\s*"([\w:/.-]+)"\s*,\s*"settings"\s*:\s*({[^}]*})\s*}/g;
 const SESSION_DETAILS_PATTERN = /window\.session_details\s*=\s*{\s*(?:readwrite_hash:\s*"(\w+)"\s*,\s*)?read_hash:\s*"(\w+)"\s*,\s*last_change:\s*"([\w: \(\)\+]+)",?\s*};/;
 
+/**
+ * Tests whether the session exists, determines whether it is writable and what is the last change time.
+ * @param sessionId session read/write hash code
+ * @throws error when session does not exist, or session type is not recognized
+ */
 export async function checkSession(sessionId: string): Promise<[SessionMode, number]> {
 	let url = `${SESSION_URL}check/${sessionId}`;
 
@@ -102,7 +107,7 @@ export async function getSession(sessionConfiguration: SessionConfiguration): Pr
 	let sessionFiles = new Map<string, string>();
 	fileNames.forEach(fileName => sessionFiles.set(fileName, savedTabsJson[fileName]));
 
-	return new SessionContent(rawSession.readOnlyHash, rawSession.readWriteHash, rawSession.sessionDate, sessionFiles);
+	return new SessionContent(rawSession.readOnlyHash, rawSession.readWriteHash, rawSession.sessionDate, sessionFiles, rawSession.plugins);
 }
 
 export async function uploadSession(session: SessionContent): Promise<SessionContent> {
@@ -155,6 +160,10 @@ export async function duplicateSession(session: SessionContent): Promise<string>
 	return postResult["result"]["readwrite_hash"];
 }
 
+/**
+ * Fetches session from the planning.domains server.
+ * @param sessionConfiguration session identity
+ */
 async function getRawSession(sessionConfiguration: SessionConfiguration): Promise<RawSession> {
 	let url = sessionConfiguration.writeHash ?
 		`${SESSION_URL}edit/${sessionConfiguration.writeHash}` :
@@ -179,17 +188,25 @@ async function getRawSession(sessionConfiguration: SessionConfiguration): Promis
 		throw new Error("Malformed saved session. Could not extract session date.");
 	}
 
-	var domainFilesString: string;
-
-	SESSION_TABS_PATTERN.lastIndex = 0;
-	let matchTabs = SESSION_TABS_PATTERN.exec(sessionContent);
-
-	if (matchTabs) {
-		domainFilesString = matchTabs[1];
+	// extract plugins
+	let plugins = new Map<string, RawSessionPlugin>();
+	SESSION_PLUGIN_PATTERN.lastIndex = 0;
+	let pluginMatch: RegExpExecArray;
+	while(pluginMatch = SESSION_PLUGIN_PATTERN.exec(sessionContent)) {
+		plugins.set(pluginMatch[1], {
+			name: pluginMatch[1],
+			url: pluginMatch[2],
+			settingsAsString: pluginMatch[3],
+			settings: JSON.parse(pluginMatch[3]),
+		});
 	}
-	else {
+
+	const saveTabsPlugin = "save-tabs";
+	if (!plugins.has(saveTabsPlugin)){
 		throw new Error("Saved session contains no saved tabs.");
 	}
+
+	var domainFilesString =  plugins.get(saveTabsPlugin).settingsAsString;
 
 	return {
 		sessionDetails: sessionDetails,
@@ -197,10 +214,12 @@ async function getRawSession(sessionConfiguration: SessionConfiguration): Promis
 		sessionDate: sessionDate,
 		readOnlyHash: readOnlyHash,
 		readWriteHash: readWriteHash,
-		domainFilesAsString: domainFilesString
+		domainFilesAsString: domainFilesString,
+		plugins: plugins,
 	};
 }
 
+/** Session in its raw - freshly downloaded form. */
 interface RawSession {
 	readonly sessionDetails: string;
 	readonly sessionContent: string;
@@ -208,4 +227,12 @@ interface RawSession {
 	readonly readWriteHash: string;
 	readonly readOnlyHash: string;
 	readonly domainFilesAsString: string;
+	readonly plugins: Map<string, RawSessionPlugin>;
+}
+
+interface RawSessionPlugin {
+	readonly name: string;
+	readonly url: string;
+	readonly settingsAsString: string;
+	readonly settings: any;
 }
