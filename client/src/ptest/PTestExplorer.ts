@@ -8,7 +8,7 @@ import {
     workspace, TreeView, window, commands, ViewColumn, Uri, OutputChannel, ProgressLocation, Range, SaveDialogOptions, Position
 } from 'vscode';
 import { dirname, basename } from 'path';
-import { readFileSync } from 'fs';
+import { readFileSync, promises } from 'fs';
 import * as afs from '../../../common/src/asyncfs';
 import { Test, TestOutcome } from './Test';
 import { PTestTreeDataProvider, PTestNode, PTestNodeKind } from './PTestTreeDataProvider';
@@ -85,7 +85,7 @@ export class PTestExplorer {
             // todo: try this node module: jsonc-parser - A scanner and fault tolerant parser to process JSON with or without comments.
 
             if (test.getLabel()) {
-                let manifestText: string = await afs.readFile(manifest.path, { encoding: "utf8" });
+                let manifestText: string = await promises.readFile(manifest.path, { encoding: "utf8" });
                 let lineIdx = manifestText.split('\n').findIndex(line => new RegExp(`"label"\\s*:\\s*"${test.getLabel()}"`).test(line));
 
                 await window.showTextDocument(manifestDocument.uri, { preview: true, viewColumn: ViewColumn.One, selection: new Range(lineIdx, 0, lineIdx, Number.MAX_SAFE_INTEGER) });

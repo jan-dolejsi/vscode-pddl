@@ -8,10 +8,10 @@ import { TextDocument, window, workspace, QuickPickItem, Uri, ExtensionContext }
 import { PDDL, PLAN, toLanguageFromId, HAPPENINGS, PlanInfo, ProblemInfo, DomainInfo } from '../../common/src/parser';
 import { PddlLanguage } from '../../common/src/FileInfo';
 import { HappeningsInfo } from "../../common/src/HappeningsInfo";
-import { PddlWorkspace } from '../../common/src/workspace-model';
+import { PddlWorkspace } from '../../common/src/PddlWorkspace';
 import { PddlExtensionContext } from '../../common/src/PddlExtensionContext';
 import { basename, join } from 'path';
-import * as afs from '../../common/src/asyncfs';
+import * as fs from 'fs';
 
 export function isAnyPddl(doc: TextDocument): boolean {
     return isPddl(doc) || isPlan(doc) || isHappenings(doc);
@@ -146,7 +146,7 @@ export function createPddlExtensionContext(context: ExtensionContext): PddlExten
 
 export async function getWebViewHtml(extensionContext: ExtensionContext, relativePath: string, htmlFileName: string) {
     let overviewHtmlPath = extensionContext.asAbsolutePath(join(relativePath, htmlFileName));
-    let html = await afs.readFile(overviewHtmlPath, { encoding: "utf-8" });
+    let html = await fs.promises.readFile(overviewHtmlPath, { encoding: "utf-8" });
 
     html = html.replace(/<(script|img|link) ([^>]*)(src|href)="([^"]+)"/g, (sourceElement: string, elementName: string, middleBits: string, attribName: string, attribValue: string) => {
         if (attribValue.startsWith('http')) {

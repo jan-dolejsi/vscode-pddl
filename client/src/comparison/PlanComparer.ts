@@ -10,7 +10,7 @@ import {
     TextDocument, Disposable, ViewColumn,
 } from 'vscode';
 
-import { PddlWorkspace } from '../../../common/src/workspace-model';
+import { PddlWorkspace } from '../../../common/src/PddlWorkspace';
 import { PddlLanguage } from '../../../common/src/FileInfo';
 import { toLanguage, isPlan } from '../utils';
 
@@ -35,12 +35,12 @@ export class PlanComparer implements Disposable {
 
         this.disposables.push(commands.registerCommand("pddl.plan.compareNormalized",
             async (rightPlanUri: Uri, selectedFiles: Uri[]) => {
-                if (selectedFiles.length != 2) {
+                if (selectedFiles.length !== 2) {
                     window.showErrorMessage("Hold down the Ctrl/Command key and select two plan files.");
                     return;
                 }
 
-                let leftFileUri = selectedFiles.find(otherFileUri => otherFileUri.toString() != rightPlanUri.toString());
+                let leftFileUri = selectedFiles.find(otherFileUri => otherFileUri.toString() !== rightPlanUri.toString());
                 let leftTextDocument = await workspace.openTextDocument(leftFileUri);
 
                 if (toLanguage(leftTextDocument) !== PddlLanguage.PLAN) {
@@ -56,7 +56,7 @@ export class PlanComparer implements Disposable {
         );
 
         this.disposables.push(commands.registerCommand("pddl.plan.normalize", async (uri: Uri) => {
-            if (!uri && window.activeTextEditor) uri = window.activeTextEditor.document.uri;
+            if (!uri && window.activeTextEditor) { uri = window.activeTextEditor.document.uri; }
             let planDoc = await workspace.openTextDocument(uri);
             if (!isPlan(planDoc)) {
                 window.showErrorMessage("Active document is not a plan.");
@@ -88,7 +88,7 @@ export class PlanComparer implements Disposable {
     subscribeToNormalizedUri(uri: Uri): Uri {
         let normalizedPlanUri = uri.with({scheme: this.normalizedPlanScheme});
         this.disposables.push(workspace.onDidChangeTextDocument(e => {
-            if (e.document.uri == uri) this.provider.planChanged(normalizedPlanUri);
+            if (e.document.uri.toString() === uri.toString()) { this.provider.planChanged(normalizedPlanUri); }
         }));
 
         return normalizedPlanUri;

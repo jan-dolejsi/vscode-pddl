@@ -521,6 +521,8 @@ See [CHANGELOG](CHANGELOG.md).
 
 Icons made by [Pixel perfect](https://www.flaticon.com/authors/pixel-perfect) from [www.flaticon.com](https://www.flaticon.com/) is licensed by [CC 3.0 BY](http://creativecommons.org/licenses/by/3.0/).
 
+Development of this extension was supported by [Schlumberger](https://www.slb.com). Visit [careers.slb.com](https://careers.slb.com/).
+
 **Enjoy!**
 
 [PDDL]: https://en.wikipedia.org/wiki/Planning_Domain_Definition_Language

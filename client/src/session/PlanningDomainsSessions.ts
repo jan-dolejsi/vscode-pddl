@@ -6,6 +6,7 @@
 
 import { ExtensionContext, window, Uri, commands, workspace, Disposable, WorkspaceFolder, QuickPickItem, ViewColumn, SourceControl, env } from 'vscode';
 import { firstIndex } from '../utils';
+import * as fs from 'fs';
 import * as afs from '../../../common/src/asyncfs';
 import * as path from 'path';
 import { SessionDocumentContentProvider } from './SessionDocumentContentProvider';
@@ -260,7 +261,7 @@ export class PlanningDomainsSessions {
             } else {
                 if (!(await afs.exists(folderUri.fsPath))) {
                     await afs.mkdirIfDoesNotExist(folderUri.fsPath, 0o777);
-                } else if (!(await afs.stat(folderUri.fsPath)).isDirectory()) {
+                } else if (!(await fs.promises.stat(folderUri.fsPath)).isDirectory()) {
                     window.showErrorMessage("Selected path is not a directory.");
                     return null;
                 }
@@ -276,7 +277,7 @@ export class PlanningDomainsSessions {
                 folderPicks.push(newWorkspaceFolderPick);
 
                 for (const wf of workspace.workspaceFolders) {
-                    let content = await afs.readdir(wf.uri.fsPath);
+                    let content = await fs.promises.readdir(wf.uri.fsPath);
                     folderPicks.push(new ExistingWorkspaceFolderPick(wf, content));
                 }
             }
@@ -336,7 +337,7 @@ export class PlanningDomainsSessions {
         if (!workspaceFolderUri) { return undefined; }
 
         // check if the workspace is empty, or clear it
-        let existingWorkspaceFiles: string[] = await afs.readdir(workspaceFolderUri.fsPath);
+        let existingWorkspaceFiles: string[] = await fs.promises.readdir(workspaceFolderUri.fsPath);
         if (existingWorkspaceFiles.length > 0) {
             let answer = await window.showQuickPick(["Yes", "No"],
                 { placeHolder: `Remove ${existingWorkspaceFiles.length} file(s) from the folder ${workspaceFolderUri.fsPath} before cloning the remote repository?` });
@@ -345,7 +346,7 @@ export class PlanningDomainsSessions {
             if (answer === "Yes") {
                 existingWorkspaceFiles
                     .forEach(async filename =>
-                        await afs.unlink(path.join(workspaceFolderUri.fsPath, filename)));
+                        await fs.promises.unlink(path.join(workspaceFolderUri.fsPath, filename)));
             }
         }
 

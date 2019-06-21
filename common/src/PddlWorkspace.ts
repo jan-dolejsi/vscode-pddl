@@ -4,7 +4,7 @@
  * ------------------------------------------------------------------------------------------ */
 'use strict';
 
-import { Parser, DomainInfo, ProblemInfo, UnknownFileInfo, PlanInfo } from './parser'
+import { Parser, DomainInfo, ProblemInfo, UnknownFileInfo, PlanInfo } from './parser';
 import { FileInfo, PddlLanguage, FileStatus } from './FileInfo';
 import { HappeningsInfo } from "./HappeningsInfo";
 import { Util } from './util';
@@ -63,9 +63,9 @@ class Folder {
 }
 
 function lowerCaseEquals(first: string, second: string): boolean {
-    if (first == null) return second == null;
-    else if (second == null) return first == null;
-    else return first.toLowerCase() === second.toLowerCase();
+    if (first === null || first === undefined) { return second === null || second === undefined; }
+    else if (second === null || second === undefined) { return first === null || first === undefined; }
+    else { return first.toLowerCase() === second.toLowerCase(); }
 }
 
 export class PddlWorkspace extends EventEmitter {
@@ -93,16 +93,16 @@ export class PddlWorkspace extends EventEmitter {
         return basename(documentPath);
     }
 
-    upsertAndParseFile(fileUri: string, language: PddlLanguage, fileVersion: number, fileText: string): FileInfo {
-        let fileInfo = this.upsertFile(fileUri, language, fileVersion, fileText);
-        if (fileInfo.getStatus() == FileStatus.Dirty) {
-            fileInfo = this.reParseFile(fileInfo);
+    async upsertAndParseFile(fileUri: string, language: PddlLanguage, fileVersion: number, fileText: string): Promise<FileInfo> {
+        let fileInfo = await this.upsertFile(fileUri, language, fileVersion, fileText);
+        if (fileInfo.getStatus() === FileStatus.Dirty) {
+            fileInfo = await this.reParseFile(fileInfo);
         }
 
         return fileInfo;
     }
 
-    upsertFile(fileUri: string, language: PddlLanguage, fileVersion: number, fileText: string): FileInfo {
+    async upsertFile(fileUri: string, language: PddlLanguage, fileVersion: number, fileText: string): Promise<FileInfo> {
 
         let folderUri = PddlWorkspace.getFolderUri(fileUri);
 
@@ -115,14 +115,14 @@ export class PddlWorkspace extends EventEmitter {
             }
         }
         else {
-            fileInfo = this.insertFile(folder, fileUri, language, fileVersion, fileText);
+            fileInfo = await this.insertFile(folder, fileUri, language, fileVersion, fileText);
         }
 
         return fileInfo;
     }
 
-    private insertFile(folder: Folder, fileUri: string, language: PddlLanguage, fileVersion: number, fileText: string): FileInfo {
-        let fileInfo = this.parseFile(fileUri, language, fileVersion, fileText);
+    private async insertFile(folder: Folder, fileUri: string, language: PddlLanguage, fileVersion: number, fileText: string): Promise<FileInfo> {
+        let fileInfo = await this.parseFile(fileUri, language, fileVersion, fileText);
         folder.add(fileInfo);
 
         if (fileInfo.isDomain()) {
@@ -154,42 +154,42 @@ export class PddlWorkspace extends EventEmitter {
     }
 
     scheduleParsing(): void {
-        this.cancelScheduledParsing()
+        this.cancelScheduledParsing();
         this.timeout = setTimeout(() => this.parseAllDirty(), this.defaultTimerDelayInSeconds * 1000);
     }
 
     private cancelScheduledParsing(): void {
-        if (this.timeout) clearTimeout(this.timeout);
+        if (this.timeout) { clearTimeout(this.timeout); }
     }
 
     private parseAllDirty(): void {
         // find all dirty files
-        let dirtyFiles = this.getAllFilesIf(fileInfo => fileInfo.getStatus() == FileStatus.Dirty);
+        let dirtyFiles = this.getAllFilesIf(fileInfo => fileInfo.getStatus() === FileStatus.Dirty);
 
         dirtyFiles.forEach(file => this.reParseFile(file));
     }
 
-    private reParseFile(fileInfo: FileInfo): FileInfo {
+    private async reParseFile(fileInfo: FileInfo): Promise<FileInfo> {
         let folderUri = PddlWorkspace.getFolderUri(fileInfo.fileUri);
 
         let folder = this.upsertFolder(folderUri);
 
         folder.remove(fileInfo);
-        fileInfo = this.parseFile(fileInfo.fileUri, fileInfo.getLanguage(), fileInfo.version, fileInfo.getText());
+        fileInfo = await this.parseFile(fileInfo.fileUri, fileInfo.getLanguage(), fileInfo.version, fileInfo.getText());
         folder.add(fileInfo);
         this.emit(PddlWorkspace.UPDATED, fileInfo);
 
         return fileInfo;
     }
 
-    private parseFile(fileUri: string, language: PddlLanguage, fileVersion: number, fileText: string): FileInfo {
-        if (language == PddlLanguage.PDDL) {
+    private async parseFile(fileUri: string, language: PddlLanguage, fileVersion: number, fileText: string): Promise<FileInfo> {
+        if (language === PddlLanguage.PDDL) {
             let domainInfo = this.parser.tryDomain(fileUri, fileVersion, fileText);
 
             if (domainInfo) {
                 return domainInfo;
             } else {
-                let problemInfo = this.parser.tryProblem(fileUri, fileVersion, fileText);
+                let problemInfo = await this.parser.tryProblem(fileUri, fileVersion, fileText);
 
                 if (problemInfo) {
                     return problemInfo;
@@ -200,10 +200,10 @@ export class PddlWorkspace extends EventEmitter {
             unknownFile.setText(fileText);
             return unknownFile;
         }
-        else if (language == PddlLanguage.PLAN) {
+        else if (language === PddlLanguage.PLAN) {
             return this.parser.parsePlan(fileUri, fileVersion, fileText, this.epsilon);
         }
-        else if (language == PddlLanguage.HAPPENINGS) {
+        else if (language === PddlLanguage.HAPPENINGS) {
             return this.parser.parseHappenings(fileUri, fileVersion, fileText, this.epsilon);
         }
         else {
@@ -272,8 +272,8 @@ export class PddlWorkspace extends EventEmitter {
         return Array.from(folder.files.values())
             .filter(f => f.isPlan())
             .map(f => <PlanInfo>f)
-            .filter(p => lowerCaseEquals(p.problemName, problemInfo.name) 
-                && lowerCaseEquals(p.domainName, problemInfo.domainName))
+            .filter(p => lowerCaseEquals(p.problemName, problemInfo.name)
+                && lowerCaseEquals(p.domainName, problemInfo.domainName));
     }
 
     getHappeningsFiles(problemInfo: ProblemInfo): HappeningsInfo[] {
@@ -284,7 +284,7 @@ export class PddlWorkspace extends EventEmitter {
             .filter(f => f.isHappenings())
             .map(f => <HappeningsInfo>f)
             .filter(p => lowerCaseEquals(p.problemName, problemInfo.name)
-                && lowerCaseEquals(p.domainName, problemInfo.domainName))
+                && lowerCaseEquals(p.domainName, problemInfo.domainName));
     }
 
     getAllFilesIf<T extends FileInfo>(predicate: (fileInfo: T) => boolean): T[] {
@@ -292,7 +292,7 @@ export class PddlWorkspace extends EventEmitter {
 
         this.folders.forEach(folder => {
             folder.files.forEach((fileInfo) => {
-                if (predicate.apply(this, [fileInfo])) selectedFiles.push(fileInfo);
+                if (predicate.apply(this, [fileInfo])) { selectedFiles.push(fileInfo); }
             });
         });
 
@@ -315,7 +315,7 @@ export class PddlWorkspace extends EventEmitter {
     /**
      * Finds a corresponding domain file
      * @param fileInfo a PDDL file info
-     * @returns corresponding domain file if fileInfo is a problem file, 
+     * @returns corresponding domain file if fileInfo is a problem file,
      * or `fileInfo` itself if the `fileInfo` is a domain file, or `null` otherwise.
      */
     asDomain(fileInfo: FileInfo): DomainInfo {
@@ -326,19 +326,21 @@ export class PddlWorkspace extends EventEmitter {
             return this.getDomainFileFor(<ProblemInfo>fileInfo);
         }
         else if (fileInfo.isPlan()) {
-            var problemFile = this.getProblemFileForPlan(<PlanInfo>fileInfo);
-            if (problemFile) {
-                return this.getDomainFileFor(problemFile);
+            var problemFile1 = this.getProblemFileForPlan(<PlanInfo>fileInfo);
+            if (problemFile1) {
+                return this.getDomainFileFor(problemFile1);
             }
             else {
-                return null
+                return null;
             }
         }
         else if (fileInfo.isHappenings()) {
-            var problemFile = this.getProblemFileForHappenings(<HappeningsInfo>fileInfo);
-            return this.getDomainFileFor(problemFile);
+            var problemFile2 = this.getProblemFileForHappenings(<HappeningsInfo>fileInfo);
+            return this.getDomainFileFor(problemFile2);
         }
-        else return null;
+        else {
+            return null;
+        }
     }
 
     /**
@@ -349,19 +351,19 @@ export class PddlWorkspace extends EventEmitter {
     getDomainFileFor(problemFile: ProblemInfo): DomainInfo {
         let folder = this.folders.get(PddlWorkspace.getFolderUri(problemFile.fileUri));
 
-        if (!folder) return null;
+        if (!folder) { return null; }
 
         // find domain files in the same folder that match the problem's domain name
         let domainFiles = folder.getDomainFilesFor(problemFile);
 
-        return domainFiles.length == 1 ? domainFiles[0] : null;
+        return domainFiles.length === 1 ? domainFiles[0] : null;
     }
 
     getProblemFileForPlan(planInfo: PlanInfo): ProblemInfo {
         let problemFileInfo: ProblemInfo;
 
         let folder = this.getFolderOf(planInfo);
-        if (!folder) return null;
+        if (!folder) { return null; }
         problemFileInfo = folder.getProblemFileWithName(planInfo.problemName);
 
         return problemFileInfo;
@@ -371,7 +373,7 @@ export class PddlWorkspace extends EventEmitter {
         let problemFileInfo: ProblemInfo;
 
         let folder = this.getFolderOf(happeningsInfo);
-        if (!folder) return null;
+        if (!folder) { return null; }
         problemFileInfo = folder.getProblemFileWithName(happeningsInfo.problemName);
 
         return problemFileInfo;

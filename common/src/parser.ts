@@ -30,12 +30,12 @@ export class Parser {
         }
     }
 
-    tryProblem(fileUri: string, fileVersion: number, fileText: string): ProblemInfo {
+    async tryProblem(fileUri: string, fileVersion: number, fileText: string): Promise<ProblemInfo> {
         let filePath = Util.fsPath(fileUri);
         let workingDirectory = dirname(filePath);
 
         try {
-            if (this.preProcessor) { fileText = this.preProcessor.process(fileText, workingDirectory); }
+            if (this.preProcessor) { fileText = await this.preProcessor.process(fileText, workingDirectory); }
         } catch (ex) {
             if (ex instanceof PreProcessingError) {
                 let problemInfo = new ProblemInfo(fileUri, fileVersion, "unknown", "unknown");

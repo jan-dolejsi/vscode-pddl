@@ -4,8 +4,8 @@
  * ------------------------------------------------------------------------------------------ */
 'use strict';
 
-import { CompletionItemProvider, CompletionItem, TextDocument, Position, CancellationToken, CompletionList, CompletionContext, Range } from 'vscode';
-import { PddlWorkspace } from '../../../common/src/workspace-model';
+import { CompletionItemProvider, CompletionItem, TextDocument, Position, CancellationToken, CompletionContext, Range } from 'vscode';
+import { PddlWorkspace } from '../../../common/src/PddlWorkspace';
 import { ProblemInfo, DomainInfo, toLanguageFromId } from '../../../common/src/parser';
 import { KeywordDelegate } from './KeywordDelegate';
 import { ProblemInitDelegate } from './ProblemInitDelegate';
@@ -32,11 +32,13 @@ export class AutoCompletion implements CompletionItemProvider {
         this.effectDelegate = new EffectDelegate(pddlWorkspace);
     }
 
-    provideCompletionItems(document: TextDocument, position: Position, token: CancellationToken, context: CompletionContext): CompletionItem[] | CompletionList | Thenable<CompletionItem[] | CompletionList> {
-        if (token.isCancellationRequested) return [];
-        return new CompletionCollector(this.pddlWorkspace, document, position, context,
+    async provideCompletionItems(document: TextDocument, position: Position, token: CancellationToken, context: CompletionContext): Promise<CompletionItem[]> {
+        if (token.isCancellationRequested) { return []; }
+
+        let completionCollector = await new CompletionCollector(this.pddlWorkspace, document, position, context,
             this.keywordDelegate, this.operatorDelegate, this.variableDelegate, this.typeDelegate,
-        this.effectDelegate).getCompletions();
+            this.effectDelegate).initialize();
+        return completionCollector.getCompletions();
     }
 }
 
@@ -46,18 +48,23 @@ class CompletionCollector {
     lineText: string;
     leadingText: string;
 
-    constructor(public pddlWorkspace: PddlWorkspace, public document: TextDocument, public position: Position, public context: CompletionContext,
-        private keywordDelegate: KeywordDelegate,
-        private operatorDelegate: OperatorDelegate,
-        private variableDelegate: VariableDelegate,
-        private typeDelegate: TypeDelegate,
-        private effectDelegate: EffectDelegate) {
+    constructor(private readonly pddlWorkspace: PddlWorkspace, private readonly document: TextDocument,
+        private readonly position: Position, private readonly context: CompletionContext,
+        private readonly keywordDelegate: KeywordDelegate,
+        private readonly operatorDelegate: OperatorDelegate,
+        private readonly variableDelegate: VariableDelegate,
+        private readonly typeDelegate: TypeDelegate,
+        private readonly effectDelegate: EffectDelegate) {
 
         this.lineText = document.lineAt(position.line).text;
         this.leadingText = this.lineText.substring(0, position.character);
-        if (this.leadingText.includes(';')) return; // do not auto-complete in comment text
+        if (this.leadingText.includes(';')) { return; } // do not auto-complete in comment text
+    }
 
-        const activeFileInfo = this.pddlWorkspace.upsertFile(document.uri.toString(), toLanguageFromId(document.languageId), document.version, document.getText());
+    async initialize(): Promise<CompletionCollector> {
+
+        const activeFileInfo = await this.pddlWorkspace.upsertFile(this.document.uri.toString(),
+            toLanguageFromId(this.document.languageId), this.document.version, this.document.getText());
 
         if (activeFileInfo.isProblem()) {
             let problemFileInfo = <ProblemInfo>activeFileInfo;
@@ -76,6 +83,8 @@ class CompletionCollector {
         } else if (this.leadingText.endsWith(' -')) {
             this.pushAll(this.typeDelegate.getTypeItems(activeFileInfo));
         }
+
+        return this;
     }
 
     getCompletions(): CompletionItem[] {
@@ -89,13 +98,14 @@ class CompletionCollector {
             this.pushAll(this.keywordDelegate.getActionItems());
         } else if (this.isTriggeredByBracket()) {
             //todo: check if we are inside an action/durative-action
-            this.pushAll(this.effectDelegate.getNumericEffectItems(domainFileInfo))
+            this.pushAll(this.effectDelegate.getNumericEffectItems(domainFileInfo));
         }
     }
 
     createProblemCompletionItems(problemFileInfo: ProblemInfo): void {
-        if (this.isTriggeredByBracketColon())
+        if (this.isTriggeredByBracketColon()) {
             this.pushAll(this.keywordDelegate.getProblemItems());
+        }
 
         let folder = this.pddlWorkspace.getFolderOf(problemFileInfo);
         // find domain files in the same folder that match the problem's domain name

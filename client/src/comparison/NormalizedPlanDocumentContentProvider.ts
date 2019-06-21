@@ -8,7 +8,7 @@ import { CancellationToken, Event, EventEmitter, TextDocumentContentProvider, Ur
 import { Parser, UNSPECIFIED_DOMAIN } from '../../../common/src/parser';
 import { PddlPlanParser } from '../../../common/src/PddlPlanParser';
 import { PlanStep } from '../../../common/src/PlanStep';
-import { PddlWorkspace } from '../../../common/src/workspace-model';
+import { PddlWorkspace } from '../../../common/src/PddlWorkspace';
 import { PddlConfiguration } from '../configuration';
 import { getDomainAndProblemForPlan } from '../utils';
 import { PlanEvaluator } from './PlanEvaluator';
@@ -64,8 +64,9 @@ export class NormalizedPlanDocumentContentProvider implements TextDocumentConten
         if (this.includeFinalValues) {
             try {
                 let planValuesAsText = await this.evaluate(uri, origText);
-                if (planValuesAsText)
+                if (planValuesAsText) {
                     normalizedPlan = `${normalizedPlan}\n\n;; Modified state values:\n\n${planValuesAsText}`;
+                }
             }
             catch (err) {
                 window.showWarningMessage(err.toString());
@@ -109,18 +110,20 @@ class PlanParserAndNormalizer {
 
     normalize(origText: string): string {
         var compare = function (step1: PlanStep, step2: PlanStep): number {
-            if (step1.getStartTime() != step2.getStartTime())
+            if (step1.getStartTime() !== step2.getStartTime()) {
                 return step1.getStartTime() - step2.getStartTime();
-            else
+            }
+            else {
                 return step1.fullActionName.localeCompare(step2.fullActionName);
+            }
         };
 
         let planMeta = Parser.parsePlanMeta(origText);
         let normalizedText = AbstractPlanExporter.getPlanMeta(planMeta.domainName, planMeta.problemName)
-            + "\n; Normalized plan:\n" 
+            + "\n; Normalized plan:\n"
             + origText.split('\n')
             .map((origLine, idx) => this.parseLine(origLine, idx))
-            .filter(step => step != null)
+            .filter(step => step !== null && step !== undefined)
             .sort(compare)
             .map(step => step.toPddl())
             .join('\n');

@@ -10,7 +10,7 @@ import {
 
 import * as process from 'child_process';
 
-import { PddlWorkspace } from '../../../common/src/workspace-model';
+import { PddlWorkspace } from '../../../common/src/PddlWorkspace';
 import { PlanInfo, DomainInfo, ProblemInfo } from '../../../common/src/parser';
 import { PddlLanguage, ParsingProblem } from '../../../common/src/FileInfo';
 import { PddlConfiguration, CONF_PDDL, VALIDATION_PATH } from '../configuration';
@@ -63,7 +63,7 @@ export class PlanValidator {
 
     async validateTextDocument(planDocument: TextDocument): Promise<PlanValidationOutcome> {
 
-        let planFileInfo = <PlanInfo>this.pddlWorkspace.upsertAndParseFile(planDocument.uri.toString(), PddlLanguage.PLAN, planDocument.version, planDocument.getText());
+        let planFileInfo = <PlanInfo> await this.pddlWorkspace.upsertAndParseFile(planDocument.uri.toString(), PddlLanguage.PLAN, planDocument.version, planDocument.getText());
 
         if (!planFileInfo) { return PlanValidationOutcome.failed(null, new Error("Cannot open or parse plan file.")); }
 

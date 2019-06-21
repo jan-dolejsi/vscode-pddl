@@ -5,11 +5,11 @@
 'use strict';
 
 import {
-    Uri, Event, TextDocumentContentProvider, CancellationToken, workspace, OutputChannel, EventEmitter, window
+    Uri, Event, TextDocumentContentProvider, CancellationToken, workspace, OutputChannel, EventEmitter,
 } from 'vscode';
 import { Test } from './Test';
 import { join, dirname, basename } from 'path';
-import { PddlWorkspace } from '../../../common/src/workspace-model';
+import { PddlWorkspace } from '../../../common/src/PddlWorkspace';
 import { FileInfo } from '../../../common/src/FileInfo';
 
 /**
@@ -68,8 +68,7 @@ export class GeneratedDocumentContentProvider implements TextDocumentContentProv
         try {
             return await test.getPreProcessor().transform(documentText, dirname(test.getManifest().path), this.outputWindow);
         } catch (ex) {
-            window.showErrorMessage(`Cannot show problem file ${basename(uri.fsPath)}: ${ex}`);
-            return Promise.reject(ex);
+            return `Problem file '${basename(uri.fsPath)}' failed to generate: ${ex.message}`;
         }
     }
 }

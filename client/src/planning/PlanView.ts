@@ -11,7 +11,7 @@ import {
 
 import { isPlan, getDomainAndProblemForPlan } from '../utils';
 import { PlanReportGenerator } from './PlanReportGenerator';
-import { PddlWorkspace } from '../../../common/src/workspace-model';
+import { PddlWorkspace } from '../../../common/src/PddlWorkspace';
 import { PddlLanguage } from '../../../common/src/FileInfo';
 import { PlanInfo, PLAN } from '../../../common/src/parser';
 import { Plan } from '../../../common/src/Plan';
@@ -72,12 +72,12 @@ export class PlanView extends Disposable {
         return plannerOutputPanel;
     }
 
-    setNeedsRebuild(planDocument: TextDocument): void {
+    async setNeedsRebuild(planDocument: TextDocument): Promise<void> {
         let panel = this.webviewPanels.get(planDocument.uri);
 
         if (panel) {
             try {
-                let plan = this.parsePlanFile(planDocument);
+                let plan = await this.parsePlanFile(planDocument);
                 panel.setPlans([plan]);
             }
             catch (ex) {
@@ -126,7 +126,7 @@ export class PlanView extends Disposable {
             this.webviewPanels.set(doc.uri, previewPanel);
         }
 
-        this.setNeedsRebuild(doc);
+        await this.setNeedsRebuild(doc);
         this.updateContent(previewPanel);
     }
 
@@ -168,9 +168,9 @@ export class PlanView extends Disposable {
         }
     }
 
-    parsePlanFile(planDocument: TextDocument): Plan {
+    async parsePlanFile(planDocument: TextDocument): Promise<Plan> {
         try {
-            let planFileInfo = <PlanInfo>this.pddlWorkspace.upsertAndParseFile(planDocument.uri.toString(), PddlLanguage.PLAN, planDocument.version, planDocument.getText());
+            let planFileInfo = <PlanInfo> await this.pddlWorkspace.upsertAndParseFile(planDocument.uri.toString(), PddlLanguage.PLAN, planDocument.version, planDocument.getText());
 
             let domainAndProblem = getDomainAndProblemForPlan(planFileInfo, this.pddlWorkspace);
 

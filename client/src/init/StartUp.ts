@@ -12,7 +12,7 @@ import { PddlConfiguration } from '../configuration';
 
 import {diff} from 'semver';
 import { OverviewPage, SHOULD_SHOW_OVERVIEW_PAGE } from './OverviewPage';
-import * as afs from '../../../common/src/asyncfs';
+import * as fs from 'fs';
 
 enum TipResponse { Ok, Later, Next }
 
@@ -43,7 +43,7 @@ export class StartUp {
 
     async showTips(): Promise<boolean> {
         var tipsPath = this.context.asAbsolutePath('tips.txt');
-        var tips: string[] = (await afs.readFile(tipsPath, 'utf-8')).split("\n");
+        var tips: string[] = (await fs.promises.readFile(tipsPath, 'utf-8')).split("\n");
 
         var nextTipToShow = this.context.globalState.get(this.NEXT_TIP_TO_SHOW, 0);
 
@@ -144,7 +144,7 @@ export class StartUp {
             }
             else {
                 let changeLog = this.context.asAbsolutePath('CHANGELOG.html');
-                let html = await afs.readFile(changeLog, { encoding: "utf-8" });
+                let html = await fs.promises.readFile(changeLog, { encoding: "utf-8" });
 
                 let webViewPanel = window.createWebviewPanel(
                     "pddl.WhatsNew",

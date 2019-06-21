@@ -5,7 +5,7 @@
 'use strict';
 
 import { RenameProvider, TextDocument, Position, CancellationToken, WorkspaceEdit, workspace, Uri } from 'vscode';
-import { PddlWorkspace } from './workspace-model';
+import { PddlWorkspace } from './PddlWorkspace';
 import { SymbolUtils, SymbolInfo, VariableInfo, TypeInfo } from './SymbolUtils';
 
 export class SymbolRenameProvider implements RenameProvider {
@@ -15,14 +15,14 @@ export class SymbolRenameProvider implements RenameProvider {
         this.symbolUtils = new SymbolUtils(pddlWorkspace);
     }
 
-    provideRenameEdits(document: TextDocument, position: Position, newName: string, token: CancellationToken): WorkspaceEdit | Thenable<WorkspaceEdit> {
-        if (token.isCancellationRequested) return null;
-        this.symbolUtils.assertFileParsed(document);
+    async provideRenameEdits(document: TextDocument, position: Position, newName: string, token: CancellationToken): Promise<WorkspaceEdit> {
+        if (token.isCancellationRequested) { return null; }
+        await this.symbolUtils.assertFileParsed(document);
 
         let fileUri = document.uri.toString();
         let symbolInfo = this.symbolUtils.getSymbolInfo(document, position);
 
-        if (!symbolInfo || !this.canRename(symbolInfo)) return null;
+        if (!symbolInfo || !this.canRename(symbolInfo)) { return null; }
 
         let references = this.symbolUtils.findSymbolReferences(fileUri, symbolInfo, true);
 
@@ -41,15 +41,15 @@ export class SymbolRenameProvider implements RenameProvider {
     }
 
     findDocument(fileUri: Uri): TextDocument {
-        let documentFound = workspace.textDocuments.find(textDoc => textDoc.uri.toString() == fileUri.toString());
+        let documentFound = workspace.textDocuments.find(textDoc => textDoc.uri.toString() === fileUri.toString());
 
-        if (!documentFound) throw new Error("Document not found in the workspace: " + fileUri.toString());
+        if (!documentFound) { throw new Error("Document not found in the workspace: " + fileUri.toString()); }
 
         return documentFound;
     }
 
     canRename(symbolInfo: SymbolInfo): boolean {
-        return symbolInfo instanceof VariableInfo 
+        return symbolInfo instanceof VariableInfo
             || symbolInfo instanceof TypeInfo;
     }
 }

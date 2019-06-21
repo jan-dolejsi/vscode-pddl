@@ -7,7 +7,7 @@
 import { workspace, window, ExtensionContext, commands, Uri, ViewColumn, Range, languages } from 'vscode';
 
 import { Planning } from './planning/planning';
-import { PddlWorkspace } from '../../common/src/workspace-model';
+import { PddlWorkspace } from '../../common/src/PddlWorkspace';
 import { DomainInfo, PDDL, PLAN, HAPPENINGS } from '../../common/src/parser';
 import { PddlRange } from '../../common/src/FileInfo';
 import { PddlConfiguration } from './configuration';
