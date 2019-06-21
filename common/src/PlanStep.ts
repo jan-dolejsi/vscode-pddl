@@ -38,7 +38,7 @@ export class PlanStep {
         }
 
         return PlanStep.equalsWithin(this.time, other.time, epsilon)
-            && this.fullActionName.toLowerCase() == other.fullActionName.toLowerCase();
+            && this.fullActionName.toLowerCase() === other.fullActionName.toLowerCase();
     }
 
     static equalsWithin(a: number, b: number, epsilon: number): boolean {

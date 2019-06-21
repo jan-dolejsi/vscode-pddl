@@ -5,7 +5,7 @@
 'use strict';
 
 import { CompletionItem, CompletionItemKind } from 'vscode';
-import { PddlWorkspace } from '../../../common/src/workspace-model';
+import { PddlWorkspace } from '../../../common/src/PddlWorkspace';
 import { FileInfo } from '../../../common/src/FileInfo';
 import { Delegate } from './Delegate';
 

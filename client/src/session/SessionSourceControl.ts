@@ -160,7 +160,7 @@ export class SessionSourceControl implements vscode.Disposable {
 	/** Resets the given local file content to the checked-out version. */
 	private async resetFile(fileName: string, fileContent: string): Promise<void> {
 		let filePath = this.sessionRepository.createLocalResourcePath(fileName);
-		await afs.writeFile(filePath, fileContent);
+		await fs.promises.writeFile(filePath, fileContent);
 	}
 
 	private async getFileContent(fileName: string): Promise<string> {
@@ -334,7 +334,7 @@ export class SessionSourceControl implements vscode.Disposable {
 
 		for (const otherFile of otherFolderFiles) {
 			let resourcePath = path.join(this.getWorkspaceFolder().uri.fsPath, otherFile);
-			let fileStats = await afs.stat(resourcePath);
+			let fileStats = await fs.promises.stat(resourcePath);
 			if (fileStats.isDirectory()) { continue; }
 
 			// add this file as a new file to the session changed resources
@@ -360,25 +360,15 @@ export class SessionSourceControl implements vscode.Disposable {
 	}
 
 	async getLocalFileNames(): Promise<string[]> {
-		// todo: when upgraded to Node.js 10+, use { withFileTypes: true }
-		let fileNames: string[] = await afs.readdir(this.getWorkspaceFolder().uri.fsPath);
-		return fileNames
+		let fileEnts: fs.Dirent[] = await fs.promises.readdir(this.getWorkspaceFolder().uri.fsPath, { withFileTypes: true });
+		return fileEnts
 			// keep only files, not directories
-			.filter(fileName => this.isFile(fileName))
+			.filter(fileEnt => fileEnt.isFile())
+			.map(fileEnt => fileEnt.name)
 			// keep only pddl files, exclude the config file
 			.filter(fileName => fileName !== CONFIGURATION_FILE)
 			// keep only pddl files, exclude VS Code workspace file
 			.filter(fileName => !fileName.endsWith('.code-workspace'));
-	}
-
-	/**
-	 * Returns true if the fileName represents a file, false if it is a directory, or something else.
-	 * @param fileName file name in the workspace
-	 */
-	private isFile(fileName: string): boolean {
-		let fileStats = fs.statSync(path.join(this.getWorkspaceFolder().uri.fsPath, fileName));
-
-		return fileStats.isFile();
 	}
 
 	/** Determines whether the resource is different, regardless of line endings. */

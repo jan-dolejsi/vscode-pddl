@@ -9,7 +9,7 @@ import {
 } from 'vscode';
 
 import { Authentication } from '../../../common/src/Authentication';
-import { PddlWorkspace } from '../../../common/src/workspace-model';
+import { PddlWorkspace } from '../../../common/src/PddlWorkspace';
 import { DomainInfo, ProblemInfo, PlanInfo } from '../../../common/src/parser';
 import { FileInfo, FileStatus, stripComments, ParsingProblem } from '../../../common/src/FileInfo';
 
@@ -58,11 +58,11 @@ export class Diagnostics extends Disposable {
     scheduleValidation(): void {
         this.cancelScheduledValidation()
         let timerDelayInSeconds = this.pddlParserSettings.delayInSecondsBeforeParsing || this.defaultTimerDelayInSeconds;
-        this.timeout = setTimeout(() => { this.validateAllDirty(); }, timerDelayInSeconds * 1000);
+        this.timeout = setTimeout(() => this.validateAllDirty(), timerDelayInSeconds * 1000);
     }
 
     cancelScheduledValidation(): void {
-        if (this.timeout) clearTimeout(this.timeout);
+        if (this.timeout) { clearTimeout(this.timeout); }
     }
 
     validateAllDirty(): void {
@@ -130,7 +130,7 @@ export class Diagnostics extends Disposable {
         this.pddlWorkspace.folders.forEach(folder => {
             folder.files
                 .forEach(f => {
-                    if (f.getStatus() != FileStatus.Dirty) f.setStatus(FileStatus.Parsed)
+                    if (f.getStatus() !== FileStatus.Dirty) { f.setStatus(FileStatus.Parsed); }
                 }
                 );
         });
@@ -145,9 +145,9 @@ export class Diagnostics extends Disposable {
     }
 
     validatePlan(planInfo: PlanInfo, scheduleFurtherValidation: boolean): void {
-        if (planInfo == null) return;
+        if (planInfo === null || planInfo === undefined) { return; }
 
-        if (!this.planValidator.testConfiguration()) return;
+        if (!this.planValidator.testConfiguration()) { return; }
 
         // mark the file as under validation
         planInfo.setStatus(FileStatus.Validating);
@@ -158,7 +158,7 @@ export class Diagnostics extends Disposable {
             // Send the computed diagnostics to VSCode.
             this.sendDiagnostics(diagnostics);
             planInfo.setStatus(FileStatus.Validated);
-            if (scheduleFurtherValidation) this.scheduleValidation();
+            if (scheduleFurtherValidation) { this.scheduleValidation(); }
         }, (err) => {
             window.showErrorMessage(err);
             console.warn(err);
@@ -168,7 +168,7 @@ export class Diagnostics extends Disposable {
     }
 
     validateHappenings(happeningsInfo: HappeningsInfo, scheduleFurtherValidation: boolean): void {
-        if (happeningsInfo == null) return;
+        if (happeningsInfo === null || happeningsInfo === undefined) { return; }
 
         // mark the file as under validation
         happeningsInfo.setStatus(FileStatus.Validating);
@@ -179,7 +179,7 @@ export class Diagnostics extends Disposable {
             // Send the computed diagnostics to VSCode.
             this.sendDiagnostics(diagnostics);
             happeningsInfo.setStatus(FileStatus.Validated);
-            if (scheduleFurtherValidation) this.scheduleValidation();
+            if (scheduleFurtherValidation) { this.scheduleValidation(); }
         }, (err) => {
             window.showErrorMessage(err);
             console.warn(err);
@@ -188,7 +188,7 @@ export class Diagnostics extends Disposable {
 
     validatePddlDocument(fileInfo: FileInfo, scheduleFurtherValidation: boolean): void {
 
-        if (fileInfo == null) {
+        if (fileInfo === null || fileInfo === undefined) {
             console.log('File not found in the workspace.');
             return;
         }
@@ -213,7 +213,7 @@ export class Diagnostics extends Disposable {
 
             let domainFile = this.getDomainFileFor(problemInfo);
 
-            if (domainFile != null) {
+            if (domainFile !== null && domainFile !== undefined) {
                 this.validateDomainAndProblems(domainFile, [problemInfo], scheduleFurtherValidation);
             }
         }
@@ -224,7 +224,9 @@ export class Diagnostics extends Disposable {
 
     validateDomainAndProblems(domainInfo: DomainInfo, problemFiles: ProblemInfo[], scheduleFurtherValidation: boolean): void {
 
-        if (this.pddlParserSettings.executableOrService == null || this.pddlParserSettings.executableOrService == "") {
+        if (this.pddlParserSettings.executableOrService === null ||
+            this.pddlParserSettings.executableOrService === undefined ||
+            this.pddlParserSettings.executableOrService === "") {
             // suggest the user to update the settings
             var showNever = true;
             this.pddlConfiguration.suggestNewParserConfiguration(showNever);
@@ -238,12 +240,12 @@ export class Diagnostics extends Disposable {
         // this.connection.console.log(`Validating ${domainInfo.name} and ${problemFiles.length} problem files.`)
 
         let validator = this.createValidator();
-        if (!validator) return;
+        if (!validator) { return; }
 
         validator.validate(domainInfo, problemFiles, (diagnostics) => {
             // Send the computed diagnostics to VSCode.
             this.sendDiagnostics(diagnostics);
-            if (scheduleFurtherValidation) this.scheduleValidation();
+            if (scheduleFurtherValidation) { this.scheduleValidation(); }
         }, (err) => {
             window.showErrorMessage(err);
             console.warn(err);
@@ -253,10 +255,10 @@ export class Diagnostics extends Disposable {
     }
 
     createValidator(): Validator {
-        if (!this.validator || this.validator.path != this.pddlParserSettings.executableOrService
+        if (!this.validator || this.validator.path !== this.pddlParserSettings.executableOrService
             || (this.validator instanceof ValidatorExecutable) && (
-                this.validator.syntax != this.pddlParserSettings.executableOptions ||
-                this.validator.customPattern != this.pddlParserSettings.problemPattern
+                this.validator.syntax !== this.pddlParserSettings.executableOptions ||
+                this.validator.customPattern !== this.pddlParserSettings.problemPattern
             )) {
             if (this.pddlParserSettings.executableOrService.match(/^http[s]?:/i)) {
                 // is a service
@@ -304,7 +306,7 @@ export class Diagnostics extends Disposable {
             problemFile.setStatus(FileStatus.Validated);
             return null;
         }
-        else if (domainFiles.length == 0) {
+        else if (domainFiles.length === 0) {
             // this.workspace.folders.forEach()
 
             let message = `There are no domains open in the same folder with name (domain '${problemFile.domainName}') open in the editor.`;

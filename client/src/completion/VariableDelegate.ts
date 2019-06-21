@@ -5,7 +5,7 @@
 'use strict';
 
 import { CompletionItem, CompletionItemKind } from 'vscode';
-import { PddlWorkspace } from '../../../common/src/workspace-model';
+import { PddlWorkspace } from '../../../common/src/PddlWorkspace';
 import { DomainInfo } from '../../../common/src/parser';
 import { FileInfo, Variable } from '../../../common/src/FileInfo';
 import { Delegate } from './Delegate';
@@ -22,7 +22,7 @@ export class VariableDelegate extends Delegate {
 
     getVariableItems(fileInfo: FileInfo): CompletionItem[] {
         let domainInfo = this.workspace.asDomain(fileInfo);
-        if (!domainInfo) return [];
+        if (!domainInfo) { return []; }
         let predicates = this.getPredicates(domainInfo).map(p => this.createPredicate(p));
         let functions = this.getFunctions(domainInfo).map(f => this.createFunction(f));
         let derived = this.getDerived(domainInfo).map(d => this.createDerived(d));

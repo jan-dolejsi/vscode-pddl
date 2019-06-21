@@ -11,7 +11,7 @@ import {
 
 import * as path from 'path';
 
-import { PddlWorkspace } from '../../../common/src/workspace-model';
+import { PddlWorkspace } from '../../../common/src/PddlWorkspace';
 import { DomainInfo, ProblemInfo } from '../../../common/src/parser';
 import { FileInfo, PddlLanguage } from '../../../common/src/FileInfo';
 import { PddlConfiguration } from '../configuration';
@@ -122,13 +122,13 @@ export class Planning implements PlannerResponseHandler {
         let domainDocument = await workspace.openTextDocument(domainUri);
         let problemDocument = await workspace.openTextDocument(problemUri);
 
-        let domainInfo = <DomainInfo>this.upsertFile(domainDocument);
-        let problemInfo = <ProblemInfo>this.upsertFile(problemDocument);
+        let domainInfo = <DomainInfo> await this.upsertFile(domainDocument);
+        let problemInfo = <ProblemInfo> await this.upsertFile(problemDocument);
 
         this.planExplicit(domainInfo, problemInfo, workingFolder, options);
     }
 
-    private upsertFile(doc: TextDocument): FileInfo {
+    private upsertFile(doc: TextDocument): Promise<FileInfo> {
         return this.pddlWorkspace.upsertAndParseFile(doc.uri.toString(), PddlLanguage.PDDL, doc.version, doc.getText());
     }
 
@@ -147,7 +147,7 @@ export class Planning implements PlannerResponseHandler {
         const activeDocument = window.activeTextEditor.document;
         const activeFilePath = activeDocument.fileName;
 
-        const activeFileInfo = this.upsertFile(activeDocument);
+        const activeFileInfo = await this.upsertFile(activeDocument);
 
         let problemFileInfo: ProblemInfo;
         let domainFileInfo: DomainInfo;

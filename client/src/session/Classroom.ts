@@ -6,6 +6,7 @@
 
 import * as path from 'path';
 import * as afs from '../../../common/src/asyncfs';
+import * as fs from 'fs';
 import { StudentName } from "./StudentNameParser";
 import { SessionSourceControl } from "./SessionSourceControl";
 import { saveConfiguration, SessionConfiguration } from './SessionConfiguration';
@@ -30,7 +31,7 @@ export class Classroom {
         let workspaceAsString = JSON.stringify(workspaceObj, null, 4);
 
         let workspaceFilePath = await this.createNewWorkspaceFile();
-        await afs.writeFile(workspaceFilePath, workspaceAsString);
+        await fs.promises.writeFile(workspaceFilePath, workspaceAsString);
 
         return workspaceFilePath;
     }

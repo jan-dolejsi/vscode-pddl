@@ -28,3 +28,9 @@ Modify following files:
 - Update the version in `client/publish.cmd`
 - Add section about new features and fixes on top of the `client\CHANGELOG.md` and refer to Git tag at the bottom of the file
 - Add end-user documentation about new features to `client\README.md`
+
+## Credits
+
+Icons made by [Pixel perfect](https://www.flaticon.com/authors/pixel-perfect) from [www.flaticon.com](https://www.flaticon.com/) is licensed by [CC 3.0 BY](http://creativecommons.org/licenses/by/3.0/).
+
+Development of this extension was supported by [Schlumberger](https://www.slb.com). Visit [careers.slb.com](https://careers.slb.com/).

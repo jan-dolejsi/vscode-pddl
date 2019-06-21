@@ -53,7 +53,7 @@ export class Util {
 
         let url = new URL(fileUri);
         let decodedPath: string = decodeURIComponent(url.pathname);
-        if(decodedPath.startsWith('/')) decodedPath = decodedPath.substr(1);
+        if(decodedPath.startsWith('/')) { decodedPath = decodedPath.substr(1); }
 
         return decodedPath;
     }

@@ -8,7 +8,7 @@ import {
     Position, Range, Hover, Location, Uri, TextDocument, MarkdownString
 } from 'vscode';
 
-import { PddlWorkspace } from '../../common/src/workspace-model';
+import { PddlWorkspace } from '../../common/src/PddlWorkspace';
 import { toLanguageFromId, Action } from '../../common/src/parser';
 import { Variable, PddlRange } from '../../common/src/FileInfo';
 
@@ -19,11 +19,11 @@ export class SymbolUtils {
         let fileInfo = this.workspace.getFileInfo(document.uri.toString());
 
         let domainInfo = this.workspace.asDomain(fileInfo);
-        if (!domainInfo) return null;
+        if (!domainInfo) { return null; }
 
         let symbol = this.getSymbolAtPosition(document, position);
 
-        if (!symbol) return null;
+        if (!symbol) { return null; }
 
         if (symbol.isPrefixedBy('(')) {
             let symbolName = symbol.name.toLowerCase();
@@ -57,7 +57,7 @@ export class SymbolUtils {
             let actionFound = domainInfo.getActions().find(a => a.name.toLowerCase() === symbolName);
             if (actionFound) {
                 let label = 'Action';
-                if (actionFound.isDurative) label = 'Durative ' + label;
+                if (actionFound.isDurative) { label = 'Durative ' + label; }
                 return new ActionInfo(
                     this.createHover(symbol.range, label, actionFound.name, actionFound.documentation || ''),
                     new Location(this.toUri(domainInfo.fileUri), SymbolUtils.toRange(actionFound.location)),
@@ -69,7 +69,7 @@ export class SymbolUtils {
 
             if (domainInfo.getTypes().includes(symbol.name)) {
                 let parents = domainInfo.typeInheritance.getVerticesWithEdgesFrom(symbol.name);
-                let inheritsFromText = parents.length > 0 ? "Inherits from: " + parents.join(', ') : ""
+                let inheritsFromText = parents.length > 0 ? "Inherits from: " + parents.join(', ') : "";
                 return new TypeInfo(
                     this.createHover(symbol.range, 'Type', symbol.name, inheritsFromText),
                     new Location(this.toUri(domainInfo.fileUri), SymbolUtils.toRange(domainInfo.getTypeLocation(symbol.name))),
@@ -86,7 +86,7 @@ export class SymbolUtils {
     getWordAtDocumentPosition(document: TextDocument, position: Position): WordOnPositionContext {
         // find the word at the position leveraging the TextDocument facility
         let wordRange = document.getWordRangeAtPosition(position, /\w[-\w]*/);
-        if (!wordRange || wordRange.isEmpty || !wordRange.isSingleLine) return null;
+        if (!wordRange || wordRange.isEmpty || !wordRange.isSingleLine) { return null; }
 
         let word = document.getText(wordRange);
         let lineIdx = wordRange.start.line;
@@ -107,12 +107,12 @@ export class SymbolUtils {
 
         this.leadingSymbolPattern.lastIndex = 0;
         let match = this.leadingSymbolPattern.exec(leadingText); //todo: this pattern does not match, if the word was selected
-        if (!match) return null;
+        if (!match) { return null; }
         let leadingSymbolPart = match[1];
 
         this.followingSymbolPattern.lastIndex = 0;
         match = this.followingSymbolPattern.exec(followingText);
-        if (!match) return null;
+        if (!match) { return null; }
         let followingSymbolPart = match[1];
 
         let symbolName = leadingSymbolPart + followingSymbolPart.substr(1);
@@ -133,8 +133,8 @@ export class SymbolUtils {
     getSymbolAtPosition(document: TextDocument, position: Position): Symbol {
         let wordContext = this.getWordAtDocumentPosition(document, position);
 
-        // is the position not a word, or within comments? 
-        if (wordContext == null || wordContext.before.includes(';')) return null;
+        // is the position not a word, or within comments?
+        if (wordContext === null || wordContext === undefined || wordContext.before.includes(';')) { return null; }
 
         return new Symbol(wordContext.word, wordContext.range, wordContext.line);
     }
@@ -157,7 +157,7 @@ export class SymbolUtils {
         let fileInfo = this.workspace.getFileInfo(fileUri);
 
         let domainInfo = this.workspace.asDomain(fileInfo);
-        if (!domainInfo) return null;
+        if (!domainInfo) { return null; }
 
         let problemFiles = this.workspace.getProblemFiles(domainInfo);
 
@@ -167,7 +167,7 @@ export class SymbolUtils {
             // add variable references found in the domain file
             domainInfo.getVariableReferences((<VariableInfo>symbol).variable).forEach(range => {
                 if (includeReference) {
-                    locations.push(new Location(this.toUri(domainInfo.fileUri), SymbolUtils.toRange(range)))
+                    locations.push(new Location(this.toUri(domainInfo.fileUri), SymbolUtils.toRange(range)));
                 } else {
                     // we skipped the declaration, but let's include any further references
                     includeReference = true;
@@ -189,7 +189,7 @@ export class SymbolUtils {
                 if (!vsRange.isEqual(symbol.location.range)) {
                     locations.push(new Location(this.toUri(domainInfo.fileUri), vsRange));
                 }
-            })
+            });
 
             // add type references found in all problem files
             problemFiles.forEach(p =>
@@ -201,10 +201,10 @@ export class SymbolUtils {
         return locations;
     }
 
-    assertFileParsed(document: TextDocument): void {
+    async assertFileParsed(document: TextDocument): Promise<void> {
         let fileUri = document.uri.toString();
         if (!this.workspace.getFileInfo(fileUri)) {
-            this.workspace.upsertAndParseFile(fileUri, toLanguageFromId(document.languageId), document.version, document.getText());
+            await this.workspace.upsertAndParseFile(fileUri, toLanguageFromId(document.languageId), document.version, document.getText());
         }
     }
 

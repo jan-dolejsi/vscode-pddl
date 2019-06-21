@@ -9,7 +9,7 @@ import { EventEmitter } from 'events';
 
 import { Util } from '../../../common/src/util';
 import * as atmp from '../../../common/src/asynctmp';
-import * as afs from '../../../common/src/asyncfs';
+import * as fs from 'fs';
 import * as path from 'path';
 import { TimedVariableValue, VariableValue, ProblemInfo, DomainInfo, Parser } from '../../../common/src/parser';
 import { Happening } from '../../../common/src/HappeningsInfo';
@@ -50,7 +50,7 @@ export class ValStep extends EventEmitter {
         const that = this;
 
         return new Promise<TimedVariableValue[]>(async (resolve, reject) => {
-            let child = process.execFile(valStepPath, args, { cwd: cwd, timeout: 2000, maxBuffer: 2 * 1024 * 1024 }, (error, stdout, stderr) => {
+            let child = process.execFile(valStepPath, args, { cwd: cwd, timeout: 2000, maxBuffer: 2 * 1024 * 1024 }, async (error, stdout, stderr) => {
                 if (error) {
                     reject(new ValStepError(error.message, this.domainInfo, this.problemInfo, this.valStepInput));
                     return;
@@ -60,7 +60,7 @@ export class ValStep extends EventEmitter {
                     console.log(stderr);
                 }
                 let eventualProblem = that.outputBuffer;
-                let newValues = that.extractInitialState(eventualProblem);
+                let newValues = await that.extractInitialState(eventualProblem);
                 resolve(newValues);
             });
 
@@ -114,8 +114,8 @@ export class ValStep extends EventEmitter {
      * @param problemText problem file content output by ValStep
      * @returns variable values array, or null if the tool failed
      */
-    private extractInitialState(problemText: string): TimedVariableValue[] {
-        let problemInfo = new Parser().tryProblem("eventual-problem://not-important", 0, problemText);
+    private async extractInitialState(problemText: string): Promise<TimedVariableValue[]> {
+        let problemInfo = await new Parser().tryProblem("eventual-problem://not-important", 0, problemText);
 
         if (!problemInfo) { return null; }
 
@@ -300,12 +300,12 @@ export class ValStep extends EventEmitter {
         const domainFile = "domain.pddl";
         const problemFile = "problem.pddl";
         const inputFile = "happenings.valsteps";
-        await afs.writeFile(path.join(tempDir, domainFile), err.domain.getText(), {encoding: "utf-8"});
-        await afs.writeFile(path.join(tempDir, problemFile), err.problem.getText(), {encoding: "utf-8"});
-        await afs.writeFile(path.join(tempDir, inputFile), err.valStepInput, {encoding: "utf-8"});
+        await fs.promises.writeFile(path.join(tempDir, domainFile), err.domain.getText(), {encoding: "utf-8"});
+        await fs.promises.writeFile(path.join(tempDir, problemFile), err.problem.getText(), {encoding: "utf-8"});
+        await fs.promises.writeFile(path.join(tempDir, inputFile), err.valStepInput, {encoding: "utf-8"});
 
         let command = `type ${inputFile} | valstep ${domainFile} ${problemFile}`;
-        await afs.writeFile(path.join(tempDir, "run.cmd"), command, {encoding: "utf-8"});
+        await fs.promises.writeFile(path.join(tempDir, "run.cmd"), command, {encoding: "utf-8"});
         return tempDir;
     }
 }

@@ -8,8 +8,7 @@ import {
     workspace, Uri, TreeDataProvider, Event, TreeItem, EventEmitter, TreeItemCollapsibleState, window
 } from 'vscode';
 import { basename, join } from 'path';
-import { readdirSync, statSync } from 'fs';
-import * as afs from '../../../common/src/asyncfs';
+import * as fs from 'fs';
 import { TestsManifest } from './TestsManifest';
 import { TestOutcome, Test } from './Test';
 import { PddlExtensionContext } from '../../../common/src/PddlExtensionContext';
@@ -149,7 +148,7 @@ export class PTestTreeDataProvider implements TreeDataProvider<PTestNode> {
             }
             else {
                 let children: string[] = [];
-                children = await afs.readdir(parentPath);
+                children = await fs.promises.readdir(parentPath);
                 return Promise.all(children
                     .map(child => join(parentPath, child))
                     .filter(childPath => PTestTreeDataProvider.isOrHasTests(childPath))
@@ -194,7 +193,7 @@ ${error}`);
     }
 
     filePathToNodeKind(filePath: string): PTestNodeKind {
-        if (statSync(filePath).isDirectory()) {
+        if (fs.statSync(filePath).isDirectory()) {
             return PTestNodeKind.Directory;
         }
         else if (PTestTreeDataProvider.isTestManifest(filePath)) {
@@ -211,7 +210,7 @@ ${error}`);
     }
 
     static isOrHasTests(childPath: string): boolean {
-        if (statSync(childPath).isDirectory()) {
+        if (fs.statSync(childPath).isDirectory()) {
             return PTestTreeDataProvider.getAllChildrenFiles(childPath).some(filePath => this.isTestManifest(filePath));
         } else {
             return this.isTestManifest(childPath);
@@ -225,12 +224,12 @@ ${error}`);
     }
 
     static getAllChildrenFiles(dir: string): string[] {
-        let fileNames: string[] = readdirSync(dir);
+        let fileNames: string[] = fs.readdirSync(dir);
         return fileNames
             .filter(file => file !== ".git")
             .reduce((files: string[], file: string) => {
                 let filePath = join(dir, file);
-                return statSync(filePath).isDirectory() ?
+                return fs.statSync(filePath).isDirectory() ?
                     files.concat(PTestTreeDataProvider.getAllChildrenFiles(filePath)) :
                     files.concat(filePath);
             },

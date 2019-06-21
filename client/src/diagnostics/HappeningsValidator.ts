@@ -10,7 +10,7 @@ import {
 
 import * as process from 'child_process';
 
-import { PddlWorkspace } from '../../../common/src/workspace-model';
+import { PddlWorkspace } from '../../../common/src/PddlWorkspace';
 import { DomainInfo, ProblemInfo } from '../../../common/src/parser';
 import { PddlLanguage } from '../../../common/src/FileInfo';
 import { HappeningsInfo, Happening } from "../../../common/src/HappeningsInfo";
@@ -52,7 +52,7 @@ export class HappeningsValidator {
 
     async validateTextDocument(planDocument: TextDocument): Promise<HappeningsValidationOutcome> {
 
-        let planFileInfo = <HappeningsInfo>this.pddlWorkspace.upsertAndParseFile(planDocument.uri.toString(), PddlLanguage.PLAN, planDocument.version, planDocument.getText());
+        let planFileInfo = <HappeningsInfo> await this.pddlWorkspace.upsertAndParseFile(planDocument.uri.toString(), PddlLanguage.PLAN, planDocument.version, planDocument.getText());
 
         if (!planFileInfo) {
             return HappeningsValidationOutcome.failed(null, new Error("Cannot open or parse plan file."));
@@ -178,7 +178,7 @@ export class HappeningsValidator {
 
     private isDomainAction(domain: DomainInfo, problem: ProblemInfo, happening: Happening): boolean {
         problem;
-        return domain.actions.some(a => a.name.toLowerCase() == happening.getAction().toLowerCase());
+        return domain.actions.some(a => a.name.toLowerCase() === happening.getAction().toLowerCase());
     }
 
     private isTimeMonotonociallyIncreasing(first: Happening, second: Happening): boolean {

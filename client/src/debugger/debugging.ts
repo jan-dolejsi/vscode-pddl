@@ -11,7 +11,7 @@ import * as Net from 'net';
 import { HAPPENINGS } from '../../../common/src/parser';
 import { FileInfo } from '../../../common/src/FileInfo';
 import { HappeningsInfo } from "../../../common/src/HappeningsInfo";
-import { PddlWorkspace } from '../../../common/src/workspace-model';
+import { PddlWorkspace } from '../../../common/src/PddlWorkspace';
 import { toLanguage, isHappenings, getDomainAndProblemForHappenings, selectHappenings } from '../utils';
 import { PddlConfiguration } from '../configuration';
 import { HappeningsExecutor } from './HappeningsExecutor';
@@ -37,7 +37,7 @@ export class Debugging {
 		}));
 
 		// register a configuration provider for 'pddl-happenings' debug type
-		const provider = new PddlPlanDebugConfigurationProvider()
+		const provider = new PddlPlanDebugConfigurationProvider();
 		context.subscriptions.push(vscode.debug.registerDebugConfigurationProvider('pddl-happenings', provider));
 		context.subscriptions.push(provider);
 
@@ -53,7 +53,7 @@ export class Debugging {
 				this.saveDecorations(editor.document, decorations);
 			}
 			catch (ex) {
-				vscode.window.showErrorMessage(ex)
+				vscode.window.showErrorMessage(ex);
 			}
 		}));
 
@@ -63,7 +63,7 @@ export class Debugging {
 				new HappeningsToPlanResumeCasesConvertor(context, this.plannerConfiguration).generate();
 			}
 			catch (ex) {
-				vscode.window.showErrorMessage(ex)
+				vscode.window.showErrorMessage(ex);
 			}
 		}));
 
@@ -74,7 +74,7 @@ export class Debugging {
 
 	clearDecorations(document: vscode.TextDocument): void {
 		let decorations = this.decorations.get(document);
-		if (decorations) decorations.forEach(d => d.dispose());
+		if (decorations) { decorations.forEach(d => d.dispose()); }
 		this.decorations.set(document, []);
 	}
 
@@ -95,7 +95,7 @@ export class Debugging {
 			return null;
 		}
 
-		let activeFileInfo = this.upsertAndParseFile(window.activeTextEditor.document);
+		let activeFileInfo = await this.upsertAndParseFile(window.activeTextEditor.document);
 
 		if (!(activeFileInfo instanceof HappeningsInfo)) {
 			window.showErrorMessage('Active document is not debuggable.');
@@ -113,7 +113,7 @@ export class Debugging {
 		};
 	}
 
-	upsertAndParseFile(textDocument: vscode.TextDocument): FileInfo {
+	upsertAndParseFile(textDocument: vscode.TextDocument): Promise<FileInfo> {
 		return this.pddlWorkspace.upsertAndParseFile(textDocument.uri.toString(),
 			toLanguage(textDocument),
 			textDocument.version, textDocument.getText());
@@ -156,7 +156,7 @@ class PddlPlanDebugConfigurationProvider implements vscode.DebugConfigurationPro
 				config.request = 'launch';
 				config.program = '${file}';
 				config.domain = 'domain.pddl';
-				config.problem = '${fileBasenameNoExtension}.pddl'
+				config.problem = '${fileBasenameNoExtension}.pddl';
 				config.stopOnEntry = true;
 			}
 		}
