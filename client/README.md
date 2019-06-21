@@ -483,6 +483,11 @@ When all sessions are created, a dedicated VS Code workspace is created for the 
 
 ![Planning.Domains classroom generation](https://raw.githubusercontent.com/wiki/jan-dolejsi/vscode-pddl/img/Planning.Domains_classroom.gif)
 
+#### Gamifying PDDL trainings
+
+Include a `.ptest.json` file into the template session, create classroom using the , open the Test Explorer (View > Open View ... > Test > PDDL TESTS) and click the _Run All_ button in the toolbar. This runs the test cases from all the student sessions and displays the pass/fail results.
+First student with passing tests wins ... a diploma :-!
+
 #### Working with multiple-sessions in VS Code
 
 The support for multiple sessions or even the entire classroom of sessions per student is built using the VS Code Workspace Folders facility. Each workspace folder in this case is its own Source Control root. The Source Control panel lets you select the session you want to interact with and the status bar starts from the left with a version indicator pertaining to the selected (or first) workspace folder.

@@ -369,6 +369,11 @@
       ],
       "view/title": [
         {
+          "command": "pddl.tests.runAll",
+          "when": "view == pddl.tests.explorer",
+          "group": "navigation"
+        },
+        {
           "command": "pddl.tests.refresh",
           "when": "view == pddl.tests.explorer",
           "group": "navigation"
@@ -382,7 +387,7 @@
         },
         {
           "command": "pddl.tests.runAll",
-          "when": "view == pddl.tests.explorer && viewItem == manifest",
+          "when": "view == pddl.tests.explorer && viewItem != test",
           "group": "execution"
         },
         {

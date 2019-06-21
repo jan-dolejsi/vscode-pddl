@@ -33,12 +33,14 @@ export class NormalizedPlanDocumentContentProvider implements TextDocumentConten
 
     dispose() {
         this._onDidChange.dispose();
-        if (this.timeout) clearTimeout(this.timeout);
+        if (this.timeout) { clearTimeout(this.timeout); }
     }
 
     planChanged(uri: Uri): void {
-        if (this.timeout) clearTimeout(this.timeout);
-        if (!this.changingUris.some(uri1 => uri1.toString() === uri.toString())) this.changingUris.push(uri);
+        if (this.timeout) { clearTimeout(this.timeout); }
+        if (!this.changingUris.some(uri1 => uri1.toString() === uri.toString())) {
+            this.changingUris.push(uri);
+        }
         this.timeout = setTimeout(() => this.updateChangedPlans(), 1000);
     }
 
@@ -49,7 +51,7 @@ export class NormalizedPlanDocumentContentProvider implements TextDocumentConten
     }
 
     provideTextDocumentContent(uri: Uri, token: CancellationToken): string | Thenable<string> {
-        if (token.isCancellationRequested) return "Canceled";
+        if (token.isCancellationRequested) { return "Canceled"; }
 
         let fileUri = uri.with({ scheme: 'file' });
 
@@ -142,7 +144,7 @@ class PlanParserAndNormalizer {
             let time = group[2] ? parseFloat(group[2]) : this.makespan;
 
             if (!this.firstLineParsed) {
-                if (time == 0) {
+                if (time === 0) {
                     this.timeOffset = -this.epsilon;
                 }
                 this.firstLineParsed = true;

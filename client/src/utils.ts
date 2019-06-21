@@ -146,7 +146,7 @@ export function createPddlExtensionContext(context: ExtensionContext): PddlExten
 
 export async function getWebViewHtml(extensionContext: ExtensionContext, relativePath: string, htmlFileName: string) {
     let overviewHtmlPath = extensionContext.asAbsolutePath(join(relativePath, htmlFileName));
-    let html = await fs.promises.readFile(overviewHtmlPath, { encoding: "utf-8" });
+    let html = await fs.promises.readFile(overviewHtmlPath, { encoding: "utf-8", flag: 'r' });
 
     html = html.replace(/<(script|img|link) ([^>]*)(src|href)="([^"]+)"/g, (sourceElement: string, elementName: string, middleBits: string, attribName: string, attribValue: string) => {
         if (attribValue.startsWith('http')) {
