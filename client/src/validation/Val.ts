@@ -7,8 +7,9 @@
 import { commands, ExtensionContext, window, ProgressLocation, workspace, ConfigurationTarget } from 'vscode';
 import * as path from 'path';
 import { getFile } from '../httpUtils';
-import { mkdirIfDoesNotExist, writeFile, unlink } from '../../../common/src/asyncfs';
+import { mkdirIfDoesNotExist } from '../../../common/src/asyncfs';
 import * as os from 'os';
+import * as fs from 'fs';
 import * as AdmZip from 'adm-zip';
 
 export class Val {
@@ -74,11 +75,11 @@ export class Val {
 
         // clean-up and delete the drop content
         zipEntries.forEach(async (zipEntry) => {
-            await unlink(path.join(this.valPath, zipEntry));
+            await fs.promises.unlink(path.join(this.valPath, zipEntry));
         });
 
         // delete the drop zip
-        await unlink(zipPath);
+        await fs.promises.unlink(zipPath);
 
         this.writeVersion(buildId, version, valToolFileNames);
 
@@ -117,7 +118,7 @@ export class Val {
         let valToolFilePaths = valToolFileNames.map(fileName => path.join(this.valPath, fileName));
         var json = JSON.stringify({ buildId: buildId, version: version, files: valToolFilePaths }, null, 2);
         try {
-            await writeFile(this.valVersion, json, 'utf8');
+            await fs.promises.writeFile(this.valVersion, json, 'utf8');
         }
         catch (err) {
             window.showErrorMessage(`Error saving VAL version ${err.name}: ${err.message}`);
