@@ -5,14 +5,15 @@
 'use strict';
 
 import * as fs from 'fs';
+import util = require('util');
 
-export async function exists(path: string): Promise<boolean> {
-    return await fs.promises.access(path).then(() => true).catch(() => false);
-}
-
-const util = require('util');
-
+export const readFile = util.promisify(fs.readFile);
+export const writeFile = util.promisify(fs.writeFile);
 export const write = util.promisify(fs.write);
+export const exists = util.promisify(fs.exists);
+export const readdir = util.promisify(fs.readdir);
+export const unlink = util.promisify(fs.unlink);
+export const stat = util.promisify(fs.stat);
 
 export const mkdirIfDoesNotExist = (path: string, mode: number) => new Promise<void>(
     (resolve, reject) => fs.mkdir(path, mode,

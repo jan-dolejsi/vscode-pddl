@@ -7,7 +7,7 @@
 import {
     workspace, TreeView, window, commands, ViewColumn, Uri, OutputChannel, ProgressLocation, Range, SaveDialogOptions, Position
 } from 'vscode';
-import { dirname, basename } from 'path';
+import { dirname } from 'path';
 import { readFileSync, promises } from 'fs';
 import * as afs from '../../../common/src/asyncfs';
 import { Test, TestOutcome } from './Test';
@@ -39,14 +39,14 @@ export class PTestExplorer {
 
         context.subscriptions.push(commands.registerCommand('pddl.tests.refresh', () => this.pTestTreeDataProvider.refresh()));
         context.subscriptions.push(commands.registerCommand('pddl.tests.run', node => this.runTest(node)));
-        context.subscriptions.push(commands.registerCommand('pddl.tests.runAll', node => this.runTests(node)));
+        context.subscriptions.push(commands.registerCommand('pddl.tests.runAll', node => this.findAndRunTests(node)));
         context.subscriptions.push(commands.registerCommand('pddl.tests.view', node => this.openTest(node)));
         context.subscriptions.push(commands.registerCommand('pddl.tests.viewDefinition', node => this.openDefinition(node)));
         context.subscriptions.push(commands.registerCommand('pddl.tests.viewExpectedPlans', node => this.openExpectedPlans(node)));
         context.subscriptions.push(commands.registerCommand('pddl.tests.problemSaveAs', () => this.saveProblemAs()));
 
-        context.subscriptions.push(commands.registerCommand('pddl.tests.reveal', nodeUri => 
-            this.pTestViewer.reveal(this.pTestTreeDataProvider.findNodeByResource(nodeUri), {select: true, expand: true})));
+        context.subscriptions.push(commands.registerCommand('pddl.tests.reveal', nodeUri =>
+            this.pTestViewer.reveal(this.pTestTreeDataProvider.findNodeByResource(nodeUri), { select: true, expand: true })));
 
         this.outputWindow = window.createOutputChannel("PDDL Test output");
 
@@ -76,7 +76,7 @@ export class PTestExplorer {
         }
     }
 
-    async openDefinition(node: PTestNode) {
+    async openDefinition(node: PTestNode): Promise<void> {
         if (node.kind === PTestNodeKind.Test) {
             let test = Test.fromUri(node.resource, this.context);
             let manifest = test.getManifest();
@@ -99,7 +99,7 @@ export class PTestExplorer {
         }
     }
 
-    async openExpectedPlans(node: PTestNode) {
+    async openExpectedPlans(node: PTestNode): Promise<void> {
         if (node.kind === PTestNodeKind.Test) {
             let test = Test.fromUri(node.resource, this.context);
 
@@ -121,7 +121,7 @@ export class PTestExplorer {
         }
     }
 
-    async openTest(node: PTestNode) {
+    async openTest(node: PTestNode): Promise<void> {
         if (node.kind === PTestNodeKind.Test) {
             let test = Test.fromUri(node.resource, this.context);
 
@@ -136,7 +136,7 @@ export class PTestExplorer {
         }
     }
 
-    async openProblemFile(test: Test) {
+    async openProblemFile(test: Test): Promise<void> {
         let uri: Uri = null;
 
         if (test.getPreProcessor()) {
@@ -151,45 +151,78 @@ export class PTestExplorer {
         await window.showTextDocument(uri, { preview: true, viewColumn: ViewColumn.Two });
     }
 
-    async runTests(node: PTestNode) {
-        if (node.kind === PTestNodeKind.Manifest) {
+    /**
+     * Finds all tests in given scope and executes them.
+     * @param node user-selected tree node, or `null` for all workspace folders
+     */
+    async findAndRunTests(node: PTestNode): Promise<void> {
+        let allManifests: TestsManifest[] = [];
+        await this.findTests(node, allManifests);
+
+        let contextPath = node ?
+            workspace.asRelativePath(node.resource.fsPath) :
+            "this workspace";
+
+        this.runTests(allManifests, contextPath);
+    }
+
+    /**
+     * Walks the tree from the given node recursively and adds manifests to `allManifests`.
+     * @param node tree node from where to start walking
+     * @param allManifests all manifests found so far
+     */
+    async findTests(node: PTestNode, allManifests: TestsManifest[]): Promise<void> {
+        if (!node || node.kind === PTestNodeKind.Directory) {
+            let children = await this.pTestTreeDataProvider.getChildren(node);
+            for (const child of children) {
+                await this.findTests(child, allManifests);
+            }
+        }
+        else if (node.kind === PTestNodeKind.Manifest) {
             let manifest = TestsManifest.load(node.resource.fsPath, this.context);
-            let testCount = manifest.testCases.length;
+            allManifests.push(manifest);
+        }
+    }
 
-            this.outputWindow.clear();
-            this.outputWindow.appendLine(`Executing tests from ${basename(node.resource.fsPath)}.`);
+    private runTests(manifests: TestsManifest[], contextPath: string) {
+        let testCount = manifests.map(m => m.testCases.length).reduce((previousValue, currentValue) => previousValue + currentValue, 0);
+        this.outputWindow.clear();
 
-            window.withProgress({
-                location: ProgressLocation.Notification,
-                title: `Running tests from ${basename(node.resource.fsPath)}`,
-                cancellable: true
-            }, (progress, token) => {
+        window.withProgress({
+            location: ProgressLocation.Notification,
+            title: `Running tests from ${contextPath}`,
+            cancellable: true
+        }, (progress, token) => {
+            return new Promise(async (resolve, reject) => {
+                try {
+                    for (const manifest of manifests) {
+                        let manifestLocation = workspace.asRelativePath(manifest.path, true);
+                        this.outputWindow.appendLine(`Executing tests from ${manifestLocation}.`);
 
-                return new Promise(async (resolve, reject) => {
-                    for (let index = 0; index < manifest.testCases.length; index++) {
-                        if (token.isCancellationRequested) {
-                            this.outputWindow.appendLine('Canceled by user.');
-                            reject();
-                            break;
+                        for (let caseIndex = 0; caseIndex < manifest.testCases.length; caseIndex++) {
+                            if (token.isCancellationRequested) {
+                                this.outputWindow.appendLine('Canceled by user.');
+                                reject();
+                                break;
+                            }
+                            const test = manifest.testCases[caseIndex];
+                            progress.report({ message: 'Test case: ' + test.getLabel(), increment: 100.0 / testCount });
+                            try {
+                                await this.executeTest(test);
+                            }
+                            catch (e) {
+                                console.log(e);
+                            }
                         }
-
-                        const test = manifest.testCases[index];
-
-                        progress.report({ message: 'Test case: ' + test.getLabel(), increment: 100.0 / testCount });
-
-                        try {
-                            await this.executeTest(test);
-                        } catch (e) {
-                            console.log(e);
-                        }
+                        this.outputWindow.appendLine(`Finished executing tests from ${manifestLocation}.`);
                     }
                     resolve();
-
-                    this.outputWindow.appendLine(`Finished executing tests from ${basename(node.resource.fsPath)}.`);
+                }
+                finally {
                     this.outputWindow.show(true);
-                });
+                }
             });
-        }
+        });
     }
 
     async runTest(node: PTestNode) {
@@ -240,7 +273,7 @@ export class PTestExplorer {
                     this.outputTestResult(test, TestOutcome.SKIPPED, result.elapsedTime, 'Killed by the user.');
                     resolve(false);
                     return;
-                } else if (result.plans.length === 0){
+                } else if (result.plans.length === 0) {
                     this.outputTestResult(test, TestOutcome.FAILED, result.elapsedTime, 'No plan found.');
                     resolve(false);
                     return;
@@ -294,8 +327,8 @@ export class PTestExplorer {
 
         let outputMessage = `${outcomeChar} ${test.getLabel()}`;
 
-        if (!Number.isNaN(elapsedTime)){
-            outputMessage += ` (${elapsedTime/1000.0} sec)`;
+        if (!Number.isNaN(elapsedTime)) {
+            outputMessage += ` (${elapsedTime / 1000.0} sec)`;
         }
 
         if (error) {
@@ -354,7 +387,7 @@ export class PTestExplorer {
         let expectedPlanPromises = test.getExpectedPlans().map(async planPath => await this.assertFileExists(test.toAbsolutePath(planPath), 'Test', planPath));
         let expectedPlansExist = await Promise.all(expectedPlanPromises);
         return domainExists && problemExists
-             && expectedPlansExist.every(v => v);
+            && expectedPlansExist.every(v => v);
     }
 
     async assertFileExists(path: string, resourceName: string, fileName: string): Promise<boolean> {

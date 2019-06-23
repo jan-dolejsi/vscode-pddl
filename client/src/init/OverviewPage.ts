@@ -13,7 +13,6 @@ import { PddlConfiguration } from '../configuration';
 import * as path from 'path';
 import { getWebViewHtml } from '../utils';
 import * as afs from '../../../common/src/asyncfs';
-import * as fs from 'fs';
 
 export const SHOULD_SHOW_OVERVIEW_PAGE = 'shouldShowOverviewPage';
 export const LAST_SHOWN_OVERVIEW_PAGE = 'lastShownOverviewPage';
@@ -140,18 +139,18 @@ export class OverviewPage {
         }
 
         let domainResourcePath = this.context.asAbsolutePath('overview/domain.pddl');
-        let domainText = await fs.promises.readFile(domainResourcePath, { encoding: "utf-8" });
+        let domainText = await afs.readFile(domainResourcePath, { encoding: "utf-8" });
         let domainPath = path.join(folder.fsPath, "helloWorldDomain.pddl");
         if (await afs.exists(domainPath)) { throw new Error("File 'helloWorldDomain.pddl' already exists."); }
-        await fs.promises.writeFile(domainPath, domainText, { encoding: "utf-8" });
+        await afs.writeFile(domainPath, domainText, { encoding: "utf-8" });
         let domainDocument = await workspace.openTextDocument(domainPath);
         await window.showTextDocument(domainDocument, { viewColumn: ViewColumn.One, preview: false });
 
         let problemResourcePath = this.context.asAbsolutePath('overview/problem.pddl');
-        let problemText = await fs.promises.readFile(problemResourcePath, { encoding: "utf-8" });
+        let problemText = await afs.readFile(problemResourcePath, { encoding: "utf-8" });
         let problemPath = path.join(folder.fsPath, "helloWorldProblem.pddl");
         if (await afs.exists(problemPath)) { throw new Error("File 'helloWorldProblem.pddl' already exists."); }
-        await fs.promises.writeFile(problemPath, problemText, { encoding: "utf-8" });
+        await afs.writeFile(problemPath, problemText, { encoding: "utf-8" });
         let problemDocument = await workspace.openTextDocument(problemPath);
         window.showTextDocument(problemDocument, { viewColumn: ViewColumn.Two, preview: false });
 

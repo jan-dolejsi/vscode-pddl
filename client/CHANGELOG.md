@@ -1,6 +1,10 @@
 # PDDL support - What's new?
 
-## [2.11.5] - 2019-06-??
+## [2.11.5] - 2019-06-24
+
+### PDDL Test execution for all tests in the workspace
+
+It is now possible to click on a folder in the PDDL Tests panel or even on the _Run all_ button in the toolbar and all tests nested within that folder, or in the workspace will be executed respectively.
 
 ### Configuration alerts on Overview Page
 
@@ -23,9 +27,18 @@ The `solver` plugin's configuration (i.e. the URL of the solver service) is now 
 
 When local session changes are committed back to the server, the solver URL is *not* included.
 
+#### Gamifying PDDL trainings
+
+Include a `.ptest.json` file into the template session, create classroom, open the Test Explorer (View > Open View ... > Test > PDDL TESTS) and click the _Run All_ button in the toolbar. This runs the test cases from all the student sessions and displays the pass/fail results.
+First student with passing tests wins ... a diploma :-!
+
 #### Allowing checkout when untracked local files exist
 
 Untracked local files are no longer preventing session update to latest server-side version. This means the user may deal with version conflicts by renaming files and merging using the VS Code Diff. Manually.
+
+#### Classroom: PDDL-Testing student sessions
+
+Planning.Domains classroom student sessions are no longer created in a sub-folder of the template session. If the template included a `.ptest.json` file with _unit_ test definitions, they may all now be executed using one click on the "Run all" button in the PDDL TEST panel toolbar. 
 
 ### Clean-up
 
@@ -619,7 +632,8 @@ Note for open source contributors: all notable changes to the "pddl" extension w
 
 Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
 
-[Unreleased]: https://github.com/jan-dolejsi/vscode-pddl/compare/v2.11.4...HEAD
+[Unreleased]: https://github.com/jan-dolejsi/vscode-pddl/compare/v2.11.5...HEAD
+[2.11.5]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.11.4...v2.11.5
 [2.11.4]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.11.3...v2.11.4
 [2.11.3]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.11.2...v2.11.3
 [2.11.2]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.11.1...v2.11.2

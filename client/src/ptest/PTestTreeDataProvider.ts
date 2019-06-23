@@ -9,6 +9,7 @@ import {
 } from 'vscode';
 import { basename, join } from 'path';
 import * as fs from 'fs';
+import * as afs from '../../../common/src/asyncfs';
 import { TestsManifest } from './TestsManifest';
 import { TestOutcome, Test } from './Test';
 import { PddlExtensionContext } from '../../../common/src/PddlExtensionContext';
@@ -148,7 +149,7 @@ export class PTestTreeDataProvider implements TreeDataProvider<PTestNode> {
             }
             else {
                 let children: string[] = [];
-                children = await fs.promises.readdir(parentPath);
+                children = await afs.readdir(parentPath);
                 return Promise.all(children
                     .map(child => join(parentPath, child))
                     .filter(childPath => PTestTreeDataProvider.isOrHasTests(childPath))

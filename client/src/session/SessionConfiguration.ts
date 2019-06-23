@@ -5,7 +5,6 @@
 
 import { WorkspaceFolder, Uri } from "vscode";
 import * as afs from '../../../common/src/asyncfs';
-import * as fs from 'fs';
 import * as path from 'path';
 
 export const CONFIGURATION_FILE = '.planning.domains.session.json';
@@ -46,7 +45,7 @@ export async function isSessionFolder(folder: WorkspaceFolder): Promise<boolean>
 
 export async function readSessionConfiguration(folder: WorkspaceFolder): Promise<SessionConfiguration> {
 	const configurationPath = toConfigurationFilePath(folder);
-	let data = await fs.promises.readFile(configurationPath, { flag: 'r' });
+	let data = await afs.readFile(configurationPath, { flag: 'r' });
 	return <SessionConfiguration>JSON.parse(data.toString("utf-8"), (key, value) => {
 		if (key === "files") {
 			return objToStrMap(value);
@@ -73,7 +72,7 @@ export async function saveConfiguration(workspaceFolderUri: Uri, sessionConfigur
 		}
 	}, 4);
 
-	return fs.promises.writeFile(path.join(workspaceFolderUri.fsPath, CONFIGURATION_FILE), sessionConfigurationString);
+	return afs.writeFile(path.join(workspaceFolderUri.fsPath, CONFIGURATION_FILE), sessionConfigurationString);
 }
 
 export function strMapToObj(strMap: Map<string, any>): any {

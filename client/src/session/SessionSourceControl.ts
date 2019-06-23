@@ -160,7 +160,7 @@ export class SessionSourceControl implements vscode.Disposable {
 	/** Resets the given local file content to the checked-out version. */
 	private async resetFile(fileName: string, fileContent: string): Promise<void> {
 		let filePath = this.sessionRepository.createLocalResourcePath(fileName);
-		await fs.promises.writeFile(filePath, fileContent);
+		await afs.writeFile(filePath, fileContent);
 	}
 
 	private async getFileContent(fileName: string): Promise<string> {
@@ -334,7 +334,7 @@ export class SessionSourceControl implements vscode.Disposable {
 
 		for (const otherFile of otherFolderFiles) {
 			let resourcePath = path.join(this.getWorkspaceFolder().uri.fsPath, otherFile);
-			let fileStats = await fs.promises.stat(resourcePath);
+			let fileStats = await afs.stat(resourcePath);
 			if (fileStats.isDirectory()) { continue; }
 
 			// add this file as a new file to the session changed resources
@@ -360,11 +360,16 @@ export class SessionSourceControl implements vscode.Disposable {
 	}
 
 	async getLocalFileNames(): Promise<string[]> {
-		let fileEnts: fs.Dirent[] = await fs.promises.readdir(this.getWorkspaceFolder().uri.fsPath, { withFileTypes: true });
-		return fileEnts
+		// when VS Code upgrades to node.js 10.10, use { withFileTypes: true }
+		let fileNames: string[] //fs.Dirent[]
+			= await afs.readdir(this.getWorkspaceFolder().uri.fsPath);
+
+		return fileNames
+			// use following two lines, when VS Code upgrades to node.js 10.10.*
+			// . filter(fileEnt => fileEnt.isFile())
+			// .map(fileEnt => fileEnt.name)
 			// keep only files, not directories
-			.filter(fileEnt => fileEnt.isFile())
-			.map(fileEnt => fileEnt.name)
+			.filter(fileName => fs.statSync(path.join(this.getWorkspaceFolder().uri.fsPath, fileName)).isFile())
 			// keep only pddl files, exclude the config file
 			.filter(fileName => fileName !== CONFIGURATION_FILE)
 			// keep only pddl files, exclude VS Code workspace file
