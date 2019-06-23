@@ -1,6 +1,6 @@
 # PDDL support - What's new?
 
-## [2.11.5] - 2019-06-??
+## [2.11.5] - 2019-06-24
 
 ### PDDL Test execution for all tests in the workspace
 
@@ -632,7 +632,8 @@ Note for open source contributors: all notable changes to the "pddl" extension w
 
 Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
 
-[Unreleased]: https://github.com/jan-dolejsi/vscode-pddl/compare/v2.11.4...HEAD
+[Unreleased]: https://github.com/jan-dolejsi/vscode-pddl/compare/v2.11.5...HEAD
+[2.11.5]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.11.4...v2.11.5
 [2.11.4]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.11.3...v2.11.4
 [2.11.3]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.11.2...v2.11.3
 [2.11.2]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.11.1...v2.11.2
