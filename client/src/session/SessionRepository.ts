@@ -66,7 +66,7 @@ export class SessionRepository implements QuickDiffProvider {
 }
 
 const SESSION_URL = "http://editor.planning.domains/session/";
-const SESSION_PLUGIN_PATTERN = /"([\w-]+)"\s*:\s*{\s*"url"\s*:\s*"([\w:/.-]+)"\s*,\s*"settings"\s*:\s*({[^}]*})\s*}/g;
+const SESSION_PLUGINS_PATTERN = /define\s*\(\s*function\s*\(\s*\)\s*\{\s*return\s*{\s*meta:\s*true\s*,\s*plugins\s*:\s*({[\S\s]*})\s*}\s*}\s*\);/ms;
 const SESSION_DETAILS_PATTERN = /window\.session_details\s*=\s*{\s*(?:readwrite_hash:\s*"(\w+)"\s*,\s*)?read_hash:\s*"(\w+)"\s*,\s*last_change:\s*"([\w: \(\)\+]+)",?\s*};/;
 
 /**
@@ -115,6 +115,10 @@ export async function uploadSession(session: SessionContent): Promise<SessionCon
 
 	let rawLatestSession = await getRawSession(session);
 
+	if (rawLatestSession.sessionContent.indexOf(rawLatestSession.domainFilesAsString) === -1) {
+		throw new Error("Re-stringified session files do not match the original session saved tabs.");
+	}
+
 	// replace the session files
 	let newFilesAsString = JSON.stringify(strMapToObj(session.files), null, 4);
 	let newContent = rawLatestSession.sessionContent
@@ -160,6 +164,9 @@ export async function duplicateSession(session: SessionContent): Promise<string>
 	return postResult["result"]["readwrite_hash"];
 }
 
+const SAVE_TABS_PLUGIN_NAME = "save-tabs";
+const SOLVER_PLUGIN_NAME = "solver";
+
 /**
  * Fetches session from the planning.domains server.
  * @param sessionConfiguration session identity
@@ -170,6 +177,10 @@ async function getRawSession(sessionConfiguration: SessionConfiguration): Promis
 		`${SESSION_URL}${sessionConfiguration.hash}`;
 
 	let sessionContent = await getText(url);
+
+	if (sessionContent.match(/not found/i)) {
+		throw new Error(`Session ${sessionConfiguration.writeHash || sessionConfiguration.hash} not found.`);
+	}
 
 	var sessionDetails: string;
 	var sessionDate: number;
@@ -185,28 +196,33 @@ async function getRawSession(sessionConfiguration: SessionConfiguration): Promis
 		sessionDate = Date.parse(matchDetails[3]);
 	}
 	else {
+		console.log("Malformed saved session. Could not extract session date. Session content:"  + sessionContent);
 		throw new Error("Malformed saved session. Could not extract session date.");
 	}
 
 	// extract plugins
 	let plugins = new Map<string, RawSessionPlugin>();
-	SESSION_PLUGIN_PATTERN.lastIndex = 0;
-	let pluginMatch: RegExpExecArray;
-	while(pluginMatch = SESSION_PLUGIN_PATTERN.exec(sessionContent)) {
-		plugins.set(pluginMatch[1], {
-			name: pluginMatch[1],
-			url: pluginMatch[2],
-			settingsAsString: pluginMatch[3],
-			settings: JSON.parse(pluginMatch[3]),
+	SESSION_PLUGINS_PATTERN.lastIndex = 0;
+	let pluginsMatch = SESSION_PLUGINS_PATTERN.exec(sessionContent);
+	if(pluginsMatch = SESSION_PLUGINS_PATTERN.exec(sessionContent)) {
+		let rawPlugins = JSON.parse(pluginsMatch[1]);
+
+		[SAVE_TABS_PLUGIN_NAME, SOLVER_PLUGIN_NAME].forEach(pluginName => {
+			if (rawPlugins.hasOwnProperty(pluginName)) {
+				plugins.set(pluginName, toRawSessionPlugin(pluginName, rawPlugins[pluginName]));
+			}
 		});
 	}
+	else {
+		console.log("Malformed saved session plugins. Could not extract session plugins. Session content:"  + sessionContent);
+		throw new Error("Malformed saved session. Could not extract session plugins.");
+	}
 
-	const saveTabsPlugin = "save-tabs";
-	if (!plugins.has(saveTabsPlugin)){
+	if (!plugins.has(SAVE_TABS_PLUGIN_NAME)){
 		throw new Error("Saved session contains no saved tabs.");
 	}
 
-	var domainFilesString =  plugins.get(saveTabsPlugin).settingsAsString;
+	var domainFilesString =  plugins.get(SAVE_TABS_PLUGIN_NAME).settingsAsString;
 
 	return {
 		sessionDetails: sessionDetails,
@@ -228,6 +244,15 @@ interface RawSession {
 	readonly readOnlyHash: string;
 	readonly domainFilesAsString: string;
 	readonly plugins: Map<string, RawSessionPlugin>;
+}
+
+function toRawSessionPlugin(name: string, json: any): RawSessionPlugin {
+	return {
+		name: name,
+		url: json["url"],
+		settings: json["settings"],
+		settingsAsString: JSON.stringify(json["settings"], null, 4)
+	};
 }
 
 interface RawSessionPlugin {

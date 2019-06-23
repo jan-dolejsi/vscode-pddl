@@ -2,6 +2,10 @@
 
 ## [2.11.5] - 2019-06-??
 
+### PDDL Test execution for all tests in the workspace
+
+It is now possible to click on a folder in the PDDL Tests panel or even on the _Run all_ button in the toolbar and all tests nested within that folder, or in the workspace will be executed respectively.
+
 ### Configuration alerts on Overview Page
 
 Overview Page shows non-intrusive alerts when the extension configuration is not optimal.
@@ -31,6 +35,10 @@ First student with passing tests wins ... a diploma :-!
 #### Allowing checkout when untracked local files exist
 
 Untracked local files are no longer preventing session update to latest server-side version. This means the user may deal with version conflicts by renaming files and merging using the VS Code Diff. Manually.
+
+#### Classroom: PDDL-Testing student sessions
+
+Planning.Domains classroom student sessions are no longer created in a sub-folder of the template session. If the template included a `.ptest.json` file with _unit_ test definitions, they may all now be executed using one click on the "Run all" button in the PDDL TEST panel toolbar. 
 
 ### Clean-up
 

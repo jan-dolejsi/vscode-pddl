@@ -5,9 +5,9 @@
 'use strict';
 
 import * as process from 'child_process';
-import * as fs from 'fs';
 import * as path from 'path';
 import * as nunjucks from 'nunjucks';
+import * as afs from './asyncfs';
 
 export interface OutputAdaptor {
     appendLine(text: string): void;
@@ -130,7 +130,7 @@ export class NunjucksPreProcessor extends PreProcessor {
 
     async transform(input: string, workingDirectory: string, outputWindow: OutputAdaptor): Promise<string> {
         let dataPath = path.join(workingDirectory, this.dataFileName);
-        let dataText = await fs.promises.readFile(dataPath);
+        let dataText = await afs.readFile(dataPath);
         let data: any;
 
         try {

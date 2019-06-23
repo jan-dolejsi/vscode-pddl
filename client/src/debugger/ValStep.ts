@@ -9,7 +9,7 @@ import { EventEmitter } from 'events';
 
 import { Util } from '../../../common/src/util';
 import * as atmp from '../../../common/src/asynctmp';
-import * as fs from 'fs';
+import * as afs from '../../../common/src/asyncfs';
 import * as path from 'path';
 import { TimedVariableValue, VariableValue, ProblemInfo, DomainInfo, Parser } from '../../../common/src/parser';
 import { Happening } from '../../../common/src/HappeningsInfo';
@@ -300,12 +300,12 @@ export class ValStep extends EventEmitter {
         const domainFile = "domain.pddl";
         const problemFile = "problem.pddl";
         const inputFile = "happenings.valsteps";
-        await fs.promises.writeFile(path.join(tempDir, domainFile), err.domain.getText(), {encoding: "utf-8"});
-        await fs.promises.writeFile(path.join(tempDir, problemFile), err.problem.getText(), {encoding: "utf-8"});
-        await fs.promises.writeFile(path.join(tempDir, inputFile), err.valStepInput, {encoding: "utf-8"});
+        await afs.writeFile(path.join(tempDir, domainFile), err.domain.getText(), {encoding: "utf-8"});
+        await afs.writeFile(path.join(tempDir, problemFile), err.problem.getText(), {encoding: "utf-8"});
+        await afs.writeFile(path.join(tempDir, inputFile), err.valStepInput, {encoding: "utf-8"});
 
         let command = `type ${inputFile} | valstep ${domainFile} ${problemFile}`;
-        await fs.promises.writeFile(path.join(tempDir, "run.cmd"), command, {encoding: "utf-8"});
+        await afs.writeFile(path.join(tempDir, "run.cmd"), command, {encoding: "utf-8"});
         return tempDir;
     }
 }

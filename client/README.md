@@ -204,7 +204,10 @@ To add a test case, create a file named `*.ptest.json` anywhere in the workspace
 
 Use other JSON properties like `expectedPlans` to define the test assertion or `options` to specify command-line options to use.
 
-Interesting by-product of this feature is that it can be used to give effective demos. Right click on the _Open PDDL domain and test problem_ and both files open side-by-side in the editor. This lends itself well to switching between different models during a presentation/meeting/review.
+Interesting by-product of this feature is that it can be used to give effective demos. Prepare a specific `<name>.ptest.json` for your planned demo. Right click on each test and select the _Open PDDL domain and test problem_ and both files open side-by-side in the editor. Show the code and run the planner. Then move to the next test case - demo.
+
+All tests under a given directory may be executed by right clicking on the folder and selecting the _run all_ command.
+All tests in the workspace may be executed by clicking the _Run all_ button in the _PDDL TESTS_ pane's toolbar.
 
 ## Problem file generation
 

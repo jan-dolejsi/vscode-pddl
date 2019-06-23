@@ -6,7 +6,6 @@
 
 import { ExtensionContext, window, Uri, commands, workspace, Disposable, WorkspaceFolder, QuickPickItem, ViewColumn, SourceControl, env } from 'vscode';
 import { firstIndex } from '../utils';
-import * as fs from 'fs';
 import * as afs from '../../../common/src/asyncfs';
 import * as path from 'path';
 import { SessionDocumentContentProvider } from './SessionDocumentContentProvider';
@@ -83,15 +82,20 @@ export class PlanningDomainsSessions {
         }));
 
         this.subscribe(workspace.onDidChangeWorkspaceFolders(e => {
-            // initialize new source control for manually added workspace folders
-            e.added.forEach(wf => {
-                this.initializeFromConfigurationFile(wf, context);
-            });
+            try {
+                // initialize new source control for manually added workspace folders
+                e.added.forEach(wf => {
+                    this.initializeFromConfigurationFile(wf, context);
+                });
 
-            // dispose source control for removed workspace folders
-            e.removed.forEach(wf => {
-                this.unregisterSessionSourceControl(wf.uri);
-            });
+            } catch (ex) {
+                window.showErrorMessage(ex);
+            } finally {
+                // dispose source control for removed workspace folders
+                e.removed.forEach(wf => {
+                    this.unregisterSessionSourceControl(wf.uri);
+                });
+            }
         }));
     }
 
@@ -225,21 +229,23 @@ export class PlanningDomainsSessions {
         workspace.workspaceFolders
             .sort((f1, f2) => f1.name.localeCompare(f2.name))
             .forEach(async folder => {
-                await this.initializeFromConfigurationFile(folder, context);
+                try {
+                    await this.initializeFromConfigurationFile(folder, context);
+                }
+                catch (err) {
+                    let output = window.createOutputChannel("Planner output");
+                    output.appendLine(err);
+                    output.show();
+                }
             });
     }
 
     private async initializeFromConfigurationFile(folder: WorkspaceFolder, context: ExtensionContext) {
         let sessionFolder = await isSessionFolder(folder);
         if (sessionFolder) {
-            try {
-                let sessionConfiguration = await readSessionConfiguration(folder);
-                let sessionSourceControl = await SessionSourceControl.fromConfiguration(sessionConfiguration, folder, context, sessionConfiguration.versionDate === undefined);
-                this.registerSessionSourceControl(sessionSourceControl, context);
-            }
-            catch (err) {
-                window.showErrorMessage(err);
-            }
+            let sessionConfiguration = await readSessionConfiguration(folder);
+            let sessionSourceControl = await SessionSourceControl.fromConfiguration(sessionConfiguration, folder, context, sessionConfiguration.versionDate === undefined);
+            this.registerSessionSourceControl(sessionSourceControl, context);
         }
     }
 
@@ -261,7 +267,7 @@ export class PlanningDomainsSessions {
             } else {
                 if (!(await afs.exists(folderUri.fsPath))) {
                     await afs.mkdirIfDoesNotExist(folderUri.fsPath, 0o777);
-                } else if (!(await fs.promises.stat(folderUri.fsPath)).isDirectory()) {
+                } else if (!(await afs.stat(folderUri.fsPath)).isDirectory()) {
                     window.showErrorMessage("Selected path is not a directory.");
                     return null;
                 }
@@ -277,7 +283,7 @@ export class PlanningDomainsSessions {
                 folderPicks.push(newWorkspaceFolderPick);
 
                 for (const wf of workspace.workspaceFolders) {
-                    let content = await fs.promises.readdir(wf.uri.fsPath);
+                    let content = await afs.readdir(wf.uri.fsPath);
                     folderPicks.push(new ExistingWorkspaceFolderPick(wf, content));
                 }
             }
@@ -337,7 +343,7 @@ export class PlanningDomainsSessions {
         if (!workspaceFolderUri) { return undefined; }
 
         // check if the workspace is empty, or clear it
-        let existingWorkspaceFiles: string[] = await fs.promises.readdir(workspaceFolderUri.fsPath);
+        let existingWorkspaceFiles: string[] = await afs.readdir(workspaceFolderUri.fsPath);
         if (existingWorkspaceFiles.length > 0) {
             let answer = await window.showQuickPick(["Yes", "No"],
                 { placeHolder: `Remove ${existingWorkspaceFiles.length} file(s) from the folder ${workspaceFolderUri.fsPath} before cloning the remote repository?` });
@@ -346,7 +352,7 @@ export class PlanningDomainsSessions {
             if (answer === "Yes") {
                 existingWorkspaceFiles
                     .forEach(async filename =>
-                        await fs.promises.unlink(path.join(workspaceFolderUri.fsPath, filename)));
+                        await afs.unlink(path.join(workspaceFolderUri.fsPath, filename)));
             }
         }
 
@@ -438,7 +444,7 @@ Open session in Visual Studio Code: ${this.createVSCodeUri(session, readWrite)}`
         commands.executeCommand('vscode.openFolder', Uri.file(workspacePath));
     }
 
-    /** duplicate the session, the code just mocks the new sessions by using the template many times */
+    /** duplicate the session */
     async duplicateClassroomSession(templateSourceControl: SessionSourceControl, student: StudentName): Promise<StudentSession> {
         let sessionPath = Classroom.getSessionPath(templateSourceControl, student);
         let studentSessionHash = await templateSourceControl.duplicateAsWritable(Uri.file(sessionPath), false);

@@ -6,7 +6,6 @@
 
 import * as path from 'path';
 import * as afs from '../../../common/src/asyncfs';
-import * as fs from 'fs';
 import { StudentName } from "./StudentNameParser";
 import { SessionSourceControl } from "./SessionSourceControl";
 import { saveConfiguration, SessionConfiguration } from './SessionConfiguration';
@@ -14,15 +13,20 @@ import { Uri } from 'vscode';
 
 /** Represents classroom of student sessions. */
 export class Classroom {
+    private readonly parentPath: string;
 
-    constructor(private templateSourceControl: SessionSourceControl, private studentSessions: StudentSession[]) { }
+    constructor(private readonly templateSourceControl: SessionSourceControl, private readonly studentSessions: StudentSession[]) {
+        this.parentPath = Classroom.getTemplateParentPath(templateSourceControl);
+    }
 
     async createWorkspace(): Promise<string> {
         await Promise.all(this.studentSessions
             .map(async studentSession => await this.createFolderWithConfig(studentSession)));
 
+        let templateFolderName = path.basename(this.templateSourceControl.getWorkspaceFolder().uri.fsPath);
+
         var folders: WorkspaceFolderSpec[] = this.studentSessions.map(s => <WorkspaceFolderSpec>{ name: s.identity.getEffectiveName(), path: s.identity.getEffectivePath() });
-        folders = [{ name: 'Template', path: '.' }, ...folders];
+        folders = [{ name: 'Template', path: templateFolderName }, ...folders];
 
         var workspaceObj = Object.create(null);
         workspaceObj["folders"] = folders;
@@ -31,7 +35,7 @@ export class Classroom {
         let workspaceAsString = JSON.stringify(workspaceObj, null, 4);
 
         let workspaceFilePath = await this.createNewWorkspaceFile();
-        await fs.promises.writeFile(workspaceFilePath, workspaceAsString);
+        await afs.writeFile(workspaceFilePath, workspaceAsString);
 
         return workspaceFilePath;
     }
@@ -43,15 +47,20 @@ export class Classroom {
         var filePath; var fileAlreadyExists;
         var counter = 1;
         do {
-            filePath = path.join(this.templateSourceControl.getWorkspaceFolder().uri.fsPath, `classroom${counter}.code-workspace`);
+            filePath = path.join(this.parentPath, `classroom${counter++}.code-workspace`);
             fileAlreadyExists = await afs.exists(filePath);
         } while (fileAlreadyExists);
 
         return filePath;
     }
 
+    static getTemplateParentPath(templateSourceControl: SessionSourceControl): string {
+        return path.dirname(templateSourceControl.getWorkspaceFolder().uri.fsPath);
+    }
+
     static getSessionPath(templateSourceControl: SessionSourceControl, student: StudentName): string {
-        return path.join(templateSourceControl.getWorkspaceFolder().uri.fsPath, student.getEffectivePath());
+        const parentPath = Classroom.getTemplateParentPath(templateSourceControl);
+        return path.join(parentPath, student.getEffectivePath());
     }
 
     async createFolderWithConfig(studentSession: StudentSession): Promise<void> {

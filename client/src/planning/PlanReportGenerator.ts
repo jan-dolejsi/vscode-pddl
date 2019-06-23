@@ -19,7 +19,7 @@ import { Util } from '../../../common/src/util';
 import { PlanFunctionEvaluator } from './PlanFunctionEvaluator';
 import { PlanReportSettings } from './PlanReportSettings';
 import { VAL_STEP_PATH, CONF_PDDL, PDDL_PLANNER, VALUE_SEQ_PATH } from '../configuration';
-import * as fs from 'fs';
+import * as afs from '../../../common/src/asyncfs';
 import { ValStepError, ValStep } from '../debugger/ValStep';
 const DIGITS = 4;
 
@@ -337,7 +337,7 @@ ${stepsInvolvingThisObject}
 
     async includeStyle(uri: Uri): Promise<string> {
         if (this.options.selfContained) {
-            let styleText = await fs.promises.readFile(uri.fsPath, { encoding: 'utf-8' });
+            let styleText = await afs.readFile(uri.fsPath, { encoding: 'utf-8' });
             return `<style>\n${styleText}\n</style>`;
         } else {
             return `<link rel = "stylesheet" type = "text/css" href = "${uri.toString()}" />`;
@@ -346,7 +346,7 @@ ${stepsInvolvingThisObject}
 
     async includeScript(uri: Uri): Promise<string> {
         if (this.options.selfContained) {
-            let scriptText = await fs.promises.readFile(uri.fsPath, { encoding: 'utf-8' });
+            let scriptText = await afs.readFile(uri.fsPath, { encoding: 'utf-8' });
             return `<script>\n${scriptText}\n</script>`;
         } else {
             return `<script src="${uri.toString()}"></script>`;
