@@ -5,9 +5,10 @@
 'use strict';
 
 import { CompletionItem, MarkdownString, SnippetString } from 'vscode';
-import { PddlWorkspace } from '../../../common/src/workspace-model';
-import { FileInfo, Variable, DomainInfo } from '../../../common/src/parser';
-import { Delegate } from './delegate';
+import { PddlWorkspace } from '../../../common/src/PddlWorkspace';
+import { DomainInfo } from '../../../common/src/parser';
+import { FileInfo, Variable } from '../../../common/src/FileInfo';
+import { Delegate } from './Delegate';
 
 var PDDL = 'pddl';
 

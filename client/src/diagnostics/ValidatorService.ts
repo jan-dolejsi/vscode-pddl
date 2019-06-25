@@ -9,7 +9,8 @@ import {
 } from 'vscode';
 
 import { Validator } from './validator';
-import { DomainInfo, ProblemInfo, FileStatus } from '../../../common/src/parser';
+import { DomainInfo, ProblemInfo } from '../../../common/src/parser';
+import { FileStatus } from '../../../common/src/FileInfo';
 import { Authentication } from '../../../common/src/Authentication';
 
 import request = require('request');
@@ -29,8 +30,8 @@ export class ValidatorService extends Validator {
         }
 
         let requestBody = {
-            "domain": domainInfo.text,
-            "problems": problemFiles.map(pf => pf.text)
+            "domain": domainInfo.getText(),
+            "problems": problemFiles.map(pf => pf.getText())
         }
 
         request.post({ url: this.path, headers: requestHeader, body: requestBody, json: true }, (err, httpResponse, responseBody) => {

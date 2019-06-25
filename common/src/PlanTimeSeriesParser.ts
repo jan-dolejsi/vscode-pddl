@@ -4,7 +4,7 @@
  * ------------------------------------------------------------------------------------------ */
 'use strict';
 
-import { Variable } from './parser';
+import { Variable } from './FileInfo';
 
 export class PlanTimeSeriesParser {
 
@@ -12,7 +12,7 @@ export class PlanTimeSeriesParser {
 
     constructor(public functions: Variable[], timeSeriesCsv: string) {
 
-        let lines = timeSeriesCsv.split('\n')   
+        let lines = timeSeriesCsv.split('\n')
             .map(l => l.trim())
             .filter(l => l.length > 0)
 
@@ -33,6 +33,11 @@ export class PlanTimeSeriesParser {
                     throw new Error(`The ValueSeq output does not parse: ${line}`);
                 }
                 else {
+                    if (currentFunctionValues.lastTime() > time) {
+                        time = currentFunctionValues.lastTime() + 1e-10;
+                    } else if (currentFunctionValues.lastTime() == time) {
+                        time += 1e-10;
+                    }
                     currentFunctionValues.addValue(time, value);
                 }
             }
@@ -122,6 +127,10 @@ export class FunctionValues {
 
     addValue(time: number, value: number): void {
         this.values.push([time, value]);
+    }
+
+    lastTime(): number {
+        return this.values.length > 0 ? this.values[this.values.length -1][0] : NaN;
     }
 
     getLegend(): string {

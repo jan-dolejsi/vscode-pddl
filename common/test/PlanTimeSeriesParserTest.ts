@@ -6,7 +6,7 @@
 
 import { PlanTimeSeriesParser, FunctionValues, StateValues, FunctionsValues } from '../src/PlanTimeSeriesParser';
 import * as assert from 'assert';
-import { Variable, ObjectInstance, Parameter } from '../src/parser';
+import { Variable, ObjectInstance, Parameter } from '../src/FileInfo';
 
 describe('PlanTimeSeriesParser', () => {
 

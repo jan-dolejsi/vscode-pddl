@@ -6,17 +6,33 @@
 
 import { DomainInfo, ProblemInfo } from './parser';
 import { PlanStep } from './PlanStep';
+import { HappeningType } from './HappeningsInfo';
 
 export class Plan {
     makespan: number;
     statesEvaluated?: number;
     cost?: number;
- 
-    constructor(public steps: PlanStep[], public domain: DomainInfo, public problem: ProblemInfo) {
-        this.makespan = Math.max(...steps.map(step => step.getEndTime()));
+
+    constructor(public readonly steps: PlanStep[], public readonly domain: DomainInfo,
+        public readonly problem: ProblemInfo,
+        public readonly now?: number,
+        public readonly helpfulActions?: HelpfulAction[]) {
+        this.makespan = steps.length ? Math.max(...steps.map(step => step.getEndTime())) : 0;
+    }
+
+    /**
+     * Returns true if any helpful actions were specified.
+     */
+    hasHelpfulActions() {
+        return this.helpfulActions && this.helpfulActions.length > 0;
     }
 
     getText(): string {
         return this.steps.map(step => step.toPddl()).join("\n");
     }
+}
+
+export interface HelpfulAction {
+    actionName: string;
+    kind: HappeningType;
 }

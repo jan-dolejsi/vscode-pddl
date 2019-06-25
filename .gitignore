@@ -4,3 +4,7 @@ client/*.vsix
 npm-debug.log
 client/tsc.log
 .vscode/cSpell.json
+coverage/
+.nyc_output/
+client/CHANGELOG.html
+client/val/

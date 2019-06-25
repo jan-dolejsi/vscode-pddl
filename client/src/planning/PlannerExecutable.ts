@@ -5,14 +5,14 @@
 'use strict';
 
 import {
-    workspace
+    workspace, window
 } from 'vscode';
 
 import * as process from 'child_process';
 const tree_kill = require('tree-kill');
 
 import { Planner } from './planner';
-import { PlanningHandler } from './plan';
+import { PlannerResponseHandler } from './PlannerResponseHandler';
 import { DomainInfo, ProblemInfo } from '../../../common/src/parser';
 import { Util } from '../../../common/src/util';
 import { PddlPlanParser } from '../../../common/src/PddlPlanParser';
@@ -27,48 +27,58 @@ export class PlannerExecutable extends Planner {
         super(plannerPath, plannerOptions);
     }
 
-    plan(domainFileInfo: DomainInfo, problemFileInfo: ProblemInfo, planParser: PddlPlanParser, parent: PlanningHandler): Promise<Plan[]> {
+    async plan(domainFileInfo: DomainInfo, problemFileInfo: ProblemInfo, planParser: PddlPlanParser, parent: PlannerResponseHandler): Promise<Plan[]> {
 
-        let domainFilePath = Util.toPddlFile("domain", domainFileInfo.text);
-        let problemFilePath = Util.toPddlFile("problem", problemFileInfo.text);
+        let domainFilePath = await Util.toPddlFile("domain", domainFileInfo.getText());
+        let problemFilePath = await Util.toPddlFile("problem", problemFileInfo.getText());
 
-        let command = this.plannerSyntax.replace('$(planner)', this.plannerPath)
+        let command = this.plannerSyntax.replace('$(planner)', Util.q(this.plannerPath))
             .replace('$(options)', this.plannerOptions)
             .replace('$(domain)', Util.q(domainFilePath))
             .replace('$(problem)', Util.q(problemFilePath));
-    
+
+        command += ' ' + parent.providePlannerOptions({ domain: domainFileInfo, problem: problemFileInfo });
+
         parent.handleOutput(command + '\n');
-        
+
         let thisPlanner = this;
         super.planningProcessKilled = false;
 
-        return new Promise<Plan[]>(function(resolve, reject) {
-            thisPlanner.child = process.exec(command, 
-                { cwd: thisPlanner.workingDirectory },
-                (error, stdout, stderr) => {
-                planParser.onPlanFinished();
-
-                if (error && !thisPlanner.child.killed && !thisPlanner.planningProcessKilled) {
-                    parent.handleError(error, stderr);//todo: remove this and use Promise
-                    reject(error);
-                }
-    
-                let plans = planParser.getPlans();
-                parent.handleSuccess(stdout, plans);//todo: remove this and use Promise
+        if (workspace.getConfiguration("pddlPlanner").get("executionTarget") === "Terminal") {
+            return new Promise<Plan[]>((resolve, _reject) => {
+                let terminal = window.createTerminal({ name: "Planner output", cwd: thisPlanner.workingDirectory });
+                terminal.sendText(command, true);
+                terminal.show(true);
+                let plans: Plan[] = [];
                 resolve(plans);
-                thisPlanner.child = null;
             });
-    
+        }
+
+        return new Promise<Plan[]>(function (resolve, reject) {
+            thisPlanner.child = process.exec(command,
+                { cwd: thisPlanner.workingDirectory },
+                (error, _stdout, _stderr) => {
+                    planParser.onPlanFinished();
+
+                    if (error && !thisPlanner.child.killed && !thisPlanner.planningProcessKilled) {
+                        reject(error);
+                    }
+
+                    let plans = planParser.getPlans();
+                    resolve(plans); // todo: should we resolve() even if we reject()ed above?
+                    thisPlanner.child = null;
+                });
+
             thisPlanner.child.stdout.on('data', (data: any) => {
                 const dataString = data.toString();
                 parent.handleOutput(dataString);
                 planParser.appendBuffer(dataString);
             });
             thisPlanner.child.stderr.on('data', (data: any) => parent.handleOutput("Error: " + data));
-    
+
             thisPlanner.child.on("close", (code: any, signal: any) => {
-                if (code) console.log("Exit code: " + code);
-                if (signal) console.log("Exit Signal: " + signal);
+                if (code) { console.log("Exit code: " + code); }
+                if (signal) { console.log("Exit Signal: " + signal); }
             });
         });
     }
@@ -85,12 +95,5 @@ export class PlannerExecutable extends Planner {
             // this.child.stdin.pause();
             tree_kill(this.child.pid);
         }
-    }
-
-    static toPath(uri: string): string {
-        return workspace.textDocuments.find(doc => doc.uri.toString() == uri).fileName;
-    }
-    static q(path: string): string {
-        return path.includes(' ') ? `"${path}"` : path;
     }
 }

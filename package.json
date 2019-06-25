@@ -14,8 +14,8 @@
     "url": "https://github.com/jan-dolejsi/vscode-pddl"
   },
   "scripts": {
-    "install:common": "cd common && npm install && npm test && cd ..",
-    "install:client": "cd client && npm install && cd ..",
+    "install:common": "cd common && npm install --no-optional && npm test && cd ..",
+    "install:client": "cd client && npm install --no-optional && cd ..",
     "postinstall": "npm run install:common && npm run install:client",
     "compile:client": "tsc -p ./client",
     "compile:common": "tsc -p ./common",
@@ -25,7 +25,10 @@
     "watch": "npm run watch:common && npm run watch:client"
   },
   "devDependencies": {
-    "@types/node": "^6.0.88",
-    "typescript": "^2.6.2"
+    "@types/node": "^10.2.0",
+    "typescript": "^3.0.3"
+  },
+  "dependencies": {
+    "tslint": "^5.17.0"
   }
 }

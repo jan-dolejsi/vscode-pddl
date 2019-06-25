@@ -15,6 +15,9 @@ export interface PddlExtensionContext {
 	 */
 	extensionPath: string;
 
+	/** Keeps python location (if python extension is installed) */
+	pythonPath(): string;
+
 	/**
 	 * Get the absolute path of a resource contained in the extension.
 	 *
@@ -29,4 +32,6 @@ export interface PddlExtensionContext {
 	 * up to the extension. However, the parent directory is guaranteed to be existent.
 	 */
 	storagePath: string | undefined;
+
+	subscriptions: { dispose(): any }[];
 }

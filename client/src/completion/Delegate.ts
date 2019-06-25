@@ -5,12 +5,13 @@
 'use strict';
 
 import { CompletionItem, CompletionItemKind, MarkdownString } from 'vscode';
-import { DomainInfo, TypeObjects, Variable } from '../../../common/src/parser';
+import { TypeObjects, DomainInfo } from '../../../common/src/parser';
+import { Variable } from '../../../common/src/FileInfo';
 
 export abstract class Delegate {
-    
+
     constructor(){
-        
+
     }
 
     createOperator(label: string, detail: string, documentation: string | MarkdownString): CompletionItem {
@@ -69,7 +70,7 @@ export abstract class Delegate {
     }
 
     isSymmetric(variable: Variable): boolean {
-        // the predicate has exactly 2 parameters    
+        // the predicate has exactly 2 parameters
         return variable.parameters.length == 2
             // and the parameters are of the same type
             && variable.parameters[0].type == variable.parameters[1].type;

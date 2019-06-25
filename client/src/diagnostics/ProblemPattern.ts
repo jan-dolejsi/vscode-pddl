@@ -29,8 +29,8 @@ export class ProblemPattern {
             .split('.').join("\\.");
 
         let dummy, pattern, flags, order: string;
-        [dummy, pattern, flags, order] = patternWithMatchGroupOrder.split('/');
-
+        [dummy, pattern, flags, order] = patternWithMatchGroupOrder.split('/');dummy;
+        
         pattern = pattern.replace('$(filePaths)', fileNamesJoint);
 
         this.regEx = new RegExp(pattern, flags);

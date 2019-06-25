@@ -10,6 +10,7 @@
         "Groundable",
         "jinja",
         "pddl",
+        "planview",
         "ptest",
         "templated",
         "tpddl"

@@ -5,9 +5,9 @@
 'use strict';
 
 import * as process from 'child_process';
-import { readFileSync } from 'fs';
 import * as path from 'path';
 import * as nunjucks from 'nunjucks';
+import * as afs from './asyncfs';
 
 export interface OutputAdaptor {
     appendLine(text: string): void;
@@ -17,12 +17,11 @@ export interface OutputAdaptor {
 export abstract class PreProcessor {
     constructor(private metaDataLine?: string) { }
     abstract transform(input: string, workingDirectory: string, outputWindow: OutputAdaptor): Promise<string>;
-    abstract transformSync(input: string, workingDirectory: string, outputWindow: OutputAdaptor): string;
     abstract toString(): string;
-    removeMetaDataLine(text: string) { 
+    removeMetaDataLine(text: string) {
         this.metaDataLine;
         let pattern = /^;;\s*!pre-parsing:/;
-        
+
         return text.split('\n').map(line => pattern.test(line) ? "; Generated from a PDDL template and a data file" : line).join('\n');
     }
 }
@@ -31,8 +30,8 @@ export abstract class PreProcessor {
  * Shell command based pre-processor.
  */
 export class CommandPreProcessor extends PreProcessor {
-    constructor(public command: string, public args: string[], metaDataLine?: string) { 
-        super(metaDataLine); 
+    constructor(public command: string, public args: string[], metaDataLine?: string) {
+        super(metaDataLine);
     }
 
     toString(): string {
@@ -60,43 +59,22 @@ export class CommandPreProcessor extends PreProcessor {
                     }
 
                     if (error) {
-                        outputWindow.appendLine('Failed to transform the problem file.')
-                        outputWindow.appendLine(error.message)
+                        outputWindow.appendLine('Failed to transform the problem file.');
+                        outputWindow.appendLine(error.message);
                         outputWindow.show();
                         reject(error);
+                        resolve(input);
+                        return;
                     }
-
-                    resolve(that.removeMetaDataLine(stdout));
+                    else {
+                        resolve(that.removeMetaDataLine(stdout));
+                        return;
+                    }
                 });
             childProcess.stdin.write(input);
             childProcess.stdin.end();
 
         });
-    }
-
-
-    transformSync(input: string, workingDirectory: string, outputWindow: OutputAdaptor): string {
-
-        let command = this.command + ' ' + this.args.join(' ')
-
-        try {
-
-            let outputBuffer = process.execSync(command,
-                {
-                    cwd: workingDirectory,
-                    input: input,
-                    stdio: ['pipe']
-                });
-
-            return this.removeMetaDataLine(outputBuffer.toString());
-
-        } catch (error) {
-            outputWindow.appendLine('Failed to transform the problem file.')
-            outputWindow.appendLine(error.message)
-            if(error.stderr) outputWindow.appendLine(error.stderr.toString())
-            outputWindow.show();
-            return input;
-        }
     }
 }
 
@@ -109,8 +87,8 @@ export class PythonPreProcessor extends CommandPreProcessor {
     }
 
     static fromJson(json: any): any {
-        json
-        throw "For Jinja2 pre-processor, use the constructor instead"
+        json;
+        throw new Error("For Jinja2 pre-processor, use the constructor instead");
     }
 }
 
@@ -123,8 +101,8 @@ export class Jinja2PreProcessor extends PythonPreProcessor {
     }
 
     static fromJson(json: any): any {
-        json
-        throw "For Jinja2 pre-processor, use the constructor instead"
+        json;
+        throw new Error("For Jinja2 pre-processor, use the constructor instead");
     }
 }
 
@@ -134,13 +112,13 @@ export class Jinja2PreProcessor extends PythonPreProcessor {
 export class NunjucksPreProcessor extends PreProcessor {
     nunjucksEnv: nunjucks.Environment;
 
-    constructor(public dataFileName: string, metaDataLine: string, preserveWhitespace: boolean) { 
+    constructor(public dataFileName: string, metaDataLine: string, preserveWhitespace: boolean) {
         super(metaDataLine);
         this.nunjucksEnv = nunjucks.configure({ trimBlocks: false, lstripBlocks: !preserveWhitespace, throwOnUndefined: true });
-        this.nunjucksEnv.addFilter('map', function(array, attribute) { 
-            return array.map((item: any) => item[attribute]); 
+        this.nunjucksEnv.addFilter('map', function (array, attribute) {
+            return array.map((item: any) => item[attribute]);
         });
-        this.nunjucksEnv.addFilter('setAttribute', function(dictionary, key, value) {
+        this.nunjucksEnv.addFilter('setAttribute', function (dictionary, key, value) {
             dictionary[key] = value;
             return dictionary;
         });
@@ -151,19 +129,13 @@ export class NunjucksPreProcessor extends PreProcessor {
     }
 
     async transform(input: string, workingDirectory: string, outputWindow: OutputAdaptor): Promise<string> {
-        return this.transformSync(input, workingDirectory, outputWindow);
-    }
-   
-    transformSync(input: string, workingDirectory: string, outputWindow: OutputAdaptor): string {
-
-
         let dataPath = path.join(workingDirectory, this.dataFileName);
-        let dataText = readFileSync(dataPath);
+        let dataText = await afs.readFile(dataPath);
         let data: any;
 
         try {
             data = JSON.parse(dataText.toLocaleString());
-        }catch (error){
+        } catch (error) {
             outputWindow.appendLine(`Failed to read from ${this.dataFileName}.`);
             outputWindow.appendLine(error.message);
             outputWindow.show();
@@ -172,15 +144,25 @@ export class NunjucksPreProcessor extends PreProcessor {
 
         try {
 
-            let translated = this.nunjucksEnv.renderString(input, {data: data});
-    
+            let translated = this.nunjucksEnv.renderString(input, { data: data });
+
             return this.removeMetaDataLine(translated);
         } catch (error) {
-            outputWindow.appendLine('Failed to transform the problem file.');
-            outputWindow.appendLine(error.message);
-            if(error.stderr) outputWindow.appendLine(error.stderr.toString());
-            outputWindow.show();
-            return input;
+            let pattern = /\((.+)\)\s+\[Line\s+(\d+),\s+Column\s+(\d+)\]/;
+            let match = pattern.exec(error.message);
+            if (match) {
+                throw new PreProcessingError(match[1], parseInt(match[2]) - 1, parseInt(match[3]) - 1);
+            } else {
+                throw new PreProcessingError(error.message, 0, 0);
+            }
         }
+    }
+}
+
+export class PreProcessingError implements Error {
+    name: string;
+    stack?: string;
+    constructor(public message: string, public line: number, public column: number) {
+
     }
 }

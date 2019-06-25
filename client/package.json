@@ -4,14 +4,16 @@
   "description": "Planning Domain Description Language support",
   "author": "Jan Dolejsi",
   "license": "MIT",
-  "version": "2.6.7",
+  "version": "2.11.5",
   "publisher": "jan-dolejsi",
   "engines": {
-    "vscode": "^1.22.0"
+    "vscode": "^1.31.0",
+    "node": "^10.2.0"
   },
   "categories": [
     "Snippets",
-    "Programming Languages"
+    "Programming Languages",
+    "Debuggers"
   ],
   "keywords": [
     "PDDL",
@@ -31,10 +33,15 @@
     "onLanguage:pddl",
     "onLanguage:plan",
     "onLanguage:happenings",
-    "workspaceContains:**/*.pddl",
-    "workspaceContains:**/*ptest.json",
     "onCommand:pddl.configureParser",
-    "onCommand:pddl.configurePlanner"
+    "onCommand:pddl.configurePlanner",
+    "onCommand:pddl.showOverview",
+    "onCommand:pddl.searchDebugger.start",
+    "onCommand:pddl.planning.domains.session.load",
+    "workspaceContains:.planning.domains.session.json",
+    "onView:pddl.planning.domains",
+    "onView:pddl.tests.explorer",
+    "onUri"
   ],
   "main": "./out/client/src/extension",
   "contributes": {
@@ -75,6 +82,11 @@
         "configuration": "./language-configuration.json"
       }
     ],
+    "breakpoints": [
+      {
+        "language": "happenings"
+      }
+    ],
     "grammars": [
       {
         "language": "pddl",
@@ -99,6 +111,10 @@
       }
     ],
     "commands": [
+      {
+        "command": "pddl.showOverview",
+        "title": "PDDL: Show overview page"
+      },
       {
         "command": "pddl.planAndDisplayResult",
         "title": "PDDL: Run the planner and display the plan"
@@ -144,8 +160,12 @@
         "title": "PDDL: Convert plan to happenings..."
       },
       {
+        "command": "pddl.convertHappeningsToPlan",
+        "title": "PDDL: Convert happenings to plan..."
+      },
+      {
         "command": "pddl.tests.refresh",
-        "title": "Refresh",
+        "title": "PDDL: Refresh test cases",
         "icon": {
           "light": "images/light/refresh.svg",
           "dark": "images/dark/refresh.svg"
@@ -188,8 +208,112 @@
         "title": "PDDL: Open as an editable problem file..."
       },
       {
+        "command": "pddl.searchDebugger.start",
+        "title": "PDDL: Start search debugger"
+      },
+      {
+        "command": "pddl.searchDebugger.stop",
+        "title": "PDDL: Stop search debugger"
+      },
+      {
+        "command": "pddl.searchDebugger.reset",
+        "title": "PDDL: Reset search debugger"
+      },
+      {
+        "command": "pddl.searchDebugger.mock",
+        "title": "PDDL: Mock search progress to test debugger"
+      },
+      {
+        "command": "pddl.plan.compareNormalized",
+        "title": "PDDL: Normalize and compare 2 plans"
+      },
+      {
+        "command": "pddl.plan.preview",
+        "title": "PDDL: Preview plan"
+      },
+      {
+        "command": "pddl.plan.normalize",
+        "title": "PDDL: Normalize and evaluate plan"
+      },
+      {
         "command": "pddl.plan.validate",
         "title": "PDDL: Validate plan"
+      },
+      {
+        "command": "pddl.happenings.debug",
+        "title": "PDDL: Debug plan happenings (mockup only)"
+      },
+      {
+        "command": "pddl.happenings.execute",
+        "title": "PDDL: Execute plan and show effects"
+      },
+      {
+        "command": "pddl.happenings.generatePlanResumeCases",
+        "title": "PDDL: Execute plan and generate plan-resume test cases"
+      },
+      {
+        "command": "pddl.configureValidate",
+        "title": "PDDL: Configure VAL/Validate tool"
+      },
+      {
+        "command": "pddl.planning.domains.session.load",
+        "title": "PDDL: Download Planning.domains session"
+      },
+      {
+        "command": "pddl.planning.domains.session.refresh",
+        "title": "PDDL: Refresh Planning.domains session",
+        "icon": {
+          "light": "images/light/refresh.svg",
+          "dark": "images/dark/refresh.svg"
+        }
+      },
+      {
+        "command": "pddl.planning.domains.session.refresh_all",
+        "title": "PDDL: Refresh all Planning.domains sessions",
+        "icon": {
+          "light": "images/light/refresh.svg",
+          "dark": "images/dark/refresh.svg"
+        }
+      },
+      {
+        "command": "pddl.planning.domains.session.commit",
+        "title": "PDDL: Commit local changes to Planning.Domains session",
+        "icon": {
+          "light": "images/light/cloud-upload.svg",
+          "dark": "images/dark/cloud-upload.svg"
+        }
+      },
+      {
+        "command": "pddl.planning.domains.session.discard",
+        "title": "PDDL: Discards local changes to the Planning.Domains session",
+        "icon": {
+          "light": "images/light/discard.svg",
+          "dark": "images/dark/discard.svg"
+        }
+      },
+      {
+        "command": "pddl.planning.domains.session.checkout",
+        "title": "PDDL: Checkout another version of this Planning.Domains session",
+        "icon": {
+          "light": "images/light/refresh.svg",
+          "dark": "images/dark/refresh.svg"
+        }
+      },
+      {
+        "command": "pddl.planning.domains.session.duplicate",
+        "title": "PDDL: Duplicate a Planning.Domains session as writable"
+      },
+      {
+        "command": "pddl.planning.domains.session.open",
+        "title": "PDDL: Open a Planning.Domains session in the browser"
+      },
+      {
+        "command": "pddl.planning.domains.session.share",
+        "title": "PDDL: Share a Planning.Domains session via email"
+      },
+      {
+        "command": "pddl.planning.domains.session.generateClassroom",
+        "title": "PDDL: Generate Planning.Domains classroom sessions from this template..."
       }
     ],
     "menus": {
@@ -203,46 +327,123 @@
           "when": "resourceLangId == pddl && resourceScheme == tpddl"
         },
         {
+          "command": "pddl.plan.preview",
+          "when": "resourceLangId == plan",
+          "group": "pddl"
+        },
+        {
           "command": "pddl.convertPlanToHappenings",
-          "when": "resourceLangId == plan"
+          "when": "resourceLangId == plan",
+          "group": "pddl"
+        },
+        {
+          "command": "pddl.convertHappeningsToPlan",
+          "when": "resourceLangId == happenings",
+          "group": "pddl"
         },
         {
           "command": "pddl.plan.validate",
-          "when": "resourceLangId == plan"
+          "when": "resourceLangId == plan",
+          "group": "pddl"
+        },
+        {
+          "command": "pddl.plan.normalize",
+          "when": "resourceLangId == plan",
+          "group": "pddl"
+        },
+        {
+          "command": "pddl.happenings.debug",
+          "when": "resourceLangId == happenings && false",
+          "group": "pddl"
+        },
+        {
+          "command": "pddl.happenings.execute",
+          "when": "resourceLangId == happenings",
+          "group": "pddl"
+        },
+        {
+          "command": "pddl.happenings.generatePlanResumeCases",
+          "when": "resourceLangId == happenings",
+          "group": "pddl"
         }
       ],
       "view/title": [
         {
+          "command": "pddl.tests.runAll",
+          "when": "view == pddl.tests.explorer",
+          "group": "navigation"
+        },
+        {
           "command": "pddl.tests.refresh",
-          "when": "view == PTestExplorer",
+          "when": "view == pddl.tests.explorer",
           "group": "navigation"
         }
       ],
       "view/item/context": [
         {
           "command": "pddl.tests.run",
-          "when": "view == PTestExplorer && viewItem == test",
+          "when": "view == pddl.tests.explorer && viewItem == test",
           "group": "execution"
         },
         {
           "command": "pddl.tests.runAll",
-          "when": "view == PTestExplorer && viewItem == manifest",
+          "when": "view == pddl.tests.explorer && viewItem != test",
           "group": "execution"
         },
         {
           "command": "pddl.tests.view",
-          "when": "view == PTestExplorer && viewItem == test",
+          "when": "view == pddl.tests.explorer && viewItem == test",
           "group": "navigation"
         },
         {
           "command": "pddl.tests.viewDefinition",
-          "when": "view == PTestExplorer && viewItem != folder",
+          "when": "view == pddl.tests.explorer && viewItem != folder",
           "group": "navigation"
         },
         {
           "command": "pddl.tests.viewExpectedPlans",
-          "when": "view == PTestExplorer && viewItem == test",
+          "when": "view == pddl.tests.explorer && viewItem == test",
           "group": "navigation"
+        }
+      ],
+      "explorer/context": [
+        {
+          "command": "pddl.plan.compareNormalized",
+          "when": "viewItem != folder && resourceLangId == plan",
+          "group": "3_compare"
+        }
+      ],
+      "scm/title": [
+        {
+          "command": "pddl.planning.domains.session.commit",
+          "group": "navigation",
+          "when": "scmProvider == planningDomainsSession"
+        },
+        {
+          "command": "pddl.planning.domains.session.discard",
+          "group": "navigation",
+          "when": "scmProvider == planningDomainsSession"
+        },
+        {
+          "command": "pddl.planning.domains.session.refresh",
+          "group": "navigation",
+          "when": "scmProvider == planningDomainsSession"
+        },
+        {
+          "command": "pddl.planning.domains.session.duplicate",
+          "when": "scmProvider == planningDomainsSession"
+        },
+        {
+          "command": "pddl.planning.domains.session.open",
+          "when": "scmProvider == planningDomainsSession"
+        },
+        {
+          "command": "pddl.planning.domains.session.share",
+          "when": "scmProvider == planningDomainsSession"
+        },
+        {
+          "command": "pddl.planning.domains.session.generateClassroom",
+          "when": "scmProvider == planningDomainsSession"
         }
       ]
     },
@@ -383,7 +584,7 @@
           "description": "Controls the maximum number of problems produced by the parser."
         },
         "pddlPlanner.executableOrService": {
-          "scope": "window",
+          "scope": "resource",
           "type": "string",
           "title": "Planner executable or service URL",
           "default": "http://solver.planning.domains/solve",
@@ -395,6 +596,20 @@
           "description": "Override the command-line options passed to the PDDL planner configured in 'pddlPlanner.executableOrService'.",
           "pattern": "^\\$\\(planner\\).+\\$\\(options\\).+\\$\\(domain\\).+\\$\\(problem\\).*$",
           "default": "$(planner) $(options) $(domain) $(problem)"
+        },
+        "pddlPlanner.executionTarget": {
+          "scope": "window",
+          "enum": [
+            "Output window",
+            "Terminal",
+            "Search debugger"
+          ],
+          "default": "Output window",
+          "enumDescriptions": [
+            "Planner output is displayed in the VS Code Output Window 'Planner output'.",
+            "Planner is executed in a terminal window. Plan is not displayed visually. Use this to interact with the planner.",
+            "Same as the 'Output window' option, but the output window and resulting plan are not revealed in order to keep the Search debugger in the forefront."
+          ]
         },
         "pddlPlanner.serviceAuthenticationEnabled": {
           "scope": "resource",
@@ -487,48 +702,140 @@
           "type": "string",
           "description": "ValueSeq path - the tool that evaluates numeric values of functions at starts and ends of actions in the plan."
         },
-        "pddlTestExplorer.enabled": {
-          "type": "boolean",
-          "default": true,
-          "description": "Enable/disable the preview of PDDL test explorer. Restart the editor for the change to take effect."
-        },
         "pddl.validatorPath": {
           "type": "string",
           "description": "Path of the 'validate' executable."
+        },
+        "pddl.valStepPath": {
+          "type": "string",
+          "description": "Path of the 'valstep' executable."
+        },
+        "pddlSearchDebugger.defaultPort": {
+          "type": "integer",
+          "description": "Search debugger static port. If not specified (or set to zero, the port is randomized for security reasons).",
+          "default": 0
+        },
+        "pddlSearchDebugger.stateIdPattern": {
+          "type": "string",
+          "description": "Search debugger regular expression pattern to extract the numeric State ID.",
+          "default": "^(\\d+)$"
+        },
+        "pddlSearchDebugger.stateLogPattern": {
+          "type": "string",
+          "description": "Pattern to find the line in the state log file pertaining to the selected state.",
+          "default": "^\\s*State ID:\\s*(.*)\\s*$"
+        },
+        "pddlSearchDebugger.plannerCommandLine": {
+          "type": "string",
+          "description": "Command-line switch to configure planning engine to work with the Search Debugger pane. The '$(port)' part gets replaced by actual port number.",
+          "default": "--search-tree-dump=http://localhost:$(port)"
         }
       }
     },
     "views": {
       "test": [
         {
-          "id": "PTestExplorer",
+          "id": "pddl.tests.explorer",
           "name": "PDDL Tests"
         }
+      ],
+      "explorer": [
+        {
+          "id": "pddl.planning.domains",
+          "name": "Planning.domains"
+        }
       ]
-    }
+    },
+    "debuggers": [
+      {
+        "type": "pddl-happenings",
+        "label": "PDDL Plan Debugger",
+        "program": "./out/debugger/debugAdapter.js",
+        "runtime": "node",
+        "configurationAttributes": {
+          "launch": {
+            "required": [
+              "program"
+            ],
+            "properties": {
+              "program": {
+                "type": "string",
+                "description": "Absolute path to a plan happenings file path.",
+                "default": "${command:PddlPlanHappenings}"
+              },
+              "stopOnEntry": {
+                "type": "boolean",
+                "description": "Automatically stop after launch.",
+                "default": true
+              },
+              "trace": {
+                "type": "boolean",
+                "description": "Enable logging of the Debug Adapter Protocol.",
+                "default": true
+              }
+            }
+          }
+        },
+        "initialConfigurations": [
+          {
+            "type": "pddl-happenings",
+            "request": "launch",
+            "name": "PDDL: Plan Happenings",
+            "program": "${command:PddlPlanHappenings}",
+            "stopOnEntry": true
+          }
+        ],
+        "configurationSnippets": [
+          {
+            "label": "PDDL Plan Debug: Launch",
+            "description": "A new configuration for debugging a user selected PDDL Plan file.",
+            "body": {
+              "type": "pddl-happenings",
+              "request": "launch",
+              "name": "PDDL: Plan Happenings",
+              "program": "^\"\\${command:PddlPlanHappenings}\"",
+              "stopOnEntry": true
+            }
+          }
+        ],
+        "variables": {
+          "PddlPlanHappenings": "pddl.selectAndActivateHappenings"
+        }
+      }
+    ]
   },
   "scripts": {
     "postinstall": "node ./node_modules/vscode/bin/install",
     "compile": "tsc -p ./",
     "watch": "tsc -w -p ./",
     "vscode:prepublish": "npm run compile",
-    "update-vscode": "node ./node_modules/vscode/bin/install"
+    "update-vscode": "node ./node_modules/vscode/bin/install",
+    "package": "vsce package"
   },
   "dependencies": {
-    "vscode-extension-telemetry": "^0.0.17",
-    "express": "^4.16.3",
-    "npm": "^6.1.0",
-    "nunjucks": "^3.1.3",
-    "opn": "^5.3.0",
-    "tmp": "^0.0.33",
-    "request": "^2.87.0",
-    "tree-kill": "^1.2.0",
-    "util.promisify": "^1.0.0",
-    "vscode": "^1.1.17"
+    "vscode-extension-telemetry-wrapper": "^0.4.0",
+    "tree-kill": "^1.2.1",
+    "vscode-debugadapter": "1.34.0",
+    "vscode-debugprotocol": "1.34.0",
+    "await-notify": "^1.0.1",
+    "express": "^4.17.1",
+    "npm": "5.5.1",
+    "nunjucks": "^3.2.0",
+    "open": "^6.3.0",
+    "tmp": "^0.1.0",
+    "request": "^2.88.0",
+    "body-parser": "^1.19.0",
+    "events": "^3.0.0",
+    "semver": "^6.1.1"
   },
   "devDependencies": {
-    "@types/request": "^2.47.1",
-    "@types/tmp": "^0.0.33",
-    "typescript": "^2.9.2"
+    "@types/express": "^4.17.0",
+    "@types/request": "^2.48.1",
+    "@types/semver": "^6.0.0",
+    "@types/tmp": "^0.1.0",
+    "tslint": "^5.17.0",
+    "typescript": "^3.0.3",
+    "vsce": "^1.63.0",
+    "vscode": "^1.1.30"
   }
 }

@@ -1,6 +1,21 @@
+var selectedPlan = 0;
+
+var vscode = null;
+try {
+    vscode = acquireVsCodeApi();
+} catch (error) {
+    console.error(error);
+    // swallow, so in the script can be tested in a browser
+}
+
+function postMessage(message) {
+    if (vscode) vscode.postMessage(message);
+}
+
 function showPlan(planIndex) {
     // remember the index of the plan that is being shown for later manipulation
     selectedPlan = planIndex;
+    postMessage({ "command": "selectPlan", "planIndex": planIndex});
     document.querySelectorAll("div.gantt").forEach(div => showPlanDiv(planIndex, div));
     document.querySelectorAll("div.resourceUtilization").forEach(div => showPlanDiv(planIndex, div));
     document.querySelectorAll("div.lineChart").forEach(div => showPlanDiv(planIndex, div));
@@ -10,7 +25,7 @@ function showPlan(planIndex) {
         if (planIndex == planId) newClass += " planSelector-selected";
         div.setAttribute("class", newClass);
     });
-    eval("drawPlan"+planIndex+"Charts();");
+    eval("drawPlan" + planIndex + "Charts();");
 }
 function showPlanDiv(planIndex, div) {
     let planId = parseInt(div.getAttribute("plan"));
@@ -25,7 +40,10 @@ function scrollPlanSelectorIntoView(planIndex) {
     });
 }
 
-var selectedPlan = 0;
-function updatePlanExportHref(a) {
-    a.search = "?" + encodeURI(JSON.stringify([selectedPlan]));
+function savePlanToFile() {
+    postMessage({ "command": "savePlanToFile" });
+}
+
+function openInBrowser() {
+    postMessage({ "command": "openInBrowser" });
 }

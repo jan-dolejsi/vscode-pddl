@@ -5,7 +5,7 @@
 'use strict';
 
 import * as assert from 'assert';
-import { PddlWorkspace } from '../src/workspace-model';
+import { PddlWorkspace } from '../src/PddlWorkspace';
 
 describe('PddlWorkspace', () => {
     // var subject: PddlWorkspace;
@@ -47,4 +47,4 @@ describe('PddlWorkspace', () => {
             assert.equal(fileName, 'c:/folder/sub-folder');
         });
     });
-})
+});

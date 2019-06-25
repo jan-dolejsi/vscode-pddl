@@ -4,7 +4,7 @@
  * ------------------------------------------------------------------------------------------ */
 'use strict';
 
-import { Plan } from './plan';
+import { Plan } from './Plan';
 import { PlanStep } from './PlanStep';
 import { DomainInfo, ProblemInfo } from './parser';
 
@@ -14,14 +14,14 @@ import { DomainInfo, ProblemInfo } from './parser';
 export class PddlPlanParser {
 
     plans: Plan[] = [];
-    public static planStepPattern = /^\s*((\d+|\d+\.\d+)\s*:)?\s*\((.*)\)\s*(\[(\d+|\d+\.\d+)\])?\s*$/gim;
+    public static planStepPattern = /^\s*((\d+|\d+\.\d+)\s*:)?\s*\((.*)\)\s*(\[\s*(\d+|\d+\.\d+)\s*\])?\s*$/gim;
     planStatesEvaluatedPattern = /^;\s*States evaluated[\w ]*:[ ]*(\d*)\s*$/i;
     planCostPattern = /[\w ]*(cost|metric)[\D :]*[ ]*(\d*|\d*\.\d*)\s*$/i
 
     planBuilder: PlanBuilder;
     endOfBufferToBeParsedNextTime = '';
 
-    constructor(public domain: DomainInfo, public problem: ProblemInfo, public epsilon: number, public onPlanReady?: (plans: Plan[]) => void) {
+    constructor(private domain: DomainInfo, private problem: ProblemInfo, private epsilon: number, private onPlanReady?: (plans: Plan[]) => void) {
         this.planBuilder = new PlanBuilder(epsilon);
     }
 
@@ -36,7 +36,7 @@ export class PddlPlanParser {
         let nextEndLine: number;
         while ((nextEndLine = textString.indexOf('\n', lastEndLine)) > -1) {
             let nextLine = textString.substring(lastEndLine, nextEndLine + 1);
-            this.appendLine(nextLine);
+            if (nextLine.trim()) this.appendLine(nextLine);
             lastEndLine = nextEndLine + 1;
         }
         if (textString.length > lastEndLine) {
@@ -99,6 +99,11 @@ export class PddlPlanParser {
         }
 
         if (this.onPlanReady) this.onPlanReady.apply(this, [this.plans]);
+    }
+
+    /** Gets current plan's provisional makespan. */
+    getCurrentPlanMakespan(): number {
+        return this.planBuilder.getMakespan();
     }
 
     /**

@@ -4,7 +4,8 @@
  * ------------------------------------------------------------------------------------------ */
 'use strict';
 
-import { Variable, DomainInfo, ProblemInfo, ObjectInstance, TypeObjects } from "./parser";
+import { DomainInfo, ProblemInfo, TypeObjects } from "./parser";
+import { Variable, ObjectInstance } from './FileInfo';
 
 export class Grounder {
     

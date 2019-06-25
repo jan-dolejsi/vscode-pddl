@@ -5,7 +5,7 @@
 'use strict';
 
 import { CompletionItem, MarkdownString } from 'vscode';
-import { Delegate } from './delegate';
+import { Delegate } from './Delegate';
 
 var PDDL = 'pddl';
 

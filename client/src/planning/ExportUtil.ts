@@ -4,20 +4,22 @@
  * ------------------------------------------------------------------------------------------ */
 'use strict';
 
-import {
-    Uri, window, workspace, Range, ViewColumn
-} from 'vscode';
-
-import { existsSync } from 'fs'
+import { Uri, window, workspace, Range, ViewColumn } from 'vscode';
+import * as afs from '../../../common/src/asyncfs';
 
 export async function exportToAndShow(text: string, uri: Uri): Promise<boolean> {
-    let fileExists = await existsSync(uri.fsPath);
+    let fileExists = await afs.exists(uri.fsPath);
     if (!fileExists) {
         uri = uri.with({ scheme: 'untitled' });
     }
 
     let newDocument = await workspace.openTextDocument(uri);
-    let editor = await window.showTextDocument(newDocument, { viewColumn: ViewColumn.Three, preserveFocus: true });
+    let editor = await window.showTextDocument(newDocument, { viewColumn: ViewColumn.Active, preserveFocus: true });
     let fullRange = newDocument.validateRange(new Range(0, 0, newDocument.lineCount, 0));
-    return editor.edit(edit => edit.replace(fullRange, text));
+    if (await editor.edit(edit => edit.replace(fullRange, text))) {
+        return newDocument.save();
+    }
+    else {
+        throw new Error("Cannot insert text to document: " + newDocument.fileName);
+    }
 }

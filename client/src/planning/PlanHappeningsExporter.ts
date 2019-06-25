@@ -12,6 +12,9 @@ import { PlanExporter } from './PlanExporter';
 import { PddlPlanParser } from '../../../common/src/PddlPlanParser';
 import { exportToAndShow } from './ExportUtil';
 
+/**
+ * Converts plan to happenings while preserving comments.
+ */
 export class PlanHappeningsExporter {
 
     decimals: number;
@@ -39,7 +42,7 @@ export class PlanHappeningsExporter {
 
             await exportToAndShow(this.happeningsText, uri);
         } catch (ex) {
-            window.showErrorMessage(`Cannot export plan to happenings: ${ex.message}`);
+            window.showErrorMessage(`Cannot export plan to happenings: ${ex}`);
         }
     }
 
@@ -138,7 +141,7 @@ export class PlanHappeningsExporter {
 
     outputHappening(happening: Happening): void {
         let happeningQualifier = '';
-        
+
         switch(happening.type){
             case HappeningType.Start:
                 happeningQualifier = "start ";
@@ -173,14 +176,6 @@ export class PlanHappeningsExporter {
 
 class Happening {
     constructor(public time: number, public name: string, public type: HappeningType, public count: number) {
-
-    }
-}
-
-export class HappeningsParser {
-    static PATTERN = /^\s*((\d+|\d+\.\d+|\.\d+)\s*:)?\s*(start|end)?\s*\((.*)\)\s*(#\d+)?$/;
-
-    constructor() {
 
     }
 }

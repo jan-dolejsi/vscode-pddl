@@ -5,45 +5,45 @@
 'use strict';
 
 import {
-    window, extensions, ExtensionContext, MessageItem, Uri, commands
+    window, extensions, ExtensionContext, MessageItem, Uri, commands, ViewColumn, workspace, ConfigurationTarget
 } from 'vscode';
 
-import * as fs from 'fs';
+import { PddlConfiguration } from '../configuration';
 
-const util = require('util');
-require('util.promisify').shim();
-
-const readFile = util.promisify(fs.readFile);
-
-import { PddlConfiguration } from './configuration';
+import {diff} from 'semver';
+import { OverviewPage, SHOULD_SHOW_OVERVIEW_PAGE } from './OverviewPage';
+import * as afs from '../../../common/src/asyncfs';
 
 enum TipResponse { Ok, Later, Next }
 
 const LATER = 'LATER';
-const NEVER = 'NEVER'
+const NEVER = 'NEVER';
 const ACCEPTED = 'ACCEPTED';
 
 export class StartUp {
 
-    private context: ExtensionContext;
+    overviewPage: OverviewPage;
 
-    constructor(context: ExtensionContext) {
-        this.context = context;
+    constructor(private context: ExtensionContext, private pddlConfiguration: PddlConfiguration) {
+        this.overviewPage = new OverviewPage(context, this.pddlConfiguration);
     }
 
-    atStartUp(pddlConfiguration: PddlConfiguration): void {
+    atStartUp(): void {
+        this.showOverviewPage();
         this.showWhatsNew();
         this.showTips();
-        this.uninstallLegacyExtension(pddlConfiguration);
+        this.suggestFolderIsOpen();
+        this.suggestAutoSave();
     }
 
     NEXT_TIP_TO_SHOW = 'nextTipToShow';
     WHATS_NEW_SHOWN_FOR_VERSION = 'whatsNewShownForVersion';
     ACCEPTED_TO_WRITE_A_REVIEW = 'acceptedToWriteAReview';
+    NEVER_AUTO_SAVE = 'neverAutoSave';
 
     async showTips(): Promise<boolean> {
         var tipsPath = this.context.asAbsolutePath('tips.txt');
-        var tips: string[] = (await readFile(tipsPath, 'utf-8')).split("\n");
+        var tips: string[] = (await afs.readFile(tipsPath, 'utf-8')).split("\n");
 
         var nextTipToShow = this.context.globalState.get(this.NEXT_TIP_TO_SHOW, 0);
 
@@ -52,7 +52,7 @@ export class StartUp {
             const tip = tips[index];
 
             // skip tips that were removed subsequently as obsolete
-            if (tip.trim() == "") {
+            if (tip.trim() === "") {
                 nextTipToShow++;
                 continue;
             }
@@ -72,7 +72,7 @@ export class StartUp {
             }
         }
 
-        if (nextTipToShow == tips.length) {
+        if (nextTipToShow === tips.length) {
             this.askForReview();
         }
 
@@ -101,25 +101,78 @@ export class StartUp {
         // The PDDL extension works best if you open VS Code in a specific folder. Use File > Open Folder ...
     }
 
-    showWhatsNew(): void {
+    async suggestAutoSave(): Promise<void> {
+        if (this.context.globalState.get(this.NEVER_AUTO_SAVE, false)) { return; }
+
+        let option = "files.autoSave";
+        if (workspace.getConfiguration().get(option) === "off") {
+            let changeConfigurationOption: MessageItem = { title: "Configure auto-save"};
+            let notNow: MessageItem = { title: "Not now" };
+            let never: MessageItem = { title: "Do not ask again" };
+            let options = [changeConfigurationOption, notNow, never];
+
+            let choice = await window.showInformationMessage("Switching on `File > Auto Save` saves you from constant file saving when working with command-line tools.", ...options);
+
+            switch(choice){
+                case changeConfigurationOption:
+                    workspace.getConfiguration().update(option, "afterDelay", ConfigurationTarget.Global);
+                    break;
+                case never:
+                    this.context.globalState.update(this.NEVER_AUTO_SAVE, true);
+                case notNow:
+                default:
+                    // do nothing
+                    break;
+            }
+        }
+    }
+
+    async showWhatsNew(): Promise<boolean> {
         let thisExtension = extensions.getExtension("jan-dolejsi.pddl");
         let currentVersion = thisExtension.packageJSON["version"];
         var lastValue = this.context.globalState.get(this.WHATS_NEW_SHOWN_FOR_VERSION, "0.0.0");
 
-        if (currentVersion != lastValue) {
-            //let changeLog = this.context.asAbsolutePath('CHANGELOG.md');
-            let changeLog = 'https://marketplace.visualstudio.com/items/jan-dolejsi.pddl/changelog';
-            commands.executeCommand('vscode.open', Uri.parse(changeLog));
+        let lastInstalledDiff = diff(currentVersion, lastValue);
+        if (['major', 'minor'].includes(lastInstalledDiff)) {
 
+            if (true) {
+                let changeLogMd = this.context.asAbsolutePath('CHANGELOG.md');
+                commands.executeCommand('markdown.showPreview', Uri.file(changeLogMd), null, {
+                    sideBySide: false,
+                    locked: true
+                });
+            }
+            else {
+                let changeLog = this.context.asAbsolutePath('CHANGELOG.html');
+                let html = await afs.readFile(changeLog, { encoding: "utf-8" });
+
+                let webViewPanel = window.createWebviewPanel(
+                    "pddl.WhatsNew",
+                    "PDDL: What's new?",
+                    ViewColumn.Active,
+                    {
+                        retainContextWhenHidden: true,
+                        enableFindWidget: true,
+                        enableCommandUris: false,
+                        enableScripts: true
+                    }
+                );
+
+                webViewPanel.webview.html = html;
+
+                this.context.subscriptions.push(webViewPanel);
+            }
             this.context.globalState.update(this.WHATS_NEW_SHOWN_FOR_VERSION, currentVersion);
         }
+
+        return true;
     }
 
     async askForReview(): Promise<void> {
         // what was the user response last time? 
         var accepted = this.context.globalState.get(this.ACCEPTED_TO_WRITE_A_REVIEW, LATER);
 
-        if (accepted == LATER) {
+        if (accepted === LATER) {
             let optionAccepted: MessageItem = { title: "OK, let's give feedback" };
             let optionLater: MessageItem = { title: "Remind me later" };
             let optionNever: MessageItem = { title: "Never" };
@@ -145,12 +198,10 @@ export class StartUp {
         }
     }
 
-    uninstallLegacyExtension(pddlConfiguration: PddlConfiguration): void {
-        let extension = extensions.getExtension("jan-dolejsi.pddl-parser");
-
-        if (extension) {
-            pddlConfiguration.copyFromLegacyParserConfig()
-            window.showWarningMessage(`The internal preview extension 'PDDL SL8 Only' is now obsolete. Please uninstall it, or it will interfere with functionality of the PDDL extension.`);
+    showOverviewPage(): void {
+        var shouldShow = this.context.globalState.get<boolean>(SHOULD_SHOW_OVERVIEW_PAGE, true);
+        if (shouldShow) {
+            this.overviewPage.showWelcomePage(false);
         }
     }
 }

@@ -23,33 +23,36 @@
 			"patterns": [
 				{
 					"name": "variable.happening",
-					"match": "^\\s*((\\d+|\\d+\\.\\d+|\\.\\d+)\\s*:)?\\s*(start|end)?\\s*\\(([\\w -]+)\\)\\s*(#\\d+)?$",
+					"match": "^\\s*((\\d+|\\d+\\.\\d+|\\.\\d+)\\s*:)?\\s*(start|end)?\\s*\\(([\\w -]+)\\)\\s*(#\\d+)?\\s*(;.*)?$",
 					"captures": {
 						"2": { "name": "constant.numeric.happening.time" },
 						"3": { "name": "keyword.control.happening.snap"},
 						"4": { "name": "support.function.action.name" },
-						"5": { "name": "constant.other.happening.order" }
+						"5": { "name": "constant.other.happening.counter" },
+						"6": { "name": "comment.line" }
 					}
 				},
 				{
 					"name": "variable.til",
 					"comment": "Time-initial literal",
-					"match": "^\\s*((\\d+|\\d+\\.\\d+|\\.\\d+)\\s*:)?\\s*(set|unset)\\s*\\(([\\w -]+)\\)\\s*$",
+					"match": "^\\s*((\\d+|\\d+\\.\\d+|\\.\\d+)\\s*:)?\\s*(set|unset)\\s*\\(([\\w -]+)\\)\\s*(;.*)?$",
 					"captures": {
 						"2": { "name": "constant.numeric.happening.time" },
 						"3": { "name": "keyword.control.happening.operator"},
-						"4": { "name": "support.variable.predicate.name" }
+						"4": { "name": "support.variable.predicate.name" },
+						"5": { "name": "comment.line" }
 					}
 				},
 				{
 					"name": "variable.tif",
 					"comment": "Time-initial fluent",
-					"match": "^\\s*((\\d+|\\d+\\.\\d+|\\.\\d+)\\s*:)?\\s*\\(=\\s*\\(([\\w -]+)\\)\\s*(\\d+|\\d+\\.\\d+|\\.\\d+)\\s*\\)\\s*$",
+					"match": "^\\s*((\\d+|\\d+\\.\\d+|\\.\\d+)\\s*:)?\\s*\\(=\\s*\\(([\\w -]+)\\)\\s*(\\d+|\\d+\\.\\d+|\\.\\d+)\\s*\\)\\s*(;.*)?$",
 					"captures": {
 						"2": { "name": "constant.numeric.happening.time" },
 						"3": { "name": "keyword.control.happening.operator"},
 						"4": { "name": "support.variable.function.name" },
-						"5": { "name": "constant.numeric.function.value" }
+						"5": { "name": "constant.numeric.function.value" },
+						"6": { "name": "comment.line" }
 					}
 				}
 			]

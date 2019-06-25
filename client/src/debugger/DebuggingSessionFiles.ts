@@ -4,10 +4,14 @@
  * ------------------------------------------------------------------------------------------ */
 'use strict';
 
-import { Plan } from "../../../common/src/Plan";
+import { DomainInfo, ProblemInfo } from '../../../common/src/parser';
+import { HappeningsInfo } from "../../../common/src/HappeningsInfo";
 
-export interface PlanningHandler {
-    handleOutput(outputText: string): void;
-    handleSuccess(stdout: string, plans: Plan[]): void;
-    handleError(error: Error, stderr: string): void;
+/**
+ * Files involved in the debugging session.
+ */
+export interface DebuggingSessionFiles {
+	domain: DomainInfo;
+	problem: ProblemInfo;
+	happenings: HappeningsInfo;
 }

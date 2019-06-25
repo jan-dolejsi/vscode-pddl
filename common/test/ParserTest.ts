@@ -4,8 +4,10 @@
  * ------------------------------------------------------------------------------------------ */
 'use strict';
 
-import { Parser, DirectionalGraph, DomainInfo, Variable, Parameter, ProblemInfo, ObjectInstance } from '../src/parser'
+import { Parser, DomainInfo, ProblemInfo } from '../src/parser'
+import { DirectionalGraph } from '../src/DirectionalGraph';
 import * as assert from 'assert';
+import { Variable, Parameter, ObjectInstance } from '../src/FileInfo';
 
 describe('Parser', () => {
     var subject: Parser;
@@ -420,13 +422,13 @@ describe('DomainInfo', () => {
         it('finds type location in multi-line declaration', () => {
             // GIVEN
             let domainInfo = new DomainInfo("/uri", 1.0, "name");
-            domainInfo.text = `(define (domain generator)
+            domainInfo.setText(`(define (domain generator)
             (:requirements :fluents :durative-actions :duration-inequalities
                     :negative-preconditions :typing)
             
             (:types generator tankstelle ; comment
             tank)
-            `;
+            `);
             
             // WHEN
             let range = domainInfo.getTypeLocation('tank');
@@ -442,7 +444,7 @@ describe('DomainInfo', () => {
         it('finds type location in single line declaration', () => {
             // GIVEN
             let domainInfo = new DomainInfo("/uri", 1.0, "name");
-            domainInfo.text = `(define (domain generator) (:types generator tankstelle tank)`;
+            domainInfo.setText(`(define (domain generator) (:types generator tankstelle tank)`);
             
             // WHEN
             let range = domainInfo.getTypeLocation('tank');
@@ -460,7 +462,7 @@ describe('DomainInfo', () => {
         it('finds all references', () => {
             // GIVEN
             let domainInfo = new DomainInfo("/uri", 1.0, "name");
-            domainInfo.text = `(define (domain generator)
+            domainInfo.setText(`(define (domain generator)
             (:requirements :fluents :durative-actions :duration-inequalities
                     :negative-preconditions :typing)
             
@@ -488,7 +490,7 @@ describe('DomainInfo', () => {
                     (at end (generator-ran))
                 )
             )
-            `;
+            `);
             
             // WHEN
             let ranges = domainInfo.getTypeReferences('generator');

@@ -1,0 +1,1 @@
+export const KEY: string = null;//not stored

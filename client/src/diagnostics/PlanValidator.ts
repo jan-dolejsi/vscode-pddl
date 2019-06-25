@@ -10,17 +10,19 @@ import {
 
 import * as process from 'child_process';
 
-import { PddlWorkspace } from '../../../common/src/workspace-model';
-import { ProblemInfo, FileInfo, PlanInfo, PddlLanguage } from '../../../common/src/parser';
+import { PddlWorkspace } from '../../../common/src/PddlWorkspace';
+import { PlanInfo, DomainInfo, ProblemInfo } from '../../../common/src/parser';
+import { PddlLanguage, ParsingProblem } from '../../../common/src/FileInfo';
 import { PddlConfiguration, CONF_PDDL, VALIDATION_PATH } from '../configuration';
 import { Util } from '../../../common/src/util';
 import { dirname } from 'path';
 import { PlanStep } from '../../../common/src/PlanStep';
+import { DomainAndProblem, getDomainAndProblemForPlan, isPlan } from '../utils';
 
 export const PDDL_PLAN_VALIDATE = 'pddl.plan.validate';
 
 /**
- * Delegate for handling requests to run the planner and visualize the plans.
+ * Delegate for parsing and validating plans..
  */
 export class PlanValidator {
 
@@ -28,8 +30,8 @@ export class PlanValidator {
 
         context.subscriptions.push(commands.registerCommand(PDDL_PLAN_VALIDATE,
             async () => {
-                if (window.activeTextEditor && window.activeTextEditor.document.languageId == "plan") {
-                    if (!this.testConfiguration()) return;
+                if (window.activeTextEditor && isPlan(window.activeTextEditor.document)) {
+                    if (!await this.testConfiguration()) { return; }
                     try {
                         let outcome = await this.validateTextDocument(window.activeTextEditor.document);
                         if (outcome.getError()) {
@@ -46,29 +48,24 @@ export class PlanValidator {
             }));
     }
 
-    testConfiguration(): boolean {
+    async testConfiguration(): Promise<boolean> {
         let validatePath = this.plannerConfiguration.getValidatorPath();
-        if (validatePath.length == 0) {
-            window.showErrorMessage(`Set the 'validate' executable path to the '${CONF_PDDL}.${VALIDATION_PATH}' setting.`);
+        if (validatePath.length === 0) {
+
+            let answer = await window.showWarningMessage(`The 'validate' executable path is not set up in '${CONF_PDDL}.${VALIDATION_PATH}'.`, "Configure 'validate' now...");
+            if (answer) { commands.executeCommand('pddl.configureValidate'); }
             return false;
         }
         else {
             return true;
         }
-
-        // if (this.validatorPath == null || this.validatorPath == "") {
-        // suggest the user to update the settings
-        // var showNever = true;
-        // this.pddlConfiguration.suggestValidatorConfiguration(showNever);
-        // return;
-        // }
     }
 
     async validateTextDocument(planDocument: TextDocument): Promise<PlanValidationOutcome> {
 
-        let planFileInfo = <PlanInfo>this.pddlWorkspace.upsertAndParseFile(planDocument.uri.toString(), PddlLanguage.PLAN, planDocument.version, planDocument.getText());
+        let planFileInfo = <PlanInfo> await this.pddlWorkspace.upsertAndParseFile(planDocument.uri.toString(), PddlLanguage.PLAN, planDocument.version, planDocument.getText());
 
-        if (!planFileInfo) return PlanValidationOutcome.failed(null, new Error("Cannot open or parse plan file."));
+        if (!planFileInfo) { return PlanValidationOutcome.failed(null, new Error("Cannot open or parse plan file.")); }
 
         return this.validatePlanAndReportDiagnostics(planFileInfo, true, _ => { }, _ => { });
     }
@@ -77,47 +74,47 @@ export class PlanValidator {
         let epsilon = this.plannerConfiguration.getEpsilonTimeStep();
         let validatePath = this.plannerConfiguration.getValidatorPath();
 
-        let problemFileInfo: ProblemInfo;
+        let context: DomainAndProblem = null;
 
-        let folder = this.pddlWorkspace.getFolderOf(planInfo);
-        folder.files.forEach((value: FileInfo) => {
-            if (value instanceof ProblemInfo) {
-                let problemInfo = <ProblemInfo>value;
-                if (problemInfo.name.toLowerCase() == planInfo.problemName.toLowerCase()) {
-                    problemFileInfo = value;
-                }
-            }
-        });
-
-        if (!problemFileInfo) {
-            let outcome = PlanValidationOutcome.failed(planInfo, new Error(`No problem file with name '(problem ${planInfo.problemName}') and located in the same folder as the plan is not open in the editor.`));
+        try {
+            context = getDomainAndProblemForPlan(planInfo, this.pddlWorkspace);
+        } catch (err) {
+            let outcome = PlanValidationOutcome.failed(planInfo, err);
             onSuccess(outcome.getDiagnostics());
             return outcome;
         }
 
-        let domainFileInfo = this.pddlWorkspace.getDomainFileFor(problemFileInfo);
+        // are the actions in the plan declared in the domain?
+        let actionNameDiagnostics = this.validateActionNames(context.domain, context.problem, planInfo);
+        if (actionNameDiagnostics.length) {
+            let errorOutcome = PlanValidationOutcome.failedWithDiagnostics(planInfo, actionNameDiagnostics);
+            onSuccess(errorOutcome.getDiagnostics());
+            return errorOutcome;
+        }
 
-        if (!domainFileInfo) {
-            let outcome = PlanValidationOutcome.failed(planInfo, new Error(`No domain file corresponding to problem '${problemFileInfo.name}' and located in the same folder is open in the editor.`));
-            onSuccess(outcome.getDiagnostics());
-            return outcome;
+        // are the actions start times monotonically increasing?
+        let actionTimeDiagnostics = this.validateActionTimes(planInfo);
+        if (actionTimeDiagnostics.length) {
+            let errorOutcome = PlanValidationOutcome.failedWithDiagnostics(planInfo, actionTimeDiagnostics);
+            onSuccess(errorOutcome.getDiagnostics());
+            return errorOutcome;
         }
 
         // copy editor content to temp files to avoid using out-of-date content on disk
-        let domainFile = Util.toPddlFile('domain', domainFileInfo.text);
-        let problemFile = Util.toPddlFile('problem', problemFileInfo.text);
-        let planFile = Util.toPddlFile('plan', planInfo.text);
+        let domainFilePath = await Util.toPddlFile('domain', context.domain.getText());
+        let problemFilePath = await Util.toPddlFile('problem', context.problem.getText());
+        let planFilePath = await Util.toPddlFile('plan', planInfo.getText());
 
-        let args = ['-t', epsilon.toString(), '-v', domainFile, problemFile, planFile];
+        let args = ['-t', epsilon.toString(), '-v', domainFilePath, problemFilePath, planFilePath];
         let child = process.spawnSync(validatePath, args, { cwd: dirname(Uri.parse(planInfo.fileUri).fsPath) });
 
-        if (showOutput) this.output.appendLine(validatePath + ' ' + args.join(' '));
+        if (showOutput) { this.output.appendLine(validatePath + ' ' + args.join(' ')); }
 
         let output = child.stdout.toString();
 
-        if (showOutput) this.output.appendLine(output);
+        if (showOutput) { this.output.appendLine(output); }
 
-        if (showOutput && child.stderr) {
+        if (showOutput && child.stderr && child.stderr.length) {
             this.output.append('Error:');
             this.output.appendLine(child.stderr.toString());
         }
@@ -125,7 +122,9 @@ export class PlanValidator {
         let outcome = this.analyzeOutput(planInfo, child.error, output);
 
         if (child.error) {
-            if (showOutput) this.output.appendLine(`Error: name=${child.error.name}, message=${child.error.message}`);
+            if (showOutput) {
+                this.output.appendLine(`Error: name=${child.error.name}, message=${child.error.message}`);
+            }
             onError(child.error.name);
         }
         else {
@@ -169,6 +168,40 @@ export class PlanValidator {
 
         return PlanValidationOutcome.unknown(planInfo);
     }
+
+    /**
+     * Validate that plan steps match domain actions
+     * @param domain domain file
+     * @param problem problem file
+     * @param plan plan
+     */
+    validateActionNames(domain: DomainInfo, problem: ProblemInfo, plan: PlanInfo): Diagnostic[] {
+        return plan.getSteps()
+            .filter(step => !this.isDomainAction(domain, problem, step))
+            .map(step => new Diagnostic(createRangeFromLine(step.lineIndex), `Action '${step.actionName}' not known by the domain ${domain.name}`, DiagnosticSeverity.Error));
+    }
+
+    /**
+     * Validate that plan step times are monotonically increasing
+     * @param domain domain file
+     * @param problem problem file
+     * @param plan plan
+     */
+    validateActionTimes(plan: PlanInfo): Diagnostic[] {
+        return plan.getSteps()
+            .slice(1)
+            .filter((step: PlanStep, index: number) => !this.isTimeMonotonicallyIncreasing(plan.getSteps()[index], step))
+            .map(step => new Diagnostic(createRangeFromLine(step.lineIndex), `Action '${step.actionName}' time ${step.getStartTime()} is before the preceding action time`, DiagnosticSeverity.Error));
+    }
+
+    private isDomainAction(domain: DomainInfo, problem: ProblemInfo, step: PlanStep): boolean {
+        problem;
+        return domain.actions.some(a => a.name.toLowerCase() === step.actionName.toLowerCase());
+    }
+
+    private isTimeMonotonicallyIncreasing(first: PlanStep, second: PlanStep): boolean {
+        return first.getStartTime() <= second.getStartTime();
+    }
 }
 
 class PlanValidationOutcome {
@@ -189,7 +222,7 @@ class PlanValidationOutcome {
     static goalNotAttained(planInfo: PlanInfo): PlanValidationOutcome {
         let errorLine = planInfo.getSteps().length > 0 ? planInfo.getSteps().slice(-1).pop().lineIndex + 1 : 0;
         let error = "Plan does not reach the goal.";
-        let diagnostics = [createDiagnostic(errorLine, error, DiagnosticSeverity.Warning)];
+        let diagnostics = [createDiagnostic(errorLine, 0, error, DiagnosticSeverity.Warning)];
         return new PlanValidationOutcome(planInfo, diagnostics, error);
     }
 
@@ -198,7 +231,7 @@ class PlanValidationOutcome {
      */
     static invalidPlanDescription(planInfo: PlanInfo): PlanValidationOutcome {
         let error = "Invalid plan description.";
-        let diagnostics = [createDiagnostic(0, error, DiagnosticSeverity.Error)];
+        let diagnostics = [createDiagnostic(0, 0, error, DiagnosticSeverity.Error)];
         return new PlanValidationOutcome(planInfo, diagnostics, error);
     }
 
@@ -211,15 +244,21 @@ class PlanValidationOutcome {
 
     static failed(planInfo: PlanInfo, error: Error): PlanValidationOutcome {
         let message = "Validate tool failed. " + error.message;
-        let diagnostics = [createDiagnostic(0, message, DiagnosticSeverity.Error)];
+        let diagnostics = [createDiagnostic(0, 0, message, DiagnosticSeverity.Error)];
         return new PlanValidationOutcome(planInfo, diagnostics, message);
+    }
+
+    static failedWithDiagnostics(planInfo: PlanInfo, diagnostics: Diagnostic[]): PlanValidationOutcome {
+        return new PlanValidationOutcome(planInfo, diagnostics);
     }
 
     static failedAtTime(planInfo: PlanInfo, timeStamp: number, repairHints: string[]): PlanValidationOutcome {
         let errorLine = 0;
         let stepAtTimeStamp =
-            planInfo.getSteps().find(step => PlanStep.equalsWithin(step.getStartTime(), timeStamp, 1e-4));
-        if (stepAtTimeStamp) errorLine = stepAtTimeStamp.lineIndex;
+            planInfo.getSteps()
+                .find(step => PlanStep.equalsWithin(step.getStartTime(), timeStamp, 1e-4));
+
+        if (stepAtTimeStamp) { errorLine = stepAtTimeStamp.lineIndex; }
 
         let diagnostics = repairHints.map(hint => new Diagnostic(createRangeFromLine(errorLine), hint, DiagnosticSeverity.Warning));
         return new PlanValidationOutcome(planInfo, diagnostics);
@@ -231,10 +270,14 @@ class PlanValidationOutcome {
     }
 }
 
-function createRangeFromLine(errorLine: number): Range {
-    return new Range(errorLine, 0, errorLine, 100);
+export function createRangeFromLine(errorLine: number, errorColumn: number = 0): Range {
+    return new Range(errorLine, errorColumn, errorLine, errorColumn + 100);
 }
 
-function createDiagnostic(errorLine: number, error: string, severity: DiagnosticSeverity): Diagnostic {
-    return new Diagnostic(createRangeFromLine(errorLine), error, severity);
+export function createDiagnostic(errorLine: number, errorColumn: number, error: string, severity: DiagnosticSeverity): Diagnostic {
+    return new Diagnostic(createRangeFromLine(errorLine, errorColumn), error, severity);
+}
+
+export function createDiagnosticFromParsingProblem(problem: ParsingProblem, severity: DiagnosticSeverity): Diagnostic {
+    return new Diagnostic(createRangeFromLine(problem.lineIndex, problem.columnIndex), problem.problem, severity);
 }

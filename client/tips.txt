@@ -1,5 +1,5 @@
 For the PDDL extension to work, place domain and problem files to the same folder and ensure `(:domain ...)` name in the problem file matches the  `(define (domain ...)` name in the domain file.
-Did you know that switching on `File > Auto Save` saves you from constant file saving?
+
 Did you know you can configure your own PDDL parser? Press `Ctrl + Shift + P` and type `PDDL: Configure Parser` and follow the instructions.
 Did you know you can configure your own the planner? Press `Ctrl + Shift + P` and type `PDDL: Configure Planner` and follow the instructions.
 Did you know that `Ctrl + /` comments out the current line? Press it again to un-comment it.

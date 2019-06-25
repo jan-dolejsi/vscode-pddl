@@ -10,14 +10,29 @@ import { PreProcessor, CommandPreProcessor, OutputAdaptor, NunjucksPreProcessor,
 import { PddlExtensionContext } from "./PddlExtensionContext";
 
 export class ProblemParserPreProcessor {
-    problemCompletePattern = /^;;\s*!pre-parsing:\s*{\s*type:\s*"(command|nunjucks|jinja2)"\s*,\s*(command:\s*"([\w:\-/\\\. ]+)"\s*(,\s*args:\s*\[([^\]]*)\])?|data:\s*"([\w:\-/\\\. ]+)")\s*}/gm;
+    problemCompletePattern = /^;;\s*!pre-parsing:\s*{\s*type:\s*"(command|nunjucks|jinja2|python)"\s*,\s*(command:\s*"([\w:\-/\\\. ]+)"\s*(,\s*args:\s*\[([^\]]*)\])?|data:\s*"([\w:\-/\\\. ]+)")\s*}/gm;
 
     constructor(private context: PddlExtensionContext) {
 
     }
 
-    process(templatedProblem: string, workingDirectory: string): string {
+    async process(templatedProblem: string, workingDirectory: string): Promise<string> {
 
+        let preProcessor: PreProcessor = this.createPreProcessor(templatedProblem);
+
+        if (preProcessor) {
+            let transformed: string = null;
+
+            transformed = await preProcessor.transform(templatedProblem, workingDirectory, new ConsoleOutputAdaptor());
+            console.log("Pre-processed successfully using " + preProcessor.toString());
+            return transformed ? transformed : templatedProblem;
+        }
+        else {
+            return templatedProblem;
+        }
+    }
+
+    createPreProcessor(templatedProblem: string): PreProcessor {
         let preProcessor: PreProcessor = null;
 
         this.problemCompletePattern.lastIndex = 0;
@@ -31,8 +46,7 @@ export class ProblemParserPreProcessor {
                 case "python":
                     try {
                         let args1 = this.parseArgs(match[5]);
-                        // todo: here we ignore the python.pythonPath configuration and just one the %path%
-                        preProcessor = new PythonPreProcessor("python", match[3], args1, match[0]);
+                        preProcessor = new PythonPreProcessor(this.context.pythonPath(), match[3], args1, match[0]);
                     } catch (err) {
                         console.log(err);
                     }
@@ -45,10 +59,9 @@ export class ProblemParserPreProcessor {
                     }
                     break;
                 case "jinja2":
-                    if (!this.context) break;
+                    if (!this.context) { break; }
                     try {
-                        // todo: here we ignore the python.pythonPath configuration and just one the %path%
-                        preProcessor = new Jinja2PreProcessor("python", this.context.extensionPath, match[6], match[0]);
+                        preProcessor = new Jinja2PreProcessor(this.context.pythonPath(), this.context.extensionPath, match[6], match[0]);
                     } catch (err) {
                         console.log(err);
                     }
@@ -58,16 +71,7 @@ export class ProblemParserPreProcessor {
             }
         }
 
-        if (preProcessor) {
-            let transformed: string = null;
-
-            transformed = preProcessor.transformSync(templatedProblem, workingDirectory, new ConsoleOutputAdaptor());
-            console.log("Pre-processed successfully using " + preProcessor.toString());
-            return transformed ? transformed : templatedProblem;
-        }
-        else {
-            return templatedProblem;
-        }
+        return preProcessor;
     }
 
     parseArgs(argsText: string): string[] {
@@ -83,5 +87,3 @@ class ConsoleOutputAdaptor implements OutputAdaptor {
         // do nothing
     }
 }
-
-
