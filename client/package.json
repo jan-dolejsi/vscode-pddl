@@ -487,11 +487,6 @@
           "type": "string",
           "description": "Pattern to match onto the parser output to extract the parsing problems. The syntax must be: '/regex/flags/order'. See more info at https://github.com/jan-dolejsi/vscode-pddl/wiki/Configuring-the-PDDL-parser"
         },
-        "pddlParser.pddlParserService": {
-          "scope": "resource",
-          "type": "string",
-          "description": "Obsolete: please remove configuration values manually."
-        },
         "pddlParser.serviceAuthenticationEnabled": {
           "scope": "resource",
           "type": "boolean",
@@ -701,6 +696,12 @@
           "default": 0.001,
           "title": "Default epsilon time step used by your planner.",
           "description": "Default epsilon time step used by your planner. This is used when interpreting/visualizing the plan. "
+        },
+        "pddl.validatorVersion": {
+          "type": "number",
+          "default": 15,
+          "title": "VAL build number",
+          "description": "Stable VAL build number to download or update to."
         },
         "pddl.valueSeqPath": {
           "type": "string",

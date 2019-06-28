@@ -99,9 +99,9 @@ export class ValidatorService extends Validator {
             onSuccess.apply(this, [diagnostics]);
         });
     }
-    
+
     toRange(position: any): Range {
-        if (position == null) return Validator.createRange(0, 0);
+        if (position === null || position === undefined) { return Validator.createRange(0, 0); }
 
         let line = parseInt(position.line) - 1;
         let character = parseInt(position.character) - 1;

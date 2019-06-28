@@ -25,8 +25,9 @@ function updateConfiguration(message) {
     document.getElementById('validator').value = message.validator;
     setStyleDisplay('installIconsAlert', message.showInstallIconsAlert, "list-item");
     setStyleDisplay('enableIconsAlert', message.showEnableIconsAlert, "list-item");
-    setStyleDisplay('enableAutoSaveAlert', message.autoSave == "off", "list-item")
-    setStyleDisplay('downloadValAlert', message.downloadValAlert, "list-item")
+    setStyleDisplay('enableAutoSaveAlert', message.autoSave == "off", "list-item");
+    setStyleDisplay('downloadValAlert', message.downloadValAlert, "list-item");
+    setStyleDisplay('updateValAlert', message.updateValAlert, "list-item");
     setStyleDisplay('alertList', hasAnyChildrenToDisplay('alertList'), "block");
     updatePlannerOutputTarget(message.plannerOutputTarget);
     updateShowOverviewChanged(message.shouldShow);
@@ -155,6 +156,8 @@ function populateWithTestData() {
             shouldShow: true,
             showInstallIconsAlert: true,
             showEnableIconsAlert: true,
+            downloadValAlert: true,
+            updateValAlert: true
         });
     }
 }

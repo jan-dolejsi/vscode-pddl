@@ -56,7 +56,7 @@ export class Diagnostics extends Disposable {
     }
 
     scheduleValidation(): void {
-        this.cancelScheduledValidation()
+        this.cancelScheduledValidation();
         let timerDelayInSeconds = this.pddlParserSettings.delayInSecondsBeforeParsing || this.defaultTimerDelayInSeconds;
         this.timeout = setTimeout(() => this.validateAllDirty(), timerDelayInSeconds * 1000);
     }
@@ -67,13 +67,13 @@ export class Diagnostics extends Disposable {
 
     validateAllDirty(): void {
         // find all dirty unknown files
-        let dirtyUnknowns = this.pddlWorkspace.getAllFilesIf(fileInfo => fileInfo.isUnknownPddl() && fileInfo.getStatus() == FileStatus.Parsed);
+        let dirtyUnknowns = this.pddlWorkspace.getAllFilesIf(fileInfo => fileInfo.isUnknownPddl() && fileInfo.getStatus() === FileStatus.Parsed);
 
         // validate unknown files (those where the header does not parse)
         dirtyUnknowns.forEach(file => this.validateUnknownFile(file));
 
         // find all dirty domains
-        let dirtyDomains = this.pddlWorkspace.getAllFilesIf(fileInfo => fileInfo.isDomain() && fileInfo.getStatus() == FileStatus.Parsed);
+        let dirtyDomains = this.pddlWorkspace.getAllFilesIf(fileInfo => fileInfo.isDomain() && fileInfo.getStatus() === FileStatus.Parsed);
 
         if (dirtyDomains.length > 0) {
             let firstDirtyDomain = <DomainInfo>dirtyDomains[0];
@@ -84,7 +84,7 @@ export class Diagnostics extends Disposable {
         }
 
         // find all dirty problems
-        let dirtyProblems = this.pddlWorkspace.getAllFilesIf(fileInfo => fileInfo.isProblem() && fileInfo.getStatus() == FileStatus.Parsed);
+        let dirtyProblems = this.pddlWorkspace.getAllFilesIf(fileInfo => fileInfo.isProblem() && fileInfo.getStatus() === FileStatus.Parsed);
 
         if (dirtyProblems.length > 0) {
             let firstDirtyProblem = <ProblemInfo>dirtyProblems[0];
@@ -96,7 +96,7 @@ export class Diagnostics extends Disposable {
         }
 
         // find all dirty plans
-        let dirtyPlans = this.pddlWorkspace.getAllFilesIf(fileInfo => fileInfo.isPlan() && fileInfo.getStatus() == FileStatus.Parsed);
+        let dirtyPlans = this.pddlWorkspace.getAllFilesIf(fileInfo => fileInfo.isPlan() && fileInfo.getStatus() === FileStatus.Parsed);
 
         if (dirtyPlans.length > 0) {
             let firstDirtyPlan = <PlanInfo>dirtyPlans[0];
@@ -108,7 +108,7 @@ export class Diagnostics extends Disposable {
         }
 
         // find all dirty happenings
-        let dirtyHappenings = this.pddlWorkspace.getAllFilesIf(fileInfo => fileInfo.isHappenings() && fileInfo.getStatus() == FileStatus.Parsed);
+        let dirtyHappenings = this.pddlWorkspace.getAllFilesIf(fileInfo => fileInfo.isHappenings() && fileInfo.getStatus() === FileStatus.Parsed);
 
         if (dirtyHappenings.length > 0) {
             let firstDirtyHappenings = <HappeningsInfo>dirtyHappenings[0];
@@ -199,7 +199,7 @@ export class Diagnostics extends Disposable {
             parsingProblems.set(fileInfo.fileUri, toDiagnostics(fileInfo.getParsingProblems()));
             this.sendDiagnostics(parsingProblems);
             return;
-        };
+        }
 
         if (fileInfo.isDomain()) {
             let domainInfo = <DomainInfo>fileInfo;
