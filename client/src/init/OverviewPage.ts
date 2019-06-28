@@ -115,7 +115,7 @@ export class OverviewPage {
                 }
                 break;
             case 'enableIcons':
-                    await workspace.getConfiguration().update("workbench.iconTheme", "vscode-icons", ConfigurationTarget.Global);
+                await workspace.getConfiguration().update("workbench.iconTheme", "vscode-icons", ConfigurationTarget.Global);
                 break;
             default:
                 console.warn('Unexpected command: ' + message.command);
@@ -180,7 +180,7 @@ export class OverviewPage {
             autoSave: workspace.getConfiguration().get<String>("files.autoSave"),
             showInstallIconsAlert: !this.iconsInstalled,
             showEnableIconsAlert: this.iconsInstalled && workspace.getConfiguration().get<String>("workbench.iconTheme") !== "vscode-icons",
-            downloadValAlert: !this.pddlConfiguration.getValidatorPath() || !this.val.isInstalled(),
+            downloadValAlert: !this.pddlConfiguration.getValidatorPath() || !(await this.val.isInstalled()),
             updateValAlert: await this.val.isNewValVersionAvailable()
         };
         this.webViewPanel.webview.postMessage(message);
