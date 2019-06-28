@@ -26,37 +26,37 @@ export class ValidatorService extends Validator {
         if(this.useAuthentication) {
             requestHeader = {
                 "Authorization": "Bearer " + this.authentication.sToken
-            }
+            };
         }
 
         let requestBody = {
             "domain": domainInfo.getText(),
             "problems": problemFiles.map(pf => pf.getText())
-        }
+        };
 
         request.post({ url: this.path, headers: requestHeader, body: requestBody, json: true }, (err, httpResponse, responseBody) => {
 
-            if (err != null) {
+            if (err) {
                 onError.apply(this, [err.message]);
                 return;
             }
 
             if(this.useAuthentication) {
                 if (httpResponse) {
-                    if (httpResponse.statusCode == 400) {
-                        let message = "Authentication failed. Please login or update tokens."
+                    if (httpResponse.statusCode === 400) {
+                        let message = "Authentication failed. Please login or update tokens.";
                         onError.apply(this, [message]);
                         return;
                     }
-                    else if (httpResponse.statusCode == 401) {
-                        let message = "Invalid token. Please update tokens."
+                    else if (httpResponse.statusCode === 401) {
+                        let message = "Invalid token. Please update tokens.";
                         onError.apply(this, [message]);
                         return;
                     }
                 }
             }
 
-            if (httpResponse && httpResponse.statusCode != 200) {
+            if (httpResponse && httpResponse.statusCode !== 200) {
                 let notificationMessage = `PDDL Language Parser returned code ${httpResponse.statusCode} ${httpResponse.statusMessage}`;
                 //let notificationType = MessageType.Warning;
                 onError.apply(this, [notificationMessage]);
@@ -76,7 +76,7 @@ export class ValidatorService extends Validator {
                 let location: string = messages[i].location;
 
                 let fileUri: string = null;
-                if (location == "DOMAIN") {
+                if (location === "DOMAIN") {
                     fileUri = domainInfo.fileUri;
                 }
                 else if (location.startsWith("PROBLEM")) {
