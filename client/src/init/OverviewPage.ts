@@ -22,16 +22,14 @@ export class OverviewPage {
 
     private webViewPanel: WebviewPanel;
     private iconsInstalled: boolean;
-    private val: Val;
 
     private readonly ICONS_EXTENSION_NAME = "vscode-icons-team.vscode-icons";
 
-    constructor(private context: ExtensionContext, private pddlConfiguration: PddlConfiguration) {
+    constructor(private context: ExtensionContext, private pddlConfiguration: PddlConfiguration, private val: Val) {
         commands.registerCommand("pddl.showOverview", () => this.showWelcomePage(true));
         workspace.onDidChangeConfiguration(_ => this.updatePageConfiguration(), undefined, this.context.subscriptions);
         extensions.onDidChange(() => this.updateIconsAlerts(), this.context.subscriptions);
         this.updateIconsAlerts();
-        this.val = new Val(context);
     }
 
     async showWelcomePage(showAnyway: boolean): Promise<void> {

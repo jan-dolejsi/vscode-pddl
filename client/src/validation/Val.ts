@@ -228,10 +228,10 @@ export class Val {
     private async updateConfigurationPaths(newValVersion: ValVersion, oldValVersion: ValVersion): Promise<void> {
         // let configuration = workspace.getConfiguration("pddl");
         let fileToConfig = new Map<string, string>();
+        fileToConfig.set("Parser", PARSER_EXECUTABLE_OR_SERVICE);
         fileToConfig.set("Validate", CONF_PDDL + '.' + VALIDATION_PATH);
         fileToConfig.set("ValueSeq", CONF_PDDL + '.' + VALUE_SEQ_PATH);
         fileToConfig.set("ValStep", CONF_PDDL + '.' + VAL_STEP_PATH);
-        fileToConfig.set("Parser", PARSER_EXECUTABLE_OR_SERVICE);
 
         for (const toolName of fileToConfig.keys()) {
             let oldToolPath = findValToolPath(oldValVersion, toolName);
@@ -255,12 +255,19 @@ export class Val {
             console.log("configuration not declared: " + configKey);
             return;
         }
-        let oldGlobalValue = oldValue.globalValue;
+        let configuredGlobalValue: string = <string>oldValue.globalValue;
+        let normConfiguredGlobalValue = this.normalizePathIfValid(configuredGlobalValue);
+
+        let normOldToolPath = this.normalizePathIfValid(oldToolPath);
 
         // was the oldValue empty, or did it match the oldToolPath? Overwrite it!
-        if (oldGlobalValue === null || oldGlobalValue === undefined || oldGlobalValue === oldToolPath) {
+        if (configuredGlobalValue === null || configuredGlobalValue === undefined || normConfiguredGlobalValue === normOldToolPath) {
             await workspace.getConfiguration().update(configKey, newToolPath, ConfigurationTarget.Global);
         }
+    }
+
+    private normalizePathIfValid(pathToNormalize: string): string {
+        return pathToNormalize ? path.normalize(pathToNormalize) : pathToNormalize;
     }
 
     async isNewValVersionAvailable(): Promise<boolean> {

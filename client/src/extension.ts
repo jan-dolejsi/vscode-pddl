@@ -53,15 +53,18 @@ export async function activate(context: ExtensionContext) {
 		await instrumentOperation("activation", activateWithTelemetry)(context);
 	}
 	catch (ex) {
-		window.showErrorMessage("There was an error starting the PDDL extension: " + ex);
+		// sadly, the next line never gets triggered, even if the activateWithTelemetry fails
+		window.showErrorMessage("There was an error starting the PDDL extension: " + ex.message);
 	}
 }
 
 function activateWithTelemetry(_operationId: string, context: ExtensionContext) {
 	let pddlConfiguration = new PddlConfiguration(context);
 
+	let val = new Val(context);
+
 	// run start-up actions
-	new StartUp(context, pddlConfiguration).atStartUp();
+	new StartUp(context, pddlConfiguration, val).atStartUp();
 
 	let pddlContext = createPddlExtensionContext(context);
 
@@ -178,9 +181,6 @@ function activateWithTelemetry(_operationId: string, context: ExtensionContext) 
 	new Debugging(context, pddlWorkspace, pddlConfiguration);
 
 	context.subscriptions.push(new PlanComparer(pddlWorkspace, pddlConfiguration));
-
-	// tslint:disable-next-line:no-unused-expression
-	new Val(context);
 
 	subscribeToWorkspace(pddlWorkspace, pddlConfiguration, context);
 
