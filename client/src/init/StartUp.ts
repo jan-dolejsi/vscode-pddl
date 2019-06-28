@@ -14,6 +14,7 @@ import {diff} from 'semver';
 import { OverviewPage, SHOULD_SHOW_OVERVIEW_PAGE } from './OverviewPage';
 import * as afs from '../../../common/src/asyncfs';
 import { Val } from '../validation/Val';
+import { ValDownloadReminder } from '../validation/ValDownloadReminder';
 
 enum TipResponse { Ok, Later, Next }
 
@@ -35,6 +36,8 @@ export class StartUp {
         this.showTips();
         this.suggestFolderIsOpen();
         this.suggestAutoSave();
+
+        new ValDownloadReminder(this.context, this.val).suggestValDownloadConfigurationIfAbsent();
     }
 
     NEXT_TIP_TO_SHOW = 'nextTipToShow';

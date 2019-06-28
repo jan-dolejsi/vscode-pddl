@@ -699,7 +699,7 @@
         },
         "pddl.validatorVersion": {
           "type": "number",
-          "default": 15,
+          "default": 16,
           "title": "VAL build number",
           "description": "Stable VAL build number to download or update to."
         },

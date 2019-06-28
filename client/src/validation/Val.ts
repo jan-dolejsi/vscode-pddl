@@ -40,7 +40,7 @@ export class Val {
         return answer === download;
     }
 
-    private async downloadConfigureAndCleanUp(): Promise<void> {
+    async downloadConfigureAndCleanUp(): Promise<void> {
         let wasValInstalled = await this.isInstalled();
         let previousVersion: ValVersion = wasValInstalled ? await this.readVersion() : null;
         let newVersion: ValVersion;
@@ -104,9 +104,7 @@ export class Val {
         let valToolFileNames = await this.decompress(path.join(this.valPath, valZipFileName));
 
         // clean-up and delete the drop content
-        dropEntries.forEach(async (zipEntry) => {
-            await afs.unlink(path.join(this.valPath, zipEntry));
-        });
+        await this.deleteAll(dropEntries.map(file => path.join(this.valPath, file)));
 
         // delete the drop zip
         await afs.unlink(zipPath);
@@ -174,7 +172,7 @@ export class Val {
 
     private async readVersion(): Promise<ValVersion> {
         try {
-            let versionAsString = await afs.readFile(this.valVersionPath, { encoding: 'utf8'});
+            let versionAsString = await afs.readFile(this.valVersionPath, { encoding: 'utf8' });
             var versionAsJson = JSON.parse(versionAsString);
             return versionAsJson;
         }

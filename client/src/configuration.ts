@@ -48,12 +48,13 @@ export class PddlConfiguration {
         if (this.setupParserLater || this.context.globalState.get(this.NEVER_SETUP_PARSER)) { return; }
 
         let setupParserNow: vscode.MessageItem = { title: "Setup now..." };
+        let downloadVal: vscode.MessageItem = { title: "Download VAL now..." };
         let setupParserNever: vscode.MessageItem = { title: "Never" };
         let setupParserLater: vscode.MessageItem = { title: "Later", isCloseAffordance: true };
-        let options: vscode.MessageItem[] = [setupParserNow, setupParserLater];
-        if (showNever) { options.splice(2, 0, setupParserNever); }
+        let options: vscode.MessageItem[] = [setupParserNow, downloadVal, setupParserLater];
+        if (showNever) { options.splice(options.length, 0, setupParserNever); }
         let choice = await vscode.window.showInformationMessage(
-            'Setup a [PDDL parser](https://github.com/jan-dolejsi/vscode-pddl/wiki/Configuring-the-PDDL-parser "Read more about PDDL parsers") in order to enable detailed syntactic analysis.',
+            'Setup a [PDDL parser](https://github.com/jan-dolejsi/vscode-pddl/wiki/Configuring-the-PDDL-parser "Read more about PDDL parsers") or download [VAL Tools](https://github.com/KCL-Planning/VAL) in order to enable detailed syntactic analysis.',
             ...options);
 
         switch (choice) {
@@ -62,12 +63,17 @@ export class PddlConfiguration {
                 // if the above method call updates the configuration, the parser will be notified
                 break;
 
+            case downloadVal:
+                vscode.commands.executeCommand("pddl.downloadVal");
+                break;
+
             case setupParserLater:
                 this.setupParserLater = true;// will retry in the next session
                 break;
 
             case setupParserNever:
                 this.context.globalState.update(this.NEVER_SETUP_PARSER, true);
+                break;
 
             default:
                 break;
