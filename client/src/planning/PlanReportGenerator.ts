@@ -18,7 +18,7 @@ import { Plan, HelpfulAction } from '../../../common/src/Plan';
 import { Util } from '../../../common/src/util';
 import { PlanFunctionEvaluator } from './PlanFunctionEvaluator';
 import { PlanReportSettings } from './PlanReportSettings';
-import { VAL_STEP_PATH, CONF_PDDL, PDDL_PLANNER, VALUE_SEQ_PATH } from '../configuration';
+import { VAL_STEP_PATH, CONF_PDDL, VALUE_SEQ_PATH } from '../configuration';
 import * as afs from '../../../common/src/asyncfs';
 import { ValStepError, ValStep } from '../debugger/ValStep';
 const DIGITS = 4;
@@ -152,7 +152,7 @@ ${objectsHtml}
     </div>`;
 
         let valStepPath = workspace.getConfiguration(CONF_PDDL).get<string>(VAL_STEP_PATH);
-        let valueSeqPath = workspace.getConfiguration(PDDL_PLANNER).get<string>(VALUE_SEQ_PATH);
+        let valueSeqPath = workspace.getConfiguration(CONF_PDDL).get<string>(VALUE_SEQ_PATH);
 
         let lineCharts = `    <div class="lineChart" plan="${planIndex}" style="display: ${styleDisplay};margin-top: 20px;">\n`;
         let lineChartScripts = '';
@@ -177,6 +177,9 @@ ${objectsHtml}
                     console.log(err);
                     this.handleValStepError(err);
                 }
+            }
+            else {
+                lineCharts += `<a href="command:pddl.downloadVal" title="Click to initiate download. You will be able to see what is being downloaded and from where...">Download plan validation tools (a.k.a. VAL) to see line plots of function values.</a>`;
             }
         }
         lineCharts += `\n    </div>`;

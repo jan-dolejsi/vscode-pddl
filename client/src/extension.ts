@@ -30,6 +30,7 @@ import { initialize, instrumentOperation } from "vscode-extension-telemetry-wrap
 import { KEY } from './TelemetryInstrumentation';
 import { SearchDebugger } from './searchDebugger/SearchDebugger';
 import { PlanningDomainsSessions } from './session/PlanningDomainsSessions';
+import { Val } from './validation/Val';
 
 const PDDL_CONFIGURE_PARSER = 'pddl.configureParser';
 const PDDL_LOGIN_PARSER_SERVICE = 'pddl.loginParserService';
@@ -52,15 +53,18 @@ export async function activate(context: ExtensionContext) {
 		await instrumentOperation("activation", activateWithTelemetry)(context);
 	}
 	catch (ex) {
-		window.showErrorMessage("There was an error starting the PDDL extension: " + ex);
+		// sadly, the next line never gets triggered, even if the activateWithTelemetry fails
+		window.showErrorMessage("There was an error starting the PDDL extension: " + ex.message);
 	}
 }
 
 function activateWithTelemetry(_operationId: string, context: ExtensionContext) {
 	let pddlConfiguration = new PddlConfiguration(context);
 
+	let val = new Val(context);
+
 	// run start-up actions
-	new StartUp(context, pddlConfiguration).atStartUp();
+	new StartUp(context, pddlConfiguration, val).atStartUp();
 
 	let pddlContext = createPddlExtensionContext(context);
 

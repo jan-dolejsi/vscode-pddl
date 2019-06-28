@@ -36,6 +36,20 @@
             <br />It is also recommended to go run the <i>Git: Initialize Repository</i> command to enjoy safety of
             version control and never miss a working version.
         </li>
+        <li id="downloadValAlert" class="alert">Download the latest
+            <a href="https://dev.azure.com/schlumberger/ai-planning-validation">build</a> of
+            <a href="https://github.com/KCL-Planning/VAL">VAL tools</a> to get a PDDL parser, to be able to validate and
+            evaluate plans.
+            <a href="command:pddl.downloadVal" class="button" style="width: 100px; text-align:center"
+                title="Click to initiate download. You will be able to see what is being downloaded and from where...">Download</a>
+            plan validation tools
+        </li>
+        <li id="updateValAlert" class="alert">New version of
+            <a href="https://github.com/KCL-Planning/VAL">VAL tools</a> is available.
+            Update to the latest version.
+            <a href="command:pddl.downloadVal" class="button" style="width: 100px; text-align:center"
+            title="Click to initiate download..">Update VAL</a>
+        </li>
     </ul>
 
     <table style="width: 100%">
@@ -81,8 +95,10 @@
                 <input type="text" id="validator" class="config" readonly />
                 <a href="command:pddl.configureValidate" class="button" title="Configure..."><img src="gear.svg"
                         class="configIcon" /></a><br />
-                        Clone and compile <a href="https://github.com/KCL-Planning/VAL">VAL from GitHub</a><br/>
-
+                        Clone and compile <a href="https://github.com/KCL-Planning/VAL">VAL from GitHub</a> or...<br/>
+                        <a href="command:pddl.downloadVal"
+                    title="Click to initiate download. You will be able to see what is being downloaded and from where...">Download</a>
+                plan validation tools
             </td>
             <td style="white-space: nowrap">
                 <h2>Resources</h2>

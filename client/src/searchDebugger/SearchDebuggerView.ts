@@ -173,7 +173,7 @@ export class SearchDebuggerView {
         try {
             this.showStatePlan(state.id);
         } catch (ex) {
-            window.showErrorMessage(ex);
+            window.showErrorMessage(ex.message);
         }
     }
 
