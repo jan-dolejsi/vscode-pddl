@@ -13,6 +13,8 @@ import { PddlConfiguration } from '../configuration';
 import {diff} from 'semver';
 import { OverviewPage, SHOULD_SHOW_OVERVIEW_PAGE } from './OverviewPage';
 import * as afs from '../../../common/src/asyncfs';
+import { Val } from '../validation/Val';
+import { ValDownloadReminder } from '../validation/ValDownloadReminder';
 
 enum TipResponse { Ok, Later, Next }
 
@@ -24,8 +26,8 @@ export class StartUp {
 
     overviewPage: OverviewPage;
 
-    constructor(private context: ExtensionContext, private pddlConfiguration: PddlConfiguration) {
-        this.overviewPage = new OverviewPage(context, this.pddlConfiguration);
+    constructor(private context: ExtensionContext, private pddlConfiguration: PddlConfiguration, private val: Val) {
+        this.overviewPage = new OverviewPage(context, this.pddlConfiguration, this.val);
     }
 
     atStartUp(): void {
@@ -34,6 +36,8 @@ export class StartUp {
         this.showTips();
         this.suggestFolderIsOpen();
         this.suggestAutoSave();
+
+        new ValDownloadReminder(this.context, this.val).suggestValDownloadConfigurationIfAbsent();
     }
 
     NEXT_TIP_TO_SHOW = 'nextTipToShow';

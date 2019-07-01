@@ -65,7 +65,7 @@ export class ValidatorExecutable extends Validator {
             let match: RegExpExecArray;
             while (match = pattern.regEx.exec(output)) {
 
-                let pathUriTuple = pathToUriMap.find(tuple => tuple[0] == pattern.getFilePath(match))
+                let pathUriTuple = pathToUriMap.find(tuple => tuple[0] === pattern.getFilePath(match));
 
                 if (!pathUriTuple) { continue; } // this is not a file of interest
 
@@ -90,7 +90,7 @@ export class ValidatorExecutable extends Validator {
         let child = process.exec(command, (error, stdout, stderr) => {
             if (error && !child.killed) {
                 onError.apply(this, [error.message]);
-                console.log(stderr)
+                console.log(stderr);
             }
 
             onOutput.apply(this, [stdout]);
