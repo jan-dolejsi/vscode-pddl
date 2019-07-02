@@ -710,6 +710,11 @@
           "type": "string",
           "description": "Path of the 'valstep' executable."
         },
+        "pddl.formatter" : {
+          "type": "boolean",
+          "default": false,
+          "description": "Enable PDDL formatter (default is 'false'). Requires VS Code window reload."
+        },
         "pddlSearchDebugger.defaultPort": {
           "type": "integer",
           "description": "Search debugger static port. If not specified (or set to zero, the port is randomized for security reasons).",
