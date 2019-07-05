@@ -10,11 +10,10 @@ import { Plan } from '../../../common/src/Plan';
 import { PddlPlanParser } from '../../../common/src/PddlPlanParser';
 
 export abstract class Planner {
-    epsilon = 1e-3;
 
     planningProcessKilled: boolean;
 
-    constructor(public plannerPath: string, public plannerOptions: string) {
+    constructor(protected readonly plannerPath: string) {
 
     }
 

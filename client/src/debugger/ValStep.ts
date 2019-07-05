@@ -8,12 +8,12 @@ import * as process from 'child_process';
 import { EventEmitter } from 'events';
 
 import { Util } from '../../../common/src/util';
-import * as atmp from '../../../common/src/asynctmp';
 import * as afs from '../../../common/src/asyncfs';
 import * as path from 'path';
 import { TimedVariableValue, VariableValue, ProblemInfo, DomainInfo, Parser } from '../../../common/src/parser';
 import { Happening } from '../../../common/src/HappeningsInfo';
 import { HappeningsToValStep } from '../diagnostics/HappeningsToValStep';
+import { Uri } from 'vscode';
 
 /**
  * Wraps the Valstep executable.
@@ -85,7 +85,7 @@ export class ValStep extends EventEmitter {
 
                 try {
                     if (!child.stdin.write(valSteps)) {
-                        reject('Cannot post happenings to valstep');return;
+                        reject('Failed to post happenings to valstep'); return;
                     }
                     if (this.verbose) {
                         console.log("ValStep >>>" + valSteps);
@@ -95,7 +95,7 @@ export class ValStep extends EventEmitter {
                     if (this.verbose) {
                         console.log("ValStep input causing error: " + valSteps);
                     }
-                    reject('Cannot post happenings to valstep: ' + err);return;
+                    reject('Sending happenings to valstep caused error: ' + err); return;
                 }
             }
 
@@ -295,18 +295,24 @@ export class ValStep extends EventEmitter {
         return !this.initialValues.some(value2 => value1.sameValue(value2));
     }
 
-    static async storeError(err: ValStepError): Promise<string> {
-        let tempDir = await atmp.dir(0o644);
+    static async storeError(err: ValStepError, targetDirectory: Uri, valStepPath: string): Promise<string> {
+        let targetDir = targetDirectory.fsPath;
+        let caseDir = 'valstep-' + new Date().toISOString().split(':').join('-');
+        let casePath = path.join(targetDir, caseDir);
+        afs.mkdirIfDoesNotExist(casePath, 0o644);
+
         const domainFile = "domain.pddl";
         const problemFile = "problem.pddl";
         const inputFile = "happenings.valsteps";
-        await afs.writeFile(path.join(tempDir, domainFile), err.domain.getText(), {encoding: "utf-8"});
-        await afs.writeFile(path.join(tempDir, problemFile), err.problem.getText(), {encoding: "utf-8"});
-        await afs.writeFile(path.join(tempDir, inputFile), err.valStepInput, {encoding: "utf-8"});
+        await afs.writeFile(path.join(casePath, domainFile), err.domain.getText(), { encoding: "utf-8" });
+        await afs.writeFile(path.join(casePath, problemFile), err.problem.getText(), { encoding: "utf-8" });
+        await afs.writeFile(path.join(casePath, inputFile), err.valStepInput, { encoding: "utf-8" });
 
-        let command = `type ${inputFile} | valstep ${domainFile} ${problemFile}`;
-        await afs.writeFile(path.join(tempDir, "run.cmd"), command, {encoding: "utf-8"});
-        return tempDir;
+        let command = `:: The purpose of this batch file is to be able to reproduce the valstep error
+type ${inputFile} | ${Util.q(valStepPath)} ${domainFile} ${problemFile}`;
+
+        await afs.writeFile(path.join(casePath, "run.cmd"), command, { encoding: "utf-8" });
+        return casePath;
     }
 }
 

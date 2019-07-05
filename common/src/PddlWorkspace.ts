@@ -175,7 +175,7 @@ export class PddlWorkspace extends EventEmitter {
         let folder = this.upsertFolder(folderUri);
 
         folder.remove(fileInfo);
-        fileInfo = await this.parseFile(fileInfo.fileUri, fileInfo.getLanguage(), fileInfo.version, fileInfo.getText());
+        fileInfo = await this.parseFile(fileInfo.fileUri, fileInfo.getLanguage(), fileInfo.getVersion(), fileInfo.getText());
         folder.add(fileInfo);
         this.emit(PddlWorkspace.UPDATED, fileInfo);
 

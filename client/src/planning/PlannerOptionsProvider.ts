@@ -22,6 +22,6 @@ export interface PlannerOptionsProvider {
  * Planning request context.
  */
 export interface PlanningRequestContext {
-    domain: DomainInfo,
-    problem: ProblemInfo
+    domain: DomainInfo;
+    problem: ProblemInfo;
 }

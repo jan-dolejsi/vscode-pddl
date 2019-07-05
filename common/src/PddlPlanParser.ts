@@ -13,15 +13,15 @@ import { DomainInfo, ProblemInfo } from './parser';
  */
 export class PddlPlanParser {
 
-    plans: Plan[] = [];
-    public static planStepPattern = /^\s*((\d+|\d+\.\d+)\s*:)?\s*\((.*)\)\s*(\[\s*(\d+|\d+\.\d+)\s*\])?\s*$/gim;
-    planStatesEvaluatedPattern = /^;\s*States evaluated[\w ]*:[ ]*(\d*)\s*$/i;
-    planCostPattern = /[\w ]*(cost|metric)[\D :]*[ ]*(\d*|\d*\.\d*)\s*$/i
+    private readonly plans: Plan[] = [];
+    public static readonly planStepPattern = /^\s*((\d+|\d+\.\d+)\s*:)?\s*\((.*)\)\s*(\[\s*(\d+|\d+\.\d+)\s*\])?\s*$/gim;
+    private readonly planStatesEvaluatedPattern = /^;\s*States evaluated[\w ]*:[ ]*(\d*)\s*$/i;
+    private readonly planCostPattern = /[\w ]*(cost|metric)[\D :]*[ ]*(\d*|\d*\.\d*)\s*$/i;
 
-    planBuilder: PlanBuilder;
-    endOfBufferToBeParsedNextTime = '';
+    private planBuilder: PlanBuilder;
+    private endOfBufferToBeParsedNextTime = '';
 
-    constructor(private domain: DomainInfo, private problem: ProblemInfo, private epsilon: number, private onPlanReady?: (plans: Plan[]) => void) {
+    constructor(private domain: DomainInfo, private problem: ProblemInfo, public readonly epsilon: number, private onPlanReady?: (plans: Plan[]) => void) {
         this.planBuilder = new PlanBuilder(epsilon);
     }
 
@@ -36,7 +36,7 @@ export class PddlPlanParser {
         let nextEndLine: number;
         while ((nextEndLine = textString.indexOf('\n', lastEndLine)) > -1) {
             let nextLine = textString.substring(lastEndLine, nextEndLine + 1);
-            if (nextLine.trim()) this.appendLine(nextLine);
+            if (nextLine.trim()) { this.appendLine(nextLine); }
             lastEndLine = nextEndLine + 1;
         }
         if (textString.length > lastEndLine) {
@@ -81,7 +81,7 @@ export class PddlPlanParser {
      */
     appendStep(planStep: PlanStep) {
         this.planBuilder.add(planStep);
-        if (!this.planBuilder.parsingPlan) this.planBuilder.parsingPlan = true;
+        if (!this.planBuilder.parsingPlan) { this.planBuilder.parsingPlan = true; }
     }
 
     /**
@@ -98,7 +98,7 @@ export class PddlPlanParser {
             this.planBuilder = new PlanBuilder(this.epsilon);
         }
 
-        if (this.onPlanReady) this.onPlanReady.apply(this, [this.plans]);
+        if (this.onPlanReady) { this.onPlanReady.apply(this, [this.plans]); }
     }
 
     /** Gets current plan's provisional makespan. */

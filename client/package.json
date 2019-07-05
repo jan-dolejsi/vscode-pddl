@@ -4,7 +4,7 @@
   "description": "Planning Domain Description Language support",
   "author": "Jan Dolejsi",
   "license": "MIT",
-  "version": "2.11.7",
+  "version": "2.11.8",
   "publisher": "jan-dolejsi",
   "engines": {
     "vscode": "^1.31.0",
@@ -38,6 +38,7 @@
     "onCommand:pddl.showOverview",
     "onCommand:pddl.searchDebugger.start",
     "onCommand:pddl.planning.domains.session.load",
+    "onCommand:pddl.downloadVal",
     "workspaceContains:.planning.domains.session.json",
     "onView:pddl.planning.domains",
     "onView:pddl.tests.explorer",
