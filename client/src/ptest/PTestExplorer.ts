@@ -5,7 +5,7 @@
 'use strict';
 
 import {
-    workspace, TreeView, window, commands, ViewColumn, Uri, OutputChannel, ProgressLocation, Range, SaveDialogOptions, Position
+    workspace, TreeView, window, commands, ViewColumn, Uri, ProgressLocation, Range, SaveDialogOptions, Position
 } from 'vscode';
 import { dirname } from 'path';
 import { readFileSync, promises } from 'fs';
@@ -20,6 +20,7 @@ import { PddlPlanParser } from '../../../common/src/PddlPlanParser';
 import { TestsManifest } from './TestsManifest';
 import { PlanStep } from '../../../common/src/PlanStep';
 import { PddlExtensionContext } from '../../../common/src/PddlExtensionContext';
+import { PTestReport } from './PTestReport';
 
 /**
  * PDDL Test Explorer pane.
@@ -29,7 +30,7 @@ export class PTestExplorer {
     private generatedDocumentContentProvider: GeneratedDocumentContentProvider;
     private pTestViewer: TreeView<PTestNode>;
     private pTestTreeDataProvider: PTestTreeDataProvider;
-    private outputWindow: OutputChannel;
+    private report: PTestReport;
 
     constructor(private context: PddlExtensionContext, public planning: Planning) {
         this.pTestTreeDataProvider = new PTestTreeDataProvider(context);
@@ -38,20 +39,31 @@ export class PTestExplorer {
         context.subscriptions.push(this.pTestViewer);
 
         context.subscriptions.push(commands.registerCommand('pddl.tests.refresh', () => this.pTestTreeDataProvider.refresh()));
-        context.subscriptions.push(commands.registerCommand('pddl.tests.run', node => this.runTest(node)));
-        context.subscriptions.push(commands.registerCommand('pddl.tests.runAll', node => this.findAndRunTests(node)));
-        context.subscriptions.push(commands.registerCommand('pddl.tests.view', node => this.openTest(node)));
-        context.subscriptions.push(commands.registerCommand('pddl.tests.viewDefinition', node => this.openDefinition(node)));
-        context.subscriptions.push(commands.registerCommand('pddl.tests.viewExpectedPlans', node => this.openExpectedPlans(node)));
-        context.subscriptions.push(commands.registerCommand('pddl.tests.problemSaveAs', () => this.saveProblemAs()));
+        context.subscriptions.push(commands.registerCommand('pddl.tests.run', node => this.runTest(node).catch(this.showError)));
+        context.subscriptions.push(commands.registerCommand('pddl.tests.runAll', node => this.findAndRunTests(node).catch(this.showError)));
+        context.subscriptions.push(commands.registerCommand('pddl.tests.view', nodeOrUri => {
+            if (nodeOrUri instanceof Uri) {
+                this.openTestByUri(<Uri>nodeOrUri).catch(this.showError);
+            } else {
+                this.openTest(nodeOrUri).catch(this.showError);
+            }
+        }));
+        context.subscriptions.push(commands.registerCommand('pddl.tests.viewDefinition', node => this.openDefinition(node).catch(this.showError)));
+        context.subscriptions.push(commands.registerCommand('pddl.tests.viewExpectedPlans', node => this.openExpectedPlans(node).catch(this.showError)));
+        context.subscriptions.push(commands.registerCommand('pddl.tests.problemSaveAs', () => this.saveProblemAs().catch(this.showError)));
 
         context.subscriptions.push(commands.registerCommand('pddl.tests.reveal', nodeUri =>
-            this.pTestViewer.reveal(this.pTestTreeDataProvider.findNodeByResource(nodeUri), { select: true, expand: true })));
+            this.pTestViewer.reveal(this.pTestTreeDataProvider.findNodeByResource(nodeUri), { select: true, expand: true }))
+        );
 
-        this.outputWindow = window.createOutputChannel("PDDL Test output");
-
-        this.generatedDocumentContentProvider = new GeneratedDocumentContentProvider(this.outputWindow, planning.pddlWorkspace);
+        context.subscriptions.push(this.report = new PTestReport(context));
+        this.generatedDocumentContentProvider = new GeneratedDocumentContentProvider(this.report.outputWindow, planning.pddlWorkspace);
         context.subscriptions.push(workspace.registerTextDocumentContentProvider('tpddl', this.generatedDocumentContentProvider));
+    }
+
+    showError(reason: any): void {
+        console.log(reason);
+        window.showErrorMessage(reason.message);
     }
 
     async saveProblemAs(): Promise<void> {
@@ -123,17 +135,21 @@ export class PTestExplorer {
 
     async openTest(node: PTestNode): Promise<void> {
         if (node.kind === PTestNodeKind.Test) {
-            let test = Test.fromUri(node.resource, this.context);
-
-            // assert that everything exists
-            if (!test) { return; }
-            await this.assertValid(test);
-
-            let domainDocument = await workspace.openTextDocument(test.getDomainUri());
-            await window.showTextDocument(domainDocument.uri, { preview: true, viewColumn: ViewColumn.One });
-
-            this.openProblemFile(test);
+            this.openTestByUri(node.resource);
         }
+    }
+
+    async openTestByUri(testCaseUri: Uri): Promise<void> {
+        let test = Test.fromUri(testCaseUri, this.context);
+
+        // assert that everything exists
+        if (!test) { return; }
+        await this.assertValid(test);
+
+        let domainDocument = await workspace.openTextDocument(test.getDomainUri());
+        await window.showTextDocument(domainDocument.uri, { preview: true, viewColumn: ViewColumn.One });
+
+        this.openProblemFile(test);
     }
 
     async openProblemFile(test: Test): Promise<void> {
@@ -184,9 +200,9 @@ export class PTestExplorer {
         }
     }
 
-    private runTests(manifests: TestsManifest[], contextPath: string) {
+    private runTests(manifests: TestsManifest[], contextPath: string): void {
         let testCount = manifests.map(m => m.testCases.length).reduce((previousValue, currentValue) => previousValue + currentValue, 0);
-        this.outputWindow.clear();
+        this.report.clearAndShow();
 
         window.withProgress({
             location: ProgressLocation.Notification,
@@ -196,12 +212,11 @@ export class PTestExplorer {
             return new Promise(async (resolve, reject) => {
                 try {
                     for (const manifest of manifests) {
-                        let manifestLocation = workspace.asRelativePath(manifest.path, true);
-                        this.outputWindow.appendLine(`Executing tests from ${manifestLocation}.`);
+                        this.report.startingManifest(manifest);
 
                         for (let caseIndex = 0; caseIndex < manifest.testCases.length; caseIndex++) {
                             if (token.isCancellationRequested) {
-                                this.outputWindow.appendLine('Canceled by user.');
+                                this.report.output('Canceled by user.');
                                 reject();
                                 break;
                             }
@@ -214,12 +229,12 @@ export class PTestExplorer {
                                 console.log(e);
                             }
                         }
-                        this.outputWindow.appendLine(`Finished executing tests from ${manifestLocation}.`);
+                        this.report.finishedManifest(manifest);
                     }
                     resolve();
                 }
                 finally {
-                    this.outputWindow.show(true);
+                    this.report.show();
                 }
             });
         });
@@ -309,38 +324,7 @@ export class PTestExplorer {
     }
 
     outputTestResult(test: Test, outcome: TestOutcome, elapsedTime: number, error?: string) {
-        let outcomeChar = String.fromCharCode(0x2591);
-
-        switch (outcome) {
-            case TestOutcome.SUCCESS:
-                outcomeChar = String.fromCharCode(0x2611);
-                break;
-            case TestOutcome.SKIPPED:
-                outcomeChar = String.fromCharCode(0x2610);
-                break;
-            case TestOutcome.FAILED:
-                outcomeChar = String.fromCharCode(0x2612);
-                break;
-            // failed assertion: 	U+01C2 450
-            // ‼	Double exclamation mark	0923
-        }
-
-        let outputMessage = `${outcomeChar} ${test.getLabel()}`;
-
-        if (!Number.isNaN(elapsedTime)) {
-            outputMessage += ` (${elapsedTime / 1000.0} sec)`;
-        }
-
-        if (error) {
-            outputMessage += `\n    ${error}`;
-        }
-
-        this.outputWindow.appendLine(outputMessage);
-
-        if (outcome === TestOutcome.FAILED) {
-            this.outputWindow.show(true);
-        }
-
+        this.report.outputTestResult(test, outcome, elapsedTime, error);
         this.setTestOutcome(test, outcome);
     }
 

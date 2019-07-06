@@ -200,8 +200,8 @@ export class PddlConfiguration {
         return path.match(/^http[s]?:/i);
     }
 
-    async getPlannerPath(): Promise<string> {
-        let plannerPath: string = vscode.workspace.getConfiguration(null).get(PLANNER_EXECUTABLE_OR_SERVICE);
+    async getPlannerPath(workingFolder?: vscode.Uri): Promise<string> {
+        let plannerPath: string = vscode.workspace.getConfiguration(PDDL_PLANNER, workingFolder).get(EXECUTABLE_OR_SERVICE);
 
         if (!plannerPath) {
             plannerPath = await this.askNewPlannerPath();
@@ -211,7 +211,7 @@ export class PddlConfiguration {
     }
 
     async askNewPlannerPath() {
-        let existingValue: string = vscode.workspace.getConfiguration(null).get(PLANNER_EXECUTABLE_OR_SERVICE);
+        let existingValue: string = vscode.workspace.getConfiguration(PDDL_PLANNER, null).get(EXECUTABLE_OR_SERVICE);
 
         let newPlannerPath = await vscode.window.showInputBox({
             prompt: "Enter PDDL planner path local command or web service URL",

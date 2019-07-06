@@ -144,7 +144,7 @@ export function createPddlExtensionContext(context: ExtensionContext): PddlExten
     };
 }
 
-export async function getWebViewHtml(extensionContext: ExtensionContext, relativePath: string, htmlFileName: string) {
+export async function getWebViewHtml(extensionContext: PddlExtensionContext, relativePath: string, htmlFileName: string) {
     let overviewHtmlPath = extensionContext.asAbsolutePath(join(relativePath, htmlFileName));
     let html = await afs.readFile(overviewHtmlPath, { encoding: "utf-8", flag: 'r' });
 

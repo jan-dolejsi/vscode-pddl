@@ -1,5 +1,16 @@
 # PDDL support - What's new?
 
+## [2.11.9] - 2019-07-?
+
+### New features
+
+- PDDL Testing now shows results on a report page. This is far more readable than the summary in the output window.
+
+### Fixes
+
+- Ask for confirmation before discarding changes in session files.
+- PDDL Planner configuration can now be picked up from a workspace folder configuration.
+
 ## [2.11.8] - 2019-07-05
 
 ### Fixes

@@ -11,7 +11,7 @@ import {
 import { PddlConfiguration } from '../configuration';
 
 import * as path from 'path';
-import { getWebViewHtml } from '../utils';
+import { getWebViewHtml, createPddlExtensionContext } from '../utils';
 import * as afs from '../../../common/src/asyncfs';
 import { Val } from '../validation/Val';
 
@@ -159,7 +159,7 @@ export class OverviewPage {
     }
 
     async getHtml(): Promise<string> {
-        let html = getWebViewHtml(this.context, this.CONTENT_FOLDER, 'overview.html');
+        let html = getWebViewHtml(createPddlExtensionContext(this.context), this.CONTENT_FOLDER, 'overview.html');
         return html;
     }
 

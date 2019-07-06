@@ -11,7 +11,7 @@ export class PlannerUserOptionsSelector {
 
     async getPlannerOptions() {
         let optionsSelected = await vscode.window.showQuickPick(this.optionsHistory,
-            { placeHolder: 'Optionally specify planner switches or press ENTER to use default planner configuration.' });
+            { placeHolder: 'Optionally specify planner switches or press ENTER to use default planner configuration.', ignoreFocusOut: true });
 
         if (!optionsSelected) { return null; } // operation canceled by the user by pressing Escape
         else if (optionsSelected.newValue) {

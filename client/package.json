@@ -209,6 +209,10 @@
         "title": "PDDL: Open as an editable problem file..."
       },
       {
+        "command": "pddl.tests.report.view",
+        "title": "PDDL: Show test report"
+      },
+      {
         "command": "pddl.searchDebugger.start",
         "title": "PDDL: Start search debugger"
       },
@@ -286,7 +290,7 @@
       },
       {
         "command": "pddl.planning.domains.session.discard",
-        "title": "PDDL: Discards local changes to the Planning.Domains session",
+        "title": "PDDL: Discard local changes to the Planning.Domains session",
         "icon": {
           "light": "images/light/discard.svg",
           "dark": "images/dark/discard.svg"
@@ -382,6 +386,10 @@
           "command": "pddl.tests.refresh",
           "when": "view == pddl.tests.explorer",
           "group": "navigation"
+        },
+        {
+          "command": "pddl.tests.report.view",
+          "when": "view == pddl.tests.explorer"
         }
       ],
       "view/item/context": [

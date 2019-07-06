@@ -317,7 +317,7 @@ export class Planning implements PlannerResponseHandler {
      * @returns `Planner` instance of the configured planning engine
      */
     async createPlanner(workingDirectory: string, options?: string): Promise<Planner> {
-        let plannerPath = await this.plannerConfiguration.getPlannerPath();
+        let plannerPath = await this.plannerConfiguration.getPlannerPath(Uri.file(workingDirectory));
         if (!plannerPath) { return null; }
 
         if (!await this.verifyConsentForSendingPddl(plannerPath)) { return null; }
