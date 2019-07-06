@@ -18,7 +18,8 @@ import { PddlConfiguration } from '../configuration';
 import { Plan } from '../../../common/src/Plan';
 import { PlannerResponseHandler } from './PlannerResponseHandler';
 import { PlannerExecutable } from './PlannerExecutable';
-import { PlannerService } from './PlannerService';
+import { PlannerSyncService } from './PlannerSyncService';
+import { PlannerAsyncService } from './PlannerAsyncService';
 import { Planner } from './planner';
 import { PddlPlanParser } from '../../../common/src/PddlPlanParser';
 import { Authentication } from '../../../common/src/Authentication';
@@ -33,6 +34,8 @@ import * as afs from '../../../common/src/asyncfs';
 
 import { PlanView, PDDL_GENERATE_PLAN_REPORT, PDDL_EXPORT_PLAN } from './PlanView';
 import { PlannerOptionsProvider, PlanningRequestContext } from './PlannerOptionsProvider';
+import { PlannerUserOptionsSelector } from './PlannerUserOptionsSelector';
+import { PlannerConfigurationSelector } from './PlannerConfigurationSelector';
 
 const PDDL_STOP_PLANNER = 'pddl.stopPlanner';
 const PDDL_CONVERT_PLAN_TO_HAPPENINGS = 'pddl.convertPlanToHappenings';
@@ -50,8 +53,10 @@ export class Planning implements PlannerResponseHandler {
     planningProcessKilled: boolean;
     planView: PlanView;
     optionProviders: PlannerOptionsProvider[] = [];
+    userOptionsProvider: PlannerUserOptionsSelector;
 
     constructor(public pddlWorkspace: PddlWorkspace, public plannerConfiguration: PddlConfiguration, context: ExtensionContext) {
+        this.userOptionsProvider = new PlannerUserOptionsSelector();
         this.output = window.createOutputChannel("Planner output");
 
         context.subscriptions.push(this.planView = new PlanView(context, pddlWorkspace));
@@ -104,8 +109,8 @@ export class Planning implements PlannerResponseHandler {
     }
 
     addOptionsProvider(optionsProvider: PlannerOptionsProvider) {
-		this.optionProviders.push(optionsProvider);
-	}
+        this.optionProviders.push(optionsProvider);
+    }
 
     providePlannerOptions(context: PlanningRequestContext): string {
         return this.optionProviders.map(provider => provider.providePlannerOptions(context)).join(' ');
@@ -122,8 +127,8 @@ export class Planning implements PlannerResponseHandler {
         let domainDocument = await workspace.openTextDocument(domainUri);
         let problemDocument = await workspace.openTextDocument(problemUri);
 
-        let domainInfo = <DomainInfo> await this.upsertFile(domainDocument);
-        let problemInfo = <ProblemInfo> await this.upsertFile(problemDocument);
+        let domainInfo = <DomainInfo>await this.upsertFile(domainDocument);
+        let problemInfo = <ProblemInfo>await this.upsertFile(problemDocument);
 
         this.planExplicit(domainInfo, problemInfo, workingFolder, options);
     }
@@ -204,7 +209,7 @@ export class Planning implements PlannerResponseHandler {
             return;
         }
 
-        this.planExplicit(domainFileInfo, problemFileInfo, dirname(activeDocument.fileName));
+        await this.planExplicit(domainFileInfo, problemFileInfo, dirname(activeDocument.fileName));
     }
 
     private readonly _onPlansFound = new EventEmitter<PlanningResult>();
@@ -308,7 +313,7 @@ export class Planning implements PlannerResponseHandler {
      * Creates the right planner wrapper according to the current configuration.
      *
      * @param workingDirectory directory where planner creates output files by default
-     * @param options planner options
+     * @param options planner options or a path of a configuration file
      * @returns `Planner` instance of the configured planning engine
      */
     async createPlanner(workingDirectory: string, options?: string): Promise<Planner> {
@@ -316,9 +321,6 @@ export class Planning implements PlannerResponseHandler {
         if (!plannerPath) { return null; }
 
         if (!await this.verifyConsentForSendingPddl(plannerPath)) { return null; }
-
-        let plannerOptions = options !== undefined ? options : await this.plannerConfiguration.getPlannerOptions();
-        if (plannerOptions === null) { return null; }
 
         if (PddlConfiguration.isHttp(plannerPath)) {
             let useAuthentication = this.plannerConfiguration.isPddlPlannerServiceAuthenticationEnabled();
@@ -330,14 +332,35 @@ export class Planning implements PlannerResponseHandler {
                     configuration.tokensvcCodePath, configuration.tokensvcRefreshPath, configuration.tokensvcSvctkPath,
                     configuration.refreshToken, configuration.accessToken, configuration.sToken);
             }
-            return new PlannerService(plannerPath, plannerOptions, useAuthentication, authentication);
+
+            if (plannerPath.endsWith("/solve")) {
+                options = await this.getPlannerLineOptions(options);
+                if (options === null || options === undefined) { return null; }
+
+                return new PlannerSyncService(plannerPath, options, useAuthentication, authentication);
+            }
+            else if (plannerPath.endsWith("/request")) {
+                let configuration = options ? Uri.parse(options) : await new PlannerConfigurationSelector(Uri.file(workingDirectory)).getConfiguration();
+                if (!configuration) { return null; }
+                return new PlannerAsyncService(plannerPath, configuration, useAuthentication, authentication);
+            }
+            else {
+                throw new Error("Planning service not supported: " + plannerPath);
+            }
         }
         else {
+            options = await this.getPlannerLineOptions(options);
+            if (options === null) { return null; }
+
             let plannerSyntax = await this.plannerConfiguration.getPlannerSyntax();
             if (plannerSyntax === null) { return null; }
 
-            return new PlannerExecutable(plannerPath, plannerOptions, plannerSyntax, workingDirectory);
+            return new PlannerExecutable(plannerPath, options, plannerSyntax, workingDirectory);
         }
+    }
+
+    async getPlannerLineOptions(options: string): Promise<string> {
+        return options || await this.userOptionsProvider.getPlannerOptions();
     }
 
     PLANNING_SERVICE_CONSENTS = "planningServiceConsents";

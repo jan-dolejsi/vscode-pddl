@@ -1,5 +1,19 @@
 # PDDL support - What's new?
 
+## [2.11.8] - 2019-07-05
+
+### Fixes
+
+- Activating the extension upon the `pddl.downloadVal` command.
+- Improved Valstep error reporting.
+- Instantaneous actions visualized correctly in object swim-lanes.
+- Valstep error repro export uses full valstep path rather than relying on valstep in the `%path%`. Thanks, Christian.
+
+### New Features
+
+- Added configuration for asynchronous planning services exposing a `/request` RESTful interface. Configuration may be retrieved from a `*.plannerConfiguration.json` or a `.json` file.
+- Tooltip on plan visualization plan selection bars now explain that the size of the bar correspond to the given plan metric value.
+
 ## [2.11.7] - 2019-06-28
 
 ### Preview of VAL tools download
@@ -638,7 +652,8 @@ Note for open source contributors: all notable changes to the "pddl" extension w
 
 Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
 
-[Unreleased]: https://github.com/jan-dolejsi/vscode-pddl/compare/v2.11.7...HEAD
+[Unreleased]: https://github.com/jan-dolejsi/vscode-pddl/compare/v2.11.8...HEAD
+[2.11.8]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.11.7...v2.11.8
 [2.11.7]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.11.5...v2.11.7
 [2.11.5]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.11.4...v2.11.5
 [2.11.4]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.11.3...v2.11.4

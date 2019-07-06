@@ -86,10 +86,15 @@ export class PlanReportGenerator {
         if (planIndex === selectedPlan) { className += " planSelector-selected"; }
 
         let normalizedCost = plan.cost / maxCost * 100;
+        let costRounded = plan.cost ? plan.cost.toFixed(DIGITS) : NaN;
+        let tooltip = `Plan #${planIndex}
+Metric value / cost: ${plan.cost}
+Makespan: ${plan.makespan}
+States evaluated: ${plan.statesEvaluated}`;
 
         return `
-        <div class="${className}" plan="${planIndex}" onclick="showPlan(${planIndex})"><span>${plan.cost}</span>
-            <div class="planMetricBar" style="height: ${normalizedCost}px"></div>
+        <div class="${className}" plan="${planIndex}" onclick="showPlan(${planIndex})"><span>${costRounded}</span>
+            <div class="planMetricBar" style="height: ${normalizedCost}px" title="${tooltip}"></div>
         </div>`;
     }
 
@@ -175,7 +180,7 @@ ${objectsHtml}
                     });
                 } catch (err) {
                     console.log(err);
-                    this.handleValStepError(err);
+                    this.handleValStepError(err, evaluator.getValStepPath());
                 }
             }
             else {
@@ -192,13 +197,24 @@ ${lineCharts}
 `;
     }
 
-    private async handleValStepError(err: any) {
+    private async handleValStepError(err: any, valStepPath: string): Promise<void> {
         if (err instanceof ValStepError) {
             try {
-                let choice = await window.showErrorMessage("ValStep failed to evaluate the plan values.", "Show", "Ignore");
-                if (choice === "Show") {
-                    let path = await ValStep.storeError(err);
-                    env.openExternal(Uri.file(path));
+                const exportCase = "Export valstep case...";
+                let choice = await window.showErrorMessage("ValStep failed to evaluate the plan values.", exportCase, "Ignore");
+                if (choice === exportCase) {
+                    let targetPathUris = await window.showOpenDialog({
+                        canSelectFolders: true, canSelectFiles: false,
+                        defaultUri: Uri.file(path.dirname(err.domain.fileUri)),
+                        openLabel: 'Select target folder'
+                    });
+                    if (!targetPathUris) { return; }
+                    let targetPath = targetPathUris[0];
+                    let outputPath = await ValStep.storeError(err, targetPath, valStepPath);
+                    let success = await env.openExternal(Uri.file(outputPath));
+                    if (!success) {
+                        window.showErrorMessage(`Files for valstep bug report: ${outputPath}.`);
+                    }
                 }
             }
             catch (err1) {

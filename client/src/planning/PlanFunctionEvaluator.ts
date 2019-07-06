@@ -26,6 +26,10 @@ export class PlanFunctionEvaluator {
         return this.valueSeqPath && this.valStepPath ? true : false;
     }
 
+    getValStepPath(): string {
+        return this.valStepPath;
+    }
+
     async evaluate(): Promise<Map<Variable, GroundedFunctionValues>> {
         let domainFile = await Util.toPddlFile("domain", this.plan.domain.getText());
         let problemFile = await Util.toPddlFile("problem", this.plan.problem.getText());

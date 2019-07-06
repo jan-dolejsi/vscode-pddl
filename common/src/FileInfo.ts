@@ -13,10 +13,14 @@ export abstract class FileInfo {
     private status: FileStatus = FileStatus.Parsed;
     private parsingProblems: ParsingProblem[] = [];
 
-    constructor(public fileUri: string, public version: number, public name: string) {
+    constructor(public readonly fileUri: string, private version: number, public readonly name: string) {
     }
 
     abstract getLanguage(): PddlLanguage;
+
+    getVersion(): number {
+        return this.version;
+    }
 
     getText(): string {
         return this.text;
@@ -122,12 +126,12 @@ export abstract class FileInfo {
             let commentStartColumn = line.indexOf(';');
             let match = regexp.exec(line);
             if (match) {
-                if (commentStartColumn > -1 && match.index > commentStartColumn) continue;
+                if (commentStartColumn > -1 && match.index > commentStartColumn) { continue; }
 
                 let range = new PddlRange(lineIdx, match.index, lineIdx, match.index + match[0].length);
                 let shouldContinue = callback.apply(this, [range, line]);
 
-                if (!shouldContinue) return;
+                if (!shouldContinue) { return; }
             }
         }
     }
@@ -185,11 +189,11 @@ export class Variable {
     }
 
     bind(objects: ObjectInstance[]): Variable {
-        if (this.parameters.length != objects.length) {
+        if (this.parameters.length !== objects.length) {
             throw new Error(`Invalid objects ${objects} for function ${this.getFullName()} parameters ${this.parameters}.`);
         }
         let fullName = this.name;
-        if (objects) fullName += " " + objects.map(o => o.name).join(" ");
+        if (objects) { fullName += " " + objects.map(o => o.name).join(" "); }
         return new Variable(fullName, objects);
     }
 

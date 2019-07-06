@@ -21,10 +21,10 @@ import { Plan } from "../../../common/src/Plan";
 export class PlannerExecutable extends Planner {
 
     // this property stores the reference to the planner child process, while planning is in progress
-    child: process.ChildProcess;
+    private child: process.ChildProcess;
 
-    constructor(plannerPath: string, plannerOptions: string, public plannerSyntax: string, public workingDirectory: string) {
-        super(plannerPath, plannerOptions);
+    constructor(plannerPath: string, private plannerOptions: string, private plannerSyntax: string, private workingDirectory: string) {
+        super(plannerPath);
     }
 
     async plan(domainFileInfo: DomainInfo, problemFileInfo: ProblemInfo, planParser: PddlPlanParser, parent: PlannerResponseHandler): Promise<Plan[]> {
