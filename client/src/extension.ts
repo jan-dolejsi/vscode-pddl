@@ -21,7 +21,7 @@ import { PTestExplorer } from './ptest/PTestExplorer';
 import { PlanValidator } from './diagnostics/PlanValidator';
 import { Debugging } from './debugger/debugging';
 import { ExtensionInfo } from './ExtensionInfo';
-import { toLanguage, isAnyPddl, createPddlExtensionContext } from './utils';
+import { toLanguage, isAnyPddl } from './workspace/workspaceUtils';
 import { HappeningsValidator } from './diagnostics/HappeningsValidator';
 import { PlanComparer } from './comparison/PlanComparer';
 import { Catalog } from './catalog/Catalog';
@@ -31,6 +31,8 @@ import { KEY } from './TelemetryInstrumentation';
 import { SearchDebugger } from './searchDebugger/SearchDebugger';
 import { PlanningDomainsSessions } from './session/PlanningDomainsSessions';
 import { Val } from './validation/Val';
+import { createPddlExtensionContext } from './utils';
+import { AssociationProvider } from './workspace/AssociationProvider';
 
 const PDDL_CONFIGURE_PARSER = 'pddl.configureParser';
 const PDDL_LOGIN_PARSER_SERVICE = 'pddl.loginParserService';
@@ -162,6 +164,9 @@ function activateWithTelemetry(_operationId: string, context: ExtensionContext) 
 	let diagnostics = new Diagnostics(pddlWorkspace, diagnosticCollection, pddlConfiguration,
 		planValidator, happeningsValidator);
 
+	// tslint:disable-next-line: no-unused-expression
+	new AssociationProvider(context, pddlWorkspace);
+
 	let planDefinitionProvider = languages.registerDefinitionProvider(PLAN, symbolInfoProvider);
 	let planHoverProvider = languages.registerHoverProvider(PLAN, symbolInfoProvider);
 
@@ -209,7 +214,7 @@ async function revealAction(domainInfo: DomainInfo, actionName: String) {
 	let document = await workspace.openTextDocument(Uri.parse(domainInfo.fileUri));
 	let actionFound = domainInfo.actions.find(a => a.name.toLowerCase() === actionName.toLowerCase());
 	let actionRange = actionFound ? toRange(actionFound.location) : null;
-	window.showTextDocument(document.uri, { viewColumn: ViewColumn.One, preserveFocus: true, preview: true, selection: actionRange });
+	window.showTextDocument(document.uri, { viewColumn: ViewColumn.One, preserveFocus: true, selection: actionRange });
 }
 
 function toRange(pddlRange: PddlRange): Range {

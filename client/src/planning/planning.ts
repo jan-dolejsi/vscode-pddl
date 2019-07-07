@@ -9,8 +9,6 @@ import {
     MessageItem, ExtensionContext, ProgressLocation, TextDocument, EventEmitter, Event, CancellationToken, Progress
 } from 'vscode';
 
-import * as path from 'path';
-
 import { PddlWorkspace } from '../../../common/src/PddlWorkspace';
 import { DomainInfo, ProblemInfo } from '../../../common/src/parser';
 import { FileInfo, PddlLanguage } from '../../../common/src/FileInfo';
@@ -29,13 +27,14 @@ import { PlanReportGenerator } from './PlanReportGenerator';
 import { PlanExporter } from './PlanExporter';
 import { PlanHappeningsExporter } from './PlanHappeningsExporter';
 import { HappeningsPlanExporter } from './HappeningsPlanExporter';
-import { isHappenings, isPlan } from '../utils';
+import { isHappenings, isPlan, selectFile } from '../workspace/workspaceUtils';
 import * as afs from '../../../common/src/asyncfs';
 
 import { PlanView, PDDL_GENERATE_PLAN_REPORT, PDDL_EXPORT_PLAN } from './PlanView';
 import { PlannerOptionsProvider, PlanningRequestContext } from './PlannerOptionsProvider';
 import { PlannerUserOptionsSelector } from './PlannerUserOptionsSelector';
 import { PlannerConfigurationSelector } from './PlannerConfigurationSelector';
+import { AssociationProvider } from '../workspace/AssociationProvider';
 
 const PDDL_STOP_PLANNER = 'pddl.stopPlanner';
 const PDDL_CONVERT_PLAN_TO_HAPPENINGS = 'pddl.convertPlanToHappenings';
@@ -150,7 +149,6 @@ export class Planning implements PlannerResponseHandler {
         this.output.clear();
 
         const activeDocument = window.activeTextEditor.document;
-        const activeFilePath = activeDocument.fileName;
 
         const activeFileInfo = await this.upsertFile(activeDocument);
 
@@ -160,25 +158,24 @@ export class Planning implements PlannerResponseHandler {
         if (activeFileInfo.isProblem()) {
             problemFileInfo = <ProblemInfo>activeFileInfo;
 
-            let folder = this.pddlWorkspace.getFolderOf(problemFileInfo);
-
-            // find domain files in the same folder that match the problem's domain name
-            let domainFiles = folder.getDomainFilesFor(problemFileInfo);
+            // find domain file(s)
+            let domainFiles = this.pddlWorkspace.getDomainFilesFor(problemFileInfo);
 
             if (domainFiles.length === 1) {
                 domainFileInfo = domainFiles[0];
-            } else if (domainFiles.length > 1) {
-                const domainFileCandidates = domainFiles
-                    .map(doc => Planning.getFileName(doc.fileUri.toString()));
+            } else if (domainFiles.length !== 1) {
+                const domainFileUri = await selectFile({
+                    language: PddlLanguage.PDDL,
+                    promptMessage: 'Select the matching domain file...',
+                    findPattern: AssociationProvider.PDDL_PATTERN,
+                    fileOpenLabel: 'Select',
+                    fileOpenFilters: { 'PDDL Domain Files': ['pddl'] }
+                }, domainFiles);
 
-                const domainFileName = await window.showQuickPick(domainFileCandidates, { placeHolder: "Select domain file:" });
+                if (!domainFileUri) { return; } // was canceled
 
-                if (!domainFileName) { return; } // was canceled
-
-                const domainFilePath = path.join(dirname(activeFilePath), domainFileName);
-                let domainFileUri = Uri.file(domainFilePath);
-
-                domainFileInfo = domainFiles.find(doc => doc.fileUri === domainFileUri.toString());
+                domainFileInfo = domainFiles.find(doc => doc.fileUri === domainFileUri.toString())
+                    || this.pddlWorkspace.getFileInfo<DomainInfo>(domainFileUri.toString());
             } else {
                 window.showInformationMessage(`Ensure a domain '${problemFileInfo.domainName}' from the same folder is open in the editor.`);
                 return;
@@ -360,7 +357,12 @@ export class Planning implements PlannerResponseHandler {
     }
 
     async getPlannerLineOptions(options: string): Promise<string> {
-        return options || await this.userOptionsProvider.getPlannerOptions();
+        if (options === null || options === undefined) {
+            return await this.userOptionsProvider.getPlannerOptions();
+        }
+        else {
+            return options;
+        }
     }
 
     PLANNING_SERVICE_CONSENTS = "planningServiceConsents";
@@ -372,15 +374,13 @@ export class Planning implements PlannerResponseHandler {
                 return true;
             }
             else {
-                let answer = await window.showQuickPick(
-                    [
-                        "Yes, send my PDDL to this service.",
-                        "No, I do not want to send this PDDL to this service."
-                    ],
+                let answer = await window.showWarningMessage(
+                    "Confirm you want to send this PDDL to " + plannerPath,
                     {
-                        canPickMany: false,
-                        placeHolder: "Confirm you want to send this PDDL to " + plannerPath
-                    }
+                        modal: true
+                    },
+                    "Yes, send my PDDL to this service.",
+                    "No, I do not want to send this PDDL to this service."
                 );
                 let consentGiven = answer && answer.toLowerCase().startsWith("yes");
                 consents[plannerPath] = consentGiven;

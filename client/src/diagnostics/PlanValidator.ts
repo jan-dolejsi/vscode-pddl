@@ -5,7 +5,7 @@
 'use strict';
 
 import {
-    window, commands, OutputChannel, ExtensionContext, TextDocument, Diagnostic, Uri, Range, DiagnosticSeverity
+    window, commands, OutputChannel, ExtensionContext, TextDocument, Diagnostic, Uri, Range, DiagnosticSeverity, workspace
 } from 'vscode';
 
 import * as process from 'child_process';
@@ -13,11 +13,12 @@ import * as process from 'child_process';
 import { PddlWorkspace } from '../../../common/src/PddlWorkspace';
 import { PlanInfo, DomainInfo, ProblemInfo } from '../../../common/src/parser';
 import { PddlLanguage, ParsingProblem } from '../../../common/src/FileInfo';
-import { PddlConfiguration, CONF_PDDL, VALIDATION_PATH } from '../configuration';
+import { PddlConfiguration } from '../configuration';
 import { Util } from '../../../common/src/util';
 import { dirname } from 'path';
 import { PlanStep } from '../../../common/src/PlanStep';
-import { DomainAndProblem, getDomainAndProblemForPlan, isPlan } from '../utils';
+import { DomainAndProblem, getDomainAndProblemForPlan, isPlan, NoProblemAssociated, NoDomainAssociated } from '../workspace/workspaceUtils';
+import { showError } from '../utils';
 
 export const PDDL_PLAN_VALIDATE = 'pddl.plan.validate';
 
@@ -29,31 +30,41 @@ export class PlanValidator {
     constructor(private output: OutputChannel, public pddlWorkspace: PddlWorkspace, public plannerConfiguration: PddlConfiguration, context: ExtensionContext) {
 
         context.subscriptions.push(commands.registerCommand(PDDL_PLAN_VALIDATE,
-            async () => {
-                if (window.activeTextEditor && isPlan(window.activeTextEditor.document)) {
-                    if (!await this.testConfiguration()) { return; }
-                    try {
-                        let outcome = await this.validateTextDocument(window.activeTextEditor.document);
-                        if (outcome.getError()) {
-                            window.showErrorMessage(outcome.getError());
-                        }
-                    } catch (ex) {
-                        window.showErrorMessage("Plan validation failed: " + ex);
-                        return;
-                    }
-                } else {
-                    window.showErrorMessage("There is no plan file open.");
-                    return;
+            async (planUri: Uri) => this.validateActiveDocument(planUri).catch(showError)));
+    }
+
+    async validateActiveDocument(planUri?: Uri): Promise<void> {
+
+        var planDocument: TextDocument;
+        if (!planUri && window.activeTextEditor) {
+            planDocument = window.activeTextEditor.document;
+        } else {
+            planDocument = await workspace.openTextDocument(planUri);
+        }
+
+        if (!isPlan(planDocument)) { return; }
+
+        if (planDocument) {
+            if (!await this.testConfiguration()) { return; }
+            try {
+                let outcome = await this.validatePlanDocument(planDocument);
+                if (outcome.getError()) {
+                    commands.executeCommand('workbench.actions.view.problems');
+                    throw new Error(outcome.getError());
                 }
-            }));
+            } catch (ex) {
+                console.error(ex);
+                throw new Error("Plan validation failed: " + ex);
+            }
+        } else {
+            throw new Error("There is no plan file open.");
+        }
     }
 
     async testConfiguration(): Promise<boolean> {
         let validatePath = this.plannerConfiguration.getValidatorPath();
         if (validatePath.length === 0) {
-
-            let answer = await window.showWarningMessage(`The 'validate' executable path is not set up in '${CONF_PDDL}.${VALIDATION_PATH}'.`, "Configure 'validate' now...");
-            if (answer) { commands.executeCommand('pddl.configureValidate'); }
+            commands.executeCommand('pddl.downloadVal');
             return false;
         }
         else {
@@ -61,9 +72,9 @@ export class PlanValidator {
         }
     }
 
-    async validateTextDocument(planDocument: TextDocument): Promise<PlanValidationOutcome> {
+    async validatePlanDocument(planDocument: TextDocument): Promise<PlanValidationOutcome> {
 
-        let planFileInfo = <PlanInfo> await this.pddlWorkspace.upsertAndParseFile(planDocument.uri.toString(), PddlLanguage.PLAN, planDocument.version, planDocument.getText());
+        let planFileInfo = <PlanInfo>await this.pddlWorkspace.upsertAndParseFile(planDocument.uri.toString(), PddlLanguage.PLAN, planDocument.version, planDocument.getText());
 
         if (!planFileInfo) { return PlanValidationOutcome.failed(null, new Error("Cannot open or parse plan file.")); }
 
@@ -106,28 +117,32 @@ export class PlanValidator {
         let planFilePath = await Util.toPddlFile('plan', planInfo.getText());
 
         let args = ['-t', epsilon.toString(), '-v', domainFilePath, problemFilePath, planFilePath];
-        let child = process.spawnSync(validatePath, args, { cwd: dirname(Uri.parse(planInfo.fileUri).fsPath) });
+        let workingDir = this.createWorkingFolder(Uri.parse(planInfo.fileUri));
+        let child = process.spawnSync(validatePath, args, { cwd: workingDir });
 
         if (showOutput) { this.output.appendLine(validatePath + ' ' + args.join(' ')); }
 
-        let output = child.stdout.toString();
-
-        if (showOutput) { this.output.appendLine(output); }
-
-        if (showOutput && child.stderr && child.stderr.length) {
-            this.output.append('Error:');
-            this.output.appendLine(child.stderr.toString());
-        }
-
-        let outcome = this.analyzeOutput(planInfo, child.error, output);
+        let outcome: PlanValidationOutcome;
 
         if (child.error) {
             if (showOutput) {
                 this.output.appendLine(`Error: name=${child.error.name}, message=${child.error.message}`);
             }
             onError(child.error.name);
+            outcome = PlanValidationOutcome.failed(planInfo, child.error);
+            onSuccess(outcome.getDiagnostics());
         }
         else {
+            let output = child.stdout.toString();
+
+            if (showOutput) { this.output.appendLine(output); }
+
+            if (showOutput && child.stderr && child.stderr.length) {
+                this.output.append('Error:');
+                this.output.appendLine(child.stderr.toString());
+            }
+
+            outcome = this.analyzeOutput(planInfo, child.error, output);
             onSuccess(outcome.getDiagnostics());
         }
 
@@ -137,6 +152,22 @@ export class PlanValidator {
         }
 
         return outcome;
+    }
+
+    createWorkingFolder(planUri: Uri): string {
+        if (planUri.scheme === "file") {
+            return dirname(planUri.fsPath);
+        }
+        let workspaceFolder = workspace.getWorkspaceFolder(planUri);
+        if (workspaceFolder) {
+            return workspaceFolder.uri.fsPath;
+        }
+
+        if (workspace.workspaceFolders && workspace.workspaceFolders.length > 0) {
+            return workspace.workspaceFolders[0].uri.fsPath;
+        }
+
+        return ".";
     }
 
     analyzeOutput(planInfo: PlanInfo, error: Error, output: string): PlanValidationOutcome {
@@ -194,8 +225,9 @@ export class PlanValidator {
             .map(step => new Diagnostic(createRangeFromLine(step.lineIndex), `Action '${step.actionName}' time ${step.getStartTime()} is before the preceding action time`, DiagnosticSeverity.Error));
     }
 
-    private isDomainAction(domain: DomainInfo, problem: ProblemInfo, step: PlanStep): boolean {
-        problem;
+    private isDomainAction(domain: DomainInfo, _problem: ProblemInfo, step: PlanStep): boolean {
+        // tslint:disable-next-line: no-unused-expression
+        _problem;
         return domain.actions.some(a => a.name.toLowerCase() === step.actionName.toLowerCase());
     }
 
@@ -244,8 +276,15 @@ class PlanValidationOutcome {
 
     static failed(planInfo: PlanInfo, error: Error): PlanValidationOutcome {
         let message = "Validate tool failed. " + error.message;
-        let diagnostics = [createDiagnostic(0, 0, message, DiagnosticSeverity.Error)];
-        return new PlanValidationOutcome(planInfo, diagnostics, message);
+        let diagnostic = createDiagnostic(0, 0, message, DiagnosticSeverity.Error);
+        if (error instanceof NoProblemAssociated) {
+            diagnostic.code = NoProblemAssociated.DIAGNOSTIC_CODE;
+        }
+        else if (error instanceof NoDomainAssociated) {
+            diagnostic.code = NoDomainAssociated.DIAGNOSTIC_CODE;
+        }
+
+        return new PlanValidationOutcome(planInfo, [diagnostic], message);
     }
 
     static failedWithDiagnostics(planInfo: PlanInfo, diagnostics: Diagnostic[]): PlanValidationOutcome {

@@ -10,9 +10,11 @@ import { PddlPlanParser } from '../../../common/src/PddlPlanParser';
 import { PlanStep } from '../../../common/src/PlanStep';
 import { PddlWorkspace } from '../../../common/src/PddlWorkspace';
 import { PddlConfiguration } from '../configuration';
-import { getDomainAndProblemForPlan } from '../utils';
+import { getDomainAndProblemForPlan } from '../workspace/workspaceUtils';
 import { PlanEvaluator } from './PlanEvaluator';
 import { AbstractPlanExporter } from '../planning/PlanExporter';
+import { PlanningDomains } from '../catalog/PlanningDomains';
+import { HTTPLAN } from '../catalog/Catalog';
 
 
 /**
@@ -53,7 +55,9 @@ export class NormalizedPlanDocumentContentProvider implements TextDocumentConten
     provideTextDocumentContent(uri: Uri, token: CancellationToken): string | Thenable<string> {
         if (token.isCancellationRequested) { return "Canceled"; }
 
-        let fileUri = uri.with({ scheme: 'file' });
+        let newScheme = (uri.authority === PlanningDomains.AUTHORITY) ? HTTPLAN : 'file';
+
+        let fileUri = uri.with({ scheme: newScheme });
 
         return workspace.openTextDocument(fileUri)
             .then(document => document.getText())
@@ -124,11 +128,11 @@ class PlanParserAndNormalizer {
         let normalizedText = AbstractPlanExporter.getPlanMeta(planMeta.domainName, planMeta.problemName)
             + "\n; Normalized plan:\n"
             + origText.split('\n')
-            .map((origLine, idx) => this.parseLine(origLine, idx))
-            .filter(step => step !== null && step !== undefined)
-            .sort(compare)
-            .map(step => step.toPddl())
-            .join('\n');
+                .map((origLine, idx) => this.parseLine(origLine, idx))
+                .filter(step => step !== null && step !== undefined)
+                .sort(compare)
+                .map(step => step.toPddl())
+                .join('\n');
 
         return normalizedText;
     }

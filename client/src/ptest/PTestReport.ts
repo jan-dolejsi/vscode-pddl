@@ -5,7 +5,7 @@
 'use strict';
 
 import {
-    workspace, window, OutputChannel, Disposable, commands
+    workspace, OutputChannel, Disposable, commands
 } from 'vscode';
 import { TestsManifest } from './TestsManifest';
 import { TestOutcome, Test } from './Test';
@@ -13,12 +13,10 @@ import { PTestReportView } from './PTestReportView';
 import { PddlExtensionContext } from '../PddlExtensionContext';
 
 export class PTestReport implements Disposable {
-    outputWindow: OutputChannel;
     private view: PTestReportView;
     private manifests = new ManifestMap();
 
-    constructor(private context: PddlExtensionContext) {
-        this.outputWindow = window.createOutputChannel("PDDL Test output");
+    constructor(private context: PddlExtensionContext, private outputWindow: OutputChannel) {
         commands.registerCommand("pddl.tests.report.view", () => this.show());
     }
 
@@ -99,6 +97,8 @@ export class PTestReport implements Disposable {
 
     clearAndShow() {
         this.outputWindow.clear();
+        this.manifests.clear();
+        if (this.view) { this.view.updatePage(); }
         this.show();
     }
 

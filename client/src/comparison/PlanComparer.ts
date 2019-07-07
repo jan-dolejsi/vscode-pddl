@@ -12,7 +12,7 @@ import {
 
 import { PddlWorkspace } from '../../../common/src/PddlWorkspace';
 import { PddlLanguage } from '../../../common/src/FileInfo';
-import { toLanguage, isPlan } from '../utils';
+import { toLanguage, isPlan } from '../workspace/workspaceUtils';
 
 import { NormalizedPlanDocumentContentProvider } from './NormalizedPlanDocumentContentProvider';
 import { PddlConfiguration } from '../configuration';

@@ -21,6 +21,7 @@ import { PddlConfiguration, PDDL_PARSER, VALIDATION_PATH, CONF_PDDL } from '../c
 import { PlanValidator, createDiagnostic } from './PlanValidator';
 import { HappeningsValidator } from './HappeningsValidator';
 import { HappeningsInfo } from '../HappeningsInfo';
+import { NoDomainAssociated, getDomainFileForProblem } from '../workspace/workspaceUtils';
 
 /**
  * Listens to updates to PDDL files and performs detailed parsing and syntactical analysis and report problems as `Diagnostics`.
@@ -294,40 +295,29 @@ export class Diagnostics extends Disposable {
     }
 
     getDomainFileFor(problemFile: ProblemInfo): DomainInfo {
-        let folder = this.pddlWorkspace.folders.get(PddlWorkspace.getFolderUri(problemFile.fileUri));
-
-        // find domain files in the same folder that match the problem's domain name
-        let domainFiles = folder.getDomainFilesFor(problemFile);
-
-        if (domainFiles.length > 1) {
-            let message = `There are multiple candidate domains with name ${problemFile.domainName}: ` + domainFiles.map(d => PddlWorkspace.getFileName(d.fileUri)).join(', ');
-
-            this.sendDiagnosticInfo(problemFile.fileUri, message);
-            problemFile.setStatus(FileStatus.Validated);
-            return null;
+        try{
+            return getDomainFileForProblem(problemFile, this.pddlWorkspace);
         }
-        else if (domainFiles.length === 0) {
-            // this.workspace.folders.forEach()
-
-            let message = `There are no domains open in the same folder with name (domain '${problemFile.domainName}') open in the editor.`;
-
-            this.sendDiagnosticInfo(problemFile.fileUri, message);
-            problemFile.setStatus(FileStatus.Validated);
-            return null;
+        catch(err){
+            if (err instanceof NoDomainAssociated) {
+                this.sendDiagnosticInfo(problemFile.fileUri, err.message, NoDomainAssociated.DIAGNOSTIC_CODE);
+                problemFile.setStatus(FileStatus.Validated);
+                return null;
+            }
+            throw err;
         }
-        else {
-            return domainFiles[0];
-        }
-
     }
 
-    sendDiagnosticInfo(fileUri: string, message: string) {
-        this.sendDiagnostic(fileUri, message, DiagnosticSeverity.Information);
+    sendDiagnosticInfo(fileUri: string, message: string, code?: string | number) {
+        this.sendDiagnostic(fileUri, message, DiagnosticSeverity.Information, code);
     }
 
-    sendDiagnostic(fileUri: string, message: string, severity: DiagnosticSeverity) {
-        let diagnostics: Diagnostic[] = [new Diagnostic(Validator.createRange(0, 0), message, severity)];
-        this.diagnosticCollection.set(Uri.parse(fileUri), diagnostics);
+    sendDiagnostic(fileUri: string, message: string, severity: DiagnosticSeverity, code?: string | number) {
+        let diagnostic = new Diagnostic(Validator.createLineRange(0), message, severity);
+        if  (code !== undefined && code !== null) {
+            diagnostic.code = code;
+        }
+        this.diagnosticCollection.set(Uri.parse(fileUri), [diagnostic]);
     }
 
     clearDiagnostics(fileUri: string): void {

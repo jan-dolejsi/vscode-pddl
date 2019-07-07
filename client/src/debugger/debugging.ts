@@ -12,7 +12,7 @@ import { HAPPENINGS } from '../../../common/src/parser';
 import { FileInfo } from '../../../common/src/FileInfo';
 import { HappeningsInfo } from "../../../common/src/HappeningsInfo";
 import { PddlWorkspace } from '../../../common/src/PddlWorkspace';
-import { toLanguage, isHappenings, getDomainAndProblemForHappenings, selectHappenings } from '../utils';
+import { toLanguage, isHappenings, getDomainAndProblemForHappenings, selectHappenings } from '../workspace/workspaceUtils';
 import { PddlConfiguration } from '../configuration';
 import { HappeningsExecutor } from './HappeningsExecutor';
 import { DebuggingSessionFiles } from './DebuggingSessionFiles';

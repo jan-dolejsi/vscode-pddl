@@ -21,6 +21,7 @@ import { TestsManifest } from './TestsManifest';
 import { PlanStep } from '../../../common/src/PlanStep';
 import { PddlExtensionContext } from '../../../common/src/PddlExtensionContext';
 import { PTestReport } from './PTestReport';
+import { showError } from '../utils';
 
 /**
  * PDDL Test Explorer pane.
@@ -39,31 +40,26 @@ export class PTestExplorer {
         context.subscriptions.push(this.pTestViewer);
 
         context.subscriptions.push(commands.registerCommand('pddl.tests.refresh', () => this.pTestTreeDataProvider.refresh()));
-        context.subscriptions.push(commands.registerCommand('pddl.tests.run', node => this.runTest(node).catch(this.showError)));
-        context.subscriptions.push(commands.registerCommand('pddl.tests.runAll', node => this.findAndRunTests(node).catch(this.showError)));
+        context.subscriptions.push(commands.registerCommand('pddl.tests.run', node => this.runTest(node).catch(showError)));
+        context.subscriptions.push(commands.registerCommand('pddl.tests.runAll', node => this.findAndRunTests(node).catch(showError)));
         context.subscriptions.push(commands.registerCommand('pddl.tests.view', nodeOrUri => {
             if (nodeOrUri instanceof Uri) {
-                this.openTestByUri(<Uri>nodeOrUri).catch(this.showError);
+                this.openTestByUri(<Uri>nodeOrUri).catch(showError);
             } else {
-                this.openTest(nodeOrUri).catch(this.showError);
+                this.openTest(nodeOrUri).catch(showError);
             }
         }));
-        context.subscriptions.push(commands.registerCommand('pddl.tests.viewDefinition', node => this.openDefinition(node).catch(this.showError)));
-        context.subscriptions.push(commands.registerCommand('pddl.tests.viewExpectedPlans', node => this.openExpectedPlans(node).catch(this.showError)));
-        context.subscriptions.push(commands.registerCommand('pddl.tests.problemSaveAs', () => this.saveProblemAs().catch(this.showError)));
+        context.subscriptions.push(commands.registerCommand('pddl.tests.viewDefinition', node => this.openDefinition(node).catch(showError)));
+        context.subscriptions.push(commands.registerCommand('pddl.tests.viewExpectedPlans', node => this.openExpectedPlans(node).catch(showError)));
+        context.subscriptions.push(commands.registerCommand('pddl.tests.problemSaveAs', () => this.saveProblemAs().catch(showError)));
 
         context.subscriptions.push(commands.registerCommand('pddl.tests.reveal', nodeUri =>
             this.pTestViewer.reveal(this.pTestTreeDataProvider.findNodeByResource(nodeUri), { select: true, expand: true }))
         );
 
-        context.subscriptions.push(this.report = new PTestReport(context));
-        this.generatedDocumentContentProvider = new GeneratedDocumentContentProvider(this.report.outputWindow, planning.pddlWorkspace);
+        context.subscriptions.push(this.report = new PTestReport(context, this.planning.output));
+        this.generatedDocumentContentProvider = new GeneratedDocumentContentProvider(this.planning.output, planning.pddlWorkspace);
         context.subscriptions.push(workspace.registerTextDocumentContentProvider('tpddl', this.generatedDocumentContentProvider));
-    }
-
-    showError(reason: any): void {
-        console.log(reason);
-        window.showErrorMessage(reason.message);
     }
 
     async saveProblemAs(): Promise<void> {
@@ -216,7 +212,7 @@ export class PTestExplorer {
 
                         for (let caseIndex = 0; caseIndex < manifest.testCases.length; caseIndex++) {
                             if (token.isCancellationRequested) {
-                                this.report.output('Canceled by user.');
+                                this.planning.handleOutput('Canceled by user.\n');
                                 reject();
                                 break;
                             }

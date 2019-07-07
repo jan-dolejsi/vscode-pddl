@@ -9,7 +9,7 @@ import {
     ViewColumn, ExtensionContext, TextDocument, WebviewPanel, Disposable, TextDocumentChangeEvent
 } from 'vscode';
 
-import { isPlan, getDomainAndProblemForPlan } from '../utils';
+import { isPlan, getDomainAndProblemForPlan } from '../workspace/workspaceUtils';
 import { PlanReportGenerator } from './PlanReportGenerator';
 import { PddlWorkspace } from '../../../common/src/PddlWorkspace';
 import { PddlLanguage } from '../../../common/src/FileInfo';
