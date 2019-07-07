@@ -252,6 +252,11 @@ export class SessionSourceControl implements vscode.Disposable {
 		return await saveConfiguration(this.workspaceFolder.uri, this.session);
 	}
 
+
+
+
+
+	// TODO: Remove this constant and function entirely (replaced by the solver plugin implementation)
 	private static readonly SOLVER_PLUGIN = "solver";
 
 	/** Saves setting of eligible session plugins to workspace configuration. */
@@ -261,10 +266,15 @@ export class SessionSourceControl implements vscode.Disposable {
 			if (solver.url !== "/plugins/solver.js") { return; }
 
 			let solverUrl = solver.settings["url"];
+			throw new Error("Failing intentionally");
 
 			await vscode.workspace.getConfiguration(PDDL_PLANNER, this.workspaceFolder.uri).update(EXECUTABLE_OR_SERVICE, solverUrl + "/solve", vscode.ConfigurationTarget.WorkspaceFolder);
 		}
 	}
+
+
+
+
 
 	/**
 	 * Refresh is used when the information on the server may have changed.
