@@ -218,24 +218,9 @@ async function getRawSession(sessionConfiguration: SessionConfiguration): Promis
 					{ placeHolder: `Allow code injection from ${pluginName} extension?` });
 				if (answer === "Yes") {
 					try {
-
-						// Build the settings to be passed into the plugin
 						var vscode_settings = {vscode: vscode};
-
-						// TODO: This doesn't quite get at the URI I need
-						//    vscode.ConfigurationTarget.WorkspaceFolder.uri
-						//
-						//   This is the code that's being attempted:
-						//    vscode_api.vscode.workspace.getConfiguration("pddlPlanner", vscode_api.vscode.ConfigurationTarget.WorkspaceFolder.uri)
-						//									.update("executableOrService",
-						//											plugin_settings.url + "/solve",
-						//											vscode_api.vscode.ConfigurationTarget.WorkspaceFolder);
-						//
-
-						console.log("Injecting the following: "+rawPlugins[pluginName]['settings']['vscode-injection']);
 						var cb = eval(rawPlugins[pluginName]['settings']['vscode-injection']);
 						cb(rawPlugins[pluginName]['settings'], vscode_settings);
-
 					} catch (ex) {
 						throw new Error("Failed to run plugin's vscode injection code: " + ex);
 					}

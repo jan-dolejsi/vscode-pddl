@@ -10,7 +10,6 @@ import { toFuzzyRelativeTime } from '../utils';
 import * as afs from '../../../common/src/asyncfs';
 import * as fs from 'fs';
 import { SessionConfiguration, saveConfiguration, SessionMode, toSessionConfiguration, CONFIGURATION_FILE } from './SessionConfiguration';
-import { PDDL_PLANNER, EXECUTABLE_OR_SERVICE } from '../configuration';
 
 /**
  * Command for cloning a session to the local storage.
@@ -226,8 +225,6 @@ export class SessionSourceControl implements vscode.Disposable {
 		if (overwrite) { this.resetFilesToCheckedOutVersion(); } // overwrite local file content
 		this._onRepositoryChange.fire(this.session);
 		await this.updateChangedGroup();
-		await this.saveWorkspaceSettings();
-
 		await this.saveCurrentConfiguration();
 	}
 
@@ -251,30 +248,6 @@ export class SessionSourceControl implements vscode.Disposable {
 	private async saveCurrentConfiguration(): Promise<void> {
 		return await saveConfiguration(this.workspaceFolder.uri, this.session);
 	}
-
-
-
-
-
-	// TODO: Remove this constant and function entirely (replaced by the solver plugin implementation)
-	private static readonly SOLVER_PLUGIN = "solver";
-
-	/** Saves setting of eligible session plugins to workspace configuration. */
-	async saveWorkspaceSettings(): Promise<void> {
-		if (this.session.plugins.has(SessionSourceControl.SOLVER_PLUGIN)) {
-			let solver = this.session.plugins.get(SessionSourceControl.SOLVER_PLUGIN);
-			if (solver.url !== "/plugins/solver.js") { return; }
-
-			let solverUrl = solver.settings["url"];
-			throw new Error("Failing intentionally");
-
-			await vscode.workspace.getConfiguration(PDDL_PLANNER, this.workspaceFolder.uri).update(EXECUTABLE_OR_SERVICE, solverUrl + "/solve", vscode.ConfigurationTarget.WorkspaceFolder);
-		}
-	}
-
-
-
-
 
 	/**
 	 * Refresh is used when the information on the server may have changed.
