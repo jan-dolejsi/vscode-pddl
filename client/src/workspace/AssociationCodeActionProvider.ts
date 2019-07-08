@@ -18,6 +18,7 @@ export class AssociationCodeActionProvider implements CodeActionProvider {
 	];
 
 	provideCodeActions(document: TextDocument, _range: Range | Selection, context: CodeActionContext, token: CancellationToken): CodeAction[] {
+		//console.log('providing code lens actions');
 		if (token.isCancellationRequested) { return []; }
 
 		let associateProblemCodeActions = context.diagnostics
@@ -32,6 +33,7 @@ export class AssociationCodeActionProvider implements CodeActionProvider {
 	}
 
 	private createAssociateProblemCommand(diagnostic: Diagnostic, document: TextDocument): CodeAction {
+		//console.log('creating association quick fix for ' + document.fileName);
 		const title = 'Associate problem file that corresponds to this plan file...';
 		const action = new CodeAction(title, CodeActionKind.QuickFix);
 		action.command = { command: COMMAND_ASSOCIATE_PROBLEM, arguments: [document.uri], title: title };

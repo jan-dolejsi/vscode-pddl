@@ -15,7 +15,7 @@ import { PARSER_EXECUTABLE_OR_SERVICE, CONF_PDDL, VALIDATION_PATH, VALUE_SEQ_PAT
 
 export class Val {
     /** Directory where VAL binaries are to be downloaded locally. */
-    valPath: string;
+    static readonly VAL_DIR = "val";
     /** File that contains version info of last downloaded VAL binaries. */
     valVersionPath: string;
 
@@ -30,8 +30,12 @@ export class Val {
             }
         }));
 
-        this.valPath = path.join(this.context.extensionPath, "val");
-        this.valVersionPath = path.join(this.valPath, "VAL.version");
+        this.valVersionPath = path.join(this.getValPath(), "VAL.version");
+    }
+
+    /** Directory where VAL binaries are to be downloaded locally. */
+    getValPath(): string {
+        return path.join(this.context.extensionPath, Val.VAL_DIR);
     }
 
     private async promptForConsent(): Promise<boolean> {
@@ -73,7 +77,7 @@ export class Val {
             return;
         }
 
-        let zipPath = path.join(this.valPath, "drop.zip");
+        let zipPath = path.join(this.getValPath(), "drop.zip");
         await afs.mkdirIfDoesNotExist(path.dirname(zipPath), 0o644);
 
         let url = `https://dev.azure.com/schlumberger/4e6bcb11-cd68-40fe-98a2-e3777bfec0a6/_apis/build/builds/${buildId}/artifacts?artifactName=${artifactName}&api-version=5.1-preview.5&%24format=zip`;
@@ -101,10 +105,10 @@ export class Val {
 
         let version = versionMatch[1];
 
-        let valToolFileNames = await this.decompress(path.join(this.valPath, valZipFileName));
+        let valToolFileNames = await this.decompress(path.join(this.getValPath(), valZipFileName));
 
         // clean-up and delete the drop content
-        await this.deleteAll(dropEntries.map(file => path.join(this.valPath, file)));
+        await this.deleteAll(dropEntries.map(file => path.join(this.getValPath(), file)));
 
         // delete the drop zip
         await afs.unlink(zipPath);
@@ -112,12 +116,12 @@ export class Val {
         let wasValInstalled = await this.isInstalled();
         let previousVersion = wasValInstalled ? await this.readVersion() : null;
 
-        let valToolFilePaths = valToolFileNames.map(fileName => path.join(this.valPath, fileName));
-        let newValVersion = { buildId: buildId, version: version, files: valToolFilePaths };
+        let valToolFileRelativePaths = valToolFileNames.map(fileName => path.join(Val.VAL_DIR, fileName));
+        let newValVersion = { buildId: buildId, version: version, files: valToolFileRelativePaths };
 
-        this.writeVersion(newValVersion);
+        await this.writeVersion(newValVersion);
 
-        this.updateConfigurationPaths(newValVersion, previousVersion);
+        await this.updateConfigurationPaths(newValVersion, previousVersion);
     }
 
     async decompress(compressedFilePath: string): Promise<string[]> {
@@ -136,7 +140,7 @@ export class Val {
             .map(entry => entry.entryName);
 
         return new Promise<string[]>((resolve, reject) => {
-            zip.extractAllToAsync(this.valPath, true, err => {
+            zip.extractAllToAsync(this.getValPath(), true, err => {
                 if (err) {
                     reject(err);
                     return;
@@ -221,10 +225,10 @@ export class Val {
 
     /**
      * Configures the val tool paths
-     * @param valToolFileNames all VAL tool relative path
+     * @param newValVersion val version just downloaded
+     * @param oldValVersion val version from which we are upgrading
      */
     private async updateConfigurationPaths(newValVersion: ValVersion, oldValVersion: ValVersion): Promise<void> {
-        // let configuration = workspace.getConfiguration("pddl");
         let fileToConfig = new Map<string, string>();
         fileToConfig.set("Parser", PARSER_EXECUTABLE_OR_SERVICE);
         fileToConfig.set("Validate", CONF_PDDL + '.' + VALIDATION_PATH);

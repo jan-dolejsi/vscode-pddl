@@ -4,7 +4,7 @@
  * ------------------------------------------------------------------------------------------ */
 'use strict';
 
-import { join } from 'path';
+import * as path from 'path';
 import { ExtensionContext, Uri, workspace, window } from 'vscode';
 import * as afs from '../../common/src/asyncfs';
 import { PddlExtensionContext } from '../../common/src/PddlExtensionContext';
@@ -20,7 +20,7 @@ export function createPddlExtensionContext(context: ExtensionContext): PddlExten
 }
 
 export async function getWebViewHtml(extensionContext: PddlExtensionContext, relativePath: string, htmlFileName: string) {
-    let overviewHtmlPath = extensionContext.asAbsolutePath(join(relativePath, htmlFileName));
+    let overviewHtmlPath = extensionContext.asAbsolutePath(path.join(relativePath, htmlFileName));
     let html = await afs.readFile(overviewHtmlPath, { encoding: "utf-8", flag: 'r' });
 
     html = html.replace(/<(script|img|link) ([^>]*)(src|href)="([^"]+)"/g, (sourceElement: string, elementName: string, middleBits: string, attribName: string, attribValue: string) => {
@@ -28,7 +28,7 @@ export async function getWebViewHtml(extensionContext: PddlExtensionContext, rel
             return sourceElement;
         }
         let resource = Uri.file(
-            extensionContext.asAbsolutePath(join(relativePath, attribValue)))
+            extensionContext.asAbsolutePath(path.join(relativePath, attribValue)))
             .with({ scheme: "vscode-resource" });
         return `<${elementName} ${middleBits}${attribName}="${resource}"`;
     });
@@ -106,4 +106,21 @@ export function toFuzzyRelativeTime(time: number): string {
 export function showError(reason: any): void {
     console.log(reason);
     window.showErrorMessage(reason.message);
+}
+
+/**
+ * Absolute path, unless it relied on a %path% location (i.e. there was no dirname). 
+ * @param configuredPath a configured path to an executable
+ */
+export function ensureAbsolutePath(configuredPath: string, context: ExtensionContext): string {
+    // if the path is absolute, or contains just the name of an executable (obviously relying on the %path&), return it as is
+    if (!configuredPath) {
+        return configuredPath;
+    } 
+    else if (path.isAbsolute(configuredPath) || !path.dirname(configuredPath)) {
+        return configuredPath;
+    }
+    else {
+        return context.asAbsolutePath(configuredPath);
+    }
 }

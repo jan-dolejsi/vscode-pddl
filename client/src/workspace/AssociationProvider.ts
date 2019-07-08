@@ -5,7 +5,7 @@
 'use strict';
 
 import { CodeActionKind, ExtensionContext, commands, languages, Uri, workspace, TextDocument } from 'vscode';
-import { PLAN, ProblemInfo, PDDL, HAPPENINGS } from '../../../common/src/parser';
+import { PLAN, ProblemInfo, PDDL, HAPPENINGS, DomainInfo } from '../../../common/src/parser';
 import { AssociationCodeActionProvider } from './AssociationCodeActionProvider';
 import { showError } from '../utils';
 import { selectFile } from './workspaceUtils';
@@ -49,18 +49,23 @@ export class AssociationProvider {
             promptMessage: 'Select the matching problem file...',
             findPattern: AssociationProvider.PDDL_PATTERN,
             fileOpenLabel: 'Select',
-            fileOpenFilters: { 'PDDL Problem Files': ['pddl'] }
+            fileOpenFilters: { 'PDDL Problem Files': ['pddl'] },
+            workspaceFolder: workspace.getWorkspaceFolder(planUri)
         });
         if (problemUri) {
             let problemDocument = await workspace.openTextDocument(problemUri);
             //window.showTextDocument(problemDocument);
-            this.associatePlanToProblem(planUri, problemDocument);
+            await this.associatePlanToProblem(planUri, problemDocument);
         }
     }
 
     private async associatePlanToProblem(planUri: Uri, problemDocument: TextDocument): Promise<void> {
-        await this.upsertAndParseFile(problemDocument);
-        this.pddlWorkspace.associatePlanToProblem(planUri.toString(), problemDocument.uri.toString());
+        let parsedFileInfo = await this.upsertAndParseFile(problemDocument);
+        if (!(parsedFileInfo instanceof ProblemInfo)) {
+            throw new Error("Selected file is not a problem file.");
+        }
+        let problemInfo = <ProblemInfo>parsedFileInfo;
+        this.pddlWorkspace.associatePlanToProblem(planUri.toString(), problemInfo);
         console.log(`Associated ${problemDocument.uri} to ${planUri}.`);
         // re-validate the plan file
         let planInfo = this.pddlWorkspace.getFileInfo(planUri.toString());
@@ -73,11 +78,12 @@ export class AssociationProvider {
             promptMessage: 'Select the matching domain file...',
             findPattern: AssociationProvider.PDDL_PATTERN,
             fileOpenLabel: 'Select',
-            fileOpenFilters: { 'PDDL Domain Files': ['pddl'] }
+            fileOpenFilters: { 'PDDL Domain Files': ['pddl'] },
+            workspaceFolder: workspace.getWorkspaceFolder(problemUri)
         }, suggestedFiles);
         if (domainUri) {
             let domainDocument = await workspace.openTextDocument(domainUri);
-            this.associateDomainToProblem(problemUri, domainDocument);
+            await this.associateDomainToProblem(problemUri, domainDocument);
             return domainDocument;
         }
         else {
@@ -85,18 +91,23 @@ export class AssociationProvider {
         }
     }
     private async associateDomainToProblem(problemUri: Uri, domainDocument: TextDocument): Promise<void> {
-        await this.upsertAndParseFile(domainDocument);
-        this.pddlWorkspace.associateProblemToDomain(problemUri.toString(), domainDocument.uri.toString());
+        let parsedFileInfo = await this.upsertAndParseFile(domainDocument);
+        if (!(parsedFileInfo instanceof DomainInfo)) {
+            throw new Error("Selected file is not a domain file.");
+        }
+        let domainInfo = <DomainInfo>parsedFileInfo;
+        let problemInfo = this.pddlWorkspace.getFileInfo<ProblemInfo>(problemUri.toString());
+
+        this.pddlWorkspace.associateProblemToDomain(problemInfo, domainInfo);
         console.log(`Associated ${domainDocument.uri} to ${problemUri}.`);
         // re-validate the problem file
-        let problemInfo = this.pddlWorkspace.getFileInfo<ProblemInfo>(problemUri.toString());
         this.pddlWorkspace.invalidateDiagnostics(problemInfo);
         this.pddlWorkspace.getPlanFiles(problemInfo).forEach(planInfo => this.pddlWorkspace.invalidateDiagnostics(planInfo));
         this.pddlWorkspace.getHappeningsFiles(problemInfo).forEach(happeningsInfo => this.pddlWorkspace.invalidateDiagnostics(happeningsInfo));
     }
 
-    private async upsertAndParseFile(document: TextDocument) {
-        await this.pddlWorkspace.upsertAndParseFile(document.uri.toString(), PddlLanguage.PDDL, document.version, document.getText());
+    private async upsertAndParseFile(document: TextDocument): Promise<FileInfo> {
+        return await this.pddlWorkspace.upsertAndParseFile(document.uri.toString(), PddlLanguage.PDDL, document.version, document.getText());
     }
 
 }

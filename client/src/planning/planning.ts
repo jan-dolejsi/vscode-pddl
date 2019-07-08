@@ -35,6 +35,7 @@ import { PlannerOptionsProvider, PlanningRequestContext } from './PlannerOptions
 import { PlannerUserOptionsSelector } from './PlannerUserOptionsSelector';
 import { PlannerConfigurationSelector } from './PlannerConfigurationSelector';
 import { AssociationProvider } from '../workspace/AssociationProvider';
+import { showError } from '../utils';
 
 const PDDL_STOP_PLANNER = 'pddl.stopPlanner';
 const PDDL_CONVERT_PLAN_TO_HAPPENINGS = 'pddl.convertPlanToHappenings';
@@ -63,9 +64,9 @@ export class Planning implements PlannerResponseHandler {
         context.subscriptions.push(commands.registerCommand('pddl.planAndDisplayResult',
             async (domainUri: Uri, problemUri: Uri, workingFolder: string, options: string) => {
                 if (problemUri) {
-                    await this.planByUri(domainUri, problemUri, workingFolder, options);
+                    await this.planByUri(domainUri, problemUri, workingFolder, options).catch(showError);
                 } else {
-                    await this.plan();
+                    await this.plan().catch(showError);
                 }
             })
         );
@@ -149,7 +150,7 @@ export class Planning implements PlannerResponseHandler {
         this.output.clear();
 
         const activeDocument = window.activeTextEditor.document;
-
+        if (!activeDocument) { return null; }
         const activeFileInfo = await this.upsertFile(activeDocument);
 
         let problemFileInfo: ProblemInfo;
@@ -164,12 +165,14 @@ export class Planning implements PlannerResponseHandler {
             if (domainFiles.length === 1) {
                 domainFileInfo = domainFiles[0];
             } else if (domainFiles.length !== 1) {
+                let workspaceFolder = workspace.getWorkspaceFolder(window.activeTextEditor.document.uri);
                 const domainFileUri = await selectFile({
                     language: PddlLanguage.PDDL,
                     promptMessage: 'Select the matching domain file...',
                     findPattern: AssociationProvider.PDDL_PATTERN,
                     fileOpenLabel: 'Select',
-                    fileOpenFilters: { 'PDDL Domain Files': ['pddl'] }
+                    fileOpenFilters: { 'PDDL Domain Files': ['pddl'] },
+                    workspaceFolder: workspaceFolder
                 }, domainFiles);
 
                 if (!domainFileUri) { return; } // was canceled
@@ -206,7 +209,8 @@ export class Planning implements PlannerResponseHandler {
             return;
         }
 
-        await this.planExplicit(domainFileInfo, problemFileInfo, dirname(activeDocument.fileName));
+        let workingDirectory = activeDocument.uri.scheme === "file" ? dirname(activeDocument.fileName) : "";
+        await this.planExplicit(domainFileInfo, problemFileInfo, workingDirectory);
     }
 
     private readonly _onPlansFound = new EventEmitter<PlanningResult>();
@@ -288,6 +292,8 @@ export class Planning implements PlannerResponseHandler {
     }
 
     async adjustWorkingFolder(workingDirectory: string): Promise<string> {
+        if (!workingDirectory) { return ""; }
+
         // the working directory may be virtual, replace it
         if (!await afs.exists(workingDirectory)) {
             if (workspace.workspaceFolders.length) {

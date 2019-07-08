@@ -5,6 +5,8 @@
 import * as vscode from 'vscode';
 import { PDDLParserSettings } from './Settings';
 
+import { ensureAbsolutePath } from './utils';
+
 export const EXECUTABLE_OR_SERVICE = 'executableOrService';
 export const PDDL_PARSER = 'pddlParser';
 export const PARSER_EXECUTABLE_OR_SERVICE = PDDL_PARSER + '.' + EXECUTABLE_OR_SERVICE;
@@ -24,8 +26,8 @@ export const CONF_PDDL = 'pddl';
 export const VALIDATION_PATH = 'validatorPath';
 export const VAL_STEP_PATH = 'valStepPath';
 export const VALUE_SEQ_PATH = 'valueSeqPath';
-export const PLANNER_VAL_STEP_PATH  = CONF_PDDL + "." + VAL_STEP_PATH;
-export const PLANNER_VALUE_SEQ_PATH  = CONF_PDDL + "." + VALUE_SEQ_PATH;
+export const PLANNER_VAL_STEP_PATH = CONF_PDDL + "." + VAL_STEP_PATH;
+export const PLANNER_VALUE_SEQ_PATH = CONF_PDDL + "." + VALUE_SEQ_PATH;
 
 export class PddlConfiguration {
 
@@ -36,9 +38,10 @@ export class PddlConfiguration {
         return vscode.workspace.getConfiguration().get(PLANNER_EPSILON_TIMESTEP);
     }
 
-    async getParserPath(): Promise<string> {
+    getParserPath(): string {
         // this may be 'undefined'
-        return vscode.workspace.getConfiguration().get(PARSER_EXECUTABLE_OR_SERVICE);
+        let configuredPath = vscode.workspace.getConfiguration().get<string>(PARSER_EXECUTABLE_OR_SERVICE);
+        return ensureAbsolutePath(configuredPath, this.context);
     }
 
     NEVER_SETUP_PARSER = 'neverSetupParser';
@@ -81,7 +84,7 @@ export class PddlConfiguration {
     }
 
     async askNewParserPath() {
-        let existingValue: string = vscode.workspace.getConfiguration().get(PARSER_EXECUTABLE_OR_SERVICE);
+        let existingValue = vscode.workspace.getConfiguration().get<string>(PARSER_EXECUTABLE_OR_SERVICE);
 
         let newParserPath = await vscode.window.showInputBox({
             prompt: "Enter PDDL parser/validator path local command or web service URL",
@@ -265,23 +268,27 @@ export class PddlConfiguration {
     }
 
     getPlannerSyntax(): string {
-        return vscode.workspace.getConfiguration().get(PLANNER_EXECUTABLE_OPTIONS);
+        return vscode.workspace.getConfiguration().get<string>(PLANNER_EXECUTABLE_OPTIONS);
     }
 
     getValueSeqPath(): string {
-        return vscode.workspace.getConfiguration().get(PLANNER_VALUE_SEQ_PATH);
+        let configuredPath = vscode.workspace.getConfiguration().get<string>(PLANNER_VALUE_SEQ_PATH);
+        return ensureAbsolutePath(configuredPath, this.context);
     }
 
     getValidatorPath(): string {
-        return vscode.workspace.getConfiguration(CONF_PDDL).get(VALIDATION_PATH);
+        let configuredPath = vscode.workspace.getConfiguration(CONF_PDDL).get<string>(VALIDATION_PATH);
+        return ensureAbsolutePath(configuredPath, this.context);
     }
 
-    askNewValidatorPath(): Promise<string> {
-        return this.askAndUpdatePath(VALIDATION_PATH, "Validate tool");
+    async askNewValidatorPath(): Promise<string> {
+        let configuredPath = await this.askAndUpdatePath(VALIDATION_PATH, "Validate tool");
+        return ensureAbsolutePath(configuredPath, this.context);
     }
 
-    getValStepPath(): Promise<string> {
-        return this.getOrAskPath(VAL_STEP_PATH, "ValStep executable");
+    async getValStepPath(): Promise<string> {
+        let configuredPath = await this.getOrAskPath(VAL_STEP_PATH, "ValStep executable");
+        return ensureAbsolutePath(configuredPath, this.context);
     }
 
     async getOrAskPath(configName: string, configFriendlyName: string): Promise<string> {
@@ -355,7 +362,7 @@ export class PddlConfiguration {
 
         let target: vscode.ConfigurationTarget;
 
-        if (legacyConfig.workspaceFolderValue) { 
+        if (legacyConfig.workspaceFolderValue) {
             target = vscode.ConfigurationTarget.WorkspaceFolder;
         } else if (legacyConfig.workspaceValue) {
             target = vscode.ConfigurationTarget.Workspace;

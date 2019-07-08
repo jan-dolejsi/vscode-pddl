@@ -346,8 +346,8 @@ export class PddlWorkspace extends EventEmitter {
     /** Explicit associations between problem files and domain files. */
     private problemToDomainMap = new Map<string, string>();
 
-    associateProblemToDomain(problemUri: string, domainUri: string) {
-        this.problemToDomainMap.set(problemUri, domainUri);
+    associateProblemToDomain(problemInfo: ProblemInfo, domainInfo: DomainInfo) {
+        this.problemToDomainMap.set(problemInfo.fileUri, domainInfo.fileUri);
     }
 
     /**
@@ -388,8 +388,8 @@ export class PddlWorkspace extends EventEmitter {
     /** Explicit associations between plan files and problem files. */
     private planToProblemMap = new Map<string, string>();
 
-    associatePlanToProblem(planUri: string, problemUri: string) {
-        this.planToProblemMap.set(planUri, problemUri);
+    associatePlanToProblem(planUri: string, problemFileInfo: ProblemInfo) {
+        this.planToProblemMap.set(planUri, problemFileInfo.fileUri);
     }
 
     getProblemFileForPlan(planInfo: PlanInfo): ProblemInfo {

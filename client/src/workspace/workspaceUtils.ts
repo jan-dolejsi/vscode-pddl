@@ -4,7 +4,7 @@
  * ------------------------------------------------------------------------------------------ */
 'use strict';
 
-import { TextDocument, window, workspace, QuickPickItem, Uri, GlobPattern } from 'vscode';
+import { TextDocument, window, workspace, QuickPickItem, Uri, GlobPattern, WorkspaceFolder } from 'vscode';
 import { PDDL, PLAN, toLanguageFromId, HAPPENINGS, PlanInfo, ProblemInfo, DomainInfo, UNSPECIFIED_PROBLEM, UNSPECIFIED_DOMAIN } from '../../../common/src/parser';
 import { PddlLanguage, FileInfo } from '../../../common/src/FileInfo';
 import { HappeningsInfo } from "../../../common/src/HappeningsInfo";
@@ -122,12 +122,16 @@ export async function selectHappenings(): Promise<string> {
         return window.activeTextEditor.document.uri.fsPath;
     }
 
+    let workspaceFolder = window.activeTextEditor && window.activeTextEditor.document ?
+        workspace.getWorkspaceFolder(window.activeTextEditor.document.uri) : null;
+
     let happeningsUri = await selectFile({
         language: PddlLanguage.HAPPENINGS,
         promptMessage: 'Select happenings file to debug...',
         findPattern: '**/*.happenings',
         fileOpenLabel: 'Start debugging',
-        fileOpenFilters: { 'PDDL Plan Happenings': ['happenings'] }
+        fileOpenFilters: { 'PDDL Plan Happenings': ['happenings'] },
+        workspaceFolder: workspaceFolder
     });
 
     window.showTextDocument(happeningsUri);
@@ -147,6 +151,11 @@ async function selectTextDocument(options: SelectFileOptions, textDocuments: Tex
     }
 }
 
+/**
+ * Selects a document given th criteria in the _options_
+ * @param options select file options
+ * @param suggestedFiles files that the PddlWorkspace identified as candidates
+ */
 export async function selectFile(options: SelectFileOptions, suggestedFiles?: FileInfo[]): Promise<Uri> {
     // 0. is one of the suggested text documents the right one?
     if (suggestedFiles && suggestedFiles.length) {
@@ -187,8 +196,7 @@ export async function selectFile(options: SelectFileOptions, suggestedFiles?: Fi
 
     // 3. else select a file from the local disk
     {
-        let workspaceFolder = workspace.workspaceFolders.find(_ => true);
-        let defaultUri = workspaceFolder ? workspaceFolder.uri : undefined;
+        let defaultUri = options.workspaceFolder ? options.workspaceFolder.uri : undefined;
         let selectedHappeningsUris = await window.showOpenDialog({
             defaultUri: defaultUri,
             canSelectFiles: true, canSelectFolders: false,
@@ -220,6 +228,8 @@ export interface SelectFileOptions {
      * File open dialog pattern: `{ 'PDDL Plan Happenings': ['happenings'] }`
     */
     fileOpenFilters: { [name: string]: string[] };
+    /** default workspace folder to look in */
+    workspaceFolder?: WorkspaceFolder;
 }
 
 interface FileInfoQuickPickItem extends QuickPickItem {

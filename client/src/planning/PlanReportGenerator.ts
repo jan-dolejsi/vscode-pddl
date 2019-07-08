@@ -21,6 +21,7 @@ import { PlanReportSettings } from './PlanReportSettings';
 import { VAL_STEP_PATH, CONF_PDDL, VALUE_SEQ_PATH } from '../configuration';
 import * as afs from '../../../common/src/asyncfs';
 import { ValStepError, ValStep } from '../debugger/ValStep';
+import { ensureAbsolutePath } from '../utils';
 const DIGITS = 4;
 
 export class PlanReportGenerator {
@@ -156,8 +157,8 @@ ${objectsHtml}
         </table>
     </div>`;
 
-        let valStepPath = workspace.getConfiguration(CONF_PDDL).get<string>(VAL_STEP_PATH);
-        let valueSeqPath = workspace.getConfiguration(CONF_PDDL).get<string>(VALUE_SEQ_PATH);
+        let valStepPath = ensureAbsolutePath(workspace.getConfiguration(CONF_PDDL).get<string>(VAL_STEP_PATH), this.context);
+        let valueSeqPath = ensureAbsolutePath(workspace.getConfiguration(CONF_PDDL).get<string>(VALUE_SEQ_PATH), this.context);
 
         let lineCharts = `    <div class="lineChart" plan="${planIndex}" style="display: ${styleDisplay};margin-top: 20px;">\n`;
         let lineChartScripts = '';

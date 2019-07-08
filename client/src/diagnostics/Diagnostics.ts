@@ -194,6 +194,8 @@ export class Diagnostics extends Disposable {
             return;
         }
 
+        // console.log(`Validating '${fileInfo.name}' file.`);
+
         // detect parsing and pre-processing issues
         if (fileInfo.getParsingProblems().length > 0) {
             let parsingProblems = new Map<string, Diagnostic[]>();
@@ -225,9 +227,7 @@ export class Diagnostics extends Disposable {
 
     validateDomainAndProblems(domainInfo: DomainInfo, problemFiles: ProblemInfo[], scheduleFurtherValidation: boolean): void {
 
-        if (this.pddlParserSettings.executableOrService === null ||
-            this.pddlParserSettings.executableOrService === undefined ||
-            this.pddlParserSettings.executableOrService === "") {
+        if (!this.pddlConfiguration.getParserPath()) {
             // suggest the user to update the settings
             var showNever = true;
             this.pddlConfiguration.suggestNewParserConfiguration(showNever);
@@ -237,8 +237,6 @@ export class Diagnostics extends Disposable {
         // mark the files that they are under validation
         domainInfo.setStatus(FileStatus.Validating);
         problemFiles.forEach(p => p.setStatus(FileStatus.Validating));
-
-        // this.connection.console.log(`Validating ${domainInfo.name} and ${problemFiles.length} problem files.`)
 
         let validator = this.createValidator();
         if (!validator) { return; }
@@ -256,12 +254,12 @@ export class Diagnostics extends Disposable {
     }
 
     createValidator(): Validator {
-        if (!this.validator || this.validator.path !== this.pddlParserSettings.executableOrService
+        if (!this.validator || this.validator.path !== this.pddlConfiguration.getParserPath()
             || (this.validator instanceof ValidatorExecutable) && (
                 this.validator.syntax !== this.pddlParserSettings.executableOptions ||
                 this.validator.customPattern !== this.pddlParserSettings.problemPattern
             )) {
-            if (this.pddlParserSettings.executableOrService.match(/^http[s]?:/i)) {
+            if (this.pddlConfiguration.getParserPath().match(/^http[s]?:/i)) {
                 // is a service
                 let authentication = new Authentication(
                     this.pddlParserSettings.serviceAuthenticationUrl,
@@ -279,10 +277,10 @@ export class Diagnostics extends Disposable {
                     this.pddlParserSettings.serviceAuthenticationRefreshToken,
                     this.pddlParserSettings.serviceAuthenticationAccessToken,
                     this.pddlParserSettings.serviceAuthenticationSToken);
-                return this.validator = new ValidatorService(this.pddlParserSettings.executableOrService, this.pddlParserSettings.serviceAuthenticationEnabled, authentication);
+                return this.validator = new ValidatorService(this.pddlConfiguration.getParserPath(), this.pddlParserSettings.serviceAuthenticationEnabled, authentication);
             }
             else {
-                return this.validator = new ValidatorExecutable(this.pddlParserSettings.executableOrService, this.pddlParserSettings.executableOptions, this.pddlParserSettings.problemPattern);
+                return this.validator = new ValidatorExecutable(this.pddlConfiguration.getParserPath(), this.pddlParserSettings.executableOptions, this.pddlParserSettings.problemPattern);
             }
         }
         else {
