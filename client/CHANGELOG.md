@@ -1,15 +1,46 @@
 # PDDL support - What's new?
 
-## [2.11.9] - 2019-07-?
+## [2.12.0] - 2019-07-08 - ICAPS 2019 Update
+
+### News
+
+This YouTube channel now shows how to use the PDDL extension to its full potential: [Hands-on PDDL Tutorial](https://youtu.be/XW0z8Oik6G8)
 
 ### New features
 
-- PDDL Testing now shows results on a report page. This is far more readable than the summary in the output window.
+#### PDDL parser and plan validation tools auto-download
+
+The _PDDL Overview Page_ suggests to download the [VAL](https://github.com/KCL-Planning/VAL) tools that include the PDDL parser, plan validator and couple other derived utilities for plan evaluation. This democratises many of the features that were available in experimental mode for the last 12(!) months.\
+This YouTube video shows the download experience: [PDDL Tooling - Episode 1: Planning.Domains session](https://youtu.be/XW0z8Oik6G8)\
+This video shows the benefits of having the VAL tools: [PDDL Tooling - Episode 4: Working with plans](https://youtu.be/BFlCz49ETcA)
+
+#### PDDL domain/problem/plan file associations
+
+You can now enjoy the freedom of having your PDDL files spread across any directory structure.
+
+The VS Code PDDL extension had rigid convention for matching domain and problem files to each other. They had to be in the same folder and both open in the editor. Failing that, the editor was not able to naturally associate your files to each other. That would prevent you from invoking the planner, or validator seamlessly.
+
+If one of the rules above is not satisfied, the editor will not naturally associate your files to each other. In that case it shows a validation error suggesting to apply a _Quick Fix_ via the 💡 symbol, which lets you find the corresponding domain/problem file from following scopes:
+
+1. suggested files, if multiple candidates were found
+1. currently open files in the editor
+1. other files in the workspace
+1. any other file selectable from the computer storage
+
+![domain/problem/plann associations](https://raw.githubusercontent.com/wiki/jan-dolejsi/vscode-pddl/img/PDDL_explicit_domain-problem-plan_associations.gif)
+
+#### PDDL Test Report
+
+PDDL Testing now shows results on a report page. This is far more readable than the summary in the `PDDL Test Output` window, which is now removed.
+I removed the `PDDL Test Output` channel to simplify UX.
 
 ### Fixes
 
 - Ask for confirmation before discarding changes in session files.
 - PDDL Planner configuration can now be picked up from a workspace folder configuration.
+- Modal warning when sending PDDL to a new service
+- Cleaned-up tips
+- Planning.Domains interactions improvements ahead of the upcoming ICAPS tutorial.
 
 ## [2.11.8] - 2019-07-05
 
@@ -637,11 +668,11 @@ Simplified snippets and added tabstops/placeholders to them, so they are easy to
 
 ## Future work
 
+- valstep batch mode
 - Review configuration properties scope - which properties should be moved to 'application' scope?
 - Validate new symbol name while renaming using `prepareRename`
 - Rename parameters and objects
 - Auto-completion for constant/object names.
-- More general matching of domain file to problem file across workspace folder structure
 - Support for [Outline view](https://code.visualstudio.com/updates/v1_25#_outline-view), [Document Symbols](https://code.visualstudio.com/updates/v1_25#_document-symbols)
 - Any other extensions to put into extensions.json?
 - Review the ViewColumn usage following the Grid View feature availability in VS Code
@@ -663,7 +694,8 @@ Note for open source contributors: all notable changes to the "pddl" extension w
 
 Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
 
-[Unreleased]: https://github.com/jan-dolejsi/vscode-pddl/compare/v2.11.8...HEAD
+[Unreleased]: https://github.com/jan-dolejsi/vscode-pddl/compare/v2.12.0...HEAD
+[2.12.0]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.11.8...v2.12.0
 [2.11.8]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.11.7...v2.11.8
 [2.11.7]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.11.5...v2.11.7
 [2.11.5]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.11.4...v2.11.5

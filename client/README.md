@@ -21,7 +21,7 @@ Simplest way to get started is to:
 1. create two blank files using _File > New File_ named `domain.pddl` and `problem.pddl`, both files will show up in the _Explorer_ pane, open them side by side in the editor,
 1. open the _domain.pddl_ file and type ```domain```. The auto-completion suggests to insert the entire structure of the domain file. Use the <kbd>Tab</kbd> and <kbd>Enter</kbd> keys to skip through the placeholders and make your selections.
 1. open the _problem.pddl_ file and type ```problem```. The auto-completion suggests to insert the entire structure of the problem file. Make sure that the `(domain name)` here matches the name selected in the domain file.
-1. When prompted to configure a _PDDL Parser_, follow the instructions, or select _Later_ to postpone this if you do not have a PDDL parser handy. See [more info](https://github.com/jan-dolejsi/vscode-pddl/wiki/Configuring-the-PDDL-parser).
+1. When prompted to install the VAL (i.e. Validator) tools, follow the instructions. This will bring a PDDL parser and plan validation utilities to your experience.
 1. When you are ready to run the planner on your domain and problem files (both must be open in the editor), invoke the planner via context menu on one of the file text content, or via the <kbd>Alt</kbd> + <kbd>P</kbd> shortcut. The [planning.domains](http://solver.planning.domains/) solver will be used, so do not send any confidential PDDL code.
 1. Configure your own PDDL planner by following [instructions](https://github.com/jan-dolejsi/vscode-pddl/wiki/Configuring-the-PDDL-planner).
 
@@ -35,7 +35,8 @@ To exercise the features of this PDDL Extension, clone this [vscode-pddl-samples
 
 ### Starting from existing PDDL models
 
-Open [editor.planning.domains](http://editor.planning.domains/) in your browser, select _Import_ from the menu and browse the catalog of all the International Planning Competition benchmarks. Or find more examples [here](https://github.com/SoarGroup/Domains-Planning-Domain-Definition-Language/tree/master/pddl).
+Open [editor.planning.domains](http://editor.planning.domains/) in your browser, select _Import_ from the menu and browse the catalog of all the International Planning Competition benchmarks. Or find more examples [here](https://github.com/SoarGroup/Domains-Planning-Domain-Definition-Language/tree/master/pddl).\
+To get back from the online editor to VS Code, save your files into a session and click "Open offline".
 
 ## Features
 
@@ -114,7 +115,7 @@ There are multiple scenarios supported:
   * and if multiple corresponding problem files are open, the list of applicable problem files will appear and the user will select one.
 * if command is invoked on a problem file, the domain file (if open in the editor) will be selected automatically.
 
-Domain and problem files correspond to each other, if:
+Domain, problem and plan/happenings files correspond to each other, if:
 
 * they have the same domain name i.e. `(domain name)` and
 * they are located in the same folder and
@@ -123,6 +124,15 @@ Domain and problem files correspond to each other, if:
 ![planner](https://raw.githubusercontent.com/wiki/jan-dolejsi/vscode-pddl/img/PDDL_plan.gif)
 
 Control+click on action names in `.plan` files to jump to the action definition in the domain file.
+
+If one of the rules above is not satisfied, the editor will not naturally associate your files to each other. In that case it shows a validation error suggesting to apply a _Quick Fix_, which lets you find the corresponding domain/problem file from following scopes:
+
+* suggested files, if multiple candidates were found
+* currently open files in the editor
+* other files in the workspace
+* any other file selectable from the computer storage
+
+![domain/problem/plann associations](https://raw.githubusercontent.com/wiki/jan-dolejsi/vscode-pddl/img/PDDL_explicit_domain-problem-plan_associations.gif)
 
 #### Running the planner interactively
 

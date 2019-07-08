@@ -37,9 +37,10 @@ export class PTestReport implements Disposable {
     }
 
     upsertTestResult(test: Test, result: TestResult): void {
+        this.manifests.putIfAbsent(test.getManifest(), () => new TestResultMap());
         let testMap = this.manifests.get(test.getManifest());
         testMap.set(test, result);
-        this.view.updatePage();
+        if (this.view) { this.view.updatePage(); }
     }
 
     finishedManifest(manifest: TestsManifest): void {

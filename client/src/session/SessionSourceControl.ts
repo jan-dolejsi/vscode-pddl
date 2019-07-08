@@ -158,11 +158,14 @@ export class SessionSourceControl implements vscode.Disposable {
 	 * Throws away all local changes and resets all files to the checked out version of the repository.
 	 */
 	async resetFilesToCheckedOutVersion(): Promise<void> {
-		const discardAnswer = "Discard";
-		let answer = await vscode.window.showWarningMessage(`Discard ${this.getLocalModifiedResources().length} changes?`, {modal: true}, discardAnswer, "Cancel");
-		if (answer === discardAnswer) {
-			this.session.files.forEach((fileContent, fileName) => this.resetFile(fileName, fileContent));
+		if (this.getLocalModifiedResources() && this.getLocalModifiedResources().length > 0) {
+			const discardAnswer = "Discard";
+			let answer = await vscode.window.showWarningMessage(`Discard ${this.getLocalModifiedResources().length} changes?`, { modal: true }, discardAnswer, "Cancel");
+			if (answer !== discardAnswer) {
+				return null;
+			}
 		}
+		this.session.files.forEach((fileContent, fileName) => this.resetFile(fileName, fileContent));
 	}
 
 	/** Resets the given local file content to the checked-out version. */
@@ -210,7 +213,7 @@ export class SessionSourceControl implements vscode.Disposable {
 					let conflictingUntrackedResourceNames = conflictingUntrackedResources
 						.map(resource => this.toOpenFileNotificationLink(resource.resourceUri))
 						.join(", ");
-					vscode.window.showErrorMessage(`Merge conflict: delete/rename your local version of following session file(s): ${conflictingUntrackedResourceNames} before checking out the session content.`, { modal: true });
+					vscode.window.showErrorMessage(`Merge conflict: delete/rename your local version of following session file(s): ${conflictingUntrackedResourceNames} before checking out the session content.`, { modal: false });
 				} else {
 					await this.setSession(newSession, true);
 				}

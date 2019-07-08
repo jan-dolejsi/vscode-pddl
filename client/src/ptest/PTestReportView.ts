@@ -65,8 +65,10 @@ export class PTestReportView {
     }
 
     async updatePage(): Promise<void> {
-        let html = await this.getHtml();
-        this.webViewPanel.webview.html = html;
+        if (this.webViewPanel) {
+            let html = await this.getHtml();
+            this.webViewPanel.webview.html = html;
+        }
     }
 
     async getHtml(): Promise<string> {

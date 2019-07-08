@@ -320,8 +320,8 @@ export class PTestExplorer {
     }
 
     outputTestResult(test: Test, outcome: TestOutcome, elapsedTime: number, error?: string) {
-        this.report.outputTestResult(test, outcome, elapsedTime, error);
         this.setTestOutcome(test, outcome);
+        this.report.outputTestResult(test, outcome, elapsedTime, error);
     }
 
     setTestOutcome(test: Test, testOutcome: TestOutcome) {
