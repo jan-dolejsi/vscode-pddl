@@ -145,7 +145,7 @@ export class PTestExplorer {
         let domainDocument = await workspace.openTextDocument(test.getDomainUri());
         await window.showTextDocument(domainDocument.uri, { preview: true, viewColumn: ViewColumn.One });
 
-        this.openProblemFile(test);
+        await this.openProblemFile(test);
     }
 
     async openProblemFile(test: Test): Promise<void> {

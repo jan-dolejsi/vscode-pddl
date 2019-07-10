@@ -176,9 +176,6 @@ function initialize() {
         }
     });
 
-    initializeChart();
-    subscribeToChartEvents();
-
     window.document.addEventListener('keydown', function(event) {
         navigate(event);
     })
@@ -192,6 +189,9 @@ function initialize() {
     if (!vscode) {
         showDebuggerOn(false);
     }
+
+    initializeChart();
+    subscribeToChartEvents();
 }
 
 var chartSelectEvent;
