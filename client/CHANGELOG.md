@@ -1,6 +1,6 @@
 # PDDL support - What's new?
 
-## [2.12.1] - 2019-07-08 - ICAPS 2019 Update
+## [2.12.2] - 2019-07-08 - ICAPS 2019 Update
 
 ### News
 
@@ -694,8 +694,8 @@ Note for open source contributors: all notable changes to the "pddl" extension w
 
 Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
 
-[Unreleased]: https://github.com/jan-dolejsi/vscode-pddl/compare/v2.12.1...HEAD
-[2.12.1]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.11.8...v2.12.1
+[Unreleased]: https://github.com/jan-dolejsi/vscode-pddl/compare/v2.12.2...HEAD
+[2.12.2]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.11.8...v2.12.2
 [2.11.8]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.11.7...v2.11.8
 [2.11.7]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.11.5...v2.11.7
 [2.11.5]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.11.4...v2.11.5
