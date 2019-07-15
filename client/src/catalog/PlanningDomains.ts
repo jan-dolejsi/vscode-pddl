@@ -8,6 +8,7 @@ import { getJson } from '../httpUtils';
 
 export class PlanningDomains {
 
+    public static readonly AUTHORITY = "api.planning.domains";
     public static readonly URL = "https://api.planning.domains/json/classical/";
 
     private parseCollection(collection_json: any): Collection {

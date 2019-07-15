@@ -9,8 +9,6 @@ import {
     MessageItem, ExtensionContext, ProgressLocation, TextDocument, EventEmitter, Event, CancellationToken, Progress
 } from 'vscode';
 
-import * as path from 'path';
-
 import { PddlWorkspace } from '../../../common/src/PddlWorkspace';
 import { DomainInfo, ProblemInfo } from '../../../common/src/parser';
 import { FileInfo, PddlLanguage } from '../../../common/src/FileInfo';
@@ -18,7 +16,8 @@ import { PddlConfiguration } from '../configuration';
 import { Plan } from '../../../common/src/Plan';
 import { PlannerResponseHandler } from './PlannerResponseHandler';
 import { PlannerExecutable } from './PlannerExecutable';
-import { PlannerService } from './PlannerService';
+import { PlannerSyncService } from './PlannerSyncService';
+import { PlannerAsyncService } from './PlannerAsyncService';
 import { Planner } from './planner';
 import { PddlPlanParser } from '../../../common/src/PddlPlanParser';
 import { Authentication } from '../../../common/src/Authentication';
@@ -28,11 +27,15 @@ import { PlanReportGenerator } from './PlanReportGenerator';
 import { PlanExporter } from './PlanExporter';
 import { PlanHappeningsExporter } from './PlanHappeningsExporter';
 import { HappeningsPlanExporter } from './HappeningsPlanExporter';
-import { isHappenings, isPlan } from '../utils';
+import { isHappenings, isPlan, selectFile } from '../workspace/workspaceUtils';
 import * as afs from '../../../common/src/asyncfs';
 
 import { PlanView, PDDL_GENERATE_PLAN_REPORT, PDDL_EXPORT_PLAN } from './PlanView';
 import { PlannerOptionsProvider, PlanningRequestContext } from './PlannerOptionsProvider';
+import { PlannerUserOptionsSelector } from './PlannerUserOptionsSelector';
+import { PlannerConfigurationSelector } from './PlannerConfigurationSelector';
+import { AssociationProvider } from '../workspace/AssociationProvider';
+import { showError } from '../utils';
 
 const PDDL_STOP_PLANNER = 'pddl.stopPlanner';
 const PDDL_CONVERT_PLAN_TO_HAPPENINGS = 'pddl.convertPlanToHappenings';
@@ -50,8 +53,10 @@ export class Planning implements PlannerResponseHandler {
     planningProcessKilled: boolean;
     planView: PlanView;
     optionProviders: PlannerOptionsProvider[] = [];
+    userOptionsProvider: PlannerUserOptionsSelector;
 
     constructor(public pddlWorkspace: PddlWorkspace, public plannerConfiguration: PddlConfiguration, context: ExtensionContext) {
+        this.userOptionsProvider = new PlannerUserOptionsSelector();
         this.output = window.createOutputChannel("Planner output");
 
         context.subscriptions.push(this.planView = new PlanView(context, pddlWorkspace));
@@ -59,9 +64,9 @@ export class Planning implements PlannerResponseHandler {
         context.subscriptions.push(commands.registerCommand('pddl.planAndDisplayResult',
             async (domainUri: Uri, problemUri: Uri, workingFolder: string, options: string) => {
                 if (problemUri) {
-                    await this.planByUri(domainUri, problemUri, workingFolder, options);
+                    await this.planByUri(domainUri, problemUri, workingFolder, options).catch(showError);
                 } else {
-                    await this.plan();
+                    await this.plan().catch(showError);
                 }
             })
         );
@@ -104,8 +109,8 @@ export class Planning implements PlannerResponseHandler {
     }
 
     addOptionsProvider(optionsProvider: PlannerOptionsProvider) {
-		this.optionProviders.push(optionsProvider);
-	}
+        this.optionProviders.push(optionsProvider);
+    }
 
     providePlannerOptions(context: PlanningRequestContext): string {
         return this.optionProviders.map(provider => provider.providePlannerOptions(context)).join(' ');
@@ -122,8 +127,8 @@ export class Planning implements PlannerResponseHandler {
         let domainDocument = await workspace.openTextDocument(domainUri);
         let problemDocument = await workspace.openTextDocument(problemUri);
 
-        let domainInfo = <DomainInfo> await this.upsertFile(domainDocument);
-        let problemInfo = <ProblemInfo> await this.upsertFile(problemDocument);
+        let domainInfo = <DomainInfo>await this.upsertFile(domainDocument);
+        let problemInfo = <ProblemInfo>await this.upsertFile(problemDocument);
 
         this.planExplicit(domainInfo, problemInfo, workingFolder, options);
     }
@@ -145,8 +150,7 @@ export class Planning implements PlannerResponseHandler {
         this.output.clear();
 
         const activeDocument = window.activeTextEditor.document;
-        const activeFilePath = activeDocument.fileName;
-
+        if (!activeDocument) { return null; }
         const activeFileInfo = await this.upsertFile(activeDocument);
 
         let problemFileInfo: ProblemInfo;
@@ -155,25 +159,26 @@ export class Planning implements PlannerResponseHandler {
         if (activeFileInfo.isProblem()) {
             problemFileInfo = <ProblemInfo>activeFileInfo;
 
-            let folder = this.pddlWorkspace.getFolderOf(problemFileInfo);
-
-            // find domain files in the same folder that match the problem's domain name
-            let domainFiles = folder.getDomainFilesFor(problemFileInfo);
+            // find domain file(s)
+            let domainFiles = this.pddlWorkspace.getDomainFilesFor(problemFileInfo);
 
             if (domainFiles.length === 1) {
                 domainFileInfo = domainFiles[0];
-            } else if (domainFiles.length > 1) {
-                const domainFileCandidates = domainFiles
-                    .map(doc => Planning.getFileName(doc.fileUri.toString()));
+            } else if (domainFiles.length !== 1) {
+                let workspaceFolder = workspace.getWorkspaceFolder(window.activeTextEditor.document.uri);
+                const domainFileUri = await selectFile({
+                    language: PddlLanguage.PDDL,
+                    promptMessage: 'Select the matching domain file...',
+                    findPattern: AssociationProvider.PDDL_PATTERN,
+                    fileOpenLabel: 'Select',
+                    fileOpenFilters: { 'PDDL Domain Files': ['pddl'] },
+                    workspaceFolder: workspaceFolder
+                }, domainFiles);
 
-                const domainFileName = await window.showQuickPick(domainFileCandidates, { placeHolder: "Select domain file:" });
+                if (!domainFileUri) { return; } // was canceled
 
-                if (!domainFileName) { return; } // was canceled
-
-                const domainFilePath = path.join(dirname(activeFilePath), domainFileName);
-                let domainFileUri = Uri.file(domainFilePath);
-
-                domainFileInfo = domainFiles.find(doc => doc.fileUri === domainFileUri.toString());
+                domainFileInfo = domainFiles.find(doc => doc.fileUri === domainFileUri.toString())
+                    || this.pddlWorkspace.getFileInfo<DomainInfo>(domainFileUri.toString());
             } else {
                 window.showInformationMessage(`Ensure a domain '${problemFileInfo.domainName}' from the same folder is open in the editor.`);
                 return;
@@ -204,7 +209,8 @@ export class Planning implements PlannerResponseHandler {
             return;
         }
 
-        this.planExplicit(domainFileInfo, problemFileInfo, dirname(activeDocument.fileName));
+        let workingDirectory = activeDocument.uri.scheme === "file" ? dirname(activeDocument.fileName) : "";
+        await this.planExplicit(domainFileInfo, problemFileInfo, workingDirectory);
     }
 
     private readonly _onPlansFound = new EventEmitter<PlanningResult>();
@@ -286,6 +292,8 @@ export class Planning implements PlannerResponseHandler {
     }
 
     async adjustWorkingFolder(workingDirectory: string): Promise<string> {
+        if (!workingDirectory) { return ""; }
+
         // the working directory may be virtual, replace it
         if (!await afs.exists(workingDirectory)) {
             if (workspace.workspaceFolders.length) {
@@ -308,17 +316,14 @@ export class Planning implements PlannerResponseHandler {
      * Creates the right planner wrapper according to the current configuration.
      *
      * @param workingDirectory directory where planner creates output files by default
-     * @param options planner options
+     * @param options planner options or a path of a configuration file
      * @returns `Planner` instance of the configured planning engine
      */
     async createPlanner(workingDirectory: string, options?: string): Promise<Planner> {
-        let plannerPath = await this.plannerConfiguration.getPlannerPath();
+        let plannerPath = await this.plannerConfiguration.getPlannerPath(Uri.file(workingDirectory));
         if (!plannerPath) { return null; }
 
         if (!await this.verifyConsentForSendingPddl(plannerPath)) { return null; }
-
-        let plannerOptions = options !== undefined ? options : await this.plannerConfiguration.getPlannerOptions();
-        if (plannerOptions === null) { return null; }
 
         if (PddlConfiguration.isHttp(plannerPath)) {
             let useAuthentication = this.plannerConfiguration.isPddlPlannerServiceAuthenticationEnabled();
@@ -330,13 +335,39 @@ export class Planning implements PlannerResponseHandler {
                     configuration.tokensvcCodePath, configuration.tokensvcRefreshPath, configuration.tokensvcSvctkPath,
                     configuration.refreshToken, configuration.accessToken, configuration.sToken);
             }
-            return new PlannerService(plannerPath, plannerOptions, useAuthentication, authentication);
+
+            if (plannerPath.endsWith("/solve")) {
+                options = await this.getPlannerLineOptions(options);
+                if (options === null || options === undefined) { return null; }
+
+                return new PlannerSyncService(plannerPath, options, useAuthentication, authentication);
+            }
+            else if (plannerPath.endsWith("/request")) {
+                let configuration = options ? Uri.parse(options) : await new PlannerConfigurationSelector(Uri.file(workingDirectory)).getConfiguration();
+                if (!configuration) { return null; }
+                return new PlannerAsyncService(plannerPath, configuration, useAuthentication, authentication);
+            }
+            else {
+                throw new Error("Planning service not supported: " + plannerPath);
+            }
         }
         else {
+            options = await this.getPlannerLineOptions(options);
+            if (options === null) { return null; }
+
             let plannerSyntax = await this.plannerConfiguration.getPlannerSyntax();
             if (plannerSyntax === null) { return null; }
 
-            return new PlannerExecutable(plannerPath, plannerOptions, plannerSyntax, workingDirectory);
+            return new PlannerExecutable(plannerPath, options, plannerSyntax, workingDirectory);
+        }
+    }
+
+    async getPlannerLineOptions(options: string): Promise<string> {
+        if (options === null || options === undefined) {
+            return await this.userOptionsProvider.getPlannerOptions();
+        }
+        else {
+            return options;
         }
     }
 
@@ -349,15 +380,13 @@ export class Planning implements PlannerResponseHandler {
                 return true;
             }
             else {
-                let answer = await window.showQuickPick(
-                    [
-                        "Yes, send my PDDL to this service.",
-                        "No, I do not want to send this PDDL to this service."
-                    ],
+                let answer = await window.showWarningMessage(
+                    "Confirm you want to send this PDDL to " + plannerPath,
                     {
-                        canPickMany: false,
-                        placeHolder: "Confirm you want to send this PDDL to " + plannerPath
-                    }
+                        modal: true
+                    },
+                    "Yes, send my PDDL to this service.",
+                    "No, I do not want to send this PDDL to this service."
                 );
                 let consentGiven = answer && answer.toLowerCase().startsWith("yes");
                 consents[plannerPath] = consentGiven;

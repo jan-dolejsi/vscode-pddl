@@ -11,8 +11,8 @@ import request = require('request');
 import { join } from 'path';
 
 const COMMAND_SHOW_DOMAIN_PROBLEM = 'pddl.planning.domains.show';
-const HTTPDDL = 'httpddl'
-const HTTPLAN = 'httplan'
+export const HTTPDDL = 'httpddl';
+export const HTTPLAN = 'httplan';
 
 export class Catalog {
 
@@ -20,7 +20,7 @@ export class Catalog {
 
     constructor(context: ExtensionContext) {
         const catalogDataProvider = new CatalogDataProvider(context);
-        this.treeView = window.createTreeView("pddl.planning.domains", { treeDataProvider: catalogDataProvider, showCollapseAll: true});
+        this.treeView = window.createTreeView("pddl.planning.domains", { treeDataProvider: catalogDataProvider, showCollapseAll: true });
         const catalogContentProvider = new CatalogDomainProblemProvider();
         context.subscriptions.push(workspace.registerTextDocumentContentProvider(HTTPDDL, catalogContentProvider));
         context.subscriptions.push(workspace.registerTextDocumentContentProvider(HTTPLAN, new CatalogPlanProvider()));
@@ -55,9 +55,9 @@ class CatalogDomainProblemProvider implements TextDocumentContentProvider {
     onDidChange?: Event<Uri>;
 
     async provideTextDocumentContent(uri: Uri, token: CancellationToken): Promise<string> {
-        if (token.isCancellationRequested) return "Operation canceled.";
+        if (token.isCancellationRequested) { return "Operation canceled."; }
 
-        uri = uri.with({ scheme: "http" })
+        uri = uri.with({ scheme: "http" });
         return new Promise<string>((resolve, _reject) => {
             request.get(uri.toString(), (error, _httpResponse, httpBody) => {
                 if (error) {
@@ -75,7 +75,7 @@ class CatalogPlanProvider implements TextDocumentContentProvider {
     onDidChange?: Event<Uri>;
 
     async provideTextDocumentContent(uri: Uri, token: CancellationToken): Promise<string> {
-        if (token.isCancellationRequested) return "Operation canceled.";
+        if (token.isCancellationRequested) { return "Operation canceled."; }
 
         uri = decodePlanUri(uri);
         return new Promise<string>((resolve, _reject) => {
@@ -102,7 +102,7 @@ class CatalogDataProvider implements TreeDataProvider<CatalogEntry> {
     }
 
     public getTreeItem(element: CatalogEntry): TreeItem {
-        let isCollapsible = element.kind != CatalogEntryKind.Problem;
+        let isCollapsible = element.kind !== CatalogEntryKind.Problem;
         return {
             label: element.label,
             collapsibleState: isCollapsible ? TreeItemCollapsibleState.Collapsed : void 0,
@@ -113,25 +113,27 @@ class CatalogDataProvider implements TreeDataProvider<CatalogEntry> {
     }
 
     getIcon(kind: CatalogEntryKind): any {
-        if (!kind) return null;
-        else if (kind == CatalogEntryKind.Domain)
+        if (!kind) {
+            return null;
+        } else if (kind === CatalogEntryKind.Domain) {
             return this.context.asAbsolutePath(join('overview', 'file_type_pddl.svg'));
-        else if (kind == CatalogEntryKind.Problem)
+        } else if (kind === CatalogEntryKind.Problem) {
             return this.context.asAbsolutePath(join('overview', 'file_type_pddl_plan.svg'));
+        }
     }
 
     private createCommand(element: CatalogEntry) {
-        if (element.kind == CatalogEntryKind.Problem) {
+        if (element.kind === CatalogEntryKind.Problem) {
             let problem = <Problem>element;
-            let domain_url = Uri.parse(problem.domain_url).with({ scheme: HTTPDDL })
-            let problem_url = Uri.parse(problem.problem_url).with({ scheme: HTTPDDL })
+            let domain_url = Uri.parse(problem.domain_url).with({ scheme: HTTPDDL });
+            let problem_url = Uri.parse(problem.problem_url).with({ scheme: HTTPDDL });
             let plan_url = encodePlanUri(problem);
 
             return {
                 command: COMMAND_SHOW_DOMAIN_PROBLEM,
                 arguments: [domain_url, problem_url, plan_url],
                 title: 'PDDL: Show PDDL domain, problem and plan'
-            }
+            };
         } else {
             return void 0;
         }
@@ -141,11 +143,11 @@ class CatalogDataProvider implements TreeDataProvider<CatalogEntry> {
         if (!element) {
             return this.planningDomains.getCollections();
         }
-        else if (element.kind == CatalogEntryKind.Collection) {
+        else if (element.kind === CatalogEntryKind.Collection) {
             let collection = <Collection>element;
             return this.planningDomains.getDomains(collection);
         }
-        else if (element.kind == CatalogEntryKind.Domain) {
+        else if (element.kind === CatalogEntryKind.Domain) {
             let domain = <Domain>element;
             return this.planningDomains.getProblems(domain);
         }
@@ -158,12 +160,12 @@ class CatalogDataProvider implements TreeDataProvider<CatalogEntry> {
 function encodePlanUri(problem: Problem): Uri {
     const extension = '.plan';
     let fileName = problem.label.replace('.pddl', extension);
-    if (!fileName.endsWith(extension)) fileName += extension;
+    if (!fileName.endsWith(extension)) { fileName += extension; }
     return Uri.parse(PlanningDomains.URL + `plan/${problem.id}/${fileName}`).with({ scheme: HTTPLAN });
 }
 
 function decodePlanUri(encodedUri: Uri): Uri {
     let lastSlash = encodedUri.path.lastIndexOf('/');
-    return encodedUri.with({ path: encodedUri.path.substring(0, lastSlash), scheme: "http" })
+    return encodedUri.with({ path: encodedUri.path.substring(0, lastSlash), scheme: "http" });
 }
 

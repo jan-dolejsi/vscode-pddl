@@ -18,7 +18,7 @@ import { PddlConfiguration } from '../configuration';
 import { Util } from '../../../common/src/util';
 import { dirname } from 'path';
 import { PlanStep } from '../../../common/src/PlanStep';
-import { DomainAndProblem, isHappenings, getDomainAndProblemForHappenings } from '../utils';
+import { DomainAndProblem, isHappenings, getDomainAndProblemForHappenings } from '../workspace/workspaceUtils';
 import { createRangeFromLine, createDiagnostic } from './PlanValidator';
 import { HappeningsToValStep } from './HappeningsToValStep';
 

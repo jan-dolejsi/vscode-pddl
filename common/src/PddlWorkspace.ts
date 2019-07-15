@@ -175,7 +175,7 @@ export class PddlWorkspace extends EventEmitter {
         let folder = this.upsertFolder(folderUri);
 
         folder.remove(fileInfo);
-        fileInfo = await this.parseFile(fileInfo.fileUri, fileInfo.getLanguage(), fileInfo.version, fileInfo.getText());
+        fileInfo = await this.parseFile(fileInfo.fileUri, fileInfo.getLanguage(), fileInfo.getVersion(), fileInfo.getText());
         folder.add(fileInfo);
         this.emit(PddlWorkspace.UPDATED, fileInfo);
 
@@ -242,14 +242,14 @@ export class PddlWorkspace extends EventEmitter {
         return false;
     }
 
-    getFileInfo(fileUri: string): FileInfo {
+    getFileInfo<T extends FileInfo>(fileUri: string): T {
         let folderUri = PddlWorkspace.getFolderUri(fileUri);
 
         if (this.folders.has(folderUri)) {
             let folder = this.folders.get(folderUri);
             let fileInfo = folder.get(fileUri);
 
-            return fileInfo; // or null if the file did not exist in the folder
+            return <T>fileInfo; // or null if the file did not exist in the folder
         }
 
         // folder does not exist
@@ -343,28 +343,68 @@ export class PddlWorkspace extends EventEmitter {
         }
     }
 
+    /** Explicit associations between problem files and domain files. */
+    private problemToDomainMap = new Map<string, string>();
+
+    associateProblemToDomain(problemInfo: ProblemInfo, domainInfo: DomainInfo) {
+        this.problemToDomainMap.set(problemInfo.fileUri, domainInfo.fileUri);
+    }
+
+    /**
+     * Finds the matching domain files.
+     * @param problemFile problem file info
+     * @returns matching domain files (zero, one or many)
+     */
+    getDomainFilesFor(problemFile: ProblemInfo): DomainInfo[] {
+        // does an explicit association exist?
+        if (this.problemToDomainMap.has(problemFile.fileUri)) {
+            let domainFileUri = this.problemToDomainMap.get(problemFile.fileUri);
+            return [this.getFileInfo<DomainInfo>(domainFileUri)];
+        }
+        else {
+            let folder = this.folders.get(PddlWorkspace.getFolderUri(problemFile.fileUri));
+
+            if (!folder) { return null; }
+
+            // find domain files in the same folder that match the problem's domain name
+            let domainFiles = folder.getDomainFilesFor(problemFile);
+
+            return domainFiles;
+        }
+    }
+
     /**
      * Finds the matching domain file in the same folder.
      * @param problemFile problem file info
      * @returns matching domain file, if exactly one exists in the same folder. `null` otherwise
      */
     getDomainFileFor(problemFile: ProblemInfo): DomainInfo {
-        let folder = this.folders.get(PddlWorkspace.getFolderUri(problemFile.fileUri));
-
-        if (!folder) { return null; }
-
         // find domain files in the same folder that match the problem's domain name
-        let domainFiles = folder.getDomainFilesFor(problemFile);
+        let domainFiles = this.getDomainFilesFor(problemFile);
 
         return domainFiles.length === 1 ? domainFiles[0] : null;
+    }
+
+    /** Explicit associations between plan files and problem files. */
+    private planToProblemMap = new Map<string, string>();
+
+    associatePlanToProblem(planUri: string, problemFileInfo: ProblemInfo) {
+        this.planToProblemMap.set(planUri, problemFileInfo.fileUri);
     }
 
     getProblemFileForPlan(planInfo: PlanInfo): ProblemInfo {
         let problemFileInfo: ProblemInfo;
 
-        let folder = this.getFolderOf(planInfo);
-        if (!folder) { return null; }
-        problemFileInfo = folder.getProblemFileWithName(planInfo.problemName);
+        // does an explicit association exist?
+        if (this.planToProblemMap.has(planInfo.fileUri)) {
+            let problemFileUri = this.planToProblemMap.get(planInfo.fileUri);
+            problemFileInfo = this.getFileInfo<ProblemInfo>(problemFileUri);
+        }
+        else {
+            let folder = this.getFolderOf(planInfo);
+            if (!folder) { return null; }
+            problemFileInfo = folder.getProblemFileWithName(planInfo.problemName);
+        }
 
         return problemFileInfo;
     }

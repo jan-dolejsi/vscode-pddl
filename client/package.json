@@ -4,7 +4,7 @@
   "description": "Planning Domain Description Language support",
   "author": "Jan Dolejsi",
   "license": "MIT",
-  "version": "2.11.5",
+  "version": "2.12.2",
   "publisher": "jan-dolejsi",
   "engines": {
     "vscode": "^1.31.0",
@@ -38,6 +38,7 @@
     "onCommand:pddl.showOverview",
     "onCommand:pddl.searchDebugger.start",
     "onCommand:pddl.planning.domains.session.load",
+    "onCommand:pddl.downloadVal",
     "workspaceContains:.planning.domains.session.json",
     "onView:pddl.planning.domains",
     "onView:pddl.tests.explorer",
@@ -208,6 +209,10 @@
         "title": "PDDL: Open as an editable problem file..."
       },
       {
+        "command": "pddl.tests.report.view",
+        "title": "PDDL: Show test report"
+      },
+      {
         "command": "pddl.searchDebugger.start",
         "title": "PDDL: Start search debugger"
       },
@@ -285,7 +290,7 @@
       },
       {
         "command": "pddl.planning.domains.session.discard",
-        "title": "PDDL: Discards local changes to the Planning.Domains session",
+        "title": "PDDL: Discard local changes to the Planning.Domains session",
         "icon": {
           "light": "images/light/discard.svg",
           "dark": "images/dark/discard.svg"
@@ -314,6 +319,10 @@
       {
         "command": "pddl.planning.domains.session.generateClassroom",
         "title": "PDDL: Generate Planning.Domains classroom sessions from this template..."
+      },
+      {
+        "command": "pddl.downloadVal",
+        "title": "PDDL: Download VAL tools"
       }
     ],
     "menus": {
@@ -377,6 +386,10 @@
           "command": "pddl.tests.refresh",
           "when": "view == pddl.tests.explorer",
           "group": "navigation"
+        },
+        {
+          "command": "pddl.tests.report.view",
+          "when": "view == pddl.tests.explorer"
         }
       ],
       "view/item/context": [
@@ -482,11 +495,6 @@
           "scope": "resource",
           "type": "string",
           "description": "Pattern to match onto the parser output to extract the parsing problems. The syntax must be: '/regex/flags/order'. See more info at https://github.com/jan-dolejsi/vscode-pddl/wiki/Configuring-the-PDDL-parser"
-        },
-        "pddlParser.pddlParserService": {
-          "scope": "resource",
-          "type": "string",
-          "description": "Obsolete: please remove configuration values manually."
         },
         "pddlParser.serviceAuthenticationEnabled": {
           "scope": "resource",
@@ -698,7 +706,13 @@
           "title": "Default epsilon time step used by your planner.",
           "description": "Default epsilon time step used by your planner. This is used when interpreting/visualizing the plan. "
         },
-        "pddlPlanner.valueSeqPath": {
+        "pddl.validatorVersion": {
+          "type": "number",
+          "default": 16,
+          "title": "VAL build number",
+          "description": "Stable VAL build number to download or update to."
+        },
+        "pddl.valueSeqPath": {
           "type": "string",
           "description": "ValueSeq path - the tool that evaluates numeric values of functions at starts and ends of actions in the plan."
         },
@@ -831,6 +845,7 @@
     "request": "^2.88.0",
     "body-parser": "^1.19.0",
     "events": "^3.0.0",
+    "adm-zip": "^0.4.13",
     "semver": "^6.1.1"
   },
   "devDependencies": {
@@ -838,6 +853,7 @@
     "@types/request": "^2.48.1",
     "@types/semver": "^6.0.0",
     "@types/tmp": "^0.1.0",
+    "@types/adm-zip": "^0.4.32",
     "tslint": "^5.17.0",
     "typescript": "^3.0.3",
     "vsce": "^1.63.0",

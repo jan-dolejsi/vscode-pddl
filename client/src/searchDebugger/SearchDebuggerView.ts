@@ -8,7 +8,7 @@ import {
     window, ExtensionContext, Uri, ViewColumn, WebviewPanel, commands, Disposable, workspace, TextEditorRevealType, TextEditor, Range
 } from 'vscode';
 
-import { getWebViewHtml } from '../utils';
+import { getWebViewHtml, createPddlExtensionContext } from '../utils';
 import { State } from './State';
 import { PlanReportGenerator } from '../planning/PlanReportGenerator';
 import { StateToPlan } from './StateToPlan';
@@ -143,7 +143,7 @@ export class SearchDebuggerView {
     CONTENT_FOLDER = "searchview";
 
     async getHtml(): Promise<string> {
-        let html = await getWebViewHtml(this.context, this.CONTENT_FOLDER, 'search.html');
+        let html = await getWebViewHtml(createPddlExtensionContext(this.context), this.CONTENT_FOLDER, 'search.html');
         return html;
     }
 
@@ -173,7 +173,7 @@ export class SearchDebuggerView {
         try {
             this.showStatePlan(state.id);
         } catch (ex) {
-            window.showErrorMessage(ex);
+            window.showErrorMessage(ex.message);
         }
     }
 

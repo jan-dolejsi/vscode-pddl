@@ -11,8 +11,9 @@ import {
 import { PddlConfiguration } from '../configuration';
 
 import * as path from 'path';
-import { getWebViewHtml } from '../utils';
+import { getWebViewHtml, createPddlExtensionContext } from '../utils';
 import * as afs from '../../../common/src/asyncfs';
+import { Val } from '../validation/Val';
 
 export const SHOULD_SHOW_OVERVIEW_PAGE = 'shouldShowOverviewPage';
 export const LAST_SHOWN_OVERVIEW_PAGE = 'lastShownOverviewPage';
@@ -24,7 +25,7 @@ export class OverviewPage {
 
     private readonly ICONS_EXTENSION_NAME = "vscode-icons-team.vscode-icons";
 
-    constructor(private context: ExtensionContext, private pddlConfiguration: PddlConfiguration) {
+    constructor(private context: ExtensionContext, private pddlConfiguration: PddlConfiguration, private val: Val) {
         commands.registerCommand("pddl.showOverview", () => this.showWelcomePage(true));
         workspace.onDidChangeConfiguration(_ => this.updatePageConfiguration(), undefined, this.context.subscriptions);
         extensions.onDidChange(() => this.updateIconsAlerts(), this.context.subscriptions);
@@ -114,7 +115,7 @@ export class OverviewPage {
                 }
                 break;
             case 'enableIcons':
-                    await workspace.getConfiguration().update("workbench.iconTheme", "vscode-icons", ConfigurationTarget.Global);
+                await workspace.getConfiguration().update("workbench.iconTheme", "vscode-icons", ConfigurationTarget.Global);
                 break;
             default:
                 console.warn('Unexpected command: ' + message.command);
@@ -158,7 +159,7 @@ export class OverviewPage {
     }
 
     async getHtml(): Promise<string> {
-        let html = getWebViewHtml(this.context, this.CONTENT_FOLDER, 'overview.html');
+        let html = getWebViewHtml(createPddlExtensionContext(this.context), this.CONTENT_FOLDER, 'overview.html');
         return html;
     }
 
@@ -179,6 +180,8 @@ export class OverviewPage {
             autoSave: workspace.getConfiguration().get<String>("files.autoSave"),
             showInstallIconsAlert: !this.iconsInstalled,
             showEnableIconsAlert: this.iconsInstalled && workspace.getConfiguration().get<String>("workbench.iconTheme") !== "vscode-icons",
+            downloadValAlert: !this.pddlConfiguration.getValidatorPath() || !(await this.val.isInstalled()),
+            updateValAlert: await this.val.isNewValVersionAvailable()
         };
         this.webViewPanel.webview.postMessage(message);
     }

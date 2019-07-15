@@ -127,11 +127,15 @@ export class SessionSourceControl implements vscode.Disposable {
 		}
 		else {
 			try {
-				let currentSession = await this.getCurrentSession();
-				let newSessionContent: SessionContent = await uploadSession(currentSession);
-
-				await this.setSession(newSessionContent, false);
-				this.sessionScm.inputBox.value = '';
+				await vscode.window.withProgress({ location: vscode.ProgressLocation.SourceControl, title: 'Committing...' }, async (progress) => {
+					let currentSession = await this.getCurrentSession();
+					progress.report({ message: 'Latest session refreshed.', increment: 33 });
+					let newSessionContent: SessionContent = await uploadSession(currentSession);
+					progress.report({ message: 'Session committed.', increment: 33 });
+					await this.setSession(newSessionContent, false);
+					progress.report({ message: 'Session re-downloaded.', increment: 34 });
+					this.sessionScm.inputBox.value = '';
+				});
 			} catch (ex) {
 				vscode.window.showErrorMessage("Cannot commit changes to Planning.Domains session. " + ex.message);
 			}
@@ -153,7 +157,14 @@ export class SessionSourceControl implements vscode.Disposable {
 	/**
 	 * Throws away all local changes and resets all files to the checked out version of the repository.
 	 */
-	resetFilesToCheckedOutVersion(): void {
+	async resetFilesToCheckedOutVersion(): Promise<void> {
+		if (this.getLocalModifiedResources() && this.getLocalModifiedResources().length > 0) {
+			const discardAnswer = "Discard";
+			let answer = await vscode.window.showWarningMessage(`Discard ${this.getLocalModifiedResources().length} changes?`, { modal: true }, discardAnswer, "Cancel");
+			if (answer !== discardAnswer) {
+				return null;
+			}
+		}
 		this.session.files.forEach((fileContent, fileName) => this.resetFile(fileName, fileContent));
 	}
 
@@ -186,9 +197,9 @@ export class SessionSourceControl implements vscode.Disposable {
 
 		if (newVersion === this.session.versionDate) { return; } // the same version was selected
 
-		let localUntrackedResources = this.changedResources.resourceStates.filter(resource => resource.decorations.faded);
+		let localUntrackedResources = this.getLocalUntrackedResources();
 		if (this.changedResources.resourceStates.length - localUntrackedResources.length) {
-			vscode.window.showErrorMessage(`There is one or more changed resources. Discard your local changes before checking out another version.`);
+			vscode.window.showErrorMessage(`There is one or more changed resources. Discard your local changes before checking out another version.`, { modal: true });
 		}
 		else {
 			try {
@@ -202,14 +213,22 @@ export class SessionSourceControl implements vscode.Disposable {
 					let conflictingUntrackedResourceNames = conflictingUntrackedResources
 						.map(resource => this.toOpenFileNotificationLink(resource.resourceUri))
 						.join(", ");
-					vscode.window.showErrorMessage(`Merge conflict: delete/rename your local version of following session file(s): ${conflictingUntrackedResourceNames} before checking out the session content.`);
+					vscode.window.showErrorMessage(`Merge conflict: delete/rename your local version of following session file(s): ${conflictingUntrackedResourceNames} before checking out the session content.`, { modal: false });
 				} else {
 					await this.setSession(newSession, true);
 				}
 			} catch (ex) {
-				vscode.window.showErrorMessage(ex);
+				vscode.window.showErrorMessage(ex.message);
 			}
 		}
+	}
+
+	private getLocalModifiedResources(): vscode.SourceControlResourceState[] {
+		return this.changedResources.resourceStates.filter(resource => !resource.decorations.faded);
+	}
+
+	private getLocalUntrackedResources(): vscode.SourceControlResourceState[] {
+		return this.changedResources.resourceStates.filter(resource => resource.decorations.faded);
 	}
 
 	toOpenFileNotificationLink(resourceUri: vscode.Uri): string {
@@ -299,7 +318,7 @@ export class SessionSourceControl implements vscode.Disposable {
 			await this.updateChangedGroup();
 		}
 		catch (ex) {
-			vscode.window.showErrorMessage(ex);
+			vscode.window.showErrorMessage(ex.message);
 		}
 	}
 

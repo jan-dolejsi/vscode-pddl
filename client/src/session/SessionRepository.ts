@@ -110,20 +110,53 @@ export async function getSession(sessionConfiguration: SessionConfiguration): Pr
 	return new SessionContent(rawSession.readOnlyHash, rawSession.readWriteHash, rawSession.sessionDate, sessionFiles, rawSession.plugins);
 }
 
+function createSessionContent(pluginDefinitions: any): string {
+	let sessionDefinitionAsString = JSON.stringify(pluginDefinitions, null, 4);
+	return `// Put this file online somewhere and import it as a plugin
+
+	define(function () {
+    return {
+        meta: true,
+		plugins:
+${sessionDefinitionAsString}
+	}
+});
+`;
+}
+
 export async function uploadSession(session: SessionContent): Promise<SessionContent> {
 	if (!session.writeHash) { throw new Error("Check if the session is writable first."); }
 
 	let rawLatestSession = await getRawSession(session);
 
-	if (rawLatestSession.sessionContent.indexOf(rawLatestSession.domainFilesAsString) === -1) {
-		throw new Error("Re-stringified session files do not match the original session saved tabs.");
-	}
+	// re-place the saved tabs in the plugins
+	let newPluginList = [...rawLatestSession.plugins.keys()]
+		.map(oldPluginName => {
+			let oldPlugin = rawLatestSession.plugins.get(oldPluginName);
+			let newPlugin: RawSessionPlugin;
+			if (oldPlugin.name === SAVE_TABS_PLUGIN_NAME) {
+				newPlugin = {
+					name: oldPlugin.name,
+					url: oldPlugin.url,
+					settings: strMapToObj(session.files),
+					settingsAsString: undefined
+				};
+			} else {
+				newPlugin = oldPlugin;
+			}
+			return newPlugin;
+		});
 
-	// replace the session files
-	let newFilesAsString = JSON.stringify(strMapToObj(session.files), null, 4);
-	let newContent = rawLatestSession.sessionContent
-		.replace(rawLatestSession.sessionDetails, '') // strip the window.session.details= assignment
-		.replace(rawLatestSession.domainFilesAsString, newFilesAsString);
+	// re-construct the session plugin definition
+	var newPlugins = Object.create(null);
+	newPluginList.forEach(plugin => {
+		let newPlugin = Object.create(null);
+		newPlugin["url"] = plugin.url;
+		newPlugin["settings"] = plugin.settings;
+		newPlugins[plugin.name] = newPlugin;
+	});
+
+	let newContent = createSessionContent(newPlugins);
 
 	var postBody = Object.create(null);
 	postBody["content"] = newContent;
@@ -196,7 +229,7 @@ async function getRawSession(sessionConfiguration: SessionConfiguration): Promis
 		sessionDate = Date.parse(matchDetails[3]);
 	}
 	else {
-		console.log("Malformed saved session. Could not extract session date. Session content:"  + sessionContent);
+		console.log("Malformed saved session. Could not extract session date. Session content:" + sessionContent);
 		throw new Error("Malformed saved session. Could not extract session date.");
 	}
 
@@ -204,7 +237,7 @@ async function getRawSession(sessionConfiguration: SessionConfiguration): Promis
 	let plugins = new Map<string, RawSessionPlugin>();
 	SESSION_PLUGINS_PATTERN.lastIndex = 0;
 	let pluginsMatch = SESSION_PLUGINS_PATTERN.exec(sessionContent);
-	if(pluginsMatch = SESSION_PLUGINS_PATTERN.exec(sessionContent)) {
+	if (pluginsMatch = SESSION_PLUGINS_PATTERN.exec(sessionContent)) {
 		let rawPlugins = JSON.parse(pluginsMatch[1]);
 
 		[SAVE_TABS_PLUGIN_NAME, SOLVER_PLUGIN_NAME].forEach(pluginName => {
@@ -214,15 +247,15 @@ async function getRawSession(sessionConfiguration: SessionConfiguration): Promis
 		});
 	}
 	else {
-		console.log("Malformed saved session plugins. Could not extract session plugins. Session content:"  + sessionContent);
+		console.log("Malformed saved session plugins. Could not extract session plugins. Session content:" + sessionContent);
 		throw new Error("Malformed saved session. Could not extract session plugins.");
 	}
 
-	if (!plugins.has(SAVE_TABS_PLUGIN_NAME)){
+	if (!plugins.has(SAVE_TABS_PLUGIN_NAME)) {
 		throw new Error("Saved session contains no saved tabs.");
 	}
 
-	var domainFilesString =  plugins.get(SAVE_TABS_PLUGIN_NAME).settingsAsString;
+	var domainFilesString = plugins.get(SAVE_TABS_PLUGIN_NAME).settingsAsString;
 
 	return {
 		sessionDetails: sessionDetails,

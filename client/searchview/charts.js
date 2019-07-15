@@ -1,4 +1,15 @@
-google.charts.load('current', { packages: ['corechart', 'line'] });
+// two maps help translating state IDs to chart data set rows and vice versa
+var stateIdToRowId = new Map();
+var rowIdToStateId = new Map();
+var chartDefined = false;
+
+try {
+    google.charts.load('current', { packages: ['corechart', 'line'] });
+    chartDefined = true;
+}
+catch(err) {
+    console.log(err);
+}
 
 // instead of this, we initialize the chart in the page body onLoad event
 // google.charts.setOnLoadCallback(initializeChart);
@@ -7,9 +18,6 @@ google.charts.load('current', { packages: ['corechart', 'line'] });
 // https://developers.google.com/chart/interactive/docs/reference#DataTable
 
 var chart, chartData, chartOptions, isReDrawing, chartNeedsReDrawing;
-// two maps help translating state IDs to chart data set rows and vice versa
-var stateIdToRowId = new Map();
-var rowIdToStateId = new Map();
 
 function initializeChart() {
 
@@ -79,6 +87,7 @@ function reDrawChart() {
 }
 
 function selectChartRow(stateId) {
+    if (!chartDefined) return;
     if (stateId !== null) {
         var rowId = stateIdToRowId.get(stateId);
         chart.setSelection([{row: rowId}]);

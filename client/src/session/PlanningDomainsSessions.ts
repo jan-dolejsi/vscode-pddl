@@ -5,7 +5,7 @@
 'use strict';
 
 import { ExtensionContext, window, Uri, commands, workspace, Disposable, WorkspaceFolder, QuickPickItem, ViewColumn, SourceControl, env } from 'vscode';
-import { firstIndex } from '../utils';
+import { firstIndex, showError } from '../utils';
 import * as afs from '../../../common/src/asyncfs';
 import * as path from 'path';
 import { SessionDocumentContentProvider } from './SessionDocumentContentProvider';
@@ -65,15 +65,15 @@ export class PlanningDomainsSessions {
         }));
         this.subscribe(commands.registerCommand("pddl.planning.domains.session.open", async (sourceControlPane: SourceControl) => {
             let sourceControl = await this.pickSourceControl(sourceControlPane);
-            if (sourceControl) { this.openInBrowser(sourceControl.getSession()); }
+            if (sourceControl) { this.openInBrowser(sourceControl.getSession()).catch(showError); }
         }));
         this.subscribe(commands.registerCommand("pddl.planning.domains.session.duplicate", async (sourceControlPane: SourceControl) => {
             let sourceControl = await this.pickSourceControl(sourceControlPane);
-            if (sourceControl) { this.duplicateAsWritable(sourceControl); }
+            if (sourceControl) { this.duplicateAsWritable(sourceControl).catch(showError); }
         }));
         this.subscribe(commands.registerCommand("pddl.planning.domains.session.share", async (sourceControlPane: SourceControl) => {
             let sourceControl = await this.pickSourceControl(sourceControlPane);
-            if (sourceControl) { this.shareByEmail(sourceControl.getSession(), '', false); }
+            if (sourceControl) { this.shareByEmail(sourceControl.getSession(), 'someone@somewhere.else', false).catch(showError); }
         }));
 
         this.subscribe(commands.registerCommand("pddl.planning.domains.session.generateClassroom", async (sourceControlPane: SourceControl) => {
@@ -89,7 +89,7 @@ export class PlanningDomainsSessions {
                 });
 
             } catch (ex) {
-                window.showErrorMessage(ex);
+                window.showErrorMessage(ex.message);
             } finally {
                 // dispose source control for removed workspace folders
                 e.removed.forEach(wf => {
@@ -143,7 +143,7 @@ export class PlanningDomainsSessions {
             await this.openSession(context, sessionId, workspaceUri);
         }
         catch (ex) {
-            window.showErrorMessage(ex);
+            window.showErrorMessage(ex.message);
             console.log(ex);
         }
     }
@@ -368,10 +368,10 @@ export class PlanningDomainsSessions {
         await window.showTextDocument(doc, { viewColumn: column });
     }
 
-    openInBrowser(session: SessionContent): void {
+    async openInBrowser(session: SessionContent): Promise<boolean> {
         var sessionUri = this.createBrowserUri(session, true);
 
-        env.openExternal(Uri.parse(sessionUri));
+        return env.openExternal(Uri.parse(sessionUri));
     }
 
     async shareByEmail(session: SessionConfiguration, email: string, readWrite: boolean): Promise<boolean> {
@@ -435,11 +435,20 @@ Open session in Visual Studio Code: ${this.createVSCodeUri(session, readWrite)}`
 
         let workspacePath = await new Classroom(templateSourceControl, studentSessions).createWorkspace();
 
+        // email students their session address
         let emailPromises = studentSessions
             .filter(studentSession => studentSession.identity.email)
             .map(session => this.shareByEmail(session.sessionConfiguration, session.identity.email, true));
 
         await Promise.all(emailPromises);
+
+        // display summary of sessions
+        let sessionSummaryCsv = studentSessions
+            .map(session => `${session.identity.getEffectiveName()}, ${session.identity.email}, ${session.sessionConfiguration.writeHash}, ${this.createBrowserUri(session.sessionConfiguration, true)}`)
+            .join('\n');
+        let summaryDoc = await workspace.openTextDocument({ language: 'csv', content: sessionSummaryCsv});
+        window.showTextDocument(summaryDoc);
+        await summaryDoc.save();        
 
         commands.executeCommand('vscode.openFolder', Uri.file(workspacePath));
     }

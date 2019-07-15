@@ -13,44 +13,46 @@ import { PddlPlanParser } from '../../../common/src/PddlPlanParser';
 import { PlanStep } from '../../../common/src/PlanStep';
 import { Authentication } from '../../../common/src/Authentication';
 
-export class PlannerService extends Planner {
+export abstract class PlannerService extends Planner {
 
-    // This epsilon is used only for the duration of instantaneous actions
-    epsilon = 1e-3;
-
-    constructor(plannerPath: string, plannerOptions: string, private useAuthentication: boolean, private authentication: Authentication) {
-        super(plannerPath, plannerOptions);
+    constructor(plannerPath: string, private useAuthentication: boolean, private authentication: Authentication) {
+        super(plannerPath);
     }
 
-    plan(domainFileInfo: DomainInfo, problemFileInfo: ProblemInfo, planParser: PddlPlanParser, parent: PlannerResponseHandler): Promise<Plan[]> {
+    abstract createRequestBody(domainFileInfo: DomainInfo, problemFileInfo: ProblemInfo): Promise<any>;
+
+    abstract createUrl(): string;
+
+    abstract processServerResponseBody(responseBody: any, planParser: PddlPlanParser, parent: PlannerResponseHandler,
+        resolve: (plans: Plan[]) => void, reject: (error: Error) => void): void;
+
+    async plan(domainFileInfo: DomainInfo, problemFileInfo: ProblemInfo, planParser: PddlPlanParser, parent: PlannerResponseHandler): Promise<Plan[]> {
         parent.handleOutput(`Planning service: ${this.plannerPath}\nDomain: ${domainFileInfo.name}, Problem: ${problemFileInfo.name}\n`);
 
         let requestHeader: any = {};
-        if(this.useAuthentication) {
+        if (this.useAuthentication) {
             requestHeader = {
                 "Authorization": "Bearer " + this.authentication.sToken
             };
         }
 
-        let requestBody = {
-            "domain": domainFileInfo.getText(),
-            "problem": problemFileInfo.getText()
-        };
+        let requestBody = await this.createRequestBody(domainFileInfo, problemFileInfo);
+        if (!requestBody) { return []; }
+        let url: string = this.createUrl();
+
+        let timeoutInSec = this.getTimeout();
 
         let that = this;
-        return new Promise<Plan[]>(function(resolve, reject) {
-            let url = that.plannerPath;
-            if (that.plannerOptions) {
-                url = `${url}?${that.plannerOptions}`;
-            }
-            request.post({ url: url, headers: requestHeader, body: requestBody, json: true }, (err, httpResponse, responseBody) => {
+        return new Promise<Plan[]>(function (resolve, reject) {
+
+            request.post({ url: url, headers: requestHeader, body: requestBody, json: true, timeout: timeoutInSec*1000*1.1 }, (err, httpResponse, responseBody) => {
 
                 if (err !== null) {
                     reject(err);
                     return;
                 }
 
-                if(that.useAuthentication) {
+                if (that.useAuthentication) {
                     if (httpResponse) {
                         if (httpResponse.statusCode === 400) {
                             let message = "Authentication failed. Please login or update tokens.";
@@ -67,69 +69,32 @@ export class PlannerService extends Planner {
                     }
                 }
 
-                if (httpResponse && httpResponse.statusCode !== 200) {
+                if (httpResponse && httpResponse.statusCode > 202) {
                     let notificationMessage = `PDDL Planning Service returned code ${httpResponse.statusCode} ${httpResponse.statusMessage}`;
-                    //let notificationType = MessageType.Warning;
                     let error = new Error(notificationMessage);
                     reject(error);
                     return;
                 }
 
-                let status = responseBody["status"];
-
-                if (status === "error") {
-                    let result = responseBody["result"];
-
-                    let resultOutput = result["output"];
-                    if (resultOutput) {
-                        parent.handleOutput(resultOutput);
-                    }
-
-                    let resultError = result["error"];
-                    if (resultError) {
-                        parent.handleOutput(resultError);
-                        resolve([]);
-                    }
-                    else {
-                        reject(new Error(result));
-                    }
-                    return;
-                }
-                else if (status !== "ok") {
-                    reject(new Error("Planner service failed."));
-                    return;
-                }
-
-                let result = responseBody["result"];
-                let resultOutput = result["output"];
-                if (resultOutput) {
-                    parent.handleOutput(resultOutput);
-                }
-
-                let planSteps = result['plan'];
-
-                for (var index = 0; index < planSteps.length; index++) {
-                    var planStep = planSteps[index];
-                    let fullActionName = (<string>planStep["name"]).replace('(','').replace(')', '');
-                    let time = planStep["time"] || (index+1)*that.epsilon;
-                    let duration = planStep["duration"];
-                    let isDurative = duration !== undefined && duration !== null;
-                    let planStepObj = new PlanStep(time, fullActionName, isDurative, duration, index);
-                    planParser.appendStep(planStepObj);
-                }
-
-                planParser.onPlanFinished();
-
-                let plans = planParser.getPlans();
-                if (plans.length > 0) { parent.handleOutput(plans[0].getText() + '\n'); }
-                else { parent.handleOutput('No plan found.'); }
-
-                resolve(plans);
+                that.processServerResponseBody(responseBody, planParser, parent, resolve, reject);
             });
         });
     }
 
-    stop(): void {
-        super.stop();
+    /** Gets timeout in seconds. */
+    abstract getTimeout(): number;
+
+    parsePlanSteps(planSteps: any, planParser: PddlPlanParser): void {
+        for (var index = 0; index < planSteps.length; index++) {
+            var planStep = planSteps[index];
+            let fullActionName = (<string>planStep["name"]).replace('(', '').replace(')', '');
+            let time = planStep["time"] || (index + 1) * planParser.epsilon;
+            let duration = planStep["duration"];
+            let isDurative = duration !== undefined && duration !== null;
+            duration = duration || planParser.epsilon;
+            let planStepObj = new PlanStep(time, fullActionName, isDurative, duration, index);
+            planParser.appendStep(planStepObj);
+        }
+        planParser.onPlanFinished();
     }
 }

@@ -12,7 +12,7 @@ import { HAPPENINGS } from '../../../common/src/parser';
 import { FileInfo } from '../../../common/src/FileInfo';
 import { HappeningsInfo } from "../../../common/src/HappeningsInfo";
 import { PddlWorkspace } from '../../../common/src/PddlWorkspace';
-import { toLanguage, isHappenings, getDomainAndProblemForHappenings, selectHappenings } from '../utils';
+import { toLanguage, isHappenings, getDomainAndProblemForHappenings, selectHappenings } from '../workspace/workspaceUtils';
 import { PddlConfiguration } from '../configuration';
 import { HappeningsExecutor } from './HappeningsExecutor';
 import { DebuggingSessionFiles } from './DebuggingSessionFiles';
@@ -53,7 +53,7 @@ export class Debugging {
 				this.saveDecorations(editor.document, decorations);
 			}
 			catch (ex) {
-				vscode.window.showErrorMessage(ex);
+				vscode.window.showErrorMessage(ex.message);
 			}
 		}));
 
@@ -63,7 +63,7 @@ export class Debugging {
 				new HappeningsToPlanResumeCasesConvertor(context, this.plannerConfiguration).generate();
 			}
 			catch (ex) {
-				vscode.window.showErrorMessage(ex);
+				vscode.window.showErrorMessage(ex.message);
 			}
 		}));
 

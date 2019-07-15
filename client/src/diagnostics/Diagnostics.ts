@@ -21,6 +21,7 @@ import { PddlConfiguration, PDDL_PARSER, VALIDATION_PATH, CONF_PDDL } from '../c
 import { PlanValidator, createDiagnostic } from './PlanValidator';
 import { HappeningsValidator } from './HappeningsValidator';
 import { HappeningsInfo } from '../HappeningsInfo';
+import { NoDomainAssociated, getDomainFileForProblem } from '../workspace/workspaceUtils';
 
 /**
  * Listens to updates to PDDL files and performs detailed parsing and syntactical analysis and report problems as `Diagnostics`.
@@ -56,7 +57,7 @@ export class Diagnostics extends Disposable {
     }
 
     scheduleValidation(): void {
-        this.cancelScheduledValidation()
+        this.cancelScheduledValidation();
         let timerDelayInSeconds = this.pddlParserSettings.delayInSecondsBeforeParsing || this.defaultTimerDelayInSeconds;
         this.timeout = setTimeout(() => this.validateAllDirty(), timerDelayInSeconds * 1000);
     }
@@ -67,13 +68,13 @@ export class Diagnostics extends Disposable {
 
     validateAllDirty(): void {
         // find all dirty unknown files
-        let dirtyUnknowns = this.pddlWorkspace.getAllFilesIf(fileInfo => fileInfo.isUnknownPddl() && fileInfo.getStatus() == FileStatus.Parsed);
+        let dirtyUnknowns = this.pddlWorkspace.getAllFilesIf(fileInfo => fileInfo.isUnknownPddl() && fileInfo.getStatus() === FileStatus.Parsed);
 
         // validate unknown files (those where the header does not parse)
         dirtyUnknowns.forEach(file => this.validateUnknownFile(file));
 
         // find all dirty domains
-        let dirtyDomains = this.pddlWorkspace.getAllFilesIf(fileInfo => fileInfo.isDomain() && fileInfo.getStatus() == FileStatus.Parsed);
+        let dirtyDomains = this.pddlWorkspace.getAllFilesIf(fileInfo => fileInfo.isDomain() && fileInfo.getStatus() === FileStatus.Parsed);
 
         if (dirtyDomains.length > 0) {
             let firstDirtyDomain = <DomainInfo>dirtyDomains[0];
@@ -84,7 +85,7 @@ export class Diagnostics extends Disposable {
         }
 
         // find all dirty problems
-        let dirtyProblems = this.pddlWorkspace.getAllFilesIf(fileInfo => fileInfo.isProblem() && fileInfo.getStatus() == FileStatus.Parsed);
+        let dirtyProblems = this.pddlWorkspace.getAllFilesIf(fileInfo => fileInfo.isProblem() && fileInfo.getStatus() === FileStatus.Parsed);
 
         if (dirtyProblems.length > 0) {
             let firstDirtyProblem = <ProblemInfo>dirtyProblems[0];
@@ -96,7 +97,7 @@ export class Diagnostics extends Disposable {
         }
 
         // find all dirty plans
-        let dirtyPlans = this.pddlWorkspace.getAllFilesIf(fileInfo => fileInfo.isPlan() && fileInfo.getStatus() == FileStatus.Parsed);
+        let dirtyPlans = this.pddlWorkspace.getAllFilesIf(fileInfo => fileInfo.isPlan() && fileInfo.getStatus() === FileStatus.Parsed);
 
         if (dirtyPlans.length > 0) {
             let firstDirtyPlan = <PlanInfo>dirtyPlans[0];
@@ -108,7 +109,7 @@ export class Diagnostics extends Disposable {
         }
 
         // find all dirty happenings
-        let dirtyHappenings = this.pddlWorkspace.getAllFilesIf(fileInfo => fileInfo.isHappenings() && fileInfo.getStatus() == FileStatus.Parsed);
+        let dirtyHappenings = this.pddlWorkspace.getAllFilesIf(fileInfo => fileInfo.isHappenings() && fileInfo.getStatus() === FileStatus.Parsed);
 
         if (dirtyHappenings.length > 0) {
             let firstDirtyHappenings = <HappeningsInfo>dirtyHappenings[0];
@@ -193,13 +194,15 @@ export class Diagnostics extends Disposable {
             return;
         }
 
+        // console.log(`Validating '${fileInfo.name}' file.`);
+
         // detect parsing and pre-processing issues
         if (fileInfo.getParsingProblems().length > 0) {
             let parsingProblems = new Map<string, Diagnostic[]>();
             parsingProblems.set(fileInfo.fileUri, toDiagnostics(fileInfo.getParsingProblems()));
             this.sendDiagnostics(parsingProblems);
             return;
-        };
+        }
 
         if (fileInfo.isDomain()) {
             let domainInfo = <DomainInfo>fileInfo;
@@ -224,9 +227,7 @@ export class Diagnostics extends Disposable {
 
     validateDomainAndProblems(domainInfo: DomainInfo, problemFiles: ProblemInfo[], scheduleFurtherValidation: boolean): void {
 
-        if (this.pddlParserSettings.executableOrService === null ||
-            this.pddlParserSettings.executableOrService === undefined ||
-            this.pddlParserSettings.executableOrService === "") {
+        if (!this.pddlConfiguration.getParserPath()) {
             // suggest the user to update the settings
             var showNever = true;
             this.pddlConfiguration.suggestNewParserConfiguration(showNever);
@@ -236,8 +237,6 @@ export class Diagnostics extends Disposable {
         // mark the files that they are under validation
         domainInfo.setStatus(FileStatus.Validating);
         problemFiles.forEach(p => p.setStatus(FileStatus.Validating));
-
-        // this.connection.console.log(`Validating ${domainInfo.name} and ${problemFiles.length} problem files.`)
 
         let validator = this.createValidator();
         if (!validator) { return; }
@@ -255,12 +254,12 @@ export class Diagnostics extends Disposable {
     }
 
     createValidator(): Validator {
-        if (!this.validator || this.validator.path !== this.pddlParserSettings.executableOrService
+        if (!this.validator || this.validator.path !== this.pddlConfiguration.getParserPath()
             || (this.validator instanceof ValidatorExecutable) && (
                 this.validator.syntax !== this.pddlParserSettings.executableOptions ||
                 this.validator.customPattern !== this.pddlParserSettings.problemPattern
             )) {
-            if (this.pddlParserSettings.executableOrService.match(/^http[s]?:/i)) {
+            if (this.pddlConfiguration.getParserPath().match(/^http[s]?:/i)) {
                 // is a service
                 let authentication = new Authentication(
                     this.pddlParserSettings.serviceAuthenticationUrl,
@@ -278,10 +277,10 @@ export class Diagnostics extends Disposable {
                     this.pddlParserSettings.serviceAuthenticationRefreshToken,
                     this.pddlParserSettings.serviceAuthenticationAccessToken,
                     this.pddlParserSettings.serviceAuthenticationSToken);
-                return this.validator = new ValidatorService(this.pddlParserSettings.executableOrService, this.pddlParserSettings.serviceAuthenticationEnabled, authentication);
+                return this.validator = new ValidatorService(this.pddlConfiguration.getParserPath(), this.pddlParserSettings.serviceAuthenticationEnabled, authentication);
             }
             else {
-                return this.validator = new ValidatorExecutable(this.pddlParserSettings.executableOrService, this.pddlParserSettings.executableOptions, this.pddlParserSettings.problemPattern);
+                return this.validator = new ValidatorExecutable(this.pddlConfiguration.getParserPath(), this.pddlParserSettings.executableOptions, this.pddlParserSettings.problemPattern);
             }
         }
         else {
@@ -294,40 +293,29 @@ export class Diagnostics extends Disposable {
     }
 
     getDomainFileFor(problemFile: ProblemInfo): DomainInfo {
-        let folder = this.pddlWorkspace.folders.get(PddlWorkspace.getFolderUri(problemFile.fileUri));
-
-        // find domain files in the same folder that match the problem's domain name
-        let domainFiles = folder.getDomainFilesFor(problemFile);
-
-        if (domainFiles.length > 1) {
-            let message = `There are multiple candidate domains with name ${problemFile.domainName}: ` + domainFiles.map(d => PddlWorkspace.getFileName(d.fileUri)).join(', ');
-
-            this.sendDiagnosticInfo(problemFile.fileUri, message);
-            problemFile.setStatus(FileStatus.Validated);
-            return null;
+        try{
+            return getDomainFileForProblem(problemFile, this.pddlWorkspace);
         }
-        else if (domainFiles.length === 0) {
-            // this.workspace.folders.forEach()
-
-            let message = `There are no domains open in the same folder with name (domain '${problemFile.domainName}') open in the editor.`;
-
-            this.sendDiagnosticInfo(problemFile.fileUri, message);
-            problemFile.setStatus(FileStatus.Validated);
-            return null;
+        catch(err){
+            if (err instanceof NoDomainAssociated) {
+                this.sendDiagnosticInfo(problemFile.fileUri, err.message, NoDomainAssociated.DIAGNOSTIC_CODE);
+                problemFile.setStatus(FileStatus.Validated);
+                return null;
+            }
+            throw err;
         }
-        else {
-            return domainFiles[0];
-        }
-
     }
 
-    sendDiagnosticInfo(fileUri: string, message: string) {
-        this.sendDiagnostic(fileUri, message, DiagnosticSeverity.Information);
+    sendDiagnosticInfo(fileUri: string, message: string, code?: string | number) {
+        this.sendDiagnostic(fileUri, message, DiagnosticSeverity.Information, code);
     }
 
-    sendDiagnostic(fileUri: string, message: string, severity: DiagnosticSeverity) {
-        let diagnostics: Diagnostic[] = [new Diagnostic(Validator.createRange(0, 0), message, severity)];
-        this.diagnosticCollection.set(Uri.parse(fileUri), diagnostics);
+    sendDiagnostic(fileUri: string, message: string, severity: DiagnosticSeverity, code?: string | number) {
+        let diagnostic = new Diagnostic(Validator.createLineRange(0), message, severity);
+        if  (code !== undefined && code !== null) {
+            diagnostic.code = code;
+        }
+        this.diagnosticCollection.set(Uri.parse(fileUri), [diagnostic]);
     }
 
     clearDiagnostics(fileUri: string): void {
