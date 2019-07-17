@@ -178,6 +178,7 @@ class MockStateContextEvent extends MockEvent {
             parentId: this.stateContext.parentId,
             g: this.stateContext.g,
             earliestTime: this.stateContext.earliestTime,
+            appliedAction: this.stateContext.appliedAction ? toWireSearchHappening(this.stateContext.appliedAction) : null,
             planHead: this.stateContext.planHead.map(h => toWireSearchHappening(h))
         };
     }
@@ -212,7 +213,7 @@ function toWireHelpfulAction(action: HelpfulAction): any {
     return {
         actionName: action.actionName,
         kind: HappeningType[action.kind]
-    }
+    };
 }
 
 class MockStateSearchContext {
@@ -226,24 +227,20 @@ class MockStateSearchContext {
 class MockStateContext {
 
     static createInitial(): MockStateContext {
-        return new MockStateContext(MockState.createInitial(), 0, EPSILON, [], null);
+        return new MockStateContext(MockState.createInitial(), 0, EPSILON, null, [], null);
     }
 
-    private _actionName: string;
-
     constructor(public readonly state: MockState, public readonly g: number, public readonly earliestTime: number,
+        public readonly appliedAction: MockSearchHappening,
         public readonly planHead: SearchHappening[], public readonly parentId?: string) {
-        this._actionName = !this.isInitialState() ?
-            this.getLastHappening().actionName :
-            null;
     }
 
     get actionName(): string {
-        return this._actionName;
+        return this.appliedAction ? this.appliedAction.actionName : null;
     }
 
     isInitialState(): boolean {
-        return this.planHead.length == 0;
+        return this.planHead.length === 0;
     }
 
     getLastHappening(): SearchHappening {
@@ -264,8 +261,9 @@ class MockStateContext {
     apply(actionName: string, shotCounter: number, kind: HappeningType, timeIncrement: number): MockStateContext {
         let id = ++MockState.lastStateId;
         let earliestTime = this.earliestTime + timeIncrement;
-        let newPlanHead = this.planHead.concat([new MockSearchHappening(earliestTime, actionName, shotCounter, kind, false)]);
-        return new MockStateContext(new MockState(id.toString()), this.g + 1, earliestTime, newPlanHead, this.state.id);
+        let appliedAction = new MockSearchHappening(earliestTime, actionName, shotCounter, kind, false);
+        let newPlanHead = this.planHead.concat([appliedAction]);
+        return new MockStateContext(new MockState(id.toString()), this.g + 1, earliestTime, appliedAction, newPlanHead, this.state.id);
     }
 
     evaluate(h: number, helpfulActions: HelpfulAction[], relaxedPlanFactory: (stateContext: MockStateContext) => RelaxedPlanBuilder): MockStateSearchContext {

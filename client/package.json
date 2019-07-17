@@ -4,7 +4,7 @@
   "description": "Planning Domain Description Language support",
   "author": "Jan Dolejsi",
   "license": "MIT",
-  "version": "2.12.1",
+  "version": "2.12.2",
   "publisher": "jan-dolejsi",
   "engines": {
     "vscode": "^1.31.0",
@@ -723,6 +723,11 @@
         "pddl.valStepPath": {
           "type": "string",
           "description": "Path of the 'valstep' executable."
+        },
+        "pddl.formatter" : {
+          "type": "boolean",
+          "default": false,
+          "description": "Enable PDDL formatter (default is 'false'). Requires VS Code window reload."
         },
         "pddlSearchDebugger.defaultPort": {
           "type": "integer",

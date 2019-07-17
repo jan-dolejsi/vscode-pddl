@@ -30,6 +30,7 @@ import { initialize, instrumentOperation } from "vscode-extension-telemetry-wrap
 import { KEY } from './TelemetryInstrumentation';
 import { SearchDebugger } from './searchDebugger/SearchDebugger';
 import { PlanningDomainsSessions } from './session/PlanningDomainsSessions';
+import { PddlFormatProvider } from './formatting/PddlFormatProvider';
 import { Val } from './validation/Val';
 import { createPddlExtensionContext } from './utils';
 import { AssociationProvider } from './workspace/AssociationProvider';
@@ -151,6 +152,11 @@ function activateWithTelemetry(_operationId: string, context: ExtensionContext) 
 	}));
 
 	let completionItemProvider = languages.registerCompletionItemProvider(PDDL, new AutoCompletion(pddlWorkspace), '(', ':', '-');
+
+	if (workspace.getConfiguration("pddl").get<boolean>("formatter")) {
+		let formattingProvider = languages.registerDocumentFormattingEditProvider(PDDL, new PddlFormatProvider());
+		context.subscriptions.push(formattingProvider);
+	}
 
 	let renameProvider = languages.registerRenameProvider(PDDL, new SymbolRenameProvider(pddlWorkspace));
 
