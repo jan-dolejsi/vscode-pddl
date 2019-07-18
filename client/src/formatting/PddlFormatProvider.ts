@@ -15,7 +15,7 @@ export class PddlFormatProvider implements DocumentFormattingEditProvider {
         if (token.isCancellationRequested) {
             return null;
         }
-        console.log(`${document} ${options} ${token}`);
+        console.log(`Formatting: ${document.fileName}, insertSpaces: ${options.insertSpaces}, tabSize: ${options.tabSize}`);
 
 		// NEW ALGORITHM
 		// note: user is free to define spacing within comments

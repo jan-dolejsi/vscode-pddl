@@ -727,7 +727,7 @@
         "pddl.formatter" : {
           "type": "boolean",
           "default": false,
-          "description": "Enable PDDL formatter (default is 'false'). Requires VS Code window reload."
+          "description": "Enable PDDL formatter (default is 'false'). Warning: this is an experimental feature - work in progress."
         },
         "pddlSearchDebugger.defaultPort": {
           "type": "integer",

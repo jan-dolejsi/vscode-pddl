@@ -43,6 +43,7 @@ const PDDL_LOGIN_PLANNER_SERVICE = 'pddl.loginPlannerService';
 const PDDL_UPDATE_TOKENS_PLANNER_SERVICE = 'pddl.updateTokensPlannerService';
 
 const PDDL_CONFIGURE_VALIDATOR = 'pddl.configureValidate';
+var formattingProvider: PddlFormatProvider;
 
 export async function activate(context: ExtensionContext) {
 
@@ -153,10 +154,7 @@ function activateWithTelemetry(_operationId: string, context: ExtensionContext) 
 
 	let completionItemProvider = languages.registerCompletionItemProvider(PDDL, new AutoCompletion(pddlWorkspace), '(', ':', '-');
 
-	if (workspace.getConfiguration("pddl").get<boolean>("formatter")) {
-		let formattingProvider = languages.registerDocumentFormattingEditProvider(PDDL, new PddlFormatProvider());
-		context.subscriptions.push(formattingProvider);
-	}
+	registerDocumentFormattingProvider(context);
 
 	let renameProvider = languages.registerRenameProvider(PDDL, new SymbolRenameProvider(pddlWorkspace));
 
@@ -254,5 +252,23 @@ function subscribeToWorkspace(pddlWorkspace: PddlWorkspace, pddlConfiguration: P
 		if (isAnyPddl(textDoc)) { pddlWorkspace.removeFile(textDoc.uri.toString()); }
 	}));
 
-	workspace.onDidChangeConfiguration(_ => pddlWorkspace.epsilon = pddlConfiguration.getEpsilonTimeStep());
+	workspace.onDidChangeConfiguration(_ => {
+		pddlWorkspace.epsilon = pddlConfiguration.getEpsilonTimeStep();
+		if (registerDocumentFormattingProvider(context)) {
+			window.showInformationMessage("PDDL formatter is now available. Right-click on a PDDL file...");
+			console.log('PDDL Formatter enabled.');
+		}
+	});
+}
+
+function registerDocumentFormattingProvider(context: ExtensionContext): boolean {
+	if (workspace.getConfiguration("pddl").get<boolean>("formatter") && !formattingProvider) {
+		formattingProvider = new PddlFormatProvider();
+		let formattingProviderDisposable = languages.registerDocumentFormattingEditProvider(PDDL, formattingProvider);
+		context.subscriptions.push(formattingProviderDisposable);
+		return true;
+	}	
+	else {
+		return false;
+	}
 }

@@ -23,7 +23,7 @@
 			"request": "launch",
 			"runtimeExecutable": "${execPath}",
 			"args": [
-				"--folder-uri=${workspaceFolder}/client/src/test/tmpFolder",
+				"--folder-uri=${workspaceFolder}/client/src/test/tmpFolder/",
 				"--extensionDevelopmentPath=${workspaceFolder}",
 				"--extensionTestsPath=${workspaceFolder}/client/out/client/src/test/suite/index"
 			],
