@@ -16,6 +16,19 @@
 				"${workspaceRoot}/client/out/**/*.js"
 			],
 			"preLaunchTask": "compile"
+		},
+		{
+			"name": "Run Extension Tests",
+			"type": "extensionHost",
+			"request": "launch",
+			"runtimeExecutable": "${execPath}",
+			"args": [
+				"--folder-uri=${workspaceFolder}/client/src/test/tmpFolder/",
+				"--extensionDevelopmentPath=${workspaceFolder}",
+				"--extensionTestsPath=${workspaceFolder}/client/out/client/src/test/suite/index"
+			],
+			"outFiles": ["${workspaceFolder}/client/out/client/src/test/**/*.js"],
+			"preLaunchTask": "compile"
 		}
 	]
 }
