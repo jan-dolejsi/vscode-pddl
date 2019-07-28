@@ -129,6 +129,10 @@
         "title": "PDDL: Configure parser"
       },
       {
+        "command": "pddl.syntaxTree",
+        "title": "PDDL: Syntax tree"
+      },
+      {
         "command": "pddl.loginParserService",
         "title": "PDDL: Login for parser service"
       },
@@ -724,7 +728,7 @@
           "type": "string",
           "description": "Path of the 'valstep' executable."
         },
-        "pddl.formatter" : {
+        "pddl.formatter": {
           "type": "boolean",
           "default": false,
           "description": "Enable PDDL formatter (default is 'false'). Warning: this is an experimental feature - work in progress."

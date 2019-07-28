@@ -35,7 +35,7 @@ export class HappeningsPlanExporter extends AbstractPlanExporter {
         var happeningsParser = new PlanHappeningsBuilder(this.epsilon);
         happeningsParser.tryParseFile(happeningsText);
         var happenings = happeningsParser.getHappenings();
-        var planSteps: PlanStep[] = []
+        var planSteps: PlanStep[] = [];
 
         happenings.forEach((happening, happeningIndex) => {
             switch (happening.getType()) {

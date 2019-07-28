@@ -24,7 +24,7 @@
 			"runtimeExecutable": "${execPath}",
 			"args": [
 				"--folder-uri=${workspaceFolder}/client/src/test/tmpFolder/",
-				"--extensionDevelopmentPath=${workspaceFolder}",
+				"--extensionDevelopmentPath=${workspaceFolder}/client",
 				"--extensionTestsPath=${workspaceFolder}/client/out/client/src/test/suite/index"
 			],
 			"outFiles": ["${workspaceFolder}/client/out/client/src/test/**/*.js"],

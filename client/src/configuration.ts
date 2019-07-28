@@ -5,7 +5,7 @@
 import * as vscode from 'vscode';
 import { PDDLParserSettings } from './Settings';
 
-import { ensureAbsolutePath } from './utils';
+import { ensureAbsolutePath, isHttp } from './utils';
 
 export const EXECUTABLE_OR_SERVICE = 'executableOrService';
 export const PDDL_PARSER = 'pddlParser';
@@ -104,7 +104,7 @@ export class PddlConfiguration {
 
             let configurationToUpdate = this.getConfigurationForScope(newParserScope);
 
-            if (!PddlConfiguration.isHttp(newParserPath)) {
+            if (!isHttp(newParserPath)) {
                 this.askParserOptions(newParserScope);
             }
 
@@ -199,10 +199,6 @@ export class PddlConfiguration {
         configuration.update(PLANNER_SERVICE_AUTHENTICATION_S_TOKEN, stoken, target);
     }
 
-    static isHttp(path: string) {
-        return path.match(/^http[s]?:/i);
-    }
-
     async getPlannerPath(workingFolder?: vscode.Uri): Promise<string> {
         let plannerPath: string = vscode.workspace.getConfiguration(PDDL_PLANNER, workingFolder).get(EXECUTABLE_OR_SERVICE);
 
@@ -234,7 +230,7 @@ export class PddlConfiguration {
             if (!newPlannerScope) { return null; }
             let configurationToUpdate = this.getConfigurationForScope(newPlannerScope);
 
-            if (!PddlConfiguration.isHttp(newPlannerPath)) {
+            if (!isHttp(newPlannerPath)) {
                 this.askPlannerSyntax(newPlannerScope);
             }
 

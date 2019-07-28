@@ -1,5 +1,13 @@
 # PDDL support - What's new?
 
+## [2.12.3] - TBD
+
+### Fixes
+
+Type/predicate/function renaming fixes
+
+- new name is validated before applying the bulk-rename
+
 ## [2.12.2] - 2019-07-08 - ICAPS 2019 Update
 
 ### News
@@ -676,8 +684,9 @@ Simplified snippets and added tabstops/placeholders to them, so they are easy to
 - Support for [Outline view](https://code.visualstudio.com/updates/v1_25#_outline-view), [Document Symbols](https://code.visualstudio.com/updates/v1_25#_document-symbols)
 - Any other extensions to put into extensions.json?
 - Review the ViewColumn usage following the Grid View feature availability in VS Code
-- Add a file system provider (readonly) for the IPC community and adapt it to the test cases manifests for ease of use
+- Add a search into the virtual file system for the IPC benchmarks and adapt it to the test cases manifests for ease of use
 - Add ['unused' warning](https://code.visualstudio.com/updates/v1_25#_diagnostictag)
+- Add Happenings to Problem explicit mapping
 
 ## [Unreleased]
 

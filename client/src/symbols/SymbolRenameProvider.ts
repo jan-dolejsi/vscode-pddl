@@ -4,14 +4,14 @@
  * ------------------------------------------------------------------------------------------ */
 'use strict';
 
-import { RenameProvider, TextDocument, Position, CancellationToken, WorkspaceEdit, workspace, Uri } from 'vscode';
-import { PddlWorkspace } from './PddlWorkspace';
+import { RenameProvider, TextDocument, Position, CancellationToken, WorkspaceEdit, workspace, Uri, Range } from 'vscode';
+import { PddlWorkspace } from '../../../common/src/PddlWorkspace';
 import { SymbolUtils, SymbolInfo, VariableInfo, TypeInfo } from './SymbolUtils';
 
 export class SymbolRenameProvider implements RenameProvider {
     private symbolUtils: SymbolUtils;
 
-    constructor(public pddlWorkspace: PddlWorkspace) {
+    constructor(pddlWorkspace: PddlWorkspace) {
         this.symbolUtils = new SymbolUtils(pddlWorkspace);
     }
 
@@ -22,11 +22,16 @@ export class SymbolRenameProvider implements RenameProvider {
         let fileUri = document.uri.toString();
         let symbolInfo = this.symbolUtils.getSymbolInfo(document, position);
 
-        if (!symbolInfo || !this.canRename(symbolInfo)) { return null; }
+        if (!symbolInfo || !this.canRename(symbolInfo)) { throw new Error("This cannot be renamed."); }
+
+        if (!newName.match(/^\w[-\w]*$/g)) {
+
+            throw new Error(`This is not a valid PDDL name: ${newName}`);
+        }
 
         let references = this.symbolUtils.findSymbolReferences(fileUri, symbolInfo, true);
 
-        let origName = document.getText(document.getWordRangeAtPosition(position, /\w[-\w]*/g));
+        let origName = document.getText(this.getWordRangeAtPosition(document, position));
 
         const workspaceEdits = new WorkspaceEdit();
 
@@ -40,7 +45,11 @@ export class SymbolRenameProvider implements RenameProvider {
         return workspaceEdits;
     }
 
-    findDocument(fileUri: Uri): TextDocument {
+    private getWordRangeAtPosition(document: TextDocument, position: Position): Range | undefined {
+        return document.getWordRangeAtPosition(position, /\w[-\w]*/g);
+    }
+
+    private findDocument(fileUri: Uri): TextDocument {
         let documentFound = workspace.textDocuments.find(textDoc => textDoc.uri.toString() === fileUri.toString());
 
         if (!documentFound) { throw new Error("Document not found in the workspace: " + fileUri.toString()); }
@@ -48,8 +57,19 @@ export class SymbolRenameProvider implements RenameProvider {
         return documentFound;
     }
 
-    canRename(symbolInfo: SymbolInfo): boolean {
+    private canRename(symbolInfo: SymbolInfo): boolean {
         return symbolInfo instanceof VariableInfo
             || symbolInfo instanceof TypeInfo;
+    }
+
+    async prepareRename(document: TextDocument, position: Position, token: CancellationToken): Promise<Range>{
+        if (token.isCancellationRequested) { return null; }
+        await this.symbolUtils.assertFileParsed(document);
+
+        let symbolInfo = this.symbolUtils.getSymbolInfo(document, position);
+
+        if (!symbolInfo || !this.canRename(symbolInfo)) { throw new Error("This cannot be renamed."); }
+
+        return this.getWordRangeAtPosition(document, position);
     }
 }

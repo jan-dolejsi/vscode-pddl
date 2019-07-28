@@ -10,6 +10,7 @@ import {
 } from 'vscode';
 
 import { PddlWorkspace } from '../../../common/src/PddlWorkspace';
+import { PddlSyntaxTree } from '../../../common/src/PddlSyntaxTree';
 import { DomainInfo, ProblemInfo } from '../../../common/src/parser';
 import { FileInfo, PddlLanguage } from '../../../common/src/FileInfo';
 import { PddlConfiguration } from '../configuration';
@@ -27,7 +28,7 @@ import { PlanReportGenerator } from './PlanReportGenerator';
 import { PlanExporter } from './PlanExporter';
 import { PlanHappeningsExporter } from './PlanHappeningsExporter';
 import { HappeningsPlanExporter } from './HappeningsPlanExporter';
-import { isHappenings, isPlan, selectFile } from '../workspace/workspaceUtils';
+import { isHappenings, isPlan, selectFile, isPddl } from '../workspace/workspaceUtils';
 import * as afs from '../../../common/src/asyncfs';
 
 import { PlanView, PDDL_GENERATE_PLAN_REPORT, PDDL_EXPORT_PLAN } from './PlanView';
@@ -35,7 +36,7 @@ import { PlannerOptionsProvider, PlanningRequestContext } from './PlannerOptions
 import { PlannerUserOptionsSelector } from './PlannerUserOptionsSelector';
 import { PlannerConfigurationSelector } from './PlannerConfigurationSelector';
 import { AssociationProvider } from '../workspace/AssociationProvider';
-import { showError } from '../utils';
+import { showError, isHttp } from '../utils';
 
 const PDDL_STOP_PLANNER = 'pddl.stopPlanner';
 const PDDL_CONVERT_PLAN_TO_HAPPENINGS = 'pddl.convertPlanToHappenings';
@@ -104,6 +105,16 @@ export class Planning implements PlannerResponseHandler {
                 new HappeningsPlanExporter(window.activeTextEditor.document, epsilon).export();
             } else {
                 window.showErrorMessage("Active document is not a happening.");
+            }
+        }));
+
+        context.subscriptions.push(commands.registerCommand("pddl.syntaxTree", () => {
+            if (window.activeTextEditor && isPddl(window.activeTextEditor.document)) {
+                let index = window.activeTextEditor.document.offsetAt(window.activeTextEditor.selection.active);
+                let breadcrumbs = new PddlSyntaxTree(window.activeTextEditor.document.getText(), index).getBreadcrumbs();
+                this.output.appendLine("PDDL Parser Breadcrumbs:");
+                breadcrumbs.forEach(b => this.output.appendLine(b.toString()));
+                this.output.show();
             }
         }));
     }
@@ -325,7 +336,7 @@ export class Planning implements PlannerResponseHandler {
 
         if (!await this.verifyConsentForSendingPddl(plannerPath)) { return null; }
 
-        if (PddlConfiguration.isHttp(plannerPath)) {
+        if (isHttp(plannerPath)) {
             let useAuthentication = this.plannerConfiguration.isPddlPlannerServiceAuthenticationEnabled();
             let authentication = null;
             if (useAuthentication) {
@@ -374,7 +385,7 @@ export class Planning implements PlannerResponseHandler {
     PLANNING_SERVICE_CONSENTS = "planningServiceConsents";
 
     async verifyConsentForSendingPddl(plannerPath: string): Promise<boolean> {
-        if (PddlConfiguration.isHttp(plannerPath)) {
+        if (isHttp(plannerPath)) {
             let consents: any = this.plannerConfiguration.context.globalState.get(this.PLANNING_SERVICE_CONSENTS, {});
             if (consents[plannerPath]) {
                 return true;

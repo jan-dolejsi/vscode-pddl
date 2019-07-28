@@ -124,8 +124,8 @@ export abstract class FileInfo {
             let line = lines[lineIdx];
             regexp.lastIndex = 0;
             let commentStartColumn = line.indexOf(';');
-            let match = regexp.exec(line);
-            if (match) {
+            let match: RegExpExecArray;
+            while (match = regexp.exec(line)) { 
                 if (commentStartColumn > -1 && match.index > commentStartColumn) { continue; }
 
                 let range = new PddlRange(lineIdx, match.index, lineIdx, match.index + match[0].length);
@@ -177,8 +177,8 @@ export enum FileStatus { Parsed, Dirty, Validating, Validated }
  * State variable.
  */
 export class Variable {
-    name: string;
-    declaredNameWithoutTypes: string;
+    readonly name: string;
+    readonly declaredNameWithoutTypes: string;
     location: PddlRange = null; // initialized lazily
     private documentation = ''; // initialized lazily
     private unit = ''; // initialized lazily

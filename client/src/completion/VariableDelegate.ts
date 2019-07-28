@@ -9,7 +9,7 @@ import { PddlWorkspace } from '../../../common/src/PddlWorkspace';
 import { DomainInfo } from '../../../common/src/parser';
 import { FileInfo, Variable } from '../../../common/src/FileInfo';
 import { Delegate } from './Delegate';
-import { SymbolUtils } from '../SymbolUtils';
+import { SymbolUtils } from '../symbols/SymbolUtils';
 
 export class VariableDelegate extends Delegate {
 

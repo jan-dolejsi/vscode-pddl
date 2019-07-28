@@ -22,6 +22,7 @@ import { PlanValidator, createDiagnostic } from './PlanValidator';
 import { HappeningsValidator } from './HappeningsValidator';
 import { HappeningsInfo } from '../HappeningsInfo';
 import { NoDomainAssociated, getDomainFileForProblem } from '../workspace/workspaceUtils';
+import { isHttp } from '../utils';
 
 /**
  * Listens to updates to PDDL files and performs detailed parsing and syntactical analysis and report problems as `Diagnostics`.
@@ -259,7 +260,7 @@ export class Diagnostics extends Disposable {
                 this.validator.syntax !== this.pddlParserSettings.executableOptions ||
                 this.validator.customPattern !== this.pddlParserSettings.problemPattern
             )) {
-            if (this.pddlConfiguration.getParserPath().match(/^http[s]?:/i)) {
+            if (isHttp(this.pddlConfiguration.getParserPath())) {
                 // is a service
                 let authentication = new Authentication(
                     this.pddlParserSettings.serviceAuthenticationUrl,

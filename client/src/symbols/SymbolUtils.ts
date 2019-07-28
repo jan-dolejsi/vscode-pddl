@@ -8,9 +8,9 @@ import {
     Position, Range, Hover, Location, Uri, TextDocument, MarkdownString
 } from 'vscode';
 
-import { PddlWorkspace } from '../../common/src/PddlWorkspace';
-import { toLanguageFromId, Action } from '../../common/src/parser';
-import { Variable, PddlRange } from '../../common/src/FileInfo';
+import { PddlWorkspace } from '../../../common/src/PddlWorkspace';
+import { toLanguageFromId, Action } from '../../../common/src/parser';
+import { Variable, PddlRange } from '../../../common/src/FileInfo';
 
 export class SymbolUtils {
     constructor(public workspace: PddlWorkspace) { }

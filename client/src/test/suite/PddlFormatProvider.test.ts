@@ -62,7 +62,8 @@ suite('Domain formatter Test Suite', () => {
 function testDisabled(_name: string, _callback: any) {}
 
 async function testFormatter(initialText: string, expectedText: string, options: vscode.FormattingOptions): Promise<void> {
-    let doc = await vscode.workspace.openTextDocument({ language: 'pddl', content: initialText });
+    // we do not want the extension to actually load (it takes too much time), so use a fake language
+    let doc = await vscode.workspace.openTextDocument({ language: 'pddl-do-not-load-extension', content: initialText });
     let editor = await vscode.window.showTextDocument(doc);
     let startSelectionBefore = editor.selection.start;
     

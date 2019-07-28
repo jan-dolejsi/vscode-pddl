@@ -6,9 +6,9 @@
 
 import { TextDocument, CancellationToken, SymbolInformation,
     DocumentSymbolProvider, DefinitionProvider, ReferenceProvider, Position, ReferenceContext, Location, HoverProvider, Hover, SymbolKind } from 'vscode';
-import { PddlWorkspace } from './PddlWorkspace';
+import { PddlWorkspace } from '../PddlWorkspace';
 import { SymbolUtils } from './SymbolUtils';
-import { DomainInfo } from './parser';
+import { DomainInfo } from '../../../common/src/parser';
 
 export class SymbolInfoProvider implements DocumentSymbolProvider, DefinitionProvider, ReferenceProvider, HoverProvider {
     symbolUtils: SymbolUtils;

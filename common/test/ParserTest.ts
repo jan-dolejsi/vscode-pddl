@@ -4,7 +4,7 @@
  * ------------------------------------------------------------------------------------------ */
 'use strict';
 
-import { Parser, DomainInfo, ProblemInfo } from '../src/parser'
+import { Parser, DomainInfo, ProblemInfo } from '../src/parser';
 import { DirectionalGraph } from '../src/DirectionalGraph';
 import * as assert from 'assert';
 import { Variable, Parameter, ObjectInstance } from '../src/FileInfo';
@@ -49,7 +49,7 @@ describe('Parser', () => {
             assert.ok(graph.getVertices().includes(parent), 'should include parent');
             assert.ok(graph.getVertices().includes(child), 'should include child');
             assert.ok(graph.getVerticesWithEdgesFrom(child).includes(parent), 'child should have parent');
-            assert.ok(graph.getVerticesWithEdgesFrom(parent).length == 0, 'parent should not have parent');
+            assert.strictEqual(graph.getVerticesWithEdgesFrom(parent).length, 0, 'parent should not have parent');
         });
 
         it('should parse parent-child declarations with new line', () => {
@@ -60,7 +60,7 @@ describe('Parser', () => {
             assert.ok(graph.getVertices().includes(parent), 'should include parent');
             assert.ok(graph.getVertices().includes(child), 'should include child');
             assert.ok(graph.getVerticesWithEdgesFrom(child).includes(parent), 'child should have parent');
-            assert.ok(graph.getVerticesWithEdgesFrom(parent).length == 0, 'parent should not have parent');
+            assert.strictEqual(graph.getVerticesWithEdgesFrom(parent).length, 0, 'parent should not have parent');
         });
 
         it('should parse parent-2children declarations', () => {
@@ -73,7 +73,7 @@ describe('Parser', () => {
             assert.ok(graph.getVertices().includes(child2), 'should include child2');
             assert.ok(graph.getVerticesWithEdgesFrom(child1).includes(parent), 'child1 should have parent');
             assert.ok(graph.getVerticesWithEdgesFrom(child2).includes(parent), 'child2 should have parent');
-            assert.ok(graph.getVerticesWithEdgesFrom(parent).length == 0, 'parent should not have parent');
+            assert.strictEqual(graph.getVerticesWithEdgesFrom(parent).length, 0, 'parent should not have parent');
         });
 
         it('should parse parent-child and orphan declarations', () => {
@@ -86,8 +86,8 @@ describe('Parser', () => {
             assert.ok(graph.getVertices().includes(orphan), 'should include orphan');
 
             assert.ok(graph.getVerticesWithEdgesFrom(child).includes(parent), 'child should have parent');
-            assert.ok(graph.getVerticesWithEdgesFrom(parent).length == 0, 'parent should not have parent');
-            assert.ok(graph.getVerticesWithEdgesFrom(orphan).length == 1, 'orphan should not have "object" parent');
+            assert.strictEqual(graph.getVerticesWithEdgesFrom(parent).length, 0, 'parent should not have parent');
+            assert.strictEqual(graph.getVerticesWithEdgesFrom(orphan).length, 1, 'orphan should not have "object" parent');
         });
 
         it('should parse 2 parent-child declarations', () => {
@@ -110,10 +110,10 @@ describe('Parser', () => {
 
             let typeObjects = Parser.toTypeObjects(graph);
 
-            assert.ok(typeObjects.length == 1, 'there should be 1 type');
-            assert.ok(typeObjects[0].type == type1, 'the type should be type1');
-            assert.ok(typeObjects[0].objects.length == 1, 'the # of objects should be 1');
-            assert.ok(typeObjects[0].objects[0] == object1, 'the object should be object1');
+            assert.strictEqual(typeObjects.length, 1, 'there should be 1 type');
+            assert.strictEqual(typeObjects[0].type, type1, 'the type should be type1');
+            assert.strictEqual(typeObjects[0].objects.length, 1, 'the # of objects should be 1');
+            assert.strictEqual(typeObjects[0].objects[0], object1, 'the object should be object1');
         });
 
         it('should form 2object-type map', () => {
@@ -126,7 +126,7 @@ describe('Parser', () => {
 
             let typeObjects = Parser.toTypeObjects(graph);
 
-            assert.ok(typeObjects.length == 1, 'there should be 1 type');
+            assert.strictEqual(typeObjects.length, 1, 'there should be 1 type');
             assert.equal(typeObjects[0].type, type1, 'the type should be type1');
             assert.ok(typeObjects[0].objects.includes(object1), 'the object should be object1');
             assert.ok(typeObjects[0].objects.includes(object2), 'the object should be object2');
@@ -434,7 +434,7 @@ describe('DomainInfo', () => {
             let range = domainInfo.getTypeLocation('tank');
 
             // THEN
-            assert.ok(range != null, "range should not be null");
+            assert.notStrictEqual(range, null, "range should not be null");
             assert.equal(range.startLine, 5);
             assert.equal(range.endLine, 5);
             assert.equal(range.startCharacter, 12);
@@ -450,7 +450,7 @@ describe('DomainInfo', () => {
             let range = domainInfo.getTypeLocation('tank');
 
             // THEN
-            assert.ok(range != null, "range should not be null");
+            assert.notStrictEqual(range, null, "range should not be null");
             assert.equal(range.startLine, 0);
             assert.equal(range.endLine, 0);
             assert.equal(range.startCharacter, 56);
