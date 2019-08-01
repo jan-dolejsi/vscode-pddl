@@ -4,82 +4,150 @@
 * ------------------------------------------------------------------------------------------ */
 'use strict';
 
-import { PddlTokenizer, PddlToken, PddlTokenType } from "./PddlTokenizer";
+import { PddlToken, PddlTokenType, TextRange } from "./PddlTokenizer";
 
-/** Builds a syntax tree from PDDL syntax tokens. */
+/** Represents a syntax tree of a PDDL document. */
 export class PddlSyntaxTree {
-
-    // tokens in reverse order
-    breadcrumbs: PddlToken[] = [];
-
-    constructor(pddlText: string, private symbolIndex: number) {
-        // tslint:disable-next-line:no-unused-expression
-        new PddlTokenizer(pddlText, token => this.onToken(token), symbolIndex);
+    private root: PddlSyntaxNode;
+    
+    constructor() {
+        this.root = PddlSyntaxNode.createRoot();
     }
 
-    getBreadcrumbs(): PddlToken[] {
-        return this.breadcrumbs.reverse();
+    getRootNode(): PddlSyntaxNode {
+        return this.root;
     }
 
-    onToken(token: PddlToken): void {
-        if (token.start > this.symbolIndex) { return; }
-        switch (token.type) {
-            case PddlTokenType.Keyword:
-                this.closeKeyword();
-                this.breadcrumbs.unshift(token);
-                break;
-            case PddlTokenType.CloseBracket:
-                this.closeBracket();
-                break;
-            default:
-                if (this.inLeaf()) {
-                    // remove the sibling
-                    this.breadcrumbs.shift();
-                }
-                this.breadcrumbs.unshift(token);
-                break;
-        }
+    /**
+     * Finds the node at given index in the document text.
+     * @param symbolIndex index in the document text, where the node is located
+     */
+    getNodeAt(symbolIndex: number): PddlSyntaxNode {
+        return this.getChildNodeAt(this.root, symbolIndex);
     }
 
-    isInLeafType(types: PddlTokenType[]): boolean {
-        if (this.breadcrumbs.length === 0) {
-            return false;
+    private getChildNodeAt(parent: PddlSyntaxNode, symbolIndex: number): PddlSyntaxNode {
+        if (!parent.includesIndex(symbolIndex)) {
+            throw new Error(`Index ${symbolIndex} is not included in the scope of ${parent.toString()}.`);
         }
 
-        let leafType = this.breadcrumbs[0].type;
-        return types.includes(leafType);
-    }
-
-    inLeaf(): boolean {
-        return this.isInLeafType([PddlTokenType.Comment,
-        PddlTokenType.Other,
-        PddlTokenType.Parameter,
-        PddlTokenType.Dash,
-        PddlTokenType.Whitespace]);
-    }
-
-    isOpenBracket(token: PddlToken): boolean {
-        return token.type === PddlTokenType.OpenBracketOperator || token.type === PddlTokenType.OpenBracket;
-    }
-
-    closeBracket(): void {
-        this.closeSibling(token => this.isOpenBracket(token), _token => false);
-    }
-
-    closeKeyword(): void {
-        this.closeSibling(token => token.type === PddlTokenType.Keyword, token => this.isOpenBracket(token));
-    }
-
-    closeSibling(isSibling: (token: PddlToken) => boolean, isParent: (token:PddlToken) => boolean): void {
-        // remove the other nested tokens
-        while (this.breadcrumbs.length && !isSibling(this.breadcrumbs[0]) && !isParent(this.breadcrumbs[0])) {
-            this.breadcrumbs.shift();
+        if (!parent.hasChildren()) {
+            return parent;
         }
-
-        // remove the parent token
-        if (this.breadcrumbs.length && isSibling(this.breadcrumbs[0]) && !isParent(this.breadcrumbs[0])) {
-            this.breadcrumbs.shift();
+        else if (parent.getToken().includesIndex(symbolIndex)) {
+            return parent;
+        }
+        else {
+            // todo: use binary search among chindren
+            let firstMatchingChild = parent.getChildren().find(node => node.includesIndex(symbolIndex));
+            return this.getChildNodeAt(firstMatchingChild, symbolIndex);
         }
     }
+}
 
+/** Single node in the syntax tree that wraps one PDDL tokenizer token. */
+export class PddlSyntaxNode extends TextRange {
+
+    private children: PddlSyntaxNode[] = [];
+
+    private maxChildEnd: number;
+    
+    /**
+     * Creates the syntax tree node.
+     * @param token pddl token wrapped by this node
+     * @param parent parent node, unless this is the root node
+     */
+    constructor(private token: PddlToken, private parent?: PddlSyntaxNode) {
+        super();
+        this.maxChildEnd = token.getEnd();
+    }
+
+    static createRoot(): PddlSyntaxNode {
+        return new PddlSyntaxNode(new PddlToken(PddlTokenType.Document, '', 0), undefined);
+    }
+
+    isRoot(): boolean {
+        return this.parent === undefined;
+    }
+
+    getParent(): PddlSyntaxNode | undefined {
+        return this.parent;
+    }
+
+    getToken(): PddlToken {
+        return this.token;
+    }
+
+    addChild(childNode: PddlSyntaxNode): void {
+        this.children.push(childNode);
+        this.recalculateEnd(childNode);
+    }
+
+    recalculateEnd(childNode: TextRange) {
+        this.maxChildEnd = Math.max(this.maxChildEnd, childNode.getEnd());
+        if (this.parent) { this.parent.recalculateEnd(this); }
+    }
+
+    getChildren(): PddlSyntaxNode[] {
+        return this.children;
+    }
+
+    getSingleChild(): PddlSyntaxNode {
+        if (this.children.length !== 1) {
+            throw new Error(`Failed assertion that node '${this.toString()}' has a single child.`);
+        }
+        return this.children[0];
+    }
+
+    getNonWhitespaceChildren(): PddlSyntaxNode[] {
+        return this.children.filter(c => c.getToken().type !== PddlTokenType.Whitespace);
+    }
+
+    getSingleNonWhitespaceChild(): PddlSyntaxNode {
+        let nonWhitespaceChildren = this.getNonWhitespaceChildren();
+        if (nonWhitespaceChildren.length !== 1) {
+            throw new Error(`Failed assertion that node '${this.toString()}' has a single non-whitespace child.`);
+        }
+        return nonWhitespaceChildren[0];
+    }
+
+    hasChildren(): boolean {
+        return this.children.length > 0;
+    }
+
+    getStart(): number {
+        return this.token.getStart();
+    }
+
+    getEnd(): number {
+        return this.maxChildEnd;
+    }
+
+    toString(): string {
+        return `${this.token.type}: text: '${this.token.tokenText.split(/\r?\n/).join('\\n')}', range: ${this.getStart()}~${this.getEnd()}}`;
+    }
+}
+
+/** Specialized tree node for open/close bracket pair. */
+export class PddlBracketNode extends PddlSyntaxNode {
+    private closeToken: PddlToken;
+    private _isClosed : boolean;
+
+    /**
+     * Sets the bracket close token.
+     * @param token pddl bracket close token
+     */
+    setCloseBracket(token: PddlToken): void {
+        this._isClosed = true;
+        this.closeToken = token;
+        this.recalculateEnd(token);
+    }
+
+    getCloseBracket(): PddlToken {
+        return this.closeToken;
+    }
+    
+    public get isClosed() : boolean {
+        return this._isClosed;
+    }
 }

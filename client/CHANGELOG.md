@@ -2,6 +2,10 @@
 
 ## [2.12.3] - TBD
 
+### Features
+
+Added syntax highlighting for [PDDL+](https://planning.wiki/ref/pddlplus/domain) features such as the `:time` requirement and `process` or `event`.
+
 ### Fixes
 
 Type/predicate/function renaming fixes

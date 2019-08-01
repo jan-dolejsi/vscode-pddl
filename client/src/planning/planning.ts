@@ -10,7 +10,7 @@ import {
 } from 'vscode';
 
 import { PddlWorkspace } from '../../../common/src/PddlWorkspace';
-import { PddlSyntaxTree } from '../../../common/src/PddlSyntaxTree';
+import { PddlSyntaxTreeBuilder } from '../../../common/src/PddlSyntaxTreeBuilder';
 import { DomainInfo, ProblemInfo } from '../../../common/src/parser';
 import { FileInfo, PddlLanguage } from '../../../common/src/FileInfo';
 import { PddlConfiguration } from '../configuration';
@@ -111,9 +111,16 @@ export class Planning implements PlannerResponseHandler {
         context.subscriptions.push(commands.registerCommand("pddl.syntaxTree", () => {
             if (window.activeTextEditor && isPddl(window.activeTextEditor.document)) {
                 let index = window.activeTextEditor.document.offsetAt(window.activeTextEditor.selection.active);
-                let breadcrumbs = new PddlSyntaxTree(window.activeTextEditor.document.getText(), index).getBreadcrumbs();
+                const pddlSyntaxTreeBuilder = new PddlSyntaxTreeBuilder(window.activeTextEditor.document.getText());
+                this.output.appendLine('');
+                this.output.appendLine("PDDL Syntax Tree:");
+                this.output.appendLine(pddlSyntaxTreeBuilder.getTreeAsString());
+                
+                let breadcrumbs = pddlSyntaxTreeBuilder.getBreadcrumbs(index);
+                this.output.appendLine('');
                 this.output.appendLine("PDDL Parser Breadcrumbs:");
                 breadcrumbs.forEach(b => this.output.appendLine(b.toString()));
+
                 this.output.show();
             }
         }));

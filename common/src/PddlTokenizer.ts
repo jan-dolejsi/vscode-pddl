@@ -80,10 +80,29 @@ export class PddlTokenizer {
     }
 }
 
+export abstract class TextRange {
+
+    /** Index of first character of the token. */
+    abstract getStart(): number;
+    /** Index in the document text just after the last character of the token. */
+    abstract getEnd(): number;
+
+    includesIndex(symbolIndex: number): boolean {
+        if (symbolIndex < this.getStart()) { return false; }
+        
+        if (this.getEnd() === undefined) { 
+            return true; 
+        }
+        else {
+            return symbolIndex <= this.getEnd();
+        }
+    }
+}
+
 /** PDDL syntax token. */
-export class PddlToken {
-    /** Last character of the token. */
-    public readonly end: number;
+export class PddlToken extends TextRange {
+    /** Index in the document text just after the last character of the token. */
+    private readonly end: number;
 
     /**
      * Constructs.
@@ -92,8 +111,9 @@ export class PddlToken {
      * @param start first character of the token
      */
     constructor(public readonly type: PddlTokenType, public readonly tokenText: string, 
-        public readonly start: number) {
-            this.end = start + tokenText.length -1;
+        private readonly start: number) {
+            super();
+            this.end = start + tokenText.length;
     }
 
     /**
@@ -105,6 +125,14 @@ export class PddlToken {
         return new PddlToken(type, match[0], match.index);
     }
 
+    getStart(): number {
+        return this.start;
+    }
+
+    getEnd(): number {
+        return this.end;
+    }
+
     toString(): string {
         return `PddlToken{type: ${this.type}, text: '${this.tokenText}', range: ${this.start}~${this.end}}`;
     }
@@ -114,7 +142,7 @@ export enum PddlTokenType {
     /** Open bracket with the operator name, e.g. `(+` or `(:action` or `(increase` */
     OpenBracketOperator = "OPEN_BRACKET_OPERATOR",
     /** Open bracket `(` */
-    OpenBracket = "OPEN_BRACKET", 
+    OpenBracket = "OPEN_BRACKET",
     /** Close bracket `)` */
     CloseBracket = "CLOSE_BRACKET",
     /** Keyword e.g. `:parameters` or `:effect` */
@@ -129,4 +157,6 @@ export enum PddlTokenType {
     Other = "OTHER",
     /** Comment i.e. anything after `;`, including the semicolon */
     Comment = "COMMENT",
+    /** Document is the root node type. */
+    Document = "DOCUMENT"
 }

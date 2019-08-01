@@ -63,8 +63,8 @@ describe('PddlParser', () => {
             let fragment0 = fragments[0];
             assert.strictEqual(fragment0.type, PddlTokenType.Whitespace);
             assert.strictEqual(fragment0.tokenText, domainPddl);
-            assert.strictEqual(fragment0.start, 0, 'start');
-            assert.strictEqual(fragment0.end, 0, 'end');
+            assert.strictEqual(fragment0.getStart(), 0, 'start');
+            assert.strictEqual(fragment0.getEnd(), 1, 'end');
         });
 
         it('parses whitespace', () => {
@@ -172,13 +172,13 @@ describe('PddlParser', () => {
             assert.strictEqual(fragments.length, 2, 'there should be two fragments');
             assert.strictEqual(fragments[0].type, PddlTokenType.Comment);
             assert.strictEqual(fragments[0].tokenText, ';X');
-            assert.strictEqual(fragments[0].start, 0, 'comment start');
-            assert.strictEqual(fragments[0].end, 1, 'comment end');
+            assert.strictEqual(fragments[0].getStart(), 0, 'comment start');
+            assert.strictEqual(fragments[0].getEnd(), 2, 'comment end');
 
             assert.strictEqual(fragments[1].type, PddlTokenType.Whitespace);
             assert.strictEqual(fragments[1].tokenText, '\r\n');
-            assert.strictEqual(fragments[1].start, 2, 'whitespce start');
-            assert.strictEqual(fragments[1].end, 3, 'whitespace end');
+            assert.strictEqual(fragments[1].getStart(), 2, 'whitespce start');
+            assert.strictEqual(fragments[1].getEnd(), 4, 'whitespace end');
         });
 
         it('parses one open bracket', () => {
@@ -219,8 +219,8 @@ describe('PddlParser', () => {
                 PddlTokenType.CloseBracket
             ]);
             assert.strictEqual(fragments[4].tokenText, 'domain_name');
-            assert.strictEqual(fragments[4].start, fragments[3].end + 1);
-            assert.strictEqual(fragments[4].end, fragments[5].start - 1);
+            assert.strictEqual(fragments[4].getStart(), fragments[3].getEnd(), 'fragment 4 starts where fragment 3 ends');
+            assert.strictEqual(fragments[4].getEnd(), fragments[5].getStart(), 'fragment 4 ends where frament 5 starts');
         });
 
         it('parses requirements', () => {
