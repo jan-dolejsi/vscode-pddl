@@ -214,6 +214,13 @@ export class Val {
                     default:
                         return null;
                 }
+            case "darwin":
+                switch (os.arch()) {
+                    case "x64":
+                        return "macos64";
+                    default:
+                        return null;
+                }
             default:
                 return null;
         }

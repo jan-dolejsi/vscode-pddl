@@ -118,7 +118,8 @@ export class PlanValidator {
 
         let args = ['-t', epsilon.toString(), '-v', domainFilePath, problemFilePath, planFilePath];
         let workingDir = this.createWorkingFolder(Uri.parse(planInfo.fileUri));
-        let child = process.spawnSync(validatePath, args, { cwd: workingDir });
+        let validateDirectory = dirname(validatePath);
+        let child = process.spawnSync(validatePath, args, { cwd: workingDir, env: {'DYLD_FALLBACK_LIBRARY_PATH':validateDirectory} });
 
         if (showOutput) { this.output.appendLine(validatePath + ' ' + args.join(' ')); }
 
