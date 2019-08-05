@@ -80,7 +80,7 @@ export class Val {
         let zipPath = path.join(this.getValPath(), "drop.zip");
         await afs.mkdirIfDoesNotExist(path.dirname(zipPath), 0o644);
 
-        let url = `https://dev.azure.com/schlumberger/4e6bcb11-cd68-40fe-98a2-e3777bfec0a6/_apis/build/builds/${buildId}/artifacts?artifactName=${artifactName}&api-version=5.1-preview.5&%24format=zip`;
+        let url = `https://dev.azure.com/schlumberger/4e6bcb11-cd68-40fe-98a2-e3777bfec0a6/_apis/build/builds/${buildId}/artifacts?artifactName=${artifactName}&api-version=5.2-preview.5&%24format=zip`;
 
         await window.withProgress({ location: ProgressLocation.Window, title: 'Downloading VAL tools...' }, (_progress, _token) => {
             return getFile(url, zipPath);
