@@ -12,6 +12,7 @@ import * as fs from 'fs';
 import * as os from 'os';
 import * as AdmZip from 'adm-zip';
 import { PARSER_EXECUTABLE_OR_SERVICE, CONF_PDDL, VALIDATION_PATH, VALUE_SEQ_PATH, VAL_STEP_PATH } from '../configuration';
+import { VAL_DOWNLOAD_COMMAND, ValDownloadOptions } from './valCommand';
 
 export class Val {
     /** Directory where VAL binaries are to be downloaded locally. */
@@ -20,13 +21,13 @@ export class Val {
     valVersionPath: string;
 
     constructor(private context: ExtensionContext) {
-        context.subscriptions.push(commands.registerCommand("pddl.downloadVal", async () => {
+        context.subscriptions.push(commands.registerCommand(VAL_DOWNLOAD_COMMAND, async (options: ValDownloadOptions) => {
             try {
-                let userAgreesToDownload = await this.promptForConsent();
+                let userAgreesToDownload = (options && options.bypassConsent) || await this.promptForConsent();
                 if (!userAgreesToDownload) { return; }
                 await this.downloadConfigureAndCleanUp();
             } catch (ex) {
-                window.showErrorMessage(ex.message);
+                window.showErrorMessage(ex.message || ex);
             }
         }));
 
@@ -57,8 +58,9 @@ export class Val {
             // clean previous version
             if (wasValInstalled && previousVersion && newVersion) {
                 if (previousVersion.buildId !== newVersion.buildId) {
-                    console.log(`The ${previousVersion.version} and the ${newVersion.version} different, cleaning-up the old version.`);
-                    await this.deleteAll(previousVersion.files);
+                    console.log(`The ${previousVersion.version} and the ${newVersion.version} differ, cleaning-up the old version.`);
+                    let filesAbsPaths = previousVersion.files.map(f => path.join(this.context.extensionPath, f));
+                    await this.deleteAll(filesAbsPaths);
                 }
             }
         }
@@ -162,11 +164,13 @@ export class Val {
         // 2. delete empty directories
         let directories = [...new Set(files.map(file => path.dirname(file)))];
         let emptyDirectories = directories
-            .filter(async directory => await afs.isEmpty(directory))
+            // sorted from longest to shortest to delete sub-directories first
             .sort((a, b) => b.length - a.length);
 
         for (const directory of emptyDirectories) {
-            await afs.rmdir(directory);
+            if (await afs.isEmpty(directory)) {
+                await afs.rmdir(directory);
+            }
         }
     }
 

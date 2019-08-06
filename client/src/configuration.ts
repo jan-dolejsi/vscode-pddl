@@ -6,6 +6,7 @@ import * as vscode from 'vscode';
 import { PDDLParserSettings } from './Settings';
 
 import { ensureAbsolutePath, isHttp } from './utils';
+import { VAL_DOWNLOAD_COMMAND } from './validation/valCommand';
 
 export const EXECUTABLE_OR_SERVICE = 'executableOrService';
 export const PDDL_PARSER = 'pddlParser';
@@ -67,7 +68,7 @@ export class PddlConfiguration {
                 break;
 
             case downloadVal:
-                vscode.commands.executeCommand("pddl.downloadVal");
+                vscode.commands.executeCommand(VAL_DOWNLOAD_COMMAND);
                 break;
 
             case setupParserLater:

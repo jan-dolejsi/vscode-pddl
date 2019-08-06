@@ -14,6 +14,7 @@ import * as path from 'path';
 import { getWebViewHtml, createPddlExtensionContext } from '../utils';
 import * as afs from '../../../common/src/asyncfs';
 import { Val } from '../validation/Val';
+import { VAL_DOWNLOAD_COMMAND, ValDownloadOptions } from '../validation/valCommand';
 
 export const SHOULD_SHOW_OVERVIEW_PAGE = 'shouldShowOverviewPage';
 export const LAST_SHOWN_OVERVIEW_PAGE = 'lastShownOverviewPage';
@@ -97,7 +98,7 @@ export class OverviewPage {
                     await this.helloWorld();
                 }
                 catch (ex) {
-                    window.showErrorMessage(ex.message);
+                    window.showErrorMessage(ex.message || ex);
                 }
                 break;
             case 'clonePddlSamples':
@@ -117,6 +118,9 @@ export class OverviewPage {
             case 'enableIcons':
                 await workspace.getConfiguration().update("workbench.iconTheme", "vscode-icons", ConfigurationTarget.Global);
                 break;
+            case 'downloadVal':
+                let options: ValDownloadOptions = { bypassConsent: message.informedDecision };
+                await commands.executeCommand(VAL_DOWNLOAD_COMMAND, options);
             default:
                 console.warn('Unexpected command: ' + message.command);
         }

@@ -19,6 +19,7 @@ import { dirname } from 'path';
 import { PlanStep } from '../../../common/src/PlanStep';
 import { DomainAndProblem, getDomainAndProblemForPlan, isPlan, NoProblemAssociated, NoDomainAssociated } from '../workspace/workspaceUtils';
 import { showError } from '../utils';
+import { VAL_DOWNLOAD_COMMAND } from '../validation/valCommand';
 
 export const PDDL_PLAN_VALIDATE = 'pddl.plan.validate';
 
@@ -64,7 +65,7 @@ export class PlanValidator {
     async testConfiguration(): Promise<boolean> {
         let validatePath = this.plannerConfiguration.getValidatorPath();
         if (validatePath.length === 0) {
-            commands.executeCommand('pddl.downloadVal');
+            commands.executeCommand(VAL_DOWNLOAD_COMMAND);
             return false;
         }
         else {

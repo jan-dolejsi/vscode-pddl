@@ -4,6 +4,8 @@
 
 ### Features
 
+VAL binaries are now available for Mac OS as well as Linux and Windows. If you are a Mac user, download them using the `PDDL: Download VAL` command or when prompt.
+
 Added syntax highlighting for [PDDL+](https://planning.wiki/ref/pddlplus/domain) features such as the `:time` requirement and `process` or `event`.
 
 Added code actions corresponding to parser warning:
@@ -17,6 +19,8 @@ Type/predicate/function renaming fixes
 
 * new name is validated before applying the bulk-rename
 * de-duplicating parser warnings/errors (VAL Parser repeats the missing requirement warning many times)
+* errors while downloading VAL binaries are now reported up to the user
+* previous VAL binaries are properly deleted after upgrade to the latest
 
 ### Engineering
 
@@ -43,7 +47,7 @@ You can now enjoy the freedom of having your PDDL files spread across any direct
 
 The VS Code PDDL extension had rigid convention for matching domain and problem files to each other. They had to be in the same folder and both open in the editor. Failing that, the editor was not able to naturally associate your files to each other. That would prevent you from invoking the planner, or validator seamlessly.
 
-If one of the rules above is not satisfied, the editor will not naturally associate your files to each other. In that case it shows a validation error suggesting to apply a _Quick Fix_ via the 💡 symbol, which lets you find the corresponding domain/problem file from following scopes:
+If one of the rules above is not satisfied, the editor will not naturally associate your files to each other. In that case it shows a validation error suggesting to apply a _Quick Fix_ via the 💡 (bulb) symbol, which lets you find the corresponding domain/problem file from following scopes:
 
 1. suggested files, if multiple candidates were found
 1. currently open files in the editor

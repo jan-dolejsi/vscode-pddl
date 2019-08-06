@@ -53,7 +53,7 @@ export class Debugging {
 				this.saveDecorations(editor.document, decorations);
 			}
 			catch (ex) {
-				vscode.window.showErrorMessage(ex.message);
+				vscode.window.showErrorMessage(ex.message || ex);
 			}
 		}));
 
@@ -63,7 +63,7 @@ export class Debugging {
 				new HappeningsToPlanResumeCasesConvertor(context, this.plannerConfiguration).generate();
 			}
 			catch (ex) {
-				vscode.window.showErrorMessage(ex.message);
+				vscode.window.showErrorMessage(ex.message || ex);
 			}
 		}));
 

@@ -141,6 +141,14 @@ function enableIcons() {
         command: 'enableIcons'
     })
 }
+
+function downloadValInformed() {
+    postMessage({
+        command: 'downloadVal',
+        informedDecision: true
+    })
+}
+
 function postMessage(message) {
     if (vscode) vscode.postMessage(message);
 }
