@@ -12,6 +12,7 @@ import { TestOutcome, Test } from './Test';
 import { PTestReportView } from './PTestReportView';
 import { PddlExtensionContext } from '../PddlExtensionContext';
 
+/** Gathers the output of running PDDL Test cases and summarizes them into a WebView table. */
 export class PTestReport implements Disposable {
     private view: PTestReportView;
     private manifests = new ManifestMap();

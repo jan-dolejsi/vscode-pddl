@@ -38,8 +38,7 @@ export class AssociationCodeActionProvider implements CodeActionProvider {
 		const action = new CodeAction(title, CodeActionKind.QuickFix);
 		action.command = { command: COMMAND_ASSOCIATE_PROBLEM, arguments: [document.uri], title: title };
 		action.diagnostics = [diagnostic];
-		// todo: re-introduce this when upgraded to a later VS Code version
-		// action.isPreferred = true;
+		action.isPreferred = true;
 		return action;
 	}
 
@@ -48,8 +47,7 @@ export class AssociationCodeActionProvider implements CodeActionProvider {
 		const action = new CodeAction(title, CodeActionKind.QuickFix);
 		action.command = { command: COMMAND_ASSOCIATE_DOMAIN, arguments: [document.uri], title: title };
 		action.diagnostics = [diagnostic];
-		// todo: re-introduce this when upgraded to a later VS Code version
-		// action.isPreferred = true;
+		action.isPreferred = true;
 		return action;
 	}
 }

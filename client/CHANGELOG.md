@@ -6,11 +6,22 @@
 
 Added syntax highlighting for [PDDL+](https://planning.wiki/ref/pddlplus/domain) features such as the `:time` requirement and `process` or `event`.
 
+Added code actions corresponding to parser warning:
+
+* empty .pddl file suggests applying the domain/problem snippet.
+* missing PDDL requirement warning offers to add the requirement to `:requirement`
+
 ### Fixes
 
 Type/predicate/function renaming fixes
 
-- new name is validated before applying the bulk-rename
+* new name is validated before applying the bulk-rename
+* de-duplicating parser warnings/errors (VAL Parser repeats the missing requirement warning many times)
+
+### Engineering
+
+* file path and URI manipulations now delegated to the `vscode-uri` package and unit tests more robust for execution on MacOS
+* minimum version of VS Code is now 1.32
 
 ## [2.12.2] - 2019-07-08 - ICAPS 2019 Update
 

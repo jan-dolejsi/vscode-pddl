@@ -115,7 +115,7 @@ export class Planning implements PlannerResponseHandler {
                 this.output.appendLine('');
                 this.output.appendLine("PDDL Syntax Tree:");
                 this.output.appendLine(pddlSyntaxTreeBuilder.getTreeAsString());
-                
+
                 let breadcrumbs = pddlSyntaxTreeBuilder.getBreadcrumbs(index);
                 this.output.appendLine('');
                 this.output.appendLine("PDDL Parser Breadcrumbs:");
@@ -210,7 +210,7 @@ export class Planning implements PlannerResponseHandler {
             if (problemFiles.length === 1) {
                 problemFileInfo = problemFiles[0];
             } else if (problemFiles.length > 1) {
-                const problemFileNames = problemFiles.map(info => Planning.getFileName(info.fileUri));
+                const problemFileNames = problemFiles.map(info => PddlWorkspace.getFileInfoName(info));
 
                 const selectedProblemFileName = await window.showQuickPick(problemFileNames, { placeHolder: "Select problem file:" });
 
@@ -445,11 +445,6 @@ export class Planning implements PlannerResponseHandler {
         this.planView.setPlannerOutput(plans, !this.isSearchDebugger());
     }
 
-    // copied from the Workspace class
-    static getFileName(documentUri: string): string {
-        let lastSlashIdx = documentUri.lastIndexOf("/");
-        return documentUri.substring(lastSlashIdx + 1);
-    }
     static q(path: string): string {
         return path.includes(' ') ? `"${path}"` : path;
     }

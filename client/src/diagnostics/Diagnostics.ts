@@ -294,10 +294,10 @@ export class Diagnostics extends Disposable {
     }
 
     getDomainFileFor(problemFile: ProblemInfo): DomainInfo {
-        try{
+        try {
             return getDomainFileForProblem(problemFile, this.pddlWorkspace);
         }
-        catch(err){
+        catch (err) {
             if (err instanceof NoDomainAssociated) {
                 this.sendDiagnosticInfo(problemFile.fileUri, err.message, NoDomainAssociated.DIAGNOSTIC_CODE);
                 problemFile.setStatus(FileStatus.Validated);
@@ -313,7 +313,7 @@ export class Diagnostics extends Disposable {
 
     sendDiagnostic(fileUri: string, message: string, severity: DiagnosticSeverity, code?: string | number) {
         let diagnostic = new Diagnostic(Validator.createLineRange(0), message, severity);
-        if  (code !== undefined && code !== null) {
+        if (code !== undefined && code !== null) {
             diagnostic.code = code;
         }
         this.diagnosticCollection.set(Uri.parse(fileUri), [diagnostic]);
@@ -326,14 +326,9 @@ export class Diagnostics extends Disposable {
     validateUnknownFile(fileInfo: FileInfo): void {
         fileInfo.setStatus(FileStatus.Validating);
 
-        if (fileInfo.getText().length > 0) {
-            let firstLine = stripComments(fileInfo.getText()).replace(/^\s+/g, '').split('\n')[0];
+        let firstLine = stripComments(fileInfo.getText()).replace(/^\s+/g, '').split('\n')[0];
 
-            this.sendDiagnostic(fileInfo.fileUri, `Cannot recognize whether this is a domain or problem: ${firstLine}`, DiagnosticSeverity.Error);
-        }
-        else {
-            this.clearDiagnostics(fileInfo.fileUri);
-        }
+        this.sendDiagnostic(fileInfo.fileUri, `Cannot recognize whether this is a domain or problem: ${firstLine}`, DiagnosticSeverity.Error, 'CONTENT_NOT_RECOGNIZED');
 
         fileInfo.setStatus(FileStatus.Validated);
     }

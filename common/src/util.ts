@@ -7,7 +7,7 @@ import * as atmp from './asynctmp';
 import * as tmp from 'tmp';
 import fs = require('fs');
 import * as afs from './asyncfs';
-import { URL } from "url";
+import { URI } from 'vscode-uri';
 
 
 export class Util {
@@ -50,12 +50,7 @@ export class Util {
     }
 
     static fsPath(fileUri: string): string {
-
-        let url = new URL(fileUri);
-        let decodedPath: string = decodeURIComponent(url.pathname);
-        if(decodedPath.startsWith('/')) { decodedPath = decodedPath.substr(1); }
-
-        return decodedPath;
+        return URI.parse(fileUri).fsPath;
     }
 
     /**

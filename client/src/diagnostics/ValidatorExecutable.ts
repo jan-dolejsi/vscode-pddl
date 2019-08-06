@@ -61,10 +61,15 @@ export class ValidatorExecutable extends Validator {
             patterns.push(new ProblemPattern(this.customPattern, filePaths));
         }
 
+        let distinctOutputs: string[] = [];
+
         patterns.forEach(pattern => {
             let match: RegExpExecArray;
             while (match = pattern.regEx.exec(output)) {
-
+                // only report each warning/error once
+                if (distinctOutputs.includes(match[0])) { continue; }
+                distinctOutputs.push(match[0]);
+                
                 let pathUriTuple = pathToUriMap.find(tuple => tuple[0] === pattern.getFilePath(match));
 
                 if (!pathUriTuple) { continue; } // this is not a file of interest

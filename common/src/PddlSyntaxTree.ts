@@ -111,6 +111,21 @@ export class PddlSyntaxNode extends TextRange {
         return nonWhitespaceChildren[0];
     }
 
+    getFirstChild(type: PddlTokenType, pattern: RegExp): PddlSyntaxNode {
+        return this.children.filter(c => c.getToken().type === type)
+            .find(node => node.getToken().tokenText.match(pattern));
+    }
+
+    getFirstChildOrThrow(type: PddlTokenType, pattern: RegExp): PddlSyntaxNode {
+        let matchingChild = this.getFirstChild(type, pattern);
+
+        if (!matchingChild) {
+            throw new Error(`No child element of type ${type} satisfying pattern ${pattern.source}.`);
+        }
+
+        return matchingChild;
+    }
+
     hasChildren(): boolean {
         return this.children.length > 0;
     }

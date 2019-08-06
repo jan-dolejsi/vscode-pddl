@@ -83,14 +83,18 @@ export class PddlWorkspace extends EventEmitter {
         this.parser = new Parser(context);
     }
 
-    static getFolderUri(documentUri: string): string {
+    static getFolderPath(documentUri: string): string {
         let documentPath = Util.fsPath(documentUri);
-        return Util.replaceAll(dirname(documentPath), '\\', '/');
+        return dirname(documentPath);
     }
 
     static getFileName(documentUri: string): string {
         let documentPath = Util.fsPath(documentUri);
         return basename(documentPath);
+    }
+
+    static getFileInfoName(fileInfo: FileInfo): string {
+        return this.getFileName(fileInfo.fileUri);
     }
 
     async upsertAndParseFile(fileUri: string, language: PddlLanguage, fileVersion: number, fileText: string): Promise<FileInfo> {
@@ -104,7 +108,7 @@ export class PddlWorkspace extends EventEmitter {
 
     async upsertFile(fileUri: string, language: PddlLanguage, fileVersion: number, fileText: string): Promise<FileInfo> {
 
-        let folderUri = PddlWorkspace.getFolderUri(fileUri);
+        let folderUri = PddlWorkspace.getFolderPath(fileUri);
 
         let folder = this.upsertFolder(folderUri);
 
@@ -170,7 +174,7 @@ export class PddlWorkspace extends EventEmitter {
     }
 
     private async reParseFile(fileInfo: FileInfo): Promise<FileInfo> {
-        let folderUri = PddlWorkspace.getFolderUri(fileInfo.fileUri);
+        let folderUri = PddlWorkspace.getFolderPath(fileInfo.fileUri);
 
         let folder = this.upsertFolder(folderUri);
 
@@ -227,7 +231,7 @@ export class PddlWorkspace extends EventEmitter {
 
     removeFile(documentUri: string): boolean {
 
-        let folderUri = PddlWorkspace.getFolderUri(documentUri);
+        let folderUri = PddlWorkspace.getFolderPath(documentUri);
 
         if (this.folders.has(folderUri)) {
             let folder = this.folders.get(folderUri);
@@ -243,7 +247,7 @@ export class PddlWorkspace extends EventEmitter {
     }
 
     getFileInfo<T extends FileInfo>(fileUri: string): T {
-        let folderUri = PddlWorkspace.getFolderUri(fileUri);
+        let folderUri = PddlWorkspace.getFolderPath(fileUri);
 
         if (this.folders.has(folderUri)) {
             let folder = this.folders.get(folderUri);
@@ -257,7 +261,7 @@ export class PddlWorkspace extends EventEmitter {
     }
 
     getProblemFiles(domainInfo: DomainInfo): ProblemInfo[] {
-        let folder = this.folders.get(PddlWorkspace.getFolderUri(domainInfo.fileUri));
+        let folder = this.folders.get(PddlWorkspace.getFolderPath(domainInfo.fileUri));
 
         // find problem files in the same folder that match the domain name
         let problemFiles = folder.getProblemFilesFor(domainInfo);
@@ -266,7 +270,7 @@ export class PddlWorkspace extends EventEmitter {
     }
 
     getPlanFiles(problemInfo: ProblemInfo): PlanInfo[] {
-        let folder = this.folders.get(PddlWorkspace.getFolderUri(problemInfo.fileUri));
+        let folder = this.folders.get(PddlWorkspace.getFolderPath(problemInfo.fileUri));
 
         // find plan files in the same folder that match the domain and problem names
         return Array.from(folder.files.values())
@@ -277,7 +281,7 @@ export class PddlWorkspace extends EventEmitter {
     }
 
     getHappeningsFiles(problemInfo: ProblemInfo): HappeningsInfo[] {
-        let folder = this.folders.get(PddlWorkspace.getFolderUri(problemInfo.fileUri));
+        let folder = this.folders.get(PddlWorkspace.getFolderPath(problemInfo.fileUri));
 
         // find happenings files in the same folder that match the domain and problem names
         return Array.from(folder.files.values())
@@ -362,7 +366,7 @@ export class PddlWorkspace extends EventEmitter {
             return [this.getFileInfo<DomainInfo>(domainFileUri)];
         }
         else {
-            let folder = this.folders.get(PddlWorkspace.getFolderUri(problemFile.fileUri));
+            let folder = this.folders.get(PddlWorkspace.getFolderPath(problemFile.fileUri));
 
             if (!folder) { return null; }
 
@@ -420,10 +424,6 @@ export class PddlWorkspace extends EventEmitter {
     }
 
     getFolderOf(fileInfo: FileInfo): Folder {
-        return this.getFolderOfFileUri(fileInfo.fileUri);
-    }
-
-    getFolderOfFileUri(fileUri: string): Folder {
-        return this.folders.get(PddlWorkspace.getFolderUri(fileUri));
+        return this.folders.get(PddlWorkspace.getFolderPath(fileInfo.fileUri));
     }
 }
