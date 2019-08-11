@@ -5,15 +5,13 @@
 'use strict';
 
 import { TextDocument, CodeActionProvider, CodeActionKind, Range, Selection, CodeActionContext, CancellationToken, CodeAction, Diagnostic } from 'vscode';
-// import { NoProblemAssociated, NoDomainAssociated } from './workspaceUtils';
 import { MissingRequirements } from './MissingRequirements';
-import { PddlWorkspace } from '../../../common/src/PddlWorkspace';
-import { toLanguage } from '../workspace/workspaceUtils';
 import { Util } from '../../../common/src/util';
 import { PddlSyntaxTreeBuilder } from '../../../common/src/PddlSyntaxTreeBuilder';
 import { PddlTokenType } from '../../../common/src/PddlTokenizer';
 import { PddlSyntaxTree } from '../../../common/src/PddlSyntaxTree';
 import { FileInfo } from '../../../common/src/FileInfo';
+import { CodePddlWorkspace } from '../workspace/CodePddlWorkspace';
 
 /**
  * Provides code actions for PDDL files.
@@ -22,7 +20,7 @@ export class SuggestionProvider implements CodeActionProvider {
 
     static readonly CONTENT_NOT_RECOGNIZED = 'CONTENT_NOT_RECOGNIZED';
 
-    constructor(private workspace: PddlWorkspace) {
+    constructor(private workspace: CodePddlWorkspace) {
     }
 
     public static readonly providedCodeActionKinds = [
@@ -32,7 +30,7 @@ export class SuggestionProvider implements CodeActionProvider {
     async provideCodeActions(document: TextDocument, range: Range | Selection, context: CodeActionContext, token: CancellationToken): Promise<CodeAction[]> {
         if (token.isCancellationRequested) { return []; }
 
-        let fileInfo = await this.workspace.upsertFile(document.uri.toString(), toLanguage(document), document.version, document.getText());
+        let fileInfo = await this.workspace.upsertFile(document);
         let syntaxTree = new PddlSyntaxTreeBuilder(fileInfo.getText()).getTree();
 
         let insertSnippetCodeActions = context.diagnostics

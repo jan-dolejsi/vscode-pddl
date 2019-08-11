@@ -8,7 +8,8 @@ import {
     Diagnostic, DiagnosticSeverity, Range, Position
 } from 'vscode';
 
-import { DomainInfo, ProblemInfo } from '../../../common/src/parser';
+import { ProblemInfo } from '../../../common/src/parser';
+import { DomainInfo } from '../../../common/src/DomainInfo';
 
 export abstract class Validator {
 

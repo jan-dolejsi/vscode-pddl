@@ -15,6 +15,7 @@ import { PlanEvaluator } from './PlanEvaluator';
 import { AbstractPlanExporter } from '../planning/PlanExporter';
 import { PlanningDomains } from '../catalog/PlanningDomains';
 import { HTTPLAN } from '../catalog/Catalog';
+import { SimpleDocumentPositionResolver } from '../../../common/src/DocumentPositionResolver';
 
 
 /**
@@ -85,7 +86,7 @@ export class NormalizedPlanDocumentContentProvider implements TextDocumentConten
     async evaluate(uri: Uri, origText: string): Promise<string> {
         let planMetaData = Parser.parsePlanMeta(origText);
         if (planMetaData.domainName !== UNSPECIFIED_DOMAIN && planMetaData.problemName !== UNSPECIFIED_DOMAIN) {
-            let planInfo = this.pddlWorkspace.parser.parsePlan(uri.toString(), -1, origText, this.configuration.getEpsilonTimeStep());
+            let planInfo = this.pddlWorkspace.parser.parsePlan(uri.toString(), -1, origText, this.configuration.getEpsilonTimeStep(), new SimpleDocumentPositionResolver(origText));
 
             let context = getDomainAndProblemForPlan(planInfo, this.pddlWorkspace);
             let planValues = await new PlanEvaluator(this.configuration).evaluate(context.domain, context.problem, planInfo);

@@ -244,7 +244,7 @@ describe('PddlSyntaxTreeBuilder', () => {
 
             // THEN
             assert.strictEqual(reqs.getNonWhitespaceChildren().length, 2, 'there should be 2 reqs');
-            let tokenTypes = reqs.getChildren().map(f => f.getToken().type);
+            let tokenTypes = reqs.getNestedChildren().map(f => f.getToken().type);
             assert.deepStrictEqual(tokenTypes, [
                 PddlTokenType.Whitespace,
                 PddlTokenType.Keyword,
@@ -263,7 +263,7 @@ describe('PddlSyntaxTreeBuilder', () => {
             assert.strictEqual(reqs.getChildren()[1].getEnd(), 23, 'typing end');
         });
 
-        it('oarses action', () => {
+        it('parses action', () => {
             // GIVEN
             let domainPddl = `(:action name
                 :parameters (?p - t)
@@ -278,7 +278,7 @@ describe('PddlSyntaxTreeBuilder', () => {
             assert.strictEqual(actionName.getToken().tokenText, 'name');
             let parameters = action.getChildren()[3];
             let parametersBracket = parameters.getSingleNonWhitespaceChild();
-            let parametersChildren = parametersBracket.getChildren().map(c => c.getToken().type);
+            let parametersChildren = parametersBracket.getNestedChildren().map(c => c.getToken().type);
             assert.deepStrictEqual(parametersChildren, [
                 PddlTokenType.Parameter,
                 PddlTokenType.Whitespace,

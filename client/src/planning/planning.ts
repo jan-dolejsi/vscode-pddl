@@ -6,13 +6,14 @@
 
 import {
     window, workspace, commands, OutputChannel, Uri,
-    MessageItem, ExtensionContext, ProgressLocation, TextDocument, EventEmitter, Event, CancellationToken, Progress
+    MessageItem, ExtensionContext, ProgressLocation, EventEmitter, Event, CancellationToken, Progress
 } from 'vscode';
 
 import { PddlWorkspace } from '../../../common/src/PddlWorkspace';
 import { PddlSyntaxTreeBuilder } from '../../../common/src/PddlSyntaxTreeBuilder';
-import { DomainInfo, ProblemInfo } from '../../../common/src/parser';
-import { FileInfo, PddlLanguage } from '../../../common/src/FileInfo';
+import { ProblemInfo } from '../../../common/src/parser';
+import { DomainInfo } from '../../../common/src/DomainInfo';
+import { PddlLanguage } from '../../../common/src/FileInfo';
 import { PddlConfiguration } from '../configuration';
 import { Plan } from '../../../common/src/Plan';
 import { PlannerResponseHandler } from './PlannerResponseHandler';
@@ -37,6 +38,7 @@ import { PlannerUserOptionsSelector } from './PlannerUserOptionsSelector';
 import { PlannerConfigurationSelector } from './PlannerConfigurationSelector';
 import { AssociationProvider } from '../workspace/AssociationProvider';
 import { showError, isHttp } from '../utils';
+import { CodePddlWorkspace } from '../workspace/CodePddlWorkspace';
 
 const PDDL_STOP_PLANNER = 'pddl.stopPlanner';
 const PDDL_CONVERT_PLAN_TO_HAPPENINGS = 'pddl.convertPlanToHappenings';
@@ -56,11 +58,11 @@ export class Planning implements PlannerResponseHandler {
     optionProviders: PlannerOptionsProvider[] = [];
     userOptionsProvider: PlannerUserOptionsSelector;
 
-    constructor(public pddlWorkspace: PddlWorkspace, public plannerConfiguration: PddlConfiguration, context: ExtensionContext) {
+    constructor(public codePddlWorkspace: CodePddlWorkspace, public plannerConfiguration: PddlConfiguration, context: ExtensionContext) {
         this.userOptionsProvider = new PlannerUserOptionsSelector();
         this.output = window.createOutputChannel("Planner output");
 
-        context.subscriptions.push(this.planView = new PlanView(context, pddlWorkspace));
+        context.subscriptions.push(this.planView = new PlanView(context, codePddlWorkspace));
 
         context.subscriptions.push(commands.registerCommand('pddl.planAndDisplayResult',
             async (domainUri: Uri, problemUri: Uri, workingFolder: string, options: string) => {
@@ -145,14 +147,10 @@ export class Planning implements PlannerResponseHandler {
         let domainDocument = await workspace.openTextDocument(domainUri);
         let problemDocument = await workspace.openTextDocument(problemUri);
 
-        let domainInfo = <DomainInfo>await this.upsertFile(domainDocument);
-        let problemInfo = <ProblemInfo>await this.upsertFile(problemDocument);
+        let domainInfo = <DomainInfo>await this.codePddlWorkspace.upsertAndParseFile(domainDocument);
+        let problemInfo = <ProblemInfo>await this.codePddlWorkspace.upsertAndParseFile(problemDocument);
 
         this.planExplicit(domainInfo, problemInfo, workingFolder, options);
-    }
-
-    private upsertFile(doc: TextDocument): Promise<FileInfo> {
-        return this.pddlWorkspace.upsertAndParseFile(doc.uri.toString(), PddlLanguage.PDDL, doc.version, doc.getText());
     }
 
     /**
@@ -169,7 +167,7 @@ export class Planning implements PlannerResponseHandler {
 
         const activeDocument = window.activeTextEditor.document;
         if (!activeDocument) { return null; }
-        const activeFileInfo = await this.upsertFile(activeDocument);
+        const activeFileInfo = await this.codePddlWorkspace.upsertAndParseFile(activeDocument);
 
         let problemFileInfo: ProblemInfo;
         let domainFileInfo: DomainInfo;
@@ -178,7 +176,7 @@ export class Planning implements PlannerResponseHandler {
             problemFileInfo = <ProblemInfo>activeFileInfo;
 
             // find domain file(s)
-            let domainFiles = this.pddlWorkspace.getDomainFilesFor(problemFileInfo);
+            let domainFiles = this.codePddlWorkspace.pddlWorkspace.getDomainFilesFor(problemFileInfo);
 
             if (domainFiles.length === 1) {
                 domainFileInfo = domainFiles[0];
@@ -196,7 +194,7 @@ export class Planning implements PlannerResponseHandler {
                 if (!domainFileUri) { return; } // was canceled
 
                 domainFileInfo = domainFiles.find(doc => doc.fileUri === domainFileUri.toString())
-                    || this.pddlWorkspace.getFileInfo<DomainInfo>(domainFileUri.toString());
+                    || this.codePddlWorkspace.pddlWorkspace.getFileInfo<DomainInfo>(domainFileUri.toString());
             } else {
                 window.showInformationMessage(`Ensure a domain '${problemFileInfo.domainName}' from the same folder is open in the editor.`);
                 return;
@@ -205,7 +203,7 @@ export class Planning implements PlannerResponseHandler {
         else if (activeFileInfo.isDomain()) {
             domainFileInfo = <DomainInfo>activeFileInfo;
 
-            let problemFiles = this.pddlWorkspace.getProblemFiles(domainFileInfo);
+            let problemFiles = this.codePddlWorkspace.pddlWorkspace.getProblemFiles(domainFileInfo);
 
             if (problemFiles.length === 1) {
                 problemFileInfo = problemFiles[0];

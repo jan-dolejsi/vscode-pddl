@@ -8,7 +8,8 @@ import * as process from 'child_process';
 
 import { Variable } from '../../../common/src/FileInfo';
 import { Grounder } from '../../../common/src/Grounder';
-import { PlanInfo, TypeObjects } from '../../../common/src/parser';
+import { PlanInfo } from '../../../common/src/parser';
+import { TypeObjects } from '../../../common/src/DomainInfo';
 import { Plan } from "../../../common/src/Plan";
 import { Util } from '../../../common/src/util';
 import { PlanTimeSeriesParser } from '../../../common/src/PlanTimeSeriesParser';
@@ -101,9 +102,6 @@ export class PlanFunctionEvaluator {
     }
 
     async addChartValues(domainFile: string, problemFile: string, planFile: string, liftedFunction: Variable, groundedFunctions: Variable[], chartData: Map<Variable, GroundedFunctionValues>) {
-        // this forces the variable unit of measure to be parsed
-        this.plan.domain.findVariableLocation(liftedFunction);
-
         if (groundedFunctions.length === 0) { return; }
 
         let functions = groundedFunctions

@@ -11,12 +11,11 @@ import {
 
 import { isPlan, getDomainAndProblemForPlan } from '../workspace/workspaceUtils';
 import { PlanReportGenerator } from './PlanReportGenerator';
-import { PddlWorkspace } from '../../../common/src/PddlWorkspace';
-import { PddlLanguage } from '../../../common/src/FileInfo';
 import { PlanInfo, PLAN } from '../../../common/src/parser';
 import { Plan } from '../../../common/src/Plan';
 
 import * as path from 'path';
+import { CodePddlWorkspace } from '../workspace/CodePddlWorkspace';
 
 const CONTENT = 'planview';
 export const PDDL_GENERATE_PLAN_REPORT = 'pddl.planReport';
@@ -29,7 +28,7 @@ export class PlanView extends Disposable {
     displayWidth = 200;
     public static readonly PLANNER_OUTPUT_URI = Uri.parse("pddl://planner/output");
 
-    constructor(private context: ExtensionContext, private pddlWorkspace: PddlWorkspace) {
+    constructor(private context: ExtensionContext, private codePddlWorkspace: CodePddlWorkspace) {
         super(() => this.dispose());
 
         context.subscriptions.push(commands.registerCommand("pddl.plan.preview", async planUri => {
@@ -170,9 +169,9 @@ export class PlanView extends Disposable {
 
     async parsePlanFile(planDocument: TextDocument): Promise<Plan> {
         try {
-            let planFileInfo = <PlanInfo> await this.pddlWorkspace.upsertAndParseFile(planDocument.uri.toString(), PddlLanguage.PLAN, planDocument.version, planDocument.getText());
+            let planFileInfo = <PlanInfo> await this.codePddlWorkspace.upsertAndParseFile(planDocument);
 
-            let domainAndProblem = getDomainAndProblemForPlan(planFileInfo, this.pddlWorkspace);
+            let domainAndProblem = getDomainAndProblemForPlan(planFileInfo, this.codePddlWorkspace.pddlWorkspace);
 
             return new Plan(planFileInfo.getSteps(), domainAndProblem.domain, domainAndProblem.problem);
         }

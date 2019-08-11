@@ -4,7 +4,8 @@
  * ------------------------------------------------------------------------------------------ */
 'use strict';
 
-import { DomainInfo, ProblemInfo } from '../../../common/src/parser';
+import { ProblemInfo } from '../../../common/src/parser';
+import { DomainInfo } from '../../../common/src/DomainInfo';
 import { HappeningsInfo } from "../../../common/src/HappeningsInfo";
 
 /**

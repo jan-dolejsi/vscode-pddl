@@ -8,17 +8,18 @@ import {
     Position, Range, Hover, Location, Uri, TextDocument, MarkdownString
 } from 'vscode';
 
-import { PddlWorkspace } from '../../../common/src/PddlWorkspace';
-import { toLanguageFromId, Action } from '../../../common/src/parser';
-import { Variable, PddlRange } from '../../../common/src/FileInfo';
+import { Action } from '../../../common/src/DomainInfo';
+import { Variable } from '../../../common/src/FileInfo';
+import { PddlRange } from '../../../common/src/DocumentPositionResolver';
+import { CodePddlWorkspace } from '../workspace/CodePddlWorkspace';
 
 export class SymbolUtils {
-    constructor(public workspace: PddlWorkspace) { }
+    constructor(public workspace: CodePddlWorkspace) { }
 
     getSymbolInfo(document: TextDocument, position: Position): SymbolInfo {
-        let fileInfo = this.workspace.getFileInfo(document.uri.toString());
+        let fileInfo = this.workspace.getFileInfo(document);
 
-        let domainInfo = this.workspace.asDomain(fileInfo);
+        let domainInfo = this.workspace.pddlWorkspace.asDomain(fileInfo);
         if (!domainInfo) { return null; }
 
         let symbol = this.getSymbolAtPosition(document, position);
@@ -27,51 +28,46 @@ export class SymbolUtils {
 
         if (symbol.isPrefixedBy('(')) {
             let symbolName = symbol.name.toLowerCase();
-            let predicateFound = domainInfo.getPredicates().find(p => p.name.toLowerCase() === symbolName);
+            let predicateFound = domainInfo.getPredicates().find(p => p.matchesShortNameCaseInsensitive(symbol.name));
             if (predicateFound) {
-                domainInfo.findVariableLocation(predicateFound);
                 return new VariableInfo(
                     this.createHover(symbol.range, 'Predicate', this.brackets(predicateFound.declaredName), predicateFound.getDocumentation()),
-                    new Location(this.toUri(domainInfo.fileUri), SymbolUtils.toRange(predicateFound.location)),
+                    new Location(this.toUri(domainInfo.fileUri), SymbolUtils.toRange(predicateFound.getLocation())),
                     predicateFound,
                 );
             }
-            let functionFound = domainInfo.getFunctions().find(f => f.name.toLowerCase() === symbolName);
+            let functionFound = domainInfo.getFunctions().find(f => f.matchesShortNameCaseInsensitive(symbol.name));
             if (functionFound) {
-                domainInfo.findVariableLocation(functionFound);
                 return new VariableInfo(
                     this.createHover(symbol.range, 'Function', this.brackets(functionFound.declaredName), functionFound.getDocumentation()),
-                    new Location(this.toUri(domainInfo.fileUri), SymbolUtils.toRange(functionFound.location)),
+                    new Location(this.toUri(domainInfo.fileUri), SymbolUtils.toRange(functionFound.getLocation())),
                     functionFound
                 );
             }
-            let derivedFound = domainInfo.getDerived().find(d => d.name.toLowerCase() === symbolName);
+            let derivedFound = domainInfo.getDerived().find(d => d.matchesShortNameCaseInsensitive(symbol.name));
             if (derivedFound) {
-                // todo: refresh the documentation string
                 return new VariableInfo(
                     this.createHover(symbol.range, 'Derived predicate/function', this.brackets(derivedFound.declaredName), derivedFound.getDocumentation()),
-                    new Location(this.toUri(domainInfo.fileUri), SymbolUtils.toRange(derivedFound.location)),
+                    new Location(this.toUri(domainInfo.fileUri), SymbolUtils.toRange(derivedFound.getLocation())),
                     derivedFound
                 );
             }
             let actionFound = domainInfo.getActions().find(a => a.name.toLowerCase() === symbolName);
             if (actionFound) {
-                let label = 'Action';
-                if (actionFound.isDurative) { label = 'Durative ' + label; }
                 return new ActionInfo(
-                    this.createHover(symbol.range, label, actionFound.name, actionFound.documentation || ''),
+                    this.createActionHover(symbol.range, actionFound),
                     new Location(this.toUri(domainInfo.fileUri), SymbolUtils.toRange(actionFound.location)),
                     actionFound
                 );
             }
         }
-        else if (symbol.isPrefixedBy('- ')) {
+        else if (symbol.isPrefixedBy('- ') || domainInfo.getTypes().includes(symbol.name)) {
 
             if (domainInfo.getTypes().includes(symbol.name)) {
-                let parents = domainInfo.typeInheritance.getVerticesWithEdgesFrom(symbol.name);
+                let parents = domainInfo.getTypeInheritance().getVerticesWithEdgesFrom(symbol.name);
                 let inheritsFromText = parents.length > 0 ? "Inherits from: " + parents.join(', ') : "";
                 return new TypeInfo(
-                    this.createHover(symbol.range, 'Type', symbol.name, inheritsFromText),
+                    this.createHover(symbol.range, 'Type', symbol.name, [inheritsFromText]),
                     new Location(this.toUri(domainInfo.fileUri), SymbolUtils.toRange(domainInfo.getTypeLocation(symbol.name))),
                     symbol.name
                 );
@@ -139,27 +135,42 @@ export class SymbolUtils {
         return new Symbol(wordContext.word, wordContext.range, wordContext.line);
     }
 
-    createHover(range: Range, title: string, symbolName: string, documentation: string) {
+    createHover(range: Range, title: string, symbolName: string, documentation: string[]) {
         let markdownString = this.createSymbolMarkdownDocumentation(title, symbolName, documentation);
         return new Hover(markdownString, range);
     }
 
-    createSymbolMarkdownDocumentation(title: string, symbolName: string, documentation: string) {
+    createSymbolMarkdownDocumentation(title: string, symbolName: string, documentation: string[]) {
         let markdownString = new MarkdownString(title ? `**${title}**` : undefined);
         markdownString.appendCodeblock(symbolName, 'pddl');
-        markdownString.appendText(`
-`);
-        markdownString.appendMarkdown(documentation);
+        documentation.forEach(d => markdownString.appendText(END_LINE+END_LINE).appendMarkdown(d));
         return markdownString;
     }
 
-    findSymbolReferences(fileUri: string, symbol: SymbolInfo, includeDeclaration: boolean): Location[] {
-        let fileInfo = this.workspace.getFileInfo(fileUri);
+    createActionHover(range: Range, action: Action): Hover {
+        let label = 'Action';
+        if (action.isDurative) { label = 'Durative ' + label; }
 
-        let domainInfo = this.workspace.asDomain(fileInfo);
+        let doc = new MarkdownString(`**${label}**`)
+            .appendCodeblock(action.name, 'pddl');
+
+        if (action.parameters.length) {
+            doc = doc.appendMarkdown('Parameters:' + END_LINE + END_LINE);
+            action.parameters.forEach(p => doc.appendMarkdown('* `' + p.toPddlString() + '`' + END_LINE));
+        }
+
+        action.getDocumentation().forEach(d => doc.appendText(END_LINE+END_LINE).appendMarkdown(d));
+
+        return new Hover(doc, range);
+    }
+
+    findSymbolReferences(document: TextDocument, symbol: SymbolInfo, includeDeclaration: boolean): Location[] {
+        let fileInfo = this.workspace.getFileInfo(document);
+
+        let domainInfo = this.workspace.pddlWorkspace.asDomain(fileInfo);
         if (!domainInfo) { return null; }
 
-        let problemFiles = this.workspace.getProblemFiles(domainInfo);
+        let problemFiles = this.workspace.pddlWorkspace.getProblemFiles(domainInfo);
 
         let locations: Location[] = [];
         let includeReference = includeDeclaration;
@@ -202,9 +213,8 @@ export class SymbolUtils {
     }
 
     async assertFileParsed(document: TextDocument): Promise<void> {
-        let fileUri = document.uri.toString();
-        if (!this.workspace.getFileInfo(fileUri)) {
-            await this.workspace.upsertAndParseFile(fileUri, toLanguageFromId(document.languageId), document.version, document.getText());
+        if (!this.workspace.getFileInfo(document)) {
+            await this.workspace.upsertAndParseFile(document);
         }
     }
 
@@ -264,3 +274,6 @@ interface WordOnPositionContext {
     line: string;
     range: Range;
 }
+
+const END_LINE = `
+`;

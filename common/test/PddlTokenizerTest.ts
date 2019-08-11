@@ -7,7 +7,7 @@
 import * as assert from 'assert';
 import { PddlToken, PddlTokenizer, PddlTokenType } from '../src/PddlTokenizer';
 
-describe('PddlParser', () => {
+describe('PddlTokenizer', () => {
 
     describe('#constructor', () => {
         it('parses domain', () => {
@@ -264,6 +264,22 @@ describe('PddlParser', () => {
                 PddlTokenType.Dash,
                 PddlTokenType.Other, //type1
                 PddlTokenType.CloseBracket
+            ]);
+        });
+
+        it ('parses a number', () => {
+            let domainPddl = '-3.14';
+            let fragments: PddlToken[] = [];
+            
+            // WHEN
+            // tslint:disable-next-line:no-unused-expression
+            new PddlTokenizer(domainPddl, fragment => fragments.push(fragment));
+
+            // THEN
+            assert.strictEqual(fragments.length, 1, 'there should be one fragment');
+            let fragmentTypes = fragments.map(f => f.type);
+            assert.deepStrictEqual(fragmentTypes, [
+                PddlTokenType.Other, // -3.14
             ]);
         });
 

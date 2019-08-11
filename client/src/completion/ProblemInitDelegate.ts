@@ -5,7 +5,8 @@
 'use strict';
 
 import { CompletionItem, CompletionContext, SnippetString, MarkdownString, CompletionItemKind } from 'vscode';
-import { ProblemInfo, DomainInfo, TypeObjects } from '../../../common/src/parser';
+import { ProblemInfo } from '../../../common/src/parser';
+import { DomainInfo, TypeObjects } from '../../../common/src/DomainInfo';
 import { Variable } from '../../../common/src/FileInfo';
 import { ContextDelegate } from './ContextDelegate';
 import { Delegate } from './Delegate';
@@ -20,7 +21,7 @@ export class ProblemInitDelegate extends ContextDelegate {
     }
 
     createProblemInitCompletionItems(problemFileInfo: ProblemInfo, domainFiles: DomainInfo[]): void {
-        if (domainFiles.length == 1) {
+        if (domainFiles.length === 1) {
             // there is a single associated domain file
 
             this.createSymmetricInit(problemFileInfo, domainFiles[0]);
@@ -61,7 +62,7 @@ export class ProblemInitDelegate extends ContextDelegate {
         let objectNames = objectsDefined
             .join(',');
 
-        if (!objectsDefined.length) return;
+        if (!objectsDefined.length) { return; }
 
         let item = new CompletionItem('Initialize a symmetric predicate and function', CompletionItemKind.Snippet);
         item.insertText = new SnippetString(
@@ -82,7 +83,7 @@ export class ProblemInitDelegate extends ContextDelegate {
         let objectNames = objectsDefined
             .join(',');
 
-        if (!objectsDefined.length) return;
+        if (!objectsDefined.length) { return; }
 
         let symmetricPredicateNames = Delegate.toNamesCsv(symmetricPredicates);
 
@@ -102,7 +103,7 @@ export class ProblemInitDelegate extends ContextDelegate {
         let objectNames = objectsDefined
             .join(',');
 
-        if (!objectsDefined.length) return;
+        if (!objectsDefined.length) { return; }
 
         let symmetricFunctionNames = Delegate.toNamesCsv(symmetricFunctions);
 
@@ -121,7 +122,7 @@ export class ProblemInitDelegate extends ContextDelegate {
         let typeInvolved = symmetricPredicate.parameters[0].type;
         let objects = this.getObjects(allTypeObjects, [typeInvolved]);
 
-        if (objects.length < 2) return;
+        if (objects.length < 2) { return; }
 
         let textToInsert = '';
 
@@ -143,7 +144,7 @@ export class ProblemInitDelegate extends ContextDelegate {
 
         let predicates = domainFile.getPredicates();
 
-        if (!predicates.length) return;
+        if (!predicates.length) { return; }
 
         let namesCsv = Delegate.toTypeLessNamesCsv(predicates);
 
@@ -151,7 +152,7 @@ export class ProblemInitDelegate extends ContextDelegate {
         item.filterText = 'at ';
         item.insertText = new SnippetString(this.enclose(
             "at ${1:1.0} (${2|" + namesCsv + "|})"));
-        item.detail = 'Timed initial literal'
+        item.detail = 'Timed initial literal';
         item.documentation = new MarkdownString()
             .appendMarkdown("Defines that selected predicated changes value to `true` at specified time.")
             .appendCodeblock("(at 42 (predicate1))", "PDDL")
@@ -164,7 +165,7 @@ export class ProblemInitDelegate extends ContextDelegate {
 
         let predicates = domainFile.getPredicates();
 
-        if (!predicates.length) return;
+        if (!predicates.length) { return; }
 
         let namesCsv = Delegate.toTypeLessNamesCsv(predicates);
 
@@ -172,7 +173,7 @@ export class ProblemInitDelegate extends ContextDelegate {
         item.filterText = 'at ';
         item.insertText = new SnippetString(this.enclose(
             "at ${1:1.0} (not (${2|" + namesCsv + "|}))"));
-        item.detail = 'Timed initial literal (negative)'
+        item.detail = 'Timed initial literal (negative)';
         item.documentation = new MarkdownString()
             .appendMarkdown("Defines that selected predicated changes value to `false` at specified time.")
             .appendCodeblock("(at 42 (not (predicate1)))", "PDDL")
@@ -185,13 +186,13 @@ export class ProblemInitDelegate extends ContextDelegate {
 
         let functions = domainFile.getFunctions();
 
-        if (!functions.length) return;
+        if (!functions.length) { return; }
 
         let item = new CompletionItem('at <time> (= (function1) <value>)', CompletionItemKind.Snippet);
         item.filterText = 'at ';
         item.insertText = new SnippetString(this.enclose(
             "at ${1:1.0} (= (${2|" + Delegate.toTypeLessNamesCsv(functions) + "|}) ${3:42})"));
-        item.detail = 'Timed initial fluent'
+        item.detail = 'Timed initial fluent';
         item.documentation = new MarkdownString()
             .appendText("Defines that selected function changes value at specified time.")
             .appendCodeblock("(at 42 (= (function1) 1.0))", "PDDL")

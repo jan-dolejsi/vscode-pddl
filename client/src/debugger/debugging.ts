@@ -9,14 +9,13 @@ import { WorkspaceFolder, DebugConfiguration, ProviderResult, CancellationToken,
 import { PlanDebugSession } from './PlanDebugSession';
 import * as Net from 'net';
 import { HAPPENINGS } from '../../../common/src/parser';
-import { FileInfo } from '../../../common/src/FileInfo';
 import { HappeningsInfo } from "../../../common/src/HappeningsInfo";
-import { PddlWorkspace } from '../../../common/src/PddlWorkspace';
-import { toLanguage, isHappenings, getDomainAndProblemForHappenings, selectHappenings } from '../workspace/workspaceUtils';
+import { isHappenings, getDomainAndProblemForHappenings, selectHappenings } from '../workspace/workspaceUtils';
 import { PddlConfiguration } from '../configuration';
 import { HappeningsExecutor } from './HappeningsExecutor';
 import { DebuggingSessionFiles } from './DebuggingSessionFiles';
 import { HappeningsToPlanResumeCasesConvertor } from './HappeningsToPlanResumeCasesConvertor';
+import { CodePddlWorkspace } from '../workspace/CodePddlWorkspace';
 
 /*
  * Set the following compile time flag to true if the
@@ -29,7 +28,7 @@ export class Debugging {
 
 	decorations = new Map<vscode.TextDocument, vscode.TextEditorDecorationType[]>();
 
-	constructor(context: vscode.ExtensionContext, private pddlWorkspace: PddlWorkspace, public plannerConfiguration: PddlConfiguration) {
+	constructor(context: vscode.ExtensionContext, private pddlWorkspace: CodePddlWorkspace, public plannerConfiguration: PddlConfiguration) {
 
 		context.subscriptions.push(vscode.commands.registerCommand('pddl.selectAndActivateHappenings', async(config) => {
 			config;
@@ -95,7 +94,7 @@ export class Debugging {
 			return null;
 		}
 
-		let activeFileInfo = await this.upsertAndParseFile(window.activeTextEditor.document);
+		let activeFileInfo = await this.pddlWorkspace.upsertAndParseFile(window.activeTextEditor.document);
 
 		if (!(activeFileInfo instanceof HappeningsInfo)) {
 			window.showErrorMessage('Active document is not debuggable.');
@@ -104,19 +103,13 @@ export class Debugging {
 
 		let happeningsInfo = <HappeningsInfo>activeFileInfo;
 
-		let context = getDomainAndProblemForHappenings(happeningsInfo, this.pddlWorkspace);
+		let context = getDomainAndProblemForHappenings(happeningsInfo, this.pddlWorkspace.pddlWorkspace);
 
 		return {
 			domain: context.domain,
 			problem: context.problem,
 			happenings: happeningsInfo
 		};
-	}
-
-	upsertAndParseFile(textDocument: vscode.TextDocument): Promise<FileInfo> {
-		return this.pddlWorkspace.upsertAndParseFile(textDocument.uri.toString(),
-			toLanguage(textDocument),
-			textDocument.version, textDocument.getText());
 	}
 
 	async startDebugging() {

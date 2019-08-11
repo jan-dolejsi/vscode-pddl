@@ -4,7 +4,8 @@
  * ------------------------------------------------------------------------------------------ */
 'use strict';
 
-import { DomainInfo, ProblemInfo } from "../../../common/src/parser";
+import { ProblemInfo } from "../../../common/src/parser";
+import { DomainInfo } from '../../../common/src/DomainInfo';
 
 /**
  * Provides configuration options for the planner invocation.

@@ -58,7 +58,7 @@ export class PTestExplorer {
         );
 
         context.subscriptions.push(this.report = new PTestReport(context, this.planning.output));
-        this.generatedDocumentContentProvider = new GeneratedDocumentContentProvider(this.planning.output, planning.pddlWorkspace);
+        this.generatedDocumentContentProvider = new GeneratedDocumentContentProvider(this.planning.output, planning.codePddlWorkspace.pddlWorkspace);
         context.subscriptions.push(workspace.registerTextDocumentContentProvider('tpddl', this.generatedDocumentContentProvider));
     }
 

@@ -13,7 +13,8 @@ import { State } from './State';
 import { PlanReportGenerator } from '../planning/PlanReportGenerator';
 import { StateToPlan } from './StateToPlan';
 import { StateResolver } from './StateResolver';
-import { DomainInfo, ProblemInfo } from '../../../common/src/parser';
+import { ProblemInfo } from '../../../common/src/parser';
+import { DomainInfo } from '../../../common/src/DomainInfo';
 
 export class SearchDebuggerView {
     private webViewPanel: WebviewPanel;

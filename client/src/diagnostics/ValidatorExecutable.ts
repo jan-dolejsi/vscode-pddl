@@ -12,7 +12,8 @@ import * as process from 'child_process';
 
 import { Validator } from './validator';
 import { ProblemPattern } from './ProblemPattern';
-import { DomainInfo, ProblemInfo } from '../../../common/src/parser';
+import { ProblemInfo } from '../../../common/src/parser';
+import { DomainInfo } from '../../../common/src/DomainInfo';
 import { PddlFactory } from '../../../common/src/PddlFactory';
 import { Util } from '../../../common/src/util';
 

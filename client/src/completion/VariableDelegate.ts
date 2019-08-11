@@ -5,47 +5,28 @@
 'use strict';
 
 import { CompletionItem, CompletionItemKind } from 'vscode';
-import { PddlWorkspace } from '../../../common/src/PddlWorkspace';
-import { DomainInfo } from '../../../common/src/parser';
 import { FileInfo, Variable } from '../../../common/src/FileInfo';
 import { Delegate } from './Delegate';
 import { SymbolUtils } from '../symbols/SymbolUtils';
+import { CodePddlWorkspace } from '../workspace/CodePddlWorkspace';
 
 export class VariableDelegate extends Delegate {
 
     symbolUtils: SymbolUtils;
 
-    constructor(public workspace: PddlWorkspace) {
+    constructor(public workspace: CodePddlWorkspace) {
         super();
         this.symbolUtils = new SymbolUtils(workspace);
     }
 
     getVariableItems(fileInfo: FileInfo): CompletionItem[] {
-        let domainInfo = this.workspace.asDomain(fileInfo);
+        let domainInfo = this.workspace.pddlWorkspace.asDomain(fileInfo);
         if (!domainInfo) { return []; }
-        let predicates = this.getPredicates(domainInfo).map(p => this.createPredicate(p));
-        let functions = this.getFunctions(domainInfo).map(f => this.createFunction(f));
-        let derived = this.getDerived(domainInfo).map(d => this.createDerived(d));
+        let predicates = domainInfo.getPredicates().map(p => this.createPredicate(p));
+        let functions = domainInfo.getFunctions().map(f => this.createFunction(f));
+        let derived = domainInfo.getDerived().map(d => this.createDerived(d));
 
         return predicates.concat(functions).concat(derived);
-    }
-
-    private getPredicates(domainInfo: DomainInfo): Variable[] {
-        let predicates = domainInfo.getPredicates();
-        predicates.forEach(p => domainInfo.findVariableLocation(p));
-        return predicates;
-    }
-
-    private getFunctions(domainInfo: DomainInfo): Variable[] {
-        let functions = domainInfo.getFunctions();
-        functions.forEach(f => domainInfo.findVariableLocation(f));
-        return functions;
-    }
-
-    private getDerived(domainInfo: DomainInfo): Variable[] {
-        let derived = domainInfo.getDerived();
-        derived.forEach(d => domainInfo.findVariableLocation(d));
-        return derived;
     }
 
     private createPredicate(predicate: Variable): CompletionItem {

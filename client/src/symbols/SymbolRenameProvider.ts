@@ -5,13 +5,13 @@
 'use strict';
 
 import { RenameProvider, TextDocument, Position, CancellationToken, WorkspaceEdit, workspace, Uri, Range } from 'vscode';
-import { PddlWorkspace } from '../../../common/src/PddlWorkspace';
 import { SymbolUtils, SymbolInfo, VariableInfo, TypeInfo } from './SymbolUtils';
+import { CodePddlWorkspace } from '../workspace/CodePddlWorkspace';
 
 export class SymbolRenameProvider implements RenameProvider {
     private symbolUtils: SymbolUtils;
 
-    constructor(pddlWorkspace: PddlWorkspace) {
+    constructor(pddlWorkspace: CodePddlWorkspace) {
         this.symbolUtils = new SymbolUtils(pddlWorkspace);
     }
 
@@ -19,7 +19,6 @@ export class SymbolRenameProvider implements RenameProvider {
         if (token.isCancellationRequested) { return null; }
         await this.symbolUtils.assertFileParsed(document);
 
-        let fileUri = document.uri.toString();
         let symbolInfo = this.symbolUtils.getSymbolInfo(document, position);
 
         if (!symbolInfo || !this.canRename(symbolInfo)) { throw new Error("This cannot be renamed."); }
@@ -29,7 +28,7 @@ export class SymbolRenameProvider implements RenameProvider {
             throw new Error(`This is not a valid PDDL name: ${newName}`);
         }
 
-        let references = this.symbolUtils.findSymbolReferences(fileUri, symbolInfo, true);
+        let references = this.symbolUtils.findSymbolReferences(document, symbolInfo, true);
 
         let origName = document.getText(this.getWordRangeAtPosition(document, position));
 

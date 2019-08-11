@@ -1,6 +1,6 @@
 # PDDL support - What's new?
 
-## [2.12.3] - TBD
+## [2.13.0] - VAL binaries available for MacOS
 
 ### Features
 
@@ -13,6 +13,19 @@ Added code actions corresponding to parser warning:
 * empty .pddl file suggests applying the domain/problem snippet.
 * missing PDDL requirement warning offers to add the requirement to `:requirement`
 
+Enriched action hover-over info. It now details action parameters and documentation comment.
+
+Predicate/function documentation comments are picked-up from both above and to-the-right location relative to the declaration.
+
+```pddl
+(:functions
+    ; some general comments
+
+    ; Accumulates cost
+    (cost) ; [$]
+)
+```
+
 ### Fixes
 
 Type/predicate/function renaming fixes
@@ -20,12 +33,13 @@ Type/predicate/function renaming fixes
 * new name is validated before applying the bulk-rename
 * de-duplicating parser warnings/errors (VAL Parser repeats the missing requirement warning many times)
 * errors while downloading VAL binaries are now reported up to the user
-* previous VAL binaries are properly deleted after upgrade to the latest
+* previous VAL binaries are properly deleted after upgrade to the latest version
 
 ### Engineering
 
 * file path and URI manipulations now delegated to the `vscode-uri` package and unit tests more robust for execution on MacOS
 * minimum version of VS Code is now 1.32
+* rewritten the PDDL domain/problem regex parsing by a PDDL tokenizer, which allows inspecting the syntax tree and implementing context-sensitive features correctly
 
 ## [2.12.2] - 2019-07-08 - ICAPS 2019 Update
 
@@ -722,7 +736,8 @@ Note for open source contributors: all notable changes to the "pddl" extension w
 
 Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
 
-[Unreleased]: https://github.com/jan-dolejsi/vscode-pddl/compare/v2.12.2...HEAD
+[Unreleased]: https://github.com/jan-dolejsi/vscode-pddl/compare/v2.13.0...HEAD
+[2.13.0]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.12.2...v2.13.0
 [2.12.2]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.11.8...v2.12.2
 [2.11.8]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.11.7...v2.11.8
 [2.11.7]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.11.5...v2.11.7

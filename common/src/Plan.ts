@@ -4,9 +4,10 @@
  * ------------------------------------------------------------------------------------------ */
 'use strict';
 
-import { DomainInfo, ProblemInfo } from './parser';
+import { ProblemInfo } from './parser';
 import { PlanStep } from './PlanStep';
 import { HappeningType } from './HappeningsInfo';
+import { DomainInfo } from './DomainInfo';
 
 export class Plan {
     makespan: number;

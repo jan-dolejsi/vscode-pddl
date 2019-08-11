@@ -8,8 +8,9 @@ import { workspace, window, ExtensionContext, commands, Uri, ViewColumn, Range, 
 
 import { Planning } from './planning/planning';
 import { PddlWorkspace } from '../../common/src/PddlWorkspace';
-import { DomainInfo, PDDL, PLAN, HAPPENINGS } from '../../common/src/parser';
-import { PddlRange } from '../../common/src/FileInfo';
+import { PDDL, PLAN, HAPPENINGS } from '../../common/src/parser';
+import { DomainInfo } from '../../common/src/DomainInfo';
+import { PddlRange } from '../../common/src/DocumentPositionResolver';
 import { PddlConfiguration } from './configuration';
 import { Authentication } from '../../common/src/Authentication';
 import { AutoCompletion } from './completion/AutoCompletion';
@@ -21,7 +22,7 @@ import { PTestExplorer } from './ptest/PTestExplorer';
 import { PlanValidator } from './diagnostics/PlanValidator';
 import { Debugging } from './debugger/debugging';
 import { ExtensionInfo } from './ExtensionInfo';
-import { toLanguage, isAnyPddl } from './workspace/workspaceUtils';
+import { isAnyPddl } from './workspace/workspaceUtils';
 import { HappeningsValidator } from './diagnostics/HappeningsValidator';
 import { PlanComparer } from './comparison/PlanComparer';
 import { Catalog } from './catalog/Catalog';
@@ -35,6 +36,7 @@ import { Val } from './validation/Val';
 import { createPddlExtensionContext } from './utils';
 import { AssociationProvider } from './workspace/AssociationProvider';
 import { SuggestionProvider } from './symbols/SuggestionProvider';
+import { CodePddlWorkspace } from './workspace/CodePddlWorkspace';
 
 const PDDL_CONFIGURE_PARSER = 'pddl.configureParser';
 const PDDL_LOGIN_PARSER_SERVICE = 'pddl.loginParserService';
@@ -74,9 +76,10 @@ function activateWithTelemetry(_operationId: string, context: ExtensionContext) 
 	let pddlContext = createPddlExtensionContext(context);
 
 	let pddlWorkspace = new PddlWorkspace(pddlConfiguration.getEpsilonTimeStep(), pddlContext);
-	let planning = new Planning(pddlWorkspace, pddlConfiguration, context);
-	let planValidator = new PlanValidator(planning.output, pddlWorkspace, pddlConfiguration, context);
-	let happeningsValidator = new HappeningsValidator(planning.output, pddlWorkspace, pddlConfiguration, context);
+	let codePddlWorkspace = new CodePddlWorkspace(pddlWorkspace);
+	let planning = new Planning(codePddlWorkspace, pddlConfiguration, context);
+	let planValidator = new PlanValidator(planning.output, codePddlWorkspace, pddlConfiguration, context);
+	let happeningsValidator = new HappeningsValidator(planning.output, codePddlWorkspace, pddlConfiguration, context);
 
 	let revealActionCommand = commands.registerCommand('pddl.revealAction', (domainFileUri: Uri, actionName: String) => {
 		revealAction(<DomainInfo>pddlWorkspace.getFileInfo(domainFileUri.toString()), actionName);
@@ -153,17 +156,17 @@ function activateWithTelemetry(_operationId: string, context: ExtensionContext) 
 		pddlConfiguration.askNewValidatorPath();
 	}));
 
-	let completionItemProvider = languages.registerCompletionItemProvider(PDDL, new AutoCompletion(pddlWorkspace), '(', ':', '-');
+	let completionItemProvider = languages.registerCompletionItemProvider(PDDL, new AutoCompletion(codePddlWorkspace), '(', ':', '-');
 
-	let suggestionProvider = languages.registerCodeActionsProvider(PDDL, new SuggestionProvider(pddlWorkspace), {
+	let suggestionProvider = languages.registerCodeActionsProvider(PDDL, new SuggestionProvider(codePddlWorkspace), {
 		providedCodeActionKinds: SuggestionProvider.providedCodeActionKinds
 	});
 
 	registerDocumentFormattingProvider(context);
 
-	let renameProvider = languages.registerRenameProvider(PDDL, new SymbolRenameProvider(pddlWorkspace));
+	let renameProvider = languages.registerRenameProvider(PDDL, new SymbolRenameProvider(codePddlWorkspace));
 
-	let symbolInfoProvider = new SymbolInfoProvider(pddlWorkspace);
+	let symbolInfoProvider = new SymbolInfoProvider(codePddlWorkspace);
 
 	let documentSymbolProvider = languages.registerDocumentSymbolProvider(PDDL, symbolInfoProvider);
 	let definitionProvider = languages.registerDefinitionProvider(PDDL, symbolInfoProvider);
@@ -174,7 +177,7 @@ function activateWithTelemetry(_operationId: string, context: ExtensionContext) 
 		planValidator, happeningsValidator);
 
 	// tslint:disable-next-line: no-unused-expression
-	new AssociationProvider(context, pddlWorkspace);
+	new AssociationProvider(context, codePddlWorkspace);
 
 	let planDefinitionProvider = languages.registerDefinitionProvider(PLAN, symbolInfoProvider);
 	let planHoverProvider = languages.registerHoverProvider(PLAN, symbolInfoProvider);
@@ -192,11 +195,11 @@ function activateWithTelemetry(_operationId: string, context: ExtensionContext) 
 	new PlanningDomainsSessions(context);
 
 	// tslint:disable-next-line:no-unused-expression
-	new Debugging(context, pddlWorkspace, pddlConfiguration);
+	new Debugging(context, codePddlWorkspace, pddlConfiguration);
 
 	context.subscriptions.push(new PlanComparer(pddlWorkspace, pddlConfiguration));
 
-	subscribeToWorkspace(pddlWorkspace, pddlConfiguration, context);
+	subscribeToWorkspace(codePddlWorkspace, pddlConfiguration, context);
 
 	// Push the disposables to the context's subscriptions so that the
 	// client can be deactivated on extension deactivation
@@ -230,35 +233,35 @@ function toRange(pddlRange: PddlRange): Range {
 	return new Range(pddlRange.startLine, pddlRange.startCharacter, pddlRange.endLine, pddlRange.endCharacter);
 }
 
-function subscribeToWorkspace(pddlWorkspace: PddlWorkspace, pddlConfiguration: PddlConfiguration, context: ExtensionContext): void {
+function subscribeToWorkspace(pddlWorkspace: CodePddlWorkspace, pddlConfiguration: PddlConfiguration, context: ExtensionContext): void {
 	// add all open documents
 	workspace.textDocuments
 		.filter(textDoc => isAnyPddl(textDoc))
 		.forEach(textDoc => {
-			pddlWorkspace.upsertFile(textDoc.uri.toString(), toLanguage(textDoc), textDoc.version, textDoc.getText());
+			pddlWorkspace.upsertFile(textDoc);
 		});
 
 	// subscribe to document opening event
 	context.subscriptions.push(workspace.onDidOpenTextDocument(textDoc => {
 		if (isAnyPddl(textDoc)) {
-			pddlWorkspace.upsertFile(textDoc.uri.toString(), toLanguage(textDoc), textDoc.version, textDoc.getText());
+			pddlWorkspace.upsertFile(textDoc);
 		}
 	}));
 
 	// subscribe to document changing event
 	context.subscriptions.push(workspace.onDidChangeTextDocument(docEvent => {
 		if (isAnyPddl(docEvent.document)) {
-			pddlWorkspace.upsertFile(docEvent.document.uri.toString(), toLanguage(docEvent.document), docEvent.document.version, docEvent.document.getText());
+			pddlWorkspace.upsertFile(docEvent.document);
 		}
 	}));
 
 	// subscribe to document closing event
 	context.subscriptions.push(workspace.onDidCloseTextDocument(textDoc => {
-		if (isAnyPddl(textDoc)) { pddlWorkspace.removeFile(textDoc.uri.toString()); }
+		if (isAnyPddl(textDoc)) { pddlWorkspace.removeFile(textDoc); }
 	}));
 
 	workspace.onDidChangeConfiguration(_ => {
-		pddlWorkspace.epsilon = pddlConfiguration.getEpsilonTimeStep();
+		pddlWorkspace.setEpsilon(pddlConfiguration.getEpsilonTimeStep());
 		if (registerDocumentFormattingProvider(context)) {
 			window.showInformationMessage("PDDL formatter is now available. Right-click on a PDDL file...");
 			console.log('PDDL Formatter enabled.');

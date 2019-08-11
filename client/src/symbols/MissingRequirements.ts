@@ -5,10 +5,8 @@
 'use strict';
 
 import { TextDocument, WorkspaceEdit, workspace, EndOfLine } from 'vscode';
-// import { PddlWorkspace } from '../../../common/src/PddlWorkspace';
 import { PddlSyntaxTreeBuilder } from '../../../common/src/PddlSyntaxTreeBuilder';
-import { PddlTokenType } from '../../../common/src/PddlTokenizer';
-import { PddlSyntaxNode, PddlSyntaxTree } from '../../../common/src/PddlSyntaxTree';
+import { PddlSyntaxTree } from '../../../common/src/PddlSyntaxTree';
 import { FileInfo } from '../../../common/src/FileInfo';
 
 export class MissingRequirements {
@@ -33,15 +31,15 @@ export class MissingRequirements {
     }
 
     createEdit(document: TextDocument, requirementName: string): WorkspaceEdit {
-        let defineNode = this.findDefineNode();
-        let requirementsNode = defineNode.getFirstChild(PddlTokenType.OpenBracketOperator, /\(\s*:requirements/);
+        let defineNode = this.syntaxTree.getDefineNode();
+        let requirementsNode = defineNode.getFirstOpenBracket(':requirements');
 
         let edit = new WorkspaceEdit();
 
         if (requirementsNode) {
             edit.insert(document.uri, document.positionAt(requirementsNode.getEnd()-1), ' '  + requirementName);
         } else {
-            let domainNode = defineNode.getFirstChildOrThrow(PddlTokenType.OpenBracketOperator, /\(\s*domain/);
+            let domainNode = defineNode.getFirstOpenBracketOrThrow('domain');
             let config = workspace.getConfiguration('editor', document.uri);
             let indent: string;
             if (config.get<boolean>('insertSpaces')) {
@@ -56,10 +54,5 @@ export class MissingRequirements {
         }
 
         return edit;
-    }
-
-    findDefineNode(): PddlSyntaxNode {
-        return this.syntaxTree.getRootNode()
-            .getFirstChildOrThrow(PddlTokenType.OpenBracketOperator, /\(\s*define/);
     }
 }
