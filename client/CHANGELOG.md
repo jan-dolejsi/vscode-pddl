@@ -4,7 +4,9 @@
 
 ### Features
 
-VAL binaries are now available for Mac OS as well as Linux and Windows. If you are a Mac user, download them using the `PDDL: Download VAL` command or when prompt.
+VAL binaries are now available for Mac OS as well as Linux and Windows. If you are a Mac user, download them using the `PDDL: Download VAL` command or when prompted.
+
+![One-click VAL download](https://raw.githubusercontent.com/wiki/jan-dolejsi/vscode-pddl/img/PDDL_update_VAL.gif)
 
 Added syntax highlighting for [PDDL+](https://planning.wiki/ref/pddlplus/domain) features such as the `:time` requirement and `process` or `event`.
 
@@ -14,6 +16,8 @@ Added code actions corresponding to parser warning:
 * missing PDDL requirement warning offers to add the requirement to `:requirement`
 
 Enriched action hover-over info. It now details action parameters and documentation comment.
+
+![Missing requirements and unused predicates/functions](https://raw.githubusercontent.com/wiki/jan-dolejsi/vscode-pddl/img/PDDL_missing_requirements_unused_predicates.gif)
 
 Predicate/function documentation comments are picked-up from both above and to-the-right location relative to the declaration.
 
@@ -25,6 +29,8 @@ Predicate/function documentation comments are picked-up from both above and to-t
     (cost) ; [$]
 )
 ```
+
+Unused functions or predicates are rendered as faded.
 
 ### Fixes
 
@@ -68,7 +74,7 @@ If one of the rules above is not satisfied, the editor will not naturally associ
 1. other files in the workspace
 1. any other file selectable from the computer storage
 
-![domain/problem/plann associations](https://raw.githubusercontent.com/wiki/jan-dolejsi/vscode-pddl/img/PDDL_explicit_domain-problem-plan_associations.gif)
+![domain/problem/plan associations](https://raw.githubusercontent.com/wiki/jan-dolejsi/vscode-pddl/img/PDDL_explicit_domain-problem-plan_associations.gif)
 
 #### PDDL Test Report
 

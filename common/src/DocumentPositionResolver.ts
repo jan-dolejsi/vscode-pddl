@@ -3,14 +3,18 @@
  * Licensed under the MIT License. See License.txt in the project root for license information.
  * ------------------------------------------------------------------------------------------ */
 
-export interface DocumentPositionResolver {
-    resolveToPosition(offset: number): PddlPosition;
+export abstract class DocumentPositionResolver {
+    abstract resolveToPosition(offset: number): PddlPosition;
+    resolveToRange(start: number, end: number): PddlRange {
+        return PddlRange.from(this.resolveToPosition(start), this.resolveToPosition(end));
+    }
 }
 
-export class SimpleDocumentPositionResolver implements DocumentPositionResolver {
+export class SimpleDocumentPositionResolver extends DocumentPositionResolver {
     private readonly lineLengths: number[];
-    
+
     constructor(readonly documentText: string) {
+        super();
         this.lineLengths = this.documentText.split('\n')
             .map(line => line.length + 1);
     }
@@ -21,7 +25,7 @@ export class SimpleDocumentPositionResolver implements DocumentPositionResolver 
         for (let lineIndex = 0; lineIndex < this.lineLengths.length; lineIndex++) {
             const currentLineLength = this.lineLengths[lineIndex];
             documentLengthAtCurrentLineEnd += currentLineLength;
-            
+
             if (offset >= documentLengthAtCurrentLineStart && offset < documentLengthAtCurrentLineEnd) {
                 let character = offset - documentLengthAtCurrentLineStart;
                 return new PddlPosition(lineIndex, character);

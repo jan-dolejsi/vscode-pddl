@@ -5,6 +5,7 @@
 'use strict';
 
 import { PddlRange, DocumentPositionResolver } from "./DocumentPositionResolver";
+import { PddlSyntaxNode } from "./PddlSyntaxNode";
 
 /**
  * An abstract PDDL file.
@@ -86,15 +87,8 @@ export abstract class FileInfo {
         return this.parsingProblems;
     }
 
-    getVariableReferences(variable: Variable): PddlRange[] {
-        let referenceLocations: PddlRange[] = [];
-
-        this.findVariableReferences(variable, (location) => {
-            referenceLocations.push(location);
-            return true; // continue searching
-        });
-
-        return referenceLocations;
+    getVariableReferences(_variable: Variable): PddlRange[] {
+        return [];
     }
 
     getTypeReferences(typeName: string): PddlRange[] {
@@ -118,24 +112,8 @@ export abstract class FileInfo {
         return referenceLocations;
     }
 
-    protected findVariableReferences(variable: Variable, callback: (location: PddlRange, line: string) => boolean): void {
-        let lines = this.text.split('\n');
-        let pattern = "\\(\\s*" + variable.name + "( [^\\)]*)?\\)";
-        let regexp = new RegExp(pattern, "gi");
-        for (var lineIdx = 0; lineIdx < lines.length; lineIdx++) {
-            let line = lines[lineIdx];
-            regexp.lastIndex = 0;
-            let commentStartColumn = line.indexOf(';');
-            let match: RegExpExecArray;
-            while (match = regexp.exec(line)) { 
-                if (commentStartColumn > -1 && match.index > commentStartColumn) { continue; }
-
-                let range = new PddlRange(lineIdx, match.index, lineIdx, match.index + match[0].length);
-                let shouldContinue = callback.apply(this, [range, line]);
-
-                if (!shouldContinue) { return; }
-            }
-        }
+    protected getRange(node: PddlSyntaxNode): PddlRange {
+        return this.positionResolver.resolveToRange(node.getStart(), node.getEnd());
     }
 
     setRequirements(requirements: string[]) {

@@ -7,7 +7,7 @@
 import uuidv4 = require('uuid/v4');
 import express = require('express');
 import request = require('request');
-import bodyParser = require('body-parser')
+import bodyParser = require('body-parser');
 import http = require('http');
 import opn = require('open');
 
@@ -39,18 +39,18 @@ export class Authentication {
 
     login(onSuccess: (refreshToken: string, accessToken: string, sToken: string) => void, onError: (message: string) => void) {
         var nonce = uuidv4();
-        var app = express()
+        var app = express();
         app.use(bodyParser.json());
         app.use(bodyParser.urlencoded({ extended: true }));
         var server: http.Server = null;
         var thisAuthentication = this;
         app.post('/auth/sauth/callback', function (req:any, res:any, next:any) {
             server.close();
-            if(req.body.nonce == nonce) {
+            if(req.body.nonce === nonce) {
                 thisAuthentication.refreshToken = req.body.refreshtoken;
                 thisAuthentication.accessToken = req.body.accesstoken;
                 thisAuthentication.sToken = req.body.stoken;
-                onSuccess(thisAuthentication.refreshToken, thisAuthentication.accessToken, thisAuthentication.sToken)
+                onSuccess(thisAuthentication.refreshToken, thisAuthentication.accessToken, thisAuthentication.sToken);
                 res.sendStatus(200);
                 next();
             }
@@ -59,10 +59,10 @@ export class Authentication {
                 res.sendStatus(401);
                 next();
             }
-        })
+        });
         server = http.createServer(app);
         server.on('error', function (e) {
-                onError(e.message)
+                onError(e.message);
             });
         server.listen(this.callbackPort);
         setTimeout( () => { server.close(); }, this.timeoutInMs );
@@ -72,9 +72,9 @@ export class Authentication {
     }
 
     refreshTokens(onSuccess: (refreshToken: string, accessToken: string, sToken: string) => void, onError: (message: string) => void) {
-        if(this.sToken == null || this.sToken == "") {
-            if(this.accessToken == null || this.accessToken == "") {
-                if(this.refreshToken == null || this.refreshToken == "") {
+        if(this.sToken === null || this.sToken === undefined || this.sToken === "") {
+            if(this.accessToken === null || this.accessToken === undefined || this.accessToken === "") {
+                if(this.refreshToken === null || this.refreshToken === undefined || this.refreshToken === "") {
                     this.refreshToken = null;
                     this.accessToken = null;
                     this.sToken = null;
@@ -100,7 +100,7 @@ export class Authentication {
         let authentication = this;
         request.post({ url: this.tokensvcUrl + this.tokensvcRefreshPath + '?key=' + this.tokensvcApiKey + '&accesstoken=\'\'', json: {clientid: this.clientId, refreshtoken: this.refreshToken}}, 
         function(error, response, body) {
-            if(error == null && response.statusCode == 200 && body != null) {
+            if(!error && response.statusCode === 200 && !!body) {
                 authentication.accessToken = body.accesstoken;                
                 authentication.refreshSToken(onSuccess, onError);
             }
@@ -116,7 +116,7 @@ export class Authentication {
         let authentication = this;
         request.post({ url: this.tokensvcUrl + this.tokensvcAccessPath + '?key=' + this.tokensvcApiKey + '&stoken=\'\'', json: {clientid: this.clientId, accesstoken: this.accessToken}}, 
         function(error, response, body) {
-            if(error == null && response.statusCode == 200 && body != null) {
+            if(!error && response.statusCode === 200 && !!body) {
                 authentication.sToken = body.stoken;
                 onSuccess(authentication.refreshToken, authentication.accessToken, authentication.sToken);
             }
@@ -132,7 +132,7 @@ export class Authentication {
         let authentication = this;
         request.post({ url: this.tokensvcUrl + this.tokensvcValidatePath + '?key=' + this.tokensvcApiKey, json: {clientid: this.clientId, audiences: this.clientId, stoken: this.sToken}}, 
         function(error, response, body) {
-            if(error == null && response.statusCode == 200 && body != null) {
+            if(!error && response.statusCode === 200 && !!body) {
                 authentication.sToken = authentication.sToken;
                 onSuccess(authentication.refreshToken, authentication.accessToken, authentication.sToken);
             }

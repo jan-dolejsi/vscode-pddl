@@ -60,7 +60,7 @@ export class PddlSyntaxNode extends TextRange {
         if (this.getNestedChildren().length !== 1) {
             throw new Error(`Failed assertion that node '${this.getText()}' has a single child.`);
         }
-        return this.children[0];
+        return this.getNestedChildren()[0];
     }
 
     getNonWhitespaceChildren(): PddlSyntaxNode[] {
@@ -109,12 +109,26 @@ export class PddlSyntaxNode extends TextRange {
         return matchingNode;
     }
 
+    getChildrenRecursively(test: (node: PddlSyntaxNode) => boolean, callback: (node: PddlSyntaxNode) => void) {
+        this.getNestedChildren().forEach(child => {
+            try {
+                if (test(child)) { callback(child); }
+            }
+            catch(_e) {
+                // swallow
+            }
+            finally {
+                child.getChildrenRecursively(test, callback);
+            }
+        });
+    }
+
     /**
      * Finds the bracket nested inside the `:keyword`.
      * @param keyword keyword name e.g. 'precondition' to match ':precondition (*)' 
      */
     getKeywordOpenBracket(keyword: string): PddlBracketNode {
-        let keywordNode = this.getFirstChild(PddlTokenType.Keyword, new RegExp(":"+keyword +"$", "i"));
+        let keywordNode = this.getFirstChild(PddlTokenType.Keyword, new RegExp(":" + keyword + "$", "i"));
 
         if (!keywordNode) {
             return undefined;
