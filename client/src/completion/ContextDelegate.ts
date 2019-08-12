@@ -16,7 +16,7 @@ export abstract class ContextDelegate extends Delegate {
     enclose(snippetText: string): string {
         let enclosingStart = '';
         let enclosingEnd = '';
-        if (this.context.triggerCharacter != "(") {
+        if (this.context.triggerCharacter !== "(") {
             enclosingStart = '(';
             enclosingEnd = ')';
         }

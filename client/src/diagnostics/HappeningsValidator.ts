@@ -10,9 +10,8 @@ import {
 
 import * as process from 'child_process';
 
-import { PddlWorkspace } from '../../../common/src/PddlWorkspace';
-import { DomainInfo, ProblemInfo } from '../../../common/src/parser';
-import { PddlLanguage } from '../../../common/src/FileInfo';
+import { ProblemInfo } from '../../../common/src/parser';
+import { DomainInfo } from '../../../common/src/DomainInfo';
 import { HappeningsInfo, Happening } from "../../../common/src/HappeningsInfo";
 import { PddlConfiguration } from '../configuration';
 import { Util } from '../../../common/src/util';
@@ -21,6 +20,7 @@ import { PlanStep } from '../../../common/src/PlanStep';
 import { DomainAndProblem, isHappenings, getDomainAndProblemForHappenings } from '../workspace/workspaceUtils';
 import { createRangeFromLine, createDiagnostic } from './PlanValidator';
 import { HappeningsToValStep } from './HappeningsToValStep';
+import { CodePddlWorkspace } from '../workspace/CodePddlWorkspace';
 
 export const PDDL_HAPPENINGS_VALIDATE = 'pddl.happenings.validate';
 
@@ -29,7 +29,7 @@ export const PDDL_HAPPENINGS_VALIDATE = 'pddl.happenings.validate';
  */
 export class HappeningsValidator {
 
-    constructor(private output: OutputChannel, public pddlWorkspace: PddlWorkspace, public plannerConfiguration: PddlConfiguration, context: ExtensionContext) {
+    constructor(private output: OutputChannel, public codePddlWorkspace: CodePddlWorkspace, public plannerConfiguration: PddlConfiguration, context: ExtensionContext) {
 
         context.subscriptions.push(commands.registerCommand(PDDL_HAPPENINGS_VALIDATE,
             async () => {
@@ -52,7 +52,7 @@ export class HappeningsValidator {
 
     async validateTextDocument(planDocument: TextDocument): Promise<HappeningsValidationOutcome> {
 
-        let planFileInfo = <HappeningsInfo> await this.pddlWorkspace.upsertAndParseFile(planDocument.uri.toString(), PddlLanguage.PLAN, planDocument.version, planDocument.getText());
+        let planFileInfo = <HappeningsInfo> await this.codePddlWorkspace.upsertAndParseFile(planDocument);
 
         if (!planFileInfo) {
             return HappeningsValidationOutcome.failed(null, new Error("Cannot open or parse plan file."));
@@ -73,7 +73,7 @@ export class HappeningsValidator {
         let context: DomainAndProblem = null;
 
         try {
-            context = getDomainAndProblemForHappenings(happeningsInfo, this.pddlWorkspace);
+            context = getDomainAndProblemForHappenings(happeningsInfo, this.codePddlWorkspace.pddlWorkspace);
         } catch (err) {
             let outcome = HappeningsValidationOutcome.info(happeningsInfo, err);
             onSuccess(outcome.getDiagnostics());

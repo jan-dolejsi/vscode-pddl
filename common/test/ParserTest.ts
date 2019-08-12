@@ -4,10 +4,12 @@
  * ------------------------------------------------------------------------------------------ */
 'use strict';
 
-import { Parser, DomainInfo, ProblemInfo } from '../src/parser';
+import { Parser, ProblemInfo } from '../src/parser';
 import { DirectionalGraph } from '../src/DirectionalGraph';
 import * as assert from 'assert';
 import { Variable, Parameter, ObjectInstance } from '../src/FileInfo';
+import { PddlSyntaxTreeBuilder } from '../src/PddlSyntaxTreeBuilder';
+import { SimpleDocumentPositionResolver } from '../src/DocumentPositionResolver';
 
 describe('Parser', () => {
     var subject: Parser;
@@ -16,301 +18,40 @@ describe('Parser', () => {
         subject = new Parser();
     });
 
-    describe('#parseInheritance', () => {
-        it('should parse empty declaration', () => {
-            let graph = subject.parseInheritance('');
-            assert.equal(0, graph.getVertices().length);
-        });
-
-        it('should parse single type declaration', () => {
-            let typeName = 'type1';
-            let graph = subject.parseInheritance(typeName);
-            assert.ok(graph.getVertices().includes(typeName), 'should include type1');
-        });
-
-        it('should parse single type declaration with a dash', () => {
-            let typeName = 'basic-type1';
-            let graph = subject.parseInheritance(typeName);
-            assert.ok(graph.getVertices().includes(typeName), 'should include basic-type1');
-        });
-
-        it('should parse two type declarations', () => {
-            let typeName1 = 'type1';
-            let typeName2 = 'type2';
-            let graph = subject.parseInheritance(`${typeName1} ${typeName2}`);
-            assert.ok(graph.getVertices().includes(typeName1), 'should include type1');
-            assert.ok(graph.getVertices().includes(typeName2), 'should include type2');
-        });
-
-        it('should parse parent-child declarations', () => {
-            let parent = 'parent';
-            let child = 'child';
-            let graph = subject.parseInheritance(`${child} - ${parent}`);
-            assert.ok(graph.getVertices().includes(parent), 'should include parent');
-            assert.ok(graph.getVertices().includes(child), 'should include child');
-            assert.ok(graph.getVerticesWithEdgesFrom(child).includes(parent), 'child should have parent');
-            assert.strictEqual(graph.getVerticesWithEdgesFrom(parent).length, 0, 'parent should not have parent');
-        });
-
-        it('should parse parent-child declarations with new line', () => {
-            let parent = 'parent';
-            let child = 'child';
-            let graph = subject.parseInheritance(`${child} 
-- ${parent}`);
-            assert.ok(graph.getVertices().includes(parent), 'should include parent');
-            assert.ok(graph.getVertices().includes(child), 'should include child');
-            assert.ok(graph.getVerticesWithEdgesFrom(child).includes(parent), 'child should have parent');
-            assert.strictEqual(graph.getVerticesWithEdgesFrom(parent).length, 0, 'parent should not have parent');
-        });
-
-        it('should parse parent-2children declarations', () => {
-            let parent = 'parent';
-            let child1 = 'child1';
-            let child2 = 'child2';
-            let graph = subject.parseInheritance(`${child1} ${child2} - ${parent}`);
-            assert.ok(graph.getVertices().includes(parent), 'should include parent');
-            assert.ok(graph.getVertices().includes(child1), 'should include child1');
-            assert.ok(graph.getVertices().includes(child2), 'should include child2');
-            assert.ok(graph.getVerticesWithEdgesFrom(child1).includes(parent), 'child1 should have parent');
-            assert.ok(graph.getVerticesWithEdgesFrom(child2).includes(parent), 'child2 should have parent');
-            assert.strictEqual(graph.getVerticesWithEdgesFrom(parent).length, 0, 'parent should not have parent');
-        });
-
-        it('should parse parent-child and orphan declarations', () => {
-            let parent = 'parent';
-            let child = 'child';
-            let orphan = 'orphan';
-            let graph = subject.parseInheritance(`${child} - ${parent} ${orphan}`);
-            assert.ok(graph.getVertices().includes(parent), 'should include parent');
-            assert.ok(graph.getVertices().includes(child), 'should include child');
-            assert.ok(graph.getVertices().includes(orphan), 'should include orphan');
-
-            assert.ok(graph.getVerticesWithEdgesFrom(child).includes(parent), 'child should have parent');
-            assert.strictEqual(graph.getVerticesWithEdgesFrom(parent).length, 0, 'parent should not have parent');
-            assert.strictEqual(graph.getVerticesWithEdgesFrom(orphan).length, 1, 'orphan should not have "object" parent');
-        });
-
-        it('should parse 2 parent-child declarations', () => {
-            let parent1 = 'parent1';
-            let child1 = 'child1';
-            let parent2 = 'parent2';
-            let child2 = 'child2';
-            let graph = subject.parseInheritance(`${child1} - ${parent1} ${child2} - ${parent2}`);
-            assert.ok(graph.getVerticesWithEdgesFrom(child1).includes(parent1), 'child1 should have parent1');
-            assert.ok(graph.getVerticesWithEdgesFrom(child2).includes(parent2), 'child2 should have parent2');
-        });
-    });
-
-    describe('#toTypeObjects', () => {
-        it('should form object-type map', () => {
-            let type1 = "type1";
-            let object1 = "object1";
-            let graph = new DirectionalGraph();
-            graph.addEdge(object1, type1);
-
-            let typeObjects = Parser.toTypeObjects(graph);
-
-            assert.strictEqual(typeObjects.length, 1, 'there should be 1 type');
-            assert.strictEqual(typeObjects[0].type, type1, 'the type should be type1');
-            assert.strictEqual(typeObjects[0].objects.length, 1, 'the # of objects should be 1');
-            assert.strictEqual(typeObjects[0].objects[0], object1, 'the object should be object1');
-        });
-
-        it('should form 2object-type map', () => {
-            let type1 = "type1";
-            let object1 = "object1";
-            let object2 = "object2";
-            let graph = new DirectionalGraph();
-            graph.addEdge(object1, type1);
-            graph.addEdge(object2, type1);
-
-            let typeObjects = Parser.toTypeObjects(graph);
-
-            assert.strictEqual(typeObjects.length, 1, 'there should be 1 type');
-            assert.equal(typeObjects[0].type, type1, 'the type should be type1');
-            assert.ok(typeObjects[0].objects.includes(object1), 'the object should be object1');
-            assert.ok(typeObjects[0].objects.includes(object2), 'the object should be object2');
-        });
-    });
-
-
-    describe('#parsePredicatesOrFunctions', () => {
-        it('finds one predicate', () => {
+    describe('#tryDomain', () => {
+        it('should parse domain meta', () => {
             // GIVEN
-            let predicatePddl = `(said_hello)
-`;
-            // WHEN
-            let variables = Parser.parsePredicatesOrFunctions(predicatePddl);
+            let fileText = `;Header and description
 
-            assert.equal(variables.length, 1, 'there should be 1 predicate');
-            assert.equal(variables[0].getFullName(), "said_hello", 'the predicate name should be...');
-        });
-    });
-
-    describe('#parseParameters', () => {
-        it('finds one parameter', () => {
-            // GIVEN
-            let predicatePddl = `predicate1 ?p - type1`;
+            (define (domain domain_name)
+            ...
+            `;
+            let syntaxTree = new PddlSyntaxTreeBuilder(fileText).getTree();
+            let positionResolver = new SimpleDocumentPositionResolver(fileText);
 
             // WHEN
-            let parameters = Parser.parseParameters(predicatePddl);
-
-            assert.equal(parameters.length, 1, 'there should be 1 parameter');
-            assert.equal(parameters[0].name, 'p', 'the parameter name should be...');
-            assert.equal(parameters[0].type, 'type1', 'the parameter type should be...');
-        });
-
-        it('finds two parameters in ?p1 - type1 ?p2 - type2', () => {
-            // GIVEN
-            let predicatePddl = `predicate1 ?p1 - type1 ?p2 - type2`;
-
-            // WHEN
-            let parameters = Parser.parseParameters(predicatePddl);
-
-            assert.equal(parameters.length, 2, 'there should be 2 parameters');
-            assert.equal(parameters[0].name, 'p1', 'the parameter name should be...');
-            assert.equal(parameters[0].type, 'type1', 'the parameter name should be...');
-            assert.equal(parameters[1].name, 'p2', 'the parameter name should be...');
-            assert.equal(parameters[1].type, 'type2', 'the parameter name should be...');
-        });
-
-        it('finds two parameters in ?p1 ?p2 - type2', () => {
-            // GIVEN
-            let predicatePddl = `predicate1 ?p1 ?p2 - type2`;
-
-            // WHEN
-            let parameters = Parser.parseParameters(predicatePddl);
+            let domainInfo = subject.tryDomain('file:///file', 0, fileText, syntaxTree, positionResolver);
 
             // THEN
-            assert.equal(parameters.length, 2, 'there should be 2 parameters');
-            assert.equal(parameters[0].name, 'p1', 'the parameter name should be...');
-            assert.equal(parameters[0].type, 'type2', 'the parameter name should be...');
-            assert.equal(parameters[1].name, 'p2', 'the parameter name should be...');
-            assert.equal(parameters[1].type, 'type2', 'the parameter name should be...');
+            assert.notStrictEqual(domainInfo, null, 'domain should not be null');
+            assert.strictEqual(domainInfo.name, 'domain_name');
         });
-    });
 
-    describe('#parseDerived', () => {
-        let domainPddl = `(define (domain Depot-Derived)
-        (:requirements :typing :durative-actions)
-        (:types place locatable - object
-                depot distributor - place
-                truck hoist surface - locatable
-                pallet crate - surface)
-        
-        (:predicates (at ?x - locatable ?y - place) 
-                     (on ?x - crate ?y - surface)
-                     (in ?x - crate ?y - truck)
-                     (lifting ?x - hoist ?y - crate)
-                     (available ?x - hoist)
-                     (clear ?x - surface))
-        
-        (:derived (can-lift ?c - crate ?s - surface) ; can lift crate from the surface
-           (and (clear ?c) (on ?c ?s)))
-        
-        (:derived (c) (+ (a) (b))`;
-
-        it('extracts one derived predicate', () => {
+        it('should return null on non-domain PDDL', () => {
             // GIVEN
+            let fileText = `;Header and description
+
+            (define (problem name)
+            ...
+            `;
+            let syntaxTree = new PddlSyntaxTreeBuilder(fileText).getTree();
+            let positionResolver = new SimpleDocumentPositionResolver(fileText);
+
             // WHEN
-            let derived = new Parser().parseDerived(domainPddl);
+            let domainInfo = subject.tryDomain('file:///file', 0, fileText, syntaxTree, positionResolver);
 
             // THEN
-            assert.equal(derived.length, 2, 'there should be 2 derived variables');
-            assert.equal(derived[0].name, 'can-lift');
-            assert.equal(derived[0].parameters.length, 2);
-            assert.ok(derived[0].getDocumentation().startsWith('can lift'));
-            assert.equal(derived[1].name, 'c');
-        });
-    });
-
-    describe('#getDomainStructure', () => {
-        it('extracts structure even when the :types section is not defined', () => {
-            // GIVEN
-            let domainPddl = `(define (domain helloworld)
-            (:requirements :strips :negative-preconditions )
-            (:predicates 
-                (said_hello)
-            )
-            )`;
-            let domainInfo = new DomainInfo("uri", 1, "helloworld");
-
-            // WHEN
-            new Parser().getDomainStructure(domainPddl, domainInfo);
-
-            // THEN
-            assert.equal(1, domainInfo.getPredicates().length, 'there should be 1 predicate');
-            assert.equal(0, domainInfo.getTypes().length, 'there should be 0 types');
-            assert.equal(0, domainInfo.getFunctions().length, 'there should be 0 functions');
-        });
-
-        it('extracts predicate', () => {
-            // GIVEN
-            let domainPddl = `(define (domain helloworld)
-            (:requirements :strips :negative-preconditions )
-            (:predicates 
-                (said_hello)
-            )
-            )`;
-            let domainInfo = new DomainInfo("uri", 1, "helloworld");
-
-            // WHEN
-            new Parser().getDomainStructure(domainPddl, domainInfo);
-
-            assert.equal(domainInfo.getPredicates().length, 1, 'there should be 1 predicate');
-            assert.equal(domainInfo.getPredicates()[0].getFullName(), "said_hello", 'the predicate should be "said_hello"');
-        });
-
-        it('extracts function', () => {
-            // GIVEN
-            let domainPddl = `(define (domain helloworld)
-            (:requirements :strips :negative-preconditions )
-            (:functions 
-                (count)
-            )
-            )`;
-            let domainInfo = new DomainInfo("uri", 1, "helloworld");
-
-            // WHEN
-            new Parser().getDomainStructure(domainPddl, domainInfo);
-
-            assert.equal(domainInfo.getFunctions().length, 1, 'there should be 1 function');
-            assert.equal(domainInfo.getFunctions()[0].getFullName(), "count", 'the function should be "count"');
-        });
-
-        it('extracts types', () => {
-            // GIVEN
-            let domainPddl = `(define (domain helloworld)
-            (:requirements :strips :negative-preconditions )
-            (:types 
-                type1
-            )
-            )`;
-            let domainInfo = new DomainInfo("uri", 1, "helloworld");
-
-            // WHEN
-            new Parser().getDomainStructure(domainPddl, domainInfo);
-
-            assert.equal(domainInfo.getTypes().length, 1, 'there should be 1 type');
-            assert.equal(domainInfo.getTypes()[0], "type1", 'the function should be "count"');
-        });
-
-        
-        it('extracts types with dashes', () => {
-            // GIVEN
-            let domainPddl = `(define (domain helloworld)
-            (:requirements :strips :negative-preconditions )
-            (:types 
-                some-type1
-            )
-            )`;
-            let domainInfo = new DomainInfo("uri", 1, "helloworld");
-
-            // WHEN
-            new Parser().getDomainStructure(domainPddl, domainInfo);
-
-            assert.equal(domainInfo.getTypes().length, 1, 'there should be 1 type');
-            assert.equal(domainInfo.getTypes()[0], "some-type1", 'the function should be "count"');
+            assert.strictEqual(domainInfo, null, 'domain should be null');
         });
     });
 
@@ -328,7 +69,9 @@ describe('Parser', () => {
             (:goal )
             )
             `;
-            let problemInfo = new ProblemInfo("uri", 1, "p1", "d1");
+            let syntaxTree = new PddlSyntaxTreeBuilder(problemPddl).getTree();
+            let positionResolver = new SimpleDocumentPositionResolver(problemPddl);
+            let problemInfo = new ProblemInfo("uri", 1, "p1", "d1", syntaxTree, positionResolver);
 
             // WHEN
             new Parser().getProblemStructure(problemPddl, problemInfo);
@@ -349,7 +92,9 @@ describe('Parser', () => {
             (:goal )
             )
             `;
-            let problemInfo = new ProblemInfo("uri", 1, "p1", "d1");
+            let syntaxTree = new PddlSyntaxTreeBuilder(problemPddl).getTree();
+            let positionResolver = new SimpleDocumentPositionResolver(problemPddl);
+            let problemInfo = new ProblemInfo("uri", 1, "p1", "d1", syntaxTree, positionResolver);
 
             // WHEN
             new Parser().getProblemStructure(problemPddl, problemInfo);
@@ -412,96 +157,6 @@ describe('Variable', () => {
             assert.equal(variable.declaredNameWithoutTypes, variableName, "the declared name without types should be...");
             assert.equal(variable.parameters.length, 0);
             assert.equal(variable.isGrounded(), true, "should be grounded");
-        });
-    });
-});
-
-describe('DomainInfo', () => {
-
-    describe('#getTypeLocation', () => {
-        it('finds type location in multi-line declaration', () => {
-            // GIVEN
-            let domainInfo = new DomainInfo("/uri", 1.0, "name");
-            domainInfo.setText(`(define (domain generator)
-            (:requirements :fluents :durative-actions :duration-inequalities
-                    :negative-preconditions :typing)
-            
-            (:types generator tankstelle ; comment
-            tank)
-            `);
-            
-            // WHEN
-            let range = domainInfo.getTypeLocation('tank');
-
-            // THEN
-            assert.notStrictEqual(range, null, "range should not be null");
-            assert.equal(range.startLine, 5);
-            assert.equal(range.endLine, 5);
-            assert.equal(range.startCharacter, 12);
-            assert.equal(range.endCharacter, 16);
-        });
-
-        it('finds type location in single line declaration', () => {
-            // GIVEN
-            let domainInfo = new DomainInfo("/uri", 1.0, "name");
-            domainInfo.setText(`(define (domain generator) (:types generator tankstelle tank)`);
-            
-            // WHEN
-            let range = domainInfo.getTypeLocation('tank');
-
-            // THEN
-            assert.notStrictEqual(range, null, "range should not be null");
-            assert.equal(range.startLine, 0);
-            assert.equal(range.endLine, 0);
-            assert.equal(range.startCharacter, 56);
-            assert.equal(range.endCharacter, 56 + 4);
-        });
-    });
-
-    describe('#getTypeReferences', () => {
-        it('finds all references', () => {
-            // GIVEN
-            let domainInfo = new DomainInfo("/uri", 1.0, "name");
-            domainInfo.setText(`(define (domain generator)
-            (:requirements :fluents :durative-actions :duration-inequalities
-                    :negative-preconditions :typing)
-            
-            (:types tank - generator)
-            
-            (:predicates 
-                (generator-ran) ; Flags that the generator ran
-                (used ?t - tank) ; To force the planner to empty the entire tank in one action (rather than bit by bit), we mark the tank as 'used'
-            )
-            
-            (:functions 
-                (fuel-level ?t - generator) ; Fuel level in the generator
-                (fuel-reserve ?t - tank) ; Fuel reserve in the tank
-                (refuel-rate ?g - generator) ; Refuel rate of the generator
-                (capacity ?g - generator) ; Total fuel-capacity of the generator
-            )
-            
-            (:durative-action generate
-                :parameters (?g - generator)
-                :duration (= ?duration  100) ; arbitrarily the duration is set to 100 time-units
-                :condition 
-                    (over all (>= (fuel-level ?g) 0))
-                :effect (and 
-                    (decrease (fuel-level ?g) (* #t 1))
-                    (at end (generator-ran))
-                )
-            )
-            `);
-            
-            // WHEN
-            let ranges = domainInfo.getTypeReferences('generator');
-
-            // THEN
-            assert.equal(ranges.length, 5, "there should be N hits");
-            let range = ranges[0];
-            assert.equal(range.startLine, 4);
-            assert.equal(range.endLine, 4);
-            assert.equal(range.startCharacter, 27);
-            assert.equal(range.endCharacter, 36);
         });
     });
 });

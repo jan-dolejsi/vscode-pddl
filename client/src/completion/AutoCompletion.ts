@@ -5,14 +5,15 @@
 'use strict';
 
 import { CompletionItemProvider, CompletionItem, TextDocument, Position, CancellationToken, CompletionContext, Range } from 'vscode';
-import { PddlWorkspace } from '../../../common/src/PddlWorkspace';
-import { ProblemInfo, DomainInfo, toLanguageFromId } from '../../../common/src/parser';
+import { ProblemInfo } from '../../../common/src/parser';
+import { DomainInfo } from '../../../common/src/DomainInfo';
 import { KeywordDelegate } from './KeywordDelegate';
 import { ProblemInitDelegate } from './ProblemInitDelegate';
 import { OperatorDelegate } from './OperatorDelegate';
 import { VariableDelegate } from './VariableDelegate';
 import { TypeDelegate } from './TypeDelegate';
 import { EffectDelegate } from './EffectDelegate';
+import { CodePddlWorkspace } from '../workspace/CodePddlWorkspace';
 
 export class AutoCompletion implements CompletionItemProvider {
 
@@ -24,18 +25,18 @@ export class AutoCompletion implements CompletionItemProvider {
     typeDelegate: TypeDelegate;
     effectDelegate: EffectDelegate;
 
-    constructor(public pddlWorkspace: PddlWorkspace) {
+    constructor(public codePddlWorkspace: CodePddlWorkspace) {
         this.keywordDelegate = new KeywordDelegate();
         this.operatorDelegate = new OperatorDelegate();
-        this.variableDelegate = new VariableDelegate(pddlWorkspace);
-        this.typeDelegate = new TypeDelegate(pddlWorkspace);
-        this.effectDelegate = new EffectDelegate(pddlWorkspace);
+        this.variableDelegate = new VariableDelegate(codePddlWorkspace);
+        this.typeDelegate = new TypeDelegate(codePddlWorkspace.pddlWorkspace);
+        this.effectDelegate = new EffectDelegate(codePddlWorkspace.pddlWorkspace);
     }
 
     async provideCompletionItems(document: TextDocument, position: Position, token: CancellationToken, context: CompletionContext): Promise<CompletionItem[]> {
         if (token.isCancellationRequested) { return []; }
 
-        let completionCollector = await new CompletionCollector(this.pddlWorkspace, document, position, context,
+        let completionCollector = await new CompletionCollector(this.codePddlWorkspace, document, position, context,
             this.keywordDelegate, this.operatorDelegate, this.variableDelegate, this.typeDelegate,
             this.effectDelegate).initialize();
         return completionCollector.getCompletions();
@@ -48,7 +49,7 @@ class CompletionCollector {
     lineText: string;
     leadingText: string;
 
-    constructor(private readonly pddlWorkspace: PddlWorkspace, private readonly document: TextDocument,
+    constructor(private readonly codePddlWorkspace: CodePddlWorkspace, private readonly document: TextDocument,
         private readonly position: Position, private readonly context: CompletionContext,
         private readonly keywordDelegate: KeywordDelegate,
         private readonly operatorDelegate: OperatorDelegate,
@@ -63,8 +64,7 @@ class CompletionCollector {
 
     async initialize(): Promise<CompletionCollector> {
 
-        const activeFileInfo = await this.pddlWorkspace.upsertFile(this.document.uri.toString(),
-            toLanguageFromId(this.document.languageId), this.document.version, this.document.getText());
+        const activeFileInfo = await this.codePddlWorkspace.upsertFile(this.document);
 
         if (activeFileInfo.isProblem()) {
             let problemFileInfo = <ProblemInfo>activeFileInfo;
@@ -107,7 +107,7 @@ class CompletionCollector {
             this.pushAll(this.keywordDelegate.getProblemItems());
         }
 
-        let folder = this.pddlWorkspace.getFolderOf(problemFileInfo);
+        let folder = this.codePddlWorkspace.pddlWorkspace.getFolderOf(problemFileInfo);
         // find domain files in the same folder that match the problem's domain name
         let domainFiles = folder.getDomainFilesFor(problemFileInfo);
 

@@ -32,6 +32,9 @@ export function getFile(url: string, localFilePath: string): Promise<void> {
         request.get(url)
             .on('response', function (response) {
                 console.log("Downloading %s. Content-type: %s, Status code: %d", url, response.headers['content-type'], response.statusCode);
+                if (response.statusCode >= 400) {
+                    reject(new Error("Downloading VAL binaries failed with HTTP status code " + response.statusCode));
+                }
             })
             .on('error', function (err) {
                 reject(err);

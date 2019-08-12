@@ -10,10 +10,13 @@ import { EventEmitter } from 'events';
 import { Util } from '../../../common/src/util';
 import * as afs from '../../../common/src/asyncfs';
 import * as path from 'path';
-import { TimedVariableValue, VariableValue, ProblemInfo, DomainInfo, Parser } from '../../../common/src/parser';
+import { TimedVariableValue, VariableValue, ProblemInfo, Parser } from '../../../common/src/parser';
+import { DomainInfo } from '../../../common/src/DomainInfo';
 import { Happening } from '../../../common/src/HappeningsInfo';
 import { HappeningsToValStep } from '../diagnostics/HappeningsToValStep';
 import { Uri } from 'vscode';
+import { PddlSyntaxTreeBuilder } from '../../../common/src/PddlSyntaxTreeBuilder';
+import { SimpleDocumentPositionResolver } from '../../../common/src/DocumentPositionResolver';
 
 /**
  * Wraps the Valstep executable.
@@ -115,7 +118,8 @@ export class ValStep extends EventEmitter {
      * @returns variable values array, or null if the tool failed
      */
     private async extractInitialState(problemText: string): Promise<TimedVariableValue[]> {
-        let problemInfo = await new Parser().tryProblem("eventual-problem://not-important", 0, problemText);
+        let syntaxTree = new PddlSyntaxTreeBuilder(problemText).getTree();
+        let problemInfo = await new Parser().tryProblem("eventual-problem://not-important", 0, problemText, syntaxTree, new SimpleDocumentPositionResolver(problemText));
 
         if (!problemInfo) { return null; }
 

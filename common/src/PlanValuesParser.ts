@@ -13,7 +13,7 @@ export class PlanValuesParser {
 
     constructor(public steps: PlanStep[], public functions: Variable[], actionFunctionValues: String[]) {
 
-        if (steps.length != actionFunctionValues.length) {
+        if (steps.length !== actionFunctionValues.length) {
             throw new Error("Plan steps and action values do not correspond.");
         }
 
@@ -25,7 +25,7 @@ export class PlanValuesParser {
                 throw new Error("Wrong number of values on in the output: " + actionFunctionValues[idx]);
             }
 
-            if (planStep.fullActionName != planStepFunctionValues[0]) {
+            if (planStep.fullActionName !== planStepFunctionValues[0]) {
                 throw new Error("Action name does not match the one in the plan: " + actionFunctionValues[idx]);
             }
 
@@ -50,14 +50,14 @@ export class PlanValuesParser {
     }
 
     compareCsvTermsToFunctionCount(planStepFunctionValues: string[], multiple: number): boolean {
-        return planStepFunctionValues.length == 1 + multiple * this.functions.length;
+        return planStepFunctionValues.length === 1 + multiple * this.functions.length;
     }
 
     addState(time: number, values: string[]): void {
         let state = new StateValues(time);
 
-        if (values.length != this.functions.length) {
-            throw new Error(`Expecting number of values (${values}) to match number of functions ${this.functions.length}.`)
+        if (values.length !== this.functions.length) {
+            throw new Error(`Expecting number of values (${values}) to match number of functions ${this.functions.length}.`);
         }
 
         for (let index = 0; index < values.length; index++) {
@@ -74,7 +74,7 @@ export class PlanValuesParser {
     }
 
     getValues(functionName: String): number[][] {
-        let functions = this.functions.filter(f => f.name == functionName);
+        let functions = this.functions.filter(f => f.name === functionName);
 
         return this.stateValues.map(state => this.getStateValues(functions, state));
     }

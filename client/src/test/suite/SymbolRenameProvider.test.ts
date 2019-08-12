@@ -6,6 +6,7 @@ import { before } from 'mocha';
 import * as vscode from 'vscode';
 import { SymbolRenameProvider } from '../../symbols/SymbolRenameProvider';
 import { PddlWorkspace } from '../../../../common/src/PddlWorkspace';
+import { CodePddlWorkspace } from '../../workspace/CodePddlWorkspace';
 
 suite('SymbolRenameProvider Test Suite', () => {
 
@@ -21,7 +22,7 @@ suite('SymbolRenameProvider Test Suite', () => {
 		let initialText = `(define (domain domain_name)`;
 		let doc = await vscode.workspace.openTextDocument({ language: 'pddl', content: initialText });
 
-		let renameProvider = new SymbolRenameProvider(new PddlWorkspace(.3));
+		let renameProvider = new SymbolRenameProvider(new CodePddlWorkspace(new PddlWorkspace(.3)));
 
 		let positionZeroEdits = await renameProvider.provideRenameEdits(doc, new vscode.Position(0, 0), "asdf", tokenSource.token);
 		assert.strictEqual(positionZeroEdits, null, "position 0 should have no edits");
@@ -34,7 +35,7 @@ suite('SymbolRenameProvider Test Suite', () => {
 		let initialText = `(define (domain domain_name) (:types type1))`;
 		let doc = await vscode.workspace.openTextDocument({ language: 'pddl', content: initialText });
 
-		let renameProvider = new SymbolRenameProvider(new PddlWorkspace(.3));
+		let renameProvider = new SymbolRenameProvider(new CodePddlWorkspace(new PddlWorkspace(.3)));
 
 		let typeEdits = await renameProvider.provideRenameEdits(doc, new vscode.Position(0, 40), "asdf", tokenSource.token);
 		assert.strictEqual(typeEdits.size, 1);

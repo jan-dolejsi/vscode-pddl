@@ -4,8 +4,9 @@
 * ------------------------------------------------------------------------------------------ */
 'use strict';
 
-import { PddlTokenizer, PddlToken, PddlTokenType } from "./PddlTokenizer";
-import { PddlSyntaxTree, PddlSyntaxNode, PddlBracketNode } from "./PddlSyntaxTree";
+import { PddlTokenizer, PddlToken, PddlTokenType, isOpenBracket } from "./PddlTokenizer";
+import { PddlSyntaxTree } from "./PddlSyntaxTree";
+import { PddlSyntaxNode, PddlBracketNode } from "./PddlSyntaxNode";
 
 /** Builds a syntax tree from PDDL syntax tokens. */
 export class PddlSyntaxTreeBuilder {
@@ -75,7 +76,7 @@ export class PddlSyntaxTreeBuilder {
     }
 
     private addChild(token: PddlToken) {
-        const newChild = this.isOpenBracket(token) ? 
+        const newChild = isOpenBracket(token) ? 
             new PddlBracketNode(token, this.currentLeaf) : 
             new PddlSyntaxNode(token, this.currentLeaf);
         this.currentLeaf.addChild(newChild);
@@ -95,12 +96,8 @@ export class PddlSyntaxTreeBuilder {
         PddlTokenType.Whitespace]);
     }
 
-    private isOpenBracket(token: PddlToken): boolean {
-        return token.type === PddlTokenType.OpenBracketOperator || token.type === PddlTokenType.OpenBracket;
-    }
-
     private closeBracket(closeBracketToken: PddlToken): void {
-        let openBracketNode = this.closeSibling(token => this.isOpenBracket(token), _token => false);
+        let openBracketNode = this.closeSibling(token => isOpenBracket(token), _token => false);
 
         if (openBracketNode) {
             (<PddlBracketNode>openBracketNode).setCloseBracket(closeBracketToken);
@@ -108,7 +105,7 @@ export class PddlSyntaxTreeBuilder {
     }
 
     private closeKeyword(): void {
-        this.closeSibling(token => token.type === PddlTokenType.Keyword, token => this.isOpenBracket(token));
+        this.closeSibling(token => token.type === PddlTokenType.Keyword, token => isOpenBracket(token));
     }
 
     private closeSibling(isSibling: (token: PddlToken) => boolean, isParent: (token: PddlToken) => boolean): PddlSyntaxNode {

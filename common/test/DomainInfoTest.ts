@@ -4,13 +4,101 @@
  * ------------------------------------------------------------------------------------------ */
 'use strict';
 
-import { Parser, DomainInfo } from '../src/parser';
 import * as assert from 'assert';
-import { PddlRange } from '../src/FileInfo';
+import { PddlRange } from '../src/DocumentPositionResolver';
+import { createPddlDomainParser } from './PddlDomainParserTest';
 
 describe('DomainInfo', () => {
 
-    describe('#findVariableReferences', () => {
+    describe('#getTypeLocation', () => {
+        it('finds type location in multi-line declaration', () => {
+            // GIVEN
+            let domainPddl = `(define (domain generator)
+            (:requirements :fluents :durative-actions :duration-inequalities
+                    :negative-preconditions :typing)
+            
+            (:types generator tankstelle ; comment
+            tank)
+            `;
+
+            let domainInfo = createPddlDomainParser(domainPddl).getDomain();           
+
+            // WHEN
+            let range = domainInfo.getTypeLocation('tank');
+
+            // THEN
+            assert.notStrictEqual(range, null, "range should not be null");
+            assert.equal(range.startLine, 5);
+            assert.equal(range.endLine, 5);
+            assert.equal(range.startCharacter, 12);
+            assert.equal(range.endCharacter, 16);
+        });
+
+        it('finds type location in single line declaration', () => {
+            // GIVEN
+            const domainPddl = `(define (domain generator) (:types generator tankstelle tank)`;
+            let domainInfo = createPddlDomainParser(domainPddl).getDomain();           
+            
+            // WHEN
+            let range = domainInfo.getTypeLocation('tank');
+
+            // THEN
+            assert.notStrictEqual(range, null, "range should not be null");
+            assert.equal(range.startLine, 0);
+            assert.equal(range.endLine, 0);
+            assert.equal(range.startCharacter, 56);
+            assert.equal(range.endCharacter, 56 + 4);
+        });
+    });
+
+    describe('#getTypeReferences', () => {
+        it('finds all references', () => {
+            // GIVEN
+            const domainPddl = `(define (domain generator)
+            (:requirements :fluents :durative-actions :duration-inequalities
+                    :negative-preconditions :typing)
+            
+            (:types tank - generator)
+            
+            (:predicates 
+                (generator-ran) ; Flags that the generator ran
+                (used ?t - tank) ; To force the planner to empty the entire tank in one action (rather than bit by bit), we mark the tank as 'used'
+            )
+            
+            (:functions 
+                (fuel-level ?t - generator) ; Fuel level in the generator
+                (fuel-reserve ?t - tank) ; Fuel reserve in the tank
+                (refuel-rate ?g - generator) ; Refuel rate of the generator
+                (capacity ?g - generator) ; Total fuel-capacity of the generator
+            )
+            
+            (:durative-action generate
+                :parameters (?g - generator)
+                :duration (= ?duration  100) ; arbitrarily the duration is set to 100 time-units
+                :condition 
+                    (over all (>= (fuel-level ?g) 0))
+                :effect (and 
+                    (decrease (fuel-level ?g) (* #t 1))
+                    (at end (generator-ran))
+                )
+            )
+            `;
+            let domainInfo = createPddlDomainParser(domainPddl).getDomain();           
+            
+            // WHEN
+            let ranges = domainInfo.getTypeReferences('generator');
+
+            // THEN
+            assert.equal(ranges.length, 5, "there should be N hits");
+            let range = ranges[0];
+            assert.equal(range.startLine, 4);
+            assert.equal(range.endLine, 4);
+            assert.equal(range.startCharacter, 27);
+            assert.equal(range.endCharacter, 36);
+        });
+    });
+
+    describe('#getVariableReferences', () => {
         it('find all predicate references', () => {
             // GIVEN
             let domainPddl = `(define (domain domain_name)
@@ -40,9 +128,7 @@ describe('DomainInfo', () => {
     :effect (and (increase (f11 ?t1) 1))
 )
 )`;
-            let domainInfo = new DomainInfo("uri", 1, "domain_name");
-            domainInfo.setText(domainPddl);
-            new Parser().getDomainStructure(domainPddl, domainInfo);
+            let domainInfo = createPddlDomainParser(domainPddl).getDomain();
             assert.deepStrictEqual(domainInfo.getTypes(), ['tt1'], 'there should be 1 type');
             assert.deepStrictEqual(domainInfo.getPredicates().map(p => p.name), ['p3'], 'there should be 1 predicate');
             let p3 = domainInfo.getPredicates()[0];

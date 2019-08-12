@@ -10,15 +10,17 @@ import {
 
 import * as process from 'child_process';
 
-import { PddlWorkspace } from '../../../common/src/PddlWorkspace';
-import { PlanInfo, DomainInfo, ProblemInfo } from '../../../common/src/parser';
-import { PddlLanguage, ParsingProblem } from '../../../common/src/FileInfo';
+import { PlanInfo, ProblemInfo } from '../../../common/src/parser';
+import { DomainInfo } from '../../../common/src/DomainInfo';
+import { ParsingProblem } from '../../../common/src/FileInfo';
 import { PddlConfiguration } from '../configuration';
 import { Util } from '../../../common/src/util';
 import { dirname } from 'path';
 import { PlanStep } from '../../../common/src/PlanStep';
 import { DomainAndProblem, getDomainAndProblemForPlan, isPlan, NoProblemAssociated, NoDomainAssociated } from '../workspace/workspaceUtils';
 import { showError } from '../utils';
+import { VAL_DOWNLOAD_COMMAND } from '../validation/valCommand';
+import { CodePddlWorkspace } from '../workspace/CodePddlWorkspace';
 
 export const PDDL_PLAN_VALIDATE = 'pddl.plan.validate';
 
@@ -27,7 +29,7 @@ export const PDDL_PLAN_VALIDATE = 'pddl.plan.validate';
  */
 export class PlanValidator {
 
-    constructor(private output: OutputChannel, public pddlWorkspace: PddlWorkspace, public plannerConfiguration: PddlConfiguration, context: ExtensionContext) {
+    constructor(private output: OutputChannel, public codePddlWorkspace: CodePddlWorkspace, public plannerConfiguration: PddlConfiguration, context: ExtensionContext) {
 
         context.subscriptions.push(commands.registerCommand(PDDL_PLAN_VALIDATE,
             async (planUri: Uri) => this.validateActiveDocument(planUri).catch(showError)));
@@ -64,7 +66,7 @@ export class PlanValidator {
     async testConfiguration(): Promise<boolean> {
         let validatePath = this.plannerConfiguration.getValidatorPath();
         if (validatePath.length === 0) {
-            commands.executeCommand('pddl.downloadVal');
+            commands.executeCommand(VAL_DOWNLOAD_COMMAND);
             return false;
         }
         else {
@@ -74,7 +76,7 @@ export class PlanValidator {
 
     async validatePlanDocument(planDocument: TextDocument): Promise<PlanValidationOutcome> {
 
-        let planFileInfo = <PlanInfo>await this.pddlWorkspace.upsertAndParseFile(planDocument.uri.toString(), PddlLanguage.PLAN, planDocument.version, planDocument.getText());
+        let planFileInfo = <PlanInfo>await this.codePddlWorkspace.upsertAndParseFile(planDocument);
 
         if (!planFileInfo) { return PlanValidationOutcome.failed(null, new Error("Cannot open or parse plan file.")); }
 
@@ -88,7 +90,7 @@ export class PlanValidator {
         let context: DomainAndProblem = null;
 
         try {
-            context = getDomainAndProblemForPlan(planInfo, this.pddlWorkspace);
+            context = getDomainAndProblemForPlan(planInfo, this.codePddlWorkspace.pddlWorkspace);
         } catch (err) {
             let outcome = PlanValidationOutcome.failed(planInfo, err);
             onSuccess(outcome.getDiagnostics());

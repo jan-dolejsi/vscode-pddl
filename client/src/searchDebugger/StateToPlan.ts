@@ -5,7 +5,8 @@
 'use strict';
 
 import { State } from "./State";
-import { DomainInfo, ProblemInfo } from '../../../common/src/parser';
+import { ProblemInfo } from '../../../common/src/parser';
+import { DomainInfo } from '../../../common/src/DomainInfo';
 import { Plan } from '../../../common/src/Plan';
 import { PlanStep, PlanStepCommitment } from "../../../common/src/PlanStep";
 import { HappeningType } from "../../../common/src/HappeningsInfo";
@@ -21,12 +22,12 @@ export class StateToPlan {
 
         // all happenings except for ENDs
         let planStepBuilders = totalPlan
-            .filter(happening => happening.kind != HappeningType.END)
+            .filter(happening => happening.kind !== HappeningType.END)
             .map(happening => PlanStepBuilder.fromStart(happening));
 
         // now associate all ends with the corresponding starts
         totalPlan
-            .filter(happening => happening.kind == HappeningType.END)
+            .filter(happening => happening.kind === HappeningType.END)
             .forEach(endHappening => StateToPlan.associate(endHappening, planStepBuilders));
 
         let planSteps = planStepBuilders.map(step => step.toPalStep(state.earliestTime));
@@ -72,19 +73,19 @@ class PlanStepBuilder {
      * @param endHappening end happening to test
      */
     correspondsToEnd(endHappening: SearchHappening): boolean {
-        if (endHappening.shotCounter == -1) {
-            return this.start.actionName == endHappening.actionName
-                && this.end == null;
+        if (endHappening.shotCounter === -1) {
+            return this.start.actionName === endHappening.actionName
+                && this.end === null;
         }
 
-        return this.start.actionName == endHappening.actionName
-            && this.start.shotCounter == endHappening.shotCounter;
+        return this.start.actionName === endHappening.actionName
+            && this.start.shotCounter === endHappening.shotCounter;
     }
 
     static readonly EPSILON = 1e-3;
 
     toPalStep(stateTime: number): PlanStep {
-        let isDurative = this.start.kind == HappeningType.START;
+        let isDurative = this.start.kind === HappeningType.START;
 
         var duration = PlanStepBuilder.EPSILON;
         if (isDurative) {
@@ -103,8 +104,14 @@ class PlanStepBuilder {
     }
 
     private getCommitment(): PlanStepCommitment {
-        if (this.end && !this.end.isRelaxed) return PlanStepCommitment.Committed;
-        else if (!this.start.isRelaxed) return PlanStepCommitment.EndsInRelaxedPlan;
-        else return PlanStepCommitment.StartsInRelaxedPlan;
+        if (this.end && !this.end.isRelaxed) { 
+            return PlanStepCommitment.Committed; 
+        }
+        else if (!this.start.isRelaxed) {
+            return PlanStepCommitment.EndsInRelaxedPlan;
+        }
+        else {
+            return PlanStepCommitment.StartsInRelaxedPlan;
+        }
     }
 }

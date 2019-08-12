@@ -6,14 +6,14 @@
 
 import { TextDocument, CancellationToken, SymbolInformation,
     DocumentSymbolProvider, DefinitionProvider, ReferenceProvider, Position, ReferenceContext, Location, HoverProvider, Hover, SymbolKind } from 'vscode';
-import { PddlWorkspace } from '../PddlWorkspace';
 import { SymbolUtils } from './SymbolUtils';
-import { DomainInfo } from '../../../common/src/parser';
+import { DomainInfo } from '../../../common/src/DomainInfo';
+import { CodePddlWorkspace } from '../workspace/CodePddlWorkspace';
 
 export class SymbolInfoProvider implements DocumentSymbolProvider, DefinitionProvider, ReferenceProvider, HoverProvider {
     symbolUtils: SymbolUtils;
 
-    constructor(public pddlWorkspace: PddlWorkspace) {
+    constructor(public pddlWorkspace: CodePddlWorkspace) {
         this.symbolUtils = new SymbolUtils(pddlWorkspace);
     }
 
@@ -32,7 +32,7 @@ export class SymbolInfoProvider implements DocumentSymbolProvider, DefinitionPro
         let info = this.symbolUtils.getSymbolInfo(document, position);
         if (!info) { return []; }
 
-        return this.symbolUtils.findSymbolReferences(document.uri.toString(), info, context.includeDeclaration);
+        return this.symbolUtils.findSymbolReferences(document, info, context.includeDeclaration);
     }
 
     async provideDefinition(document: TextDocument, position: Position, token: CancellationToken): Promise<Location | Location[]> {
@@ -47,9 +47,7 @@ export class SymbolInfoProvider implements DocumentSymbolProvider, DefinitionPro
         if(token.isCancellationRequested) { return null; }
         await this.symbolUtils.assertFileParsed(document);
 
-        let fileUri = document.uri.toString();
-
-        let fileInfo = this.pddlWorkspace.getFileInfo(fileUri);
+        let fileInfo = this.pddlWorkspace.getFileInfo(document);
 
         if(!fileInfo.isDomain()) { return []; }
 
@@ -60,13 +58,11 @@ export class SymbolInfoProvider implements DocumentSymbolProvider, DefinitionPro
         let actionSymbols = domainInfo.actions.map(action =>
             new SymbolInformation(action.name, SymbolKind.Module, containerName, SymbolUtils.toLocation(document, action.location)));
 
-        domainInfo.getPredicates().forEach(p => domainInfo.findVariableLocation(p));
         let predicateSymbols = domainInfo.getPredicates().map(variable =>
-            new SymbolInformation(variable.declaredName, SymbolKind.Boolean, containerName, SymbolUtils.toLocation(document, variable.location)));
+            new SymbolInformation(variable.declaredName, SymbolKind.Boolean, containerName, SymbolUtils.toLocation(document, variable.getLocation())));
 
-        domainInfo.getFunctions().forEach(f => domainInfo.findVariableLocation(f));
         let functionSymbols = domainInfo.getFunctions().map(variable =>
-            new SymbolInformation(variable.declaredName, SymbolKind.Function, containerName, SymbolUtils.toLocation(document, variable.location)));
+            new SymbolInformation(variable.declaredName, SymbolKind.Function, containerName, SymbolUtils.toLocation(document, variable.getLocation())));
 
         let symbols = actionSymbols.concat(predicateSymbols, functionSymbols);
 

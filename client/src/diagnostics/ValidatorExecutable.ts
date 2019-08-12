@@ -12,7 +12,8 @@ import * as process from 'child_process';
 
 import { Validator } from './validator';
 import { ProblemPattern } from './ProblemPattern';
-import { DomainInfo, ProblemInfo } from '../../../common/src/parser';
+import { ProblemInfo } from '../../../common/src/parser';
+import { DomainInfo } from '../../../common/src/DomainInfo';
 import { PddlFactory } from '../../../common/src/PddlFactory';
 import { Util } from '../../../common/src/util';
 
@@ -61,10 +62,15 @@ export class ValidatorExecutable extends Validator {
             patterns.push(new ProblemPattern(this.customPattern, filePaths));
         }
 
+        let distinctOutputs: string[] = [];
+
         patterns.forEach(pattern => {
             let match: RegExpExecArray;
             while (match = pattern.regEx.exec(output)) {
-
+                // only report each warning/error once
+                if (distinctOutputs.includes(match[0])) { continue; }
+                distinctOutputs.push(match[0]);
+                
                 let pathUriTuple = pathToUriMap.find(tuple => tuple[0] === pattern.getFilePath(match));
 
                 if (!pathUriTuple) { continue; } // this is not a file of interest

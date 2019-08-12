@@ -5,7 +5,7 @@
 'use strict';
 
 import { CompletionItem, CompletionItemKind, MarkdownString } from 'vscode';
-import { TypeObjects, DomainInfo } from '../../../common/src/parser';
+import { DomainInfo, TypeObjects } from '../../../common/src/DomainInfo';
 import { Variable } from '../../../common/src/FileInfo';
 
 export abstract class Delegate {
@@ -44,8 +44,8 @@ export abstract class Delegate {
     getObjects(allTypeObjects: TypeObjects[], types: string[]): string[] {
         return allTypeObjects
             .filter(typeObjects => types.includes(typeObjects.type))
-            .map(typeObjects => typeObjects.objects)
-            .reduce((x, y) => x.concat(y), []) // flat map
+            .map(typeObjects => typeObjects.getObjects())
+            .reduce((x, y) => x.concat(y), []); // flat map
     }
 
     getTypesInvolved(variables: Variable[], domainFile: DomainInfo): string[] {
@@ -71,9 +71,9 @@ export abstract class Delegate {
 
     isSymmetric(variable: Variable): boolean {
         // the predicate has exactly 2 parameters
-        return variable.parameters.length == 2
+        return variable.parameters.length === 2
             // and the parameters are of the same type
-            && variable.parameters[0].type == variable.parameters[1].type;
+            && variable.parameters[0].type === variable.parameters[1].type;
     }
 
 }

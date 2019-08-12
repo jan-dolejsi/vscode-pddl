@@ -218,7 +218,7 @@ export class SessionSourceControl implements vscode.Disposable {
 					await this.setSession(newSession, true);
 				}
 			} catch (ex) {
-				vscode.window.showErrorMessage(ex.message);
+				vscode.window.showErrorMessage(ex.message || ex);
 			}
 		}
 	}
@@ -318,7 +318,7 @@ export class SessionSourceControl implements vscode.Disposable {
 			await this.updateChangedGroup();
 		}
 		catch (ex) {
-			vscode.window.showErrorMessage(ex.message);
+			vscode.window.showErrorMessage(ex.message || ex);
 		}
 	}
 

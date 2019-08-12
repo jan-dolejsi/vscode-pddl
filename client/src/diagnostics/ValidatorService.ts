@@ -9,7 +9,8 @@ import {
 } from 'vscode';
 
 import { Validator } from './validator';
-import { DomainInfo, ProblemInfo } from '../../../common/src/parser';
+import { ProblemInfo } from '../../../common/src/parser';
+import { DomainInfo } from '../../../common/src/DomainInfo';
 import { FileStatus } from '../../../common/src/FileInfo';
 import { Authentication } from '../../../common/src/Authentication';
 

@@ -5,6 +5,7 @@
 'use strict';
 
 import { FileInfo, PddlLanguage, ParsingProblem } from "./FileInfo";
+import { DocumentPositionResolver } from "./DocumentPositionResolver";
 
 /**
  * Plan happenings file.
@@ -13,8 +14,8 @@ export class HappeningsInfo extends FileInfo {
 
     private happenings: Happening[] = [];
 
-    constructor(fileUri: string, version: number, public problemName: string, public domainName: string, text: string) {
-        super(fileUri, version, problemName);
+    constructor(fileUri: string, version: number, public problemName: string, public domainName: string, text: string, positionResolver: DocumentPositionResolver) {
+        super(fileUri, version, problemName, positionResolver);
         this.setText(text);
     }
 
@@ -96,10 +97,12 @@ export class Happening {
      * It is decided by comparing the full action name and the counter.
      */
     belongsTo(other: Happening): boolean {
-        if (other === null || other === undefined) return false;
+        if (other === null || other === undefined) {
+            return false;
+        }
 
-        return this.fullActionName == other.fullActionName
-            && this.counter == other.counter;
+        return this.fullActionName === other.fullActionName
+            && this.counter === other.counter;
     }
 
     toString(): string {
@@ -152,7 +155,7 @@ export class PlanHappeningsBuilder {
 
     isWhiteSpace(planLine: string): boolean {
         this.whiteSpacePattern.lastIndex = 0;
-        return this.whiteSpacePattern.exec(planLine) != null;
+        return this.whiteSpacePattern.exec(planLine) !== null;
     }
 
     tryParse(planLine: string, lineIndex: number | undefined): void {
@@ -189,7 +192,7 @@ export class PlanHappeningsBuilder {
         switch (happening.getType()) {
             case HappeningType.START:
                 let alreadyExistingStart = this.openActions.concat(this.happenings).find(happening1 =>
-                    happening1.getType() == HappeningType.START
+                    happening1.getType() === HappeningType.START
                     && happening1.belongsTo(happening)
                 );
                 if (alreadyExistingStart) {

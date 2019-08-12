@@ -5,12 +5,13 @@
 'use strict';
 
 import { CodeActionKind, ExtensionContext, commands, languages, Uri, workspace, TextDocument } from 'vscode';
-import { PLAN, ProblemInfo, PDDL, HAPPENINGS, DomainInfo } from '../../../common/src/parser';
+import { PLAN, ProblemInfo, PDDL, HAPPENINGS } from '../../../common/src/parser';
+import { DomainInfo } from '../../../common/src/DomainInfo';
 import { AssociationCodeActionProvider } from './AssociationCodeActionProvider';
 import { showError } from '../utils';
 import { selectFile } from './workspaceUtils';
 import { PddlLanguage, FileInfo } from '../../../common/src/FileInfo';
-import { PddlWorkspace } from '../../../common/src/PddlWorkspace';
+import { CodePddlWorkspace } from './CodePddlWorkspace';
 
 export const COMMAND_ASSOCIATE_PROBLEM = 'pddl.workspace.associateProblem';
 export const COMMAND_ASSOCIATE_DOMAIN = 'pddl.workspace.associateDomain';
@@ -19,15 +20,18 @@ export const COMMAND_ASSOCIATE_DOMAIN = 'pddl.workspace.associateDomain';
  * Provides associations between workspace files that cannot be associated by natural links.
  */
 export class AssociationProvider {
-    constructor(context: ExtensionContext, private pddlWorkspace: PddlWorkspace) {
+    constructor(context: ExtensionContext, private codePddlWorkspace: CodePddlWorkspace) {
         context.subscriptions.push(
             commands.registerCommand(COMMAND_ASSOCIATE_PROBLEM, (planUri: Uri) =>
                 this.associateProblem(planUri).catch(showError))
         );
 
         context.subscriptions.push(
-            commands.registerCommand(COMMAND_ASSOCIATE_DOMAIN, (problemUri: Uri) =>
-                this.associateDomain(problemUri, pddlWorkspace.getDomainFilesFor(pddlWorkspace.getFileInfo(problemUri.toString()))).catch(showError))
+            commands.registerCommand(COMMAND_ASSOCIATE_DOMAIN, async (problemUri: Uri) => {
+                let problemDocument = await workspace.openTextDocument(problemUri);
+                const problemFileInfo = <ProblemInfo>codePddlWorkspace.getFileInfo(problemDocument);
+                this.associateDomain(problemUri, codePddlWorkspace.pddlWorkspace.getDomainFilesFor(problemFileInfo)).catch(showError);
+            })
         );
 
         context.subscriptions.push(
@@ -60,16 +64,16 @@ export class AssociationProvider {
     }
 
     private async associatePlanToProblem(planUri: Uri, problemDocument: TextDocument): Promise<void> {
-        let parsedFileInfo = await this.upsertAndParseFile(problemDocument);
+        let parsedFileInfo = await this.codePddlWorkspace.upsertAndParseFile(problemDocument);
         if (!(parsedFileInfo instanceof ProblemInfo)) {
             throw new Error("Selected file is not a problem file.");
         }
         let problemInfo = <ProblemInfo>parsedFileInfo;
-        this.pddlWorkspace.associatePlanToProblem(planUri.toString(), problemInfo);
+        this.codePddlWorkspace.pddlWorkspace.associatePlanToProblem(planUri.toString(), problemInfo);
         console.log(`Associated ${problemDocument.uri} to ${planUri}.`);
         // re-validate the plan file
-        let planInfo = this.pddlWorkspace.getFileInfo(planUri.toString());
-        this.pddlWorkspace.invalidateDiagnostics(planInfo);
+        let planInfo = this.codePddlWorkspace.getFileInfoByUri(planUri);
+        this.codePddlWorkspace.pddlWorkspace.invalidateDiagnostics(planInfo);
     }
 
     private async associateDomain(problemUri: Uri, suggestedFiles?: FileInfo[]): Promise<TextDocument> {
@@ -91,23 +95,19 @@ export class AssociationProvider {
         }
     }
     private async associateDomainToProblem(problemUri: Uri, domainDocument: TextDocument): Promise<void> {
-        let parsedFileInfo = await this.upsertAndParseFile(domainDocument);
+        let parsedFileInfo = await this.codePddlWorkspace.upsertAndParseFile(domainDocument);
         if (!(parsedFileInfo instanceof DomainInfo)) {
             throw new Error("Selected file is not a domain file.");
         }
         let domainInfo = <DomainInfo>parsedFileInfo;
-        let problemInfo = this.pddlWorkspace.getFileInfo<ProblemInfo>(problemUri.toString());
+        let problemInfo = this.codePddlWorkspace.getFileInfoByUri<ProblemInfo>(problemUri);
 
-        this.pddlWorkspace.associateProblemToDomain(problemInfo, domainInfo);
+        this.codePddlWorkspace.pddlWorkspace.associateProblemToDomain(problemInfo, domainInfo);
         console.log(`Associated ${domainDocument.uri} to ${problemUri}.`);
         // re-validate the problem file
-        this.pddlWorkspace.invalidateDiagnostics(problemInfo);
-        this.pddlWorkspace.getPlanFiles(problemInfo).forEach(planInfo => this.pddlWorkspace.invalidateDiagnostics(planInfo));
-        this.pddlWorkspace.getHappeningsFiles(problemInfo).forEach(happeningsInfo => this.pddlWorkspace.invalidateDiagnostics(happeningsInfo));
+        const pddlWorkspace = this.codePddlWorkspace.pddlWorkspace;
+        pddlWorkspace.invalidateDiagnostics(problemInfo);
+        pddlWorkspace.getPlanFiles(problemInfo).forEach(planInfo => pddlWorkspace.invalidateDiagnostics(planInfo));
+        pddlWorkspace.getHappeningsFiles(problemInfo).forEach(happeningsInfo => pddlWorkspace.invalidateDiagnostics(happeningsInfo));
     }
-
-    private async upsertAndParseFile(document: TextDocument): Promise<FileInfo> {
-        return await this.pddlWorkspace.upsertAndParseFile(document.uri.toString(), PddlLanguage.PDDL, document.version, document.getText());
-    }
-
 }

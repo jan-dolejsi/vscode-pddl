@@ -10,7 +10,7 @@ import {
 
 import * as path from 'path';
 
-import { DomainInfo, TypeObjects } from '../../../common/src/parser';
+import { DomainInfo, TypeObjects } from '../../../common/src/DomainInfo';
 import { SwimLane } from '../../../common/src/SwimLane';
 import { PlanStep, PlanStepCommitment } from '../../../common/src/PlanStep';
 import { HappeningType } from '../../../common/src/HappeningsInfo';
@@ -146,7 +146,7 @@ States evaluated: ${plan.statesEvaluated}`;
                 .map(type => {
                     let typeObjects = allTypeObjects.find(to => to.type === type);
                     return typeObjects
-                        ? this.renderTypeSwimLanes(type, typeObjects.objects, plan)
+                        ? this.renderTypeSwimLanes(type, typeObjects.getObjects(), plan)
                         : '';
                 }).join("\n");
         }

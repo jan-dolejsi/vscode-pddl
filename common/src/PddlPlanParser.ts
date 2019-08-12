@@ -6,7 +6,8 @@
 
 import { Plan } from './Plan';
 import { PlanStep } from './PlanStep';
-import { DomainInfo, ProblemInfo } from './parser';
+import { ProblemInfo } from './parser';
+import { DomainInfo } from './DomainInfo';
 
 /**
  * Parses plan in the PDDL form incrementally - line/buffer at a time.

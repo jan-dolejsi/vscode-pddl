@@ -89,7 +89,7 @@ export class PlanningDomainsSessions {
                 });
 
             } catch (ex) {
-                window.showErrorMessage(ex.message);
+                window.showErrorMessage(ex.message || ex);
             } finally {
                 // dispose source control for removed workspace folders
                 e.removed.forEach(wf => {
@@ -143,7 +143,7 @@ export class PlanningDomainsSessions {
             await this.openSession(context, sessionId, workspaceUri);
         }
         catch (ex) {
-            window.showErrorMessage(ex.message);
+            window.showErrorMessage(ex.message || ex);
             console.log(ex);
         }
     }

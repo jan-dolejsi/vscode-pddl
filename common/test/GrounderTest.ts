@@ -4,10 +4,13 @@
  * ------------------------------------------------------------------------------------------ */
 'use strict';
 
-import { DomainInfo, ProblemInfo, TypeObjects } from '../src/parser';
+import { ProblemInfo } from '../src/parser';
 import { Variable, Parameter, ObjectInstance } from '../src/FileInfo';
 import * as assert from 'assert';
 import { Grounder } from '../src/Grounder';
+import { PddlSyntaxTree } from '../src/PddlSyntaxTree';
+import { SimpleDocumentPositionResolver } from '../src/DocumentPositionResolver';
+import { DomainInfo, TypeObjects } from '../src/DomainInfo';
 
 describe('Grounder', () => {
 
@@ -17,8 +20,8 @@ describe('Grounder', () => {
     describe('#ground', () => {
         it('grounds un-parameterized variable', () => {
             // GIVEN            
-            let domain = new DomainInfo("file://fake", 1, "domain1");
-            let problem = new ProblemInfo("file://fake", 1, "problem1", "domain1");
+            let domain = new DomainInfo("file://fake", 1, "domain1", PddlSyntaxTree.EMPTY, createPositionResolver());
+            let problem = new ProblemInfo("file://fake", 1, "problem1", "domain1", PddlSyntaxTree.EMPTY, createPositionResolver());
             let liftedVariable = new Variable("cost", []);
 
             // WHEN
@@ -29,8 +32,8 @@ describe('Grounder', () => {
 
         it('grounds 1-parameterized variable with no objects', () => {
             // GIVEN            
-            let domain = new DomainInfo("file://fake", 1, "domain1");
-            let problem = new ProblemInfo("file://fake", 1, "problem1", "domain1");
+            let domain = new DomainInfo("file://fake", 1, "domain1", PddlSyntaxTree.EMPTY, createPositionResolver());
+            let problem = new ProblemInfo("file://fake", 1, "problem1", "domain1", PddlSyntaxTree.EMPTY, createPositionResolver());
             let liftedVariable = new Variable("cost", [new Parameter("p1", "type1")]);
 
             // WHEN
@@ -41,8 +44,8 @@ describe('Grounder', () => {
 
         it('grounds 1-parameterized variable with one object', () => {
             // GIVEN            
-            let domain = new DomainInfo("file://fake", 1, "domain1");
-            let problem = new ProblemInfo("file://fake", 1, "problem1", "domain1");
+            let domain = new DomainInfo("file://fake", 1, "domain1", PddlSyntaxTree.EMPTY, createPositionResolver());
+            let problem = new ProblemInfo("file://fake", 1, "problem1", "domain1", PddlSyntaxTree.EMPTY, createPositionResolver());
             let type1 = "type1";
             let object1 = "object1";
             problem.setObjects([new TypeObjects(type1).addAllObjects([object1])]);
@@ -58,8 +61,8 @@ describe('Grounder', () => {
 
         it('grounds 1-parameterized variable with two objects', () => {
             // GIVEN            
-            let domain = new DomainInfo("file://fake", 1, "domain1");
-            let problem = new ProblemInfo("file://fake", 1, "problem1", "domain1");
+            let domain = new DomainInfo("file://fake", 1, "domain1", PddlSyntaxTree.EMPTY, createPositionResolver());
+            let problem = new ProblemInfo("file://fake", 1, "problem1", "domain1", PddlSyntaxTree.EMPTY, createPositionResolver());
             let type1 = "type1";
             let object1 = "object1";
             let object2 = "object2";
@@ -80,8 +83,8 @@ describe('Grounder', () => {
     describe('#getObjects', () => {
         it('get objects for 1 type', () => {
             // GIVEN            
-            let domain = new DomainInfo("file://fake", 1, "domain1");
-            let problem = new ProblemInfo("file://fake", 1, "problem1", "domain1");
+            let domain = new DomainInfo("file://fake", 1, "domain1", PddlSyntaxTree.EMPTY, createPositionResolver());
+            let problem = new ProblemInfo("file://fake", 1, "problem1", "domain1", PddlSyntaxTree.EMPTY, createPositionResolver());
             let type1 = "type1";
             let object1 = "object1";
             let object2 = "object2";
@@ -96,8 +99,8 @@ describe('Grounder', () => {
 
         it('get objects for 2 types', () => {
             // GIVEN            
-            let domain = new DomainInfo("file://fake", 1, "domain1");
-            let problem = new ProblemInfo("file://fake", 1, "problem1", "domain1");
+            let domain = new DomainInfo("file://fake", 1, "domain1", PddlSyntaxTree.EMPTY, createPositionResolver());
+            let problem = new ProblemInfo("file://fake", 1, "problem1", "domain1", PddlSyntaxTree.EMPTY, createPositionResolver());
 
             let type1 = "type1";
             let type1object1 = "t1object1";
@@ -124,8 +127,8 @@ describe('Grounder', () => {
     describe('#getObjectPermutations', () => {
         it('get object permutations for 1 type', () => {
             // GIVEN            
-            let domain = new DomainInfo("file://fake", 1, "domain1");
-            let problem = new ProblemInfo("file://fake", 1, "problem1", "domain1");
+            let domain = new DomainInfo("file://fake", 1, "domain1", PddlSyntaxTree.EMPTY, createPositionResolver());
+            let problem = new ProblemInfo("file://fake", 1, "problem1", "domain1", PddlSyntaxTree.EMPTY, createPositionResolver());
             let type1 = "type1";
             let object1 = "object1";
             let object2 = "object2";
@@ -140,8 +143,8 @@ describe('Grounder', () => {
 
         it('get object permutations for 2 types', () => {
             // GIVEN            
-            let domain = new DomainInfo("file://fake", 1, "domain1");
-            let problem = new ProblemInfo("file://fake", 1, "problem1", "domain1");
+            let domain = new DomainInfo("file://fake", 1, "domain1", PddlSyntaxTree.EMPTY, createPositionResolver());
+            let problem = new ProblemInfo("file://fake", 1, "problem1", "domain1", PddlSyntaxTree.EMPTY, createPositionResolver());
 
             let type1 = "type1";
             let type1object1 = "t1object1";
@@ -167,3 +170,7 @@ describe('Grounder', () => {
         });
     });
 });
+
+function createPositionResolver() {
+    return new SimpleDocumentPositionResolver('');
+}
