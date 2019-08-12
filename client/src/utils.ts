@@ -5,9 +5,10 @@
 'use strict';
 
 import * as path from 'path';
-import { ExtensionContext, Uri, workspace, window } from 'vscode';
+import { ExtensionContext, Uri, workspace, window, Range } from 'vscode';
 import * as afs from '../../common/src/asyncfs';
 import { PddlExtensionContext } from '../../common/src/PddlExtensionContext';
+import { PddlRange } from '../../common/src/DocumentPositionResolver';
 
 export function createPddlExtensionContext(context: ExtensionContext): PddlExtensionContext {
     return {
@@ -131,4 +132,12 @@ export function ensureAbsolutePath(configuredPath: string, context: ExtensionCon
 
 export function isHttp(path: string): boolean {
     return path.match(/^http[s]?:/i) !== null;
+}
+
+export function equalsCaseInsensitive(text1: string, text2: string): boolean {
+    return text1.toLowerCase() === text2.toLowerCase();
+}
+
+export function toRange(pddlRange: PddlRange): Range {
+	return new Range(pddlRange.startLine, pddlRange.startCharacter, pddlRange.endLine, pddlRange.endCharacter);
 }

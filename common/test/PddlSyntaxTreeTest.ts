@@ -7,6 +7,7 @@
 import * as assert from 'assert';
 import { PddlSyntaxTreeBuilder } from '../src/PddlSyntaxTreeBuilder';
 import { PddlTokenType } from '../src/PddlTokenizer';
+import { PddlSyntaxNode } from '../src/PddlSyntaxNode';
 
 describe('PddlSyntaxTree', () => {
 
@@ -102,7 +103,7 @@ describe('PddlSyntaxNode', () => {
             assert.ok(keywordBracket);
             assert.strictEqual(keywordBracket.getNestedChildren().length, 0);
         });
-        
+
         it('returns bracket contents', () => {
             // GIVEN
             let actionPddl = `(action :keyword(p))`;
@@ -116,7 +117,7 @@ describe('PddlSyntaxNode', () => {
             assert.strictEqual(keywordBracket.getNestedChildren().length, 1);
             assert.strictEqual(keywordBracket.getText(), '(p)');
         });
-        
+
         it('returns bracket contents after whitespace', () => {
             // GIVEN
             let actionPddl = `(action :keyword         (p))`;
@@ -130,7 +131,7 @@ describe('PddlSyntaxNode', () => {
             assert.strictEqual(keywordBracket.getNestedChildren().length, 1);
             assert.strictEqual(keywordBracket.getText(), '(p)');
         });
-        
+
         it('returns non-trivial bracket contents - conjunction', () => {
             // GIVEN
             let actionPddl = `(action :keyword (and (p)(q)))`;
@@ -199,6 +200,76 @@ describe('PddlSyntaxNode', () => {
                 PddlTokenType.OpenBracketOperator, // (domain ...)
             ]);
         });
+    });
+
+    describe('#getChildrenRecursively()', () => {
+
+        it('it finds no child', () => {
+            // GIVEN
+            let domainPddl = `(define)`;
+
+            let tree = new PddlSyntaxTreeBuilder(domainPddl).getTree();
+            let defineNode = tree.getDefineNode();
+
+            // WHEN
+            let children: PddlSyntaxNode[] = [];
+            defineNode.getChildrenRecursively((_node: PddlSyntaxNode) => true, (node: PddlSyntaxNode) => children.push(node));
+
+            // THEN
+            assert.strictEqual(children.length, 0, 'there should be zero matches');
+        });
+
+        it('it finds one whitespace', () => {
+            // GIVEN
+            let domainPddl = `(define )`;
+
+            let tree = new PddlSyntaxTreeBuilder(domainPddl).getTree();
+            let defineNode = tree.getDefineNode();
+
+            // WHEN
+            let children: PddlSyntaxNode[] = [];
+            defineNode.getChildrenRecursively((_node: PddlSyntaxNode) => true, (node: PddlSyntaxNode) => children.push(node));
+
+            // THEN
+            assert.strictEqual(children.length, 1, 'there should be one match');
+            assert.strictEqual(children[0].getToken().type, PddlTokenType.Whitespace);
+        });
+
+        it('it finds no reference to predicate in comment', () => {
+            // GIVEN
+            let domainPddl = "(define ; (p)\n)";
+
+            let tree = new PddlSyntaxTreeBuilder(domainPddl).getTree();
+            let defineNode = tree.getDefineNode();
+
+            // WHEN
+            let children: PddlSyntaxNode[] = [];
+            defineNode.getChildrenRecursively(node => node.getToken().type === PddlTokenType.OpenBracket
+                && node.getSingleChild().getToken().tokenText === 'p',
+                (node: PddlSyntaxNode) => children.push(node));
+
+            // THEN
+            assert.strictEqual(children.length, 0, 'there should be zero matches');
+        });
+
+        
+        it('it finds two reference to predicate', () => {
+            // GIVEN
+            let domainPddl = "(define (p)\n (sub (p)))";
+
+            let tree = new PddlSyntaxTreeBuilder(domainPddl).getTree();
+            let defineNode = tree.getDefineNode();
+
+            // WHEN
+            let children: PddlSyntaxNode[] = [];
+            defineNode.getChildrenRecursively(node => node.getToken().type === PddlTokenType.OpenBracket
+                && node.getSingleChild().getToken().tokenText === 'p',
+                (node: PddlSyntaxNode) => children.push(node));
+
+            // THEN
+            assert.strictEqual(children.length, 2, 'there should be two matches');
+        });
+
     });
 
     /*
@@ -292,7 +363,7 @@ describe('PddlSyntaxNode', () => {
             // THEN
             assert.strictEqual(actual, originalPddl);
         });
-        
+
         it('gets type declaration node text', () => {
             // GIVEN
             let originalPddl = `child1 chlid2 - parent`;
@@ -320,7 +391,7 @@ describe('PddlSyntaxNode', () => {
             // THEN
             assert.strictEqual(actual, originalPddl);
         });
-        
+
         it('gets (:types) node text', () => {
             // GIVEN
             let originalPddl = `child1 chlid2 - parent`;
@@ -337,7 +408,7 @@ describe('PddlSyntaxNode', () => {
 });
 
 describe('PddlBracketNode', () => {
-    
+
     describe('#getText()', () => {
 
         it('gets single node text', () => {
@@ -351,7 +422,7 @@ describe('PddlBracketNode', () => {
             // THEN
             assert.strictEqual(actual, originalPddl);
         });
-        
+
         it('gets (:types ) node text', () => {
             // GIVEN
             let originalPddl = `(:types child1 chlid2 - parent)`;
@@ -378,7 +449,7 @@ describe('PddlBracketNode', () => {
             // THEN
             assert.strictEqual(actual, ' ');
         });
-        
+
         it('gets (:types ) node text', () => {
             // GIVEN
             let originalPddl = `(:types child1 chlid2 - parent)`;

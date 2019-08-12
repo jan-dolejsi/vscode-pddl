@@ -141,5 +141,34 @@ describe('DomainInfo', () => {
             assert.deepStrictEqual(p3ReferenceRanges[0], new PddlRange(13, 4, 13, 14), "the first reference location should be"); 
         });
 
+        it('find no predicate references', () => {
+            // GIVEN
+            let domainPddl = `(define (domain domain_name)
+
+(:predicates 
+    (p0)
+)
+
+(:functions 
+    (f11 - tt1)
+)
+; (p0) appears in a comment
+(:action t11
+    :parameters (?t1 - tt1)
+    :precondition (and (p3 ?t1) (p3 ?t1) (p3 o1))
+    :effect (and (increase (f11 ?t1) 1))
+)
+)`;
+            let domainInfo = createPddlDomainParser(domainPddl).getDomain();
+            assert.deepStrictEqual(domainInfo.getPredicates().map(p => p.name), ['p0'], 'there should be 1 predicate');
+            let p0 = domainInfo.getPredicates()[0];
+
+            // WHEN
+            let p0ReferenceRanges = domainInfo.getVariableReferences(p0);
+
+            // THEN
+            assert.strictEqual(p0ReferenceRanges.length, 1, 'there should be ONE references to predicate p0 - its declaration');
+        });
+
     });
 });

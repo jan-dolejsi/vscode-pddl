@@ -11,6 +11,7 @@ import { Plan } from '../../../common/src/Plan';
 import { PlanStep, PlanStepCommitment } from "../../../common/src/PlanStep";
 import { HappeningType } from "../../../common/src/HappeningsInfo";
 import { SearchHappening } from "./SearchHappening";
+import { equalsCaseInsensitive } from "../utils";
 
 export class StateToPlan {
 
@@ -38,10 +39,10 @@ export class StateToPlan {
     }
 
     static associate(endHappening: SearchHappening, planSteps: PlanStepBuilder[]): void {
-        let correspondingStart = planSteps.find(step => step.correspondsToEnd(endHappening) && !step.end);
+        let correspondingStart = planSteps.find(step => step.correspondsToEnd(endHappening) && !step.hasEnd());
 
         if (!correspondingStart) {
-            throw new Error("Cannot find start corresponding to: " + endHappening);
+            throw new Error("Cannot find start corresponding to: " + endHappening.actionName);
         }
 
         correspondingStart.setEnd(endHappening);
@@ -64,8 +65,12 @@ class PlanStepBuilder {
      * Sets corresponding end happening.
      * @param endHappening corresponding end happening
      */
-    setEnd(endHappening: SearchHappening) {
+    setEnd(endHappening: SearchHappening): void {
         this.end = endHappening;
+    }
+
+    hasEnd(): boolean {
+        return !!this.end;
     }
 
     /**
@@ -73,13 +78,16 @@ class PlanStepBuilder {
      * @param endHappening end happening to test
      */
     correspondsToEnd(endHappening: SearchHappening): boolean {
-        if (endHappening.shotCounter === -1) {
-            return this.start.actionName === endHappening.actionName
-                && this.end === null;
-        }
+        const matchingName = equalsCaseInsensitive(this.start.actionName, endHappening.actionName);
 
-        return this.start.actionName === endHappening.actionName
-            && this.start.shotCounter === endHappening.shotCounter;
+        if (!matchingName) { return false; }
+
+        if (endHappening.shotCounter === -1) {
+            return this.end === null || this.end === undefined;
+        }
+        else {
+            return this.start.shotCounter === endHappening.shotCounter;
+        }
     }
 
     static readonly EPSILON = 1e-3;

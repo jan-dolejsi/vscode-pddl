@@ -8,7 +8,7 @@ import { DirectionalGraph } from "./DirectionalGraph";
 import { FileInfo, Variable, PddlLanguage, ObjectInstance, Parameter } from "./FileInfo";
 import { PddlSyntaxTree } from "./PddlSyntaxTree";
 import { PddlRange, DocumentPositionResolver } from "./DocumentPositionResolver";
-import { PddlBracketNode } from "./PddlSyntaxNode";
+import { PddlBracketNode, PddlSyntaxNode } from "./PddlSyntaxNode";
 import { PddlTokenType } from "./PddlTokenizer";
 
 /**
@@ -82,7 +82,7 @@ export class DomainInfo extends FileInfo {
     setTypeInheritance(typeInheritance: DirectionalGraph, typesNode: PddlBracketNode, positionResolver: DocumentPositionResolver): void {
         this.typeInheritance = typeInheritance;
         this.getTypes().forEach(typeName => {
-            let typeNode = typesNode.getFirstChild(PddlTokenType.Other, new RegExp("^"+typeName+"$"));
+            let typeNode = typesNode.getFirstChild(PddlTokenType.Other, new RegExp("^" + typeName + "$"));
             if (typeNode) {
                 let range = PddlRange.from(positionResolver.resolveToPosition(typeNode.getStart()), positionResolver.resolveToPosition(typeNode.getEnd()));
                 this.typeLocations.set(typeName, range);
@@ -128,6 +128,30 @@ export class DomainInfo extends FileInfo {
 
     getTypeLocation(type: string): PddlRange {
         return this.typeLocations.get(type);
+    }
+
+    getVariableReferences(variable: Variable): PddlRange[] {
+
+        let referenceLocations: PddlRange[] = [];
+
+        this.syntaxTree.getDefineNode().getChildrenRecursively(node => this.isVariableReference(node, variable),
+            node => referenceLocations.push(this.getRange(node)));
+
+        return referenceLocations;
+    }
+
+    private isVariableReference(node: PddlSyntaxNode, variable: Variable): boolean {
+        if (node.getToken().type !== PddlTokenType.OpenBracket) {
+            return false;
+        }
+
+        let nonWhiteSpaceChildren = node.getNonWhitespaceChildren();
+        if (nonWhiteSpaceChildren.length < 1) {
+            return false;
+        }
+        let variableNameNode = nonWhiteSpaceChildren[0];
+        return variableNameNode.getToken().type === PddlTokenType.Other
+            && variableNameNode.getToken().tokenText === variable.declaredNameWithoutTypes;
     }
 }
 
@@ -219,13 +243,13 @@ export class InstantAction extends Action {
 }
 
 export class DurativeAction extends Action {
-    constructor(name: string, parameters: Parameter[], 
-        public readonly duration: PddlBracketNode, 
-        public readonly condition: PddlBracketNode, 
+    constructor(name: string, parameters: Parameter[],
+        public readonly duration: PddlBracketNode,
+        public readonly condition: PddlBracketNode,
         public readonly effect: PddlBracketNode) {
         super(name, parameters);
     }
-    
+
     isDurative(): boolean {
         return true;
     }

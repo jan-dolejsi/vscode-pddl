@@ -7,9 +7,9 @@
 import { TextDocument } from 'vscode';
 import { DocumentPositionResolver, PddlPosition } from '../../../common/src/DocumentPositionResolver';
 
-export class CodeDocumentPositionResolver implements DocumentPositionResolver {
+export class CodeDocumentPositionResolver extends DocumentPositionResolver {
     constructor(private readonly document: TextDocument) {
-
+        super();
     }
     
     resolveToPosition(offset: number): PddlPosition {

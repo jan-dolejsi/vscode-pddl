@@ -4,13 +4,12 @@
  * ------------------------------------------------------------------------------------------ */
 'use strict';
 
-import { workspace, window, ExtensionContext, commands, Uri, ViewColumn, Range, languages } from 'vscode';
+import { workspace, window, ExtensionContext, commands, Uri, ViewColumn, languages } from 'vscode';
 
 import { Planning } from './planning/planning';
 import { PddlWorkspace } from '../../common/src/PddlWorkspace';
 import { PDDL, PLAN, HAPPENINGS } from '../../common/src/parser';
 import { DomainInfo } from '../../common/src/DomainInfo';
-import { PddlRange } from '../../common/src/DocumentPositionResolver';
 import { PddlConfiguration } from './configuration';
 import { Authentication } from '../../common/src/Authentication';
 import { AutoCompletion } from './completion/AutoCompletion';
@@ -33,10 +32,11 @@ import { SearchDebugger } from './searchDebugger/SearchDebugger';
 import { PlanningDomainsSessions } from './session/PlanningDomainsSessions';
 import { PddlFormatProvider } from './formatting/PddlFormatProvider';
 import { Val } from './validation/Val';
-import { createPddlExtensionContext } from './utils';
+import { createPddlExtensionContext, toRange } from './utils';
 import { AssociationProvider } from './workspace/AssociationProvider';
 import { SuggestionProvider } from './symbols/SuggestionProvider';
 import { CodePddlWorkspace } from './workspace/CodePddlWorkspace';
+import { DomainDiagnostics } from './diagnostics/DomainDiagnostics';
 
 const PDDL_CONFIGURE_PARSER = 'pddl.configureParser';
 const PDDL_LOGIN_PARSER_SERVICE = 'pddl.loginParserService';
@@ -176,6 +176,9 @@ function activateWithTelemetry(_operationId: string, context: ExtensionContext) 
 	let diagnostics = new Diagnostics(pddlWorkspace, diagnosticCollection, pddlConfiguration,
 		planValidator, happeningsValidator);
 
+	// tslint:disable-next-line:no-unused-expression
+	new DomainDiagnostics(codePddlWorkspace);
+
 	// tslint:disable-next-line: no-unused-expression
 	new AssociationProvider(context, codePddlWorkspace);
 
@@ -229,10 +232,6 @@ async function revealAction(domainInfo: DomainInfo, actionName: String) {
 	window.showTextDocument(document.uri, { viewColumn: ViewColumn.One, preserveFocus: true, selection: actionRange });
 }
 
-function toRange(pddlRange: PddlRange): Range {
-	return new Range(pddlRange.startLine, pddlRange.startCharacter, pddlRange.endLine, pddlRange.endCharacter);
-}
-
 function subscribeToWorkspace(pddlWorkspace: CodePddlWorkspace, pddlConfiguration: PddlConfiguration, context: ExtensionContext): void {
 	// add all open documents
 	workspace.textDocuments
@@ -256,8 +255,8 @@ function subscribeToWorkspace(pddlWorkspace: CodePddlWorkspace, pddlConfiguratio
 	}));
 
 	// subscribe to document closing event
-	context.subscriptions.push(workspace.onDidCloseTextDocument(textDoc => {
-		if (isAnyPddl(textDoc)) { pddlWorkspace.removeFile(textDoc); }
+	context.subscriptions.push(workspace.onDidCloseTextDocument(async (textDoc) => {
+		if (isAnyPddl(textDoc)) { await pddlWorkspace.removeFile(textDoc); }
 	}));
 
 	workspace.onDidChangeConfiguration(_ => {

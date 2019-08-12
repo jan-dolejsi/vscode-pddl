@@ -17,10 +17,10 @@ import { DomainInfo } from './DomainInfo';
 
 class Folder {
     files: Map<string, FileInfo> = new Map<string, FileInfo>();
-    folderUri: string;
+    folderPath: string;
 
-    constructor(folderUri: string) {
-        this.folderUri = folderUri;
+    constructor(folderPath: string) {
+        this.folderPath = folderPath;
     }
 
     hasFile(fileUri: string): boolean {
@@ -111,9 +111,9 @@ export class PddlWorkspace extends EventEmitter {
 
     async upsertFile(fileUri: string, language: PddlLanguage, fileVersion: number, fileText: string, positionResolver: DocumentPositionResolver): Promise<FileInfo> {
 
-        let folderUri = PddlWorkspace.getFolderPath(fileUri);
+        let folderPath = PddlWorkspace.getFolderPath(fileUri);
 
-        let folder = this.upsertFolder(folderUri);
+        let folder = this.upsertFolder(folderPath);
 
         let fileInfo: FileInfo = folder.get(fileUri);
         if (fileInfo) {
@@ -177,9 +177,9 @@ export class PddlWorkspace extends EventEmitter {
     }
 
     private async reParseFile(fileInfo: FileInfo): Promise<FileInfo> {
-        let folderUri = PddlWorkspace.getFolderPath(fileInfo.fileUri);
+        let folderPath = PddlWorkspace.getFolderPath(fileInfo.fileUri);
 
-        let folder = this.upsertFolder(folderUri);
+        let folder = this.upsertFolder(folderPath);
 
         folder.remove(fileInfo);
         fileInfo = await this.parseFile(fileInfo.fileUri, fileInfo.getLanguage(), fileInfo.getVersion(), fileInfo.getText(), fileInfo.getDocumentPositionResolver());
@@ -219,26 +219,30 @@ export class PddlWorkspace extends EventEmitter {
         }
     }
 
-    private upsertFolder(folderUri: string): Folder {
+    private upsertFolder(folderPath: string): Folder {
         let folder: Folder;
 
-        if (!this.folders.has(folderUri)) {
-            folder = new Folder(folderUri);
-            this.folders.set(folderUri, folder);
+        if (!this.folders.has(folderPath)) {
+            folder = new Folder(folderPath);
+            this.folders.set(folderPath, folder);
         }
         else {
-            folder = this.folders.get(folderUri);
+            folder = this.folders.get(folderPath);
         }
 
         return folder;
     }
 
-    removeFile(documentUri: string): boolean {
+    removeFile(documentUri: string, options: FileRemovalOptions): boolean {
 
-        let folderUri = PddlWorkspace.getFolderPath(documentUri);
+        if (this.hasExplicitAssociations(documentUri)) {
+            if (!options.removeAllReferences) { return false; }
+        }
+        // todo: remove the explicit associations
+        let folderPath = PddlWorkspace.getFolderPath(documentUri);
 
-        if (this.folders.has(folderUri)) {
-            let folder = this.folders.get(folderUri);
+        if (this.folders.has(folderPath)) {
+            let folder = this.folders.get(folderPath);
             if (folder.hasFile(documentUri)) {
                 let documentInfo = folder.get(documentUri);
 
@@ -250,11 +254,16 @@ export class PddlWorkspace extends EventEmitter {
         return false;
     }
 
-    getFileInfo<T extends FileInfo>(fileUri: string): T {
-        let folderUri = PddlWorkspace.getFolderPath(fileUri);
+    hasExplicitAssociations(documentUri: string): boolean {
+        return this.problemToDomainMap.has(documentUri) || [...this.problemToDomainMap.values()].includes(documentUri)
+            || this.planToProblemMap.has(documentUri) || [...this.planToProblemMap.values()].includes(documentUri);
+    }
 
-        if (this.folders.has(folderUri)) {
-            let folder = this.folders.get(folderUri);
+    getFileInfo<T extends FileInfo>(fileUri: string): T {
+        let folderPath = PddlWorkspace.getFolderPath(fileUri);
+
+        if (this.folders.has(folderPath)) {
+            let folder = this.folders.get(folderPath);
             let fileInfo = folder.get(fileUri);
 
             return <T>fileInfo; // or null if the file did not exist in the folder
@@ -430,4 +439,8 @@ export class PddlWorkspace extends EventEmitter {
     getFolderOf(fileInfo: FileInfo): Folder {
         return this.folders.get(PddlWorkspace.getFolderPath(fileInfo.fileUri));
     }
+}
+
+export interface FileRemovalOptions {
+    removeAllReferences: boolean;
 }
