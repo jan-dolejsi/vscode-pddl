@@ -256,8 +256,8 @@ function subscribeToWorkspace(pddlWorkspace: CodePddlWorkspace, pddlConfiguratio
 	}));
 
 	// subscribe to document closing event
-	context.subscriptions.push(workspace.onDidCloseTextDocument(textDoc => {
-		if (isAnyPddl(textDoc)) { pddlWorkspace.removeFile(textDoc); }
+	context.subscriptions.push(workspace.onDidCloseTextDocument(async (textDoc) => {
+		if (isAnyPddl(textDoc)) { await pddlWorkspace.removeFile(textDoc); }
 	}));
 
 	workspace.onDidChangeConfiguration(_ => {

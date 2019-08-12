@@ -10,6 +10,7 @@ import { FileInfo } from '../../../common/src/FileInfo';
 import { PddlWorkspace } from '../../../common/src/PddlWorkspace';
 import { DocumentPositionResolver } from '../../../common/src/DocumentPositionResolver';
 import { CodeDocumentPositionResolver } from './CodeDocumentPositionResolver';
+import * as afs from '../../../common/src/asyncfs';
 
 export class CodePddlWorkspace {
     constructor(public readonly pddlWorkspace: PddlWorkspace) {
@@ -34,8 +35,9 @@ export class CodePddlWorkspace {
         return this.getFileInfoByUri(document.uri);
     }
 
-    removeFile(textDoc: TextDocument): boolean {
-        return this.pddlWorkspace.removeFile(textDoc.uri.toString());
+    async removeFile(textDoc: TextDocument): Promise<boolean> {
+        let fileExists = await afs.exists(textDoc.fileName);
+        return this.pddlWorkspace.removeFile(textDoc.uri.toString(), { removeAllReferences: !fileExists});
     }
 
     setEpsilon(epsilon: number): void {

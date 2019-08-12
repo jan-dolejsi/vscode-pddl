@@ -132,3 +132,7 @@ export function ensureAbsolutePath(configuredPath: string, context: ExtensionCon
 export function isHttp(path: string): boolean {
     return path.match(/^http[s]?:/i) !== null;
 }
+
+export function equalsCaseInsensitive(text1: string, text2: string): boolean {
+    return text1.toLowerCase() === text2.toLowerCase();
+}
