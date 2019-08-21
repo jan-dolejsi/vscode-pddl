@@ -5,7 +5,7 @@
 'use strict';
 
 import {
-    window, ExtensionContext, Uri, ViewColumn, WebviewPanel, commands, workspace, ConfigurationTarget, extensions
+    window, ExtensionContext, Uri, ViewColumn, WebviewPanel, commands, workspace, ConfigurationTarget, extensions, TextDocument
 } from 'vscode';
 
 import { PddlConfiguration } from '../configuration';
@@ -15,6 +15,7 @@ import { getWebViewHtml, createPddlExtensionContext } from '../utils';
 import * as afs from '../../../common/src/asyncfs';
 import { Val } from '../validation/Val';
 import { VAL_DOWNLOAD_COMMAND, ValDownloadOptions } from '../validation/valCommand';
+import { PTEST_VIEW } from '../ptest/PTestCommands';
 
 export const SHOULD_SHOW_OVERVIEW_PAGE = 'shouldShowOverviewPage';
 export const LAST_SHOWN_OVERVIEW_PAGE = 'lastShownOverviewPage';
@@ -101,6 +102,14 @@ export class OverviewPage {
                     window.showErrorMessage(ex.message || ex);
                 }
                 break;
+            case 'openNunjucksSample':
+                try {
+                    await this.openNunjucksSample();
+                }
+                catch (ex) {
+                    window.showErrorMessage(ex.message || ex);
+                }
+                break;
             case 'clonePddlSamples':
                 commands.executeCommand("git.clone", "https://github.com/jan-dolejsi/vscode-pddl-samples.git");
                 break;
@@ -129,37 +138,87 @@ export class OverviewPage {
     CONTENT_FOLDER = "overview";
 
     async helloWorld(): Promise<void> {
+        let sampleDocuments = await this.createSample('helloworld', 'Hello World!');
+
+        let documentsToOpen = await this.openSampleFiles(sampleDocuments, ['domain.pddl', 'problem.pddl']);
+
+        let workingDirectory = path.dirname(documentsToOpen[0].fileName);
+        commands.executeCommand("pddl.planAndDisplayResult", documentsToOpen[0].uri, documentsToOpen[1].uri, workingDirectory, "");
+    }
+
+    async openNunjucksSample(): Promise<void> {
+        let sampleDocuments = await this.createSample('nunjucks', 'Nunjucks template sample');
+
+        // let documentsToOpen = 
+        await this.openSampleFiles(sampleDocuments, ['domain.pddl', 'problem.pddl', 'problem0.json']);
+        
+        let ptestJson = sampleDocuments.find(doc => path.basename(doc.fileName) === '.ptest.json');
+        let generatedProblemUri = ptestJson.uri.with({fragment: '0'});
+
+        await commands.executeCommand(PTEST_VIEW, generatedProblemUri);
+
+        // let workingDirectory = path.dirname(documentsToOpen[0].fileName);
+        // commands.executeCommand("pddl.planAndDisplayResult", documentsToOpen[0].uri, generatedProblemUri, workingDirectory, "");
+    }
+
+    async openSampleFiles(sampleDocuments: TextDocument[], fileNamesToOpen: string[]): Promise<TextDocument[]> {
+        let documentsToOpen = fileNamesToOpen
+            .map(fileName => sampleDocuments.find(doc => path.basename(doc.fileName) === fileName));
+
+        // were all files found?
+        if (documentsToOpen.some(v => !v)) {
+            throw new Error('One or more sample files were not found: ' + fileNamesToOpen);
+        }
+
+        for (let index = 0; index < documentsToOpen.length; index++) {
+            const doc = sampleDocuments[index];
+            const viewColumn: ViewColumn = this.indexToViewColumn(index);
+            await window.showTextDocument(doc, { viewColumn: viewColumn, preview: false });
+        }
+
+        return documentsToOpen;
+    }
+
+    indexToViewColumn(index: number): ViewColumn {
+        switch (index) {
+            case 0: return ViewColumn.One;
+            case 1: return ViewColumn.Two;
+            case 2: return ViewColumn.Three;
+            case 3: return ViewColumn.Four;
+            default: return ViewColumn.Five;
+        }
+    }
+
+    async createSample(subDirectory: string, sampleName: string): Promise<TextDocument[]> {
         let folder: Uri = undefined;
 
         if (!workspace.workspaceFolders || workspace.workspaceFolders.length === 0) {
-            let folders = await window.showOpenDialog({ canSelectFiles: false, canSelectFolders: true, canSelectMany: false, openLabel: 'Select folder for hello world...' });
+            let folders = await window.showOpenDialog({ canSelectFiles: false, canSelectFolders: true, canSelectMany: false, openLabel: `Select folder for the '${sampleName}' sample...` });
             if (folders) {
                 folder = folders[0];
             }
         } else if (workspace.workspaceFolders.length === 1) {
             folder = workspace.workspaceFolders[0].uri;
         } else {
-            let selectedFolder = await window.showWorkspaceFolderPick({ placeHolder: 'Select workspace folder for Hello World!' });
+            let selectedFolder = await window.showWorkspaceFolderPick({ placeHolder: `Select workspace folder for the '${sampleName}' sample...` });
             folder = selectedFolder.uri;
         }
 
-        let domainResourcePath = this.context.asAbsolutePath('overview/domain.pddl');
-        let domainText = await afs.readFile(domainResourcePath, { encoding: "utf-8" });
-        let domainPath = path.join(folder.fsPath, "helloWorldDomain.pddl");
-        if (await afs.exists(domainPath)) { throw new Error("File 'helloWorldDomain.pddl' already exists."); }
-        await afs.writeFile(domainPath, domainText, { encoding: "utf-8" });
-        let domainDocument = await workspace.openTextDocument(domainPath);
-        await window.showTextDocument(domainDocument, { viewColumn: ViewColumn.One, preview: false });
+        let sampleFiles = await afs.readdir(this.context.asAbsolutePath(path.join(this.CONTENT_FOLDER, subDirectory)));
 
-        let problemResourcePath = this.context.asAbsolutePath('overview/problem.pddl');
-        let problemText = await afs.readFile(problemResourcePath, { encoding: "utf-8" });
-        let problemPath = path.join(folder.fsPath, "helloWorldProblem.pddl");
-        if (await afs.exists(problemPath)) { throw new Error("File 'helloWorldProblem.pddl' already exists."); }
-        await afs.writeFile(problemPath, problemText, { encoding: "utf-8" });
-        let problemDocument = await workspace.openTextDocument(problemPath);
-        window.showTextDocument(problemDocument, { viewColumn: ViewColumn.Two, preview: false });
+        let sampleDocumentPromises = sampleFiles
+            .map(async (sampleFile) => {
+                let sampleResourcePath = this.context.asAbsolutePath(path.join(this.CONTENT_FOLDER, subDirectory, sampleFile));//'overview/helloWorld/domain.pddl'
+                let sampleText = await afs.readFile(sampleResourcePath, { encoding: "utf-8" });
+                let sampleTargetPath = path.join(folder.fsPath, sampleFile);//"helloWorldDomain.pddl"
+                if (await afs.exists(sampleTargetPath)) { throw new Error(`File '${sampleFile}' already exists.`); }
+                await afs.writeFile(sampleTargetPath, sampleText, { encoding: "utf-8" });
+                let sampleDocument = await workspace.openTextDocument(sampleTargetPath);
+                return sampleDocument;
+            });
 
-        commands.executeCommand("pddl.planAndDisplayResult", domainDocument.uri, problemDocument.uri, folder.fsPath, "");
+        let sampleDocuments = await Promise.all(sampleDocumentPromises);
+        return sampleDocuments;
     }
 
     async getHtml(): Promise<string> {

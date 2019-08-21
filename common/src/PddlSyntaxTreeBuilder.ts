@@ -15,6 +15,7 @@ export class PddlSyntaxTreeBuilder {
     private tree: PddlSyntaxTree;
     /** most recently added node */
     private currentLeaf: PddlSyntaxNode;
+    private offendingTokens: PddlToken[] = [];
 
     constructor(pddlText: string, private symbolIndex?: number) {
         this.tree = new PddlSyntaxTree();
@@ -38,6 +39,10 @@ export class PddlSyntaxTreeBuilder {
 
     getTree(): PddlSyntaxTree {
         return this.tree;
+    }
+
+    getOffendingTokens(): PddlToken[] {
+        return this.offendingTokens;
     }
 
     getTreeAsString(): string {
@@ -76,8 +81,8 @@ export class PddlSyntaxTreeBuilder {
     }
 
     private addChild(token: PddlToken) {
-        const newChild = isOpenBracket(token) ? 
-            new PddlBracketNode(token, this.currentLeaf) : 
+        const newChild = isOpenBracket(token) ?
+            new PddlBracketNode(token, this.currentLeaf) :
             new PddlSyntaxNode(token, this.currentLeaf);
         this.currentLeaf.addChild(newChild);
         this.currentLeaf = newChild;
@@ -102,6 +107,9 @@ export class PddlSyntaxTreeBuilder {
         if (openBracketNode) {
             (<PddlBracketNode>openBracketNode).setCloseBracket(closeBracketToken);
         }
+        else {
+            this.offendingTokens.push(closeBracketToken);
+        }
     }
 
     private closeKeyword(): void {
@@ -111,13 +119,17 @@ export class PddlSyntaxTreeBuilder {
     private closeSibling(isSibling: (token: PddlToken) => boolean, isParent: (token: PddlToken) => boolean): PddlSyntaxNode {
         // exit out of the other nested token(s)
         while (!isSibling(this.currentLeaf.getToken()) && !isParent(this.currentLeaf.getToken())) {
-            this.currentLeaf = this.currentLeaf.getParent();   
+            if (this.currentLeaf.getParent() === undefined) {
+                return null;
+            } else {
+                this.currentLeaf = this.currentLeaf.getParent();
+            }
         }
 
         // exit out the parent token
         if (isSibling(this.currentLeaf.getToken()) && !isParent(this.currentLeaf.getToken())) {
             let sibling = this.currentLeaf;
-            this.currentLeaf = this.currentLeaf.getParent();   
+            this.currentLeaf = this.currentLeaf.getParent();
             return sibling;
         }
         else {

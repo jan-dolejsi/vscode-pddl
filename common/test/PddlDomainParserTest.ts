@@ -12,6 +12,50 @@ import { PddlDomainParser } from '../src/PddlDomainParser';
 
 describe('PddlDomainParser', () => {
 
+    describe('#constructor', () => {
+        it('should parse domain from snippet template', () =>{
+            // GIVEN
+            let domainPddl = `;Header and description
+
+            (define (domain domain_name)
+            
+            ;remove requirements that are not needed
+            (:requirements :strips :fluents :durative-actions :timed-initial-literals :typing :conditional-effects :negative-preconditions :duration-inequalities :equality)
+            
+            (:types ;todo: enumerate types and their hierarchy here, e.g. car truck bus - vehicle
+            )
+            
+            ; un-comment following line if constants are needed e.g. red blue - car
+            ;(:constants )
+            
+            (:predicates ;todo: define predicates here
+            )
+            
+            
+            (:functions ;todo: define numeric functions here
+            )
+            
+            ;define actions here
+            
+            )`;
+
+            let domainParser = createPddlDomainParser(domainPddl);
+
+            // WHEN
+            let domainInfo = domainParser.getDomain();
+
+            // THEN
+            assert.ok(domainInfo);
+            assert.strictEqual(domainInfo.name, 'domain_name');
+            assert.ok(domainInfo.getRequirements().length > 0, 'there should be requirements');
+            assert.deepStrictEqual(domainInfo.getTypes(), [], 'there should be no types');
+            assert.deepStrictEqual(domainInfo.constants, [], 'there should be no constants');
+            assert.deepStrictEqual(domainInfo.getPredicates(), [], 'there should be no predicates');
+            assert.deepStrictEqual(domainInfo.getFunctions(), [], 'there should be no functions');
+            assert.deepStrictEqual(domainInfo.getActions(), [], 'there should be no actions');
+        });
+    });
+
     describe('#parseInheritance', () => {
         it('should parse empty declaration', () => {
             let graph = PddlDomainParser.parseInheritance('');

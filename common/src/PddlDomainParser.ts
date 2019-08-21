@@ -43,12 +43,12 @@ export class PddlDomainParser {
 
         let typesNode = defineNode.getFirstOpenBracket(':types');
         if (typesNode) {
-            this.domainInfo.setTypeInheritance(PddlDomainParser.parseInheritance(typesNode.getNestedText()), typesNode, this.positionResolver);
+            this.domainInfo.setTypeInheritance(PddlDomainParser.parseInheritance(typesNode.getNestedNonCommentText()), typesNode, this.positionResolver);
         }
 
         let constantsNode = defineNode.getFirstOpenBracket(':constants');
         if (constantsNode) {
-            let constantsText = constantsNode.getNestedText();
+            let constantsText = constantsNode.getNestedNonCommentText();
             this.domainInfo.setConstants(PddlDomainParser.toTypeObjects(PddlDomainParser.parseInheritance(constantsText)));
         }
 

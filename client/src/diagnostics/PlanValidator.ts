@@ -211,7 +211,7 @@ export class PlanValidator {
     validateActionNames(domain: DomainInfo, problem: ProblemInfo, plan: PlanInfo): Diagnostic[] {
         return plan.getSteps()
             .filter(step => !this.isDomainAction(domain, problem, step))
-            .map(step => new Diagnostic(createRangeFromLine(step.lineIndex), `Action '${step.actionName}' not known by the domain ${domain.name}`, DiagnosticSeverity.Error));
+            .map(step => new Diagnostic(createRangeFromLine(step.lineIndex), `Action '${step.getActionName()}' not known by the domain ${domain.name}`, DiagnosticSeverity.Error));
     }
 
     /**
@@ -224,13 +224,13 @@ export class PlanValidator {
         return plan.getSteps()
             .slice(1)
             .filter((step: PlanStep, index: number) => !this.isTimeMonotonicallyIncreasing(plan.getSteps()[index], step))
-            .map(step => new Diagnostic(createRangeFromLine(step.lineIndex), `Action '${step.actionName}' time ${step.getStartTime()} is before the preceding action time`, DiagnosticSeverity.Error));
+            .map(step => new Diagnostic(createRangeFromLine(step.lineIndex), `Action '${step.getActionName()}' time ${step.getStartTime()} is before the preceding action time`, DiagnosticSeverity.Error));
     }
 
     private isDomainAction(domain: DomainInfo, _problem: ProblemInfo, step: PlanStep): boolean {
         // tslint:disable-next-line: no-unused-expression
         _problem;
-        return domain.actions.some(a => a.name.toLowerCase() === step.actionName.toLowerCase());
+        return domain.actions.some(a => a.name.toLowerCase() === step.getActionName().toLowerCase());
     }
 
     private isTimeMonotonicallyIncreasing(first: PlanStep, second: PlanStep): boolean {

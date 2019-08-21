@@ -5,7 +5,7 @@
 'use strict';
 
 import { Parser, ProblemInfo, UnknownFileInfo, PlanInfo } from './parser';
-import { FileInfo, PddlLanguage, FileStatus } from './FileInfo';
+import { FileInfo, PddlLanguage, FileStatus, ParsingProblem } from './FileInfo';
 import { HappeningsInfo } from "./HappeningsInfo";
 import { Util } from './util';
 import { dirname, basename } from 'path';
@@ -109,7 +109,7 @@ export class PddlWorkspace extends EventEmitter {
         return fileInfo;
     }
 
-    async upsertFile(fileUri: string, language: PddlLanguage, fileVersion: number, fileText: string, positionResolver: DocumentPositionResolver): Promise<FileInfo> {
+    async upsertFile(fileUri: string, language: PddlLanguage, fileVersion: number, fileText: string, positionResolver: DocumentPositionResolver, force: boolean = false): Promise<FileInfo> {
 
         let folderPath = PddlWorkspace.getFolderPath(fileUri);
 
@@ -117,7 +117,7 @@ export class PddlWorkspace extends EventEmitter {
 
         let fileInfo: FileInfo = folder.get(fileUri);
         if (fileInfo) {
-            if (fileInfo.update(fileVersion, fileText)) {
+            if (fileInfo.update(fileVersion, fileText, force)) {
                 this.scheduleParsing();
             }
         }
@@ -176,7 +176,7 @@ export class PddlWorkspace extends EventEmitter {
         dirtyFiles.forEach(file => this.reParseFile(file));
     }
 
-    private async reParseFile(fileInfo: FileInfo): Promise<FileInfo> {
+    async reParseFile(fileInfo: FileInfo): Promise<FileInfo> {
         let folderPath = PddlWorkspace.getFolderPath(fileInfo.fileUri);
 
         let folder = this.upsertFolder(folderPath);
@@ -191,15 +191,18 @@ export class PddlWorkspace extends EventEmitter {
 
     private async parseFile(fileUri: string, language: PddlLanguage, fileVersion: number, fileText: string, positionResolver: DocumentPositionResolver): Promise<FileInfo> {
         if (language === PddlLanguage.PDDL) {
-            let syntaxTree = new PddlSyntaxTreeBuilder(fileText).getTree();
+            const parser = new PddlSyntaxTreeBuilder(fileText);
+            let syntaxTree = parser.getTree();
             let domainInfo = this.parser.tryDomain(fileUri, fileVersion, fileText, syntaxTree, positionResolver);
 
             if (domainInfo) {
+                this.appendOffendingTokenToParsingProblems(domainInfo, parser, positionResolver);
                 return domainInfo;
             } else {
                 let problemInfo = await this.parser.tryProblem(fileUri, fileVersion, fileText, syntaxTree, positionResolver);
 
                 if (problemInfo) {
+                    this.appendOffendingTokenToParsingProblems(problemInfo, parser, positionResolver);
                     return problemInfo;
                 }
             }
@@ -217,6 +220,13 @@ export class PddlWorkspace extends EventEmitter {
         else {
             throw Error("Unknown language: " + language);
         }
+    }
+
+    private appendOffendingTokenToParsingProblems(fileInfo: FileInfo, parser: PddlSyntaxTreeBuilder, positionResolver: DocumentPositionResolver) {
+        fileInfo.addProblems(parser.getOffendingTokens().map(token => {
+            let offendingPosition = positionResolver.resolveToPosition(token.getStart());
+            return new ParsingProblem(`Unexpected token: ${token.toString()}`, offendingPosition.line, offendingPosition.character);
+        }));
     }
 
     private upsertFolder(folderPath: string): Folder {

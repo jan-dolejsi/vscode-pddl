@@ -39,7 +39,7 @@ export class DurativeActionParser {
         let actionName = nameNode ? nameNode.getText() : undefined;
 
         let parametersNode = actionNode.getKeywordOpenBracket('parameters');
-        let parameters = parametersNode ? parseParameters(parametersNode.getNestedText()) : [];
+        let parameters = parametersNode ? parseParameters(parametersNode.getNestedNonCommentText()) : [];
         
         let durationNode = actionNode.getKeywordOpenBracket('duration');
         let conditionNode = actionNode.getKeywordOpenBracket('condition');

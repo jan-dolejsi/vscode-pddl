@@ -27,14 +27,18 @@ export class PlanReportSettings {
     }
 
     shouldDisplay(planStep: PlanStep): boolean {
-        if (!this.settings) return true;
+        if (!this.settings) { return true; }
 
-        if (this.excludeActions == null) this.excludeActions = this.settings["excludeActions"];
-        if (!this.excludeActions) return true;
-        return !this.excludeActions.some(pattern => this.matches(pattern, planStep.actionName));
+        if (this.excludeActions === null || this.excludeActions === undefined) { this.excludeActions = this.settings["excludeActions"]; }
+        if (!this.excludeActions) { return true; }
+        return !this.excludeActions.some(pattern => this.matches(pattern, planStep.getActionName()));
     }
 
-    matches(pattern: string, actionName: string): boolean {
-        return actionName.match(pattern) != null;
+    private matches(pattern: string, actionName: string): boolean {
+        return !!actionName.match(pattern);
+    }
+
+    getPlanVisualizerScript(): string {
+        return this.settings && this.settings["planVisualizer"];
     }
 }

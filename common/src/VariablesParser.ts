@@ -81,7 +81,8 @@ export class VariablesParser {
         }
 
         if (!variable) {
-            throw new Error('there was no predicate/function in this chunk: ' + chunk.map(ch => ch.getText()).join('\n'));
+            // there was no predicate/function in this chunk
+            return undefined;
         }
         variable.setDocumentation(documentation);
         let startPosition = this.positionResolver.resolveToPosition(variableNode.getStart());

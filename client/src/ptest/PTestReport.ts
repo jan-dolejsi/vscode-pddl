@@ -11,6 +11,7 @@ import { TestsManifest } from './TestsManifest';
 import { TestOutcome, Test } from './Test';
 import { PTestReportView } from './PTestReportView';
 import { PddlExtensionContext } from '../PddlExtensionContext';
+import { PTEST_REPORT_VIEW } from './PTestCommands';
 
 /** Gathers the output of running PDDL Test cases and summarizes them into a WebView table. */
 export class PTestReport implements Disposable {
@@ -18,7 +19,7 @@ export class PTestReport implements Disposable {
     private manifests = new ManifestMap();
 
     constructor(private context: PddlExtensionContext, private outputWindow: OutputChannel) {
-        commands.registerCommand("pddl.tests.report.view", () => this.show());
+        commands.registerCommand(PTEST_REPORT_VIEW, () => this.show());
     }
 
     dispose() {

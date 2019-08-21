@@ -106,17 +106,22 @@ class PlanStepBuilder {
             }
         }
 
-        let commitment = this.getCommitment();
+        let commitment = this.getCommitment(isDurative);
 
         return new PlanStep(this.start.earliestTime, this.start.actionName, isDurative, duration, -1, commitment);
     }
 
-    private getCommitment(): PlanStepCommitment {
+    private getCommitment(isDurative: boolean): PlanStepCommitment {
         if (this.end && !this.end.isRelaxed) { 
             return PlanStepCommitment.Committed; 
         }
         else if (!this.start.isRelaxed) {
-            return PlanStepCommitment.EndsInRelaxedPlan;
+            if (isDurative) {
+                return PlanStepCommitment.EndsInRelaxedPlan;
+            } 
+            else {
+                return PlanStepCommitment.Committed;
+            }
         }
         else {
             return PlanStepCommitment.StartsInRelaxedPlan;

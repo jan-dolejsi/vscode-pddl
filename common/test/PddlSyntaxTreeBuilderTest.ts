@@ -287,5 +287,23 @@ describe('PddlSyntaxTreeBuilder', () => {
                 PddlTokenType.Other,
             ]);
         });
+
+        it('parses extra brackets', () => {
+            // GIVEN
+            let domainPddl = `(:action name
+            )
+            )`;
+
+            // WHEN
+            assert.doesNotThrow(() => new PddlSyntaxTreeBuilder(domainPddl).getTree());
+        });
+
+        it('parses closing bracket', () => {
+            // GIVEN
+            let domainPddl = `)`;
+
+            // WHEN
+            assert.doesNotThrow(() => new PddlSyntaxTreeBuilder(domainPddl).getTree());
+        });
     });
 });

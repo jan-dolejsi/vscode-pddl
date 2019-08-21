@@ -123,7 +123,7 @@ export class ValStep extends EventEmitter {
 
         if (!problemInfo) { return null; }
 
-        return problemInfo.getInits().filter(value => this.applyIfNew(0, value.getVariableValue()));
+        return problemInfo.getInits();
     }
 
     async executeIncrementally(valStepPath: string, cwd: string, happenings: Happening[]): Promise<TimedVariableValue[]> {

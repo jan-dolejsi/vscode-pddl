@@ -12,7 +12,7 @@ import { PlanStep } from "./PlanStep";
 import { PlanBuilder } from "./PddlPlanParser";
 import { HappeningsInfo, PlanHappeningsBuilder, Happening } from "./HappeningsInfo";
 import { FileInfo, PddlLanguage, ParsingProblem, stripComments } from "./FileInfo";
-import { PreProcessingError } from "./PreProcessors";
+import { PreProcessingError, PreProcessor } from "./PreProcessors";
 import { PddlSyntaxTree } from "./PddlSyntaxTree";
 import { DocumentPositionResolver } from "./DocumentPositionResolver";
 import { DomainInfo, TypeObjects } from "./DomainInfo";
@@ -21,36 +21,41 @@ import { PddlDomainParser } from "./PddlDomainParser";
 export class Parser {
 
     domainPattern = /^\s*\(define\s*\(domain\s+(\S+)\s*\)/gi;
-    domainDetailsPattern = /^\s*\(define\s*\(domain\s+(\S+)\s*\)\s*\(:requirements\s*([^\)]*)\)\s*(\(:types\s*([^\)]*)\))?\s*(\(:constants\s*([^\)]*)\))?\s*(\(:predicates\s*((\([^\)]*\)\s*)*)\))?\s*(\(:functions\s*((\([^\)]*\)\s*)*)\))?/gi;
     problemPattern = /^\s*\(define\s*\(problem\s+(\S+)\s*\)\s*\(:domain\s+(\S+)\s*\)/gi;
     problemCompletePattern = /^\s*\(define\s*\(problem\s+(\S+)\s*\)\s*\(:domain\s+(\S+)\s*\)\s*(\(:requirements\s*([^\)]*)\))?\s*(\(:objects\s*([^\)]*)\))?\s*\(:init\s*([\s\S]*)\s*\)\s*\(:goal\s*([\s\S]*?)\s*\)\s*(\(:constraints\s*([\s\S]*?)\s*\))?\s*(\(:metric\s*([\s\S]*?)\s*\))?\s*\)\s*$/gi;
 
-    preProcessor: ProblemParserPreProcessor;
+    problemPreParser: ProblemParserPreProcessor;
 
     constructor(context?: PddlExtensionContext) {
         if (context) {
-            this.preProcessor = new ProblemParserPreProcessor(context);
+            this.problemPreParser = new ProblemParserPreProcessor(context);
         }
     }
 
     async tryProblem(fileUri: string, fileVersion: number, fileText: string, syntaxTree: PddlSyntaxTree, positionResolver: DocumentPositionResolver): Promise<ProblemInfo> {
         let filePath = Util.fsPath(fileUri);
         let workingDirectory = dirname(filePath);
+        let preProcessor = null;
 
         try {
-            if (this.preProcessor) { fileText = await this.preProcessor.process(fileText, workingDirectory); }
+            if (this.problemPreParser) { 
+                preProcessor = this.problemPreParser.createPreProcessor(fileText);
+                fileText = await this.problemPreParser.process(preProcessor, fileText, workingDirectory); 
+            }
         } catch (ex) {
+            let problemInfo = new ProblemInfo(fileUri, fileVersion, "unknown", "unknown", PddlSyntaxTree.EMPTY, positionResolver);
+            problemInfo.setText(fileText);
             if (ex instanceof PreProcessingError) {
-                let problemInfo = new ProblemInfo(fileUri, fileVersion, "unknown", "unknown", PddlSyntaxTree.EMPTY, positionResolver);
-                problemInfo.setText(fileText);
                 let parsingError = <PreProcessingError>ex;
                 problemInfo.addProblems([new ParsingProblem(parsingError.message, parsingError.line, parsingError.column)]);
-                return problemInfo;
             }
             else {
-                console.error(ex);
+                let line = preProcessor?positionResolver.resolveToPosition(preProcessor.metaDataLineOffset).line : 0;
+                problemInfo.addProblems([new ParsingProblem(ex.message || ex, line, 0)]);
             }
-        }
+            problemInfo.setPreParsingPreProcessor(preProcessor);
+            return problemInfo;
+    }
 
         let pddlText = stripComments(fileText);
 
@@ -64,6 +69,7 @@ export class Parser {
             let problemInfo = new ProblemInfo(fileUri, fileVersion, problemName, domainName, syntaxTree, positionResolver);
             problemInfo.setText(fileText);
             this.getProblemStructure(pddlText, problemInfo);
+            problemInfo.setPreParsingPreProcessor(preProcessor);
             return problemInfo;
         }
         else {
@@ -201,9 +207,18 @@ export class Parser {
 export class ProblemInfo extends FileInfo {
     objects: TypeObjects[] = [];
     inits: TimedVariableValue[] = [];
+    preParsingPreProcessor: PreProcessor;
 
     constructor(fileUri: string, version: number, problemName: string, public domainName: string, public readonly syntaxTree: PddlSyntaxTree, positionResolver: DocumentPositionResolver) {
         super(fileUri, version, problemName, positionResolver);
+    }
+
+    setPreParsingPreProcessor(preProcessor: PreProcessor) {
+        this.preParsingPreProcessor = preProcessor;
+    }
+    
+    getPreParsingPreProcessor(): PreProcessor {
+        return this.preParsingPreProcessor;
     }
 
     getLanguage(): PddlLanguage {

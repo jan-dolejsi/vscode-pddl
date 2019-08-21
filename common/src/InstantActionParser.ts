@@ -29,7 +29,7 @@ export class InstantActionParser {
         let actionName = nameNode ? nameNode.getText() : undefined;
 
         let parametersNode = actionNode.getKeywordOpenBracket('parameters');
-        let parameters = parametersNode ? parseParameters(parametersNode.getNestedText()) : [];
+        let parameters = parametersNode ? parseParameters(parametersNode.getNestedNonCommentText()) : [];
         let conditionNode = actionNode.getKeywordOpenBracket('precondition');
         let effectNode = actionNode.getKeywordOpenBracket('effect');
         this.action = new InstantAction(actionName, parameters, conditionNode, effectNode);

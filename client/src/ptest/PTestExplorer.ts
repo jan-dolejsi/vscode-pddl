@@ -5,7 +5,7 @@
 'use strict';
 
 import {
-    workspace, TreeView, window, commands, ViewColumn, Uri, ProgressLocation, Range, SaveDialogOptions, Position
+    workspace, TreeView, window, commands, ViewColumn, Uri, ProgressLocation, Range, SaveDialogOptions, Position, Disposable
 } from 'vscode';
 import { dirname } from 'path';
 import { readFileSync, promises } from 'fs';
@@ -22,6 +22,8 @@ import { PlanStep } from '../../../common/src/PlanStep';
 import { PddlExtensionContext } from '../../../common/src/PddlExtensionContext';
 import { PTestReport } from './PTestReport';
 import { showError } from '../utils';
+import { CodePddlWorkspace } from '../workspace/CodePddlWorkspace';
+import { PTEST_VIEW_PROBLEM, PTEST_VIEW, PTEST_REVEAL } from './PTestCommands';
 
 /**
  * PDDL Test Explorer pane.
@@ -33,33 +35,38 @@ export class PTestExplorer {
     private pTestTreeDataProvider: PTestTreeDataProvider;
     private report: PTestReport;
 
-    constructor(private context: PddlExtensionContext, public planning: Planning) {
+    constructor(private context: PddlExtensionContext, private codePddlWorkspace: CodePddlWorkspace, private planning: Planning) {
         this.pTestTreeDataProvider = new PTestTreeDataProvider(context);
 
         this.pTestViewer = window.createTreeView('pddl.tests.explorer', { treeDataProvider: this.pTestTreeDataProvider, showCollapseAll: true });
-        context.subscriptions.push(this.pTestViewer);
+        this.subscribe(this.pTestViewer);
 
-        context.subscriptions.push(commands.registerCommand('pddl.tests.refresh', () => this.pTestTreeDataProvider.refresh()));
-        context.subscriptions.push(commands.registerCommand('pddl.tests.run', node => this.runTest(node).catch(showError)));
-        context.subscriptions.push(commands.registerCommand('pddl.tests.runAll', node => this.findAndRunTests(node).catch(showError)));
-        context.subscriptions.push(commands.registerCommand('pddl.tests.view', nodeOrUri => {
+        this.subscribe(commands.registerCommand('pddl.tests.refresh', () => this.pTestTreeDataProvider.refresh()));
+        this.subscribe(commands.registerCommand('pddl.tests.run', node => this.runTest(node).catch(showError)));
+        this.subscribe(commands.registerCommand('pddl.tests.runAll', node => this.findAndRunTests(node).catch(showError)));
+        this.subscribe(commands.registerCommand(PTEST_VIEW, nodeOrUri => {
             if (nodeOrUri instanceof Uri) {
                 this.openTestByUri(<Uri>nodeOrUri).catch(showError);
             } else {
                 this.openTest(nodeOrUri).catch(showError);
             }
         }));
-        context.subscriptions.push(commands.registerCommand('pddl.tests.viewDefinition', node => this.openDefinition(node).catch(showError)));
-        context.subscriptions.push(commands.registerCommand('pddl.tests.viewExpectedPlans', node => this.openExpectedPlans(node).catch(showError)));
-        context.subscriptions.push(commands.registerCommand('pddl.tests.problemSaveAs', () => this.saveProblemAs().catch(showError)));
+        this.subscribe(commands.registerCommand(PTEST_VIEW_PROBLEM, test => this.openProblemFile(test, ViewColumn.Beside).catch(showError)));
+        this.subscribe(commands.registerCommand('pddl.tests.viewDefinition', node => this.openDefinition(node).catch(showError)));
+        this.subscribe(commands.registerCommand('pddl.tests.viewExpectedPlans', node => this.openExpectedPlans(node).catch(showError)));
+        this.subscribe(commands.registerCommand('pddl.tests.problemSaveAs', () => this.saveProblemAs().catch(showError)));
 
-        context.subscriptions.push(commands.registerCommand('pddl.tests.reveal', nodeUri =>
+        this.subscribe(commands.registerCommand(PTEST_REVEAL, nodeUri =>
             this.pTestViewer.reveal(this.pTestTreeDataProvider.findNodeByResource(nodeUri), { select: true, expand: true }))
         );
 
-        context.subscriptions.push(this.report = new PTestReport(context, this.planning.output));
-        this.generatedDocumentContentProvider = new GeneratedDocumentContentProvider(this.planning.output, planning.codePddlWorkspace.pddlWorkspace);
-        context.subscriptions.push(workspace.registerTextDocumentContentProvider('tpddl', this.generatedDocumentContentProvider));
+        this.subscribe(this.report = new PTestReport(context, this.planning.output));
+        this.generatedDocumentContentProvider = new GeneratedDocumentContentProvider(this.planning.output, this.codePddlWorkspace);
+        this.subscribe(workspace.registerTextDocumentContentProvider('tpddl', this.generatedDocumentContentProvider));
+    }
+
+    private subscribe(disposable: Disposable): void {
+        this.context.subscriptions.push(disposable);
     }
 
     async saveProblemAs(): Promise<void> {
@@ -145,10 +152,10 @@ export class PTestExplorer {
         let domainDocument = await workspace.openTextDocument(test.getDomainUri());
         await window.showTextDocument(domainDocument.uri, { preview: true, viewColumn: ViewColumn.One });
 
-        await this.openProblemFile(test);
+        await this.openProblemFile(test, ViewColumn.Two);
     }
 
-    async openProblemFile(test: Test): Promise<void> {
+    async openProblemFile(test: Test, column: ViewColumn): Promise<void> {
         let uri: Uri = null;
 
         if (test.getPreProcessor()) {
@@ -160,7 +167,7 @@ export class PTestExplorer {
             let problemDocument = await workspace.openTextDocument(test.getProblemUri());
             uri = problemDocument.uri;
         }
-        await window.showTextDocument(uri, { preview: true, viewColumn: ViewColumn.Two });
+        await window.showTextDocument(uri, { preview: true, viewColumn: column });
     }
 
     /**
@@ -291,15 +298,11 @@ export class PTestExplorer {
                 }
 
                 if (test.hasExpectedPlans()) {
-                    let success = result.plans.every(plan =>
-                        test.getExpectedPlans()
-                            .map(expectedPlanFileName => test.toAbsolutePath(expectedPlanFileName))
-                            .some(expectedPlanPath => this.areSame(plan, this.loadPlan(expectedPlanPath)))
-                    );
-                    if (success) {
-                        this.outputTestResult(test, TestOutcome.SUCCESS, result.elapsedTime);
-                    } else {
-                        this.outputTestResult(test, TestOutcome.FAILED, result.elapsedTime, "Actual plan is NOT matching any of the expected plans.");
+                    try {
+                        this.assertMatchesAnExpectedPlan(result, test);
+                    }
+                    catch (err) {
+                        this.outputTestResult(test, TestOutcome.FAILED, result.elapsedTime, "Failed to compare plan to expected plans. Error: " + err.message || err);
                     }
                 }
                 else {
@@ -319,6 +322,18 @@ export class PTestExplorer {
         });
     }
 
+    private assertMatchesAnExpectedPlan(result: import("c:/NotBackedUp/c/GitHub/vscode-pddl/client/src/planning/PlanningResult").PlanningResult, test: Test) {
+        let success = result.plans.every(plan => test.getExpectedPlans()
+            .map(expectedPlanFileName => test.toAbsolutePath(expectedPlanFileName))
+            .some(expectedPlanPath => this.areSame(plan, this.loadPlan(expectedPlanPath))));
+        if (success) {
+            this.outputTestResult(test, TestOutcome.SUCCESS, result.elapsedTime);
+        }
+        else {
+            this.outputTestResult(test, TestOutcome.FAILED, result.elapsedTime, "Actual plan is NOT matching any of the expected plans.");
+        }
+    }
+
     outputTestResult(test: Test, outcome: TestOutcome, elapsedTime: number, error?: string) {
         this.setTestOutcome(test, outcome);
         this.report.outputTestResult(test, outcome, elapsedTime, error);
@@ -329,6 +344,7 @@ export class PTestExplorer {
     }
 
     areSame(actualPlan: Plan, expectedPlan: Plan): boolean {
+        // todo: refer to VAlStep to check that plan is equivalent, rather than same
         if (actualPlan.steps.length !== expectedPlan.steps.length) { return false; }
         if (actualPlan.steps.length === 0) { return true; }
 
@@ -349,7 +365,7 @@ export class PTestExplorer {
     loadPlan(expectedPlanPath: string): Plan {
         let expectedPlanText = readFileSync(expectedPlanPath, { encoding: "utf-8" });
         let epsilon = workspace.getConfiguration().get<number>("pddlPlanner.epsilonTimeStep");
-        let parser = new PddlPlanParser(null, null, epsilon);
+        let parser = new PddlPlanParser(null, null, { minimumPlansExpected: 1, epsilon: epsilon });
         parser.appendBuffer(expectedPlanText);
         parser.onPlanFinished();
         let plans = parser.getPlans();
@@ -357,7 +373,7 @@ export class PTestExplorer {
             return plans[0];
         }
         else {
-            throw new Error(`Unexpected number of plans ${plans.length} in file ${expectedPlanPath}.`);
+            throw new Error(`Unexpected number of expected plans (${plans.length}) in file ${expectedPlanPath}.`);
         }
     }
 

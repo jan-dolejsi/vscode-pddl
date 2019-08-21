@@ -64,7 +64,7 @@ export class Test {
                     preProcessor = new PythonPreProcessor(context.pythonPath(), preProcessSettings[PRE_PROCESSOR_SCRIPT], preProcessSettings[PRE_PROCESSOR_ARGS]);
                     break;
                 case "nunjucks":
-                    preProcessor = new NunjucksPreProcessor(preProcessSettings[PRE_PROCESSOR_DATA], undefined, false);
+                    preProcessor = new NunjucksPreProcessor(preProcessSettings[PRE_PROCESSOR_DATA], undefined, 0, false);
                     break;
                 case "jinja2":
                     preProcessor = new Jinja2PreProcessor(context.pythonPath(), context.extensionPath, preProcessSettings[PRE_PROCESSOR_DATA]);

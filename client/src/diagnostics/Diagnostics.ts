@@ -196,7 +196,7 @@ export class Diagnostics extends Disposable {
             return;
         }
 
-        // console.log(`Validating '${fileInfo.name}' file.`);
+        // console.log(`Validating '${fileInfo.fileUri}' file.`);
 
         // detect parsing and pre-processing issues
         if (fileInfo.getParsingProblems().length > 0) {

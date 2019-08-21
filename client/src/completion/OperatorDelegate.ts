@@ -6,8 +6,7 @@
 
 import { CompletionItem, MarkdownString } from 'vscode';
 import { Delegate } from './Delegate';
-
-var PDDL = 'pddl';
+import { PDDL } from '../../../common/src/parser';
 
 export class OperatorDelegate extends Delegate {
 

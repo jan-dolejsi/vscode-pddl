@@ -1,5 +1,23 @@
 # PDDL support - What's new?
 
+## [2.13.1] Improved support for template-based problem generation
+
+### New Features
+
+* With a single click you can add all necessary files for a Nunjucks-based problem template generation.
+![Nunjucks sample](https://raw.githubusercontent.com/wiki/jan-dolejsi/vscode-pddl/img/PDDL_nunjucks_sample.gif)
+* For templated problem files a code action (bulb) can open the live preview of the generated problem file
+![Templated problem preview](https://raw.githubusercontent.com/wiki/jan-dolejsi/vscode-pddl/img/PDDL_templated_problem_preview.gif)
+* Early preview of domain-specific plan/state visualization via the new `planVisualizer` property in the `<<domain>>.planviz.json` config file.
+* Generated problem file previews are live updating when the data in .json file is modified!
+
+### Fixes
+
+* Previously the editor did not support invoking the planner on a template-generated problem file.
+* When authoring PDDL problem templates, errors are reported as diagnostic problem, and/or instead of the generated test. This is far less intrusive for the user experience.
+* Visualization of instantaneous actions in the plan - the bars are now fully filled, instead of looking like if they were ending in the relaxed plan.
+* The plan visualization was missing some numeric function plots, when the initial and final value of the function was the same.
+
 ## [2.13.0] - VAL binaries available for MacOS
 
 ### Features
@@ -742,7 +760,8 @@ Note for open source contributors: all notable changes to the "pddl" extension w
 
 Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
 
-[Unreleased]: https://github.com/jan-dolejsi/vscode-pddl/compare/v2.13.0...HEAD
+[Unreleased]: https://github.com/jan-dolejsi/vscode-pddl/compare/v2.13.1...HEAD
+[2.13.1]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.13.0...v2.13.1
 [2.13.0]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.12.2...v2.13.0
 [2.12.2]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.11.8...v2.12.2
 [2.11.8]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.11.7...v2.11.8

@@ -7,9 +7,8 @@
 import { CompletionItem, MarkdownString, SnippetString } from 'vscode';
 import { PddlWorkspace } from '../../../common/src/PddlWorkspace';
 import { FileInfo } from '../../../common/src/FileInfo';
+import { PDDL } from '../../../common/src/parser';
 import { Delegate } from './Delegate';
-
-var PDDL = 'pddl';
 
 export class EffectDelegate extends Delegate {
 

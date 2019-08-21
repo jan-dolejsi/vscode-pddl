@@ -205,8 +205,7 @@ ${error}`);
         }
     }
 
-    getParent?(element: PTestNode): PTestNode | Thenable<PTestNode> {
-        element;
+    getParent?(_element: PTestNode): PTestNode | Thenable<PTestNode> {
         throw new Error("Method not implemented.");
     }
 

@@ -7,8 +7,8 @@
 import { Happening, HappeningType } from "./HappeningsInfo";
 
 export class PlanStep {
-    actionName: string;
-    objects: string[];
+    private actionName: string;
+    private objects: string[];
 
     constructor(private readonly time: number, public readonly fullActionName: string,
         public readonly isDurative: boolean, private readonly duration: number,
@@ -16,6 +16,18 @@ export class PlanStep {
         let nameFragments = fullActionName.split(' ');
         this.actionName = nameFragments[0];
         this.objects = nameFragments.slice(1);
+    }
+
+    getActionName(): string {
+        return this.actionName;
+    }
+
+    getFullActionName(): string {
+        return this.fullActionName;
+    }
+
+    getObjects(): string[] {
+        return this.objects;
     }
 
     getStartTime(): number {
@@ -69,7 +81,7 @@ export class PlanStep {
 }
 
 export enum PlanStepCommitment {
-    Committed,
-    EndsInRelaxedPlan,
-    StartsInRelaxedPlan
+    Committed = "COMMITTED",
+    EndsInRelaxedPlan = "ENDS_IN_RELAXED_PLAN",
+    StartsInRelaxedPlan = "STARTS_IN_RELAXED_PLAN"
 }

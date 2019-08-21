@@ -10,7 +10,9 @@ import {
 import { Test } from './Test';
 import { join, dirname, basename } from 'path';
 import { PddlWorkspace } from '../../../common/src/PddlWorkspace';
-import { FileInfo } from '../../../common/src/FileInfo';
+import { FileInfo, PddlLanguage } from '../../../common/src/FileInfo';
+import { CodePddlWorkspace } from '../workspace/CodePddlWorkspace';
+import { SimpleDocumentPositionResolver } from '../../../common/src/DocumentPositionResolver';
 
 /**
  * Content provider for the problem file generated from a template.
@@ -21,11 +23,22 @@ export class GeneratedDocumentContentProvider implements TextDocumentContentProv
     onDidChange?: Event<Uri> = this._onDidChange.event;
     private uriMap: Map<string, Test> = new Map<string, Test>();
 
-    constructor(private outputWindow: OutputChannel, pddlWorkspace: PddlWorkspace) {
-        pddlWorkspace.on(PddlWorkspace.UPDATED, (fileInfo: FileInfo) => {
+    constructor(private outputWindow: OutputChannel, private pddlWorkspace: CodePddlWorkspace) {
+        pddlWorkspace.pddlWorkspace.on(PddlWorkspace.UPDATED, (fileInfo: FileInfo) => {
             // if the URI corresponds one that was already rendered from template, fire event
             this.uriMap.forEach((testCase: Test, uri: string) => {
                 if (testCase.getProblemUri().toString() === fileInfo.fileUri) {
+                    this.changed(Uri.parse(uri));
+                }
+            });
+        });
+        workspace.onDidChangeTextDocument(e => {
+            // check if the changing document represents input data for a pre-processor
+            this.uriMap.forEach((testCase: Test, uri: string) => {
+                let inputChanged = testCase.getPreProcessor().getInputFiles()
+                    .some(inputFileName => e.document.fileName.endsWith(inputFileName));
+
+                if (inputChanged) {
                     this.changed(Uri.parse(uri));
                 }
             });
@@ -66,7 +79,10 @@ export class GeneratedDocumentContentProvider implements TextDocumentContentProv
         let documentText = problemDocument.getText();
 
         try {
-            return await test.getPreProcessor().transform(documentText, dirname(test.getManifest().path), this.outputWindow);
+            let preProcessedProblemText =  await test.getPreProcessor().transform(documentText, dirname(test.getManifest().path), this.outputWindow);
+            // force parsing of the generated problem
+            this.pddlWorkspace.pddlWorkspace.upsertFile(uri.toString(), PddlLanguage.PDDL, 0, preProcessedProblemText, new SimpleDocumentPositionResolver(preProcessedProblemText), true);
+            return preProcessedProblemText;
         } catch (ex) {
             return `Problem file '${basename(uri.fsPath)}' failed to generate: ${ex.message}`;
         }

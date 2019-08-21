@@ -22,6 +22,7 @@ import { VAL_STEP_PATH, CONF_PDDL, VALUE_SEQ_PATH } from '../configuration';
 import * as afs from '../../../common/src/asyncfs';
 import { ValStepError, ValStep } from '../debugger/ValStep';
 import { ensureAbsolutePath } from '../utils';
+import { PddlWorkspace } from '../../../common/src/PddlWorkspace';
 const DIGITS = 4;
 
 export class PlanReportGenerator {
@@ -107,8 +108,28 @@ States evaluated: ${plan.statesEvaluated}`;
     }
 
     async renderPlan(plan: Plan, planIndex: number, selectedPlan: number): Promise<string> {
+        let planVisualizerPath: string;
         if (plan.domain) {
-            this.settings.set(plan, new PlanReportSettings(plan.domain.fileUri));
+            const settings = new PlanReportSettings(plan.domain.fileUri);
+            planVisualizerPath = settings.getPlanVisualizerScript();
+            this.settings.set(plan, settings);
+        }
+
+        let styleDisplay = planIndex === selectedPlan ? "block" : "none";
+
+        let stateViz = '';
+        if (planVisualizerPath) {
+            let absPath = path.join(PddlWorkspace.getFolderPath(plan.domain.fileUri), planVisualizerPath);
+            try{
+                delete require.cache[require.resolve(absPath)];
+                const visualize = require(absPath);
+                stateViz = visualize(plan, 300, 100);
+                // todo: document.getElementById("stateviz").innerHTML = stateViz;
+                stateViz = `<div class="stateView" plan="${planIndex}" style="margin: 5px; width: 300px; height: 100px; display: ${styleDisplay};">${stateViz}</div>`;
+            }
+            catch(ex) {
+                console.log(ex);
+            }
         }
 
         let stepsToDisplay = plan.steps
@@ -130,8 +151,6 @@ States evaluated: ${plan.statesEvaluated}`;
                 .map((step, stepIndex) => this.renderGanttStep(step, stepIndex + relaxedPlanStepIndexOffset, plan, planIndex)).join("\n");
 
         let ganttChartHeight = (stepsToDisplay.length + oneIfHelpfulActionsPresent) * this.planStepHeight;
-
-        let styleDisplay = planIndex === selectedPlan ? "block" : "none";
 
         let ganttChart = `    <div class="gantt" plan="${planIndex}" style="margin: 5px; height: ${ganttChartHeight}px; display: ${styleDisplay};">
     ${ganttChartHtml}
@@ -191,6 +210,7 @@ ${objectsHtml}
         lineCharts += `\n    </div>`;
 
         return `${this.options.selfContained || this.options.disableHamburgerMenu ? '' : this.renderMenu()}
+${stateViz}
 ${ganttChart}
 ${swimLanes}
 ${lineCharts}
@@ -284,7 +304,7 @@ ${lineCharts}
         let subLanes = new SwimLane(1);
         let stepsInvolvingThisObject = plan.steps
             .filter(step => this.shouldDisplay(step, plan))
-            .filter(step => step.objects.includes(obj.toLowerCase()))
+            .filter(step => step.getObjects().includes(obj.toLowerCase()))
             .map(step => this.renderSwimLameStep(step, plan, obj, subLanes))
             .join('\n');
 
@@ -301,7 +321,7 @@ ${stepsInvolvingThisObject}
         let actionColor = this.getActionColor(step, plan.domain);
         let leftOffset = this.computeLeftOffset(step, plan);
         let width = this.computeWidth(step, plan) + this.computeRelaxedWidth(step, plan);
-        let objects = step.objects
+        let objects = step.getObjects()
             .map(obj => obj.toLowerCase() === thisObj.toLowerCase() ? '@' : obj)
             .join(' ');
 
@@ -309,11 +329,11 @@ ${stepsInvolvingThisObject}
         let fromTop = availableLane * this.planStepHeight + 1;
 
         return `
-                    <div class="resourceTaskTooltip" style="background-color: ${actionColor}; left: ${leftOffset}px; width: ${width}px; top: ${fromTop}px;">${step.actionName} ${objects}<span class="resourceTaskTooltipText">${this.toActionTooltip(step)}</span></div>`;
+                    <div class="resourceTaskTooltip" style="background-color: ${actionColor}; left: ${leftOffset}px; width: ${width}px; top: ${fromTop}px;">${step.getActionName()} ${objects}<span class="resourceTaskTooltipText">${this.toActionTooltip(step)}</span></div>`;
     }
 
     renderGanttStep(step: PlanStep, index: number, plan: Plan, planIndex: number): string {
-        let actionLink = this.toActionLink(step.actionName, plan);
+        let actionLink = this.toActionLink(step.getActionName(), plan);
 
         let fromTop = index * this.planStepHeight;
         let fromLeft = this.computeLeftOffset(step, plan);
@@ -322,7 +342,7 @@ ${stepsInvolvingThisObject}
 
         let actionColor = plan.domain ? this.getActionColor(step, plan.domain) : 'gray';
 
-        return `        <div class="planstep" id="plan${planIndex}step${index}" style="left: ${fromLeft}px; top: ${fromTop}px; "><div class="planstep-bar" title="${this.toActionTooltipPlain(step)}" style="width: ${width}px; background-color: ${actionColor}"></div><div class="planstep-bar-relaxed whitecarbon" style="width: ${widthRelaxed}px;"></div>${actionLink} ${step.objects.join(' ')}</div>`;
+        return `        <div class="planstep" id="plan${planIndex}step${index}" style="left: ${fromLeft}px; top: ${fromTop}px; "><div class="planstep-bar" title="${this.toActionTooltipPlain(step)}" style="width: ${width}px; background-color: ${actionColor}"></div><div class="planstep-bar-relaxed whitecarbon" style="width: ${widthRelaxed}px;"></div>${actionLink} ${step.getObjects().join(' ')}</div>`;
     }
 
     toActionLink(actionName: string, plan: Plan): string {
@@ -340,7 +360,7 @@ ${stepsInvolvingThisObject}
             `<tr><td class="actionToolTip">Duration: </td><td class="actionToolTip">${step.getDuration().toFixed(DIGITS)}</td></tr>
             <tr><td class="actionToolTip">End: </td><td class="actionToolTip">${step.getEndTime().toFixed(DIGITS)}</td></tr>` :
             '';
-        return `<table><tr><th colspan="2" class="actionToolTip">${step.actionName} ${step.objects.join(' ')}</th></tr><tr><td class="actionToolTip" style="width:50px">Start:</td><td class="actionToolTip">${step.getStartTime().toFixed(DIGITS)}</td></tr>${durationRow}</table>`;
+        return `<table><tr><th colspan="2" class="actionToolTip">${step.getActionName()} ${step.getObjects().join(' ')}</th></tr><tr><td class="actionToolTip" style="width:50px">Start:</td><td class="actionToolTip">${step.getStartTime().toFixed(DIGITS)}</td></tr>${durationRow}</table>`;
     }
 
     toActionTooltipPlain(step: PlanStep): string {
@@ -352,7 +372,7 @@ ${stepsInvolvingThisObject}
             `, Start: ${step.getStartTime().toFixed(DIGITS)}` :
             '';
 
-        return `${step.actionName} ${step.objects.join(' ')}${startTime} ${durationRow}`;
+        return `${step.getActionName()} ${step.getObjects().join(' ')}${startTime} ${durationRow}`;
     }
 
     async includeStyle(uri: Uri): Promise<string> {
@@ -426,7 +446,7 @@ ${stepsInvolvingThisObject}
     }
 
     getActionColor(step: PlanStep, domain: DomainInfo): string {
-        let actionIndex = domain.actions.findIndex(action => action.name.toLowerCase() === step.actionName.toLowerCase());
+        let actionIndex = domain.actions.findIndex(action => action.name.toLowerCase() === step.getActionName().toLowerCase());
         let actionColor = this.colors[actionIndex * 7 % this.colors.length];
 
         return actionColor;

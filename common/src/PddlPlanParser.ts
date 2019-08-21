@@ -16,14 +16,14 @@ export class PddlPlanParser {
 
     private readonly plans: Plan[] = [];
     public static readonly planStepPattern = /^\s*((\d+|\d+\.\d+)\s*:)?\s*\((.*)\)\s*(\[\s*(\d+|\d+\.\d+)\s*\])?\s*$/gim;
-    private readonly planStatesEvaluatedPattern = /^;?\s*States evaluated[\w ]*:[ ]*(\d*)\s*$/i;
+    private readonly planStatesEvaluatedPattern = /^\s*;?\s*States evaluated[\w ]*:[ ]*(\d*)\s*$/i;
     private readonly planCostPattern = /[\w ]*(cost|metric)[\D :]*[ ]*(\d*|\d*\.\d*)\s*$/i;
 
     private planBuilder: PlanBuilder;
     private endOfBufferToBeParsedNextTime = '';
 
-    constructor(private domain: DomainInfo, private problem: ProblemInfo, public readonly epsilon: number, private onPlanReady?: (plans: Plan[]) => void) {
-        this.planBuilder = new PlanBuilder(epsilon);
+    constructor(private domain: DomainInfo, private problem: ProblemInfo, public readonly options: PddlPlanParserOptions, private onPlanReady?: (plans: Plan[]) => void) {
+        this.planBuilder = new PlanBuilder(options.epsilon);
     }
 
     /**
@@ -94,9 +94,10 @@ export class PddlPlanParser {
             this.appendLine(this.endOfBufferToBeParsedNextTime);
             this.endOfBufferToBeParsedNextTime = '';
         }
-        if (this.planBuilder.getSteps().length > 0) {
+        if (this.planBuilder.getSteps().length > 0 ||
+            this.plans.length < this.options.minimumPlansExpected) {
             this.plans.push(this.planBuilder.build(this.domain, this.problem));
-            this.planBuilder = new PlanBuilder(this.epsilon);
+            this.planBuilder = new PlanBuilder(this.options.epsilon);
         }
 
         if (this.onPlanReady) { this.onPlanReady.apply(this, [this.plans]); }
@@ -127,7 +128,7 @@ export class PlanBuilder {
     parsingPlan = false;
     makespan = 0;
 
-    constructor(private epsilon: number) {}
+    constructor(private epsilon: number) { }
 
     parse(planLine: string, lineIndex: number | undefined): PlanStep | undefined {
         PddlPlanParser.planStepPattern.lastIndex = 0;
@@ -169,4 +170,9 @@ export class PlanBuilder {
     getMakespan(): number {
         return this.makespan;
     }
+}
+
+export interface PddlPlanParserOptions {
+    epsilon: number;
+    minimumPlansExpected?: number;
 }

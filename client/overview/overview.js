@@ -130,6 +130,12 @@ function tryHelloWorld() {
     })
 }
 
+function openNunjucksSample() {
+    postMessage({
+        command: 'openNunjucksSample'
+    })
+}
+
 function installIcons() {
     postMessage({
         command: 'installIcons'

@@ -6,7 +6,7 @@
 
 import {
     window, workspace, commands, OutputChannel, Uri,
-    MessageItem, ExtensionContext, ProgressLocation, EventEmitter, Event, CancellationToken, Progress
+    MessageItem, ExtensionContext, ProgressLocation, EventEmitter, Event, CancellationToken, Progress, QuickPickItem
 } from 'vscode';
 
 import { PddlWorkspace } from '../../../common/src/PddlWorkspace';
@@ -58,7 +58,7 @@ export class Planning implements PlannerResponseHandler {
     optionProviders: PlannerOptionsProvider[] = [];
     userOptionsProvider: PlannerUserOptionsSelector;
 
-    constructor(public codePddlWorkspace: CodePddlWorkspace, public plannerConfiguration: PddlConfiguration, context: ExtensionContext) {
+    constructor(private codePddlWorkspace: CodePddlWorkspace, private plannerConfiguration: PddlConfiguration, private context: ExtensionContext) {
         this.userOptionsProvider = new PlannerUserOptionsSelector();
         this.output = window.createOutputChannel("Planner output");
 
@@ -159,7 +159,12 @@ export class Planning implements PlannerResponseHandler {
     async plan(): Promise<void> {
 
         if (this.planner) {
-            window.showErrorMessage("Planner is already running. Stop it using the Cancel button in the progress notification, or using the PDDL: Stop planner command or wait for it to finish.");
+            window.showErrorMessage("Planner is already running. Stop it using the Cancel button in the progress notification, or using the 'PDDL: Stop planner' command or wait for it to finish.");
+            return;
+        }
+
+        if (!window.activeTextEditor) {
+            window.showErrorMessage("Active document is not a PDDL file.");
             return;
         }
 
@@ -194,7 +199,8 @@ export class Planning implements PlannerResponseHandler {
                 if (!domainFileUri) { return; } // was canceled
 
                 domainFileInfo = domainFiles.find(doc => doc.fileUri === domainFileUri.toString())
-                    || this.codePddlWorkspace.pddlWorkspace.getFileInfo<DomainInfo>(domainFileUri.toString());
+                    || this.codePddlWorkspace.pddlWorkspace.getFileInfo<DomainInfo>(domainFileUri.toString())
+                    || await this.parseDomain(domainFileUri);
             } else {
                 window.showInformationMessage(`Ensure a domain '${problemFileInfo.domainName}' from the same folder is open in the editor.`);
                 return;
@@ -208,13 +214,13 @@ export class Planning implements PlannerResponseHandler {
             if (problemFiles.length === 1) {
                 problemFileInfo = problemFiles[0];
             } else if (problemFiles.length > 1) {
-                const problemFileNames = problemFiles.map(info => PddlWorkspace.getFileInfoName(info));
+                const problemFilePicks = problemFiles.map(info => new ProblemFilePickItem(info));
 
-                const selectedProblemFileName = await window.showQuickPick(problemFileNames, { placeHolder: "Select problem file:" });
+                const selectedProblemFilePick = await window.showQuickPick(problemFilePicks, { placeHolder: "Select problem file:" });
 
-                if (!selectedProblemFileName) { return; }// was canceled
+                if (!selectedProblemFilePick) { return; }// was canceled
 
-                problemFileInfo = problemFiles.find(fileInfo => fileInfo.fileUri.endsWith('/' + selectedProblemFileName));
+                problemFileInfo = selectedProblemFilePick.problemInfo;
             } else {
                 window.showInformationMessage("Ensure a corresponding problem file is open in the editor.");
                 return;
@@ -225,13 +231,32 @@ export class Planning implements PlannerResponseHandler {
             return;
         }
 
-        let workingDirectory = activeDocument.uri.scheme === "file" ? dirname(activeDocument.fileName) : "";
+        let workingDirectory = "";
+        if (activeDocument.uri.scheme === "file") {
+            workingDirectory = dirname(activeDocument.fileName);
+        }
+        else if (Uri.parse(problemFileInfo.fileUri).scheme === "file") {
+            workingDirectory = dirname(Uri.parse(problemFileInfo.fileUri).fsPath);
+        }
+        else if (Uri.parse(domainFileInfo.fileUri).scheme === "file") {
+            workingDirectory = dirname(Uri.parse(domainFileInfo.fileUri).fsPath);
+        }
         await this.planExplicit(domainFileInfo, problemFileInfo, workingDirectory);
     }
 
     private readonly _onPlansFound = new EventEmitter<PlanningResult>();
     public onPlansFound: Event<PlanningResult> = this._onPlansFound.event;
     private progressUpdater: ElapsedTimeProgressUpdater;
+
+    private async parseDomain(domainFileUri: Uri): Promise<DomainInfo> {
+        let fileInfo = await this.codePddlWorkspace.upsertAndParseFile(await workspace.openTextDocument(domainFileUri));
+        if (!fileInfo.isDomain()) {
+            throw new Error("Selected file is not a domain file.");
+        }
+        else {
+            return <DomainInfo>fileInfo;
+        }
+    }
 
     /**
      * Invokes the planner and visualize the plan(s).
@@ -242,7 +267,7 @@ export class Planning implements PlannerResponseHandler {
      */
     async planExplicit(domainFileInfo: DomainInfo, problemFileInfo: ProblemInfo, workingDirectory: string, options?: string): Promise<void> {
 
-        let planParser = new PddlPlanParser(domainFileInfo, problemFileInfo, this.plannerConfiguration.getEpsilonTimeStep(), plans => this.visualizePlans(plans));
+        let planParser = new PddlPlanParser(domainFileInfo, problemFileInfo, { epsilon: this.plannerConfiguration.getEpsilonTimeStep() }, plans => this.visualizePlans(plans));
 
         workingDirectory = await this.adjustWorkingFolder(workingDirectory);
 
@@ -391,7 +416,7 @@ export class Planning implements PlannerResponseHandler {
 
     async verifyConsentForSendingPddl(plannerPath: string): Promise<boolean> {
         if (isHttp(plannerPath)) {
-            let consents: any = this.plannerConfiguration.context.globalState.get(this.PLANNING_SERVICE_CONSENTS, {});
+            let consents: any = this.context.globalState.get(this.PLANNING_SERVICE_CONSENTS, {});
             if (consents[plannerPath]) {
                 return true;
             }
@@ -406,7 +431,7 @@ export class Planning implements PlannerResponseHandler {
                 );
                 let consentGiven = answer && answer.toLowerCase().startsWith("yes");
                 consents[plannerPath] = consentGiven;
-                this.plannerConfiguration.context.globalState.update(this.PLANNING_SERVICE_CONSENTS, consents);
+                this.context.globalState.update(this.PLANNING_SERVICE_CONSENTS, consents);
                 return consentGiven;
             }
         }
@@ -478,5 +503,20 @@ class ElapsedTimeProgressUpdater {
 
     setFinished(): void {
         this.finished = true;
+    }
+}
+
+class ProblemFilePickItem implements QuickPickItem {
+    label: string;
+    description?: string;
+    detail?: string;
+    picked?: boolean;
+    alwaysShow?: boolean;
+    problemInfo: ProblemInfo;
+
+    constructor(problemInfo: ProblemInfo) {
+        this.label = PddlWorkspace.getFileInfoName(problemInfo);
+        this.description = PddlWorkspace.getFolderPath(problemInfo.fileUri);
+        this.problemInfo = problemInfo;
     }
 }

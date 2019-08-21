@@ -155,6 +155,14 @@ export class PddlSyntaxNode extends TextRange {
         return nestedText;
     }
 
+    getNestedNonCommentText(): string {
+        let nestedText = '';
+        this.getNestedChildren()
+            .filter(node => node.getToken().type !== PddlTokenType.Comment)
+            .forEach(node => { nestedText = nestedText + node.getText(); });
+        return nestedText;
+    }
+
     getText(): string {
         return this.getToken().tokenText + this.getNestedText();
     }

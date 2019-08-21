@@ -32,7 +32,7 @@ export const PLANNER_VALUE_SEQ_PATH = CONF_PDDL + "." + VALUE_SEQ_PATH;
 
 export class PddlConfiguration {
 
-    constructor(public context: vscode.ExtensionContext) {
+    constructor(private context: vscode.ExtensionContext) {
     }
 
     getEpsilonTimeStep(): number {

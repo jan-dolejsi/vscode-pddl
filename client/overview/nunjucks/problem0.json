@@ -1,0 +1,10 @@
+{
+    "name": "p0",
+    "products": [
+        {
+            "name": "A", 
+            "manufactured": false,
+            "cost": 5
+        }
+    ]
+}

@@ -18,6 +18,15 @@
           "^prefix_"
         ]
       }
+    },
+    "planVisualizer": {
+      "$id": "/properties/planVisualizer",
+      "type": "string",
+      "title": "Path to a javascript file, which declares function visualize(plan, width, height) returning HTML code to be inserted.",
+      "default": "",
+      "examples": [
+        "domainPlanVisualizer.js"
+      ]
     }
   }
 }

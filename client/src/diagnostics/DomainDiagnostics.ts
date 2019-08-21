@@ -24,7 +24,7 @@ export class DomainDiagnostics {
     diagnosticCollection: DiagnosticCollection;
 
     constructor(codePddlWorkspace: CodePddlWorkspace) {
-        this.diagnosticCollection = languages.createDiagnosticCollection(PDDL);
+        this.diagnosticCollection = languages.createDiagnosticCollection(PDDL+'2');
         codePddlWorkspace.pddlWorkspace.on(PddlWorkspace.UPDATED, (fileInfo: FileInfo) => {
             if (fileInfo.isDomain()) {
                 this.validateDomain(<DomainInfo>fileInfo);

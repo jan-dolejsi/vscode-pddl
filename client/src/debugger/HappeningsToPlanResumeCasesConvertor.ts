@@ -14,9 +14,7 @@ import { DebuggingSessionFiles } from './DebuggingSessionFiles';
 import { TestsManifest } from '../ptest/TestsManifest';
 import { Test } from '../ptest/Test';
 import { Happening, HappeningType } from '../../../common/src/HappeningsInfo';
-
-// const util = require('util');
-// const execAsync = util.promisify(require('child_process').exec);
+import { PTEST_REVEAL, PTEST_REFRESH } from '../ptest/PTestCommands';
 
 /**
  * Executes sequence of plan happenings and generates suite of test cases to attempt planning from any intermediate state.
@@ -95,8 +93,8 @@ export class HappeningsToPlanResumeCasesConvertor {
             console.log(output.toLocaleString()); // for inspection while debugging
 
             await commands.executeCommand('workbench.view.extension.test');
-            await commands.executeCommand('pddl.tests.reveal', manifestUri);
-            await commands.executeCommand('pddl.tests.refresh');
+            await commands.executeCommand(PTEST_REVEAL, manifestUri);
+            await commands.executeCommand(PTEST_REFRESH);
 
             return true;
         } catch (err) {

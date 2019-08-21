@@ -13,6 +13,7 @@ import { PddlExtensionContext } from '../PddlExtensionContext';
 import { PTestReport } from './PTestReport';
 import { TestsManifest } from './TestsManifest';
 import { Test } from './Test';
+import { PTEST_VIEW } from './PTestCommands';
 
 /** Visualizes PTest results on a web view panel. */
 export class PTestReportView {
@@ -108,7 +109,7 @@ export class PTestReportView {
                 await window.showTextDocument(manifestDoc, { viewColumn: ViewColumn.Beside });
                 break;
             case 'openTest':
-                commands.executeCommand('pddl.tests.view', Uri.parse(message.value));
+                commands.executeCommand(PTEST_VIEW, Uri.parse(message.value));
                 break;
             default:
                 console.warn('Unexpected command: ' + message.command);

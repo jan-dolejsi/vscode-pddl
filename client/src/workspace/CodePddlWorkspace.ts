@@ -4,23 +4,40 @@
  * ------------------------------------------------------------------------------------------ */
 'use strict';
 
-import { Uri, TextDocument } from 'vscode';
-import { toLanguage } from './workspaceUtils';
+import { Uri, TextDocument, commands, ExtensionContext, workspace, window } from 'vscode';
+import { toLanguage, isAnyPddl } from './workspaceUtils';
 import { FileInfo } from '../../../common/src/FileInfo';
 import { PddlWorkspace } from '../../../common/src/PddlWorkspace';
 import { DocumentPositionResolver } from '../../../common/src/DocumentPositionResolver';
 import { CodeDocumentPositionResolver } from './CodeDocumentPositionResolver';
 import * as afs from '../../../common/src/asyncfs';
+import { DomainInfo } from '../../../common/src/DomainInfo';
+import { toRange } from '../utils';
+import { PddlConfiguration } from '../configuration';
+import { ProblemInfo } from '../parser';
+
 
 export class CodePddlWorkspace {
-    constructor(public readonly pddlWorkspace: PddlWorkspace) {
+    constructor(public readonly pddlWorkspace: PddlWorkspace, pddlConfiguration: PddlConfiguration, context: ExtensionContext) {
+        let revealActionCommand = commands.registerCommand('pddl.revealAction', (domainFileUri: Uri, actionName: String) => {
+            revealAction(<DomainInfo>pddlWorkspace.getFileInfo(domainFileUri.toString()), actionName);
+        });
 
+        subscribeToWorkspace(this, pddlConfiguration, context);
+
+        if (context) { // unit tests do not clean-up
+            context.subscriptions.push(revealActionCommand);
+        }
     }
 
-    upsertFile(document: TextDocument): Promise<FileInfo> {
+    static getInstanceForTestingOnly(pddlWorkspace: PddlWorkspace): CodePddlWorkspace {
+        return new CodePddlWorkspace(pddlWorkspace, null, null);        
+	}
+
+    upsertFile(document: TextDocument, force: boolean = false): Promise<FileInfo> {
         return this.pddlWorkspace.upsertFile(document.uri.toString(),
             toLanguage(document), document.version, document.getText(),
-            this.createPositionResolver(document));
+            this.createPositionResolver(document), force);
     }
 
     upsertAndParseFile(document: TextDocument): Promise<FileInfo> {
@@ -47,4 +64,55 @@ export class CodePddlWorkspace {
     private createPositionResolver(document: TextDocument): DocumentPositionResolver {
         return new CodeDocumentPositionResolver(document);
     }
+}
+
+function subscribeToWorkspace(pddlWorkspace: CodePddlWorkspace, pddlConfiguration: PddlConfiguration, context: ExtensionContext): void {
+	// add all open documents
+	workspace.textDocuments
+		.filter(textDoc => isAnyPddl(textDoc))
+		.forEach(textDoc => {
+			pddlWorkspace.upsertFile(textDoc);
+		});
+
+	// subscribe to document opening event
+	context.subscriptions.push(workspace.onDidOpenTextDocument(textDoc => {
+		if (isAnyPddl(textDoc)) {
+			pddlWorkspace.upsertFile(textDoc);
+		}
+	}));
+
+	// subscribe to document changing event
+	context.subscriptions.push(workspace.onDidChangeTextDocument(docEvent => {
+		if (isAnyPddl(docEvent.document)) {
+			pddlWorkspace.upsertFile(docEvent.document);
+		} else {
+            // for all problem files that pre-parse using data from this updated document, re-validate
+            pddlWorkspace.pddlWorkspace.getAllFilesIf<ProblemInfo>(f => f.isProblem())
+
+                .filter(problemInfo => !!problemInfo.getPreParsingPreProcessor())
+                .filter(problemInfo => problemInfo.getPreParsingPreProcessor().getInputFiles().some(inputFile => docEvent.document.fileName.endsWith(inputFile)))
+                .forEach(async (problemInfo) => {
+                    let problemFile = await workspace.openTextDocument(Uri.parse(problemInfo.fileUri));
+                    pddlWorkspace.upsertFile(problemFile, true);
+                });
+        }
+	}));
+
+	// subscribe to document closing event
+	context.subscriptions.push(workspace.onDidCloseTextDocument(async (textDoc) => {
+		if (isAnyPddl(textDoc)) { await pddlWorkspace.removeFile(textDoc); }
+	}));
+
+	workspace.onDidChangeConfiguration(_ => {
+        if (pddlConfiguration) {
+            pddlWorkspace.setEpsilon(pddlConfiguration.getEpsilonTimeStep());
+        }
+	});
+}
+
+async function revealAction(domainInfo: DomainInfo, actionName: String) {
+	let document = await workspace.openTextDocument(Uri.parse(domainInfo.fileUri));
+	let actionFound = domainInfo.actions.find(a => a.name.toLowerCase() === actionName.toLowerCase());
+    let actionRange = actionFound ? toRange(actionFound.location) : null;
+	window.showTextDocument(document.uri, { preserveFocus: true, selection: actionRange, preview: true });
 }
