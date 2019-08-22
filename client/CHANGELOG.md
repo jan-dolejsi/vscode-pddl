@@ -735,14 +735,11 @@ Simplified snippets and added tabstops/placeholders to them, so they are easy to
 
 - valstep batch mode
 - Review configuration properties scope - which properties should be moved to 'application' scope?
-- Validate new symbol name while renaming using `prepareRename`
 - Rename parameters and objects
 - Auto-completion for constant/object names.
-- Support for [Outline view](https://code.visualstudio.com/updates/v1_25#_outline-view), [Document Symbols](https://code.visualstudio.com/updates/v1_25#_document-symbols)
 - Any other extensions to put into extensions.json?
 - Review the ViewColumn usage following the Grid View feature availability in VS Code
 - Add a search into the virtual file system for the IPC benchmarks and adapt it to the test cases manifests for ease of use
-- Add ['unused' warning](https://code.visualstudio.com/updates/v1_25#_diagnostictag)
 - Add Happenings to Problem explicit mapping
 
 ## [Unreleased]
@@ -750,9 +747,7 @@ Simplified snippets and added tabstops/placeholders to them, so they are easy to
 Interactive stepping through plans (aka debugging).
 Node.js update: https://code.visualstudio.com/updates/v1_31#_nodejs-update
 Icons: https://code.visualstudio.com/updates/v1_31#_updated-octicons
-Use vscode-uri package in the Common module.
-CodeAction to add/remove requirements, declare predicate/functions, etc..
-Gray out unused declarations.
+CodeAction to remove unnecessary requirements, declare predicate/functions, etc..
 
 ## Note to contributors
 
