@@ -167,7 +167,7 @@ function activateWithTelemetry(_operationId: string, context: ExtensionContext) 
 	let referencesProvider = languages.registerReferenceProvider(PDDL, symbolInfoProvider);
 	let hoverProvider = languages.registerHoverProvider(PDDL, symbolInfoProvider);
 	let diagnosticCollection = languages.createDiagnosticCollection(PDDL);
-	let diagnostics = new Diagnostics(pddlWorkspace, diagnosticCollection, pddlConfiguration,
+	let diagnostics = new Diagnostics(codePddlWorkspace, diagnosticCollection, pddlConfiguration,
 		planValidator, happeningsValidator);
 
 	// tslint:disable-next-line:no-unused-expression

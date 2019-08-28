@@ -158,7 +158,7 @@ export class PddlSyntaxNode extends TextRange {
     getNestedNonCommentText(): string {
         let nestedText = '';
         this.getNestedChildren()
-            .filter(node => node.getToken().type !== PddlTokenType.Comment)
+            .filter(node => node.isNotType(PddlTokenType.Comment))
             .forEach(node => { nestedText = nestedText + node.getText(); });
         return nestedText;
     }
@@ -173,6 +173,85 @@ export class PddlSyntaxNode extends TextRange {
 
     getEnd(): number {
         return this.maxChildEnd;
+    }
+
+    findAncestor(type: PddlTokenType, pattern: RegExp): PddlSyntaxNode {
+        let parent = this.parent;
+
+        while(parent.isNotType(PddlTokenType.Document)) {
+            if (parent.isType(type) && pattern.test(parent.getToken().tokenText)) {
+                return parent;
+            }
+            parent = parent.parent;
+        }
+
+        return null;
+    }
+    
+    findParametrisableScope(parameterName: string): PddlSyntaxNode {
+        let node: PddlSyntaxNode = this;
+        while (!node.isDocument()) {
+            node = node.findAncestor(PddlTokenType.OpenBracketOperator, /^\(\s*(:action|:durative-action|:process|:event|:derived|forall|exists)$/);
+            if (!node) { return this.getParent(); }
+            if (node.declaresParameter(parameterName)) {
+                return node;
+            }
+        }
+
+        return undefined;
+    }
+
+    getParameterDefinition(): PddlSyntaxNode {
+        if (this.getToken().tokenText.match(/:action|:durative-action|:process|:event/)) {
+            // this node is expected to have a :parameters keyword
+            return this.getKeywordOpenBracket('parameters');
+        }
+        else {
+            // this node is expected to have parameters defined inside parentheses
+            let nonWhitespaceChildren = this.getNonWhitespaceChildren();
+            if (nonWhitespaceChildren.length === 0) { return undefined; }
+            let firstChild = nonWhitespaceChildren[0];
+            if (!isOpenBracket(firstChild.getToken())) { return undefined; }
+            return firstChild;
+        }
+    }
+
+    /**
+     * Checks whether this scope node defines given parameter.
+     * @param parameterName parameter name without the `?` sign
+     */
+    declaresParameter(parameterName: string): boolean {
+        let parametersNode = this.getParameterDefinition();
+        let parameterDefinition = parametersNode && parametersNode.getNestedText();
+        
+        let pattern = new RegExp("\\?"+parameterName+"\\b");
+        return parameterDefinition && pattern.test(parameterDefinition);
+    }
+
+    expand(): PddlSyntaxNode {
+        var node: PddlSyntaxNode = this;
+        while (!isOpenBracket(node.getToken()) && !node.isDocument()) {
+            node = node.getParent();
+        }
+
+        if (node.isDocument()) {
+            return undefined;
+        }
+        else {
+            return node;
+        }
+    }
+
+    isDocument(): boolean {
+        return this.isType(PddlTokenType.Document);
+    }
+
+    isType(type: PddlTokenType): boolean {
+        return this.getToken().type === type;
+    }
+
+    isNotType(type: PddlTokenType): boolean {
+        return this.getToken().type !== type;
     }
 
     toString(): string {

@@ -181,7 +181,7 @@ export class Planning implements PlannerResponseHandler {
             problemFileInfo = <ProblemInfo>activeFileInfo;
 
             // find domain file(s)
-            let domainFiles = this.codePddlWorkspace.pddlWorkspace.getDomainFilesFor(problemFileInfo);
+            let domainFiles = this.codePddlWorkspace.getDomainFilesFor(problemFileInfo);
 
             if (domainFiles.length === 1) {
                 domainFileInfo = domainFiles[0];

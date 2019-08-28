@@ -14,6 +14,7 @@ import { EventEmitter } from 'events';
 import { PddlSyntaxTreeBuilder } from './PddlSyntaxTreeBuilder';
 import { DocumentPositionResolver } from './DocumentPositionResolver';
 import { DomainInfo } from './DomainInfo';
+import { URI } from 'vscode-uri';
 
 class Folder {
     files: Map<string, FileInfo> = new Map<string, FileInfo>();
@@ -32,7 +33,9 @@ class Folder {
     }
 
     add(fileInfo: FileInfo): void {
-        this.files.set(fileInfo.fileUri, fileInfo);
+        if (URI.parse(fileInfo.fileUri).scheme !== "git") {
+            this.files.set(fileInfo.fileUri, fileInfo);
+        }
     }
 
     remove(fileInfo: FileInfo): boolean {

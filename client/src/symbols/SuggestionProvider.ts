@@ -18,6 +18,7 @@ import { Test } from '../ptest/Test';
 import { TestsManifest } from '../ptest/TestsManifest';
 import { basename } from 'path';
 import { PreProcessor } from '../../../common/src/PreProcessors';
+import { UndeclaredVariable, VariableType } from './UndeclaredVariable';
 
 /**
  * Provides code actions for PDDL files.
@@ -47,14 +48,21 @@ export class SuggestionProvider implements CodeActionProvider {
 
         let missingRequirement = context.diagnostics
             .filter(diagnostic => diagnostic.message.match(MissingRequirements.undeclaredRequirementDiagnosticPattern))
-            .map(diagnostic => this.createUndeclaredRequirementAction(document, diagnostic, fileInfo))
+            .map(diagnostic => this.createMissingRequirementAction(document, diagnostic, fileInfo))
+            .filter(action => action !== undefined);
+
+        if (token.isCancellationRequested) { return []; }
+
+        let undeclaredVariable = context.diagnostics
+            .filter(diagnostic => diagnostic.message.match(UndeclaredVariable.undeclaredVariableDiagnosticPattern))
+            .map(diagnostic => this.createUndeclaredVariableAction(document, diagnostic, fileInfo))
             .filter(action => action !== undefined);
 
         if (token.isCancellationRequested) { return []; }
 
         let problemSnippets = this.createProblemActions(fileInfo, document, range, context);
 
-        return Util.flatMap(insertSnippetCodeActions).concat(missingRequirement).concat(problemSnippets);
+        return Util.flatMap(insertSnippetCodeActions).concat(missingRequirement).concat(undeclaredVariable).concat(problemSnippets);
     }
 
     private createProblemActions(fileInfo: FileInfo, document: TextDocument, range: Range | Selection, _context: CodeActionContext): CodeAction[] {
@@ -116,7 +124,7 @@ export class SuggestionProvider implements CodeActionProvider {
         return codeActions;
     }
 
-    private createUndeclaredRequirementAction(document: TextDocument, diagnostic: Diagnostic, fileInfo: FileInfo): CodeAction {
+    private createMissingRequirementAction(document: TextDocument, diagnostic: Diagnostic, fileInfo: FileInfo): CodeAction {
 
         let missingRequirementsDelegate = new MissingRequirements(fileInfo);
 
@@ -125,6 +133,35 @@ export class SuggestionProvider implements CodeActionProvider {
         let edit = missingRequirementsDelegate.createEdit(document, requirementName);
 
         const title = 'Add missing requirement ' + requirementName;
+        const action = new CodeAction(title, CodeActionKind.QuickFix);
+        action.edit = edit;
+        action.diagnostics = [diagnostic];
+        action.isPreferred = true;
+        return action;
+    }
+
+    private createUndeclaredVariableAction(document: TextDocument, diagnostic: Diagnostic, fileInfo: FileInfo): CodeAction {
+
+        let undeclaredVariableDelegate = new UndeclaredVariable(fileInfo);
+
+        let [variable, node] = undeclaredVariableDelegate.getVariable(diagnostic, document);
+        if (!variable) { return undefined; }
+
+        let [edit, type] = undeclaredVariableDelegate.createEdit(document, variable, node);
+
+        let sectionName: string;
+        switch (type) {
+            case VariableType.Function:
+                sectionName = "function";
+                break;
+            case VariableType.Predicate:
+                sectionName = "predicate";
+                break;
+            default:
+                throw new Error(`Could not determine whether ${variable.getFullName()} is a predicate or a function.`);
+        }
+
+        const title = `Add undeclared ${sectionName} (${variable.getFullName()})`;
         const action = new CodeAction(title, CodeActionKind.QuickFix);
         action.edit = edit;
         action.diagnostics = [diagnostic];

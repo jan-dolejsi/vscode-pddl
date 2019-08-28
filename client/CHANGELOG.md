@@ -1,5 +1,16 @@
 # PDDL support - What's new?
 
+## [2.14.0] Parameter [F2] renaming and undeclared predicate/function auto-fix
+
+### Features
+
+* Renaming of action/process/event/forall/derived parameters. Click on a `?` parameter and press _F2_. ![Undeclared predicates/functions code action](https://raw.githubusercontent.com/wiki/jan-dolejsi/vscode-pddl/img/PDDL_parameter_type_renaming.gif)
+* Declaring undeclared predicates and functions: ![Undeclared predicates/functions code action](https://raw.githubusercontent.com/wiki/jan-dolejsi/vscode-pddl/img/PDDL_undeclared_predicate_function.gif)
+
+### Fixes
+
+* For PDDL files under version control, the _git_ repo version of the domain/problem files would appear as one of the real domain/problem files in the workspace, which was very confusing. They should no longer surface.
+
 ## [2.13.1] Improved support for template-based problem generation
 
 ### New Features
@@ -735,19 +746,19 @@ Simplified snippets and added tabstops/placeholders to them, so they are easy to
 
 - valstep batch mode
 - Review configuration properties scope - which properties should be moved to 'application' scope?
-- Rename parameters and objects
+- Rename objects and constants
 - Auto-completion for constant/object names.
 - Any other extensions to put into extensions.json?
 - Review the ViewColumn usage following the Grid View feature availability in VS Code
 - Add a search into the virtual file system for the IPC benchmarks and adapt it to the test cases manifests for ease of use
 - Add Happenings to Problem explicit mapping
+- Interactive stepping through plans (aka debugging).
+- Icons: https://code.visualstudio.com/updates/v1_31#_updated-octicons
+- CodeAction to remove unnecessary requirements etc..
 
 ## [Unreleased]
 
-Interactive stepping through plans (aka debugging).
-Node.js update: https://code.visualstudio.com/updates/v1_31#_nodejs-update
-Icons: https://code.visualstudio.com/updates/v1_31#_updated-octicons
-CodeAction to remove unnecessary requirements, declare predicate/functions, etc..
+* more precise context sensitive auto completion
 
 ## Note to contributors
 
@@ -755,7 +766,8 @@ Note for open source contributors: all notable changes to the "pddl" extension w
 
 Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
 
-[Unreleased]: https://github.com/jan-dolejsi/vscode-pddl/compare/v2.13.1...HEAD
+[Unreleased]: https://github.com/jan-dolejsi/vscode-pddl/compare/v2.14.0...HEAD
+[2.14.0]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.13.1...v2.14.0
 [2.13.1]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.13.0...v2.13.1
 [2.13.0]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.12.2...v2.13.0
 [2.12.2]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.11.8...v2.12.2

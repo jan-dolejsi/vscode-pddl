@@ -31,7 +31,7 @@
   "action": {
     "prefix": "action",
     "body": [
-        "(:action ${1:name}",
+        "(:action ${1:action_name}",
         "    :parameters ($0)",
         "    :precondition (and )",
         "    :effect (and )",
@@ -43,7 +43,7 @@
   "durativeaction": {
     "prefix": "action-durative", 
     "body": [
-      "(:durative-action ${1:name}",
+      "(:durative-action ${1:action_name}",
         "    :parameters ($0)",
         "    :duration ${2|(= ?duration 1),(and (>= ?duration 1)(<= ?duration 2))|}",
         "    :condition (and ",
@@ -68,7 +68,7 @@
   "problem": {
     "prefix": "problem",
     "body": [
-      "(define (problem ${1:name}) (:domain ${2:domain_name})",
+      "(define (problem ${1:problem_name}) (:domain ${2:domain_name})",
       "(:objects $0",
       ")",
       "",

@@ -4,10 +4,11 @@
  * ------------------------------------------------------------------------------------------ */
 'use strict';
 
-import { TextDocument, WorkspaceEdit, workspace, EndOfLine } from 'vscode';
+import { TextDocument, WorkspaceEdit } from 'vscode';
 import { PddlSyntaxTreeBuilder } from '../../../common/src/PddlSyntaxTreeBuilder';
 import { PddlSyntaxTree } from '../../../common/src/PddlSyntaxTree';
 import { FileInfo } from '../../../common/src/FileInfo';
+import { UndeclaredVariable } from './UndeclaredVariable';
 
 export class MissingRequirements {
     static readonly undeclaredRequirementDiagnosticPattern = /^undeclared requirement\s*:([\w-]+)/i;
@@ -40,16 +41,8 @@ export class MissingRequirements {
             edit.insert(document.uri, document.positionAt(requirementsNode.getEnd()-1), ' '  + requirementName);
         } else {
             let domainNode = defineNode.getFirstOpenBracketOrThrow('domain');
-            let config = workspace.getConfiguration('editor', document.uri);
-            let indent: string;
-            if (config.get<boolean>('insertSpaces')) {
-                let tabSize = config.get<number>('tabSize');
-                indent = ' '.repeat(tabSize);
-            }
-            else {
-                indent = '\t';
-            }
-            let eol = document.eol === EndOfLine.CRLF ? '\r\n' : '\n';
+            let indent = UndeclaredVariable.createIndent(document, 1);
+            let eol = UndeclaredVariable.createEolString(document);
             edit.insert(document.uri, document.positionAt(domainNode.getEnd()), eol + indent + `(:requirements ${requirementName})`);
         }
 

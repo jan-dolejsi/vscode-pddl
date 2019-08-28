@@ -8,6 +8,7 @@ import * as assert from 'assert';
 import { PddlSyntaxTreeBuilder } from '../src/PddlSyntaxTreeBuilder';
 import { PddlTokenType } from '../src/PddlTokenizer';
 import { PddlSyntaxNode } from '../src/PddlSyntaxNode';
+import { parseParameters } from '../src/VariablesParser';
 
 describe('PddlSyntaxTree', () => {
 
@@ -405,6 +406,148 @@ describe('PddlSyntaxNode', () => {
         });
     });
 
+    describe('#findAncestor()', () => {
+        it('returns null for non-existent ancestor', () => {
+            // GIVEN
+            let originalPddl = `(:process :parameters(?p - some-type))`;
+            let paramNode = new PddlSyntaxTreeBuilder(originalPddl).getTree().getNodeAt(originalPddl.indexOf('?p'));
+
+            // WHEN
+            let actual = paramNode.findAncestor(PddlTokenType.OpenBracketOperator, /^\(\s*:action$/);
+
+            // THEN
+            assert.strictEqual(actual, null);
+        });
+
+        it('finds ancestor', () => {
+            // GIVEN
+            let originalPddl = `(:action :parameters(?p - some-type))`;
+            let paramNode = new PddlSyntaxTreeBuilder(originalPddl).getTree().getNodeAt(originalPddl.indexOf('?p'));
+
+            // WHEN
+            let actual = paramNode.findAncestor(PddlTokenType.OpenBracketOperator, /^\(\s*:action$/);
+
+            // THEN
+            assert.ok(actual);
+            assert.strictEqual(actual.getToken().tokenText, '(:action');
+        });
+    });
+
+    describe('#findParametrisableScope()', () => {
+        it('returns null for non-existent scope', () => {
+            // GIVEN
+            let originalPddl = `(:something :parameters(?p - some-type))`;
+            let paramNode = new PddlSyntaxTreeBuilder(originalPddl).getTree().getNodeAt(originalPddl.indexOf('?p')+1);
+
+            // WHEN
+            let actual = paramNode.findParametrisableScope('p');
+
+            // THEN
+            assert.ok(actual);
+            assert.strictEqual(actual.getToken().type, PddlTokenType.OpenBracket);
+        });
+
+        it('finds action ancestor', () => {
+            // GIVEN
+            let originalPddl = `(:action :parameters(?p - some-type))`;
+            let paramNode = new PddlSyntaxTreeBuilder(originalPddl).getTree().getNodeAt(originalPddl.indexOf('?p')+1);
+
+            // WHEN
+            let actual = paramNode.findParametrisableScope('p');
+
+            // THEN
+            assert.ok(actual);
+            assert.strictEqual(actual.getToken().tokenText, '(:action');
+        });
+        
+        it('finds durative action ancestor', () => {
+            // GIVEN
+            let originalPddl = `(:durative-action :parameters(?p - some-type))`;
+            let paramNode = new PddlSyntaxTreeBuilder(originalPddl).getTree().getNodeAt(originalPddl.indexOf('?p')+1);
+
+            // WHEN
+            let actual = paramNode.findParametrisableScope('p');
+
+            // THEN
+            assert.ok(actual);
+            assert.strictEqual(actual.getToken().tokenText, '(:durative-action');
+        });
+        
+        it('finds `forall` ancestor', () => {
+            // GIVEN
+            let originalPddl = `(forall (?p - some-type))`;
+            let paramNode = new PddlSyntaxTreeBuilder(originalPddl).getTree().getNodeAt(originalPddl.indexOf('?p')+1);
+
+            // WHEN
+            let actual = paramNode.findParametrisableScope('p');
+
+            // THEN
+            assert.ok(actual);
+            assert.strictEqual(actual.getToken().tokenText, '(forall');
+        });
+
+        it('finds `:derived` ancestor', () => {
+            // GIVEN
+            let originalPddl = `(:derived (notP ?p1 - type1)
+            (not (p ?p1))
+        )`;
+            let paramNode = new PddlSyntaxTreeBuilder(originalPddl).getTree().getNodeAt(originalPddl.lastIndexOf('?p1')+1);
+
+            // WHEN
+            let actual = paramNode.findParametrisableScope('p1');
+
+            // THEN
+            assert.ok(actual);
+            assert.strictEqual(actual.getToken().tokenText, '(:derived');
+        });
+
+        it('finds `:action`, although it is nesting `forall` ancestor', () => {
+            // GIVEN
+            let originalPddl = `(:action :parameters (?p1 - some-type) (forall (?p2 - some-type) (p ?p1 ?p2))`;
+            let paramNode = new PddlSyntaxTreeBuilder(originalPddl).getTree().getNodeAt(originalPddl.lastIndexOf('?p1')+1);
+
+            // WHEN
+            let actual = paramNode.findParametrisableScope('p1');
+
+            // THEN
+            assert.ok(actual);
+            assert.strictEqual(actual.getToken().tokenText, '(:action');
+        });
+    });
+
+    describe('#getParameterDefinition()', () => {
+        it('finds parameter definition in (:action', () => {
+            // GIVEN
+            let originalPddl = `(:action :parameters (?p1 - some-type) (forall (?p2 - some-type) (p ?p1 ?p2))`;
+            let paramNode = new PddlSyntaxTreeBuilder(originalPddl).getTree().getNodeAt(originalPddl.lastIndexOf('?p1')+1);
+
+            const parameterName = "p1";
+            // WHEN
+            let scope = paramNode.findParametrisableScope(parameterName);
+            let parameterDefinitionNode = scope && scope.getParameterDefinition();
+            let parameter = parseParameters(parameterDefinitionNode.getText()).find(p => p.name===parameterName);
+    
+            // THEN
+            assert.ok(parameter);
+            assert.strictEqual(parameter.name, parameterName);
+            assert.strictEqual(parameter.type, 'some-type');
+        });
+    });
+    
+    describe('#expand()', () => {
+        it('predicate name expands to include brackets', () => {
+            // GIVEN
+            let originalPddl = `(and (p ?p1 ?p2))`;
+            let paramNode = new PddlSyntaxTreeBuilder(originalPddl).getTree().getNodeAt(originalPddl.indexOf('?p1')+1);
+
+            // WHEN
+            let actual = paramNode.expand();
+
+            // THEN
+            assert.ok(actual);
+            assert.strictEqual(actual.getText(), '(p ?p1 ?p2)');
+        });
+    });
 });
 
 describe('PddlBracketNode', () => {

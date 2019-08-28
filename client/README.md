@@ -74,11 +74,15 @@ Use the VS Code keyboard shortcut _Ctrl + Shift + O_ to open up the symbol listi
 
 ![symbol_listing](https://raw.githubusercontent.com/wiki/jan-dolejsi/vscode-pddl/img/PDDL_symbol_listing.gif)
 
-### Global predicate/function/type renaming
+### Global predicate/function/type/parameter renaming
 
 Put cursor into a predicate, function or type name and press _F2_ to rename its appearances in the domain file and all associated problem files currently open in the editor.
 
 ![symbol_renaming](https://raw.githubusercontent.com/wiki/jan-dolejsi/vscode-pddl/img/PDDL_symbol_renaming.gif)
+
+It is also possible to rename a `?<parameter>` name within a parametrised scope e.g. action/process/effect/derived predicate or function.
+
+![Parameter renaming](https://raw.githubusercontent.com/wiki/jan-dolejsi/vscode-pddl/img/PDDL_parameter_type_renaming.gif)
 
 ### Auto-completion
 
@@ -100,11 +104,21 @@ PDDL parser can be configured to run in the background and draw attention to syn
 
 To learn more about how to configure the extension to work with one of the parsers available or even your own, read this [wiki page](https://github.com/jan-dolejsi/vscode-pddl/wiki/Configuring-the-PDDL-parser).
 
+#### Auto-fixing PDDL parser warning
+
+The VAL PDDL parser produces some warnings, that could be automatically fixed with a code action. Code actions are presented in the user interface by a light bulb. For example missing requirements could be automatically inserted:
+
+![Missing requirements and unused predicates/functions warnings](https://raw.githubusercontent.com/wiki/jan-dolejsi/vscode-pddl/img/PDDL_missing_requirements_unused_predicates.gif)
+
+Undeclared predicates and functions may also be automatically declared:
+
+![Undeclared predicates/functions code action](https://raw.githubusercontent.com/wiki/jan-dolejsi/vscode-pddl/img/PDDL_undeclared_predicate_function.gif)
+
 ### Run the planner and visualize plans
 
 The planner can be invoked in the context of a currently edited PDDL file. There are two ways how to do that via the user interface.
 
-* Type `Ctrl + Shift + P` and type _plan_ to filter the list of available commands. The _PDDL: Run the planner and visualize the plan_ command should be visible.
+* Type `Ctrl + Shift + P` or `F1` and type _plan_ to filter the list of available commands. The _PDDL: Run the planner and visualize the plan_ command should be visible.
 * Right click on the PDDL file and select  _PDDL: Run the planner and visualize the plan_
 * Alternatively you can set up a keyboard shortcut such as `Alt + P` to be associated with the above command (see VS Code documentation for that)
 
@@ -323,9 +337,9 @@ The _PDDL: Normalize and evaluate plan_ command exposes in isolation the transfo
 
 A .plan file can be generated using an option in the Plan Visualization menu (&#x2630;), or using a _PDDL: Export plan to a file..._ command.
 
-All .plan files have a context menu option _PDDL: Validate plan_, which requires the `validate` executable path to be configured in the _pddl.validatorPath_ setting. See [VAL](https://github.com/KCL-Planning/VAL) for more details.
+All .plan files have a context menu option _PDDL: Validate plan_, which requires the `Validate` executable path to be configured in the _pddl.validatorPath_ setting. See [VAL](https://github.com/KCL-Planning/VAL) for more details.
 
-Sometimes it is more convenient to create a desired plan by hand and using the `validate` tool to find out what is wrong in the domain model. While manually modifying the .plan file, all parsing and validation problems are displayed in the Problems panel of VS Code as long as a corresponding problem and domain files (located in the same folder) are open in the editor and the `validate` executable location is configured via the _pddl.validatorPath_ setting.
+Sometimes it is more convenient to create a desired plan by hand and using the `Validate` tool to find out what is wrong in the domain model. While manually modifying the .plan file, all parsing and validation problems are displayed in the Problems panel of VS Code as long as a corresponding problem and domain files (located in the same folder) are open in the editor and the `Validate` executable location is configured via the _pddl.validatorPath_ setting.
 
 ![Plan validation](https://raw.githubusercontent.com/wiki/jan-dolejsi/vscode-pddl/img/PDDL_plan_validation.gif)
 

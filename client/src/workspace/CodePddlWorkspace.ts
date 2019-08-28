@@ -31,8 +31,8 @@ export class CodePddlWorkspace {
     }
 
     static getInstanceForTestingOnly(pddlWorkspace: PddlWorkspace): CodePddlWorkspace {
-        return new CodePddlWorkspace(pddlWorkspace, null, null);        
-	}
+        return new CodePddlWorkspace(pddlWorkspace, null, null);
+    }
 
     upsertFile(document: TextDocument, force: boolean = false): Promise<FileInfo> {
         return this.pddlWorkspace.upsertFile(document.uri.toString(),
@@ -54,7 +54,24 @@ export class CodePddlWorkspace {
 
     async removeFile(textDoc: TextDocument): Promise<boolean> {
         let fileExists = await afs.exists(textDoc.fileName);
-        return this.pddlWorkspace.removeFile(textDoc.uri.toString(), { removeAllReferences: !fileExists});
+        return this.pddlWorkspace.removeFile(textDoc.uri.toString(), { removeAllReferences: !fileExists });
+    }
+
+    getDomainFilesFor(problemFileInfo: ProblemInfo): DomainInfo[] {
+        let domainFiles = this.pddlWorkspace.getDomainFilesFor(problemFileInfo);
+
+        return domainFiles
+            .filter(domainInfo => this.isRealFile(domainInfo));
+    }
+
+    private static readonly GIT_SCHEME = "git";
+
+    private isRealFile(domainInfo: DomainInfo): boolean {
+        return Uri.parse(domainInfo.fileUri).scheme !== CodePddlWorkspace.GIT_SCHEME;
+    }
+
+    static isRealDocument(document: TextDocument): boolean {
+        return document.uri.scheme !== this.GIT_SCHEME;
     }
 
     setEpsilon(epsilon: number): void {
@@ -67,25 +84,26 @@ export class CodePddlWorkspace {
 }
 
 function subscribeToWorkspace(pddlWorkspace: CodePddlWorkspace, pddlConfiguration: PddlConfiguration, context: ExtensionContext): void {
-	// add all open documents
-	workspace.textDocuments
-		.filter(textDoc => isAnyPddl(textDoc))
-		.forEach(textDoc => {
-			pddlWorkspace.upsertFile(textDoc);
-		});
+    // add all open documents
+    workspace.textDocuments
+        .filter(textDoc => isAnyPddl(textDoc))
+        .filter(textDoc => CodePddlWorkspace.isRealDocument(textDoc))
+        .forEach(textDoc => {
+            pddlWorkspace.upsertFile(textDoc);
+        });
 
-	// subscribe to document opening event
-	context.subscriptions.push(workspace.onDidOpenTextDocument(textDoc => {
-		if (isAnyPddl(textDoc)) {
-			pddlWorkspace.upsertFile(textDoc);
-		}
-	}));
+    // subscribe to document opening event
+    context.subscriptions.push(workspace.onDidOpenTextDocument(textDoc => {
+        if (isAnyPddl(textDoc) && CodePddlWorkspace.isRealDocument(textDoc)) {
+            pddlWorkspace.upsertFile(textDoc);
+        }
+    }));
 
-	// subscribe to document changing event
-	context.subscriptions.push(workspace.onDidChangeTextDocument(docEvent => {
-		if (isAnyPddl(docEvent.document)) {
-			pddlWorkspace.upsertFile(docEvent.document);
-		} else {
+    // subscribe to document changing event
+    context.subscriptions.push(workspace.onDidChangeTextDocument(docEvent => {
+        if (isAnyPddl(docEvent.document) && CodePddlWorkspace.isRealDocument(docEvent.document)) {
+            pddlWorkspace.upsertFile(docEvent.document);
+        } else {
             // for all problem files that pre-parse using data from this updated document, re-validate
             pddlWorkspace.pddlWorkspace.getAllFilesIf<ProblemInfo>(f => f.isProblem())
 
@@ -96,23 +114,23 @@ function subscribeToWorkspace(pddlWorkspace: CodePddlWorkspace, pddlConfiguratio
                     pddlWorkspace.upsertFile(problemFile, true);
                 });
         }
-	}));
+    }));
 
-	// subscribe to document closing event
-	context.subscriptions.push(workspace.onDidCloseTextDocument(async (textDoc) => {
-		if (isAnyPddl(textDoc)) { await pddlWorkspace.removeFile(textDoc); }
-	}));
+    // subscribe to document closing event
+    context.subscriptions.push(workspace.onDidCloseTextDocument(async (textDoc) => {
+        if (isAnyPddl(textDoc) && CodePddlWorkspace.isRealDocument(textDoc)) { await pddlWorkspace.removeFile(textDoc); }
+    }));
 
-	workspace.onDidChangeConfiguration(_ => {
+    workspace.onDidChangeConfiguration(_ => {
         if (pddlConfiguration) {
             pddlWorkspace.setEpsilon(pddlConfiguration.getEpsilonTimeStep());
         }
-	});
+    });
 }
 
 async function revealAction(domainInfo: DomainInfo, actionName: String) {
-	let document = await workspace.openTextDocument(Uri.parse(domainInfo.fileUri));
-	let actionFound = domainInfo.actions.find(a => a.name.toLowerCase() === actionName.toLowerCase());
+    let document = await workspace.openTextDocument(Uri.parse(domainInfo.fileUri));
+    let actionFound = domainInfo.actions.find(a => a.name.toLowerCase() === actionName.toLowerCase());
     let actionRange = actionFound ? toRange(actionFound.location) : null;
-	window.showTextDocument(document.uri, { preserveFocus: true, selection: actionRange, preview: true });
+    window.showTextDocument(document.uri, { preserveFocus: true, selection: actionRange, preview: true });
 }

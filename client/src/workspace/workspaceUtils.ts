@@ -11,6 +11,7 @@ import { PddlLanguage, FileInfo } from '../../../common/src/FileInfo';
 import { HappeningsInfo } from "../../../common/src/HappeningsInfo";
 import { PddlWorkspace } from '../../../common/src/PddlWorkspace';
 import { basename, dirname } from 'path';
+import { CodePddlWorkspace } from './CodePddlWorkspace';
 
 export function isAnyPddl(doc: TextDocument): boolean {
     return isPddl(doc) || isPlan(doc) || isHappenings(doc);
@@ -32,7 +33,7 @@ export function toLanguage(doc: TextDocument): PddlLanguage {
     return toLanguageFromId(doc.languageId);
 }
 
-export function getDomainFileForProblem(problemFile: ProblemInfo, pddlWorkspace: PddlWorkspace): DomainInfo {
+export function getDomainFileForProblem(problemFile: ProblemInfo, pddlWorkspace: CodePddlWorkspace): DomainInfo {
     // find domain files in the same folder that match the problem's domain name
     let domainFiles = pddlWorkspace.getDomainFilesFor(problemFile);
 

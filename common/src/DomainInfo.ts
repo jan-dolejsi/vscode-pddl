@@ -151,7 +151,7 @@ export class DomainInfo extends FileInfo {
         }
         let variableNameNode = nonWhiteSpaceChildren[0];
         return variableNameNode.getToken().type === PddlTokenType.Other
-            && variableNameNode.getToken().tokenText === variable.name;
+            && variableNameNode.getToken().tokenText.toLowerCase() === variable.name.toLowerCase();
     }
 }
 

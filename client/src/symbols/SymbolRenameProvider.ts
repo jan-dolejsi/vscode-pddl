@@ -5,7 +5,7 @@
 'use strict';
 
 import { RenameProvider, TextDocument, Position, CancellationToken, WorkspaceEdit, workspace, Uri, Range } from 'vscode';
-import { SymbolUtils, SymbolInfo, VariableInfo, TypeInfo } from './SymbolUtils';
+import { SymbolUtils, SymbolInfo, VariableInfo, TypeInfo, ParameterInfo } from './SymbolUtils';
 import { CodePddlWorkspace } from '../workspace/CodePddlWorkspace';
 
 export class SymbolRenameProvider implements RenameProvider {
@@ -58,7 +58,8 @@ export class SymbolRenameProvider implements RenameProvider {
 
     private canRename(symbolInfo: SymbolInfo): boolean {
         return symbolInfo instanceof VariableInfo
-            || symbolInfo instanceof TypeInfo;
+            || symbolInfo instanceof TypeInfo
+            || symbolInfo instanceof ParameterInfo;
     }
 
     async prepareRename(document: TextDocument, position: Position, token: CancellationToken): Promise<Range>{

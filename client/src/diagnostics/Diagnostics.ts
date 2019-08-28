@@ -24,31 +24,27 @@ import { HappeningsValidator } from './HappeningsValidator';
 import { HappeningsInfo } from '../HappeningsInfo';
 import { NoDomainAssociated, getDomainFileForProblem } from '../workspace/workspaceUtils';
 import { isHttp } from '../utils';
+import { CodePddlWorkspace } from '../workspace/CodePddlWorkspace';
 
 /**
  * Listens to updates to PDDL files and performs detailed parsing and syntactical analysis and report problems as `Diagnostics`.
  */
 export class Diagnostics extends Disposable {
 
-    pddlWorkspace: PddlWorkspace;
-    pddlConfiguration: PddlConfiguration;
     timeout: NodeJS.Timer;
     validator: Validator;
-    diagnosticCollection: DiagnosticCollection;
     pddlParserSettings: PDDLParserSettings;
 
     private defaultTimerDelayInSeconds = 3;
 
-    constructor(pddlWorkspace: PddlWorkspace, diagnosticCollection: DiagnosticCollection, configuration: PddlConfiguration,
-        private planValidator: PlanValidator, private happeningsValidator: HappeningsValidator) {
-        super(() => this.pddlWorkspace.removeAllListeners()); //todo: this is probably too harsh
-        this.diagnosticCollection = diagnosticCollection;
-        this.pddlWorkspace = pddlWorkspace;
-        this.pddlConfiguration = configuration;
-        this.pddlParserSettings = configuration.getParserSettings();
+    constructor(private readonly codePddlWorkspace: CodePddlWorkspace, private readonly diagnosticCollection: DiagnosticCollection, 
+        private readonly pddlConfiguration: PddlConfiguration,
+        private readonly planValidator: PlanValidator, private readonly happeningsValidator: HappeningsValidator) {
+        super(() => this.codePddlWorkspace.pddlWorkspace.removeAllListeners()); //todo: this is probably too harsh
+        this.pddlParserSettings = pddlConfiguration.getParserSettings();
 
-        this.pddlWorkspace.on(PddlWorkspace.UPDATED, _ => this.scheduleValidation());
-        this.pddlWorkspace.on(PddlWorkspace.REMOVING, (doc: FileInfo) => this.clearDiagnostics(doc.fileUri));
+        this.codePddlWorkspace.pddlWorkspace.on(PddlWorkspace.UPDATED, _ => this.scheduleValidation());
+        this.codePddlWorkspace.pddlWorkspace.on(PddlWorkspace.REMOVING, (doc: FileInfo) => this.clearDiagnostics(doc.fileUri));
 
         workspace.onDidChangeConfiguration(e => {
             if (e.affectsConfiguration(PDDL_PARSER)
@@ -70,13 +66,13 @@ export class Diagnostics extends Disposable {
 
     validateAllDirty(): void {
         // find all dirty unknown files
-        let dirtyUnknowns = this.pddlWorkspace.getAllFilesIf(fileInfo => fileInfo.isUnknownPddl() && fileInfo.getStatus() === FileStatus.Parsed);
+        let dirtyUnknowns = this.codePddlWorkspace.pddlWorkspace.getAllFilesIf(fileInfo => fileInfo.isUnknownPddl() && fileInfo.getStatus() === FileStatus.Parsed);
 
         // validate unknown files (those where the header does not parse)
         dirtyUnknowns.forEach(file => this.validateUnknownFile(file));
 
         // find all dirty domains
-        let dirtyDomains = this.pddlWorkspace.getAllFilesIf(fileInfo => fileInfo.isDomain() && fileInfo.getStatus() === FileStatus.Parsed);
+        let dirtyDomains = this.codePddlWorkspace.pddlWorkspace.getAllFilesIf(fileInfo => fileInfo.isDomain() && fileInfo.getStatus() === FileStatus.Parsed);
 
         if (dirtyDomains.length > 0) {
             let firstDirtyDomain = <DomainInfo>dirtyDomains[0];
@@ -87,7 +83,7 @@ export class Diagnostics extends Disposable {
         }
 
         // find all dirty problems
-        let dirtyProblems = this.pddlWorkspace.getAllFilesIf(fileInfo => fileInfo.isProblem() && fileInfo.getStatus() === FileStatus.Parsed);
+        let dirtyProblems = this.codePddlWorkspace.pddlWorkspace.getAllFilesIf(fileInfo => fileInfo.isProblem() && fileInfo.getStatus() === FileStatus.Parsed);
 
         if (dirtyProblems.length > 0) {
             let firstDirtyProblem = <ProblemInfo>dirtyProblems[0];
@@ -99,7 +95,7 @@ export class Diagnostics extends Disposable {
         }
 
         // find all dirty plans
-        let dirtyPlans = this.pddlWorkspace.getAllFilesIf(fileInfo => fileInfo.isPlan() && fileInfo.getStatus() === FileStatus.Parsed);
+        let dirtyPlans = this.codePddlWorkspace.pddlWorkspace.getAllFilesIf(fileInfo => fileInfo.isPlan() && fileInfo.getStatus() === FileStatus.Parsed);
 
         if (dirtyPlans.length > 0) {
             let firstDirtyPlan = <PlanInfo>dirtyPlans[0];
@@ -111,7 +107,7 @@ export class Diagnostics extends Disposable {
         }
 
         // find all dirty happenings
-        let dirtyHappenings = this.pddlWorkspace.getAllFilesIf(fileInfo => fileInfo.isHappenings() && fileInfo.getStatus() === FileStatus.Parsed);
+        let dirtyHappenings = this.codePddlWorkspace.pddlWorkspace.getAllFilesIf(fileInfo => fileInfo.isHappenings() && fileInfo.getStatus() === FileStatus.Parsed);
 
         if (dirtyHappenings.length > 0) {
             let firstDirtyHappenings = <HappeningsInfo>dirtyHappenings[0];
@@ -130,7 +126,7 @@ export class Diagnostics extends Disposable {
 
     revalidateAll(): void {
         // mark all files as dirty
-        this.pddlWorkspace.folders.forEach(folder => {
+        this.codePddlWorkspace.pddlWorkspace.folders.forEach(folder => {
             folder.files
                 .forEach(f => {
                     if (f.getStatus() !== FileStatus.Dirty) { f.setStatus(FileStatus.Parsed); }
@@ -143,7 +139,7 @@ export class Diagnostics extends Disposable {
     }
 
     validatePddlDocumentByUri(fileUri: string, scheduleFurtherValidation: boolean): void {
-        let fileInfo = this.pddlWorkspace.getFileInfo(fileUri);
+        let fileInfo = this.codePddlWorkspace.pddlWorkspace.getFileInfo(fileUri);
         this.validatePddlDocument(fileInfo, scheduleFurtherValidation);
     }
 
@@ -209,7 +205,7 @@ export class Diagnostics extends Disposable {
         if (fileInfo.isDomain()) {
             let domainInfo = <DomainInfo>fileInfo;
 
-            let problemFiles = this.pddlWorkspace.getProblemFiles(domainInfo);
+            let problemFiles = this.codePddlWorkspace.pddlWorkspace.getProblemFiles(domainInfo);
 
             this.validateDomainAndProblems(domainInfo, problemFiles, scheduleFurtherValidation);
         }
@@ -296,7 +292,7 @@ export class Diagnostics extends Disposable {
 
     getDomainFileFor(problemFile: ProblemInfo): DomainInfo {
         try {
-            return getDomainFileForProblem(problemFile, this.pddlWorkspace);
+            return getDomainFileForProblem(problemFile, this.codePddlWorkspace);
         }
         catch (err) {
             if (err instanceof NoDomainAssociated) {

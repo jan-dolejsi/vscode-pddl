@@ -12,6 +12,8 @@ import { Action } from '../../../common/src/DomainInfo';
 import { Variable } from '../../../common/src/FileInfo';
 import { PddlRange } from '../../../common/src/DocumentPositionResolver';
 import { CodePddlWorkspace } from '../workspace/CodePddlWorkspace';
+import { PddlSyntaxNode } from '../../../common/src/PddlSyntaxNode';
+import { PddlTokenType } from '../../../common/src/PddlTokenizer';
 
 export class SymbolUtils {
     constructor(public workspace: CodePddlWorkspace) { }
@@ -69,6 +71,23 @@ export class SymbolUtils {
                 return new TypeInfo(
                     this.createHover(symbol.range, 'Type', symbol.name, [inheritsFromText]),
                     new Location(this.toUri(domainInfo.fileUri), SymbolUtils.toRange(domainInfo.getTypeLocation(symbol.name))),
+                    symbol.name
+                );
+            }
+        }
+        else if (symbol.isPrefixedBy('?')) {
+            if (fileInfo.isDomain()) {
+                let parameterNode = domainInfo.syntaxTree.getNodeAt(document.offsetAt(symbol.range.start));
+
+                let scopeNode: PddlSyntaxNode = parameterNode.findParametrisableScope(symbol.name);
+                let indexOfParamDeclaration = scopeNode ?
+                    scopeNode.getText().indexOf('?' + symbol.name) :
+                    parameterNode.getStart();
+
+                return new ParameterInfo(
+                    this.createHover(symbol.range, 'Parameter', parameterNode.getToken().tokenText, []),
+                    new Location(document.uri, document.positionAt(indexOfParamDeclaration)),
+                    scopeNode,
                     symbol.name
                 );
             }
@@ -143,7 +162,7 @@ export class SymbolUtils {
     createSymbolMarkdownDocumentation(title: string, symbolName: string, documentation: string[]) {
         let markdownString = new MarkdownString(title ? `**${title}**` : undefined);
         markdownString.appendCodeblock(symbolName, 'pddl');
-        documentation.forEach(d => markdownString.appendText(END_LINE+END_LINE).appendMarkdown(d));
+        documentation.forEach(d => markdownString.appendText(END_LINE + END_LINE).appendMarkdown(d));
         return markdownString;
     }
 
@@ -159,7 +178,7 @@ export class SymbolUtils {
             action.parameters.forEach(p => doc.appendMarkdown('* `' + p.toPddlString() + '`' + END_LINE));
         }
 
-        action.getDocumentation().forEach(d => doc.appendText(END_LINE+END_LINE).appendMarkdown(d));
+        action.getDocumentation().forEach(d => doc.appendText(END_LINE + END_LINE).appendMarkdown(d));
 
         return new Hover(doc, range);
     }
@@ -207,6 +226,17 @@ export class SymbolUtils {
                 p.getTypeReferences(typeName)
                     .forEach(range => locations.push(new Location(this.toUri(p.fileUri), SymbolUtils.toRange(range))))
             );
+        } else if (symbol instanceof ParameterInfo) {
+            let parameterInfo = <ParameterInfo>symbol;
+
+            parameterInfo.scopeNode.getChildrenRecursively(
+                node => node.isType(PddlTokenType.Parameter) && node.getToken().tokenText === '?' + symbol.name,
+                node => locations.push(new Location(document.uri, SymbolUtils.nodeToRange(document, node)))
+            );
+
+            if (!includeDeclaration) {
+                locations = locations.slice(1);
+            }
         }
 
         return locations;
@@ -220,6 +250,10 @@ export class SymbolUtils {
 
     static toRange(pddlRange: PddlRange): Range {
         return new Range(pddlRange.startLine, pddlRange.startCharacter, pddlRange.endLine, pddlRange.endCharacter);
+    }
+
+    static nodeToRange(document: TextDocument, node: PddlSyntaxNode): Range {
+        return new Range(document.positionAt(node.getStart()), document.positionAt(node.getEnd()));
     }
 
     static toLocation(document: TextDocument, pddlRange: PddlRange): Location {
@@ -246,7 +280,12 @@ export class Symbol {
 }
 
 export class SymbolInfo {
-    constructor(public hover: Hover, public location: Location) { }
+    /**
+     * Creates symbol information.
+     * @param hover hover info
+     * @param location location of the symbol's declaration
+     */
+    constructor(public readonly hover: Hover, public readonly location: Location) { }
 }
 
 export class VariableInfo extends SymbolInfo {
@@ -263,6 +302,13 @@ export class TypeInfo extends SymbolInfo {
 
 export class ActionInfo extends SymbolInfo {
     constructor(public hover: Hover, public location: Location, public action: Action) {
+        super(hover, location);
+    }
+}
+
+export class ParameterInfo extends SymbolInfo {
+    constructor(public hover: Hover, public location: Location,
+        public readonly scopeNode: PddlSyntaxNode, public readonly name: string) {
         super(hover, location);
     }
 }
