@@ -5,7 +5,7 @@
 
 import { PddlSyntaxNode } from "./PddlSyntaxNode";
 import { Variable, Parameter } from "./FileInfo";
-import { PddlTokenType } from "./PddlTokenizer";
+import { PddlTokenType, isOpenBracket } from "./PddlTokenizer";
 import { PddlRange, DocumentPositionResolver } from "./DocumentPositionResolver";
 
 /** Parses the `:predicates` and `:functions` section. */
@@ -46,7 +46,7 @@ export class VariablesParser {
             else {
                 // reset the EOL counter as this is not a vertical whitespace
                 this.consecutiveVerticalWhitespaceCount = 0;
-                if (node.getToken().type === PddlTokenType.OpenBracket) {
+                if (isOpenBracket(node.getToken())) {
                     this.variableNodeEncountered = true;
                 }
                 this.currentVariableNodes.push(node);
@@ -65,16 +65,16 @@ export class VariablesParser {
 
         for (const node of chunk) {
 
-            if (node.getToken().type === PddlTokenType.Comment) {
+            if (node.isType(PddlTokenType.Comment)) {
                 let indexOfSemicolon = node.getText().indexOf(';');
                 if (indexOfSemicolon > -1) {
                     let textAfterSemicolon = node.getText().substr(indexOfSemicolon + 1).trim();
                     documentation.push(textAfterSemicolon);
                 }
             }
-            else if (node.getToken().type === PddlTokenType.OpenBracket) {
+            else if (isOpenBracket(node.getToken())) {
                 variableNode = node;
-                let fullSymbolName = node.getNestedText();
+                let fullSymbolName = node.getText().replace(/[\(\)]/g, '');
                 let parameters = parseParameters(fullSymbolName);
                 variable = new Variable(fullSymbolName, parameters);
             }

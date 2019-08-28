@@ -26,6 +26,20 @@ describe('VariableParser', () => {
             assert.deepStrictEqual(variables[0].getLocation(), new PddlRange(0, 0, 0, predicatePddl.length), 'range');
         });
 
+        it('finds "at" predicate', () => {
+            // GIVEN
+            let predicatePddl = `(at)`;
+            let predicatesNode = new PddlSyntaxTreeBuilder(predicatePddl).getTree().getRootNode();
+            let positionResolver = new SimpleDocumentPositionResolver(predicatePddl);
+
+            // WHEN
+            let variables = new VariablesParser(predicatesNode, positionResolver).getVariables();
+
+            assert.equal(variables.length, 1, 'there should be 1 predicate');
+            assert.equal(variables[0].getFullName(), "at", 'the predicate name should be...');
+            assert.deepStrictEqual(variables[0].getLocation(), new PddlRange(0, 0, 0, predicatePddl.length), 'range');
+        });
+
         it('finds one predicate with one parameter', () => {
             // GIVEN
             let predicatePddl = `(said_hello ?w - world)`;
