@@ -1,5 +1,10 @@
 # PDDL support - What's new?
 
+## [2.14.1] Fixes
+
+- added `:object-fluent` requirement to the syntax highlighter
+- support for plans in an XML format
+
 ## [2.14.0] Parameter [F2] renaming and undeclared predicate/function auto-fix
 
 ### Features
@@ -766,7 +771,8 @@ Note for open source contributors: all notable changes to the "pddl" extension w
 
 Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
 
-[Unreleased]: https://github.com/jan-dolejsi/vscode-pddl/compare/v2.14.0...HEAD
+[Unreleased]: https://github.com/jan-dolejsi/vscode-pddl/compare/v2.14.1...HEAD
+[2.14.1]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.14.0...v2.14.1
 [2.14.0]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.13.1...v2.14.0
 [2.13.1]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.13.0...v2.13.1
 [2.13.0]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.12.2...v2.13.0

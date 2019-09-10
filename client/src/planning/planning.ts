@@ -231,6 +231,15 @@ export class Planning implements PlannerResponseHandler {
             return;
         }
 
+        let workingDirectory = this.establishWorkingDirectory(activeDocument, problemFileInfo, domainFileInfo);
+        await this.planExplicit(domainFileInfo, problemFileInfo, workingDirectory);
+    }
+
+    private readonly _onPlansFound = new EventEmitter<PlanningResult>();
+    public onPlansFound: Event<PlanningResult> = this._onPlansFound.event;
+    private progressUpdater: ElapsedTimeProgressUpdater;
+
+    private establishWorkingDirectory(activeDocument: import("vscode").TextDocument, problemFileInfo: ProblemInfo, domainFileInfo: DomainInfo) {
         let workingDirectory = "";
         if (activeDocument.uri.scheme === "file") {
             workingDirectory = dirname(activeDocument.fileName);
@@ -241,12 +250,8 @@ export class Planning implements PlannerResponseHandler {
         else if (Uri.parse(domainFileInfo.fileUri).scheme === "file") {
             workingDirectory = dirname(Uri.parse(domainFileInfo.fileUri).fsPath);
         }
-        await this.planExplicit(domainFileInfo, problemFileInfo, workingDirectory);
+        return workingDirectory;
     }
-
-    private readonly _onPlansFound = new EventEmitter<PlanningResult>();
-    public onPlansFound: Event<PlanningResult> = this._onPlansFound.event;
-    private progressUpdater: ElapsedTimeProgressUpdater;
 
     private async parseDomain(domainFileUri: Uri): Promise<DomainInfo> {
         let fileInfo = await this.codePddlWorkspace.upsertAndParseFile(await workspace.openTextDocument(domainFileUri));

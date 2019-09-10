@@ -8,7 +8,7 @@ import { Plan } from './Plan';
 import { PlanStep } from './PlanStep';
 import { ProblemInfo } from './parser';
 import { DomainInfo } from './DomainInfo';
-
+ 
 /**
  * Parses plan in the PDDL form incrementally - line/buffer at a time.
  */
@@ -21,6 +21,8 @@ export class PddlPlanParser {
 
     private planBuilder: PlanBuilder;
     private endOfBufferToBeParsedNextTime = '';
+
+    private xmlPlanBuilder: XmlPlanBuilder;
 
     constructor(private domain: DomainInfo, private problem: ProblemInfo, public readonly options: PddlPlanParserOptions, private onPlanReady?: (plans: Plan[]) => void) {
         this.planBuilder = new PlanBuilder(options.epsilon);
@@ -50,6 +52,22 @@ export class PddlPlanParser {
      * @param outputLine one line of planner output
      */
     appendLine(outputLine: string): void {
+
+        if (this.xmlPlanBuilder || XmlPlanBuilder.isXmlStart(outputLine)) {
+            (this.xmlPlanBuilder || (this.xmlPlanBuilder = new XmlPlanBuilder())).appendLine(outputLine);
+            if (this.xmlPlanBuilder.isComplete()) {
+                // extract plan
+                this.xmlPlanBuilder.getPlanSteps()
+                    .then(steps => {
+                        steps.forEach(step => this.appendStep(step));
+                        this.xmlPlanBuilder = null;
+                        this.onPlanFinished();
+                    })
+                    .catch(reason => {
+                        console.log(reason);
+                    });
+            }
+        }
 
         let planStep = this.planBuilder.parse(outputLine, undefined);
         if (planStep) {
@@ -169,6 +187,52 @@ export class PlanBuilder {
 
     getMakespan(): number {
         return this.makespan;
+    }
+}
+
+class XmlPlanBuilder {
+
+    private xmlText = '';
+
+    static isXmlStart(outputLine: string): boolean {
+        return outputLine.match(/<\?xml /) !== null;
+    }
+
+    appendLine(outputLine: string) {
+        this.xmlText += outputLine;
+    }
+
+    isComplete(): boolean {
+        return this.xmlText.match(/<\/Plan>\s*$/) !== null;
+    }
+
+    async getPlanSteps(): Promise<PlanStep[]> {
+        const xml2js = require('xml2js');
+        const pxd = require('parse-xsd-duration');
+        let parser = new xml2js.Parser();
+        var plan: any;
+        try {
+            plan = await parser.parseStringPromise(this.xmlText);
+        } catch (err) {
+            console.log(err);
+            throw err;
+        }
+        const steps: PlanStep[] = [];
+        for (let happening of plan.Plan.Actions[0].OrderedHappening) {
+            //const happeningId = happening.HappeningID[0];
+            if (happening.Happening[0].ActionStart) {
+                const actionStart = happening.Happening[0].ActionStart[0];
+                const startTime = pxd.default(actionStart.ExpectedStartTime[0]);
+                const actionName = actionStart.Name[0];
+                const actionParameters = actionStart.Parameters 
+                    ? ' ' + actionStart.Parameters[0].Parameter.map((p: any) => p.Symbol[0]).join(' ') 
+                    : '';
+                const isDurative = actionStart.ExpectedDuration !== undefined;
+                const duration = isDurative ? pxd.default(actionStart.ExpectedDuration[0]) : null;
+                steps.push(new PlanStep(startTime, actionName + actionParameters, isDurative, duration, -1));
+            }
+        }
+        return steps;
     }
 }
 
