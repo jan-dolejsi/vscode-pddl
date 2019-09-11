@@ -29,6 +29,7 @@ export class ValStep extends EventEmitter {
     outputBuffer: string = '';
     happeningsConvertor: HappeningsToValStep;
     verbose = false;
+    static readonly quitInstruction = 'q\n';
 
     public static HAPPENING_EFFECTS_EVALUATED = Symbol("HAPPENING_EFFECTS_EVALUATED");
     public static NEW_HAPPENING_EFFECTS = Symbol("NEW_HAPPENING_EFFECTS");
@@ -38,6 +39,72 @@ export class ValStep extends EventEmitter {
         this.variableValues = problemInfo.getInits().map(v => TimedVariableValue.copy(v));
         this.initialValues = this.variableValues.map(v => TimedVariableValue.copy(v));
         this.happeningsConvertor = new HappeningsToValStep();
+    }
+
+    /**
+     * Executes series of plan happenings in one batch.
+     * @param valStepPath valstep path from configuration
+     * @param cwd current working directory
+     * @param happenings plan happenings to play
+     * @returns final variable values, or null in case the tool fails
+     */
+    async executeBatch(valStepPath: string, cwd: string, happenings: Happening[]): Promise<TimedVariableValue[]> {
+        this.valStepInput = this.convertHappeningsToValStepInput(happenings);
+        if (this.verbose) {
+            console.log("ValStep >>>" + this.valStepInput);
+        }
+
+        let args = await this.createValStepArgs();
+        let valStepsPath = await Util.toPddlFile('valSteps', this.valStepInput);
+        args = ['-i', valStepsPath, ...args];
+
+        const that = this;
+        
+        return new Promise<TimedVariableValue[]>(async (resolve, reject) => {
+            let child = process.spawn(valStepPath, args, { cwd: cwd });
+
+            let outputtingProblem = false;
+
+            child.stdout.on('data', output => {
+                let outputString = output.toString("utf8");
+                if (that.verbose) { console.log("ValStep <<<" + outputString); }
+                if (outputtingProblem) {
+                    that.outputBuffer += outputString;
+                } else if (outputString.indexOf('(define (problem') >= 0) {
+                    that.outputBuffer = outputString.substr(outputString.indexOf('(define (problem'));
+                    outputtingProblem = true;
+                }
+            });
+
+            child.on("error", error => 
+                reject(new ValStepError(error.message, this.domainInfo, this.problemInfo, this.valStepInput))
+            );
+
+            child.on("close", async (code, signal) => {
+                if (code !== 0) {
+                    console.log(`ValStep exit code: ${code}, signal: ${signal}.`);
+                }
+                let eventualProblem = that.outputBuffer;
+                let newValues = await that.extractInitialState(eventualProblem);
+                resolve(newValues);
+            });
+        });
+    }
+
+    private convertHappeningsToValStepInput(happenings: Happening[]): string {
+        let groupedHappenings = Util.groupBy(happenings, h => h.getTime());
+
+        var valStepInput = '';
+
+        for (const time of groupedHappenings.keys()) {
+            const happeningGroup = groupedHappenings.get(time);
+            let valSteps = this.happeningsConvertor.convert(happeningGroup);
+            valStepInput += valSteps;
+        }
+
+        valStepInput += ValStep.quitInstruction;
+
+        return valStepInput;
     }
 
     /**
@@ -102,12 +169,11 @@ export class ValStep extends EventEmitter {
                 }
             }
 
-            const quitInstruction = 'q\n';
-            this.valStepInput += quitInstruction;
+            this.valStepInput += ValStep.quitInstruction;
             if (this.verbose) {
-                console.log("ValStep >>> " + quitInstruction);
+                console.log("ValStep >>> " + ValStep.quitInstruction);
             }
-            child.stdin.write(quitInstruction);
+            child.stdin.write(ValStep.quitInstruction);
         });
 
     }

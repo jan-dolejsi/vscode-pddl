@@ -18,7 +18,7 @@ import { Plan, HelpfulAction } from '../../../common/src/Plan';
 import { Util } from '../../../common/src/util';
 import { PlanFunctionEvaluator } from './PlanFunctionEvaluator';
 import { PlanReportSettings } from './PlanReportSettings';
-import { VAL_STEP_PATH, CONF_PDDL, VALUE_SEQ_PATH } from '../configuration';
+import { VAL_STEP_PATH, CONF_PDDL, VALUE_SEQ_PATH, PLAN_REPORT_LINE_PLOT_GROUP_BY_LIFTED } from '../configuration';
 import * as afs from '../../../common/src/asyncfs';
 import { ValStepError, ValStep } from '../debugger/ValStep';
 import { ensureAbsolutePath } from '../utils';
@@ -38,8 +38,10 @@ export class PlanReportGenerator {
         let html = await this.generateHtml(plans, planId);
 
         let htmlFile = await Util.toFile("plan-report", ".html", html);
-
-        return env.openExternal(Uri.parse("file://" + htmlFile));
+        const opn = require('open');
+        const uri = Uri.parse("file://" + htmlFile);
+        opn(uri.toString());
+        return true; //env.openExternal(uri);
     }
 
     async generateHtml(plans: Plan[], planId: number = -1): Promise<string> {
@@ -183,7 +185,8 @@ ${objectsHtml}
         let lineChartScripts = '';
 
         if (!this.options.disableLinePlots && plan.domain && plan.problem) {
-            let evaluator = new PlanFunctionEvaluator(valueSeqPath, valStepPath, plan);
+            let groupByLifted = workspace.getConfiguration(CONF_PDDL).get<boolean>(PLAN_REPORT_LINE_PLOT_GROUP_BY_LIFTED);
+            let evaluator = new PlanFunctionEvaluator(valueSeqPath, valStepPath, plan, groupByLifted);
 
             if (evaluator.isAvailable()) {
 
@@ -192,9 +195,9 @@ ${objectsHtml}
                     let functionValues = await evaluator.evaluate();
 
                     functionValues.forEach((values, liftedVariable) => {
-                        let chartDivId = `chart_${planIndex}_${liftedVariable.name}`;
+                        let chartDivId = `chart_${planIndex}_${liftedVariable.declaredName}`;
                         lineCharts += `        <div id="${chartDivId}" style="width: ${this.options.displayWidth + 100}px; height: ${Math.round(this.options.displayWidth / 2)}px"></div>\n`;
-                        let chartTitleWithUnit = liftedVariable.name;
+                        let chartTitleWithUnit = values.legend.length > 1 ? liftedVariable.name : liftedVariable.getFullName();
                         if (liftedVariable.getUnit()) { chartTitleWithUnit += ` [${liftedVariable.getUnit()}]`; }
                         lineChartScripts += `        drawChart('${chartDivId}', '${chartTitleWithUnit}', '', ${JSON.stringify(values.legend)}, ${JSON.stringify(values.values)}, ${this.options.displayWidth});\n`;
                     });

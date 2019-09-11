@@ -27,6 +27,9 @@ export const CONF_PDDL = 'pddl';
 export const VALIDATION_PATH = 'validatorPath';
 export const VAL_STEP_PATH = 'valStepPath';
 export const VALUE_SEQ_PATH = 'valueSeqPath';
+export const PLAN_REPORT_LINE_PLOT_GROUP_BY_LIFTED = 'planReport.linePlot.groupByLifted';
+export const PLAN_REPORT_EXPORT_WIDTH = 'planReport.exportWidth';
+export const PLAN_REPORT_WIDTH = 'planReport.width';
 export const PLANNER_VAL_STEP_PATH = CONF_PDDL + "." + VAL_STEP_PATH;
 export const PLANNER_VALUE_SEQ_PATH = CONF_PDDL + "." + VALUE_SEQ_PATH;
 

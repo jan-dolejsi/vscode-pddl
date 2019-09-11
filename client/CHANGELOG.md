@@ -1,5 +1,21 @@
 # PDDL support - What's new?
 
+## [2.14.2] ValStep upgrade and plan line plot improvement
+
+### VAL upgrade
+
+Upgrade to VAL build 37. If it does not pop-up, open the 'PDDL: Overview Page' command and upgrade VAL from there.
+This upgrade includes improvement of ValStep robustness for (much) larger plans.
+
+### Plan visualization
+
+Use the _PDDL: Plan Report > Line Plot > Group By Lifted_ setting to enable/disable grouping of line-plots by lifted variable. When disabled, one chart is generated for each grounded function.
+
+Optionally override the _PDDL: Plan Report width (in pixels) for exporting_ to fine tune how the report looks.
+For abnormal screen sizes or DPI settings, it the plan visualization width (in VS Code) can now be set using the _PDDL: Plan visualization width (in pixels)_ setting.
+
+Fixed opening the plan report in the default browser.
+
 ## [2.14.1] Fixes
 
 - added `:object-fluent` requirement to the syntax highlighter
@@ -771,7 +787,8 @@ Note for open source contributors: all notable changes to the "pddl" extension w
 
 Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
 
-[Unreleased]: https://github.com/jan-dolejsi/vscode-pddl/compare/v2.14.1...HEAD
+[Unreleased]: https://github.com/jan-dolejsi/vscode-pddl/compare/v2.14.2...HEAD
+[2.14.2]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.14.1...v2.14.2
 [2.14.1]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.14.0...v2.14.1
 [2.14.0]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.13.1...v2.14.0
 [2.13.1]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.13.0...v2.13.1

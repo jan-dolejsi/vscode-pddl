@@ -159,8 +159,8 @@ export class Diagnostics extends Disposable {
             planInfo.setStatus(FileStatus.Validated);
             if (scheduleFurtherValidation) { this.scheduleValidation(); }
         }, (err) => {
-            window.showErrorMessage(err);
-            console.warn(err);
+            window.showErrorMessage("Error during plan validation: " + err);
+            console.warn("Error during plan validation: " + err);
             // var showNever = false;
             // this.pddlConfiguration.suggestNewValidatorConfiguration(showNever);
         });

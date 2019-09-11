@@ -130,6 +130,7 @@ export class OverviewPage {
             case 'downloadVal':
                 let options: ValDownloadOptions = { bypassConsent: message.informedDecision };
                 await commands.executeCommand(VAL_DOWNLOAD_COMMAND, options);
+                break;
             default:
                 console.warn('Unexpected command: ' + message.command);
         }

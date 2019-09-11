@@ -16,6 +16,7 @@ import { Plan } from '../../../common/src/Plan';
 
 import * as path from 'path';
 import { CodePddlWorkspace } from '../workspace/CodePddlWorkspace';
+import { CONF_PDDL, PLAN_REPORT_WIDTH } from '../configuration';
 
 const CONTENT = 'planview';
 export const PDDL_GENERATE_PLAN_REPORT = 'pddl.planReport';
@@ -25,7 +26,6 @@ export class PlanView extends Disposable {
 
     webviewPanels = new Map<Uri, PlanPreviewPanel>();
     timeout: NodeJS.Timer;
-    displayWidth = 200;
     public static readonly PLANNER_OUTPUT_URI = Uri.parse("pddl://planner/output");
 
     constructor(private context: ExtensionContext, private codePddlWorkspace: CodePddlWorkspace) {
@@ -162,7 +162,8 @@ export class PlanView extends Disposable {
             return previewPanel.getError().message;
         }
         else {
-            return new PlanReportGenerator(this.context, { displayWidth: this.displayWidth, selfContained: false })
+            let width = workspace.getConfiguration(CONF_PDDL).get<number>(PLAN_REPORT_WIDTH);
+            return new PlanReportGenerator(this.context, { displayWidth: width, selfContained: false })
                 .generateHtml(previewPanel.getPlans());
         }
     }

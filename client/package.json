@@ -4,7 +4,7 @@
   "description": "Planning Domain Description Language support",
   "author": "Jan Dolejsi",
   "license": "MIT",
-  "version": "2.14.1",
+  "version": "2.14.2",
   "publisher": "jan-dolejsi",
   "engines": {
     "vscode": "^1.32.0",
@@ -712,7 +712,7 @@
         },
         "pddl.validatorVersion": {
           "type": "number",
-          "default": 24,
+          "default": 37,
           "title": "VAL build number",
           "description": "Stable VAL build number to download or update to."
         },
@@ -727,6 +727,21 @@
         "pddl.valStepPath": {
           "type": "string",
           "description": "Path of the 'valstep' executable."
+        },
+        "pddl.planReport.linePlot.groupByLifted": {
+          "type": "boolean",
+          "description": "Group line plots of functions for different objects on the same chart - one per lifted function.",
+          "default": true
+        },
+        "pddl.planReport.width": {
+          "title": "PDDL: Plan visualization width (in pixels)",
+          "type": "integer",
+          "default": 200
+        },
+        "pddl.planReport.exportWidth": {
+          "title": "PDDL: Plan Report width (in pixels) for exporting",
+          "type": "integer",
+          "default": 1000
         },
         "pddl.formatter": {
           "type": "boolean",

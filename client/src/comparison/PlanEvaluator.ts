@@ -20,6 +20,6 @@ export class PlanEvaluator {
         const valStepPath = await this.pddlConfiguration.getValStepPath();
 
         return await new ValStep(domainInfo, problemInfo)
-            .execute(valStepPath, "", happenings);
+            .executeBatch(valStepPath, "", happenings);
     }
 }

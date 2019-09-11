@@ -17,9 +17,9 @@ import { ValStep } from '../debugger/ValStep';
 
 export class PlanFunctionEvaluator {
 
-    grounder: Grounder;
+    private grounder: Grounder;
 
-    constructor(private valueSeqPath: string, private valStepPath: string, private plan: Plan) {
+    constructor(private valueSeqPath: string, private valStepPath: string, private plan: Plan, private shouldGroupByLifted: boolean) {
         this.grounder = new Grounder(this.plan.domain, this.plan.problem);
     }
 
@@ -40,7 +40,9 @@ export class PlanFunctionEvaluator {
 
         let changingGroundedFunctions = await this.getChangingGroundedFunctions();
 
-        let changingFunctionsGrouped = this.groupByLifted(changingGroundedFunctions);
+        let changingFunctionsGrouped = this.shouldGroupByLifted 
+            ? this.groupByLifted(changingGroundedFunctions)
+            : this.doNotGroupByLifted(changingGroundedFunctions);
 
         let liftedFunctions = Array.from(changingFunctionsGrouped.keys());
 
@@ -69,10 +71,18 @@ export class PlanFunctionEvaluator {
         return grouped;
     }
 
+    doNotGroupByLifted(variables: Variable[]): Map<Variable, Variable[]> {
+        let grouped = new Map<Variable, Variable[]>();
+
+        variables.forEach(var1 => grouped.set(var1, [var1]));
+
+        return grouped;
+    }
+
     async getChangingGroundedFunctions(): Promise<Variable[]> {
         let happenings = PlanInfo.getHappenings(this.plan.steps);
 
-        let finalStateValues = await new ValStep(this.plan.domain, this.plan.problem).execute(this.valStepPath, "", happenings);
+        let finalStateValues = await new ValStep(this.plan.domain, this.plan.problem).executeBatch(this.valStepPath, "", happenings);
 
         if (finalStateValues === null) { return []; }
 
