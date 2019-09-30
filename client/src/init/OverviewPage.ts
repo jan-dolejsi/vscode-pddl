@@ -55,7 +55,7 @@ export class OverviewPage {
         let html = await this.getHtml();
         let iconUri = this.context.asAbsolutePath('images/icon.png');
 
-        this.webViewPanel = window.createWebviewPanel(
+        let webViewPanel = window.createWebviewPanel(
             "pddl.Wecome",
             "PDDL Overview",
             {
@@ -71,13 +71,14 @@ export class OverviewPage {
             }
         );
 
-        this.webViewPanel.webview.html = html;
-        this.webViewPanel.iconPath = Uri.file(iconUri);
+        webViewPanel.webview.html = html;
+        webViewPanel.iconPath = Uri.file(iconUri);
 
-        this.webViewPanel.onDidDispose(() => this.webViewPanel = undefined, undefined, this.context.subscriptions);
-        this.webViewPanel.webview.onDidReceiveMessage(message => this.handleMessage(message), undefined, this.context.subscriptions);
-        this.webViewPanel.onDidChangeViewState(_ => this.updatePageConfiguration());
+        webViewPanel.onDidDispose(() => this.webViewPanel = undefined, undefined, this.context.subscriptions);
+        webViewPanel.webview.onDidReceiveMessage(message => this.handleMessage(message), undefined, this.context.subscriptions);
+        webViewPanel.onDidChangeViewState(_ => this.updatePageConfiguration());
 
+        this.webViewPanel = webViewPanel;
         this.context.subscriptions.push(this.webViewPanel);
 
         // set up the view with relevant data
@@ -233,7 +234,7 @@ export class OverviewPage {
     }
 
     async updatePageConfiguration(): Promise<void> {
-        if (!this.webViewPanel) { return; }
+        if (!this.webViewPanel || !this.webViewPanel.active) { return; }
         let message = {
             command: 'updateConfiguration',
             planner: await this.pddlConfiguration.getPlannerPath(),

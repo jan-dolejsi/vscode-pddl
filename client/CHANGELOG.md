@@ -1,5 +1,10 @@
 # PDDL support - What's new?
 
+## [2.14.3] Preview of on-type PDDL formatter
+
+- Enable the on-type PDDL formatter to get help with shaping the whitespace around your PDDL code (namely indentation) for better readability of your models. To give it a try, enable the _Editor: Format On Type_ and _PDDL: Formatter_ setting options.
+- ValStep repro `run.cmd` batch file was updated to latest version of ValStep's syntax.
+
 ## [2.14.2] ValStep upgrade and plan line plot improvement
 
 ### VAL upgrade
@@ -787,7 +792,8 @@ Note for open source contributors: all notable changes to the "pddl" extension w
 
 Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
 
-[Unreleased]: https://github.com/jan-dolejsi/vscode-pddl/compare/v2.14.2...HEAD
+[Unreleased]: https://github.com/jan-dolejsi/vscode-pddl/compare/v2.14.3...HEAD
+[2.14.3]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.14.2...v2.14.3
 [2.14.2]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.14.1...v2.14.2
 [2.14.1]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.14.0...v2.14.1
 [2.14.0]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.13.1...v2.14.0

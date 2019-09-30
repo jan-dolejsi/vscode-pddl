@@ -14,7 +14,7 @@ suite('Domain formatter Test Suite', () => {
         formatProvider = new PddlFormatProvider();
     });
 
-    test('Indents requirements', async () => {
+    testDisabled('Indents requirements', async () => {
         // GIVEN
         let inputText = `(define (domain domain_name)
 (:requirements                                          :strips)
@@ -27,7 +27,7 @@ suite('Domain formatter Test Suite', () => {
         await testFormatter(inputText, expectedText, { insertSpaces: true, tabSize: 4});
     });
 
-    test('Formats types', async () => {
+    testDisabled('Formats types', async () => {
         // GIVEN
         let inputText = `(define (domain domain_name)(:types child11 child12))`;
 
@@ -40,7 +40,7 @@ suite('Domain formatter Test Suite', () => {
         await testFormatter(inputText, expectedText, { insertSpaces: true, tabSize: 4});
     });
 
-    test('Formats types with inheritance', async () => {
+    testDisabled('Formats types with inheritance', async () => {
         // GIVEN
         let inputText = `(define (domain domain_name)(:types child11 child12 - parent1 child21 child22 - parent2))`;
 

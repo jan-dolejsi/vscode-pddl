@@ -35,6 +35,7 @@ import { AssociationProvider } from './workspace/AssociationProvider';
 import { SuggestionProvider } from './symbols/SuggestionProvider';
 import { CodePddlWorkspace } from './workspace/CodePddlWorkspace';
 import { DomainDiagnostics } from './diagnostics/DomainDiagnostics';
+import { PddlOnTypeFormatter } from './formatting/PddlOnTypeFormatter';
 
 const PDDL_CONFIGURE_PARSER = 'pddl.configureParser';
 const PDDL_LOGIN_PARSER_SERVICE = 'pddl.loginParserService';
@@ -156,7 +157,7 @@ function activateWithTelemetry(_operationId: string, context: ExtensionContext) 
 		providedCodeActionKinds: SuggestionProvider.providedCodeActionKinds
 	});
 
-	registerDocumentFormattingProvider(context);
+	registerDocumentFormattingProvider(context, codePddlWorkspace);
 
 	let renameProvider = languages.registerRenameProvider(PDDL, new SymbolRenameProvider(codePddlWorkspace));
 
@@ -197,7 +198,7 @@ function activateWithTelemetry(_operationId: string, context: ExtensionContext) 
 	context.subscriptions.push(new PlanComparer(pddlWorkspace, pddlConfiguration));
 
 	workspace.onDidChangeConfiguration(_ => {
-		if (registerDocumentFormattingProvider(context)) {
+		if (registerDocumentFormattingProvider(context, codePddlWorkspace)) {
 			window.showInformationMessage("PDDL formatter is now available. Right-click on a PDDL file...");
 			console.log('PDDL Formatter enabled.');
 		}
@@ -224,11 +225,15 @@ function createAuthentication(pddlConfiguration: PddlConfiguration): Authenticat
 		configuration.refreshToken, configuration.accessToken, configuration.sToken);
 }
 
-function registerDocumentFormattingProvider(context: ExtensionContext): boolean {
+function registerDocumentFormattingProvider(context: ExtensionContext, pddlWorkspace: CodePddlWorkspace): boolean {
 	if (workspace.getConfiguration("pddl").get<boolean>("formatter") && !formattingProvider) {
 		formattingProvider = new PddlFormatProvider();
-		let formattingProviderDisposable = languages.registerDocumentFormattingEditProvider(PDDL, formattingProvider);
-		context.subscriptions.push(formattingProviderDisposable);
+		// let formattingProviderDisposable = languages.registerDocumentFormattingEditProvider(PDDL, formattingProvider);
+		// context.subscriptions.push(formattingProviderDisposable);
+
+		let onTypeFormattingProviderDisposable = languages.registerOnTypeFormattingEditProvider(PDDL, new PddlOnTypeFormatter(pddlWorkspace), '\n');
+		context.subscriptions.push(onTypeFormattingProviderDisposable);
+
 		return true;
 	}	
 	else {

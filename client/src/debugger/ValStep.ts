@@ -379,7 +379,9 @@ export class ValStep extends EventEmitter {
         await afs.writeFile(path.join(casePath, inputFile), err.valStepInput, { encoding: "utf-8" });
 
         let command = `:: The purpose of this batch file is to be able to reproduce the valstep error
-type ${inputFile} | ${Util.q(valStepPath)} ${domainFile} ${problemFile}`;
+type ${inputFile} | ${Util.q(valStepPath)} ${domainFile} ${problemFile}
+:: or for latest version of ValStep:
+${Util.q(valStepPath)} -i ${inputFile} ${domainFile} ${problemFile}`;
 
         await afs.writeFile(path.join(casePath, "run.cmd"), command, { encoding: "utf-8" });
         return casePath;

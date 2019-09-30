@@ -5,10 +5,11 @@
 'use strict';
 
 import * as path from 'path';
-import { ExtensionContext, Uri, workspace, window, Range } from 'vscode';
+import { ExtensionContext, Uri, workspace, window, Range, TextDocument } from 'vscode';
 import * as afs from '../../common/src/asyncfs';
 import { PddlExtensionContext } from '../../common/src/PddlExtensionContext';
 import { PddlRange } from '../../common/src/DocumentPositionResolver';
+import { PddlSyntaxNode } from '../../common/src/PddlSyntaxNode';
 
 export function createPddlExtensionContext(context: ExtensionContext): PddlExtensionContext {
     return {
@@ -140,4 +141,8 @@ export function equalsCaseInsensitive(text1: string, text2: string): boolean {
 
 export function toRange(pddlRange: PddlRange): Range {
 	return new Range(pddlRange.startLine, pddlRange.startCharacter, pddlRange.endLine, pddlRange.endCharacter);
+}
+
+export function nodeToRange(document: TextDocument, node: PddlSyntaxNode): Range {
+    return new Range(document.positionAt(node.getStart()), document.positionAt(node.getEnd()));
 }
