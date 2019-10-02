@@ -5,6 +5,7 @@ import { before } from 'mocha';
 // as well as import your extension to test it
 import * as vscode from 'vscode';
 import { PddlFormatProvider } from '../../formatting/PddlFormatProvider';
+import { testDisabled } from './testUtils';
 
 let formatProvider: PddlFormatProvider;
 
@@ -58,8 +59,6 @@ suite('Domain formatter Test Suite', () => {
         assert.fail('Not implemented yet');
     });
 });
-
-function testDisabled(_name: string, _callback: any) {}
 
 async function testFormatter(initialText: string, expectedText: string, options: vscode.FormattingOptions): Promise<void> {
     // we do not want the extension to actually load (it takes too much time), so use a fake language

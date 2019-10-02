@@ -5,6 +5,7 @@ import { before } from 'mocha';
 // as well as import your extension to test it
 import * as vscode from 'vscode';
 import { PddlOnTypeFormatter } from '../../formatting/PddlOnTypeFormatter';
+import { testDisabled, assertStrictEqualDecorated } from './testUtils';
 
 let formatProvider: PddlOnTypeFormatter;
 
@@ -94,13 +95,7 @@ suite('PDDL on-type formatter Test Suite', () => {
         let expectedText = inputTextHead + '\t' + ch + inputTextTail;
         await testFormatter(inputTextHead, ch, inputTextTail, expectedText, { insertSpaces: false, tabSize: 4});
     });
-
-    testDisabled('Removes trailing whitespace', async() => {
-        assert.fail('Not implemented yet');
-    });
 });
-
-function testDisabled(_name: string, _callback: any) {}
 
 async function testFormatter(inputTextHead: string, ch: string, inputTextTail: string, expectedText: string, options: vscode.FormattingOptions): Promise<void> {
     let initialText = inputTextHead + ch + inputTextTail; 
@@ -123,18 +118,6 @@ async function testFormatter(inputTextHead: string, ch: string, inputTextTail: s
     let textAfter = doc.getText();
     assertStrictEqualDecorated(textAfter, expectedText, "document text should be formatted");
     assert.deepStrictEqual(startSelectionAfter, startSelectionBefore, "cursor position should be the same");
-}
-
-function assertStrictEqualDecorated(actualText: string, expectedText: string, message: string): void {
-    assert.strictEqual(decorate(actualText), decorate(expectedText), message);
-}
-
-function decorate(text: string): string {
-    return text
-        .split(' ').join('·')
-        .split('\t').join('→')
-        .split('\r').join('⤵')
-        .split('\n').join('⤶');
 }
 
 function reBuild(builder: vscode.TextEditorEdit, edit: vscode.TextEdit){

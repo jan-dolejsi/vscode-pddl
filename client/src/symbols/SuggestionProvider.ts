@@ -94,12 +94,12 @@ export class SuggestionProvider implements CodeActionProvider {
 
     private createSnippetSuggestions(document: TextDocument, diagnostic: Diagnostic, range: Range | Selection, fileInfo: FileInfo, syntaxTree: PddlSyntaxTree): CodeAction[] {
         let isWhitespaceOnly = syntaxTree.getRootNode().getChildren()
-            .every(node => node.getToken().type === PddlTokenType.Comment || node.getToken().type === PddlTokenType.Whitespace);
+            .every(node => node.isType(PddlTokenType.Comment) || node.isType(PddlTokenType.Whitespace));
 
         let selectedNode = syntaxTree.getNodeAt(document.offsetAt(range.start));
         let isInsideWhitespace = selectedNode &&
-            (selectedNode.getToken().type === PddlTokenType.Whitespace
-                || selectedNode.getToken().type === PddlTokenType.Document);
+            (selectedNode.isType(PddlTokenType.Whitespace)
+                || selectedNode.isType(PddlTokenType.Document));
 
         let codeActions: CodeAction[] = [];
 

@@ -7,6 +7,7 @@ import * as vscode from 'vscode';
 import { SymbolRenameProvider } from '../../symbols/SymbolRenameProvider';
 import { PddlWorkspace } from '../../../../common/src/PddlWorkspace';
 import { CodePddlWorkspace } from '../../workspace/CodePddlWorkspace';
+import { testDisabled } from './testUtils';
 
 suite('SymbolRenameProvider Test Suite', () => {
 
@@ -42,5 +43,3 @@ suite('SymbolRenameProvider Test Suite', () => {
 	});
 
 });
-
-function testDisabled(_name: string, _callback: any) {}

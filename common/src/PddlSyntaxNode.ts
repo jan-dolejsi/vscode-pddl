@@ -242,6 +242,23 @@ export class PddlSyntaxNode extends TextRange {
         }
     }
 
+    getPrecedingSiblings(): PddlSyntaxNode[] {
+        let siblings = this.getSiblingOpenBrackets(/.*/);
+        let precedingSiblings = siblings.filter(sibling => sibling.getStart() < this.getStart());
+        return precedingSiblings;
+    }
+
+    getFollowingSiblings(): PddlSyntaxNode[] {
+        let siblings = this.getSiblingOpenBrackets(/.*/);
+        let followingSiblings = siblings.filter(sibling => sibling.getStart() > this.getStart());
+        return followingSiblings;
+    }
+
+    private getSiblingOpenBrackets(pattern: RegExp) {
+        if (this.isRoot()) { return []; }
+        return this.getParent().getChildrenOfType(PddlTokenType.OpenBracketOperator, pattern);
+    }
+
     isDocument(): boolean {
         return this.isType(PddlTokenType.Document);
     }

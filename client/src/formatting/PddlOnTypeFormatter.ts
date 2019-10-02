@@ -44,7 +44,8 @@ export class PddlOnTypeFormatter implements OnTypeFormattingEditProvider {
         // console.log(`Formatting upon '${ch}', ${currentNode}, ${options}`);
 
         let parentIndent = this.getParentStartCharacterIndent(currentNode, document);
-
+        if (parentIndent === null) { return []; }
+        
         let rangeBefore = new Range(position.with({character: 0}), position);
         let rangeAfter = new Range(position, position.with({ character: Number.MAX_VALUE }));
 
@@ -97,7 +98,7 @@ export class PddlOnTypeFormatter implements OnTypeFormattingEditProvider {
 
     getParentStartCharacterIndent(currentNode: PddlSyntaxNode, document: TextDocument): string {
         let parent = currentNode.getParent().expand();
-        if (!parent) { return ""; }
+        if (!parent) { return null; }
         else {
             let lineOfParent = document.lineAt(document.positionAt(parent.getStart()).line);
             let firstNonWhitespaceCharacter = lineOfParent.firstNonWhitespaceCharacterIndex;

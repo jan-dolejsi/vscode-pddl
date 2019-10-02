@@ -36,6 +36,7 @@ import { SuggestionProvider } from './symbols/SuggestionProvider';
 import { CodePddlWorkspace } from './workspace/CodePddlWorkspace';
 import { DomainDiagnostics } from './diagnostics/DomainDiagnostics';
 import { PddlOnTypeFormatter } from './formatting/PddlOnTypeFormatter';
+import { PddlCompletionItemProvider } from './completion/PddlCompletionItemProvider';
 
 const PDDL_CONFIGURE_PARSER = 'pddl.configureParser';
 const PDDL_LOGIN_PARSER_SERVICE = 'pddl.loginParserService';
@@ -152,6 +153,7 @@ function activateWithTelemetry(_operationId: string, context: ExtensionContext) 
 	}));
 
 	let completionItemProvider = languages.registerCompletionItemProvider(PDDL, new AutoCompletion(codePddlWorkspace), '(', ':', '-');
+	let completionItemProvider2 = languages.registerCompletionItemProvider(PDDL, new PddlCompletionItemProvider(codePddlWorkspace), '(', ':', '-');
 
 	let suggestionProvider = languages.registerCodeActionsProvider(PDDL, new SuggestionProvider(codePddlWorkspace), {
 		providedCodeActionKinds: SuggestionProvider.providedCodeActionKinds
@@ -208,7 +210,7 @@ function activateWithTelemetry(_operationId: string, context: ExtensionContext) 
 	// client can be deactivated on extension deactivation
 	context.subscriptions.push(diagnostics,
 		configureParserCommand, loginParserServiceCommand, updateTokensParserServiceCommand,
-		configurePlannerCommand, loginPlannerServiceCommand, updateTokensPlannerServiceCommand, completionItemProvider,
+		configurePlannerCommand, loginPlannerServiceCommand, updateTokensPlannerServiceCommand, completionItemProvider, completionItemProvider2,
 		renameProvider, suggestionProvider, documentSymbolProvider, definitionProvider, referencesProvider, hoverProvider,
 		planHoverProvider, planDefinitionProvider, happeningsHoverProvider, happeningsDefinitionProvider);
 }

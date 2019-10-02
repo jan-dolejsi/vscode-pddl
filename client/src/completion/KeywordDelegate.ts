@@ -6,7 +6,6 @@
 
 import { CompletionItem, MarkdownString } from 'vscode';
 import { Delegate } from './Delegate';
-import { PDDL } from '../../../common/src/parser';
 
 export class KeywordDelegate extends Delegate {
 
@@ -21,15 +20,6 @@ export class KeywordDelegate extends Delegate {
     getDomainItems() {
         if(!this.domainItems){
             this.domainItems = [
-                this.createKeyword('requirements', 'Requirements', 'Required planning engine features.'),
-                this.createKeyword('types', 'Types', new MarkdownString('Types of objects and their hierarchy. Example:').appendCodeblock('car - vehicle', PDDL)),
-                this.createKeyword('constants', 'Constants', new MarkdownString('Constant objects that will be part of all problems defined for this domain in addition to the objects defined in the `:objects` section.')),
-                this.createKeyword('predicates', 'Predicates', 'Predicates are things that are either true or false.'),
-                this.createKeyword('functions', 'Functions', 'Functions are used to define numeric values.'),
-                this.createKeyword('derived', 'Derived predicate/function', new MarkdownString('Derived predicate/function can be defined to simplify action declaration. Example:').appendCodeblock('(:derived (c) (+ (a) (b))', PDDL)),
-                this.createKeyword('constraints', 'Constraints', 'Constraints.... you may want to stay away from those.'),
-                this.createKeyword('action', 'Instantaneous action', 'Actions that change state of the world.'),
-                this.createKeyword('durative-action', 'Durative action', 'Actions that change the state of the world when they start, then they last for a defined duration period, while changing the world continuously and finally change the state when they end.'),
             ];
         }
 

@@ -23,9 +23,8 @@ export class CodePddlWorkspace {
             revealAction(<DomainInfo>pddlWorkspace.getFileInfo(domainFileUri.toString()), actionName);
         });
 
-        subscribeToWorkspace(this, pddlConfiguration, context);
-
         if (context) { // unit tests do not clean-up
+            subscribeToWorkspace(this, pddlConfiguration, context);
             context.subscriptions.push(revealActionCommand);
         }
     }

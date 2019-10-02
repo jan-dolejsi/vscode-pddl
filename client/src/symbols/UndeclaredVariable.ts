@@ -11,6 +11,7 @@ import { FileInfo, Variable, Parameter } from '../../../common/src/FileInfo';
 import { PddlTokenType } from '../../../common/src/PddlTokenizer';
 import { parseParameters } from '../../../common/src/VariablesParser';
 import { PddlSyntaxNode } from '../../../common/src/PddlSyntaxNode';
+import { PddlStructure } from '../../../common/src/PddlStructure';
 
 export class UndeclaredVariable {
     static readonly undeclaredVariableDiagnosticPattern = /^Undeclared symbol\s*:\s*([\w-]+)\s*/i;
@@ -71,6 +72,7 @@ export class UndeclaredVariable {
                     case "(decrease":
                     case "(scale-up":
                     case "(scale-down":
+                    case "(sumall":
                         type = VariableType.Function;
                         break;
                     case "(and":
@@ -79,6 +81,7 @@ export class UndeclaredVariable {
                     case "(at start":
                     case "(over all":
                     case "(at end":
+                    case "(forall":
                         type = VariableType.Predicate;
                         break;
                 }
@@ -88,10 +91,10 @@ export class UndeclaredVariable {
         let newSectionName: string;
         switch (type) {
             case VariableType.Function:
-                newSectionName = UndeclaredVariable.FUNCTIONS;
+                newSectionName = PddlStructure.FUNCTIONS;
                 break;
             case VariableType.Predicate:
-                newSectionName = UndeclaredVariable.PREDICATES;
+                newSectionName = PddlStructure.PREDICATES;
                 break;
             default:
                 throw new Error(`Could not determine whether ${variable.getFullName()} is a predicate or a function.`);
@@ -109,31 +112,11 @@ export class UndeclaredVariable {
         if (sectionNode) {
             edit.insert(document.uri, document.positionAt(sectionNode.getEnd() - 1), indent1 + `(${variable.getFullName()})` + eol);
         } else {
-            let previousSectionNode = this.findPrecedingSection(newSectionName, defineNode);
+            let previousSectionNode = PddlStructure.findPrecedingSection(newSectionName, defineNode, PddlStructure.PDDL_DOMAIN_SECTIONS);
             edit.insert(document.uri, document.positionAt(previousSectionNode.getEnd()), eol + indent1 + `(${newSectionName}${eol + indent2}(${variable.getFullName()})${eol + indent1})`);
         }
 
         return [edit, type];
-    }
-
-    static readonly PREDICATES = ':predicates';
-    static readonly FUNCTIONS = ':functions';
-    static readonly PDDL_DOMAIN_SECTIONS = ['domain', ':requirements', ':types', ':constants', UndeclaredVariable.PREDICATES, UndeclaredVariable.FUNCTIONS, ':derived', ':action', ':constraints', ':durative-actions', ':process', '::event'];
-
-    findPrecedingSection(newSectionName: string, defineNode: PddlSyntaxNode): PddlSyntaxNode {
-        let precedingSections = UndeclaredVariable.PDDL_DOMAIN_SECTIONS.slice(0, UndeclaredVariable.PDDL_DOMAIN_SECTIONS.indexOf(newSectionName));
-        // let followingSections = UndeclaredVariable.PDDL_DOMAIN_SECTIONS.slice(UndeclaredVariable.PDDL_DOMAIN_SECTIONS.indexOf(newSectionName)+1);
-
-        let previousSectionNode = defineNode;
-
-        for (let index = 0; index < precedingSections.length; index++) {
-            let node = defineNode.getFirstOpenBracket(precedingSections[index]);
-            if (node) {
-                previousSectionNode = node;
-            }
-        }
-
-        return previousSectionNode;
     }
 
     static createEolString(document: TextDocument) {
