@@ -7,7 +7,6 @@
 import { CompletionItemProvider, CompletionItem, TextDocument, Position, CancellationToken, CompletionContext, Range } from 'vscode';
 import { ProblemInfo } from '../../../common/src/parser';
 import { DomainInfo } from '../../../common/src/DomainInfo';
-import { KeywordDelegate } from './KeywordDelegate';
 import { ProblemInitDelegate } from './ProblemInitDelegate';
 import { OperatorDelegate } from './OperatorDelegate';
 import { VariableDelegate } from './VariableDelegate';
@@ -19,14 +18,12 @@ export class AutoCompletion implements CompletionItemProvider {
 
     // For snippet syntax read this: https://code.visualstudio.com/docs/editor/userdefinedsnippets
 
-    keywordDelegate: KeywordDelegate;
     operatorDelegate: OperatorDelegate;
     variableDelegate: VariableDelegate;
     typeDelegate: TypeDelegate;
     effectDelegate: EffectDelegate;
 
     constructor(public codePddlWorkspace: CodePddlWorkspace) {
-        this.keywordDelegate = new KeywordDelegate();
         this.operatorDelegate = new OperatorDelegate();
         this.variableDelegate = new VariableDelegate(codePddlWorkspace);
         this.typeDelegate = new TypeDelegate(codePddlWorkspace.pddlWorkspace);
@@ -37,7 +34,7 @@ export class AutoCompletion implements CompletionItemProvider {
         if (token.isCancellationRequested) { return []; }
 
         let completionCollector = await new CompletionCollector(this.codePddlWorkspace, document, position, context,
-            this.keywordDelegate, this.operatorDelegate, this.variableDelegate, this.typeDelegate,
+            this.operatorDelegate, this.variableDelegate, this.typeDelegate,
             this.effectDelegate).initialize();
         return completionCollector.getCompletions();
     }
@@ -51,7 +48,6 @@ class CompletionCollector {
 
     constructor(private readonly codePddlWorkspace: CodePddlWorkspace, private readonly document: TextDocument,
         private readonly position: Position, private readonly context: CompletionContext,
-        private readonly keywordDelegate: KeywordDelegate,
         private readonly operatorDelegate: OperatorDelegate,
         private readonly variableDelegate: VariableDelegate,
         private readonly typeDelegate: TypeDelegate,
@@ -92,21 +88,13 @@ class CompletionCollector {
     }
 
     createDomainCompletionItems(domainFileInfo: DomainInfo): void {
-        if (this.isTriggeredByBracketColon()) {
-            this.pushAll(this.keywordDelegate.getDomainItems());
-        } else if (this.isTriggeredByColon()) {
-            this.pushAll(this.keywordDelegate.getActionItems());
-        } else if (this.isTriggeredByBracket()) {
+        if (this.isTriggeredByBracket()) {
             //todo: check if we are inside an action/durative-action
             this.pushAll(this.effectDelegate.getNumericEffectItems(domainFileInfo));
         }
     }
 
     createProblemCompletionItems(problemFileInfo: ProblemInfo): void {
-        if (this.isTriggeredByBracketColon()) {
-            this.pushAll(this.keywordDelegate.getProblemItems());
-        }
-
         let folder = this.codePddlWorkspace.pddlWorkspace.getFolderOf(problemFileInfo);
         // find domain files in the same folder that match the problem's domain name
         let domainFiles = folder.getDomainFilesFor(problemFileInfo);
@@ -118,14 +106,6 @@ class CompletionCollector {
 
     pushAll(items: CompletionItem[]): void {
         this.completions.push(...items);
-    }
-
-    isTriggeredByBracketColon() {
-        return this.leadingText.length > 1 && this.leadingText.endsWith('(:');
-    }
-
-    isTriggeredByColon() {
-        return this.leadingText.length > 0 && this.leadingText.endsWith(':');
     }
 
     isTriggeredByBracket() {

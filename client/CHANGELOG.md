@@ -1,7 +1,8 @@
 # PDDL support - What's new?
 
-## [2.14.3] Preview of on-type PDDL formatter
+## [2.14.3] Context-sensitive auto-completion suggestions
 
+- Auto-completion of domain, problem file structures is context sensitive now and only suggests structures that are valid
 - Enable the on-type PDDL formatter to get help with shaping the whitespace around your PDDL code (namely indentation) for better readability of your models. To give it a try, enable the _Editor: Format On Type_ and _PDDL: Formatter_ setting options.
 - ValStep repro `run.cmd` batch file was updated to latest version of ValStep's syntax.
 

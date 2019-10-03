@@ -242,21 +242,23 @@ export class PddlSyntaxNode extends TextRange {
         }
     }
 
-    getPrecedingSiblings(): PddlSyntaxNode[] {
-        let siblings = this.getSiblingOpenBrackets(/.*/);
-        let precedingSiblings = siblings.filter(sibling => sibling.getStart() < this.getStart());
+    getPrecedingSiblings(type: PddlTokenType, centralNode?: PddlSyntaxNode): PddlSyntaxNode[] {
+        let siblings = this.getSiblings(type, /.*/);
+        centralNode = centralNode || this;
+        let precedingSiblings = siblings.filter(sibling => sibling.getStart() < centralNode.getStart());
         return precedingSiblings;
     }
 
-    getFollowingSiblings(): PddlSyntaxNode[] {
-        let siblings = this.getSiblingOpenBrackets(/.*/);
-        let followingSiblings = siblings.filter(sibling => sibling.getStart() > this.getStart());
+    getFollowingSiblings(type: PddlTokenType, centralNode?: PddlSyntaxNode): PddlSyntaxNode[] {
+        let siblings = this.getSiblings(type, /.*/);
+        centralNode = centralNode || this;
+        let followingSiblings = siblings.filter(sibling => sibling.getStart() > centralNode.getStart());
         return followingSiblings;
     }
 
-    private getSiblingOpenBrackets(pattern: RegExp) {
+    private getSiblings(type: PddlTokenType, pattern: RegExp) {
         if (this.isRoot()) { return []; }
-        return this.getParent().getChildrenOfType(PddlTokenType.OpenBracketOperator, pattern);
+        return this.getParent().getChildrenOfType(type, pattern);
     }
 
     isDocument(): boolean {

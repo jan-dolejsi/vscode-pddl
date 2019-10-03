@@ -94,7 +94,7 @@ describe('PddlStructure', () => {
             let currentNode = tree.getNodeAt(domainPddlBefore.length);
 
             // WHEN
-            let supportedHere = PddlStructure.getSupportedSectionsHere(currentNode, PddlStructure.PDDL_DOMAIN_SECTIONS, PddlStructure.PDDL_DOMAIN_STRUCTURES);
+            let supportedHere = PddlStructure.getSupportedSectionsHere(currentNode, currentNode, PddlTokenType.OpenBracketOperator, PddlStructure.PDDL_DOMAIN_SECTIONS, PddlStructure.PDDL_DOMAIN_STRUCTURES);
 
             // THEN
             assert.strictEqual(currentNode.getToken().type, PddlTokenType.Whitespace, 'should be inside whitespace');
@@ -109,7 +109,7 @@ describe('PddlStructure', () => {
             let currentNode = tree.getNodeAt(domainPddlBefore.length);
 
             // WHEN
-            let supportedHere = PddlStructure.getSupportedSectionsHere(currentNode, PddlStructure.PDDL_DOMAIN_SECTIONS, PddlStructure.PDDL_DOMAIN_STRUCTURES);
+            let supportedHere = PddlStructure.getSupportedSectionsHere(currentNode, currentNode, PddlTokenType.OpenBracketOperator, PddlStructure.PDDL_DOMAIN_SECTIONS, PddlStructure.PDDL_DOMAIN_STRUCTURES);
 
             // THEN
             assert.strictEqual(currentNode.getToken().type, PddlTokenType.Whitespace, 'should be inside whitespace');
@@ -124,7 +124,7 @@ describe('PddlStructure', () => {
             let currentNode = tree.getNodeAt(domainPddlBefore.length);
 
             // WHEN
-            let supportedHere = PddlStructure.getSupportedSectionsHere(currentNode, PddlStructure.PDDL_DOMAIN_SECTIONS, PddlStructure.PDDL_DOMAIN_STRUCTURES);
+            let supportedHere = PddlStructure.getSupportedSectionsHere(currentNode, currentNode, PddlTokenType.OpenBracketOperator, PddlStructure.PDDL_DOMAIN_SECTIONS, PddlStructure.PDDL_DOMAIN_STRUCTURES);
 
             // THEN
             assert.strictEqual(currentNode.getToken().type, PddlTokenType.Whitespace, 'should be inside whitespace');
@@ -139,11 +139,72 @@ describe('PddlStructure', () => {
             let currentNode = tree.getNodeAt(domainPddlBefore.length);
 
             // WHEN
-            let supportedHere = PddlStructure.getSupportedSectionsHere(currentNode, PddlStructure.PDDL_DOMAIN_SECTIONS, PddlStructure.PDDL_DOMAIN_STRUCTURES);
+            let supportedHere = PddlStructure.getSupportedSectionsHere(currentNode, currentNode, PddlTokenType.OpenBracketOperator, PddlStructure.PDDL_DOMAIN_SECTIONS, PddlStructure.PDDL_DOMAIN_STRUCTURES);
 
             // THEN
             assert.strictEqual(currentNode.getToken().type, PddlTokenType.Whitespace, 'should be inside whitespace');
             assert.deepStrictEqual(supportedHere, PddlStructure.PDDL_DOMAIN_STRUCTURES);
+        });
+
+        /* ACTIONS */
+        it('suggests 0 supported in fully defined action', () => {
+            // GIVEN
+            let domainPddlBefore = `(define (domain domain_name) (:action :parameters() :precondition(and ) `;
+            let domainPddlAfter = ` :effect(and ) ))`;
+            let tree = new PddlSyntaxTreeBuilder(domainPddlBefore+domainPddlAfter).getTree();
+            let currentNode = tree.getNodeAt(domainPddlBefore.length);
+
+            // WHEN
+            let supportedHere = PddlStructure.getSupportedSectionsHere(PddlStructure.getPrecedingKeywordOrSelf(currentNode), currentNode, PddlTokenType.Keyword, PddlStructure.PDDL_ACTION_SECTIONS, []);
+
+            // THEN
+            assert.strictEqual(currentNode.getToken().type, PddlTokenType.Whitespace, 'should be inside whitespace');
+            assert.deepStrictEqual(supportedHere, []);
+        });
+
+        it('suggests only :precondition', () => {
+            // GIVEN
+            let domainPddlBefore = `(define (domain domain_name) (:action :parameters() `;
+            let domainPddlAfter = ` :effect(and ) ))`;
+            let tree = new PddlSyntaxTreeBuilder(domainPddlBefore+domainPddlAfter).getTree();
+            let currentNode = tree.getNodeAt(domainPddlBefore.length);
+
+            // WHEN
+            let supportedHere = PddlStructure.getSupportedSectionsHere(PddlStructure.getPrecedingKeywordOrSelf(currentNode), currentNode, PddlTokenType.Keyword, PddlStructure.PDDL_ACTION_SECTIONS, []);
+
+            // THEN
+            assert.strictEqual(currentNode.getToken().type, PddlTokenType.Whitespace, 'should be inside whitespace');
+            assert.deepStrictEqual(supportedHere, [':precondition']);
+        });
+
+        it('suggests all action keywords', () => {
+            // GIVEN
+            let domainPddlBefore = `(define (domain domain_name) (:action `;
+            let domainPddlAfter = ` ))`;
+            let tree = new PddlSyntaxTreeBuilder(domainPddlBefore+domainPddlAfter).getTree();
+            let currentNode = tree.getNodeAt(domainPddlBefore.length);
+
+            // WHEN
+            let supportedHere = PddlStructure.getSupportedSectionsHere(PddlStructure.getPrecedingKeywordOrSelf(currentNode), currentNode, PddlTokenType.Keyword, PddlStructure.PDDL_ACTION_SECTIONS, []);
+
+            // THEN
+            assert.strictEqual(currentNode.getToken().type, PddlTokenType.Whitespace, 'should be inside whitespace');
+            assert.deepStrictEqual(supportedHere, [':parameters', ':precondition', ':effect']);
+        });
+
+        it('suggests only :parameters', () => {
+            // GIVEN
+            let domainPddlBefore = `(define (domain domain_name) (:action `;
+            let domainPddlAfter = ` :precondition(and ) :effect(and ) ))`;
+            let tree = new PddlSyntaxTreeBuilder(domainPddlBefore+domainPddlAfter).getTree();
+            let currentNode = tree.getNodeAt(domainPddlBefore.length);
+
+            // WHEN
+            let supportedHere = PddlStructure.getSupportedSectionsHere(PddlStructure.getPrecedingKeywordOrSelf(currentNode), currentNode, PddlTokenType.Keyword, PddlStructure.PDDL_ACTION_SECTIONS, []);
+
+            // THEN
+            assert.strictEqual(currentNode.getToken().type, PddlTokenType.Whitespace, 'should be inside whitespace');
+            assert.deepStrictEqual(supportedHere, [':parameters']);
         });
     });
 });
