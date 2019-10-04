@@ -40,6 +40,22 @@ describe('VariableParser', () => {
             assert.deepStrictEqual(variables[0].getLocation(), new PddlRange(0, 0, 0, predicatePddl.length), 'range');
         });
 
+        it('finds 2 predicates without whitespace', () => {
+            // GIVEN
+            let predicatePddl = `(p1)(p2)`;
+            let predicatesNode = new PddlSyntaxTreeBuilder(predicatePddl).getTree().getRootNode();
+            let positionResolver = new SimpleDocumentPositionResolver(predicatePddl);
+
+            // WHEN
+            let variables = new VariablesParser(predicatesNode, positionResolver).getVariables();
+
+            assert.equal(variables.length, 2, 'there should be 2 predicates');
+            assert.equal(variables[0].getFullName(), "p1", 'the predicate name should be...');
+            assert.equal(variables[1].getFullName(), "p2", 'the predicate name should be...');
+            assert.deepStrictEqual(variables[0].getLocation(), new PddlRange(0, 0, 0, 4), 'p1 range');
+            assert.deepStrictEqual(variables[1].getLocation(), new PddlRange(0, 4, 0, predicatePddl.length), 'p2 range');
+        });
+
         it('finds one predicate with one parameter', () => {
             // GIVEN
             let predicatePddl = `(said_hello ?w - world)`;

@@ -6,11 +6,12 @@ import { before } from 'mocha';
 import * as vscode from 'vscode';
 import { ProblemCompletionItemProvider } from '../../completion/ProblemCompletionItemProvider';
 import { ProblemInfo } from '../../../../common/src/parser';
-import { DomainInfo } from '../../../../common/src/DomainInfo';
+// import { DomainInfo } from '../../../../common/src/DomainInfo';
 import { PddlSyntaxTreeBuilder } from '../../../../common/src/PddlSyntaxTreeBuilder';
 import { CodeDocumentPositionResolver } from '../../workspace/CodeDocumentPositionResolver';
 import { UnknownPddlCompletionItemProvider } from '../../completion/UnknownPddlCompletionItemProvider';
 import { DomainCompletionItemProvider } from '../../completion/DomainCompletionItemProvider';
+import { PddlDomainParser } from '../../../../common/src/PddlDomainParser';
 
 suite('PDDL Completion Item Provider', () => {
     before(async () => {
@@ -49,7 +50,7 @@ suite('PDDL Completion Item Provider', () => {
 
     test('should suggest domain sections upon invoke', async () => {
         // GIVEN
-        let inputTextHead = '(define \n';
+        let inputTextHead = '(define (domain d) \n';
         let ch = '';
         let inputTextTail = '\n)';
 
@@ -58,7 +59,7 @@ suite('PDDL Completion Item Provider', () => {
 
         // THEN
         assert.deepStrictEqual(items.map(i => i.filterText || i.label), [
-            '(domain',
+            // '(domain',
             '(:requirements',
             '(:types',
             '(:constants',
@@ -75,7 +76,7 @@ suite('PDDL Completion Item Provider', () => {
 
     test('should suggest domain sections upon ( trigger', async () => {
         // GIVEN
-        let inputTextHead = '(define \n';
+        let inputTextHead = '(define (domain d) \n';
         let ch = '(';
         let inputTextTail = ')\n)';
 
@@ -84,7 +85,7 @@ suite('PDDL Completion Item Provider', () => {
 
         // THEN
         assert.deepStrictEqual(items.map(i => i.filterText || i.label), [
-            '(domain',
+            // '(domain',
             '(:requirements',
             '(:types',
             '(:constants',
@@ -101,7 +102,7 @@ suite('PDDL Completion Item Provider', () => {
 
     test('should suggest domain sections upon : trigger', async () => {
         // GIVEN
-        let inputTextHead = '(define \n(';
+        let inputTextHead = '(define (domain d) \n(';
         let ch = ':';
         let inputTextTail = ')\n)';
 
@@ -128,7 +129,7 @@ suite('PDDL Completion Item Provider', () => {
 
     test('should suggest (:action sections upon invoke', async () => {
         // GIVEN
-        let inputTextHead = '(define (:action\n';
+        let inputTextHead = '(define (domain d) (:action\n';
         let ch = '';
         let inputTextTail = '\n))';
 
@@ -146,7 +147,7 @@ suite('PDDL Completion Item Provider', () => {
 
     test('should suggest (:action sections upon : trigger', async () => {
         // GIVEN
-        let inputTextHead = '(define (:action\n';
+        let inputTextHead = '(define (domain d) (:action\n';
         let ch = ':';
         let inputTextTail = '\n))';
 
@@ -164,7 +165,7 @@ suite('PDDL Completion Item Provider', () => {
 
     test('should suggest only :effect for partially completed (:action upon : trigger', async () => {
         // GIVEN
-        let inputTextHead = '(define (:action :parameters() :precondition()\n';
+        let inputTextHead = '(define (domain d) (:action :parameters() :precondition()\n';
         let ch = ':';
         let inputTextTail = '\n))';
 
@@ -182,7 +183,7 @@ suite('PDDL Completion Item Provider', () => {
 
     test('should suggest (:durative-action sections upon invoke', async () => {
         // GIVEN
-        let inputTextHead = '(define (:durative-action\n';
+        let inputTextHead = '(define (domain d) (:durative-action\n';
         let ch = '';
         let inputTextTail = '\n))';
 
@@ -201,7 +202,7 @@ suite('PDDL Completion Item Provider', () => {
 
     test('should suggest (:durative-action sections upon : trigger', async () => {
         // GIVEN
-        let inputTextHead = '(define (:durative-action\n';
+        let inputTextHead = '(define (domain d) (:durative-action\n';
         let ch = ':';
         let inputTextTail = '\n))';
 
@@ -218,7 +219,57 @@ suite('PDDL Completion Item Provider', () => {
         items.forEach(item => assert.deepStrictEqual(item.range, new vscode.Range(1, 0, 1, 1), `Range of '${item.label}'`));
     });
 
+    /* Action effects */
+
+    test('should suggest (:action effects upon invoke', async () => {
+        // GIVEN
+        let inputTextHead = '(define (domain d) (:predicates (p1)(p2)) (:action :effect (and\n';
+        let ch = '';
+        let inputTextTail = '\n)))';
+
+        // WHEN
+        let items = await testDomainProvider(inputTextHead, ch, inputTextTail, { triggerKind: vscode.CompletionTriggerKind.Invoke, triggerCharacter: ch });
+
+        // THEN
+        assertSnippetIncludes(items, "(not", 'p1,p2');
+        assertSnippetIncludes(items, "(assign", '(assign (${1:new_function}) ${2:0})$0');
+        assert.deepStrictEqual(items.map(i => i.filterText || i.label), [
+            '(not',
+            '(assign',
+            '(increase',
+            '(decrease',
+            '(forall',
+            '(when',
+        ]);
+        items.forEach(item => assert.strictEqual(item.range, undefined, `Range of '${item.label}' should be undefined`));
+    });
+    
+    test('should suggest (:action effects upon ( trigger', async () => {
+        // GIVEN
+        let inputTextHead = '(define (domain d) (:predicates (p1)(p2)) (:action :effect (and\n';
+        let ch = '(';
+        let inputTextTail = ')\n)))';
+
+        // WHEN
+        let items = await testDomainProvider(inputTextHead, ch, inputTextTail, { triggerKind: vscode.CompletionTriggerKind.TriggerCharacter, triggerCharacter: ch });
+
+        // THEN
+        assertSnippetIncludes(items, "(not", 'p1,p2');
+        assertSnippetIncludes(items, "(assign", '(assign (${1:new_function}) ${2:0})$0');
+        assert.deepStrictEqual(items.map(i => i.filterText || i.label), [
+            '(not',
+            '(assign',
+            '(increase',
+            '(decrease',
+            '(forall',
+            '(when',
+        ]);
+        let expectedRange = new vscode.Range(1, 0, 1, 2);
+        items.forEach(item => assert.deepStrictEqual(item.range, expectedRange, `Range of '${item.label}' should be ...`));
+    });
+
     /* Problem keywords */
+    
     test('should suggest problem sections upon invoke', async () => {
         // GIVEN
         let inputTextHead = '(define \n';
@@ -289,6 +340,13 @@ suite('PDDL Completion Item Provider', () => {
 });
 
 
+function assertSnippetIncludes(items: vscode.CompletionItem[], filterText: string, needle: string) {
+    const item = items.find(item => item.filterText === filterText);
+    assert.ok(item, `Item '${filterText}' should be included`);
+    const snippet = (<vscode.SnippetString>item.insertText);
+    assert.ok(snippet.value.includes(needle), `snippet '${snippet.value}' should include ${needle}`);
+}
+
 async function testProvider(inputTextHead: string, ch: string, inputTextTail: string, context: vscode.CompletionContext): Promise<vscode.CompletionItem[]> {
     let initialText = inputTextHead + ch + inputTextTail;
 
@@ -334,7 +392,9 @@ async function testDomainProvider(inputTextHead: string, ch: string, inputTextTa
 
     let tree = new PddlSyntaxTreeBuilder(initialText).getTree();
 
-    let domainInfo = new DomainInfo('file://testProblem.pddl', 1, 'd', tree, new CodeDocumentPositionResolver(doc));
+    let domainNode = tree.getDefineNodeOrThrow().getFirstOpenBracketOrThrow('domain');
+    let positionResolver = new CodeDocumentPositionResolver(doc);
+    let domainInfo = new PddlDomainParser('file://testProblem.pddl', 1, initialText, domainNode, tree, positionResolver).getDomain();
 
     return await new DomainCompletionItemProvider().provide(doc, domainInfo, position, context);
 }

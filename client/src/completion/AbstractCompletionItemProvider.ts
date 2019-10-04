@@ -17,12 +17,12 @@ export class AbstractCompletionItemProvider {
         this.suggestionDetails = new Map<string, SuggestionDetails>();
     }
     
-    addSuggestionDocumentation(label: string, detail: string, documentation: string | MarkdownString, kind?: CompletionItemKind) {
+    addSuggestionDocumentation(label: string, detail: string, documentation: string | MarkdownString, kind?: CompletionItemKind): void {
         let details = new SuggestionDetails(label, detail, documentation, kind);
         this.suggestionDetails.set(details.label, details);
     }
 
-    protected insideDefine(domainInfo: DomainInfo | ProblemInfo, currentNode: PddlSyntaxNode, context: CompletionContext) {
+    protected insideDefine(domainInfo: DomainInfo | ProblemInfo, currentNode: PddlSyntaxNode, context: CompletionContext): boolean {
         let defineNode = domainInfo.syntaxTree.getDefineNode();
         if (context.triggerKind === CompletionTriggerKind.Invoke) {
             return currentNode.getParent() === defineNode;
@@ -34,7 +34,7 @@ export class AbstractCompletionItemProvider {
         }
     }
 
-    protected createSnippetCompletionItem(suggestion: Suggestion, snippet: string, range: Range, _context: CompletionContext, index: number) {
+    protected createSnippetCompletionItem(suggestion: Suggestion, snippet: string, range: Range, _context: CompletionContext, index: number): CompletionItem {
         let suggestionDetail = this.suggestionDetails.get(suggestion.sectionName);
         let completionItem = new CompletionItem(suggestion.sectionName, (suggestionDetail && suggestionDetail.kind) || CompletionItemKind.Keyword);
         completionItem.insertText = new SnippetString(snippet);
@@ -48,11 +48,11 @@ export class AbstractCompletionItemProvider {
         return completionItem;
     }
     
-    protected addConstraintsDocumentation() {
+    protected addConstraintsDocumentation(): void {
         this.addSuggestionDocumentation(':constraints', 'Constraints', 'Constraints.... you may want to stay away from those.');
     }
 
-    protected addRequirementsDocumentation() {
+    protected addRequirementsDocumentation(): void {
         this.addSuggestionDocumentation(':requirements', 'Requirements', 'Required planning engine features.');
     }
 }

@@ -18,10 +18,6 @@ export abstract class Delegate {
         return this.createCompletionItem(label, detail, documentation, CompletionItemKind.Function);
     }
 
-    createKeyword(label: string, detail: string, documentation: string | MarkdownString): CompletionItem {
-        return this.createCompletionItem(label, detail, documentation, CompletionItemKind.Keyword);
-    }
-
     createCompletionItem(label: string, detail: string, documentation: string | MarkdownString, kind: CompletionItemKind): CompletionItem {
         let item = new CompletionItem(label, kind);
         item.detail = detail;

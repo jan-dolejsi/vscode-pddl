@@ -115,15 +115,14 @@ export function showError(reason: any): void {
  * @param configuredPath a configured path to an executable
  */
 export function ensureAbsolutePath(configuredPath: string, context: ExtensionContext): string {
+    if (!configuredPath) { return configuredPath; }
+
     if (isHttp(configuredPath)) {
         return configuredPath;
     }
 
     // if the path is absolute, or contains just the name of an executable (obviously relying on the %path&), return it as is
-    if (!configuredPath) {
-        return configuredPath;
-    } 
-    else if (path.isAbsolute(configuredPath) || !path.dirname(configuredPath)) {
+    if (path.isAbsolute(configuredPath) || !path.dirname(configuredPath)) {
         return configuredPath;
     }
     else {

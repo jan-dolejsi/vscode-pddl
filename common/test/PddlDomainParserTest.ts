@@ -245,6 +245,23 @@ describe('PddlDomainParser', () => {
             assert.equal(domainInfo.getPredicates()[0].getFullName(), "said_hello", 'the predicate should be "said_hello"');
         });
 
+        it('extracts 2 predicates without whitespace', () => {
+            // GIVEN
+            let domainPddl = `(define (domain helloworld)
+            (:requirements :strips )
+            (:predicates 
+                (p1)(p2)
+            )
+            )`;
+
+            // WHEN
+            let domainInfo = createPddlDomainParser(domainPddl).getDomain();
+
+            assert.equal(domainInfo.getPredicates().length, 2, 'there should be 2 predicate');
+            assert.equal(domainInfo.getPredicates()[0].getFullName(), "p1", 'the predicate should be "p1"');
+            assert.equal(domainInfo.getPredicates()[1].getFullName(), "p2", 'the predicate should be "p2"');
+        });
+
         it('extracts function', () => {
             // GIVEN
             let domainPddl = `(define (domain helloworld)

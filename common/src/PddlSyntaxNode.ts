@@ -175,7 +175,7 @@ export class PddlSyntaxNode extends TextRange {
         return this.maxChildEnd;
     }
 
-    findAncestor(type: PddlTokenType, pattern: RegExp): PddlSyntaxNode {
+    findAncestor(type: PddlTokenType, pattern: RegExp): PddlSyntaxNode | null {
         let parent = this.parent;
 
         while(parent.isNotType(PddlTokenType.Document)) {
@@ -188,7 +188,7 @@ export class PddlSyntaxNode extends TextRange {
         return null;
     }
     
-    findParametrisableScope(parameterName: string): PddlSyntaxNode {
+    findParametrisableScope(parameterName: string): PddlSyntaxNode | undefined {
         let node: PddlSyntaxNode = this;
         while (!node.isDocument()) {
             node = node.findAncestor(PddlTokenType.OpenBracketOperator, /^\(\s*(:action|:durative-action|:process|:event|:derived|forall|exists)$/);

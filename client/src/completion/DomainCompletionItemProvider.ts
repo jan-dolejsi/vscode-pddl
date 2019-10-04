@@ -12,6 +12,7 @@ import { PddlSyntaxNode } from '../../../common/src/PddlSyntaxNode';
 import { PddlStructure } from '../../../common/src/PddlStructure';
 import { nodeToRange } from '../utils';
 import { AbstractCompletionItemProvider, Suggestion } from './AbstractCompletionItemProvider';
+import { DiscreteEffectCompletionItemProvider } from './DiscreteEffectCompletionItemProvider';
 
 export class DomainCompletionItemProvider extends AbstractCompletionItemProvider {
 
@@ -101,6 +102,10 @@ export class DomainCompletionItemProvider extends AbstractCompletionItemProvider
             return suggestions
                 .map((suggestion, index) => this.createDurativeActionCompletionItem(currentNode, suggestion, range, context, index))
                 .filter(item => !!item); // filter out nulls
+        }
+        else if (DiscreteEffectCompletionItemProvider.inside(currentNode)) {
+            let range = context.triggerCharacter === '(' ? nodeToRange(document, currentNode) : null;
+            return new DiscreteEffectCompletionItemProvider().provide(domainInfo, context, range);
         }
 
         return [];

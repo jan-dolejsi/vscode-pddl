@@ -7,6 +7,7 @@ import { PddlSyntaxNode } from "./PddlSyntaxNode";
 import { Variable, Parameter } from "./FileInfo";
 import { PddlTokenType, isOpenBracket } from "./PddlTokenizer";
 import { PddlRange, DocumentPositionResolver } from "./DocumentPositionResolver";
+import { Util } from "./util";
 
 /** Parses the `:predicates` and `:functions` section. */
 export class VariablesParser {
@@ -23,9 +24,7 @@ export class VariablesParser {
         // first split the list of children to chunks describing one variable
         this.chunkByVerticalWhitespace(predicatesNode);
 
-        this.variables = this.chunks
-            .map(chunk => this.processChunk(chunk))
-            .filter(var1 => var1 !== undefined);
+        this.variables = Util.flatMap(this.chunks.map(chunk => this.processChunk(chunk)));
     }
 
     private chunkByVerticalWhitespace(predicatesNode: PddlSyntaxNode) {
@@ -58,10 +57,9 @@ export class VariablesParser {
         }
     }
 
-    private processChunk(chunk: PddlSyntaxNode[]): Variable {
+    private processChunk(chunk: PddlSyntaxNode[]): Variable[] {
         let documentation = new Array<string>();
-        let variable: Variable = undefined;
-        let variableNode: PddlSyntaxNode;
+        let variableNodes: PddlSyntaxNode[] = [];
 
         for (const node of chunk) {
 
@@ -73,20 +71,20 @@ export class VariablesParser {
                 }
             }
             else if (isOpenBracket(node.getToken())) {
-                variableNode = node;
-                let fullSymbolName = node.getText().replace(/[\(\)]/g, '');
-                let parameters = parseParameters(fullSymbolName);
-                variable = new Variable(fullSymbolName, parameters);
+                variableNodes.push(node);
             }
         }
 
-        if (!variable) {
-            // there was no predicate/function in this chunk
-            return undefined;
-        }
+        return variableNodes.map(node => this.createVariable(node, documentation));
+    }
+
+    createVariable(node: PddlSyntaxNode, documentation: string[]): Variable {
+        let fullSymbolName = node.getText().replace(/[\(\)]/g, '');
+        let parameters = parseParameters(fullSymbolName);
+        let variable = new Variable(fullSymbolName, parameters);
         variable.setDocumentation(documentation);
-        let startPosition = this.positionResolver.resolveToPosition(variableNode.getStart());
-        let endPosition = this.positionResolver.resolveToPosition(variableNode.getEnd());
+        let startPosition = this.positionResolver.resolveToPosition(node.getStart());
+        let endPosition = this.positionResolver.resolveToPosition(node.getEnd());
         variable.setLocation(PddlRange.from(startPosition, endPosition));
 
         return variable;

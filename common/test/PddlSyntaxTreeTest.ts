@@ -181,6 +181,25 @@ describe('PddlSyntaxNode', () => {
                 PddlTokenType.CloseBracket,
             ]);
         });
+
+        it('gets two predicate children', () => { 
+            // GIVEN
+            let predicatesPddl = `(:predicates (p1)(p2))`;
+            let tree = new PddlSyntaxTreeBuilder(predicatesPddl).getTree();
+            let predicatesNode = tree.getRootNode().getFirstOpenBracketOrThrow(':predicates');
+
+            // WHEN
+            let children = predicatesNode.getChildren();
+
+            // THEN
+            let tokenTypes = children.map(f => f.getToken().type);
+            assert.deepStrictEqual(tokenTypes, [
+                PddlTokenType.Whitespace,
+                PddlTokenType.OpenBracket,
+                PddlTokenType.OpenBracket,
+                PddlTokenType.CloseBracket
+            ]);
+        });
     });
 
     describe('#getNestedChildren()', () => {

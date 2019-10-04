@@ -267,6 +267,28 @@ describe('PddlTokenizer', () => {
             ]);
         });
 
+        it('parses 2 predicates', () => {
+            // GIVEN
+            let domainPddl = '(p1)(p2)';
+            let fragments: PddlToken[] = [];
+
+            // WHEN
+            // tslint:disable-next-line:no-unused-expression
+            new PddlTokenizer(domainPddl, fragment => fragments.push(fragment));
+
+            // THEN
+            assert.strictEqual(fragments.length, 6, 'there should be # of fragments');
+            let fragmentTypes = fragments.map(f => f.type);
+            assert.deepStrictEqual(fragmentTypes, [
+                PddlTokenType.OpenBracket,
+                PddlTokenType.Other,
+                PddlTokenType.CloseBracket,
+                PddlTokenType.OpenBracket,
+                PddlTokenType.Other,
+                PddlTokenType.CloseBracket
+            ]);
+        });
+
         it ('parses a number', () => {
             let domainPddl = '-3.14';
             let fragments: PddlToken[] = [];

@@ -23,29 +23,6 @@ export class EffectDelegate extends Delegate {
         if (!functions.length) { return []; }
         let namesCsv = Delegate.toTypeLessNamesCsv(functions);
 
-        let discreteEffectHint = 'Use this either in instantaneous `:action`\'s `:effect`, or in `:durative-action`\'s `(at start ...)` or `(at end ...)` effect.';
-
-        let discreteIncrease = this.createOperator('increase', 'Discrete numeric increase effect', new MarkdownString('For example to increment a function value by `3.14`, use')
-            .appendCodeblock('(increase (function1) 3.14)', PDDL)
-            .appendMarkdown(discreteEffectHint));
-        discreteIncrease.insertText = new SnippetString(
-            "increase (${1|" + namesCsv + "|}) $0"
-        );
-
-        let discreteDecrease = this.createOperator('decrease', 'Discrete numerical decrease effect', new MarkdownString('For example to decrease a function value by `3.14`, use')
-            .appendCodeblock('(decrease (function1) 3.14)', PDDL)
-            .appendMarkdown(discreteEffectHint));
-        discreteDecrease.insertText = new SnippetString(
-            "decrease (${1|" + namesCsv + "|}) $0"
-        );
-
-        let discreteAssign = this.createOperator('assign', 'Numeric assign effect', new MarkdownString('Assigns value to the function, for example:')
-            .appendCodeblock('assign (function1) 3.14)', PDDL)
-            .appendMarkdown(discreteEffectHint));
-        discreteAssign.insertText = new SnippetString(
-            "assign (${1|" + namesCsv + "|}) $0"
-        );
-
         let continuousEffectHint = 'Use this in `:durative-action`\'s `:effect` block. Do not use it inside `(at start ...)` or `(at end ...)` effect. Example usage:';
         let continuousEffectExample = `(:durative-action
 ...
@@ -73,9 +50,6 @@ export class EffectDelegate extends Delegate {
         );
 
         return [
-            discreteIncrease,
-            discreteDecrease,
-            discreteAssign,
             continuousIncrease,
             continuousDecrease
         ];
