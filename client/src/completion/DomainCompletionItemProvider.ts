@@ -13,6 +13,9 @@ import { PddlStructure } from '../../../common/src/PddlStructure';
 import { nodeToRange } from '../utils';
 import { AbstractCompletionItemProvider, Suggestion } from './AbstractCompletionItemProvider';
 import { DiscreteEffectCompletionItemProvider } from './DiscreteEffectCompletionItemProvider';
+import { ContinuousEffectCompletionItemProvider } from './ContinuousEffectCompletionItemProvider';
+import { DurativeActionEffectCompletionItemProvider } from './DurativeActionEffectCompletionItemProvider';
+import { DurativeActionConditionCompletionItemProvider } from './DurativeActionConditionCompletionItemProvider';
 
 export class DomainCompletionItemProvider extends AbstractCompletionItemProvider {
 
@@ -36,7 +39,7 @@ export class DomainCompletionItemProvider extends AbstractCompletionItemProvider
             '    :effect (and',
             '        (increase (temperature ?b) (* #t 3))',
             '    )',
-            ')'].join('\n'), PDDL).appendMarkdown('Note that `:process` and `:event` require the `:time` requirement.'));
+            ')'].join('\n'), PDDL).appendMarkdown('Note that `:process` and `:event` require the `:time` requirement.'), CompletionItemKind.Struct);
         this.addSuggestionDocumentation(':event', 'PDDL+ Effect', new MarkdownString('Effect is triggered when its condition is met. It may only have continuous effects. Example:').appendCodeblock(['(:event BOUNCE',
             '    :parameters (?b - ball)',
             '    :precondition (and',
@@ -103,9 +106,24 @@ export class DomainCompletionItemProvider extends AbstractCompletionItemProvider
                 .map((suggestion, index) => this.createDurativeActionCompletionItem(currentNode, suggestion, range, context, index))
                 .filter(item => !!item); // filter out nulls
         }
-        else if (DiscreteEffectCompletionItemProvider.inside(currentNode)) {
+        else if (DurativeActionEffectCompletionItemProvider.insideEffect(currentNode)) {
+            let completions: CompletionItem[] = [];
             let range = context.triggerCharacter === '(' ? nodeToRange(document, currentNode) : null;
-            return new DiscreteEffectCompletionItemProvider().provide(domainInfo, context, range);
+
+            if (DurativeActionEffectCompletionItemProvider.inside(currentNode)) {
+                completions.push(... await new DurativeActionEffectCompletionItemProvider().provide(domainInfo, context, range));
+            }
+            if (DiscreteEffectCompletionItemProvider.inside(currentNode)) {
+                completions.push(... await new DiscreteEffectCompletionItemProvider().provide(domainInfo, context, range));
+            }
+            if (ContinuousEffectCompletionItemProvider.inside(currentNode)) {
+                completions.push(... await new ContinuousEffectCompletionItemProvider().provide(domainInfo, context, range));
+            }
+            // completions.push(...this.addIconGallery());
+            return completions;
+        } else if (DurativeActionConditionCompletionItemProvider.inside(currentNode)) {
+            let range = context.triggerCharacter === '(' ? nodeToRange(document, currentNode) : null;
+            return new DurativeActionConditionCompletionItemProvider().provide(domainInfo, context, range);
         }
 
         return [];
@@ -231,5 +249,19 @@ export class DomainCompletionItemProvider extends AbstractCompletionItemProvider
             default:
                 return null;
         }
+    }
+}
+
+export function requires(requirements: string[]): string {
+    const requirementsCsv = requirements.map(r => '`' + r + '`').join(', ');
+    return `\n\nThis language feature requires ${requirementsCsv}.`;
+}
+
+export function toSelection(tabstop: number, optionsCsv: string, orDefault: string) {
+    if (optionsCsv.length) {
+        return "${" + tabstop + "|" + optionsCsv + "|}";
+    }
+    else {
+        return "${" + tabstop + ":" + orDefault + "}";
     }
 }

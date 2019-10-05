@@ -23,9 +23,11 @@ export class TypeDelegate extends Delegate {
         let domainInfo = this.workspace.asDomain(fileInfo);
         return domainInfo ? domainInfo.getTypes() : [];
     }
+
     createType(typeName: string): CompletionItem {
         let completionItem = this.createCompletionItem(typeName, 'Type', '', CompletionItemKind.Class);
         completionItem.insertText = ' ' + typeName; // prefix with a space for formatting
+        completionItem.filterText = '- ' + typeName;
         return completionItem;
     }
 }

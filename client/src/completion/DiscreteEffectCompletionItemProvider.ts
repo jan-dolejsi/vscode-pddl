@@ -11,13 +11,15 @@ import { PddlTokenType } from '../../../common/src/PddlTokenizer';
 import { PddlSyntaxNode } from '../../../common/src/PddlSyntaxNode';
 import { AbstractCompletionItemProvider, Suggestion } from './AbstractCompletionItemProvider';
 import { Delegate } from './Delegate';
+import { requires, toSelection } from './DomainCompletionItemProvider';
+import { DurativeActionEffectCompletionItemProvider } from './DurativeActionEffectCompletionItemProvider';
 
 export class DiscreteEffectCompletionItemProvider extends AbstractCompletionItemProvider {
 
     constructor() {
         super();
         let discreteEffectHint = 'Use this either in instantaneous `:action`\'s `:effect`, or in `:durative-action`\'s `(at start ...)` or `(at end ...)` effect.';
-        let requiresFluents = this.requires([':fluents']);
+        let requiresFluents = requires([':fluents']);
 
         this.addSuggestionDocumentation('not', 'Assigns `false` to a predicate',
             new MarkdownString('Makes predicate false:')
@@ -44,22 +46,17 @@ export class DiscreteEffectCompletionItemProvider extends AbstractCompletionItem
 
         this.addSuggestionDocumentation('forall', 'For all effect',
             new MarkdownString('Effect that shall be applied to all objects of specified type. For example:')
-                .appendCodeblock('(forall (?p - product) (sold_out ?p))', PDDL), CompletionItemKind.Method);
+                .appendCodeblock('(forall (?p - product) (sold_out ?p))', PDDL), CompletionItemKind.TypeParameter);
 
         this.addSuggestionDocumentation('when', 'Conditional effect',
             new MarkdownString('Effect that shall only be applied when a condition is met. For example:')
                 .appendCodeblock('(when (at ?location) (not (at ?location)))', PDDL)
                 .appendMarkdown(discreteEffectHint)
-                .appendMarkdown(this.requires([':conditional-effects'])), CompletionItemKind.Method);
-    }
-
-    private requires(requirements: string[]): string {
-        const requirementsCsv = requirements.map(r => '`' + r + '`').join(', ');
-        return `\n\nThis language feature requires ${requirementsCsv}.`;
+                .appendMarkdown(requires([':conditional-effects'])), CompletionItemKind.Method);
     }
 
     static inside(currentNode: PddlSyntaxNode) {
-        return currentNode.findAncestor(PddlTokenType.Keyword, /:effect/i) !== null
+        return DurativeActionEffectCompletionItemProvider.insideEffect(currentNode)
             && (DiscreteEffectCompletionItemProvider.insideActionOrEvent(currentNode)
                 || DiscreteEffectCompletionItemProvider.insideDurativeActionDiscreteEffect(currentNode));
     }
@@ -84,16 +81,16 @@ export class DiscreteEffectCompletionItemProvider extends AbstractCompletionItem
 
         return [
             this.createSnippetCompletionItem(Suggestion.from("not", context.triggerCharacter, '('),
-                "(not (" + this.toSelection(1, predicateNamesCsv, "new_predicate") + "))$0",
+                "(not (" + toSelection(1, predicateNamesCsv, "new_predicate") + "))$0",
                 range, context, 0),
             this.createSnippetCompletionItem(Suggestion.from("assign", context.triggerCharacter, '('),
-                "(assign (" + this.toSelection(1, functionNamesCsv, "new_function") + ") ${2:0})$0",
+                "(assign (" + toSelection(1, functionNamesCsv, "new_function") + ") ${2:0})$0",
                 range, context, 1),
             this.createSnippetCompletionItem(Suggestion.from("increase", context.triggerCharacter, '('),
-                "(increase (" + this.toSelection(1, functionNamesCsv, "new_function") + ") ${2:1})$0",
+                "(increase (" + toSelection(1, functionNamesCsv, "new_function") + ") ${2:1})$0",
                 range, context, 2),
             this.createSnippetCompletionItem(Suggestion.from("decrease", context.triggerCharacter, '('),
-                "(decrease (" + this.toSelection(1, functionNamesCsv, "new_function") + ") ${2:1})$0",
+                "(decrease (" + toSelection(1, functionNamesCsv, "new_function") + ") ${2:1})$0",
                 range, context, 3),
             this.createSnippetCompletionItem(Suggestion.from("forall", context.triggerCharacter, '('),
                 "(forall ($1) $2)$0",
@@ -102,14 +99,5 @@ export class DiscreteEffectCompletionItemProvider extends AbstractCompletionItem
                 "(when ${1:condition} ${2:effect})$0",
                 range, context, 5)
         ];
-    }
-
-    private toSelection(tabstop: number, optionsCsv: string, orDefault: string) {
-        if (optionsCsv.length) {
-            return "${" + tabstop + "|" + optionsCsv + "|}";
-        }
-        else {
-            return "${" + tabstop + ":" + orDefault + "}";
-        }
     }
 }

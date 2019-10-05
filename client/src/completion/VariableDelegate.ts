@@ -34,11 +34,11 @@ export class VariableDelegate extends Delegate {
     }
 
     private createFunction(functionSymbol: Variable): CompletionItem {
-        return this.createSymbol(functionSymbol, 'Function', CompletionItemKind.Reference);
+        return this.createSymbol(functionSymbol, 'Function', CompletionItemKind.Unit);
     }
 
     private createDerived(derivedSymbol: Variable): CompletionItem {
-        return this.createSymbol(derivedSymbol, 'Derived predicate/function', CompletionItemKind.Field);
+        return this.createSymbol(derivedSymbol, 'Derived predicate/function', CompletionItemKind.Interface);
     }
 
     private createSymbol(symbol: Variable, title: string, kind: CompletionItemKind) {

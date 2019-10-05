@@ -4,7 +4,7 @@
  * ------------------------------------------------------------------------------------------ */
 'use strict';
 
-import { CompletionItem, CompletionItemKind, MarkdownString } from 'vscode';
+import { CompletionItem, CompletionItemKind, MarkdownString, SnippetString } from 'vscode';
 import { DomainInfo, TypeObjects } from '../../../common/src/DomainInfo';
 import { Variable } from '../../../common/src/FileInfo';
 
@@ -14,14 +14,19 @@ export abstract class Delegate {
 
     }
 
-    createOperator(label: string, detail: string, documentation: string | MarkdownString): CompletionItem {
-        return this.createCompletionItem(label, detail, documentation, CompletionItemKind.Function);
+    createOperator(label: string, detail: string, documentation: string | MarkdownString, snippet?: SnippetString): CompletionItem {
+        return this.createCompletionItem(label, detail, documentation, CompletionItemKind.Operator, snippet);
     }
 
-    createCompletionItem(label: string, detail: string, documentation: string | MarkdownString, kind: CompletionItemKind): CompletionItem {
+    createParameterized(label: string, detail: string, documentation: string | MarkdownString, snippet?: SnippetString): CompletionItem {
+        return this.createCompletionItem(label, detail, documentation, CompletionItemKind.TypeParameter, snippet);
+    }
+
+    createCompletionItem(label: string, detail: string, documentation: string | MarkdownString, kind: CompletionItemKind, snippet?: SnippetString): CompletionItem {
         let item = new CompletionItem(label, kind);
         item.detail = detail;
         item.documentation = documentation;
+        if (snippet) { item.insertText = snippet; }
         return item;
     }
 

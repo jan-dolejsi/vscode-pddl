@@ -55,6 +55,38 @@ export class AbstractCompletionItemProvider {
     protected addRequirementsDocumentation(): void {
         this.addSuggestionDocumentation(':requirements', 'Requirements', 'Required planning engine features.');
     }
+
+    protected addIconGallery(): CompletionItem[] {
+        // Object.keys(CompletionItemKind).map(key => CompletionItemKind[key]);
+        return [
+            new CompletionItem("Class", CompletionItemKind.Class),
+            new CompletionItem("Text", CompletionItemKind.Text),
+            new CompletionItem("Method", CompletionItemKind.Method),
+            new CompletionItem("Function", CompletionItemKind.Function),
+            new CompletionItem("Constructor", CompletionItemKind.Constructor),
+            new CompletionItem("Field", CompletionItemKind.Field),
+            new CompletionItem("Variable", CompletionItemKind.Variable),
+            new CompletionItem("Class", CompletionItemKind.Class),
+            new CompletionItem("Interface", CompletionItemKind.Interface),
+            new CompletionItem("Module", CompletionItemKind.Module),
+            new CompletionItem("Property", CompletionItemKind.Property),
+            new CompletionItem("Unit", CompletionItemKind.Unit),
+            new CompletionItem("Value", CompletionItemKind.Value),
+            new CompletionItem("Enum", CompletionItemKind.Enum),
+            new CompletionItem("Keyword", CompletionItemKind.Keyword),
+            new CompletionItem("Snippet", CompletionItemKind.Snippet),
+            new CompletionItem("Color", CompletionItemKind.Color),
+            new CompletionItem("Reference", CompletionItemKind.Reference),
+            new CompletionItem("File", CompletionItemKind.File),
+            new CompletionItem("Folder", CompletionItemKind.Folder),
+            new CompletionItem("EnumMember", CompletionItemKind.EnumMember),
+            new CompletionItem("Constant", CompletionItemKind.Constant),
+            new CompletionItem("Struct", CompletionItemKind.Struct),
+            new CompletionItem("Event", CompletionItemKind.Event),
+            new CompletionItem("Operator", CompletionItemKind.Operator),
+            new CompletionItem("TypeParameter", CompletionItemKind.TypeParameter)
+        ];
+    }
 }
 
 export class Suggestion {

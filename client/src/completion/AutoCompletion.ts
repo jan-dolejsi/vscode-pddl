@@ -6,12 +6,10 @@
 
 import { CompletionItemProvider, CompletionItem, TextDocument, Position, CancellationToken, CompletionContext, Range } from 'vscode';
 import { ProblemInfo } from '../../../common/src/parser';
-import { DomainInfo } from '../../../common/src/DomainInfo';
 import { ProblemInitDelegate } from './ProblemInitDelegate';
 import { OperatorDelegate } from './OperatorDelegate';
 import { VariableDelegate } from './VariableDelegate';
 import { TypeDelegate } from './TypeDelegate';
-import { EffectDelegate } from './EffectDelegate';
 import { CodePddlWorkspace } from '../workspace/CodePddlWorkspace';
 
 export class AutoCompletion implements CompletionItemProvider {
@@ -21,21 +19,18 @@ export class AutoCompletion implements CompletionItemProvider {
     operatorDelegate: OperatorDelegate;
     variableDelegate: VariableDelegate;
     typeDelegate: TypeDelegate;
-    effectDelegate: EffectDelegate;
 
     constructor(public codePddlWorkspace: CodePddlWorkspace) {
         this.operatorDelegate = new OperatorDelegate();
         this.variableDelegate = new VariableDelegate(codePddlWorkspace);
         this.typeDelegate = new TypeDelegate(codePddlWorkspace.pddlWorkspace);
-        this.effectDelegate = new EffectDelegate(codePddlWorkspace.pddlWorkspace);
     }
 
     async provideCompletionItems(document: TextDocument, position: Position, token: CancellationToken, context: CompletionContext): Promise<CompletionItem[]> {
         if (token.isCancellationRequested) { return []; }
 
         let completionCollector = await new CompletionCollector(this.codePddlWorkspace, document, position, context,
-            this.operatorDelegate, this.variableDelegate, this.typeDelegate,
-            this.effectDelegate).initialize();
+            this.operatorDelegate, this.variableDelegate, this.typeDelegate).initialize();
         return completionCollector.getCompletions();
     }
 }
@@ -50,15 +45,14 @@ class CompletionCollector {
         private readonly position: Position, private readonly context: CompletionContext,
         private readonly operatorDelegate: OperatorDelegate,
         private readonly variableDelegate: VariableDelegate,
-        private readonly typeDelegate: TypeDelegate,
-        private readonly effectDelegate: EffectDelegate) {
+        private readonly typeDelegate: TypeDelegate) {
 
         this.lineText = document.lineAt(position.line).text;
         this.leadingText = this.lineText.substring(0, position.character);
-        if (this.leadingText.includes(';')) { return; } // do not auto-complete in comment text
     }
 
     async initialize(): Promise<CompletionCollector> {
+        if (this.leadingText.includes(';')) { return this; } // do not auto-complete in comment text
 
         const activeFileInfo = await this.codePddlWorkspace.upsertFile(this.document);
 
@@ -66,11 +60,6 @@ class CompletionCollector {
             let problemFileInfo = <ProblemInfo>activeFileInfo;
 
             this.createProblemCompletionItems(problemFileInfo);
-        }
-        else if (activeFileInfo.isDomain()) {
-            let domainFileInfo = <DomainInfo>activeFileInfo;
-
-            this.createDomainCompletionItems(domainFileInfo);
         }
 
         if (this.leadingText.length > 0 && this.leadingText.endsWith('(')) {
@@ -85,13 +74,6 @@ class CompletionCollector {
 
     getCompletions(): CompletionItem[] {
         return this.completions;
-    }
-
-    createDomainCompletionItems(domainFileInfo: DomainInfo): void {
-        if (this.isTriggeredByBracket()) {
-            //todo: check if we are inside an action/durative-action
-            this.pushAll(this.effectDelegate.getNumericEffectItems(domainFileInfo));
-        }
     }
 
     createProblemCompletionItems(problemFileInfo: ProblemInfo): void {

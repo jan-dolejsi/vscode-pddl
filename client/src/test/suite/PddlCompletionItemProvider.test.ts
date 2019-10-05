@@ -268,6 +268,69 @@ suite('PDDL Completion Item Provider', () => {
         items.forEach(item => assert.deepStrictEqual(item.range, expectedRange, `Range of '${item.label}' should be ...`));
     });
 
+    test('should suggest (:durative-action continuous effects and time-qualifiers upon invoke', async () => {
+        // GIVEN
+        let inputTextHead = '(define (domain d) (:functions (f1)) (:durative-action :effect (and\n';
+        let ch = '';
+        let inputTextTail = '\n)))';
+
+        // WHEN
+        let items = await testDomainProvider(inputTextHead, ch, inputTextTail, { triggerKind: vscode.CompletionTriggerKind.Invoke, triggerCharacter: ch });
+
+        // THEN
+        assertSnippetIncludes(items, "(increase", 'f1');
+        assertSnippetIncludes(items, "(decrease", '(decrease (${1|f1|}) (* #t ${2:1.0}))$0');
+        assert.deepStrictEqual(items.map(i => i.filterText || i.label), [
+            '(at start',
+            '(at end',
+            '(increase',
+            '(decrease',
+            '(forall',
+        ]);
+        items.forEach(item => assert.strictEqual(item.range, undefined, `Range of '${item.label}' should be undefined`));
+    });
+    
+    test('should suggest (:process effects upon ( trigger', async () => {
+        // GIVEN
+        let inputTextHead = '(define (domain d) (:functions (f1)) (:process :effect (and\n';
+        let ch = '(';
+        let inputTextTail = ')\n)))';
+
+        // WHEN
+        let items = await testDomainProvider(inputTextHead, ch, inputTextTail, { triggerKind: vscode.CompletionTriggerKind.TriggerCharacter, triggerCharacter: ch });
+
+        // THEN
+        assertSnippetIncludes(items, "(increase", 'f1');
+        assertSnippetIncludes(items, "(decrease", '(decrease (${1|f1|}) (* #t ${2:1.0}))$0');
+        assert.deepStrictEqual(items.map(i => i.filterText || i.label), [
+            '(increase',
+            '(decrease',
+            '(forall',
+        ]);
+        let expectedRange = new vscode.Range(1, 0, 1, 2);
+        items.forEach(item => assert.deepStrictEqual(item.range, expectedRange, `Range of '${item.label}' should be ...`));
+    });
+
+    /* Action condition */
+
+    test('should suggest (:durative-action condition time-qualifiers upon invoke', async () => {
+        // GIVEN
+        let inputTextHead = '(define (domain d) (:durative-action :condition (and\n';
+        let ch = '';
+        let inputTextTail = '\n)))';
+
+        // WHEN
+        let items = await testDomainProvider(inputTextHead, ch, inputTextTail, { triggerKind: vscode.CompletionTriggerKind.Invoke, triggerCharacter: ch });
+
+        // THEN
+        assert.deepStrictEqual(items.map(i => i.filterText || i.label), [
+            '(at start',
+            '(at end',
+            '(over all',
+        ]);
+        items.forEach(item => assert.strictEqual(item.range, undefined, `Range of '${item.label}' should be undefined`));
+    });
+
     /* Problem keywords */
     
     test('should suggest problem sections upon invoke', async () => {
