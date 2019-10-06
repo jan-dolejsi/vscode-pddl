@@ -5,7 +5,7 @@
 'use strict';
 
 import * as path from 'path';
-import { ExtensionContext, Uri, workspace, window, Range, TextDocument } from 'vscode';
+import { ExtensionContext, Uri, workspace, window, Range, TextDocument, Webview } from 'vscode';
 import * as afs from '../../common/src/asyncfs';
 import { PddlExtensionContext } from '../../common/src/PddlExtensionContext';
 import { PddlRange } from '../../common/src/DocumentPositionResolver';
@@ -21,7 +21,7 @@ export function createPddlExtensionContext(context: ExtensionContext): PddlExten
     };
 }
 
-export async function getWebViewHtml(extensionContext: PddlExtensionContext, relativePath: string, htmlFileName: string) {
+export async function getWebViewHtml(extensionContext: PddlExtensionContext, relativePath: string, htmlFileName: string, webview?: Webview) {
     let overviewHtmlPath = extensionContext.asAbsolutePath(path.join(relativePath, htmlFileName));
     let html = await afs.readFile(overviewHtmlPath, { encoding: "utf-8", flag: 'r' });
 
@@ -35,7 +35,17 @@ export async function getWebViewHtml(extensionContext: PddlExtensionContext, rel
         return `<${elementName} ${middleBits}${attribName}="${resource}"`;
     });
 
+    if (webview) {
+        html = html.replace("<!--CSP-->", createContentSecurityPolicy(webview));
+    }
+
     return html;
+}
+
+function createContentSecurityPolicy(webview: Webview): string {
+    return `<meta http-equiv="Content-Security-Policy"
+\t\tcontent="default-src 'none'; img-src ${webview.cspSource} https:; script-src ${webview.cspSource} 'unsafe-inline'; style-src ${webview.cspSource} 'unsafe-inline';"
+\t/>`;
 }
 
 export function sleep(ms: number): Promise<void> {

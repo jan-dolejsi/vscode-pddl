@@ -5,7 +5,7 @@
 'use strict';
 
 import {
-    window, ExtensionContext, Uri, ViewColumn, WebviewPanel, commands, workspace, ConfigurationTarget, extensions, TextDocument
+    window, ExtensionContext, Uri, ViewColumn, WebviewPanel, commands, workspace, ConfigurationTarget, extensions, TextDocument, Webview
 } from 'vscode';
 
 import { PddlConfiguration } from '../configuration';
@@ -52,7 +52,6 @@ export class OverviewPage {
     }
 
     async createWelcomePage(showOnTop: boolean): Promise<void> {
-        let html = await this.getHtml();
         let iconUri = this.context.asAbsolutePath('images/icon.png');
 
         let webViewPanel = window.createWebviewPanel(
@@ -71,6 +70,7 @@ export class OverviewPage {
             }
         );
 
+        let html = await this.getHtml(webViewPanel.webview);
         webViewPanel.webview.html = html;
         webViewPanel.iconPath = Uri.file(iconUri);
 
@@ -223,8 +223,8 @@ export class OverviewPage {
         return sampleDocuments;
     }
 
-    async getHtml(): Promise<string> {
-        let html = getWebViewHtml(createPddlExtensionContext(this.context), this.CONTENT_FOLDER, 'overview.html');
+    async getHtml(webview: Webview): Promise<string> {
+        let html = getWebViewHtml(createPddlExtensionContext(this.context), this.CONTENT_FOLDER, 'overview.html', webview);
         return html;
     }
 

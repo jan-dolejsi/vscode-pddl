@@ -7,7 +7,7 @@
   "version": "2.14.3",
   "publisher": "jan-dolejsi",
   "engines": {
-    "vscode": "^1.32.0",
+    "vscode": "^1.38.0",
     "node": "^10.2.0"
   },
   "categories": [
@@ -887,6 +887,6 @@
     "@types/glob": "^7.1.1",
     "@types/mocha": "^5.2.6",
     "@types/node": "^10.14.11",
-    "@types/vscode": "^1.32.0"
+    "@types/vscode": "^1.38.0"
   }
 }
