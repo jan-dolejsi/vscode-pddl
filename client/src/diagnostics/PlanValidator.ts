@@ -10,7 +10,8 @@ import {
 
 import * as process from 'child_process';
 
-import { PlanInfo, ProblemInfo } from '../../../common/src/parser';
+import { PlanInfo } from '../../../common/src/parser';
+import { ProblemInfo } from '../../../common/src/ProblemInfo';
 import { DomainInfo } from '../../../common/src/DomainInfo';
 import { ParsingProblem } from '../../../common/src/FileInfo';
 import { PddlConfiguration } from '../configuration';
@@ -211,7 +212,7 @@ export class PlanValidator {
     validateActionNames(domain: DomainInfo, problem: ProblemInfo, plan: PlanInfo): Diagnostic[] {
         return plan.getSteps()
             .filter(step => !this.isDomainAction(domain, problem, step))
-            .map(step => new Diagnostic(createRangeFromLine(step.lineIndex), `Action '${step.getActionName()}' not known by the domain ${domain.name}`, DiagnosticSeverity.Error));
+            .map(step => new Diagnostic(createRangeFromLine(step.lineIndex), `Action '${step.getActionName()}' not known by the domain '${domain.name}'`, DiagnosticSeverity.Error));
     }
 
     /**
@@ -227,10 +228,11 @@ export class PlanValidator {
             .map(step => new Diagnostic(createRangeFromLine(step.lineIndex), `Action '${step.getActionName()}' time ${step.getStartTime()} is before the preceding action time`, DiagnosticSeverity.Error));
     }
 
-    private isDomainAction(domain: DomainInfo, _problem: ProblemInfo, step: PlanStep): boolean {
-        // tslint:disable-next-line: no-unused-expression
-        _problem;
-        return domain.actions.some(a => a.name.toLowerCase() === step.getActionName().toLowerCase());
+    private isDomainAction(domain: DomainInfo, problem: ProblemInfo, step: PlanStep): boolean {
+        let allActionNames = domain.actions.map(a => a.name.toLowerCase()).concat(
+            problem.getSupplyDemands().map(sd => sd.getName().toLowerCase()));
+
+        return allActionNames.includes(step.getActionName().toLowerCase());
     }
 
     private isTimeMonotonicallyIncreasing(first: PlanStep, second: PlanStep): boolean {

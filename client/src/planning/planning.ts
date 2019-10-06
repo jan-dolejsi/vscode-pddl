@@ -11,7 +11,7 @@ import {
 
 import { PddlWorkspace } from '../../../common/src/PddlWorkspace';
 import { PddlSyntaxTreeBuilder } from '../../../common/src/PddlSyntaxTreeBuilder';
-import { ProblemInfo } from '../../../common/src/parser';
+import { ProblemInfo } from '../../../common/src/ProblemInfo';
 import { DomainInfo } from '../../../common/src/DomainInfo';
 import { PddlLanguage } from '../../../common/src/FileInfo';
 import { PddlConfiguration, CONF_PDDL, PLAN_REPORT_EXPORT_WIDTH } from '../configuration';

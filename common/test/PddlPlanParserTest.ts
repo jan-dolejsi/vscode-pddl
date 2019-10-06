@@ -7,7 +7,7 @@
 import * as assert from 'assert';
 import { PddlPlanParser } from '../src/PddlPlanParser';
 import { DomainInfo } from '../src/DomainInfo';
-import { ProblemInfo } from '../src/parser';
+import { ProblemInfo } from '../src/ProblemInfo';
 
 describe('PddlPlanParser', () => {
 

@@ -11,7 +11,8 @@ import { PddlSyntaxTreeBuilder } from '../../../common/src/PddlSyntaxTreeBuilder
 import { PddlTokenType } from '../../../common/src/PddlTokenizer';
 import { PddlSyntaxTree } from '../../../common/src/PddlSyntaxTree';
 import { FileInfo } from '../../../common/src/FileInfo';
-import { PDDL, ProblemInfo } from '../../../common/src/parser';
+import { PDDL } from '../../../common/src/parser';
+import { ProblemInfo } from '../../../common/src/ProblemInfo';
 import { CodePddlWorkspace } from '../workspace/CodePddlWorkspace';
 import { PTEST_VIEW_PROBLEM } from '../ptest/PTestCommands';
 import { Test } from '../ptest/Test';

@@ -6,7 +6,7 @@
 
 import { Plan } from './Plan';
 import { PlanStep } from './PlanStep';
-import { ProblemInfo } from './parser';
+import { ProblemInfo } from './ProblemInfo';
 import { DomainInfo } from './DomainInfo';
  
 /**

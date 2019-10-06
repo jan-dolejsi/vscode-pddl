@@ -5,7 +5,7 @@
 'use strict';
 
 import { State } from "./State";
-import { ProblemInfo } from '../../../common/src/parser';
+import { ProblemInfo } from '../../../common/src/ProblemInfo';
 import { DomainInfo } from '../../../common/src/DomainInfo';
 import { Plan } from '../../../common/src/Plan';
 import { PlanStep, PlanStepCommitment } from "../../../common/src/PlanStep";

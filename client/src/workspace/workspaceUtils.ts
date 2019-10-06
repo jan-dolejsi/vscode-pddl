@@ -5,7 +5,8 @@
 'use strict';
 
 import { TextDocument, window, workspace, QuickPickItem, Uri, GlobPattern, WorkspaceFolder } from 'vscode';
-import { PDDL, PLAN, toLanguageFromId, HAPPENINGS, PlanInfo, ProblemInfo, UNSPECIFIED_PROBLEM, UNSPECIFIED_DOMAIN } from '../../../common/src/parser';
+import { PDDL, PLAN, toLanguageFromId, HAPPENINGS, PlanInfo, UNSPECIFIED_PROBLEM, UNSPECIFIED_DOMAIN } from '../../../common/src/parser';
+import { ProblemInfo } from '../../../common/src/ProblemInfo';
 import { DomainInfo } from '../../../common/src/DomainInfo';
 import { PddlLanguage, FileInfo } from '../../../common/src/FileInfo';
 import { HappeningsInfo } from "../../../common/src/HappeningsInfo";

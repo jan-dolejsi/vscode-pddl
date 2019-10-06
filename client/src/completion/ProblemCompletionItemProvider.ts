@@ -5,7 +5,7 @@
 'use strict';
 
 import { CompletionItem, TextDocument, Position, CompletionContext, CompletionItemKind, SnippetString, MarkdownString, Range } from 'vscode';
-import { ProblemInfo } from '../../../common/src/parser';
+import { ProblemInfo } from '../../../common/src/ProblemInfo';
 import { PddlTokenType } from '../../../common/src/PddlTokenizer';
 import { AbstractCompletionItemProvider, Suggestion } from './AbstractCompletionItemProvider';
 import { PddlSyntaxNode } from '../../../common/src/PddlSyntaxNode';

@@ -8,7 +8,7 @@ import * as request from 'request';
 import { Planner } from './planner';
 import { PlannerResponseHandler } from './PlannerResponseHandler';
 import { Plan } from '../../../common/src/Plan';
-import { ProblemInfo } from '../../../common/src/parser';
+import { ProblemInfo } from '../../../common/src/ProblemInfo';
 import { DomainInfo } from '../../../common/src/DomainInfo';
 import { PddlPlanParser } from '../../../common/src/PddlPlanParser';
 import { PlanStep } from '../../../common/src/PlanStep';

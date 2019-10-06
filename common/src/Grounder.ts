@@ -4,7 +4,7 @@
  * ------------------------------------------------------------------------------------------ */
 'use strict';
 
-import { ProblemInfo } from "./parser";
+import { ProblemInfo } from "./ProblemInfo";
 import { DomainInfo, TypeObjects } from './DomainInfo';
 import { Variable, ObjectInstance } from './FileInfo';
 

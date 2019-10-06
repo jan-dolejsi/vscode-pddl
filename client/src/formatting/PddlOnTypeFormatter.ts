@@ -9,7 +9,7 @@ import { CodePddlWorkspace } from '../workspace/CodePddlWorkspace';
 import { PddlLanguage } from '../../../common/src/FileInfo';
 import { DomainInfo } from '../../../common/src/DomainInfo';
 import { PddlSyntaxTree } from '../../../common/src/PddlSyntaxTree';
-import { ProblemInfo } from '../../../common/src/parser';
+import { ProblemInfo } from '../../../common/src/ProblemInfo';
 import { PddlSyntaxTreeBuilder } from '../../../common/src/PddlSyntaxTreeBuilder';
 import { PddlTokenType } from '../../../common/src/PddlTokenizer';
 import { PddlSyntaxNode } from '../../../common/src/PddlSyntaxNode';

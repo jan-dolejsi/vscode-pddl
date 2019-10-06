@@ -5,7 +5,7 @@
 'use strict';
 
 import { CompletionItem, CompletionContext, SnippetString, MarkdownString, CompletionItemKind } from 'vscode';
-import { ProblemInfo } from '../../../common/src/parser';
+import { ProblemInfo } from '../../../common/src/ProblemInfo';
 import { DomainInfo, TypeObjects } from '../../../common/src/DomainInfo';
 import { Variable } from '../../../common/src/FileInfo';
 import { ContextDelegate } from './ContextDelegate';

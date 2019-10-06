@@ -5,7 +5,8 @@
 'use strict';
 
 import { CodeActionKind, ExtensionContext, commands, languages, Uri, workspace, TextDocument } from 'vscode';
-import { PLAN, ProblemInfo, PDDL, HAPPENINGS } from '../../../common/src/parser';
+import { PLAN, PDDL, HAPPENINGS } from '../../../common/src/parser';
+import { ProblemInfo } from '../../../common/src/ProblemInfo';
 import { DomainInfo } from '../../../common/src/DomainInfo';
 import { AssociationCodeActionProvider } from './AssociationCodeActionProvider';
 import { showError } from '../utils';

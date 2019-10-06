@@ -4,7 +4,8 @@
  * ------------------------------------------------------------------------------------------ */
 'use strict';
 
-import { ProblemInfo, PlanInfo, TimedVariableValue } from '../../../common/src/parser';
+import { PlanInfo } from '../../../common/src/parser';
+import { ProblemInfo, TimedVariableValue } from '../../../common/src/ProblemInfo';
 import { DomainInfo } from '../../../common/src/DomainInfo';
 import { PddlConfiguration } from '../configuration';
 import { ValStep } from '../debugger/ValStep';

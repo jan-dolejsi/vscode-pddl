@@ -4,7 +4,7 @@
  * ------------------------------------------------------------------------------------------ */
 'use strict';
 
-import { ProblemInfo } from './parser';
+import { ProblemInfo } from './ProblemInfo';
 import { PlanStep } from './PlanStep';
 import { HappeningType } from './HappeningsInfo';
 import { DomainInfo } from './DomainInfo';

@@ -14,7 +14,7 @@ import * as afs from '../../../common/src/asyncfs';
 import { DomainInfo } from '../../../common/src/DomainInfo';
 import { toRange } from '../utils';
 import { PddlConfiguration } from '../configuration';
-import { ProblemInfo } from '../parser';
+import { ProblemInfo } from '../../../common/src/ProblemInfo';
 
 
 export class CodePddlWorkspace {

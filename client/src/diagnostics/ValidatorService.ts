@@ -9,7 +9,7 @@ import {
 } from 'vscode';
 
 import { Validator } from './validator';
-import { ProblemInfo } from '../../../common/src/parser';
+import { ProblemInfo } from '../../../common/src/ProblemInfo';
 import { DomainInfo } from '../../../common/src/DomainInfo';
 import { FileStatus } from '../../../common/src/FileInfo';
 import { Authentication } from '../../../common/src/Authentication';

@@ -13,7 +13,7 @@ const tree_kill = require('tree-kill');
 
 import { Planner } from './planner';
 import { PlannerResponseHandler } from './PlannerResponseHandler';
-import { ProblemInfo } from '../../../common/src/parser';
+import { ProblemInfo } from '../../../common/src/ProblemInfo';
 import { DomainInfo } from '../../../common/src/DomainInfo';
 import { Util } from '../../../common/src/util';
 import { PddlPlanParser } from '../../../common/src/PddlPlanParser';

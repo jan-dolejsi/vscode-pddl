@@ -7,7 +7,7 @@
 import { CompletionItem, CompletionContext, CompletionItemKind, SnippetString, Range, CompletionTriggerKind, MarkdownString } from 'vscode';
 import { DomainInfo } from '../../../common/src/DomainInfo';
 import { PddlSyntaxNode } from '../../../common/src/PddlSyntaxNode';
-import { ProblemInfo } from '../../../common/src/parser';
+import { ProblemInfo } from '../../../common/src/ProblemInfo';
 
 export class AbstractCompletionItemProvider {
 

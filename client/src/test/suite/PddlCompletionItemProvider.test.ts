@@ -5,8 +5,7 @@ import { before } from 'mocha';
 // as well as import your extension to test it
 import * as vscode from 'vscode';
 import { ProblemCompletionItemProvider } from '../../completion/ProblemCompletionItemProvider';
-import { ProblemInfo } from '../../../../common/src/parser';
-// import { DomainInfo } from '../../../../common/src/DomainInfo';
+import { ProblemInfo } from '../../../../common/src/ProblemInfo';
 import { PddlSyntaxTreeBuilder } from '../../../../common/src/PddlSyntaxTreeBuilder';
 import { CodeDocumentPositionResolver } from '../../workspace/CodeDocumentPositionResolver';
 import { UnknownPddlCompletionItemProvider } from '../../completion/UnknownPddlCompletionItemProvider';

@@ -4,7 +4,7 @@
  * ------------------------------------------------------------------------------------------ */
 'use strict';
 
-import { Parser, ProblemInfo } from '../src/parser';
+import { Parser } from '../src/parser';
 import { DirectionalGraph } from '../src/DirectionalGraph';
 import * as assert from 'assert';
 import { Variable, Parameter, ObjectInstance } from '../src/FileInfo';
@@ -52,54 +52,6 @@ describe('Parser', () => {
 
             // THEN
             assert.strictEqual(domainInfo, null, 'domain should be null');
-        });
-    });
-
-    describe('#getProblemStructure', () => {
-        it('parses objects for types with dashes', () => {
-            // GIVEN
-            let problemPddl = `
-            (define (problem p1) (:domain d1)
-            
-            (:objects
-              ta-sk1 task2 task3 - basic-task
-            )
-            
-            (:init )
-            (:goal )
-            )
-            `;
-            let syntaxTree = new PddlSyntaxTreeBuilder(problemPddl).getTree();
-            let positionResolver = new SimpleDocumentPositionResolver(problemPddl);
-            let problemInfo = new ProblemInfo("uri", 1, "p1", "d1", syntaxTree, positionResolver);
-
-            // WHEN
-            new Parser().getProblemStructure(problemPddl, problemInfo);
-
-            assert.equal(problemInfo.getObjects("basic-task").length, 3, 'there should be 3 objects');
-        });
-
-        it('parses structure even where there is a requirements section', () => {
-            // GIVEN
-            let problemPddl = `
-            (define (problem p1) (:domain d1)
-            (:requirements :strips :fluents :durative-actions :timed-initial-literals :typing :conditional-effects :negative-preconditions :duration-inequalities :equality)
-            (:objects
-              task1 - task
-            )
-            
-            (:init )
-            (:goal )
-            )
-            `;
-            let syntaxTree = new PddlSyntaxTreeBuilder(problemPddl).getTree();
-            let positionResolver = new SimpleDocumentPositionResolver(problemPddl);
-            let problemInfo = new ProblemInfo("uri", 1, "p1", "d1", syntaxTree, positionResolver);
-
-            // WHEN
-            new Parser().getProblemStructure(problemPddl, problemInfo);
-
-            assert.equal(problemInfo.getObjects("task").length, 1, 'there should be 1 object despite the requirements section');
         });
     });
 });

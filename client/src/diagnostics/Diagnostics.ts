@@ -10,7 +10,8 @@ import {
 
 import { Authentication } from '../../../common/src/Authentication';
 import { PddlWorkspace } from '../../../common/src/PddlWorkspace';
-import { ProblemInfo, PlanInfo } from '../../../common/src/parser';
+import { PlanInfo } from '../../../common/src/parser';
+import { ProblemInfo } from '../../../common/src/ProblemInfo';
 import { DomainInfo } from '../../../common/src/DomainInfo';
 import { FileInfo, FileStatus, stripComments, ParsingProblem } from '../../../common/src/FileInfo';
 

@@ -4,7 +4,8 @@
  * ------------------------------------------------------------------------------------------ */
 'use strict';
 
-import { Parser, ProblemInfo, UnknownFileInfo, PlanInfo } from './parser';
+import { Parser, UnknownFileInfo, PlanInfo } from './parser';
+import { ProblemInfo } from './ProblemInfo';
 import { FileInfo, PddlLanguage, FileStatus, ParsingProblem } from './FileInfo';
 import { HappeningsInfo } from "./HappeningsInfo";
 import { Util } from './util';

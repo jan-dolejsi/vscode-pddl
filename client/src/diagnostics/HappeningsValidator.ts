@@ -10,7 +10,7 @@ import {
 
 import * as process from 'child_process';
 
-import { ProblemInfo } from '../../../common/src/parser';
+import { ProblemInfo } from '../../../common/src/ProblemInfo';
 import { DomainInfo } from '../../../common/src/DomainInfo';
 import { HappeningsInfo, Happening } from "../../../common/src/HappeningsInfo";
 import { PddlConfiguration } from '../configuration';
@@ -160,7 +160,7 @@ export class HappeningsValidator {
     validateActionNames(domain: DomainInfo, problem: ProblemInfo, happeningsInfo: HappeningsInfo): Diagnostic[] {
         return happeningsInfo.getHappenings()
             .filter(happening => !this.isDomainAction(domain, problem, happening))
-            .map(happening => new Diagnostic(createRangeFromLine(happening.lineIndex), `Action '${happening.getAction()}' not known by the domain ${domain.name}`, DiagnosticSeverity.Error));
+            .map(happening => new Diagnostic(createRangeFromLine(happening.lineIndex), `Action '${happening.getAction()}' not known by the domain '${domain.name}'`, DiagnosticSeverity.Error));
     }
 
     /**
@@ -177,8 +177,10 @@ export class HappeningsValidator {
     }
 
     private isDomainAction(domain: DomainInfo, problem: ProblemInfo, happening: Happening): boolean {
-        problem;
-        return domain.actions.some(a => a.name.toLowerCase() === happening.getAction().toLowerCase());
+        let allActionNames = domain.actions.map(a => a.name.toLowerCase()).concat(
+            problem.getSupplyDemands().map(sd => sd.getName().toLowerCase()));
+
+        return allActionNames.includes(happening.getAction().toLowerCase());
     }
 
     private isTimeMonotonociallyIncreasing(first: Happening, second: Happening): boolean {

@@ -10,7 +10,7 @@ import { PddlConfiguration } from '../configuration';
 import { dirname } from 'path';
 import { DebuggingSessionFiles } from './DebuggingSessionFiles';
 import { Happening } from '../HappeningsInfo';
-import { VariableValue } from '../../../common/src/parser';
+import { VariableValue } from '../../../common/src/ProblemInfo';
 import { ValStep, ValStepError, ValStepExitCode } from './ValStep';
 
 /**
