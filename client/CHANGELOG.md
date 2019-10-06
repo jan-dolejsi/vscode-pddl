@@ -2,9 +2,10 @@
 
 ## [2.14.3] Context-sensitive auto-completion suggestions
 
-- Auto-completion of domain, problem file structures is context sensitive now and only suggests structures that are valid
+- Auto-completion of domain, problem file structures is context sensitive now and only suggests structures that are valid in the given place
 - Enable the on-type PDDL formatter to get help with shaping the whitespace around your PDDL code (namely indentation) for better readability of your models. To give it a try, enable the _Editor: Format On Type_ and _PDDL: Formatter_ setting options.
 - ValStep repro `run.cmd` batch file was updated to latest version of ValStep's syntax.
+- PDDL Problem file parsing re-worked to use the Syntax Tree
 
 ## [2.14.2] ValStep upgrade and plan line plot improvement
 
