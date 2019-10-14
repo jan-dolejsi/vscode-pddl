@@ -1,6 +1,6 @@
 # PDDL support - What's new?
 
-## [2.14.3] Context-sensitive auto-completion suggestions
+## [2.14.4] Context-sensitive auto-completion suggestions
 
 - Auto-completion of domain, problem file structures is context sensitive now and only suggests structures that are valid in the given place
 - Enable the on-type PDDL formatter to get help with shaping the whitespace around your PDDL code (namely indentation) for better readability of your models. To give it a try, enable the _Editor: Format On Type_ and _PDDL: Formatter_ setting options.
@@ -794,8 +794,8 @@ Note for open source contributors: all notable changes to the "pddl" extension w
 
 Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
 
-[Unreleased]: https://github.com/jan-dolejsi/vscode-pddl/compare/v2.14.3...HEAD
-[2.14.3]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.14.2...v2.14.3
+[Unreleased]: https://github.com/jan-dolejsi/vscode-pddl/compare/v2.14.4...HEAD
+[2.14.4]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.14.2...v2.14.4
 [2.14.2]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.14.1...v2.14.2
 [2.14.1]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.14.0...v2.14.1
 [2.14.0]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.13.1...v2.14.0
