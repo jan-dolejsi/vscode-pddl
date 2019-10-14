@@ -57,7 +57,31 @@ describe('PddlProblemParser', () => {
 
             assert.equal(problemInfo.getObjects("task").length, 1, 'there should be 1 object despite the requirements section');
         });
+        
+        it('parses problem with init values', () => {
+            // GIVEN
+            let problemPddl = `
+            (define (problem p1) (:domain d1)
+            (:requirements :strips :fluents)
+            
+            (:init 
+                (p1)
+                (= (f1) 1)
+            )
+            (:goal )
+            )
+            `;
+            let syntaxTree = new PddlSyntaxTreeBuilder(problemPddl).getTree();
+            let positionResolver = new SimpleDocumentPositionResolver(problemPddl);
+            let problemInfo = new ProblemInfo("uri", 1, "p1", "d1", syntaxTree, positionResolver);
 
+            // WHEN
+            new PddlProblemParser().getProblemStructure(problemInfo);
+
+            assert.strictEqual(problemInfo.getInits().length, 2, 'there should be 2 initial values');
+            assert.deepStrictEqual(problemInfo.getInits()[0], new TimedVariableValue(0, "p1", true));
+            assert.deepStrictEqual(problemInfo.getInits()[1], new TimedVariableValue(0, "f1", 1));
+        });
         
         it('parses problem with supply-demand', () => {
             // GIVEN

@@ -101,7 +101,7 @@ export class PddlProblemParser {
     parseInitSection(initNode: PddlSyntaxNode): [TimedVariableValue[], SupplyDemand[]] {
         let timedVariableValues = initNode.getChildren()
             .filter(node => isOpenBracket(node.getToken()))
-            .filter(node => node.getToken().tokenText.match(/\(\s*supply-demand/i) !== null)
+            .filter(node => node.getToken().tokenText.match(/\(\s*supply-demand/i) === null)
             .map(bracket => this.parseInit(bracket));
         
         let supplyDemands = initNode.getChildrenOfType(PddlTokenType.OpenBracketOperator, /\(\s*supply-demand/i)

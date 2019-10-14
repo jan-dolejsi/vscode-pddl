@@ -172,11 +172,12 @@ export class Variable {
     }
 
     bind(objects: ObjectInstance[]): Variable {
+        const objectNames = objects.map(o => o.name).join(" ");
         if (this.parameters.length !== objects.length) {
-            throw new Error(`Invalid objects ${objects} for function ${this.getFullName()} parameters ${this.parameters}.`);
+            throw new Error(`Invalid objects '${objectNames}' for function '${this.getFullName()}' with ${this.parameters.length} parameters.`);
         }
         let fullName = this.name;
-        if (objects) { fullName += " " + objects.map(o => o.name).join(" "); }
+        if (objects) { fullName += " " + objectNames; }
         return new Variable(fullName, objects);
     }
 
