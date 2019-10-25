@@ -1,5 +1,39 @@
 # PDDL support - What's new?
 
+## Unreleased
+
+### Problem `:init` visualization
+
+A "View" _code lens_ is displayed above the `:init` section of problem files. Clicking it will open a graphical representation of the initial state for easy review. 
+So far a directed graph may be displayed to visualize 2D symmetric predicates or functions i.e. predicates or functions whose first two arguments are of the same type. 
+For example predicate `(path ?from ?to)` or function `(distance ?a ?b)` will be visualized on a graph.
+
+### Excluding actions from swim-lane plan visualization by configuring selected parameters to be ignored
+
+It is now possible to exclude some action parameters from swim-lane plan visualization. This is useful for action parameters, which are just marginally involved in the action conditions, and displaying such action in the swim-lane of the given object makes the diagram confusing. To configure this, add `ignoreActionParameters` into the _domain_.planviz.json file, where _domain_ matches your domain file name. This example will exclude `?to` and `?from` parameters of any action starting with `move`. It also exclude any parameter with name ending with the `_reserved` suffix:
+
+```json
+{
+    "ignoreActionParameters": [
+        {
+            "action": "^move",
+            "parameterPattern": "^(to|from)$"
+        },
+        {
+            "action": ".+",
+            "parameterPattern": "_reserved$"
+        }
+    ]
+}
+```
+
+### Fixes
+
+- Large domain/problem files now parse correctly. Previously the parser output buffer was fixed to the node.js limit and beyond certain size, PDDL file errors and warnings would stop displaying.
+- Code Action to declare undeclared predicates/functions is now case insensitive (because the VAL parser reports warnings in lowercase)
+- _ValueSeq_ outputs warnings about unsatisfied pre-conditions. These now do not break the ValueSeq output parser. The warnings go to the log.
+- Fixed parsing of timed initial literals of `at` predicates.
+
 ## [2.14.4] Context-sensitive auto-completion suggestions
 
 - Auto-completion of domain, problem file structures is context sensitive now and only suggests structures that are valid in the given place

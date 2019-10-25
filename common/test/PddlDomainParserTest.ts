@@ -49,7 +49,7 @@ describe('PddlDomainParser', () => {
             assert.strictEqual(domainInfo.name, 'domain_name');
             assert.ok(domainInfo.getRequirements().length > 0, 'there should be requirements');
             assert.deepStrictEqual(domainInfo.getTypes(), [], 'there should be no types');
-            assert.deepStrictEqual(domainInfo.constants, [], 'there should be no constants');
+            assert.deepStrictEqual(domainInfo.getConstants(), [], 'there should be no constants');
             assert.deepStrictEqual(domainInfo.getPredicates(), [], 'there should be no predicates');
             assert.deepStrictEqual(domainInfo.getFunctions(), [], 'there should be no functions');
             assert.deepStrictEqual(domainInfo.getActions(), [], 'there should be no actions');

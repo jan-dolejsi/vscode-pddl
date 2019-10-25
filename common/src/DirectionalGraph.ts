@@ -30,7 +30,7 @@ export class DirectionalGraph {
         });
         return edges;
     }
-    addEdge(from: string, to: string): void {
+    addEdge(from: string, to: string): DirectionalGraph {
         let fromVertex = this.verticesAndEdges.find(vertex => vertex[0] === from);
         if (fromVertex) {
             let edgesAlreadyInserted = fromVertex[1];
@@ -45,6 +45,7 @@ export class DirectionalGraph {
         if (to) {
             this.addEdge(to, null);
         }
+        return this;
     }
     getVerticesWithEdgesFrom(vertex: string): string[] {
         return this.verticesAndEdges.find(t => t[0] === vertex)[1];

@@ -89,4 +89,8 @@ export class Util {
     static flatMap<T>(arrayOfArrays: Array<Array<T>>): Array<T> {
         return [].concat.apply([], arrayOfArrays);
     }
+
+    static distinct<T>(array: Array<T>): Array<T> {
+        return [...new Set(array).values()];
+    }
 }

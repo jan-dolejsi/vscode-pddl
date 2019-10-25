@@ -9,6 +9,7 @@ import { Variable } from './FileInfo';
 export class PlanTimeSeriesParser {
 
     functionValues = new Map<Variable, FunctionValues>();
+    warnings: string[];
 
     constructor(public functions: Variable[], timeSeriesCsv: string) {
 
@@ -16,34 +17,40 @@ export class PlanTimeSeriesParser {
             .map(l => l.trim())
             .filter(l => l.length > 0);
 
+        this.warnings = lines.filter(line => line.includes(':'));
+
         let currentFunctionValues: FunctionValues = null;
 
-        lines.forEach(line => {
-            let newFunction = functions.find(f => f.getFullName().toLowerCase() === line);
+        lines
+            .filter(line => !line.includes(':'))
+            .forEach(line => {
+                let newFunction = functions.find(f => f.getFullName().toLowerCase() === line);
 
-            if (newFunction) {
-                if (currentFunctionValues) { this.addFunctionValues(currentFunctionValues); }
-                currentFunctionValues = new FunctionValues(newFunction);
-            }
-            else {
-                var time; var value;
-                [time, value] = line.split(',').map(v => parseFloat(v.trim()));
-                if (currentFunctionValues === null) {
-                    throw new Error(`The ValueSeq output does not include function names ${functions.map(f => f.getFullName())}`);
-                }
-                if (isNaN(time) || value === undefined) {
-                    throw new Error(`The ValueSeq output does not parse: ${line}`);
+                if (newFunction) {
+                    if (currentFunctionValues) { this.addFunctionValues(currentFunctionValues); }
+                    currentFunctionValues = new FunctionValues(newFunction);
                 }
                 else {
-                    if (currentFunctionValues.lastTime() > time) {
-                        time = currentFunctionValues.lastTime() + 1e-10;
-                    } else if (currentFunctionValues.lastTime() === time) {
-                        time += 1e-10;
+                    var time; var value;
+                    [time, value] = line.split(',').map(v => parseFloat(v.trim()));
+                    if (currentFunctionValues === null) {
+                        throw new Error(`The ValueSeq output does not include function names ${functions.map(f => f.getFullName())}`);
                     }
-                    currentFunctionValues.addValue(time, value);
+                    if (isNaN(time) || value === undefined) {
+                        throw new Error(`The ValueSeq output does not parse: ${line}`);
+                    }
+                    else {
+                        if (currentFunctionValues.lastTime() > time) {
+                            time = currentFunctionValues.lastTime() + 1e-10;
+                        } else if (currentFunctionValues.lastTime() === time) {
+                            time += 1e-10;
+                        }
+                        currentFunctionValues.addValue(time, value);
+                    }
                 }
-            }
-        });
+            });
+
+        this.warnings.forEach(w => console.log('ValueSeq: ' + w));
 
         this.addFunctionValues(currentFunctionValues);
     }
@@ -113,8 +120,8 @@ export class FunctionsValues {
     isConstant(): boolean {
         let that = this;
         return this.functions.every((_, idx) => {
-            let firstValue = that.values[0][idx+1];
-            return that.values.every(values1 => values1[idx+1] === firstValue);
+            let firstValue = that.values[0][idx + 1];
+            return that.values.every(values1 => values1[idx + 1] === firstValue);
         });
     }
 }
@@ -132,7 +139,7 @@ export class FunctionValues {
     }
 
     lastTime(): number {
-        return this.values.length > 0 ? this.values[this.values.length -1][0] : NaN;
+        return this.values.length > 0 ? this.values[this.values.length - 1][0] : NaN;
     }
 
     getLegend(): string {

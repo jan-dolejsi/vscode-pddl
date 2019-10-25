@@ -37,6 +37,7 @@ import { CodePddlWorkspace } from './workspace/CodePddlWorkspace';
 import { DomainDiagnostics } from './diagnostics/DomainDiagnostics';
 import { PddlOnTypeFormatter } from './formatting/PddlOnTypeFormatter';
 import { PddlCompletionItemProvider } from './completion/PddlCompletionItemProvider';
+import { ProblemView } from './problemView/ProblemView';
 
 const PDDL_CONFIGURE_PARSER = 'pddl.configureParser';
 const PDDL_LOGIN_PARSER_SERVICE = 'pddl.loginParserService';
@@ -159,6 +160,9 @@ function activateWithTelemetry(_operationId: string, context: ExtensionContext) 
 		providedCodeActionKinds: SuggestionProvider.providedCodeActionKinds
 	});
 
+	let problemView = new ProblemView(context, codePddlWorkspace);
+	languages.registerCodeLensProvider(PDDL, problemView);
+
 	registerDocumentFormattingProvider(context, codePddlWorkspace);
 
 	let renameProvider = languages.registerRenameProvider(PDDL, new SymbolRenameProvider(codePddlWorkspace));
@@ -212,7 +216,8 @@ function activateWithTelemetry(_operationId: string, context: ExtensionContext) 
 		configureParserCommand, loginParserServiceCommand, updateTokensParserServiceCommand,
 		configurePlannerCommand, loginPlannerServiceCommand, updateTokensPlannerServiceCommand, completionItemProvider, completionItemProvider2,
 		renameProvider, suggestionProvider, documentSymbolProvider, definitionProvider, referencesProvider, hoverProvider,
-		planHoverProvider, planDefinitionProvider, happeningsHoverProvider, happeningsDefinitionProvider);
+		planHoverProvider, planDefinitionProvider, happeningsHoverProvider, happeningsDefinitionProvider,
+		problemView);
 }
 
 export function deactivate() {

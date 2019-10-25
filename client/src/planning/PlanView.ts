@@ -32,7 +32,7 @@ export class PlanView extends Disposable {
         super(() => this.dispose());
 
         context.subscriptions.push(commands.registerCommand("pddl.plan.preview", async planUri => {
-            let dotDocument = await getDotDocument(planUri);
+            let dotDocument = await getPlanDocument(planUri);
             if (dotDocument) {
                 return this.revealOrCreatePreview(dotDocument, ViewColumn.Beside);
             }
@@ -51,7 +51,6 @@ export class PlanView extends Disposable {
                 this.setNeedsRebuild(doc);
             }
         }));
-
     }
 
     setPlannerOutput(plans: Plan[], reveal: boolean): void {
@@ -200,7 +199,7 @@ export class PlanView extends Disposable {
     }
 }
 
-async function getDotDocument(dotDocumentUri: Uri | undefined): Promise<TextDocument> {
+async function getPlanDocument(dotDocumentUri: Uri | undefined): Promise<TextDocument> {
     if (dotDocumentUri) {
         return await workspace.openTextDocument(dotDocumentUri);
     } else {

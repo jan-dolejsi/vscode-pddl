@@ -30,7 +30,7 @@ export class UndeclaredVariable {
         let lineWithUndeclaredVariable = document.lineAt(diagnostic.range.start.line);
         let variableNameMatch = lineWithUndeclaredVariable.text.match(new RegExp("\\(\\s*" + variableName + "[ |\\)]", "i"));
         if (!variableNameMatch) { return undefined; }
-        let undeclaredVariableOffset = document.offsetAt(lineWithUndeclaredVariable.range.start) + variableNameMatch.index + variableNameMatch[0].indexOf(variableName);
+        let undeclaredVariableOffset = document.offsetAt(lineWithUndeclaredVariable.range.start) + variableNameMatch.index + variableNameMatch[0].toLowerCase().indexOf(variableName);
 
         let variableUsage = this.syntaxTree.getNodeAt(undeclaredVariableOffset + 1).expand();
         if (!variableUsage) {

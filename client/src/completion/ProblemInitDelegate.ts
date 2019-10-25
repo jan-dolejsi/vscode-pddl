@@ -32,7 +32,7 @@ export class ProblemInitDelegate extends ContextDelegate {
     }
 
     createSymmetricInit(problemFileInfo: ProblemInfo, domainFile: DomainInfo): void {
-        let allTypeObjects = TypeObjects.concatObjects(domainFile.constants, problemFileInfo.objects);
+        let allTypeObjects = TypeObjects.concatObjects(domainFile.getConstants(), problemFileInfo.getObjectsPerType());
 
         let symmetricPredicates = this.getSymmetricPredicates(domainFile);
 
@@ -139,8 +139,7 @@ export class ProblemInitDelegate extends ContextDelegate {
         this.completions.push(item);
     }
 
-    createTimedInitialLiteral(problemFileInfo: ProblemInfo, domainFile: DomainInfo): void {
-        problemFileInfo; // burn it to avoid warning
+    createTimedInitialLiteral(_problemFileInfo: ProblemInfo, domainFile: DomainInfo): void {
 
         let predicates = domainFile.getPredicates();
 
@@ -160,8 +159,7 @@ export class ProblemInitDelegate extends ContextDelegate {
         this.completions.push(item);
     }
 
-    createTimedInitialNegativeLiteral(problemFileInfo: ProblemInfo, domainFile: DomainInfo): void {
-        problemFileInfo; // burn it to avoid warning
+    createTimedInitialNegativeLiteral(_problemFileInfo: ProblemInfo, domainFile: DomainInfo): void {
 
         let predicates = domainFile.getPredicates();
 
@@ -181,8 +179,7 @@ export class ProblemInitDelegate extends ContextDelegate {
         this.completions.push(item);
     }
 
-    createTimedInitialFluent(problemFileInfo: ProblemInfo, domainFile: DomainInfo): void {
-        problemFileInfo; // burn it to avoid warning
+    createTimedInitialFluent(_problemFileInfo: ProblemInfo, domainFile: DomainInfo): void {
 
         let functions = domainFile.getFunctions();
 

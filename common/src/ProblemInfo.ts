@@ -46,6 +46,10 @@ export class ProblemInfo extends FileInfo {
         else { return thisTypesObjects.getObjects(); }
     }
 
+    getObjectsPerType(): TypeObjects[] {
+        return this.objects;
+    }
+
     /**
      * Sets predicate/function initial values.
      * @param inits initial values
@@ -100,6 +104,10 @@ export class TimedVariableValue {
 
     getVariableName(): string {
         return this.variableName;
+    }
+
+    getLiftedVariableName(): string {
+        return this.variableName.split(' ')[0];
     }
 
     getValue(): number | boolean {

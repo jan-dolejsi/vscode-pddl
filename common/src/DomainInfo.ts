@@ -21,7 +21,7 @@ export class DomainInfo extends FileInfo {
     actions: Action[] = [];
     private typeInheritance: DirectionalGraph = new DirectionalGraph();
     private typeLocations = new Map<string, PddlRange>();
-    constants: TypeObjects[] = [];
+    private constants: TypeObjects[] = [];
     events: Action[];
     processes: Action[];
 
@@ -79,20 +79,26 @@ export class DomainInfo extends FileInfo {
         return this.typeInheritance;
     }
 
-    setTypeInheritance(typeInheritance: DirectionalGraph, typesNode: PddlBracketNode, positionResolver: DocumentPositionResolver): void {
+    setTypeInheritance(typeInheritance: DirectionalGraph, typesNode?: PddlBracketNode, positionResolver?: DocumentPositionResolver): void {
         this.typeInheritance = typeInheritance;
-        this.getTypes().forEach(typeName => {
-            let typeNode = typesNode.getFirstChild(PddlTokenType.Other, new RegExp("^" + typeName + "$"));
-            if (typeNode) {
-                let range = PddlRange.from(positionResolver.resolveToPosition(typeNode.getStart()), positionResolver.resolveToPosition(typeNode.getEnd()));
-                this.typeLocations.set(typeName, range);
-            }
-        });
+        if (typesNode) {
+            this.getTypes().forEach(typeName => {
+                let typeNode = typesNode.getFirstChild(PddlTokenType.Other, new RegExp("^" + typeName + "$"));
+                if (typeNode) {
+                    let range = PddlRange.from(positionResolver.resolveToPosition(typeNode.getStart()), positionResolver.resolveToPosition(typeNode.getEnd()));
+                    this.typeLocations.set(typeName, range);
+                }
+            });
+        }
     }
 
     setConstants(constants: TypeObjects[]): void {
         if (constants === undefined || constants === null) { throw new Error("Constants must be defined or empty."); }
         this.constants = constants;
+    }
+
+    getConstants(): TypeObjects[] {
+        return this.constants;
     }
 
     getTypes(): string[] {

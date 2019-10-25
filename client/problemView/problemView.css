@@ -1,0 +1,10 @@
+body {
+    font: 10pt sans;
+  }
+  #network {
+    float: left;
+    width: 100%;
+    height: 600px;
+    margin: 5px;
+    border: 1px solid lightgray;
+  }
