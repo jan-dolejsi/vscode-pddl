@@ -156,7 +156,7 @@ export class ProblemView extends Disposable implements CodeLensProvider {
         }
         previewPanel.setNeedsRebuild(false);
         previewPanel.getPanel().webview.html = await this.generateHtml(previewPanel);
-        this.updateContentData(previewPanel, previewPanel.getPanel().webview);
+        this.updateContentData(previewPanel.getDomain(), previewPanel.getProblem(), previewPanel.getPanel().webview);
     }
 
     async updateInset(inset: ProblemInitInset) {
@@ -247,8 +247,8 @@ export class ProblemView extends Disposable implements CodeLensProvider {
         }
     }
 
-    private updateContentData(previewPanel: ProblemInitPanel, webview: Webview) {
-        let renderer = new ProblemInitRenderer(this.context, previewPanel.getDomain(), previewPanel.getProblem(), { displayWidth: 100 });
+    private updateContentData(domain: DomainInfo, problem: ProblemInfo, webview: Webview) {
+        let renderer = new ProblemInitRenderer(this.context, domain, problem, { displayWidth: 100 });
         webview.postMessage({
             command: 'updateGraph', data: {
                 nodes: renderer.getNodes(),
@@ -315,20 +315,11 @@ async function getProblemDocument(dotDocumentUri: Uri | undefined): Promise<Text
 class ProblemInitPanel {
 
     needsRebuild: boolean;
-    width: number;
     problem: ProblemInfo;
     error: Error;
     domain: DomainInfo;
 
     constructor(public uri: Uri, private panel: WebviewPanel) { }
-
-    setWidth(width: number): void {
-        this.width = width;
-    }
-
-    getWidth(): number {
-        return this.width;
-    }
 
     setDomainAndProblem(domain: DomainInfo, problem: ProblemInfo): void {
         this.domain = domain;
