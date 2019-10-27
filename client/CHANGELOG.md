@@ -33,6 +33,7 @@ It is now possible to exclude some action parameters from swim-lane plan visuali
 - Code Action to declare undeclared predicates/functions is now case insensitive (because the VAL parser reports warnings in lowercase)
 - _ValueSeq_ outputs warnings about unsatisfied pre-conditions. These now do not break the ValueSeq output parser. The warnings go to the log.
 - Fixed parsing of timed initial literals of `at` predicates.
+- Clicking on an action name in the plan will reveal it in an already open editor window, rather than opening a new panel in the same editor group.
 
 ## [2.14.4] Context-sensitive auto-completion suggestions
 

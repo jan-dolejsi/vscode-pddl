@@ -247,6 +247,7 @@ export class OverviewPage {
             showEnableIconsAlert: this.iconsInstalled && workspace.getConfiguration().get<String>("workbench.iconTheme") !== "vscode-icons",
             downloadValAlert: !this.pddlConfiguration.getValidatorPath() || !(await this.val.isInstalled()),
             updateValAlert: await this.val.isNewValVersionAvailable()
+            // todo: workbench.editor.revealIfOpen
         };
         this.webViewPanel.webview.postMessage(message);
     }
