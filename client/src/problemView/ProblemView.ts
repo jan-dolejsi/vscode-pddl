@@ -145,7 +145,7 @@ export class ProblemView extends Disposable implements CodeLensProvider {
             previewPanel.getPanel().webview.html = "Please wait...";
         }
         previewPanel.setNeedsRebuild(false);
-        previewPanel.getPanel().webview.html = await this.generateHtml(previewPanel);
+        previewPanel.getPanel().webview.html = await this.generateHtml(previewPanel.getError());
         this.updateContentData(previewPanel.getDomain(), previewPanel.getProblem(), previewPanel.getPanel().webview);
     }
 
@@ -194,9 +194,9 @@ export class ProblemView extends Disposable implements CodeLensProvider {
         return previewPanel;
     }
 
-    private async generateHtml(previewPanel: ProblemInitPanel): Promise<string> {
-        if (previewPanel.getError()) {
-            return previewPanel.getError().message;
+    private async generateHtml(error?: Error): Promise<string> {
+        if (error) {
+            return error.message;
         }
         else {
             let html = getWebViewHtml(createPddlExtensionContext(this.context), CONTENT, 'problemView.html');
