@@ -6,6 +6,7 @@
   "license": "MIT",
   "version": "2.14.4",
   "publisher": "jan-dolejsi",
+  "enableProposedApi": true,
   "engines": {
     "vscode": "^1.32.0",
     "node": "^10.2.0"
