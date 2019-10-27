@@ -6,7 +6,7 @@
 
 import {
     window, workspace, commands, Uri,
-    ViewColumn, ExtensionContext, TextDocument, WebviewPanel, Disposable, TextDocumentChangeEvent, CodeLensProvider, Event, CodeLens, CancellationToken, Command, Range, EventEmitter, Webview
+    ViewColumn, ExtensionContext, TextDocument, Disposable, TextDocumentChangeEvent, CodeLensProvider, Event, CodeLens, CancellationToken, Command, Range, EventEmitter, Webview
 } from 'vscode';
 
 import { isPddl, getDomainFileForProblem } from '../workspace/workspaceUtils';
@@ -20,6 +20,7 @@ import { PddlTokenType } from '../../../common/src/PddlTokenizer';
 import { nodeToRange, getWebViewHtml, createPddlExtensionContext } from '../utils';
 import { getObjectsInheritingFrom, getTypesInheritingFromPlusSelf } from '../../../common/src/typeInheritance';
 import { Util } from '../../../common/src/util';
+import { ProblemInitPanel } from './ProblemInitPanel';
 
 const CONTENT = 'problemView';
 
@@ -54,12 +55,6 @@ export class ProblemView extends Disposable implements CodeLensProvider {
                 this._onDidChangeCodeLenses.fire();
             }
         }));
-
-        context.subscriptions.push(workspace.onDidSaveTextDocument((doc: TextDocument) => {
-            if (isPddl(doc)) {
-                this.setNeedsRebuild(doc);
-            }
-        }));
     }
 
     async provideCodeLenses(document: TextDocument, token: CancellationToken): Promise<CodeLens[]> {
@@ -71,7 +66,9 @@ export class ProblemView extends Disposable implements CodeLensProvider {
         let defineNode = problem.syntaxTree.getDefineNodeOrThrow();
         let initNode = defineNode.getFirstChildOrThrow(PddlTokenType.OpenBracketOperator, /\s*:init/i);
         this.subscribe(document);
-        return [new DocumentCodeLens(document, nodeToRange(document, initNode))];
+        return [
+            new DocumentCodeLens(document, nodeToRange(document, initNode))
+        ];
     }
 
     async resolveCodeLens(codeLens: CodeLens, token: CancellationToken): Promise<CodeLens> {
@@ -80,18 +77,10 @@ export class ProblemView extends Disposable implements CodeLensProvider {
         }
         if (token.isCancellationRequested) { return null; }
         let [domain] = await this.getProblemAndDomain(codeLens.getDocument());
-        this.subscribe(codeLens.getDocument());
+        if (!domain) { return null; }
         if (token.isCancellationRequested) { return null; }
 
-        let hasSymmetric2DPredicates = domain.getPredicates()
-            .some(p => ProblemInitRenderer.is2DSymmetric(p));
-
-        let hasSymmetric2DFunctions = domain.getFunctions()
-            .some(p => ProblemInitRenderer.is2DSymmetric(p));
-
-        if (hasSymmetric2DFunctions || hasSymmetric2DPredicates) {
-            codeLens.command = { command: PDDL_PROBLEM_INIT_PREVIEW_COMMAND, title: 'View' };
-        }
+        codeLens.command = { command: PDDL_PROBLEM_INIT_PREVIEW_COMMAND, title: 'View', arguments: [codeLens.getDocument().uri] };
         return codeLens;
     }
 
@@ -266,55 +255,6 @@ async function getProblemDocument(dotDocumentUri: Uri | undefined): Promise<Text
         else {
             return undefined;
         }
-    }
-}
-
-class ProblemInitPanel {
-
-    needsRebuild: boolean;
-    problem: ProblemInfo;
-    error: Error;
-    domain: DomainInfo;
-
-    constructor(public uri: Uri, private panel: WebviewPanel) { }
-
-    setDomainAndProblem(domain: DomainInfo, problem: ProblemInfo): void {
-        this.domain = domain;
-        this.problem = problem;
-        this.error = null;
-        this.setNeedsRebuild(true);
-    }
-
-    setError(ex: Error): void {
-        this.error = ex;
-    }
-
-    getError(): Error {
-        return this.error;
-    }
-
-    getDomain(): DomainInfo {
-        return this.domain;
-    }
-
-    getProblem(): ProblemInfo {
-        return this.problem;
-    }
-
-    reveal(displayColumn?: ViewColumn): void {
-        this.panel.reveal(displayColumn);
-    }
-
-    setNeedsRebuild(needsRebuild: boolean) {
-        this.needsRebuild = needsRebuild;
-    }
-
-    getNeedsRebuild(): boolean {
-        return this.needsRebuild;
-    }
-
-    getPanel(): WebviewPanel {
-        return this.panel;
     }
 }
 
