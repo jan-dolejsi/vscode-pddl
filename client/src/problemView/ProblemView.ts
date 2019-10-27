@@ -20,10 +20,12 @@ import { PddlTokenType } from '../../../common/src/PddlTokenizer';
 import { nodeToRange, getWebViewHtml, createPddlExtensionContext } from '../utils';
 import { getObjectsInheritingFrom, getTypesInheritingFromPlusSelf } from '../../../common/src/typeInheritance';
 import { Util } from '../../../common/src/util';
+import { ProblemInitInset } from './ProblemInitInset';
 
 const CONTENT = 'problemView';
 
 const PDDL_PROBLEM_INIT_PREVIEW_COMMAND = "pddl.problem.init.preview";
+const PDDL_PROBLEM_INIT_INSET_COMMAND = "pddl.problem.init.inset";
 export class ProblemView extends Disposable implements CodeLensProvider {
 
     private _onDidChangeCodeLenses: EventEmitter<void> = new EventEmitter<void>();
@@ -41,8 +43,14 @@ export class ProblemView extends Disposable implements CodeLensProvider {
             let dotDocument = await getProblemDocument(problemUri);
             if (dotDocument) {
                 console.log('Revealing problem init...');
-                this.revealOrCreateInset(problemUri, 10);
                 return this.revealOrCreatePreview(dotDocument, ViewColumn.Beside);
+            }
+        }));
+
+        context.subscriptions.push(commands.registerCommand(PDDL_PROBLEM_INIT_INSET_COMMAND, async (problemUri, line)  => {
+            if (problemUri && line) {
+                console.log('Revealing problem init inset...');
+                this.revealOrCreateInset(problemUri, line);
             }
         }));
 
@@ -75,6 +83,7 @@ export class ProblemView extends Disposable implements CodeLensProvider {
         this.subscribe(document);
         return [
             new DocumentCodeLens(document, nodeToRange(document, initNode)),
+            new DocumentInsetCodeLens(document, nodeToRange(document, initNode), document.positionAt(initNode.getStart()).line)
         ];
     }
 
@@ -86,6 +95,11 @@ export class ProblemView extends Disposable implements CodeLensProvider {
         let [domain] = await this.getProblemAndDomain(codeLens.getDocument());
         this.subscribe(codeLens.getDocument());
         if (token.isCancellationRequested) { return null; }
+
+        if (codeLens instanceof DocumentInsetCodeLens) {
+            codeLens.command = { command: PDDL_PROBLEM_INIT_INSET_COMMAND, title: 'View inset', arguments: [codeLens.getDocument().uri, codeLens.getLine()] };
+            return codeLens;
+        }
 
         let hasSymmetric2DPredicates = domain.getPredicates()
             .some(p => ProblemInitRenderer.is2DSymmetric(p));
@@ -119,6 +133,19 @@ export class ProblemView extends Disposable implements CodeLensProvider {
             }
             catch (ex) {
                 panel.setError(ex);
+            }
+
+            this.resetTimeout();
+        }
+
+        let inset = this.initInsets.get(problemDocument.uri);
+        if (inset) {
+            try {
+                let [domain, problem] = await this.getProblemAndDomain(problemDocument);
+                inset.setDomainAndProblem(domain, problem);
+            }
+            catch (ex) {
+                inset.setError(ex);
             }
 
             this.resetTimeout();
@@ -172,29 +199,28 @@ export class ProblemView extends Disposable implements CodeLensProvider {
         if (!window.activeTextEditor) { return; }
 
         let inset = this.initInsets.get(problemUri);
-        if (inset) {
-            inset.setNeedsRebuild(true);
-            return;
-        }
+        if (!inset) {
 
-        let newInitInset = window.createWebviewTextEditorInset(
-            window.activeTextEditor,
-            line,
-            10,
-            {
-                enableScripts: true,
-                enableCommandUris: true,
-                localResourceRoots:  [
-                    Uri.file(this.context.extensionPath)
-                ]
-            }
-        );
-        newInitInset.onDidDispose(() => {
-            this.initInsets.delete(problemUri);
-            console.log('Problem :init inset disposed...');
-        });
-        newInitInset.webview.html = await getWebViewHtml(createPddlExtensionContext(this.context), CONTENT, 'problemView.html');
-        this.initInsets.set(problemUri, new ProblemInitInset(problemUri, newInitInset.webview));
+            let newInitInset = window.createWebviewTextEditorInset(
+                window.activeTextEditor,
+                line,
+                10,
+                {
+                    enableScripts: true,
+                    enableCommandUris: true,
+                    localResourceRoots: [
+                        Uri.file(this.context.extensionPath)
+                    ]
+                }
+            );
+            newInitInset.onDidDispose(() => {
+                this.initInsets.delete(problemUri);
+                console.log('Problem :init inset disposed...');
+            });
+            newInitInset.webview.html = await getWebViewHtml(createPddlExtensionContext(this.context), CONTENT, 'problemView.html');
+            this.initInsets.set(problemUri, new ProblemInitInset(problemUri, newInitInset.webview));
+        }
+        await this.setNeedsRebuild(await workspace.openTextDocument(problemUri));
     }
 
     async revealOrCreatePreview(doc: TextDocument, displayColumn: ViewColumn): Promise<void> {
@@ -366,51 +392,6 @@ class ProblemInitPanel {
     }
 }
 
-class ProblemInitInset {
-
-    needsRebuild: boolean;
-    problem: ProblemInfo;
-    error: Error;
-    domain: DomainInfo;
-
-    constructor(public uri: Uri, private webview: Webview) { }
-
-    setDomainAndProblem(domain: DomainInfo, problem: ProblemInfo): void {
-        this.domain = domain;
-        this.problem = problem;
-        this.error = null;
-        this.setNeedsRebuild(true);
-    }
-
-    setError(ex: Error): void {
-        this.error = ex;
-    }
-
-    getError(): Error {
-        return this.error;
-    }
-
-    getDomain(): DomainInfo {
-        return this.domain;
-    }
-
-    getProblem(): ProblemInfo {
-        return this.problem;
-    }
-
-    setNeedsRebuild(needsRebuild: boolean) {
-        this.needsRebuild = needsRebuild;
-    }
-
-    getNeedsRebuild(): boolean {
-        return this.needsRebuild;
-    }
-
-    getWebview(): Webview {
-        return this.webview;
-    }
-}
-
 class ProblemInitRenderer {
     
     private nodes: Map<string, number> = new Map();
@@ -510,6 +491,16 @@ class DocumentCodeLens extends CodeLens {
 
     getDocument(): TextDocument {
         return this.document;
+    }
+}
+
+class DocumentInsetCodeLens extends DocumentCodeLens {
+    constructor(document: TextDocument, range: Range, private line: number, command?: Command) {
+        super(document, range, command);
+    }
+
+    getLine(): number {
+        return this.line;
     }
 }
 
