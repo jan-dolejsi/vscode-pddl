@@ -4,10 +4,12 @@
  * ------------------------------------------------------------------------------------------ */
 'use strict';
 
-import { CompletionItem, CompletionContext, CompletionItemKind, SnippetString, Range, CompletionTriggerKind, MarkdownString } from 'vscode';
+import { CompletionItem, CompletionContext, CompletionItemKind, SnippetString, Range, CompletionTriggerKind, MarkdownString, TextDocument } from 'vscode';
 import { DomainInfo } from '../../../common/src/DomainInfo';
 import { PddlSyntaxNode } from '../../../common/src/PddlSyntaxNode';
 import { ProblemInfo } from '../../../common/src/ProblemInfo';
+import { PddlTokenType } from '../../../common/src/PddlTokenizer';
+import { nodeToRange } from '../utils';
 
 export class AbstractCompletionItemProvider {
 
@@ -16,7 +18,7 @@ export class AbstractCompletionItemProvider {
     constructor() {
         this.suggestionDetails = new Map<string, SuggestionDetails>();
     }
-    
+
     addSuggestionDocumentation(label: string, detail: string, documentation: string | MarkdownString, kind?: CompletionItemKind): void {
         let details = new SuggestionDetails(label, detail, documentation, kind);
         this.suggestionDetails.set(details.label, details);
@@ -34,6 +36,14 @@ export class AbstractCompletionItemProvider {
         }
     }
 
+    protected insideRequirements(domainInfo: DomainInfo | ProblemInfo, currentNode: PddlSyntaxNode, _context: CompletionContext): boolean {
+        let defineNode = domainInfo.syntaxTree.getDefineNode();
+        let requirementsNode = defineNode.getFirstChild(PddlTokenType.OpenBracketOperator, /:\s*requirements/i);
+        if (!requirementsNode) { return false; }
+
+        return currentNode.getParent() === requirementsNode;
+    }
+
     protected createSnippetCompletionItem(suggestion: Suggestion, snippet: string, range: Range, _context: CompletionContext, index: number): CompletionItem {
         let suggestionDetail = this.suggestionDetails.get(suggestion.sectionName);
         let completionItem = new CompletionItem(suggestion.sectionName, (suggestionDetail && suggestionDetail.kind) || CompletionItemKind.Keyword);
@@ -47,13 +57,20 @@ export class AbstractCompletionItemProvider {
         completionItem.sortText = 'item' + index;
         return completionItem;
     }
-    
+
     protected addConstraintsDocumentation(): void {
         this.addSuggestionDocumentation(':constraints', 'Constraints', 'Constraints.... you may want to stay away from those.');
     }
 
     protected addRequirementsDocumentation(): void {
         this.addSuggestionDocumentation(':requirements', 'Requirements', 'Required planning engine features.');
+    }
+
+    protected createRequirementsCompletionItems(document: TextDocument, currentNode: PddlSyntaxNode, context: CompletionContext): CompletionItem[] | PromiseLike<CompletionItem[]> {
+        let range = ['(', ':'].includes(context.triggerCharacter) ? nodeToRange(document, currentNode) : null;
+        const requirements = ['strips', 'typing', 'negative-preconditions', 'disjunctive-preconditions', 'equality', 'existential-preconditions', 'universal-preconditions', 'quantified-preconditions', 'conditional-effects', 'fluents', 'numeric-fluents', 'object-fluents', 'adl', 'durative-actions', 'duration-inequalities', 'continuous-effects', 'derived-predicates', 'derived-functions', 'timed-initial-literals', 'timed-effects', 'preferences', 'constraints', 'action-costs', 'timed-initial-fluents', 'time'];
+        return requirements.map(r => ':' + r)
+            .map((r, index) => this.createSnippetCompletionItem(Suggestion.from(r, context.triggerCharacter, ''), r, range, context, index));
     }
 
     protected addIconGallery(): CompletionItem[] {
@@ -106,7 +123,7 @@ export class Suggestion {
 }
 
 export class SuggestionDetails {
-    
+
     constructor(public readonly label: string, public readonly detail: string, public readonly documentation: string | MarkdownString, public readonly kind?: CompletionItemKind) {
 
     }

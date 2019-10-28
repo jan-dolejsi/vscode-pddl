@@ -154,7 +154,7 @@ function activateWithTelemetry(_operationId: string, context: ExtensionContext) 
 	}));
 
 	let completionItemProvider = languages.registerCompletionItemProvider(PDDL, new AutoCompletion(codePddlWorkspace), '(', ':', '-');
-	let completionItemProvider2 = languages.registerCompletionItemProvider(PDDL, new PddlCompletionItemProvider(codePddlWorkspace), '(', ':', '-');
+	let completionItemProvider2 = languages.registerCompletionItemProvider(PDDL, new PddlCompletionItemProvider(codePddlWorkspace), '(', ':', '-', '?');
 
 	let suggestionProvider = languages.registerCodeActionsProvider(PDDL, new SuggestionProvider(codePddlWorkspace), {
 		providedCodeActionKinds: SuggestionProvider.providedCodeActionKinds

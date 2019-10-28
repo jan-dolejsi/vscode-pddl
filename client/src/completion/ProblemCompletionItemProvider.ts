@@ -73,6 +73,9 @@ export class ProblemCompletionItemProvider extends AbstractCompletionItemProvide
                 .map((suggestion, index) => this.createDefineCompletionItem(currentNode, suggestion, range, context, index))
                 .filter(item => !!item); // filter out nulls
         }
+        else if (this.insideRequirements(problemInfo, currentNode, context)) {
+            return this.createRequirementsCompletionItems(document, currentNode, context);
+        }
 
         return [];
     }

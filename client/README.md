@@ -86,7 +86,7 @@ It is also possible to rename a `?<parameter>` name within a parametrised scope 
 
 ### Auto-completion
 
-When typing in the domain or problem file characters such as `(` or `:`, Visual Studio Code pops up the suggested keywords or names of predicates/functions.
+When typing in the domain or problem file characters such as `(`, `:` or `?`, Visual Studio Code pops up the suggested keywords or names of predicates/functions/parameters or other PDDL language constructs.
 
 ![Auto-completion](https://raw.githubusercontent.com/wiki/jan-dolejsi/vscode-pddl/img/PDDL_auto_completion.gif)
 
@@ -168,6 +168,25 @@ Plan visualization details may be fine-tuned using an additional file `<domain>.
 ```
 
 The entries may use regular expression pattern. Note that backslashes in the regex must be doubled up to comply with JSON syntax.
+
+#### Excluding actions from swim-lane plan visualization by configuring selected parameters to be ignored
+
+It is now possible to exclude selected action parameters from swim-lane plan visualization. This is useful for action parameters, which are just marginally involved in the action conditions, and displaying such action in the swim-lane of the given object makes the diagram confusing. To configure this, add `ignoreActionParameters` into the `_domain_.planviz.json` file, where _domain_ matches your domain file name. This example will exclude `?to` and `?from` parameters of any action starting with `move`. It also exclude any parameter with name ending with the `_reserved` suffix:
+
+```json
+{
+    "ignoreActionParameters": [
+        {
+            "action": "^move",
+            "parameterPattern": "^(to|from)$"
+        },
+        {
+            "action": ".+",
+            "parameterPattern": "_reserved$"
+        }
+    ]
+}
+```
 
 #### Generate plan report
 
