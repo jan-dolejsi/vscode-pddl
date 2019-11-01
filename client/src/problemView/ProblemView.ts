@@ -196,7 +196,6 @@ export class ProblemView extends Disposable implements CodeLensProvider {
                 this.initInsets.delete(problemUri);
                 console.log('Problem :init inset disposed...');
             });
-            // newInitInset.webview.html = await getWebViewHtml(createPddlExtensionContext(this.context), CONTENT, 'problemView.html');
             let problemInitPanel = new ProblemInitPanel(problemUri, new WebviewInsetAdapter(newInitInset, window.activeTextEditor));
             this.initInsets.set(problemUri, problemInitPanel);
             newInitInset.webview.onDidReceiveMessage(e => this.handleMessage(problemInitPanel, e), undefined, this.context.subscriptions);
@@ -205,7 +204,12 @@ export class ProblemView extends Disposable implements CodeLensProvider {
     }
 
     async expand(panel: ProblemInitPanel): Promise<void> {
-        console.log(`todo: expand inset ${panel.uri}`);
+        panel.getPanel().dispose();
+        if (panel.getPanel().isInset) {
+            let inset = panel.getPanel() as WebviewInsetAdapter;
+            
+            this.revealOrCreateInset(panel.getProblem().fileUri, inset.inset.line, inset.inset.height * 2);
+        }
     }
 
     async revealOrCreatePreview(doc: TextDocument, displayColumn: ViewColumn): Promise<void> {

@@ -54,7 +54,7 @@ export class WebviewPanelAdapter implements WebviewAdapter {
 }
 
 export class WebviewInsetAdapter implements WebviewAdapter {
-    constructor(private inset: WebviewEditorInset, private editor: TextEditor) { }
+    constructor(public readonly inset: WebviewEditorInset, private editor: TextEditor) { }
     isVisible(): boolean {
         return this.editor.visibleRanges.length > 0;
     }
