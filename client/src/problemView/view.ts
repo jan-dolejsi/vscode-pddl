@@ -76,4 +76,7 @@ export class WebviewInsetAdapter implements WebviewAdapter {
     postMessage(message: any): Thenable<boolean> {
         return this.inset.webview.postMessage(message);
     }
+    public get isInset(): boolean {
+        return true;
+    }
 }
