@@ -124,6 +124,36 @@ suite('PDDL Completion Item Provider', () => {
         items.forEach(item => assert.deepStrictEqual(item.range, new vscode.Range(1, 0, 1, 3), `Range of '${item.label}'`));
     });
 
+    /* Requirements */
+
+    test('should suggest requirements upon invoke', async () => {
+        // GIVEN
+        let inputTextHead = '(define (domain d) (:requirements ';
+        let ch = '';
+        let inputTextTail = ')\n)';
+
+        // WHEN
+        let items = await testDomainProvider(inputTextHead, ch, inputTextTail, { triggerKind: vscode.CompletionTriggerKind.Invoke, triggerCharacter: ch });
+
+        // THEN
+        items.some(item => (item.filterText || item.label) === ':strips');
+        items.forEach(item => assert.strictEqual(item.range, undefined, `Range of ${item.label} should be undefined`));
+    });
+
+    test('should suggest requirements upon : trigger', async () => {
+        // GIVEN
+        let inputTextHead = '(define (domain d) (:requirements ';
+        let ch = ':';
+        let inputTextTail = ')\n)';
+
+        // WHEN
+        let items = await testDomainProvider(inputTextHead, ch, inputTextTail, { triggerKind: vscode.CompletionTriggerKind.TriggerCharacter, triggerCharacter: ch });
+
+        // THEN
+        items.some(item => (item.filterText || item.label) === ':strips');
+        items.forEach(item => assert.deepStrictEqual(item.range, new vscode.Range(0, inputTextHead.length, 0, inputTextHead.length + 1), `Range of '${item.label}'`));
+    });
+
     /* Action keywords */
 
     test('should suggest (:action sections upon invoke', async () => {
@@ -328,6 +358,27 @@ suite('PDDL Completion Item Provider', () => {
             '(over all',
         ]);
         items.forEach(item => assert.strictEqual(item.range, undefined, `Range of '${item.label}' should be undefined`));
+    });
+
+    /* Action parameters */
+
+    test('should suggest action and forall parameters upon ? trigger', async () => {
+        // GIVEN
+        let inputTextHead = '(define (domain d) (:action :parameters (?pa-1 ?pa_2 - type1) :condition (forall (?pfa - type2) \n';
+        let ch = '?';
+        let inputTextTail = '\n)))';
+
+        // WHEN
+        let items = await testDomainProvider(inputTextHead, ch, inputTextTail, { triggerKind: vscode.CompletionTriggerKind.TriggerCharacter, triggerCharacter: ch });
+
+        // THEN
+        assert.deepStrictEqual(items.map(i => i.filterText || i.label), [
+            '?pfa',
+            '?pa-1',
+            '?pa_2',
+        ]);
+        let expectedRange = new vscode.Range(1, 0, 1, 1);
+        items.forEach(item => assert.deepStrictEqual(item.range, expectedRange, `Range of '${item.label}' should be ...`));
     });
 
     /* Problem keywords */

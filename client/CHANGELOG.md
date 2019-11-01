@@ -27,6 +27,10 @@ It is now possible to exclude some action parameters from swim-lane plan visuali
 }
 ```
 
+### Auto-completion
+
+Extended auto-completion to requirements inside `(:requirements )` and on parameter names (i.e. symbols starting with ?).
+
 ### Fixes
 
 - Large domain/problem files now parse correctly. Previously the parser output buffer was fixed to the node.js limit and beyond certain size, PDDL file errors and warnings would stop displaying.
