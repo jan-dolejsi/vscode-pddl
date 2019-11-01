@@ -4,12 +4,11 @@
  * ------------------------------------------------------------------------------------------ */
 'use strict';
 
-import {
-    Uri,
-    ViewColumn, WebviewPanel} from 'vscode';
+import { Uri, ViewColumn} from 'vscode';
 
 import { DomainInfo } from '../../../common/src/DomainInfo';
 import { ProblemInfo } from '../../../common/src/ProblemInfo';
+import { WebviewAdapter } from './view';
 
 export class ProblemInitPanel {
 
@@ -18,7 +17,7 @@ export class ProblemInitPanel {
     private error: Error;
     private domain: DomainInfo;
 
-    constructor(public uri: Uri, private panel: WebviewPanel) { }
+    constructor(public uri: Uri, private panel: WebviewAdapter) { }
 
     setDomainAndProblem(domain: DomainInfo, problem: ProblemInfo): void {
         this.domain = domain;
@@ -59,7 +58,7 @@ export class ProblemInitPanel {
         return this.needsRebuild;
     }
 
-    getPanel(): WebviewPanel {
+    getPanel(): WebviewAdapter {
         return this.panel;
     }
 }
