@@ -6,7 +6,7 @@
 
 import {
     window, workspace, commands, Uri,
-    ViewColumn, ExtensionContext, TextDocument, Disposable, TextDocumentChangeEvent, CodeLensProvider, Event, CodeLens, CancellationToken, Command, Range, EventEmitter
+    ViewColumn, ExtensionContext, TextDocument, Disposable, TextDocumentChangeEvent, CodeLensProvider, Event, CodeLens, CancellationToken, Command, Range, EventEmitter, TextEditor
 } from 'vscode';
 
 import { isPddl, getDomainFileForProblem } from '../workspace/workspaceUtils';
@@ -27,7 +27,9 @@ const CONTENT = 'problemView';
 
 const PDDL_PROBLEM_INIT_PREVIEW_COMMAND = "pddl.problem.init.preview";
 const PDDL_PROBLEM_INIT_INSET_COMMAND = "pddl.problem.init.inset";
-export class ProblemView extends Disposable implements CodeLensProvider {
+const DEFAULT_INSET_HEIGHT = 10;
+
+export class ProblemInitView extends Disposable implements CodeLensProvider {
 
     private _onDidChangeCodeLenses: EventEmitter<void> = new EventEmitter<void>();
     readonly onDidChangeCodeLenses?: Event<void> = this._onDidChangeCodeLenses.event;
@@ -35,24 +37,26 @@ export class ProblemView extends Disposable implements CodeLensProvider {
     private renderer = new ProblemInitRenderer();
 
     private webviewPanels = new Map<Uri, ProblemInitPanel>();
-    private initInsets = new Map<Uri, ProblemInitPanel>();
+    private initInsets = new Map<Uri, Map<TextEditor, ProblemInitPanel>>();
     private timeout: NodeJS.Timer;
 
     constructor(private context: ExtensionContext, private codePddlWorkspace: CodePddlWorkspace) {
         super(() => this.dispose());
 
         context.subscriptions.push(commands.registerCommand(PDDL_PROBLEM_INIT_PREVIEW_COMMAND, async problemUri => {
-            let dotDocument = await getProblemDocument(problemUri);
-            if (dotDocument) {
+            let problemDocument = await getProblemDocument(problemUri);
+            if (problemDocument) {
                 console.log('Revealing problem init...');
-                return this.revealOrCreatePreview(dotDocument, ViewColumn.Beside);
+                return this.revealOrCreatePreview(problemDocument, ViewColumn.Beside);
             }
         }));
 
-        context.subscriptions.push(commands.registerCommand(PDDL_PROBLEM_INIT_INSET_COMMAND, async (problemUri, line)  => {
-            if (problemUri && line) {
+        context.subscriptions.push(commands.registerCommand(PDDL_PROBLEM_INIT_INSET_COMMAND, async (problemUri: Uri, line: number)  => {
+            if (window.activeTextEditor && problemUri && line) {
                 console.log('Revealing problem init inset...');
-                this.revealOrCreateInset(problemUri, line);
+                if (problemUri.toString() === window.activeTextEditor.document.uri.toString()) {
+                    this.showInset(window.activeTextEditor, problemUri, line, DEFAULT_INSET_HEIGHT);
+                }
             }
         }));
 
@@ -95,9 +99,10 @@ export class ProblemView extends Disposable implements CodeLensProvider {
             codeLens.command = { command: PDDL_PROBLEM_INIT_INSET_COMMAND, title: 'View inset', arguments: [codeLens.getDocument().uri, codeLens.getLine()] };
             return codeLens;
         }
-
-        codeLens.command = { command: PDDL_PROBLEM_INIT_PREVIEW_COMMAND, title: 'View', arguments: [codeLens.getDocument().uri] };
-        return codeLens;
+        else {
+            codeLens.command = { command: PDDL_PROBLEM_INIT_PREVIEW_COMMAND, title: 'View', arguments: [codeLens.getDocument().uri] };
+            return codeLens;
+        }
     }
 
     private subscribe(document: TextDocument) {
@@ -125,14 +130,14 @@ export class ProblemView extends Disposable implements CodeLensProvider {
             this.resetTimeout();
         }
 
-        let inset = this.initInsets.get(problemDocument.uri);
-        if (inset) {
+        let insets = this.initInsets.get(problemDocument.uri);
+        if (insets) {
             try {
                 let [domain, problem] = await this.getProblemAndDomain(problemDocument);
-                inset.setDomainAndProblem(domain, problem);
+                [...insets.values()].forEach(panel => panel.setDomainAndProblem(domain, problem));
             }
             catch (ex) {
-                inset.setError(ex);
+                [...insets.values()].forEach(panel => panel.setError(ex));
             }
 
             this.resetTimeout();
@@ -143,25 +148,29 @@ export class ProblemView extends Disposable implements CodeLensProvider {
         if (this.timeout) {
             clearTimeout(this.timeout);
         }
-        this.timeout = setTimeout(() => this.rebuild(), 1000);
+        this.timeout = setTimeout(() => this.refresh(), 1000);
     }
 
     dispose(): void {
         clearTimeout(this.timeout);
     }
 
-    rebuild(): void {
+    refresh(): void {
         this.webviewPanels.forEach(async (panel) => {
-            if (panel.getNeedsRebuild() && panel.getPanel().isVisible()) {
-                this.updateContent(panel);
-            }
+            this.refreshPanel(panel);
         });
 
-        this.initInsets.forEach(async (inset) => {
-            if (inset.getNeedsRebuild()) {
-                this.updateContent(inset);
-            }
+        this.initInsets.forEach(async (insets) => {
+            insets.forEach(panel => {
+                this.refreshPanel(panel);
+            });
         });
+    }
+
+    private refreshPanel(panel: ProblemInitPanel) {
+        if (panel.getNeedsRebuild() && panel.getPanel().isVisible()) {
+            this.updateContent(panel);
+        }
     }
 
     async updateContent(previewPanel: ProblemInitPanel) {
@@ -173,11 +182,11 @@ export class ProblemView extends Disposable implements CodeLensProvider {
         this.updateContentData(previewPanel.getDomain(), previewPanel.getProblem(), previewPanel.getPanel());
     }
 
-    async revealOrCreateInset(problemUri: Uri, line: number): Promise<void> {
-        console.log(`todo: revealOrCreateInset ${problemUri} line ${line}`);
+    async showInset(editor: TextEditor, problemUri: Uri, line: number, height: number): Promise<void> {
+        console.log(`todo: revealOrCreateInset ${editor} ${problemUri} line ${line} height ${height}`);
     }
 
-    async expand(panel: ProblemInitPanel): Promise<void> {
+    async expandInset(panel: ProblemInitPanel): Promise<void> {
         console.log(`todo: expand inset ${panel.uri}`);
     }
 
@@ -214,16 +223,16 @@ export class ProblemView extends Disposable implements CodeLensProvider {
 
         webViewPanel.iconPath = Uri.file(this.context.asAbsolutePath("images/icon.png"));
 
-        let previewPanel = new ProblemInitPanel(uri, new WebviewPanelAdapter(webViewPanel));
+        let panel = new ProblemInitPanel(uri, new WebviewPanelAdapter(webViewPanel));
 
         // when the user closes the tab, remove the panel
         webViewPanel.onDidDispose(() => this.webviewPanels.delete(uri), undefined, this.context.subscriptions);
         // when the pane becomes visible again, refresh it
-        webViewPanel.onDidChangeViewState(_ => this.rebuild());
+        webViewPanel.onDidChangeViewState(_ => this.refreshPanel(panel));
 
-        webViewPanel.webview.onDidReceiveMessage(e => this.handleMessage(previewPanel, e), undefined, this.context.subscriptions);
+        webViewPanel.webview.onDidReceiveMessage(e => this.handleMessage(panel, e), undefined, this.context.subscriptions);
 
-        return previewPanel;
+        return panel;
     }
 
     private async generateHtml(error?: Error): Promise<string> {
@@ -280,7 +289,7 @@ export class ProblemView extends Disposable implements CodeLensProvider {
                 panel.close();
                 break;
             case 'expand':
-                this.expand(panel);
+                this.expandInset(panel);
                 break;
             default:
                 console.warn('Unexpected command: ' + message.command);
