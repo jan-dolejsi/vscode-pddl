@@ -51,6 +51,7 @@ function initialize() {
 
 window.addEventListener('message', event => {
     const message = event.data;
+    console.log("Received message: " + message.command);
 
     switch (message.command) {
         case 'updateContent':
@@ -64,11 +65,11 @@ window.addEventListener('message', event => {
     }
 })
 
-function close() {
+function closeInset() {
     postMessage({ 'command': 'close' });
 }
 
-function expand() {
+function expandInset() {
     postMessage({ 'command': 'expand' });
 }
 
@@ -79,7 +80,7 @@ function populateWithTestData() {
             nodes: [{id: 1, label: 'City'}, {id: 2, label: 'Town'}, {id: 3, label: 'Village'}],
             relationships: [{ from: 1, to: 2}, { from: 2, to: 3}]
         });
-        setIsInset(false);
+        setIsInset(true);
     }
 }
 
