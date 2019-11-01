@@ -206,6 +206,7 @@ export class ProblemView extends Disposable implements CodeLensProvider {
                 this.initInsets.delete(problemUri);
                 console.log('Problem :init inset disposed...');
             });
+            newInitInset.webview.onDidReceiveMessage(e => this.handleMessage(newInitInset, e), undefined, this.context.subscriptions);
             newInitInset.webview.html = await getWebViewHtml(createPddlExtensionContext(this.context), CONTENT, 'problemView.html');
             this.initInsets.set(problemUri, new ProblemInitInset(problemUri, newInitInset.webview));
         }
