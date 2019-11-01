@@ -5,7 +5,7 @@
 'use strict';
 
 import {
-    ExtensionContext, WebviewPanel, ViewColumn, TextEditor, WebviewEditorInset
+    ExtensionContext, WebviewPanel, ViewColumn, WebviewEditorInset
 } from 'vscode';
 
 import { DomainInfo } from '../../../common/src/DomainInfo';
@@ -54,9 +54,9 @@ export class WebviewPanelAdapter implements WebviewAdapter {
 }
 
 export class WebviewInsetAdapter implements WebviewAdapter {
-    constructor(public readonly inset: WebviewEditorInset, private editor: TextEditor) { }
+    constructor(public readonly inset: WebviewEditorInset) { }
     isVisible(): boolean {
-        return this.editor.visibleRanges.length > 0;
+        return true; // or maybe: this.editor.visibleRanges.length > 0;
     }
     canReveal(): boolean {
         return false;
