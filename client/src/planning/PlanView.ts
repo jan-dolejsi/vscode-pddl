@@ -24,7 +24,7 @@ export const PDDL_EXPORT_PLAN = 'pddl.exportPlan';
 
 export class PlanView extends Disposable {
 
-    webviewPanels = new Map<Uri, PlanPreviewPanel>();
+    webviewPanels = new Map<Uri, PlanPreviewPanel>();// todo: replace with UriMap
     timeout: NodeJS.Timer;
     public static readonly PLANNER_OUTPUT_URI = Uri.parse("pddl://planner/output");
 

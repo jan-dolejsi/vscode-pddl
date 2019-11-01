@@ -17,7 +17,7 @@ import { Variable } from '../../../common/src/FileInfo';
 import * as path from 'path';
 import { CodePddlWorkspace } from '../workspace/CodePddlWorkspace';
 import { PddlTokenType } from '../../../common/src/PddlTokenizer';
-import { nodeToRange, getWebViewHtml, createPddlExtensionContext } from '../utils';
+import { nodeToRange, getWebViewHtml, createPddlExtensionContext, UriMap } from '../utils';
 import { getObjectsInheritingFrom, getTypesInheritingFromPlusSelf } from '../../../common/src/typeInheritance';
 import { Util } from '../../../common/src/util';
 import { ProblemInitPanel } from './ProblemInitPanel';
@@ -36,8 +36,8 @@ export class ProblemInitView extends Disposable implements CodeLensProvider {
     private subscribedDocumentUris: string[] = [];
     private renderer = new ProblemInitRenderer();
 
-    private webviewPanels = new Map<Uri, ProblemInitPanel>();
-    private initInsets = new Map<Uri, Map<TextEditor, ProblemInitPanel>>();
+    private webviewPanels = new UriMap<ProblemInitPanel>();
+    private initInsets = new UriMap<Map<TextEditor, ProblemInitPanel>>();
     private timeout: NodeJS.Timer;
 
     constructor(private context: ExtensionContext, private codePddlWorkspace: CodePddlWorkspace) {
