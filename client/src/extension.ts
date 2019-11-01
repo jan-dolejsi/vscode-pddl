@@ -37,7 +37,7 @@ import { CodePddlWorkspace } from './workspace/CodePddlWorkspace';
 import { DomainDiagnostics } from './diagnostics/DomainDiagnostics';
 import { PddlOnTypeFormatter } from './formatting/PddlOnTypeFormatter';
 import { PddlCompletionItemProvider } from './completion/PddlCompletionItemProvider';
-import { ProblemView } from './problemView/ProblemView';
+import { ProblemInitView } from './problemView/ProblemInitView';
 
 const PDDL_CONFIGURE_PARSER = 'pddl.configureParser';
 const PDDL_LOGIN_PARSER_SERVICE = 'pddl.loginParserService';
@@ -160,7 +160,7 @@ function activateWithTelemetry(_operationId: string, context: ExtensionContext) 
 		providedCodeActionKinds: SuggestionProvider.providedCodeActionKinds
 	});
 
-	let problemView = new ProblemView(context, codePddlWorkspace);
+	let problemView = new ProblemInitView(context, codePddlWorkspace);
 	languages.registerCodeLensProvider(PDDL, problemView);
 
 	registerDocumentFormattingProvider(context, codePddlWorkspace);

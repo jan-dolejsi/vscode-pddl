@@ -24,7 +24,7 @@ export class PlanningDomainsSessions {
     private sessionDocumentContentProvider: SessionDocumentContentProvider;
 
     /** There may be multiple sessions in one workspace stored in different workspace folders.  */
-    private sessionSourceControlRegister = new Map<Uri, SessionSourceControl>();
+    private sessionSourceControlRegister = new Map<Uri, SessionSourceControl>(); // todo: replace with UriMap
 
     /** Triggers update of the labels in the status bar, so the relative fuzzy time keeps accurate. */
     private refreshTimer: NodeJS.Timeout;

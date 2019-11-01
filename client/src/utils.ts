@@ -10,6 +10,7 @@ import * as afs from '../../common/src/asyncfs';
 import { PddlExtensionContext } from '../../common/src/PddlExtensionContext';
 import { PddlRange } from '../../common/src/DocumentPositionResolver';
 import { PddlSyntaxNode } from '../../common/src/PddlSyntaxNode';
+import { StringifyingMap } from '../../common/src/util';
 
 export function createPddlExtensionContext(context: ExtensionContext): PddlExtensionContext {
     return {
@@ -144,4 +145,10 @@ export function toRange(pddlRange: PddlRange): Range {
 
 export function nodeToRange(document: TextDocument, node: PddlSyntaxNode): Range {
     return new Range(document.positionAt(node.getStart()), document.positionAt(node.getEnd()));
+}
+
+export class UriMap<T> extends StringifyingMap<Uri, T> {
+    protected stringifyKey(key: Uri): string {
+        return key.toString();
+    }
 }
