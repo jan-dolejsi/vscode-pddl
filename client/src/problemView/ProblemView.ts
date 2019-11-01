@@ -177,6 +177,10 @@ export class ProblemView extends Disposable implements CodeLensProvider {
         console.log(`todo: revealOrCreateInset ${problemUri} line ${line}`);
     }
 
+    async expand(panel: ProblemInitPanel): Promise<void> {
+        console.log(`todo: expand inset ${panel.uri}`);
+    }
+
     async revealOrCreatePreview(doc: TextDocument, displayColumn: ViewColumn): Promise<void> {
         let previewPanel = this.webviewPanels.get(doc.uri);
 
@@ -268,12 +272,15 @@ export class ProblemView extends Disposable implements CodeLensProvider {
         }
     }
 
-    handleMessage(previewPanel: ProblemInitPanel, message: any): void {
+    handleMessage(panel: ProblemInitPanel, message: any): void {
         console.log(`Message received from the webview: ${message.command}`);
 
         switch (message.command) {
             case 'close':
-                previewPanel.close();
+                panel.close();
+                break;
+            case 'expand':
+                this.expand(panel);
                 break;
             default:
                 console.warn('Unexpected command: ' + message.command);

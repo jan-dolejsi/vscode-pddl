@@ -1,5 +1,10 @@
 body {
   font: 10pt sans;
+  overflow: scroll; 
+  /* direction: rtl; text-align: left; */
+  scroll-padding-right: 20px;
+  scroll-margin-right: 50px;
+  scrollbar-width: 100px;
 }
 
 div#network {
@@ -11,5 +16,15 @@ div#network {
 }
 
 div#menu {
-  float: right;
+  position: fixed;
+  top: 1em;
+  right: 1em;
+}
+
+img.menuButton {
+  border: solid 1px transparent;
+}
+
+img.menuButton:hover {
+  border-color: gray;
 }
