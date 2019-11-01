@@ -47,6 +47,10 @@ export class ProblemInitPanel {
         this.panel.reveal(displayColumn);
     }
 
+    close() {
+        this.panel.dispose();
+    }
+
     setNeedsRebuild(needsRebuild: boolean) {
         this.needsRebuild = needsRebuild;
     }
