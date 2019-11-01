@@ -7,6 +7,10 @@ try {
     // swallow, so in the script can be tested in a browser
 }
 
+function postMessage(message) {
+    if (vscode) vscode.postMessage(message);
+}
+
 var nodes = new vis.DataSet([]);
 var edges = new vis.DataSet([]);
 var networkData = {
@@ -49,13 +53,24 @@ window.addEventListener('message', event => {
     const message = event.data;
 
     switch (message.command) {
-        case 'updateGraph':
+        case 'updateContent':
             updateGraph(message.data);
+            break;
+        case 'setIsInset':
+            setIsInset(message.value);
             break;
         default:
             console.log("Unexpected message: " + message.command);
     }
 })
+
+function close() {
+    postMessage({ 'command': 'close' });
+}
+
+function expand() {
+    postMessage({ 'command': 'expand' });
+}
 
 function populateWithTestData() {
     if (!vscode) {
@@ -64,6 +79,7 @@ function populateWithTestData() {
             nodes: [{id: 1, label: 'City'}, {id: 2, label: 'Town'}, {id: 3, label: 'Village'}],
             relationships: [{ from: 1, to: 2}, { from: 2, to: 3}]
         });
+        setIsInset(false);
     }
 }
 
@@ -77,4 +93,12 @@ function updateGraph(data) {
     data.nodes.forEach(node => nodes.add(node));
     data.relationships.forEach(relationship => edges.add(relationship));
     network.fit();
+}
+
+/**
+ * Sets whether this is an inset or a document content
+ * @param {boolean} value true if this view is an inset
+ */
+function setIsInset(value) {
+    document.getElementById('menu').style.display = value ? 'inherit' : 'none';
 }

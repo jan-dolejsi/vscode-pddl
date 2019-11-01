@@ -21,6 +21,7 @@ import { nodeToRange, getWebViewHtml, createPddlExtensionContext } from '../util
 import { getObjectsInheritingFrom, getTypesInheritingFromPlusSelf } from '../../../common/src/typeInheritance';
 import { Util } from '../../../common/src/util';
 import { ProblemInitPanel } from './ProblemInitPanel';
+import { ProblemRenderer } from './view';
 
 const CONTENT = 'problemView';
 
@@ -30,6 +31,7 @@ export class ProblemView extends Disposable implements CodeLensProvider {
     private _onDidChangeCodeLenses: EventEmitter<void> = new EventEmitter<void>();
     readonly onDidChangeCodeLenses?: Event<void> = this._onDidChangeCodeLenses.event;
     private subscribedDocumentUris: string[] = [];
+    private renderer = new ProblemInitRenderer();
 
     webviewPanels = new Map<Uri, ProblemInitPanel>();
     timeout: NodeJS.Timer;
@@ -153,7 +155,7 @@ export class ProblemView extends Disposable implements CodeLensProvider {
     }
 
     createPreviewPanelForDocument(doc: TextDocument, displayColumn: ViewColumn): ProblemInitPanel {
-        let previewTitle = `Preview '${path.basename(doc.uri.fsPath)}'`;
+        let previewTitle = `:init of '${path.basename(doc.uri.fsPath)}'`;
 
         return this.createPreviewPanel(previewTitle, doc.uri, displayColumn);
     }
@@ -194,12 +196,8 @@ export class ProblemView extends Disposable implements CodeLensProvider {
     }
 
     private updateContentData(domain: DomainInfo, problem: ProblemInfo, webview: Webview) {
-        let renderer = new ProblemInitRenderer(this.context, domain, problem, { displayWidth: 100 });
         webview.postMessage({
-            command: 'updateGraph', data: {
-                nodes: renderer.getNodes(),
-                relationships: renderer.getRelationships()
-            }
+            command: 'updateContent', data: this.renderer.render(this.context, problem, domain, { displayWidth: 100 })
         });
     }
 
@@ -236,8 +234,8 @@ export class ProblemView extends Disposable implements CodeLensProvider {
         console.log(`Message received from the webview: ${message.command}`);
 
         switch (message.command) {
-            case 'commandXYZ':
-                commands.executeCommand('command...', previewPanel.getProblem());
+            case 'close':
+                previewPanel.close();
                 break;
             default:
                 console.warn('Unexpected command: ' + message.command);
@@ -258,7 +256,23 @@ async function getProblemDocument(dotDocumentUri: Uri | undefined): Promise<Text
     }
 }
 
-class ProblemInitRenderer {
+class ProblemInitRenderer implements ProblemRenderer<ProblemInitViewOptions, ProblemInitViewData> {
+    render(context: ExtensionContext, problem: ProblemInfo, domain: DomainInfo, options: ProblemInitViewOptions): ProblemInitViewData {
+        let renderer = new ProblemInitRendererDelegate(context, domain, problem, options);
+        
+        return {
+            nodes: renderer.getNodes(),
+            relationships: renderer.getRelationships()
+        };
+    }
+}
+
+interface ProblemInitViewData {
+    nodes: NetworkNode[];
+    relationships: NetworkEdge[];
+}
+
+class ProblemInitRendererDelegate {
     
     private nodes: Map<string, number> = new Map();
     private relationships: NetworkEdge[] = [];
@@ -266,10 +280,10 @@ class ProblemInitRenderer {
     constructor(private context: ExtensionContext, private domain: DomainInfo, private problem: ProblemInfo, private options: ProblemInitViewOptions) {
         console.log(`${this.context}, ${this.options}`);
         let symmetric2dPredicates = domain.getPredicates()
-            .filter(v => ProblemInitRenderer.is2DSymmetric(v));
+            .filter(v => ProblemInitRendererDelegate.is2DSymmetric(v));
 
         let symmetric2dFunctions = domain.getFunctions()
-            .filter(v => ProblemInitRenderer.is2DSymmetric(v));
+            .filter(v => ProblemInitRendererDelegate.is2DSymmetric(v));
 
         let symmetric2dVariables = symmetric2dFunctions.concat(symmetric2dPredicates);
         
