@@ -22,6 +22,7 @@ export interface WebviewAdapter {
     reveal(displayColumn: ViewColumn): void;
     html: string;
     postMessage(message: any): Thenable<boolean>;
+    readonly isInset: boolean;
 }
 
 export class WebviewPanelAdapter implements WebviewAdapter {
@@ -46,5 +47,8 @@ export class WebviewPanelAdapter implements WebviewAdapter {
     }
     postMessage(message: any): Thenable<boolean> {
         return this.panel.webview.postMessage(message);
+    }
+    public get isInset(): boolean {
+        return false;
     }
 }

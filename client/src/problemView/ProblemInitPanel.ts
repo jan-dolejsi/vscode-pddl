@@ -17,7 +17,9 @@ export class ProblemInitPanel {
     private error: Error;
     private domain: DomainInfo;
 
-    constructor(public uri: Uri, private panel: WebviewAdapter) { }
+    constructor(public uri: Uri, private panel: WebviewAdapter) { 
+        panel.postMessage({ command: 'setIsInset', value: panel.isInset });
+    }
 
     setDomainAndProblem(domain: DomainInfo, problem: ProblemInfo): void {
         this.domain = domain;

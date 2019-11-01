@@ -236,6 +236,7 @@ export class ProblemView extends Disposable implements CodeLensProvider {
         panel.postMessage({
             command: 'updateContent', data: this.renderer.render(this.context, problem, domain, { displayWidth: 100 })
         });
+        panel.postMessage({ command: 'setIsInset', value: panel.isInset });
     }
 
     async parseProblem(problemDocument: TextDocument): Promise<ProblemInfo | undefined> {
