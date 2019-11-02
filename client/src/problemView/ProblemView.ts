@@ -16,7 +16,7 @@ import { ProblemInfo } from '../../../common/src/ProblemInfo';
 import { CodePddlWorkspace } from '../workspace/CodePddlWorkspace';
 import { getWebViewHtml, createPddlExtensionContext, UriMap } from '../utils';
 import { ProblemInitPanel } from './ProblemInitPanel';
-import { ProblemRenderer, WebviewPanelAdapter, WebviewAdapter } from './view';
+import { ProblemRenderer, WebviewPanelAdapter, WebviewAdapter, WebviewInsetAdapter } from './view';
 
 /**
  * Base-class for different problem views.
@@ -144,11 +144,37 @@ export abstract class ProblemView<TRendererOptions, TRenderData> extends Disposa
     }
 
     async showInset(editor: TextEditor, problemUri: Uri, line: number, height: number): Promise<void> {
-        console.log(`todo: revealOrCreateInset ${editor} ${problemUri} line ${line} height ${height}`);
+        let insets = this.initInsets.get(problemUri);
+        if (!insets || !insets.get(editor)) {
+
+            let newInitInset = window.createWebviewTextEditorInset(
+                editor,
+                line,
+                height,
+                this.options.webviewOptions
+            );
+            newInitInset.onDidDispose(() => {
+                let insets = this.initInsets.get(problemUri);
+                insets.delete(editor);
+            });
+            let problemInitPanel = new ProblemInitPanel(problemUri, new WebviewInsetAdapter(newInitInset));
+            if (!insets) {
+                insets = new Map<TextEditor, ProblemInitPanel>();
+                this.initInsets.set(problemUri, insets);
+            }
+            insets.set(editor, problemInitPanel);
+            newInitInset.webview.onDidReceiveMessage(e => this.handleMessage(problemInitPanel, e), undefined, this.context.subscriptions);
+        }
+        await this.setNeedsRebuild(await workspace.openTextDocument(problemUri));
     }
 
     async expandInset(panel: ProblemInitPanel): Promise<void> {
-        console.log(`todo: expand inset ${panel.uri}`);
+        panel.getPanel().dispose();
+        if (panel.getPanel().isInset) {
+            let inset = panel.getPanel() as WebviewInsetAdapter;
+            
+            this.showInset(inset.inset.editor, Uri.parse(panel.getProblem().fileUri), inset.inset.line, inset.inset.height * 2);
+        }
     }
 
     async revealOrCreatePreview(doc: TextDocument, displayColumn: ViewColumn): Promise<void> {
