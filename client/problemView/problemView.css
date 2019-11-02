@@ -7,14 +7,6 @@ body {
   scrollbar-width: 100px;
 }
 
-div#network {
-  /* float: left; */
-  width: 100%;
-  height: 600px;
-  margin: 5px;
-  border: 1px solid lightgray;
-}
-
 div#menu {
   position: fixed;
   top: 1em;

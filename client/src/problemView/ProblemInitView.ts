@@ -6,7 +6,7 @@
 
 import {
     Uri,
-    ExtensionContext, TextDocument, CodeLens, CancellationToken, Command, Range, CodeLensProvider
+    ExtensionContext, TextDocument, CodeLens, CancellationToken, CodeLensProvider
 } from 'vscode';
 
 import { DomainInfo, TypeObjects } from '../../../common/src/DomainInfo';
@@ -20,7 +20,7 @@ import { nodeToRange } from '../utils';
 import { getObjectsInheritingFrom, getTypesInheritingFromPlusSelf } from '../../../common/src/typeInheritance';
 import { Util } from '../../../common/src/util';
 import { ProblemRenderer } from './view';
-import { ProblemView } from './ProblemView';
+import { ProblemView, DocumentCodeLens, DocumentInsetCodeLens, ProblemRendererOptions } from './ProblemView';
 
 const CONTENT = 'problemView';
 
@@ -37,7 +37,7 @@ export class ProblemInitView extends ProblemView<ProblemInitViewOptions, Problem
             insetViewCommand: PDDL_PROBLEM_INIT_INSET_COMMAND,
             insetHeight: DEFAULT_INSET_HEIGHT,
             webviewType: 'problemPreview',
-            webviewHtmlPath: 'problemView.html',
+            webviewHtmlPath: 'problemInitView.html',
             webviewOptions: {
                 enableFindWidget: true,
                 // enableCommandUris: true,
@@ -194,29 +194,7 @@ class ProblemInitRendererDelegate {
     }
 }
 
-interface ProblemInitViewOptions {
-    displayWidth: number;
-    selfContained?: boolean;
-}
-
-class DocumentCodeLens extends CodeLens {
-    constructor(private document: TextDocument, range: Range, command?: Command) {
-        super(range, command);
-    }
-
-    getDocument(): TextDocument {
-        return this.document;
-    }
-}
-
-class DocumentInsetCodeLens extends DocumentCodeLens {
-    constructor(document: TextDocument, range: Range, private line: number, command?: Command) {
-        super(document, range, command);
-    }
-
-    getLine(): number {
-        return this.line;
-    }
+interface ProblemInitViewOptions extends ProblemRendererOptions {
 }
 
 interface NetworkNode {

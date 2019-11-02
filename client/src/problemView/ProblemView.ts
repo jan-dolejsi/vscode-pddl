@@ -6,7 +6,7 @@
 
 import {
     window, workspace, commands, Uri,
-    ViewColumn, ExtensionContext, TextDocument, Disposable, TextDocumentChangeEvent, Event, EventEmitter, TextEditor, WebviewOptions, WebviewPanelOptions
+    ViewColumn, ExtensionContext, TextDocument, Disposable, TextDocumentChangeEvent, Event, EventEmitter, TextEditor, WebviewOptions, WebviewPanelOptions, CodeLens, Range, Command
 } from 'vscode';
 
 import { isPddl, getDomainFileForProblem } from '../workspace/workspaceUtils';
@@ -294,6 +294,11 @@ async function getProblemDocument(dotDocumentUri: Uri | undefined): Promise<Text
     }
 }
 
+export interface ProblemRendererOptions {
+    displayWidth?: number;
+    selfContained?: boolean;
+}
+
 export interface ProblemViewOptions {
     /** Relative folder containing files used by the HTML content. */
     content: string;
@@ -305,4 +310,24 @@ export interface ProblemViewOptions {
     webviewType: string;
     webviewOptions: WebviewPanelOptions & WebviewOptions;
     webviewHtmlPath: string;
+}
+
+export class DocumentCodeLens extends CodeLens {
+    constructor(private document: TextDocument, range: Range, command?: Command) {
+        super(range, command);
+    }
+
+    getDocument(): TextDocument {
+        return this.document;
+    }
+}
+
+export class DocumentInsetCodeLens extends DocumentCodeLens {
+    constructor(document: TextDocument, range: Range, private line: number, command?: Command) {
+        super(document, range, command);
+    }
+
+    getLine(): number {
+        return this.line;
+    }
 }
