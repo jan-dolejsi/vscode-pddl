@@ -184,8 +184,8 @@ export class ProblemInitView extends Disposable implements CodeLensProvider {
     }
 
     async showInset(editor: TextEditor, problemUri: Uri, line: number, height: number): Promise<void> {
-        let inset = this.initInsets.get(problemUri);
-        if (!inset) {
+        let insets = this.initInsets.get(problemUri);
+        if (!insets || !insets.get(editor)) {
 
             let newInitInset = window.createWebviewTextEditorInset(
                 editor,
@@ -205,7 +205,6 @@ export class ProblemInitView extends Disposable implements CodeLensProvider {
                 console.log('Problem :init inset disposed...');
             });
             let problemInitPanel = new ProblemInitPanel(problemUri, new WebviewInsetAdapter(newInitInset));
-            var insets: Map<TextEditor, ProblemInitPanel> = this.initInsets.get(problemUri);
             if (!insets) {
                 insets = new Map<TextEditor, ProblemInitPanel>();
                 this.initInsets.set(problemUri, insets);
