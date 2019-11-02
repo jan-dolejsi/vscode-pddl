@@ -5,11 +5,10 @@
 'use strict';
 
 import {
-    window, workspace, commands, Uri,
-    ViewColumn, ExtensionContext, TextDocument, Disposable, TextDocumentChangeEvent, CodeLensProvider, Event, CodeLens, CancellationToken, Command, Range, EventEmitter, TextEditor
+    Uri,
+    ExtensionContext, TextDocument, CodeLens, CancellationToken, Command, Range, CodeLensProvider
 } from 'vscode';
 
-import { isPddl, getDomainFileForProblem } from '../workspace/workspaceUtils';
 import { DomainInfo, TypeObjects } from '../../../common/src/DomainInfo';
 import { ProblemInfo, TimedVariableValue } from '../../../common/src/ProblemInfo';
 import { Variable } from '../../../common/src/FileInfo';
@@ -17,11 +16,11 @@ import { Variable } from '../../../common/src/FileInfo';
 import * as path from 'path';
 import { CodePddlWorkspace } from '../workspace/CodePddlWorkspace';
 import { PddlTokenType } from '../../../common/src/PddlTokenizer';
-import { nodeToRange, getWebViewHtml, createPddlExtensionContext, UriMap } from '../utils';
+import { nodeToRange } from '../utils';
 import { getObjectsInheritingFrom, getTypesInheritingFromPlusSelf } from '../../../common/src/typeInheritance';
 import { Util } from '../../../common/src/util';
-import { ProblemInitPanel } from './ProblemInitPanel';
-import { ProblemRenderer, WebviewPanelAdapter, WebviewAdapter } from './view';
+import { ProblemRenderer } from './view';
+import { ProblemView } from './ProblemView';
 
 const CONTENT = 'problemView';
 
@@ -29,47 +28,28 @@ const PDDL_PROBLEM_INIT_PREVIEW_COMMAND = "pddl.problem.init.preview";
 const PDDL_PROBLEM_INIT_INSET_COMMAND = "pddl.problem.init.inset";
 const DEFAULT_INSET_HEIGHT = 10;
 
-export class ProblemInitView extends Disposable implements CodeLensProvider {
+export class ProblemInitView extends ProblemView<ProblemInitViewOptions, ProblemInitViewData> implements CodeLensProvider {
 
-    private _onDidChangeCodeLenses: EventEmitter<void> = new EventEmitter<void>();
-    readonly onDidChangeCodeLenses?: Event<void> = this._onDidChangeCodeLenses.event;
-    private subscribedDocumentUris: string[] = [];
-    private renderer = new ProblemInitRenderer();
-
-    private webviewPanels = new UriMap<ProblemInitPanel>();
-    private initInsets = new UriMap<Map<TextEditor, ProblemInitPanel>>();
-    private timeout: NodeJS.Timer;
-
-    constructor(private context: ExtensionContext, private codePddlWorkspace: CodePddlWorkspace) {
-        super(() => this.dispose());
-
-        context.subscriptions.push(commands.registerCommand(PDDL_PROBLEM_INIT_PREVIEW_COMMAND, async problemUri => {
-            let problemDocument = await getProblemDocument(problemUri);
-            if (problemDocument) {
-                console.log('Revealing problem init...');
-                return this.revealOrCreatePreview(problemDocument, ViewColumn.Beside);
+    constructor(context: ExtensionContext, codePddlWorkspace: CodePddlWorkspace) {
+        super(context, codePddlWorkspace, new ProblemInitRenderer(), {
+            content: CONTENT,
+            viewCommand: PDDL_PROBLEM_INIT_PREVIEW_COMMAND,
+            insetViewCommand: PDDL_PROBLEM_INIT_INSET_COMMAND,
+            insetHeight: DEFAULT_INSET_HEIGHT,
+            webviewType: 'problemPreview',
+            webviewHtmlPath: 'problemView.html',
+            webviewOptions: {
+                enableFindWidget: true,
+                // enableCommandUris: true,
+                retainContextWhenHidden: true,
+                enableScripts: true,
+                localResourceRoots: [
+                    Uri.file(context.extensionPath)
+                ]
             }
-        }));
-
-        context.subscriptions.push(commands.registerCommand(PDDL_PROBLEM_INIT_INSET_COMMAND, async (problemUri: Uri, line: number)  => {
-            if (window.activeTextEditor && problemUri && line) {
-                console.log('Revealing problem init inset...');
-                if (problemUri.toString() === window.activeTextEditor.document.uri.toString()) {
-                    this.showInset(window.activeTextEditor, problemUri, line, DEFAULT_INSET_HEIGHT);
-                }
-            }
-        }));
-
-        // When the active document is changed set the provider for rebuild
-        // this only occurs after an edit in a document
-        context.subscriptions.push(workspace.onDidChangeTextDocument((e: TextDocumentChangeEvent) => {
-            if (isPddl(e.document)) {
-                this.setNeedsRebuild(e.document);
-            }
-            if (this.isSubscribed(e.document)) {
-                this._onDidChangeCodeLenses.fire();
-            }
-        }));
+        },
+            { displayWidth: 100 }
+        );
     }
 
     async provideCodeLenses(document: TextDocument, token: CancellationToken): Promise<CodeLens[]> {
@@ -105,215 +85,15 @@ export class ProblemInitView extends Disposable implements CodeLensProvider {
         }
     }
 
-    private subscribe(document: TextDocument) {
-        if (!this.subscribedDocumentUris.includes(document.uri.toString())) {
-            this.subscribedDocumentUris.push(document.uri.toString());
-        }
-    }
-
-    private isSubscribed(document: TextDocument) {
-        return this.subscribedDocumentUris.includes(document.uri.toString());
-    }
-
-    async setNeedsRebuild(problemDocument: TextDocument): Promise<void> {
-        let panel = this.webviewPanels.get(problemDocument.uri);
-
-        if (panel) {
-            try {
-                let [domain, problem] = await this.getProblemAndDomain(problemDocument);
-                panel.setDomainAndProblem(domain, problem);
-            }
-            catch (ex) {
-                panel.setError(ex);
-            }
-
-            this.resetTimeout();
-        }
-
-        let insets = this.initInsets.get(problemDocument.uri);
-        if (insets) {
-            try {
-                let [domain, problem] = await this.getProblemAndDomain(problemDocument);
-                [...insets.values()].forEach(panel => panel.setDomainAndProblem(domain, problem));
-            }
-            catch (ex) {
-                [...insets.values()].forEach(panel => panel.setError(ex));
-            }
-
-            this.resetTimeout();
-        }
-    }
-
-    resetTimeout(): void {
-        if (this.timeout) {
-            clearTimeout(this.timeout);
-        }
-        this.timeout = setTimeout(() => this.refresh(), 1000);
-    }
-
-    dispose(): void {
-        clearTimeout(this.timeout);
-    }
-
-    refresh(): void {
-        this.webviewPanels.forEach(async (panel) => {
-            this.refreshPanel(panel);
-        });
-
-        this.initInsets.forEach(async (insets) => {
-            insets.forEach(panel => {
-                this.refreshPanel(panel);
-            });
-        });
-    }
-
-    private refreshPanel(panel: ProblemInitPanel) {
-        if (panel.getNeedsRebuild() && panel.getPanel().isVisible()) {
-            this.updateContent(panel);
-        }
-    }
-
-    async updateContent(previewPanel: ProblemInitPanel) {
-        if (!previewPanel.getPanel().html) {
-            previewPanel.getPanel().html = "Please wait...";
-        }
-        previewPanel.setNeedsRebuild(false);
-        previewPanel.getPanel().html = await this.generateHtml(previewPanel.getError());
-        this.updateContentData(previewPanel.getDomain(), previewPanel.getProblem(), previewPanel.getPanel());
-    }
-
-    async showInset(editor: TextEditor, problemUri: Uri, line: number, height: number): Promise<void> {
-        console.log(`todo: revealOrCreateInset ${editor} ${problemUri} line ${line} height ${height}`);
-    }
-
-    async expandInset(panel: ProblemInitPanel): Promise<void> {
-        console.log(`todo: expand inset ${panel.uri}`);
-    }
-
-    async revealOrCreatePreview(doc: TextDocument, displayColumn: ViewColumn): Promise<void> {
-        let previewPanel = this.webviewPanels.get(doc.uri);
-
-        if (previewPanel && previewPanel.getPanel().canReveal()) {
-            previewPanel.getPanel().reveal(displayColumn);
-        }
-        else {
-            previewPanel = this.createPreviewPanelForDocument(doc, displayColumn);
-            this.webviewPanels.set(doc.uri, previewPanel);
-        }
-
-        await this.setNeedsRebuild(doc);
-    }
-
-    createPreviewPanelForDocument(doc: TextDocument, displayColumn: ViewColumn): ProblemInitPanel {
-        let previewTitle = `:init of '${path.basename(doc.uri.fsPath)}'`;
-
-        return this.createPreviewPanel(previewTitle, doc.uri, displayColumn);
-    }
-
-    createPreviewPanel(previewTitle: string, uri: Uri, displayColumn: ViewColumn): ProblemInitPanel {
-        let webViewPanel = window.createWebviewPanel('problemPreview', previewTitle, displayColumn, {
-            enableFindWidget: true,
-            // enableCommandUris: true,
-            retainContextWhenHidden: true,
-            enableScripts: true,
-            localResourceRoots: [
-                Uri.file(this.context.extensionPath)
-            ]
-        });
-
-        webViewPanel.iconPath = Uri.file(this.context.asAbsolutePath("images/icon.png"));
-
-        let panel = new ProblemInitPanel(uri, new WebviewPanelAdapter(webViewPanel));
-
-        // when the user closes the tab, remove the panel
-        webViewPanel.onDidDispose(() => this.webviewPanels.delete(uri), undefined, this.context.subscriptions);
-        // when the pane becomes visible again, refresh it
-        webViewPanel.onDidChangeViewState(_ => this.refreshPanel(panel));
-
-        webViewPanel.webview.onDidReceiveMessage(e => this.handleMessage(panel, e), undefined, this.context.subscriptions);
-
-        return panel;
-    }
-
-    private async generateHtml(error?: Error): Promise<string> {
-        if (error) {
-            return error.message;
-        }
-        else {
-            let html = getWebViewHtml(createPddlExtensionContext(this.context), CONTENT, 'problemView.html');
-            return html;
-        }
-    }
-
-    private updateContentData(domain: DomainInfo, problem: ProblemInfo, panel: WebviewAdapter) {
-        panel.postMessage({
-            command: 'updateContent', data: this.renderer.render(this.context, problem, domain, { displayWidth: 100 })
-        });
-        panel.postMessage({ command: 'setIsInset', value: panel.isInset });
-    }
-
-    async parseProblem(problemDocument: TextDocument): Promise<ProblemInfo | undefined> {
-        let fileInfo = await this.codePddlWorkspace.upsertAndParseFile(problemDocument);
-
-        if (!fileInfo.isProblem()) {
-            return undefined;
-        }
-
-        return <ProblemInfo>fileInfo;
-    }
-
-    async getProblemAndDomain(problemDocument: TextDocument): Promise<[DomainInfo, ProblemInfo] | undefined> {
-        try {
-            let fileInfo = await this.parseProblem(problemDocument);
-
-            if (!fileInfo) {
-                return undefined;
-            }
-
-            let problemInfo = <ProblemInfo>fileInfo;
-
-            let domainInfo = getDomainFileForProblem(problemInfo, this.codePddlWorkspace);
-
-            return [domainInfo, problemInfo];
-        }
-        catch (ex) {
-            throw new Error("No domain associated to problem.");
-        }
-    }
-
-    handleMessage(panel: ProblemInitPanel, message: any): void {
-        console.log(`Message received from the webview: ${message.command}`);
-
-        switch (message.command) {
-            case 'close':
-                panel.close();
-                break;
-            case 'expand':
-                this.expandInset(panel);
-                break;
-            default:
-                console.warn('Unexpected command: ' + message.command);
-        }
-    }
-}
-
-async function getProblemDocument(dotDocumentUri: Uri | undefined): Promise<TextDocument> {
-    if (dotDocumentUri) {
-        return await workspace.openTextDocument(dotDocumentUri);
-    } else {
-        if (window.activeTextEditor !== null && isPddl(window.activeTextEditor.document)) {
-            return window.activeTextEditor.document;
-        }
-        else {
-            return undefined;
-        }
+    protected createPreviewPanelTitle(doc: TextDocument) {
+        return `:init of '${path.basename(doc.uri.fsPath)}'`;
     }
 }
 
 class ProblemInitRenderer implements ProblemRenderer<ProblemInitViewOptions, ProblemInitViewData> {
     render(context: ExtensionContext, problem: ProblemInfo, domain: DomainInfo, options: ProblemInitViewOptions): ProblemInitViewData {
         let renderer = new ProblemInitRendererDelegate(context, domain, problem, options);
-        
+
         return {
             nodes: renderer.getNodes(),
             relationships: renderer.getRelationships()
@@ -327,7 +107,7 @@ interface ProblemInitViewData {
 }
 
 class ProblemInitRendererDelegate {
-    
+
     private nodes: Map<string, number> = new Map();
     private relationships: NetworkEdge[] = [];
 
@@ -340,7 +120,7 @@ class ProblemInitRendererDelegate {
             .filter(v => ProblemInitRendererDelegate.is2DSymmetric(v));
 
         let symmetric2dVariables = symmetric2dFunctions.concat(symmetric2dPredicates);
-        
+
         let relatableTypes: string[] = Util.distinct(symmetric2dVariables
             .map(v => v.parameters[0].type));
 
@@ -350,7 +130,7 @@ class ProblemInitRendererDelegate {
 
         let symmetric2dInits = problem.getInits()
             .filter(init => symmetric2dVariables.some(v => v.matchesShortNameCaseInsensitive(init.getLiftedVariableName())));
-        
+
         symmetric2dInits.forEach(init => this.addRelationship(init));
     }
 
@@ -362,7 +142,7 @@ class ProblemInitRendererDelegate {
     }
 
     private addNode(obj: string): void {
-        if (!this.nodes.has(obj)) { this.nodes.set(obj, this.nodes.size+1); }
+        if (!this.nodes.has(obj)) { this.nodes.set(obj, this.nodes.size + 1); }
     }
 
     addRelationship(initialValue: TimedVariableValue): void {
