@@ -10,7 +10,7 @@ import { DomainInfo } from '../../../common/src/DomainInfo';
 import { ProblemInfo } from '../../../common/src/ProblemInfo';
 import { WebviewAdapter } from './view';
 
-export class ProblemInitPanel {
+export class ProblemViewPanel {
 
     private needsRebuild: boolean;
     private problem: ProblemInfo;
@@ -18,7 +18,6 @@ export class ProblemInitPanel {
     private domain: DomainInfo;
 
     constructor(public uri: Uri, private panel: WebviewAdapter) { 
-        panel.postMessage({ command: 'setIsInset', value: panel.isInset });
     }
 
     setDomainAndProblem(domain: DomainInfo, problem: ProblemInfo): void {

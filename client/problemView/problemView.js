@@ -83,5 +83,10 @@ window.addEventListener('message', event => {
  * @param {boolean} value true if this view is an inset
  */
 function setIsInset(value) {
-    document.getElementById('menu').style.display = value ? 'inherit' : 'none';
+    document.getElementById('insetMenu').style.display = value ? 'initial' : 'none';
+    var separators = document.getElementsByClassName('separator');
+    for (let index = 0; index < separators.length; index++) {
+        const separator = separators[index];
+        separator.style.display = value ? 'initial' : 'none';
+    }
 }

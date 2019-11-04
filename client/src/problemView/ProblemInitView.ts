@@ -60,7 +60,6 @@ export class ProblemInitView extends ProblemView<ProblemInitViewOptions, Problem
 
         let defineNode = problem.syntaxTree.getDefineNodeOrThrow();
         let initNode = defineNode.getFirstChildOrThrow(PddlTokenType.OpenBracketOperator, /\s*:init/i);
-        this.subscribe(document);
         return [
             new DocumentCodeLens(document, nodeToRange(document, initNode)),
             new DocumentInsetCodeLens(document, nodeToRange(document, initNode), document.positionAt(initNode.getStart()).line)
