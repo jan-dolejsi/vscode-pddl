@@ -92,9 +92,9 @@ function clearNetwork() {
 
 function updateGraph(data) {
   clearNetwork();
-  data.nodes.forEach(node => nodes.add(node));
-  data.relationships.forEach(relationship => edges.add(relationship));
-  network.fit();
+  nodes.add(data.nodes);
+  edges.add(data.relationships);
+  network.fit({animation: true});
 }
 
 function resize() {
