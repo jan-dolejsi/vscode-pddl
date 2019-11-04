@@ -13,7 +13,7 @@ body {
 div#menu {
   position: fixed;
   top: 3px;
-  right: 1px; 
+  right: 1em; 
 }
 
 img.menuButton {
