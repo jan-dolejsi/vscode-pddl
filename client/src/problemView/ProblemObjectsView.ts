@@ -81,8 +81,8 @@ export class ProblemObjectsView extends ProblemView<ProblemObjectsRendererOption
         }
     }
 
-    protected createPreviewPanelTitle(doc: TextDocument) {
-        return `:objects of '${path.basename(doc.uri.fsPath)}'`;
+    protected createPreviewPanelTitle(uri: Uri) {
+        return `:objects of '${path.basename(uri.fsPath)}'`;
     }
 }
 

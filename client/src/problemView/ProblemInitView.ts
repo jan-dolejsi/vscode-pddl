@@ -84,8 +84,8 @@ export class ProblemInitView extends ProblemView<ProblemInitViewOptions, Problem
         }
     }
 
-    protected createPreviewPanelTitle(doc: TextDocument) {
-        return `:init of '${path.basename(doc.uri.fsPath)}'`;
+    protected createPreviewPanelTitle(uri: Uri) {
+        return `:init of '${path.basename(uri.fsPath)}'`;
     }
 }
 
