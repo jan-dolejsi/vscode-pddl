@@ -1,16 +1,16 @@
 body {
   font: 10pt sans;
   overflow: scroll; 
-  /* direction: rtl; text-align: left; */
-  scroll-padding-right: 20px;
-  scroll-margin-right: 50px;
-  scrollbar-width: 100px;
+  margin: 0px;
+  padding: 0px;
+  border-top: 2px green;
+  border-bottom: 2px green;
 }
 
 div#menu {
   position: fixed;
-  top: 1em;
-  right: 1em;
+  top: 1px;
+  right: 1px; 
 }
 
 img.menuButton {
@@ -18,5 +18,18 @@ img.menuButton {
 }
 
 img.menuButton:hover {
+  border-color: gray;
+}
+
+a.menuButton {
+  border: solid 1px transparent;
+  font: 16px sans;
+  text-decoration: none;
+  width: 30px;
+  padding-left: 3px;
+  padding-right: 3px;
+}
+
+a.menuButton:hover {
   border-color: gray;
 }

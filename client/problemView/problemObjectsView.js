@@ -15,8 +15,7 @@ function initialize() {
   var options = {
     nodes: {
       font: {
-        size: 12,
-        strokeWidth: null
+        size: 12
       }
     },
     edges: {
@@ -52,7 +51,8 @@ function initialize() {
     configure: false
   };
   network = new vis.Network(container, networkData, options);
-  populateWithTestData();
+  if (!vscode) { populateWithTestData(); }
+  onLoad();
 
   network.on("configChange", function () {
     // this will immediately fix the height of the configuration
@@ -61,6 +61,8 @@ function initialize() {
     var div = container.getElementsByClassName("vis-configuration-wrapper")[0];
     div.style["height"] = div.getBoundingClientRect().height + "px";
   });
+
+  resize();
 }
 
 function handleMessage(message) {
@@ -75,14 +77,12 @@ function handleMessage(message) {
 }
 
 function populateWithTestData() {
-  if (!vscode) {
-    // for testing only
-    updateGraph({
-      nodes: [{ id: 1, label: 'City' }, { id: 2, label: 'Town' }, { id: 3, label: 'Village' }],
-      relationships: [{ from: 1, to: 2 }, { from: 2, to: 3 }]
-    });
-    setIsInset(true);
-  }
+  // for testing only
+  updateGraph({
+    nodes: [{ id: 1, label: 'City' }, { id: 2, label: 'Town' }, { id: 3, label: 'Village' }],
+    relationships: [{ from: 1, to: 2 }, { from: 2, to: 3 }]
+  });
+  setIsInset(true);
 }
 
 function clearNetwork() {
@@ -94,5 +94,32 @@ function updateGraph(data) {
   clearNetwork();
   data.nodes.forEach(node => nodes.add(node));
   data.relationships.forEach(relationship => edges.add(relationship));
+  network.fit();
+}
+
+function resize() {
+  // todo: network.setSize()
+  var container = document.getElementById("network");
+  var visNetwork = container.getElementsByClassName("vis-network")[0];
+  var canvas = visNetwork.canvas;
+  if (canvas) {
+    canvas.style["height"] = (window.innerHeight) + "px";
+  }
+}
+
+function topDown() {
+  setLayoutDirection('UD');
+}
+
+function leftRight() {
+  setLayoutDirection('LR');
+}
+
+function setLayoutDirection(direction) {
+  network.setOptions({ layout: { hierarchical: { direction: direction } } });
+  postMessage({ command: 'layout', direction: direction });
+}
+
+function fit() {
   network.fit();
 }
