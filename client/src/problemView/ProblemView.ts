@@ -163,7 +163,7 @@ export abstract class ProblemView<TRendererOptions, TRenderData> extends Disposa
                 this.initInsets.set(problemUri, insets);
             }
             insets.set(editor, problemInitPanel);
-            newInitInset.webview.onDidReceiveMessage(e => this.handleMessage(problemInitPanel, e), undefined, this.context.subscriptions);
+            newInitInset.webview.onDidReceiveMessage(e => this.handleMessageCore(problemInitPanel, e), undefined, this.context.subscriptions);
         }
         await this.setNeedsRebuild(await workspace.openTextDocument(problemUri));
     }
