@@ -48,7 +48,7 @@ export abstract class ProblemView<TRendererOptions, TRenderData> extends Disposa
         context.subscriptions.push(commands.registerCommand(options.insetViewCommand, async (problemUri: Uri, line: number) => {
             if (window.activeTextEditor && problemUri && line) {
                 if (problemUri.toString() === window.activeTextEditor.document.uri.toString()) {
-                    this.showInset(window.activeTextEditor, problemUri, line, options.insetHeight).catch(showError);
+                    this.showInset(window.activeTextEditor, line, options.insetHeight).catch(showError);
                 }
             }
         }));
@@ -85,85 +85,33 @@ export abstract class ProblemView<TRendererOptions, TRenderData> extends Disposa
             error = ex;
         }
 
-        var codeLensNeedsUpdate = false;
+        let panelsToRefresh: ProblemViewPanel[] = [];
     
         // update the panel
-        {
-            let panel = this.webviewPanels.get(problemUri);
-            if (panel) {
-                if (!error) {
-                    panel.setDomainAndProblem(domainInfo, problemInfo);
-                }
-                else {
-                    panel.setError(error);
-                }
-                await this.refreshPanelContent(panel);
-                codeLensNeedsUpdate = true;
-            }
+        let panel = this.webviewPanels.get(problemUri);
+        if (panel) {
+            panelsToRefresh.push(panel);
         }
 
         // update all the insets
         let insets = this.webviewInsets.get(problemUri);
         if (insets) {
-            [...insets.values()].forEach(async inset => {
-                if (!error) {
-                    inset.setDomainAndProblem(domainInfo, problemInfo);
-                }
-                else {
-                    inset.setError(error);
-                }
-                await this.refreshPanelContent(inset);
-                codeLensNeedsUpdate = true;
-            });
+            panelsToRefresh = panelsToRefresh.concat([...insets.values()]);
         }
 
-        if (codeLensNeedsUpdate) {
+        panelsToRefresh.forEach(async panel => {
+            if (!error) {
+                panel.setDomainAndProblem(domainInfo, problemInfo);
+            }
+            else {
+                panel.setError(error);
+            }
+            await this.refreshPanelContent(panel);
+        });
+
+        if (panelsToRefresh.length > 0) {
             this._onDidChangeCodeLenses.fire();
         }
-    }
-
-    // async setNeedsRebuild(problemDocument: TextDocument): Promise<void> {
-    //     let panel = this.webviewPanels.get(problemDocument.uri);
-
-    //     if (panel) {
-    //         this.resetTimeout();
-    //     }
-
-    //     let insets = this.webviewInsets.get(problemDocument.uri);
-    //     if (insets) {
-    //         try {
-    //             let [domain, problem] = await this.getProblemAndDomain(problemDocument);
-    //             [...insets.values()].forEach(panel => panel.setDomainAndProblem(domain, problem));
-    //         }
-    //         catch (ex) {
-    //             [...insets.values()].forEach(panel => panel.setError(ex));
-    //         }
-
-    //         this.resetTimeout();
-    //     }
-    // }
-
-    // resetTimeout(): void {
-    //     if (this.timeout) {
-    //         clearTimeout(this.timeout);
-    //     }
-    //     this.timeout = setTimeout(() => this.refresh(), 1000);
-    // }
-
-    // dispose(): void {
-    //     clearTimeout(this.timeout);
-    // }
-
-    refresh(): void {
-        this.webviewPanels.forEach(async (panel) => {
-            this.refreshPanel(panel);
-        });
-
-        this.webviewInsets.forEach(async (insets) => {
-            insets.forEach(panel => {
-                this.refreshPanel(panel);
-            });
-        });
     }
 
     private refreshPanel(panel: ProblemViewPanel) {
@@ -172,12 +120,20 @@ export abstract class ProblemView<TRendererOptions, TRenderData> extends Disposa
         }
     }
 
-    async setup(previewPanel: ProblemViewPanel) {
+    async setup(previewPanel: ProblemViewPanel, problemInfo: ProblemInfo) {
         if (!previewPanel.getPanel().html) {
             previewPanel.getPanel().html = "Please wait...";
         }
         previewPanel.setNeedsRebuild(false);
         previewPanel.getPanel().html = await this.generateHtml(previewPanel.getError());
+
+        try {
+            let domainInfo = getDomainFileForProblem(problemInfo, this.codePddlWorkspace);
+            previewPanel.setDomainAndProblem(domainInfo, problemInfo);
+        }
+        catch (ex) {
+            previewPanel.setError(ex);
+        }
     }
 
     async refreshPanelContent(previewPanel: ProblemViewPanel): Promise<boolean> {
@@ -185,7 +141,11 @@ export abstract class ProblemView<TRendererOptions, TRenderData> extends Disposa
         return this.updateContentData(previewPanel.getDomain(), previewPanel.getProblem(), previewPanel.getPanel());
     }
 
-    async showInset(editor: TextEditor, problemUri: Uri, line: number, height: number): Promise<void> {
+    async showInset(editor: TextEditor, line: number, height: number): Promise<void> {
+        let problemInfo = await this.parseProblem(editor.document);
+        if (!problemInfo) { return; }
+
+        let problemUri = editor.document.uri;
         let insets = this.webviewInsets.get(problemUri);
         if (!insets || !insets.get(editor)) {
 
@@ -207,7 +167,7 @@ export abstract class ProblemView<TRendererOptions, TRenderData> extends Disposa
             }
             insets.set(editor, problemViewPanel);
             newInitInset.webview.onDidReceiveMessage(e => this.handleMessageCore(problemViewPanel, e), undefined, this.context.subscriptions);
-            await this.setup(problemViewPanel);
+            await this.setup(problemViewPanel, problemInfo);
         }
     }
 
@@ -216,49 +176,45 @@ export abstract class ProblemView<TRendererOptions, TRenderData> extends Disposa
         if (panel.getPanel().isInset) {
             let inset = panel.getPanel() as WebviewInsetAdapter;
             
-            this.showInset(inset.inset.editor, Uri.parse(panel.getProblem().fileUri), inset.inset.line, inset.inset.height * 2);
+            this.showInset(inset.inset.editor, inset.inset.line, inset.inset.height * 2);
         }
     }
 
     async revealOrCreatePreview(doc: TextDocument, displayColumn: ViewColumn): Promise<void> {
+        let problemInfo = await this.parseProblem(doc);
+        if (!problemInfo) { return; }
+
         let previewPanel = this.webviewPanels.get(doc.uri);
 
         if (previewPanel && previewPanel.getPanel().canReveal()) {
             previewPanel.getPanel().reveal(displayColumn);
-            await this.refreshPanelContent(previewPanel);
+            await this.refreshProblem(problemInfo);
         }
         else {
-            previewPanel = await this.createPreviewPanelForDocument(doc, displayColumn);
+            previewPanel = await this.createPreviewPanelForDocument(problemInfo, displayColumn);
             this.webviewPanels.set(doc.uri, previewPanel);
         }
     }
 
-    protected abstract createPreviewPanelTitle(doc: TextDocument): string;
+    protected abstract createPreviewPanelTitle(uri: Uri): string;
 
-    async createPreviewPanelForDocument(doc: TextDocument, displayColumn: ViewColumn): Promise<ProblemViewPanel> {
-        let previewTitle = this.createPreviewPanelTitle(doc);
+    async createPreviewPanelForDocument(problemInfo: ProblemInfo, displayColumn: ViewColumn): Promise<ProblemViewPanel> {
+        let problemUri = Uri.parse(problemInfo.fileUri);
+        let previewTitle = this.createPreviewPanelTitle(problemUri);
         let webViewPanel = window.createWebviewPanel(this.options.webviewType, previewTitle, displayColumn, this.options.webviewOptions);
 
         webViewPanel.iconPath = Uri.file(this.context.asAbsolutePath("images/icon.png"));
 
-        let panel = new ProblemViewPanel(doc.uri, new WebviewPanelAdapter(webViewPanel));
+        let panel = new ProblemViewPanel(problemUri, new WebviewPanelAdapter(webViewPanel));
 
         // when the user closes the tab, remove the panel
-        webViewPanel.onDidDispose(() => this.webviewPanels.delete(doc.uri), undefined, this.context.subscriptions);
+        webViewPanel.onDidDispose(() => this.webviewPanels.delete(problemUri), undefined, this.context.subscriptions);
         // when the pane becomes visible again, refresh it
         webViewPanel.onDidChangeViewState(_ => this.refreshPanel(panel));
 
         webViewPanel.webview.onDidReceiveMessage(e => this.handleMessageCore(panel, e), undefined, this.context.subscriptions);
 
-        await this.setup(panel);
-
-        try {
-            let [domain, problem] = await this.getProblemAndDomain(doc);
-            panel.setDomainAndProblem(domain, problem);
-        }
-        catch (ex) {
-            panel.setError(ex);
-        }
+        await this.setup(panel, problemInfo);
 
         return panel;
     }
