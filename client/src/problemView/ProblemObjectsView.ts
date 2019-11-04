@@ -6,7 +6,7 @@
 
 import {
     Uri,
-    ExtensionContext, TextDocument, CodeLens, CancellationToken, Command, Range, CodeLensProvider
+    ExtensionContext, TextDocument, CodeLens, CancellationToken, CodeLensProvider
 } from 'vscode';
 
 import { DomainInfo, TypeObjects } from '../../../common/src/DomainInfo';
@@ -18,7 +18,7 @@ import { PddlTokenType } from '../../../common/src/PddlTokenizer';
 import { nodeToRange } from '../utils';
 import { getObjectsInheritingFrom } from '../../../common/src/typeInheritance';
 import { ProblemRenderer } from './view';
-import { ProblemView, ProblemRendererOptions } from './ProblemView';
+import { ProblemView, ProblemRendererOptions, DocumentInsetCodeLens, DocumentCodeLens } from './ProblemView';
 
 const CONTENT = 'problemView';
 
@@ -148,26 +148,6 @@ class ProblemObjectsRendererDelegate {
 }
 
 interface ProblemObjectsRendererOptions extends ProblemRendererOptions {
-}
-
-class DocumentCodeLens extends CodeLens {
-    constructor(private document: TextDocument, range: Range, command?: Command) {
-        super(range, command);
-    }
-
-    getDocument(): TextDocument {
-        return this.document;
-    }
-}
-
-class DocumentInsetCodeLens extends DocumentCodeLens {
-    constructor(document: TextDocument, range: Range, private line: number, command?: Command) {
-        super(document, range, command);
-    }
-
-    getLine(): number {
-        return this.line;
-    }
 }
 
 interface NetworkNode {
