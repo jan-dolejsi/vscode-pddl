@@ -22,7 +22,7 @@ import { Util } from '../../../common/src/util';
 import { ProblemRenderer } from './view';
 import { ProblemView, DocumentCodeLens, DocumentInsetCodeLens, ProblemRendererOptions } from './ProblemView';
 
-const CONTENT = 'problemView';
+const CONTENT = 'modelView';
 
 const PDDL_PROBLEM_INIT_PREVIEW_COMMAND = "pddl.problem.init.preview";
 const PDDL_PROBLEM_INIT_INSET_COMMAND = "pddl.problem.init.inset";

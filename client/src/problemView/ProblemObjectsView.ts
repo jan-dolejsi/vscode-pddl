@@ -20,7 +20,7 @@ import { getObjectsInheritingFrom } from '../../../common/src/typeInheritance';
 import { ProblemRenderer } from './view';
 import { ProblemView, ProblemRendererOptions, DocumentInsetCodeLens, DocumentCodeLens } from './ProblemView';
 
-const CONTENT = 'problemView';
+const CONTENT = 'modelView';
 
 const PDDL_PROBLEM_OBJECTS_PREVIEW_COMMAND = "pddl.problem.objects.preview";
 const PDDL_PROBLEM_OBJECTS_INSET_COMMAND = "pddl.problem.objects.inset";

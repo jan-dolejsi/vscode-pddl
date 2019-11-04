@@ -37,8 +37,8 @@ import { CodePddlWorkspace } from './workspace/CodePddlWorkspace';
 import { DomainDiagnostics } from './diagnostics/DomainDiagnostics';
 import { PddlOnTypeFormatter } from './formatting/PddlOnTypeFormatter';
 import { PddlCompletionItemProvider } from './completion/PddlCompletionItemProvider';
-import { ProblemInitView } from './problemView/ProblemInitView';
-import { ProblemObjectsView } from './problemView/ProblemObjectsView';
+import { ProblemInitView } from './modelView/ProblemInitView';
+import { ProblemObjectsView } from './modelView/ProblemObjectsView';
 
 const PDDL_CONFIGURE_PARSER = 'pddl.configureParser';
 const PDDL_LOGIN_PARSER_SERVICE = 'pddl.loginParserService';
