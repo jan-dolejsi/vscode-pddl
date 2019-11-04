@@ -13,6 +13,9 @@ function initialize() {
   var container = document.getElementById("network");
 
   var options = {
+    autoResize: true,
+    height: '100%',
+    width: '100%',
     nodes: {
       font: {
         size: 12
@@ -34,6 +37,8 @@ function initialize() {
     layout: {
       hierarchical: {
         enabled: true,
+        direction: "DU",
+        sortMethod: "directed",
         levelSeparation: 77,
         nodeSpacing: 17,
         treeSpacing: 17,
@@ -51,6 +56,7 @@ function initialize() {
     configure: false
   };
   network = new vis.Network(container, networkData, options);
+  resize();
   if (!vscode) { populateWithTestData(); }
   onLoad();
 
@@ -61,8 +67,6 @@ function initialize() {
     var div = container.getElementsByClassName("vis-configuration-wrapper")[0];
     div.style["height"] = div.getBoundingClientRect().height + "px";
   });
-
-  resize();
 }
 
 function handleMessage(message) {
@@ -79,8 +83,8 @@ function handleMessage(message) {
 function populateWithTestData() {
   // for testing only
   updateGraph({
-    nodes: [{ id: 1, label: 'City' }, { id: 2, label: 'Town' }, { id: 3, label: 'Village' }],
-    relationships: [{ from: 1, to: 2 }, { from: 2, to: 3 }]
+    nodes: [{ id: 1, label: 'City' }, { id: 2, label: 'Town' }, { id: 3, label: 'Village' }, { id: 4, label: 'Capital' }],
+    relationships: [{ from: 1, to: 2 }, { from: 2, to: 3 }, {from: 4, to: 2}]
   });
   setIsInset(true);
 }
@@ -98,21 +102,20 @@ function updateGraph(data) {
 }
 
 function resize() {
-  // todo: network.setSize()
   var container = document.getElementById("network");
   var visNetwork = container.getElementsByClassName("vis-network")[0];
   var canvas = visNetwork.canvas;
   if (canvas) {
-    canvas.style["height"] = (window.innerHeight) + "px";
+    network.setSize(canvas.style["width"], (window.innerHeight - 6) + "px");
   }
 }
 
 function topDown() {
-  setLayoutDirection('UD');
+  setLayoutDirection('DU');
 }
 
 function leftRight() {
-  setLayoutDirection('LR');
+  setLayoutDirection('RL');
 }
 
 function setLayoutDirection(direction) {

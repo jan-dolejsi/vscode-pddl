@@ -57,7 +57,6 @@ export class ProblemObjectsView extends ProblemView<ProblemObjectsRendererOption
 
         let defineNode = problem.syntaxTree.getDefineNodeOrThrow();
         let objectsNode = defineNode.getFirstChildOrThrow(PddlTokenType.OpenBracketOperator, /\s*:objects/i);
-        this.subscribe(document.uri);
         return [
             new DocumentCodeLens(document, nodeToRange(document, objectsNode))
         ];

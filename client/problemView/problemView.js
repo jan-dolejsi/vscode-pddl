@@ -84,4 +84,9 @@ window.addEventListener('message', event => {
  */
 function setIsInset(value) {
     document.getElementById('insetMenu').style.display = value ? 'initial' : 'none';
+    var separators = document.getElementsByClassName('separator');
+    for (let index = 0; index < separators.length; index++) {
+        const separator = separators[index];
+        separator.style.display = value ? 'initial' : 'none';
+    }
 }

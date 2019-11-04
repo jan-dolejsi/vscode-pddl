@@ -1,15 +1,18 @@
+html, 
+body {
+    height: 100%;
+}
+
 body {
   font: 10pt sans;
   overflow: scroll; 
   margin: 0px;
   padding: 0px;
-  border-top: 2px green;
-  border-bottom: 2px green;
 }
 
 div#menu {
   position: fixed;
-  top: 1px;
+  top: 3px;
   right: 1px; 
 }
 
@@ -32,4 +35,11 @@ a.menuButton {
 
 a.menuButton:hover {
   border-color: gray;
+}
+
+div.separator {
+  background-color: lightblue;
+  width: 100%;
+  height: 2px;
+  position:fixed;
 }

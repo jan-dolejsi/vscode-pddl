@@ -6,12 +6,14 @@
 
 import {
     window, workspace, commands, Uri,
-    ViewColumn, ExtensionContext, TextDocument, Disposable, TextDocumentChangeEvent, Event, EventEmitter, TextEditor, WebviewOptions, WebviewPanelOptions, CodeLens, Range, Command
+    ViewColumn, ExtensionContext, TextDocument, Disposable, Event, EventEmitter, TextEditor, WebviewOptions, WebviewPanelOptions, CodeLens, Range, Command
 } from 'vscode';
 
 import { isPddl, getDomainFileForProblem } from '../workspace/workspaceUtils';
 import { DomainInfo } from '../../../common/src/DomainInfo';
 import { ProblemInfo } from '../../../common/src/ProblemInfo';
+import { PddlWorkspace } from '../../../common/src/PddlWorkspace';
+import { FileInfo } from '../../../common/src/FileInfo';
 
 import { CodePddlWorkspace } from '../workspace/CodePddlWorkspace';
 import { getWebViewHtml, createPddlExtensionContext, UriMap, showError } from '../utils';
@@ -26,11 +28,8 @@ export abstract class ProblemView<TRendererOptions, TRenderData> extends Disposa
     private _onDidChangeCodeLenses: EventEmitter<void> = new EventEmitter<void>();
     readonly onDidChangeCodeLenses?: Event<void> = this._onDidChangeCodeLenses.event;
 
-    private subscribedDocumentUris: string[] = [];
-
     private webviewPanels = new UriMap<ProblemViewPanel>();
-    private initInsets = new UriMap<Map<TextEditor, ProblemViewPanel>>();
-    private timeout: NodeJS.Timer;
+    private webviewInsets = new UriMap<Map<TextEditor, ProblemViewPanel>>();
 
     constructor(private context: ExtensionContext, private codePddlWorkspace: CodePddlWorkspace,
         private renderer: ProblemRenderer<TRendererOptions, TRenderData>,
@@ -54,66 +53,113 @@ export abstract class ProblemView<TRendererOptions, TRenderData> extends Disposa
             }
         }));
 
-        // When the active document is changed set the provider for rebuild
-        // this only occurs after an edit in a document
-        context.subscriptions.push(workspace.onDidChangeTextDocument((e: TextDocumentChangeEvent) => {
-            if (isPddl(e.document)) {
-                this.setNeedsRebuild(e.document);
+        codePddlWorkspace.pddlWorkspace.on(PddlWorkspace.UPDATED, (fileInfo: FileInfo) => {
+            if (fileInfo.isProblem()) {
+                this.refreshProblem(<ProblemInfo>fileInfo);
             }
-            if (this.isSubscribed(e.document)) {
-                this._onDidChangeCodeLenses.fire();
+            else if (fileInfo.isDomain()) {
+                this.refreshDomainProblems(<DomainInfo>fileInfo);
             }
-        }));
+        });
     }
 
-    protected subscribe(documentUri: Uri) {
-        if (!this.subscribedDocumentUris.includes(documentUri.toString())) {
-            this.subscribedDocumentUris.push(documentUri.toString());
+    async refreshDomainProblems(domainInfo: DomainInfo): Promise<void> {
+        let promises = this.codePddlWorkspace.pddlWorkspace
+            .getProblemFiles(domainInfo)
+            .map(async problemInfo => await this.refreshProblem(problemInfo));
+        
+        await Promise.all(promises);
+    }
+
+    async refreshProblem(problemInfo: ProblemInfo) {
+        const problemUri = Uri.parse(problemInfo.fileUri);
+        // if no panel was created, skip
+        if (!this.webviewPanels.get(problemUri) && !this.webviewInsets.get(problemUri)) { return; }
+
+        let error: Error;
+        let domainInfo: DomainInfo;
+        try {
+            domainInfo = getDomainFileForProblem(problemInfo, this.codePddlWorkspace);
         }
-    }
-
-    private isSubscribed(document: TextDocument) {
-        return this.subscribedDocumentUris.includes(document.uri.toString());
-    }
-
-    async setNeedsRebuild(problemDocument: TextDocument): Promise<void> {
-        let panel = this.webviewPanels.get(problemDocument.uri);
-
-        if (panel) {
-            this.resetTimeout();
+        catch (ex) {
+            error = ex;
         }
 
-        let insets = this.initInsets.get(problemDocument.uri);
+        var codeLensNeedsUpdate = false;
+    
+        // update the panel
+        {
+            let panel = this.webviewPanels.get(problemUri);
+            if (panel) {
+                if (!error) {
+                    panel.setDomainAndProblem(domainInfo, problemInfo);
+                }
+                else {
+                    panel.setError(error);
+                }
+                await this.refreshPanelContent(panel);
+                codeLensNeedsUpdate = true;
+            }
+        }
+
+        // update all the insets
+        let insets = this.webviewInsets.get(problemUri);
         if (insets) {
-            try {
-                let [domain, problem] = await this.getProblemAndDomain(problemDocument);
-                [...insets.values()].forEach(panel => panel.setDomainAndProblem(domain, problem));
-            }
-            catch (ex) {
-                [...insets.values()].forEach(panel => panel.setError(ex));
-            }
+            [...insets.values()].forEach(async inset => {
+                if (!error) {
+                    inset.setDomainAndProblem(domainInfo, problemInfo);
+                }
+                else {
+                    inset.setError(error);
+                }
+                await this.refreshPanelContent(inset);
+                codeLensNeedsUpdate = true;
+            });
+        }
 
-            this.resetTimeout();
+        if (codeLensNeedsUpdate) {
+            this._onDidChangeCodeLenses.fire();
         }
     }
 
-    resetTimeout(): void {
-        if (this.timeout) {
-            clearTimeout(this.timeout);
-        }
-        this.timeout = setTimeout(() => this.refresh(), 1000);
-    }
+    // async setNeedsRebuild(problemDocument: TextDocument): Promise<void> {
+    //     let panel = this.webviewPanels.get(problemDocument.uri);
 
-    dispose(): void {
-        clearTimeout(this.timeout);
-    }
+    //     if (panel) {
+    //         this.resetTimeout();
+    //     }
+
+    //     let insets = this.webviewInsets.get(problemDocument.uri);
+    //     if (insets) {
+    //         try {
+    //             let [domain, problem] = await this.getProblemAndDomain(problemDocument);
+    //             [...insets.values()].forEach(panel => panel.setDomainAndProblem(domain, problem));
+    //         }
+    //         catch (ex) {
+    //             [...insets.values()].forEach(panel => panel.setError(ex));
+    //         }
+
+    //         this.resetTimeout();
+    //     }
+    // }
+
+    // resetTimeout(): void {
+    //     if (this.timeout) {
+    //         clearTimeout(this.timeout);
+    //     }
+    //     this.timeout = setTimeout(() => this.refresh(), 1000);
+    // }
+
+    // dispose(): void {
+    //     clearTimeout(this.timeout);
+    // }
 
     refresh(): void {
         this.webviewPanels.forEach(async (panel) => {
             this.refreshPanel(panel);
         });
 
-        this.initInsets.forEach(async (insets) => {
+        this.webviewInsets.forEach(async (insets) => {
             insets.forEach(panel => {
                 this.refreshPanel(panel);
             });
@@ -152,7 +198,7 @@ export abstract class ProblemView<TRendererOptions, TRenderData> extends Disposa
 
         if (previewPanel && previewPanel.getPanel().canReveal()) {
             previewPanel.getPanel().reveal(displayColumn);
-            await this.setNeedsRebuild(doc);
+            await this.refreshPanelContent(previewPanel);
         }
         else {
             previewPanel = await this.createPreviewPanelForDocument(doc, displayColumn);
@@ -182,7 +228,6 @@ export abstract class ProblemView<TRendererOptions, TRenderData> extends Disposa
         try {
             let [domain, problem] = await this.getProblemAndDomain(doc);
             panel.setDomainAndProblem(domain, problem);
-            this.subscribe(Uri.parse(domain.fileUri));
         }
         catch (ex) {
             panel.setError(ex);
