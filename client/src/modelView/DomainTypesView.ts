@@ -56,7 +56,8 @@ export class DomainTypesView extends DomainView<DomainTypesRendererOptions, Doma
         let defineNode = domain.syntaxTree.getDefineNodeOrThrow();
         let typesNode = defineNode.getFirstChildOrThrow(PddlTokenType.OpenBracketOperator, /\s*:types/i);
         return [
-            new DocumentCodeLens(document, nodeToRange(document, typesNode))
+            new DocumentCodeLens(document, nodeToRange(document, typesNode)),
+            new DocumentInsetCodeLens(document, nodeToRange(document, typesNode), document.positionAt(typesNode.getStart()).line)
         ];
     }
 

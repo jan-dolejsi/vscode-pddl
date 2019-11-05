@@ -17,7 +17,7 @@ import { FileInfo } from '../../../common/src/FileInfo';
 import { CodePddlWorkspace } from '../workspace/CodePddlWorkspace';
 import { getWebViewHtml, createPddlExtensionContext, UriMap, showError } from '../utils';
 import { DomainViewPanel } from './DomainViewPanel';
-import { WebviewPanelAdapter, WebviewAdapter } from './view';
+import { WebviewPanelAdapter, WebviewAdapter, WebviewInsetAdapter } from './view';
 
 /**
  * Base-class for different domain views.
@@ -110,11 +110,42 @@ export abstract class DomainView<TRendererOptions, TRenderData> extends Disposab
     }
 
     async showInset(editor: TextEditor, line: number, height: number): Promise<void> {
-        console.log(`todo: revealOrCreateInset ${editor} line ${line} height ${height}`);
+        let domainInfo = await this.parseDomain(editor.document);
+        if (!domainInfo) { return; }
+
+        let domainUri = editor.document.uri;
+        let insets = this.webviewInsets.get(domainUri);
+        if (!insets || !insets.get(editor)) {
+
+            let newInitInset = window.createWebviewTextEditorInset(
+                editor,
+                line,
+                height,
+                this.options.webviewOptions
+            );
+            newInitInset.onDidDispose(() => {
+                let insets = this.webviewInsets.get(domainUri);
+                insets.delete(editor);
+            });
+            
+            let domainViewPanel = new DomainViewPanel(domainUri, new WebviewInsetAdapter(newInitInset));
+            if (!insets) {
+                insets = new Map<TextEditor, DomainViewPanel>();
+                this.webviewInsets.set(domainUri, insets);
+            }
+            insets.set(editor, domainViewPanel);
+            newInitInset.webview.onDidReceiveMessage(e => this.handleMessageCore(domainViewPanel, e), undefined, this.context.subscriptions);
+            await this.setup(domainViewPanel, domainInfo);
+        }
     }
 
     async expandInset(panel: DomainViewPanel): Promise<void> {
-        console.log(`todo: expand inset ${panel.uri}`);
+        panel.getPanel().dispose();
+        if (panel.getPanel().isInset) {
+            let inset = panel.getPanel() as WebviewInsetAdapter;
+            
+            this.showInset(inset.inset.editor, inset.inset.line, inset.inset.height * 2);
+        }
     }
 
     async revealOrCreatePreview(doc: TextDocument, displayColumn: ViewColumn): Promise<void> {
