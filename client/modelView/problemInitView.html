@@ -17,10 +17,16 @@
 <body onload="initialize()" class="vscode-light">
     <div id="network"></div>
     <div id="menu">
-            <img src="img/light/chevron-down.svg" theme="light" onclick="expandInset()" title="Expand this view vertically" class="menuButton"/>
-            <img src="img/dark/chevron-down.svg" theme="dark" onclick="expandInset()" title="Expand this view vertically" class="menuButton"/>
-            <img src="img/light/close.svg" theme="light" onclick="closeInset()" title="Close this view" class="menuButton"/>
-            <img src="img/dark/close.svg" theme="dark" onclick="closeInset()" title="Close this view" class="menuButton"/>
+        <span>
+            <img src="img/light/move.svg" theme="light" onclick="fit()" title="Fit all nodes" class="menuButton" />
+            <img src="img/dark/move.svg" theme="dark" onclick="fit()" title="Fit all nodes" class="menuButton" />
+        </span>
+        <span id="insetMenu">
+            <img src="img/light/chevron-down.svg" theme="light" onclick="expandInset()" title="Expand this view vertically" class="menuButton" />
+            <img src="img/dark/chevron-down.svg" theme="dark" onclick="expandInset()" title="Expand this view vertically" class="menuButton" />
+            <img src="img/light/close.svg" theme="light" onclick="closeInset()" title="Close this view" class="menuButton" />
+            <img src="img/dark/close.svg" theme="dark" onclick="closeInset()" title="Close this view" class="menuButton" />
+        </span>
     </div>
 </body>
 

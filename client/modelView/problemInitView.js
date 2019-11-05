@@ -23,11 +23,9 @@ function initialize() {
     physics: {
       stabilization: false
     },
-    configure: true
+    configure: false
   };
   network = new vis.Network(container, networkData, options);
-  if (!vscode) { populateWithTestData(); }
-  onLoad();
 
   network.on("configChange", function () {
     // this will immediately fix the height of the configuration
@@ -36,6 +34,13 @@ function initialize() {
     var div = container.getElementsByClassName("vis-configuration-wrapper")[0];
     div.style["height"] = div.getBoundingClientRect().height + "px";
   });
+
+  document.body.addEventListener("themeChanged", event => {
+    applyThemeToNetwork(network, event.detail.newTheme)
+  })
+
+  if (!vscode) { populateWithTestData(); }
+  onLoad();
 }
 
 function handleMessage(message) {
@@ -52,7 +57,7 @@ function populateWithTestData() {
   // for testing only
   updateGraph({
     nodes: [{ id: 1, label: 'City' }, { id: 2, label: 'Town' }, { id: 3, label: 'Village' }],
-    relationships: [{ from: 1, to: 2 }, { from: 2, to: 3 }]
+    relationships: [{ from: 1, to: 2, label: 'connected' }, { from: 2, to: 3, label: 'connected' }]
   });
   setIsInset(true);
 }
@@ -66,5 +71,9 @@ function updateGraph(data) {
   clearNetwork();
   data.nodes.forEach(node => nodes.add(node));
   data.relationships.forEach(relationship => edges.add(relationship));
+  network.fit();
+}
+
+function fit() {
   network.fit();
 }

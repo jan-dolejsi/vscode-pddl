@@ -55,6 +55,8 @@ function applyTheme(newTheme) {
         const button = buttons[index];
         button.style.display = (button.getAttribute('theme') === newTheme) ? 'initial' : 'none';
     }
+
+    document.body.dispatchEvent(new CustomEvent("themeChanged", { detail: { newTheme: newTheme } }));
 }
 
 function closeInset() {
@@ -83,10 +85,32 @@ window.addEventListener('message', event => {
  * @param {boolean} value true if this view is an inset
  */
 function setIsInset(value) {
-    document.getElementById('insetMenu').style.display = value ? 'initial' : 'none';
+    var insetMenu = document.getElementById('insetMenu');
+    if (insetMenu) insetMenu.style.display = value ? 'initial' : 'none';
+
     var separators = document.getElementsByClassName('separator');
     for (let index = 0; index < separators.length; index++) {
         const separator = separators[index];
         separator.style.display = value ? 'initial' : 'none';
     }
+}
+
+/**
+ * Applies theme to a network object
+ * @param {vis.Network} network network visualization object
+ * @param {string} newTheme new theme applied
+ */
+function applyThemeToNetwork(network, newTheme) {
+    var foreground; var background;
+    switch (newTheme) {
+        case 'dark':
+            foreground = 'white';
+            background = 'black';
+            break;
+        case 'light':
+            foreground = 'black';
+            background = 'white';
+            break;
+    }
+    network.setOptions({ edges: { font: { color: foreground, strokeColor: background } } });
 }

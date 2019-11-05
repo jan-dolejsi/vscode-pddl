@@ -57,8 +57,6 @@ function initialize() {
   };
   network = new vis.Network(container, networkData, options);
   resize();
-  if (!vscode) { populateWithTestData(); }
-  onLoad();
 
   network.on("configChange", function () {
     // this will immediately fix the height of the configuration
@@ -67,6 +65,13 @@ function initialize() {
     var div = container.getElementsByClassName("vis-configuration-wrapper")[0];
     div.style["height"] = div.getBoundingClientRect().height + "px";
   });
+  
+  document.body.addEventListener("themeChanged", event => {
+    applyThemeToNetwork(network, event.detail.newTheme)
+  })
+
+  if (!vscode) { populateWithTestData(); }
+  onLoad();
 }
 
 function handleMessage(message) {

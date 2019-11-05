@@ -1,7 +1,9 @@
 div#network {
-    /* float: left; */
     width: 100%;
     height: 600px;
-    margin: 5px;
+    margin-top: 2px;
+    margin-bottom: 2px;
+    margin-left: 0px;
+    margin-right: 0px;
     border: 1px solid lightgray;
 }
