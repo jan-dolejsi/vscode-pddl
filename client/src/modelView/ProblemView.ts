@@ -6,7 +6,7 @@
 
 import {
     window, workspace, commands, Uri,
-    ViewColumn, ExtensionContext, TextDocument, Disposable, Event, EventEmitter, TextEditor, WebviewOptions, WebviewPanelOptions, CodeLens, Range, Command
+    ViewColumn, ExtensionContext, TextDocument, Disposable, Event, EventEmitter, TextEditor, WebviewOptions, WebviewPanelOptions
 } from 'vscode';
 
 import { isPddl, getDomainFileForProblem } from '../workspace/workspaceUtils';
@@ -18,7 +18,7 @@ import { FileInfo } from '../../../common/src/FileInfo';
 import { CodePddlWorkspace } from '../workspace/CodePddlWorkspace';
 import { getWebViewHtml, createPddlExtensionContext, UriMap, showError } from '../utils';
 import { ProblemViewPanel } from './ProblemViewPanel';
-import { ProblemRenderer, WebviewPanelAdapter, WebviewAdapter, WebviewInsetAdapter } from './view';
+import { WebviewPanelAdapter, WebviewAdapter, WebviewInsetAdapter } from './view';
 
 /**
  * Base-class for different problem views.
@@ -323,22 +323,6 @@ export interface ProblemViewOptions {
     webviewHtmlPath: string;
 }
 
-export class DocumentCodeLens extends CodeLens {
-    constructor(private document: TextDocument, range: Range, command?: Command) {
-        super(range, command);
-    }
-
-    getDocument(): TextDocument {
-        return this.document;
-    }
-}
-
-export class DocumentInsetCodeLens extends DocumentCodeLens {
-    constructor(document: TextDocument, range: Range, private line: number, command?: Command) {
-        super(document, range, command);
-    }
-
-    getLine(): number {
-        return this.line;
-    }
+export interface ProblemRenderer<TOptions, TData> {
+    render(context: ExtensionContext, problem: ProblemInfo, domain: DomainInfo, options: TOptions): TData;
 }

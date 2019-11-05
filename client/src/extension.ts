@@ -37,8 +37,9 @@ import { CodePddlWorkspace } from './workspace/CodePddlWorkspace';
 import { DomainDiagnostics } from './diagnostics/DomainDiagnostics';
 import { PddlOnTypeFormatter } from './formatting/PddlOnTypeFormatter';
 import { PddlCompletionItemProvider } from './completion/PddlCompletionItemProvider';
-import { ProblemInitView } from './problemView/ProblemInitView';
-import { ProblemObjectsView } from './problemView/ProblemObjectsView';
+import { ProblemInitView } from './modelView/ProblemInitView';
+import { ProblemObjectsView } from './modelView/ProblemObjectsView';
+import { DomainTypesView } from './modelView/DomainTypesView';
 
 const PDDL_CONFIGURE_PARSER = 'pddl.configureParser';
 const PDDL_LOGIN_PARSER_SERVICE = 'pddl.loginParserService';
@@ -161,11 +162,14 @@ function activateWithTelemetry(_operationId: string, context: ExtensionContext) 
 		providedCodeActionKinds: SuggestionProvider.providedCodeActionKinds
 	});
 
+	let domainTypesView = new DomainTypesView(context, codePddlWorkspace);
+	context.subscriptions.push(languages.registerCodeLensProvider(PDDL, domainTypesView));
+
 	let problemInitView = new ProblemInitView(context, codePddlWorkspace);
-	languages.registerCodeLensProvider(PDDL, problemInitView);
+	context.subscriptions.push(languages.registerCodeLensProvider(PDDL, problemInitView));
 
 	let problemObjectsView = new ProblemObjectsView(context, codePddlWorkspace);
-	languages.registerCodeLensProvider(PDDL, problemObjectsView);
+	context.subscriptions.push(languages.registerCodeLensProvider(PDDL, problemObjectsView));
 
 	registerDocumentFormattingProvider(context, codePddlWorkspace);
 

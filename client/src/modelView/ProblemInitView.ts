@@ -19,10 +19,10 @@ import { PddlTokenType } from '../../../common/src/PddlTokenizer';
 import { nodeToRange } from '../utils';
 import { getObjectsInheritingFrom, getTypesInheritingFromPlusSelf } from '../../../common/src/typeInheritance';
 import { Util } from '../../../common/src/util';
-import { ProblemRenderer } from './view';
-import { ProblemView, DocumentCodeLens, DocumentInsetCodeLens, ProblemRendererOptions } from './ProblemView';
+import { DocumentCodeLens, DocumentInsetCodeLens } from './view';
+import { ProblemView, ProblemRenderer, ProblemRendererOptions } from './ProblemView';
 
-const CONTENT = 'problemView';
+const CONTENT = 'modelView';
 
 const PDDL_PROBLEM_INIT_PREVIEW_COMMAND = "pddl.problem.init.preview";
 const PDDL_PROBLEM_INIT_INSET_COMMAND = "pddl.problem.init.inset";

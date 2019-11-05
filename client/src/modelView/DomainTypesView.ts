@@ -9,31 +9,29 @@ import {
     ExtensionContext, TextDocument, CodeLens, CancellationToken, CodeLensProvider
 } from 'vscode';
 
-import { DomainInfo, TypeObjects } from '../../../common/src/DomainInfo';
-import { ProblemInfo } from '../../../common/src/ProblemInfo';
+import { DomainInfo } from '../../../common/src/DomainInfo';
 
 import * as path from 'path';
 import { CodePddlWorkspace } from '../workspace/CodePddlWorkspace';
 import { PddlTokenType } from '../../../common/src/PddlTokenizer';
 import { nodeToRange } from '../utils';
-import { getObjectsInheritingFrom } from '../../../common/src/typeInheritance';
-import { ProblemRenderer } from './view';
-import { ProblemView, ProblemRendererOptions, DocumentInsetCodeLens, DocumentCodeLens } from './ProblemView';
+import { DocumentInsetCodeLens, DocumentCodeLens } from './view';
+import { DomainView, DomainRendererOptions, DomainRenderer } from './DomainView';
 
-const CONTENT = 'problemView';
+const CONTENT = 'modelView';
 
-const PDDL_PROBLEM_OBJECTS_PREVIEW_COMMAND = "pddl.problem.objects.preview";
-const PDDL_PROBLEM_OBJECTS_INSET_COMMAND = "pddl.problem.objects.inset";
+const PDDL_DOMAIN_TYPES_PREVIEW_COMMAND = "pddl.domain.types.preview";
+const PDDL_DOMAIN_TYPES_INSET_COMMAND = "pddl.domain.types.inset";
 
-export class ProblemObjectsView extends ProblemView<ProblemObjectsRendererOptions, ProblemObjectsViewData> implements CodeLensProvider {
+export class DomainTypesView extends DomainView<DomainTypesRendererOptions, DomainTypesViewData> implements CodeLensProvider {
 
     constructor(context: ExtensionContext, codePddlWorkspace: CodePddlWorkspace) {
-        super(context, codePddlWorkspace, new ProblemObjectsRenderer(), {
+        super(context, codePddlWorkspace, new DomainTypesRenderer(), {
             content: CONTENT,
-            viewCommand: PDDL_PROBLEM_OBJECTS_PREVIEW_COMMAND,
-            insetViewCommand: PDDL_PROBLEM_OBJECTS_INSET_COMMAND,
+            viewCommand: PDDL_DOMAIN_TYPES_PREVIEW_COMMAND,
+            insetViewCommand: PDDL_DOMAIN_TYPES_INSET_COMMAND,
             insetHeight: 5,
-            webviewType: 'problemObjectsPreview',
+            webviewType: 'domainTypesPreview',
             webviewHtmlPath: 'problemObjectsView.html',
             webviewOptions: {
                 enableFindWidget: true,
@@ -51,15 +49,14 @@ export class ProblemObjectsView extends ProblemView<ProblemObjectsRendererOption
 
     async provideCodeLenses(document: TextDocument, token: CancellationToken): Promise<CodeLens[]> {
         if (token.isCancellationRequested) { return null; }
-        let problem = await this.parseProblem(document);
+        let domain = await this.parseDomain(document);
         if (token.isCancellationRequested) { return null; }
-        if (!problem) { return []; }
+        if (!domain) { return []; }
 
-        let defineNode = problem.syntaxTree.getDefineNodeOrThrow();
-        let objectsNode = defineNode.getFirstChildOrThrow(PddlTokenType.OpenBracketOperator, /\s*:objects/i);
+        let defineNode = domain.syntaxTree.getDefineNodeOrThrow();
+        let typesNode = defineNode.getFirstChildOrThrow(PddlTokenType.OpenBracketOperator, /\s*:types/i);
         return [
-            new DocumentCodeLens(document, nodeToRange(document, objectsNode)),
-            new DocumentInsetCodeLens(document, nodeToRange(document, objectsNode), document.positionAt(objectsNode.getStart()).line)
+            new DocumentCodeLens(document, nodeToRange(document, typesNode))
         ];
     }
 
@@ -68,28 +65,28 @@ export class ProblemObjectsView extends ProblemView<ProblemObjectsRendererOption
             return null;
         }
         if (token.isCancellationRequested) { return null; }
-        let [domain] = await this.getProblemAndDomain(codeLens.getDocument());
+        let domain = await this.parseDomain(codeLens.getDocument());
         if (!domain) { return null; }
         if (token.isCancellationRequested) { return null; }
 
         if (codeLens instanceof DocumentInsetCodeLens) {
-            codeLens.command = { command: PDDL_PROBLEM_OBJECTS_INSET_COMMAND, title: 'View inset', arguments: [codeLens.getDocument().uri, codeLens.getLine()] };
+            codeLens.command = { command: PDDL_DOMAIN_TYPES_INSET_COMMAND, title: 'View inset', arguments: [codeLens.getDocument().uri, codeLens.getLine()] };
             return codeLens;
         }
         else {
-            codeLens.command = { command: PDDL_PROBLEM_OBJECTS_PREVIEW_COMMAND, title: 'View', arguments: [codeLens.getDocument().uri] };
+            codeLens.command = { command: PDDL_DOMAIN_TYPES_PREVIEW_COMMAND, title: 'View', arguments: [codeLens.getDocument().uri] };
             return codeLens;
         }
     }
 
     protected createPreviewPanelTitle(uri: Uri) {
-        return `:objects of '${path.basename(uri.fsPath)}'`;
+        return `:types of '${path.basename(uri.fsPath)}'`;
     }
 }
 
-class ProblemObjectsRenderer implements ProblemRenderer<ProblemObjectsRendererOptions, ProblemObjectsViewData> {
-    render(context: ExtensionContext, problem: ProblemInfo, domain: DomainInfo, options: ProblemObjectsRendererOptions): ProblemObjectsViewData {
-        let renderer = new ProblemObjectsRendererDelegate(context, domain, problem, options);
+class DomainTypesRenderer implements DomainRenderer<DomainTypesRendererOptions, DomainTypesViewData> {
+    render(context: ExtensionContext, domain: DomainInfo, options: DomainTypesRendererOptions): DomainTypesViewData {
+        let renderer = new DomainTypesRendererDelegate(context, domain, options);
 
         return {
             nodes: renderer.getNodes(),
@@ -98,31 +95,20 @@ class ProblemObjectsRenderer implements ProblemRenderer<ProblemObjectsRendererOp
     }
 }
 
-interface ProblemObjectsViewData {
+interface DomainTypesViewData {
     nodes: NetworkNode[];
     relationships: NetworkEdge[];
 }
 
-class ProblemObjectsRendererDelegate {
+class DomainTypesRendererDelegate {
 
     private nodes: Map<string, number> = new Map();
     private relationships: NetworkEdge[] = [];
 
-    constructor(_context: ExtensionContext, private domain: DomainInfo, private problem: ProblemInfo, _options: ProblemObjectsRendererOptions) {
+    constructor(_context: ExtensionContext, domain: DomainInfo, _options: DomainTypesRendererOptions) {
         domain.getTypes().forEach((t, index) => this.nodes.set(t, index));
         domain.getTypeInheritance().getEdges().forEach(edge => this.addEdge(edge));
     }
-
-    getObjects(type: string) {
-        return getObjectsInheritingFrom(
-            TypeObjects.concatObjects(this.domain.getConstants(), this.problem.getObjectsPerType()),
-            type,
-            this.domain.getTypeInheritance());
-    }
-
-    // private addNode(obj: string): void {
-    //     if (!this.nodes.has(obj)) { this.nodes.set(obj, this.nodes.size + 1); }
-    // }
 
     addEdge(edge: [string, string]): void {
         this.relationships.push(this.toEdge(edge));
@@ -147,7 +133,7 @@ class ProblemObjectsRendererDelegate {
     }
 }
 
-interface ProblemObjectsRendererOptions extends ProblemRendererOptions {
+interface DomainTypesRendererOptions extends DomainRendererOptions {
 }
 
 interface NetworkNode {
