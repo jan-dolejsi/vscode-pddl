@@ -5,15 +5,9 @@
 'use strict';
 
 import {
-    ExtensionContext, WebviewPanel, ViewColumn
+    WebviewPanel, ViewColumn, CodeLens, TextDocument, Range, Command
 } from 'vscode';
 
-import { DomainInfo } from '../../../common/src/DomainInfo';
-import { ProblemInfo } from '../../../common/src/ProblemInfo';
-
-export interface ProblemRenderer<TOptions, TData> {
-    render(context: ExtensionContext, problem: ProblemInfo, domain: DomainInfo, options: TOptions): TData;
-}
 
 export interface WebviewAdapter {
     isVisible(): boolean;
@@ -50,5 +44,25 @@ export class WebviewPanelAdapter implements WebviewAdapter {
     }
     public get isInset(): boolean {
         return false;
+    }
+}
+
+export class DocumentCodeLens extends CodeLens {
+    constructor(private document: TextDocument, range: Range, command?: Command) {
+        super(range, command);
+    }
+
+    getDocument(): TextDocument {
+        return this.document;
+    }
+}
+
+export class DocumentInsetCodeLens extends DocumentCodeLens {
+    constructor(document: TextDocument, range: Range, private line: number, command?: Command) {
+        super(document, range, command);
+    }
+
+    getLine(): number {
+        return this.line;
     }
 }

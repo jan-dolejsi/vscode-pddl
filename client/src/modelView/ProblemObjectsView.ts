@@ -17,8 +17,8 @@ import { CodePddlWorkspace } from '../workspace/CodePddlWorkspace';
 import { PddlTokenType } from '../../../common/src/PddlTokenizer';
 import { nodeToRange } from '../utils';
 import { getObjectsInheritingFrom } from '../../../common/src/typeInheritance';
-import { ProblemRenderer } from './view';
-import { ProblemView, ProblemRendererOptions, DocumentInsetCodeLens, DocumentCodeLens } from './ProblemView';
+import { DocumentInsetCodeLens, DocumentCodeLens } from './view';
+import { ProblemView, ProblemRendererOptions, ProblemRenderer } from './ProblemView';
 
 const CONTENT = 'modelView';
 
@@ -112,7 +112,7 @@ class ProblemObjectsRendererDelegate {
         domain.getTypeInheritance().getEdges().forEach(edge => this.addEdge(edge));
     }
 
-    getObjects(type: string) {
+    getObjects(type: string): string[] {
         return getObjectsInheritingFrom(
             TypeObjects.concatObjects(this.domain.getConstants(), this.problem.getObjectsPerType()),
             type,
