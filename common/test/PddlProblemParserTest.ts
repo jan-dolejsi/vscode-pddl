@@ -183,6 +183,17 @@ describe('PddlProblemParser', () => {
 
             assert.deepStrictEqual(variableValue, new TimedVariableValue(123.456, "f o1 o2", 3.14));
         });
+
+        it('parses a (not-ready) fact', () => {
+            // GIVEN
+            let variableValuePddl = '(not-ready)';
+            let syntaxTree = new PddlSyntaxTreeBuilder(variableValuePddl).getTree();
+
+            // WHEN
+            let variableValue = new PddlProblemParser().parseInit(syntaxTree.getRootNode().getChildren()[0]);
+
+            assert.deepStrictEqual(variableValue, new TimedVariableValue(0, "not-ready", true));
+        });
     });
 
     describe('#parseSupplyDemand', () => {

@@ -16,7 +16,6 @@ import * as path from 'path';
 import { CodePddlWorkspace } from '../workspace/CodePddlWorkspace';
 import { PddlTokenType } from '../../../common/src/PddlTokenizer';
 import { nodeToRange } from '../utils';
-import { getObjectsInheritingFrom } from '../../../common/src/typeInheritance';
 import { DocumentInsetCodeLens, DocumentCodeLens } from './view';
 import { ProblemView, ProblemRendererOptions, ProblemRenderer } from './ProblemView';
 
@@ -45,7 +44,7 @@ export class ProblemObjectsView extends ProblemView<ProblemObjectsRendererOption
                 ]
             }
         },
-            {  }
+            {}
         );
     }
 
@@ -107,39 +106,53 @@ class ProblemObjectsRendererDelegate {
 
     private nodes: Map<string, number> = new Map();
     private relationships: NetworkEdge[] = [];
+    private objectsAndConstantsPerType: TypeObjects[];
+    private lastIndex: number;
+    private typeNames = new Set<string>();
 
     constructor(_context: ExtensionContext, private domain: DomainInfo, private problem: ProblemInfo, _options: ProblemObjectsRendererOptions) {
-        domain.getTypes().forEach((t, index) => this.nodes.set(t, index));
-        domain.getTypeInheritance().getEdges().forEach(edge => this.addEdge(edge));
+        this.objectsAndConstantsPerType = TypeObjects.concatObjects(this.domain.getConstants(), this.problem.getObjectsPerType());
+
+        domain.getTypesInclObject().forEach((t, index) => {
+            this.nodes.set(t, index);
+            this.typeNames.add(t);
+        });
+        domain.getTypeInheritance().getEdges().forEach(edge => this.addEdge(edge, 'extends'));
+
+        this.lastIndex = domain.getTypesInclObject().length;
+        domain.getTypes().forEach(t => this.addObjects(t));
     }
 
-    getObjects(type: string): string[] {
-        return getObjectsInheritingFrom(
-            TypeObjects.concatObjects(this.domain.getConstants(), this.problem.getObjectsPerType()),
-            type,
-            this.domain.getTypeInheritance());
+    private addObjects(typeName: string): void {
+        let objectsOfType = this.objectsAndConstantsPerType.find(element => element.type === typeName);
+        if (objectsOfType) {
+            let objects = objectsOfType.getObjects();
+            objects.forEach((objectName, index) => {
+                this.nodes.set(objectName, index + this.lastIndex);
+                this.addEdge([objectName, typeName], '');
+            });
+
+            this.lastIndex += objects.length;
+        }
     }
 
-    // private addNode(obj: string): void {
-    //     if (!this.nodes.has(obj)) { this.nodes.set(obj, this.nodes.size + 1); }
-    // }
-
-    addEdge(edge: [string, string]): void {
-        this.relationships.push(this.toEdge(edge));
+    private addEdge(edge: [string, string], label: string): void {
+        this.relationships.push(this.toEdge(edge, label));
     }
 
     getNodes(): NetworkNode[] {
         return [...this.nodes.entries()].map(entry => this.toNode(entry));
     }
 
-    toNode(entry: [string, number]): NetworkNode {
+    private toNode(entry: [string, number]): NetworkNode {
         let [entryLabel, entryId] = entry;
-        return { id: entryId, label: entryLabel };
+        let shape = this.typeNames.has(entryLabel) ? "ellipse" : "box";
+        return { id: entryId, label: entryLabel, shape: shape };
     }
 
-    toEdge(edge: [string, string]): NetworkEdge {
+    private toEdge(edge: [string, string], label: string): NetworkEdge {
         let [from, to] = edge;
-        return { from: this.nodes.get(from), to: this.nodes.get(to), label: 'extends' };
+        return { from: this.nodes.get(from), to: this.nodes.get(to), label: label };
     }
 
     getRelationships(): NetworkEdge[] {
@@ -153,10 +166,11 @@ interface ProblemObjectsRendererOptions extends ProblemRendererOptions {
 interface NetworkNode {
     id: number;
     label: string;
+    shape?: string;
 }
 
 interface NetworkEdge {
     from: number;
     to: number;
-    label: string;
+    label?: string;
 } 

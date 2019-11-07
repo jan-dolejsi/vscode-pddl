@@ -103,7 +103,11 @@ export class DomainInfo extends FileInfo {
 
     getTypes(): string[] {
         return this.typeInheritance.getVertices()
-            .filter(t => t !== "object");
+            .filter(t => t.toLowerCase() !== "object");
+    }
+
+    getTypesInclObject(): string[] {
+        return this.typeInheritance.getVertices();
     }
 
     isDomain(): boolean {
