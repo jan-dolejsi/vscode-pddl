@@ -82,17 +82,21 @@ window.addEventListener('message', event => {
 
 /**
  * Sets whether this is an inset or a document content
- * @param {boolean} value true if this view is an inset
+ * @param {boolean} isInset true if this view is an inset
  */
-function setIsInset(value) {
+function setIsInset(isInset) {
     var insetMenu = document.getElementById('insetMenu');
-    if (insetMenu) insetMenu.style.display = value ? 'initial' : 'none';
+    if (insetMenu) insetMenu.style.display = isInset ? 'initial' : 'none';
 
     var separators = document.getElementsByClassName('separator');
     for (let index = 0; index < separators.length; index++) {
         const separator = separators[index];
-        separator.style.display = value ? 'initial' : 'none';
+        separator.style.display = isInset ? 'initial' : 'none';
     }
+
+    // apply style to the body
+    document.body.style.overflow = isInset ? 'scroll' : '';
+    document.body.style.margin = document.body.style.padding = "0px";
 }
 
 /**

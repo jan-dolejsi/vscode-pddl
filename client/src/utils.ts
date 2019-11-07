@@ -152,3 +152,36 @@ export class UriMap<T> extends StringifyingMap<Uri, T> {
         return key.toString();
     }
 }
+
+export function asSerializable(obj: any): any {
+    if (obj instanceof Map) {
+        return strMapToObj(obj);
+    }
+    else if (obj instanceof Array) {
+        return obj.map(o => asSerializable(o));
+    }
+    else if (obj instanceof Object) {
+        let serObj = Object.create(null);
+        Object.keys(obj).forEach(key => serObj[key] = asSerializable(obj[key]));
+        return serObj;
+    }
+    else {
+        return obj;
+    }
+}
+
+export function strMapToObj(strMap: Map<string, any>): any {
+    let obj = Object.create(null);
+    for (let [k, v] of strMap) {
+        obj[k] = asSerializable(v);
+    }
+    return obj;
+}
+
+export function objToStrMap(obj: any): Map<string, any> {
+    let strMap = new Map();
+    for (let k of Object.keys(obj)) {
+        strMap.set(k, obj[k]);
+    }
+    return strMap;
+}

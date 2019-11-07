@@ -3,13 +3,6 @@ body {
     height: 100%;
 }
 
-body {
-  font: 10pt sans;
-  overflow: scroll; 
-  margin: 0px;
-  padding: 0px;
-}
-
 div#menu {
   position: fixed;
   top: 3px;
@@ -18,6 +11,7 @@ div#menu {
 
 img.menuButton {
   border: solid 1px transparent;
+  vertical-align: middle;
 }
 
 img.menuButton:hover {
@@ -42,4 +36,19 @@ div.separator {
   width: 100%;
   height: 2px;
   position:fixed;
+}
+
+table.menuBar {
+  border-top: 2px solid lightblue;
+  border-bottom: 2px solid lightblue;
+  text-align: left;
+  width: 100%;
+  margin-left: 0px;
+  margin-right: 0px;
+}
+
+td.menuBarCell {
+  text-align: right;
+  padding-right: 1em;
+  border: none;
 }
