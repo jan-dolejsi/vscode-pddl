@@ -114,6 +114,14 @@ Undeclared predicates and functions may also be automatically declared:
 
 ![Undeclared predicates/functions code action](https://raw.githubusercontent.com/wiki/jan-dolejsi/vscode-pddl/img/PDDL_undeclared_predicate_function.gif)
 
+### Model visualization
+
+A "View" _code lens_ is displayed above selected PDDL sections such as `:init` section of problem files. Clicking it will open a graphical representation of the initial state for easy review.
+So far object _properties_ and _relationships_ are displayed in a tabular form and a directed graph is available to visualize 2D-symmetric predicates or functions i.e. predicates or functions whose first two arguments are of the same type.
+For example predicate `(path ?from ?to)` or function `(distance ?a ?b)` will be visualized on a graph.
+
+![Model visualization](https://raw.githubusercontent.com/wiki/jan-dolejsi/vscode-pddl/img/PDDL_model_visualization.gif)
+
 ### Run the planner and visualize plans
 
 The planner can be invoked in the context of a currently edited PDDL file. There are two ways how to do that via the user interface.

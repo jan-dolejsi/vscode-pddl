@@ -1,12 +1,14 @@
 # PDDL support - What's new?
 
-## Unreleased
+## [2.15.0] PDDL Model Visualization
 
-### Problem `:init` visualization
+### Domain `:types` hierarchy and problem `:objects` and `:init` visualization
 
-A "View" _code lens_ is displayed above the `:init` section of problem files. Clicking it will open a graphical representation of the initial state for easy review. 
-So far a directed graph may be displayed to visualize 2D symmetric predicates or functions i.e. predicates or functions whose first two arguments are of the same type. 
+A "View" _code lens_ is displayed above selected PDDL sections such as `:init` section of problem files. Clicking it will open a graphical representation of the initial state for easy review.
+So far object _properties_ and _relationships_ are displayed in a tabular form and a directed graph is available to visualize 2D-symmetric predicates or functions i.e. predicates or functions whose first two arguments are of the same type.
 For example predicate `(path ?from ?to)` or function `(distance ?a ?b)` will be visualized on a graph.
+
+![Model visualization](https://raw.githubusercontent.com/wiki/jan-dolejsi/vscode-pddl/img/PDDL_model_visualization.gif)
 
 ### Excluding actions from swim-lane plan visualization by configuring selected parameters to be ignored
 
@@ -29,7 +31,7 @@ It is now possible to exclude some action parameters from swim-lane plan visuali
 
 ### Auto-completion
 
-Extended auto-completion to requirements inside `(:requirements )` and on parameter names (i.e. symbols starting with ?).
+Extended auto-completion to requirements inside `(:requirements )` and onto parameter names (i.e. symbols starting with ?).
 
 ### Fixes
 
@@ -833,7 +835,8 @@ Note for open source contributors: all notable changes to the "pddl" extension w
 
 Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
 
-[Unreleased]: https://github.com/jan-dolejsi/vscode-pddl/compare/v2.14.4...HEAD
+[Unreleased]: https://github.com/jan-dolejsi/vscode-pddl/compare/v2.15.0...HEAD
+[2.15.0]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.14.4...v2.15.0
 [2.14.4]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.14.2...v2.14.4
 [2.14.2]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.14.1...v2.14.2
 [2.14.1]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.14.0...v2.14.1
