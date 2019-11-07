@@ -12,7 +12,7 @@ import { PddlSyntaxTree } from "./PddlSyntaxTree";
 import { ParsingProblem, stripComments } from "./FileInfo";
 import { PreProcessingError } from "./PreProcessors";
 import { PddlExtensionContext } from "./PddlExtensionContext";
-import { ProblemInfo, TimedVariableValue, VariableValue, SupplyDemand } from "./ProblemInfo";
+import { ProblemInfo, TimedVariableValue, VariableValue, SupplyDemand, UnsupportedVariableValue } from "./ProblemInfo";
 import { PddlDomainParser } from "./PddlDomainParser";
 import { PddlSyntaxNode } from "./PddlSyntaxNode";
 import { PddlTokenType, isOpenBracket } from "./PddlTokenizer";
@@ -156,6 +156,9 @@ export class PddlProblemParser {
             let nested = node.getFirstChild(PddlTokenType.OpenBracket, /.*/) || node.getFirstChild(PddlTokenType.OpenBracketOperator, /.*/);
             if (!nested) { return undefined; }
             return this.parseVariableValue(nested).negate();
+        }
+        else if (['(forall', '(assign', '(increase', '(decrease'].includes(node.getToken().tokenText)) {
+            return new UnsupportedVariableValue(node.getText());
         }
         else {
             if (node.getChildren().some(child => isOpenBracket(child.getToken()))) { return undefined; }

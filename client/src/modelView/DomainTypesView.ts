@@ -80,7 +80,7 @@ export class DomainTypesView extends DomainView<DomainTypesRendererOptions, Doma
     }
 
     protected createPreviewPanelTitle(uri: Uri) {
-        return `:types of '${path.basename(uri.fsPath)}'`;
+        return `:types in '${path.basename(uri.fsPath)}'`;
     }
 }
 
@@ -106,7 +106,7 @@ class DomainTypesRendererDelegate {
     private relationships: NetworkEdge[] = [];
 
     constructor(_context: ExtensionContext, domain: DomainInfo, _options: DomainTypesRendererOptions) {
-        domain.getTypes().forEach((t, index) => this.nodes.set(t, index));
+        domain.getTypesInclObject().forEach((t, index) => this.nodes.set(t, index));
         domain.getTypeInheritance().getEdges().forEach(edge => this.addEdge(edge));
     }
 

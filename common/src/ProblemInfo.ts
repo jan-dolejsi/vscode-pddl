@@ -82,12 +82,12 @@ export class ProblemInfo extends FileInfo {
  * Variable value effective from certain time, e.g. initialization of the variable in the problem file.
  */
 export class TimedVariableValue {
-    constructor(private time: number, private variableName: string, private value: number | boolean) {
+    constructor(private time: number, private variableName: string, private value: number | boolean, private _isSupported: boolean = true) {
 
     }
 
     static from(time: number, value: VariableValue): TimedVariableValue {
-        return new TimedVariableValue(time, value.getVariableName(), value.getValue());
+        return new TimedVariableValue(time, value.getVariableName(), value.getValue(), value.isSupported);
     }
 
     /**
@@ -95,7 +95,11 @@ export class TimedVariableValue {
      * @param value value to copy from
      */
     static copy(value: TimedVariableValue): TimedVariableValue {
-        return new TimedVariableValue(value.time, value.variableName, value.value);
+        return new TimedVariableValue(value.time, value.variableName, value.value, value.isSupported);
+    }
+
+    get isSupported(): boolean {
+        return this._isSupported;
     }
 
     getTime(): number {
@@ -159,6 +163,24 @@ export class VariableValue {
 
     negate(): VariableValue {
         return new VariableValue(this.variableName, !this.value);
+    }
+
+    get isSupported(): boolean { 
+        return true;
+    }
+}
+
+export class UnsupportedVariableValue extends VariableValue {
+    constructor(text: string) {
+        super(text, false);
+    }
+
+    negate(): VariableValue {
+        return this;
+    }
+
+    get isSupported(): boolean {
+        return false;
     }
 }
 
