@@ -4,17 +4,17 @@
 * ------------------------------------------------------------------------------------------ */
 'use strict';
 
-import { DirectionalGraph } from "./DirectionalGraph";
 import { FileInfo, Variable } from "./FileInfo";
 import { PddlTokenType } from "./PddlTokenizer";
 import { PddlSyntaxNode } from "./PddlSyntaxNode";
 import { VariablesParser } from "./VariablesParser";
 import { DocumentPositionResolver } from "./DocumentPositionResolver";
 import { DerivedVariablesParser } from "./DerivedVariableParser";
-import { DomainInfo, TypeObjects, Action } from "./DomainInfo";
+import { DomainInfo, Action } from "./DomainInfo";
 import { PddlSyntaxTree } from "./PddlSyntaxTree";
 import { InstantActionParser } from "./InstantActionParser";
 import { DurativeActionParser } from "./DurativeActionParser";
+import { PddlInheritanceParser } from "./PddlInheritanceParser";
 
 /**
  * Planning Domain parser.
@@ -43,13 +43,13 @@ export class PddlDomainParser {
 
         let typesNode = defineNode.getFirstOpenBracket(':types');
         if (typesNode) {
-            this.domainInfo.setTypeInheritance(PddlDomainParser.parseInheritance(typesNode.getNestedNonCommentText()), typesNode, this.positionResolver);
+            this.domainInfo.setTypeInheritance(PddlInheritanceParser.parseInheritance(typesNode.getNestedNonCommentText()), typesNode, this.positionResolver);
         }
 
         let constantsNode = defineNode.getFirstOpenBracket(':constants');
         if (constantsNode) {
             let constantsText = constantsNode.getNestedNonCommentText();
-            this.domainInfo.setConstants(PddlDomainParser.toTypeObjects(PddlDomainParser.parseInheritance(constantsText)));
+            this.domainInfo.setConstants(PddlInheritanceParser.toTypeObjects(PddlInheritanceParser.parseInheritance(constantsText)));
         }
 
         let predicatesNode = defineNode.getFirstOpenBracket(':predicates');
@@ -74,17 +74,6 @@ export class PddlDomainParser {
         const events = this.parseActionProcessOrEvent(defineNode, this.positionResolver, "event");
         this.domainInfo.setProcesses(processes);
         this.domainInfo.setEvents(events);
-    }
-
-    static toTypeObjects(graph: DirectionalGraph): TypeObjects[] {
-        let typeSet = new Set<string>(graph.getEdges().map(edge => edge[1]));
-        let typeObjects: TypeObjects[] = Array.from(typeSet).map(type => new TypeObjects(type));
-
-        graph.getVertices().forEach(obj => {
-            graph.getVerticesWithEdgesFrom(obj).forEach(type => typeObjects.find(to => to.type === type).addObject(obj));
-        });
-
-        return typeObjects;
     }
     
     static parseRequirements(defineNode: PddlSyntaxNode, fileInfo: FileInfo) {
@@ -113,32 +102,5 @@ export class PddlDomainParser {
         return defineNode.getChildrenOfType(PddlTokenType.OpenBracketOperator, /\(\s*:durative-action$/)
             .map(actionNode => new DurativeActionParser(actionNode, positionResolver).getAction())
             .filter(action => !!action);
-    }
-    
-    static parseInheritance(declarationText: string): DirectionalGraph {
-
-        // the inheritance graph is captured as a two dimensional array, where the first index is the types themselves, the second is the parent type they inherit from (PDDL supports multiple inheritance)
-        let inheritance = new DirectionalGraph();
-
-        if (!declarationText) { return inheritance; }
-
-        // if there are root types that do not inherit from 'object', add the 'object' inheritance.
-        // it will make the following regex work
-        if (!declarationText.match(/-\s+\w[\w-]*\s*$/)) {
-            declarationText += ' - object';
-        }
-
-        let pattern = /(\w[\w-]*\s+)+-\s+\w[\w-]*/g;
-        let match;
-        while (match = pattern.exec(declarationText)) {
-            // is this a group with inheritance?
-            let fragments = match[0].split(/\s-/);
-            let parent = fragments.length > 1 ? fragments[1].trim() : null;
-            let children = fragments[0].trim().split(/\s+/g);
-
-            children.forEach(childType => inheritance.addEdge(childType, parent));
-        }
-
-        return inheritance;
     }
 }

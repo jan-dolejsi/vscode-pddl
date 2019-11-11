@@ -31,9 +31,9 @@ export abstract class PlannerService extends Planner {
         parent.handleOutput(`Planning service: ${this.plannerPath}\nDomain: ${domainFileInfo.name}, Problem: ${problemFileInfo.name}\n`);
 
         let requestHeader: any = {};
-        if (this.useAuthentication) {
+        if (this.useAuthentication && this.authentication.getSToken() !== undefined) {
             requestHeader = {
-                "Authorization": "Bearer " + this.authentication.sToken
+                "Authorization": "Bearer " + this.authentication.getSToken()!
             };
         }
 

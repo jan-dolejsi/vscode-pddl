@@ -51,7 +51,10 @@ export class Happening {
      * @param counter same happening counter
      * @param lineIndex line index in the file
      */
-    constructor(private time: number, private type: HappeningType, private fullActionName: string, public counter: number, public lineIndex: number) {
+    constructor(private time: number, private type: HappeningType,
+        private fullActionName: string, public readonly counter: number,
+        public readonly lineIndex?: number) {
+
         let nameFragments = fullActionName.split(' ');
         this.actionName = nameFragments[0];
         this.objects = nameFragments.slice(1);
@@ -121,7 +124,7 @@ export class Happening {
     }
 }
 
-export enum HappeningType { START, END, INSTANTANEOUS, TIMED } 
+export enum HappeningType { START, END, INSTANTANEOUS, TIMED }
 
 /**
  * Builds the list of happenings while validating the sequence.
@@ -250,7 +253,7 @@ export class PlanHappeningsBuilder {
             case undefined:
                 return HappeningType.INSTANTANEOUS;
             default:
-                return undefined;
+                throw new Error(`Unexpected happening type: ${typeAsString}`);
         }
     }
 }

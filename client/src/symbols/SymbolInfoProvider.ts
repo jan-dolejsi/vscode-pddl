@@ -55,8 +55,8 @@ export class SymbolInfoProvider implements DocumentSymbolProvider, DefinitionPro
 
         let containerName = '';
 
-        let actionSymbols = domainInfo.actions.map(action =>
-            new SymbolInformation(action.name, SymbolKind.Module, containerName, SymbolUtils.toLocation(document, action.location)));
+        let actionSymbols = domainInfo.getActions().map(action =>
+            new SymbolInformation(action.name, SymbolKind.Module, containerName, SymbolUtils.toLocation(document, action.getLocation())));
 
         let predicateSymbols = domainInfo.getPredicates().map(variable =>
             new SymbolInformation(variable.declaredName, SymbolKind.Boolean, containerName, SymbolUtils.toLocation(document, variable.getLocation())));

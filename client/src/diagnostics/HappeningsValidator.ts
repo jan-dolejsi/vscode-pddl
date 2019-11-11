@@ -141,12 +141,10 @@ export class HappeningsValidator {
         return outcome;
     }
 
-    analyzeOutput(happeningsInfo: HappeningsInfo, error: Error, output: string): HappeningsValidationOutcome {
+    analyzeOutput(happeningsInfo: HappeningsInfo, error: Error, _output: string): HappeningsValidationOutcome {
         if (error) {
             return HappeningsValidationOutcome.failed(happeningsInfo, error);
         }
-
-        output;
 
         return HappeningsValidationOutcome.valid(happeningsInfo);
     }
@@ -177,7 +175,7 @@ export class HappeningsValidator {
     }
 
     private isDomainAction(domain: DomainInfo, problem: ProblemInfo, happening: Happening): boolean {
-        let allActionNames = domain.actions.map(a => a.name.toLowerCase()).concat(
+        let allActionNames = domain.getActions().map(a => a.name.toLowerCase()).concat(
             problem.getSupplyDemands().map(sd => sd.getName().toLowerCase()));
 
         return allActionNames.includes(happening.getAction().toLowerCase());

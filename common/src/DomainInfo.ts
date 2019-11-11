@@ -18,12 +18,12 @@ export class DomainInfo extends FileInfo {
     private predicates: Variable[] = [];
     private functions: Variable[] = [];
     private derived: Variable[] = [];
-    actions: Action[] = [];
+    private actions: Action[] = [];
     private typeInheritance: DirectionalGraph = new DirectionalGraph();
     private typeLocations = new Map<string, PddlRange>();
     private constants: TypeObjects[] = [];
-    events: Action[];
-    processes: Action[];
+    private events?: Action[];
+    private processes?: Action[];
 
     constructor(fileUri: string, version: number, domainName: string, public readonly syntaxTree: PddlSyntaxTree, positionResolver: DocumentPositionResolver) {
         super(fileUri, version, domainName, positionResolver);
@@ -49,13 +49,12 @@ export class DomainInfo extends FileInfo {
         this.functions = functions;
     }
 
-    getFunction(liftedVariableNeme: string): Variable {
+    getFunction(liftedVariableNeme: string): Variable | undefined {
         return this.functions
-            .filter(variable => variable.name.toLocaleLowerCase() === liftedVariableNeme.toLocaleLowerCase())
-            .find(_ => true);
+            .find(variable => variable.name.toLocaleLowerCase() === liftedVariableNeme.toLocaleLowerCase());
     }
 
-    getLiftedFunction(groundedVariable: Variable): Variable {
+    getLiftedFunction(groundedVariable: Variable): Variable | undefined {
         return this.getFunction(groundedVariable.name);
     }
 
@@ -81,7 +80,7 @@ export class DomainInfo extends FileInfo {
 
     setTypeInheritance(typeInheritance: DirectionalGraph, typesNode?: PddlBracketNode, positionResolver?: DocumentPositionResolver): void {
         this.typeInheritance = typeInheritance;
-        if (typesNode) {
+        if (typesNode && positionResolver) {
             this.getTypes().forEach(typeName => {
                 let typeNode = typesNode.getFirstChild(PddlTokenType.Other, new RegExp("^" + typeName + "$"));
                 if (typeNode) {
@@ -118,7 +117,7 @@ export class DomainInfo extends FileInfo {
         return this.typeInheritance.getSubtreePointingTo(type);
     }
 
-    getEvents(): Action[] {
+    getEvents(): Action[] | undefined {
         return this.events;
     }
 
@@ -126,7 +125,7 @@ export class DomainInfo extends FileInfo {
         this.events = events;
     }
 
-    getProcesses(): Action[] {
+    getProcesses(): Action[] | undefined {
         return this.processes;
     }
 
@@ -136,7 +135,7 @@ export class DomainInfo extends FileInfo {
 
     TYPES_SECTION_START = "(:types";
 
-    getTypeLocation(type: string): PddlRange {
+    getTypeLocation(type: string): PddlRange | undefined {
         return this.typeLocations.get(type);
     }
 
@@ -216,10 +215,10 @@ export class TypeObjects {
 }
 
 export abstract class Action {
-    location: PddlRange = null; // initialized lazily
-    documentation: string[] = []; // initialized lazily
+    private location?: PddlRange; // initialized lazily
+    private documentation: string[] = []; // initialized lazily
 
-    constructor(public readonly name: string, public readonly parameters: Parameter[]) {
+    constructor(public readonly name: string | undefined, public readonly parameters: Parameter[]) {
 
     }
 
@@ -227,7 +226,7 @@ export abstract class Action {
         this.location = location;
     }
 
-    getLocation(): PddlRange {
+    getLocation(): PddlRange | undefined{
         return this.location;
     }
 
@@ -243,7 +242,7 @@ export abstract class Action {
 }
 
 export class InstantAction extends Action {
-    constructor(name: string, parameters: Parameter[], public readonly preCondition: PddlBracketNode, public readonly effect: PddlBracketNode) {
+    constructor(name: string | undefined, parameters: Parameter[], public readonly preCondition: PddlBracketNode, public readonly effect: PddlBracketNode) {
         super(name, parameters);
     }
 
