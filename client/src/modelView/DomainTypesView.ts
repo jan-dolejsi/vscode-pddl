@@ -32,7 +32,7 @@ export class DomainTypesView extends DomainView<DomainTypesRendererOptions, Doma
             insetViewCommand: PDDL_DOMAIN_TYPES_INSET_COMMAND,
             insetHeight: 5,
             webviewType: 'domainTypesPreview',
-            webviewHtmlPath: 'problemObjectsView.html',
+            webviewHtmlPath: 'graphView.html',
             webviewOptions: {
                 enableFindWidget: true,
                 // enableCommandUris: true,

@@ -33,7 +33,7 @@ export class ProblemObjectsView extends ProblemView<ProblemObjectsRendererOption
             insetViewCommand: PDDL_PROBLEM_OBJECTS_INSET_COMMAND,
             insetHeight: 5,
             webviewType: 'problemObjectsPreview',
-            webviewHtmlPath: 'problemObjectsView.html',
+            webviewHtmlPath: 'graphView.html',
             webviewOptions: {
                 enableFindWidget: true,
                 // enableCommandUris: true,
