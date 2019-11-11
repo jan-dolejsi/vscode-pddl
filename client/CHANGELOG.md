@@ -1,5 +1,15 @@
 # PDDL support - What's new?
 
+## [2.15.1] Fixes and upgrades
+
+- upgrade to vscode 1.40
+- upgrade to TypeScript 3.7.2
+- clean-up
+- fix for type hierarchy parsing that miss the " - object"
+- moving views to a dedicated 'views' folder
+- more robustd
+- eagerly using the Elvis operator
+
 ## [2.15.0] PDDL Model Visualization
 
 ### Domain `:types` hierarchy and problem `:objects` and `:init` visualization

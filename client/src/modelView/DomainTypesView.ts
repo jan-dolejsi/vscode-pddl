@@ -18,7 +18,7 @@ import { nodeToRange } from '../utils';
 import { DocumentInsetCodeLens, DocumentCodeLens } from './view';
 import { DomainView, DomainRendererOptions, DomainRenderer } from './DomainView';
 
-const CONTENT = 'modelView';
+const CONTENT = path.join('views', 'modelView');
 
 const PDDL_DOMAIN_TYPES_PREVIEW_COMMAND = "pddl.domain.types.preview";
 const PDDL_DOMAIN_TYPES_INSET_COMMAND = "pddl.domain.types.inset";
@@ -54,10 +54,15 @@ export class DomainTypesView extends DomainView<DomainTypesRendererOptions, Doma
         if (!domain) { return []; }
 
         let defineNode = domain.syntaxTree.getDefineNodeOrThrow();
-        let typesNode = defineNode.getFirstChildOrThrow(PddlTokenType.OpenBracketOperator, /\s*:types/i);
-        return [
-            new DocumentCodeLens(document, nodeToRange(document, typesNode))
-        ];
+        let typesNode = defineNode.getFirstChild(PddlTokenType.OpenBracketOperator, /\s*:types/i);
+        if (typesNode) {
+            return [
+                new DocumentCodeLens(document, nodeToRange(document, typesNode))
+            ];
+        }
+        else {
+            return [];
+        }
     }
 
     async resolveCodeLens(codeLens: CodeLens, token: CancellationToken): Promise<CodeLens> {

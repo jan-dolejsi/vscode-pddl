@@ -24,7 +24,7 @@ export class PlanFunctionEvaluator {
     }
 
     isAvailable(): boolean {
-        return this.valueSeqPath && this.valStepPath ? true : false;
+        return !!this.valueSeqPath && !!this.valStepPath;
     }
 
     getValStepPath(): string {

@@ -22,7 +22,7 @@ export class SymbolInfoProvider implements DocumentSymbolProvider, DefinitionPro
         await this.symbolUtils.assertFileParsed(document);
 
         let info = this.symbolUtils.getSymbolInfo(document, position);
-        return info ? info.hover : null;
+        return info?.hover;
     }
 
     async provideReferences(document: TextDocument, position: Position, context: ReferenceContext, token: CancellationToken): Promise<Location[]> {
@@ -40,7 +40,7 @@ export class SymbolInfoProvider implements DocumentSymbolProvider, DefinitionPro
         await this.symbolUtils.assertFileParsed(document);
 
         let info = this.symbolUtils.getSymbolInfo(document, position);
-        return info ? info.location : null;
+        return info?.location;
     }
 
     async provideDocumentSymbols(document: TextDocument, token: CancellationToken): Promise<SymbolInformation[]> {

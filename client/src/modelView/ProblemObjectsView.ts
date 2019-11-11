@@ -19,7 +19,7 @@ import { nodeToRange } from '../utils';
 import { DocumentInsetCodeLens, DocumentCodeLens } from './view';
 import { ProblemView, ProblemRendererOptions, ProblemRenderer } from './ProblemView';
 
-const CONTENT = 'modelView';
+const CONTENT = path.join('views', 'modelView');
 
 const PDDL_PROBLEM_OBJECTS_PREVIEW_COMMAND = "pddl.problem.objects.preview";
 const PDDL_PROBLEM_OBJECTS_INSET_COMMAND = "pddl.problem.objects.inset";
@@ -55,10 +55,15 @@ export class ProblemObjectsView extends ProblemView<ProblemObjectsRendererOption
         if (!problem) { return []; }
 
         let defineNode = problem.syntaxTree.getDefineNodeOrThrow();
-        let objectsNode = defineNode.getFirstChildOrThrow(PddlTokenType.OpenBracketOperator, /\s*:objects/i);
-        return [
-            new DocumentCodeLens(document, nodeToRange(document, objectsNode))
-        ];
+        let objectsNode = defineNode.getFirstChild(PddlTokenType.OpenBracketOperator, /\s*:objects/i);
+        if (objectsNode) {
+            return [
+                new DocumentCodeLens(document, nodeToRange(document, objectsNode))
+            ];
+        }
+        else {
+            return [];
+        }
     }
 
     async resolveCodeLens(codeLens: CodeLens, token: CancellationToken): Promise<CodeLens> {

@@ -20,7 +20,7 @@ export class ProblemParserPreProcessor {
         if (preProcessor) {
             let transformed = await preProcessor.transform(templatedProblem, workingDirectory, new ConsoleOutputAdaptor());
             console.log("Pre-processed successfully using " + preProcessor.toString());
-            return transformed ? transformed : templatedProblem;
+            return transformed || templatedProblem;
         }
         else {
             return templatedProblem;

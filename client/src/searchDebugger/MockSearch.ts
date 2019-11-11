@@ -235,8 +235,8 @@ class MockStateContext {
         public readonly planHead: SearchHappening[], public readonly parentId?: string) {
     }
 
-    get actionName(): string {
-        return this.appliedAction ? this.appliedAction.actionName : null;
+    get actionName(): string | undefined{
+        return this.appliedAction?.actionName;
     }
 
     isInitialState(): boolean {
