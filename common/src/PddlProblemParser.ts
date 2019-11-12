@@ -16,6 +16,8 @@ import { ProblemInfo, TimedVariableValue, VariableValue, SupplyDemand, Unsupport
 import { PddlDomainParser } from "./PddlDomainParser";
 import { PddlSyntaxNode } from "./PddlSyntaxNode";
 import { PddlTokenType, isOpenBracket } from "./PddlTokenizer";
+import { PddlInheritanceParser } from "./PddlInheritanceParser";
+import { PddlConstraintsParser } from "./PddlConstraintsParser";
 
 /**
  * Planning Problem parser.
@@ -83,7 +85,7 @@ export class PddlProblemParser {
         let objectsNode = defineNode.getFirstOpenBracket(':objects');
         if (objectsNode) {
             let objectsText = objectsNode.getNestedNonCommentText();
-            problemInfo.setObjects(PddlDomainParser.toTypeObjects(PddlDomainParser.parseInheritance(objectsText)));
+            problemInfo.setObjects(PddlInheritanceParser.toTypeObjects(PddlInheritanceParser.parseInheritance(objectsText)));
         }
 
         let initNode = defineNode.getFirstOpenBracket(':init');
@@ -91,6 +93,12 @@ export class PddlProblemParser {
             const [values, supplyDemands] = this.parseInitSection(initNode);
             problemInfo.setInits(values);
             problemInfo.setSupplyDemands(supplyDemands);
+        }
+
+        let constraintsNode = defineNode.getFirstOpenBracket(':constraints');
+        if (constraintsNode) {
+            const constraints = new PddlConstraintsParser().parseConstraints(constraintsNode);
+            problemInfo.setConstraints(constraints);
         }
     }
 

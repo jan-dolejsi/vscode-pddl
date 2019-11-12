@@ -18,13 +18,15 @@ import { PddlTokenType } from '../../../common/src/PddlTokenizer';
 import { nodeToRange } from '../utils';
 import { DocumentInsetCodeLens, DocumentCodeLens } from './view';
 import { ProblemView, ProblemRendererOptions, ProblemRenderer } from './ProblemView';
+import { GraphViewData, NetworkEdge, NetworkNode } from './GraphViewData';
+import { ProblemViewPanel } from './ProblemViewPanel';
 
-const CONTENT = 'modelView';
+const CONTENT = path.join('views', 'modelView');
 
 const PDDL_PROBLEM_OBJECTS_PREVIEW_COMMAND = "pddl.problem.objects.preview";
 const PDDL_PROBLEM_OBJECTS_INSET_COMMAND = "pddl.problem.objects.inset";
 
-export class ProblemObjectsView extends ProblemView<ProblemObjectsRendererOptions, ProblemObjectsViewData> implements CodeLensProvider {
+export class ProblemObjectsView extends ProblemView<ProblemObjectsRendererOptions, GraphViewData> implements CodeLensProvider {
 
     constructor(context: ExtensionContext, codePddlWorkspace: CodePddlWorkspace) {
         super(context, codePddlWorkspace, new ProblemObjectsRenderer(), {
@@ -33,7 +35,7 @@ export class ProblemObjectsView extends ProblemView<ProblemObjectsRendererOption
             insetViewCommand: PDDL_PROBLEM_OBJECTS_INSET_COMMAND,
             insetHeight: 5,
             webviewType: 'problemObjectsPreview',
-            webviewHtmlPath: 'problemObjectsView.html',
+            webviewHtmlPath: 'graphView.html',
             webviewOptions: {
                 enableFindWidget: true,
                 // enableCommandUris: true,
@@ -55,11 +57,16 @@ export class ProblemObjectsView extends ProblemView<ProblemObjectsRendererOption
         if (!problem) { return []; }
 
         let defineNode = problem.syntaxTree.getDefineNodeOrThrow();
-        let objectsNode = defineNode.getFirstChildOrThrow(PddlTokenType.OpenBracketOperator, /\s*:objects/i);
-        return [
-            new DocumentCodeLens(document, nodeToRange(document, objectsNode)),
-            new DocumentInsetCodeLens(document, nodeToRange(document, objectsNode), document.positionAt(objectsNode.getStart()).line)
-        ];
+        let objectsNode = defineNode.getFirstChild(PddlTokenType.OpenBracketOperator, /\s*:objects/i);
+        if (objectsNode) {
+            return [
+                new DocumentCodeLens(document, nodeToRange(document, objectsNode)),
+                new DocumentInsetCodeLens(document, nodeToRange(document, objectsNode), document.positionAt(objectsNode.getStart()).line)
+            ];
+        }
+        else {
+            return [];
+        }
     }
 
     async resolveCodeLens(codeLens: CodeLens, token: CancellationToken): Promise<CodeLens> {
@@ -84,10 +91,25 @@ export class ProblemObjectsView extends ProblemView<ProblemObjectsRendererOption
     protected createPreviewPanelTitle(uri: Uri) {
         return `:objects of '${path.basename(uri.fsPath)}'`;
     }
+
+    protected async handleOnLoad(panel: ProblemViewPanel): Promise<boolean> {
+        await panel.postMessage('setInverted', { value: true });
+        await panel.postMessage('setOptions', {
+            groups: {
+                object: {
+                    color: {
+                        background: 'lightgreen'
+                    },
+                    borderWidth: 0
+                }
+            }
+        });
+        return super.handleOnLoad(panel);
+    }
 }
 
-class ProblemObjectsRenderer implements ProblemRenderer<ProblemObjectsRendererOptions, ProblemObjectsViewData> {
-    render(context: ExtensionContext, problem: ProblemInfo, domain: DomainInfo, options: ProblemObjectsRendererOptions): ProblemObjectsViewData {
+class ProblemObjectsRenderer implements ProblemRenderer<ProblemObjectsRendererOptions, GraphViewData> {
+    render(context: ExtensionContext, problem: ProblemInfo, domain: DomainInfo, options: ProblemObjectsRendererOptions): GraphViewData {
         let renderer = new ProblemObjectsRendererDelegate(context, domain, problem, options);
 
         return {
@@ -95,11 +117,6 @@ class ProblemObjectsRenderer implements ProblemRenderer<ProblemObjectsRendererOp
             relationships: renderer.getRelationships()
         };
     }
-}
-
-interface ProblemObjectsViewData {
-    nodes: NetworkNode[];
-    relationships: NetworkEdge[];
 }
 
 class ProblemObjectsRendererDelegate {
@@ -146,8 +163,10 @@ class ProblemObjectsRendererDelegate {
 
     private toNode(entry: [string, number]): NetworkNode {
         let [entryLabel, entryId] = entry;
-        let shape = this.typeNames.has(entryLabel) ? "ellipse" : "box";
-        return { id: entryId, label: entryLabel, shape: shape };
+        let isType = this.typeNames.has(entryLabel);
+        let shape = isType ? "ellipse" : "box";
+        let group = isType ? "type" : "object";
+        return { id: entryId, label: entryLabel, shape: shape, group: group };
     }
 
     private toEdge(edge: [string, string], label: string): NetworkEdge {
@@ -162,15 +181,3 @@ class ProblemObjectsRendererDelegate {
 
 interface ProblemObjectsRendererOptions extends ProblemRendererOptions {
 }
-
-interface NetworkNode {
-    id: number;
-    label: string;
-    shape?: string;
-}
-
-interface NetworkEdge {
-    from: number;
-    to: number;
-    label?: string;
-} 

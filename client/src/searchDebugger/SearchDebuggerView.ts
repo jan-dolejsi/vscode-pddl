@@ -7,6 +7,7 @@
 import {
     window, ExtensionContext, Uri, ViewColumn, WebviewPanel, commands, Disposable, workspace, TextEditorRevealType, TextEditor, Range
 } from 'vscode';
+import * as path from 'path';
 
 import { getWebViewHtml, createPddlExtensionContext } from '../utils';
 import { State } from './State';
@@ -141,7 +142,7 @@ export class SearchDebuggerView {
         }
     }
 
-    CONTENT_FOLDER = "searchview";
+    CONTENT_FOLDER = path.join('views', 'searchview');
 
     async getHtml(): Promise<string> {
         let html = await getWebViewHtml(createPddlExtensionContext(this.context), this.CONTENT_FOLDER, 'search.html');

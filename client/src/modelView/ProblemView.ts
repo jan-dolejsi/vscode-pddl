@@ -18,7 +18,7 @@ import { FileInfo } from '../../../common/src/FileInfo';
 import { CodePddlWorkspace } from '../workspace/CodePddlWorkspace';
 import { getWebViewHtml, createPddlExtensionContext, UriMap, showError } from '../utils';
 import { ProblemViewPanel } from './ProblemViewPanel';
-import { WebviewPanelAdapter, WebviewAdapter, WebviewInsetAdapter } from './view';
+import { WebviewPanelAdapter, WebviewInsetAdapter } from './view';
 
 /**
  * Base-class for different problem views.
@@ -138,7 +138,7 @@ export abstract class ProblemView<TRendererOptions, TRenderData> extends Disposa
 
     async refreshPanelContent(previewPanel: ProblemViewPanel): Promise<boolean> {
         previewPanel.setNeedsRebuild(false);
-        return this.updateContentData(previewPanel.getDomain(), previewPanel.getProblem(), previewPanel.getPanel());
+        return this.updateContentData(previewPanel.getDomain(), previewPanel.getProblem(), previewPanel);
     }
 
     async showInset(editor: TextEditor, line: number, height: number): Promise<void> {
@@ -229,9 +229,9 @@ export abstract class ProblemView<TRendererOptions, TRenderData> extends Disposa
         }
     }
 
-    private async updateContentData(domain: DomainInfo, problem: ProblemInfo, panel: WebviewAdapter): Promise<boolean> {
-        return panel.postMessage({
-            command: 'updateContent', data: this.renderer.render(this.context, problem, domain, this.rendererOptions)
+    private async updateContentData(domain: DomainInfo, problem: ProblemInfo, panel: ProblemViewPanel): Promise<boolean> {
+        return panel.postMessage('updateContent', {
+            data: this.renderer.render(this.context, problem, domain, this.rendererOptions)
         });
     }
 
@@ -268,6 +268,10 @@ export abstract class ProblemView<TRendererOptions, TRenderData> extends Disposa
         return false;
     }
 
+    protected async handleOnLoad(panel: ProblemViewPanel): Promise<boolean> {
+        await panel.postMessage('setIsInset', { value: panel.getPanel().isInset });
+        return await this.refreshPanelContent(panel);
+    }
 
     private async handleMessageCore(panel: ProblemViewPanel, message: any): Promise<void> {
         console.log(`Message received from the webview: ${message.command}`);
@@ -280,8 +284,7 @@ export abstract class ProblemView<TRendererOptions, TRenderData> extends Disposa
                 this.expandInset(panel);
                 break;
             case 'onload':
-                await panel.getPanel().postMessage({ command: 'setIsInset', value: panel.getPanel().isInset });
-                await this.refreshPanelContent(panel);
+                await this.handleOnLoad(panel);
                 break;
             default:
                 if (!this.handleMessage(panel, message)) {

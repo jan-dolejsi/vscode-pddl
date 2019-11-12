@@ -477,7 +477,7 @@ ${stepsInvolvingThisObject}
     }
 
     getActionColor(step: PlanStep, domain: DomainInfo): string {
-        let actionIndex = domain.actions.findIndex(action => action.name.toLowerCase() === step.getActionName().toLowerCase());
+        let actionIndex = domain.getActions().findIndex(action => action.name.toLowerCase() === step.getActionName().toLowerCase());
         let actionColor = this.colors[actionIndex * 7 % this.colors.length];
 
         return actionColor;

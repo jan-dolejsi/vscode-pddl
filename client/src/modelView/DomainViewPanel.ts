@@ -4,18 +4,20 @@
  * ------------------------------------------------------------------------------------------ */
 'use strict';
 
-import { Uri, ViewColumn} from 'vscode';
+import { Uri, ViewColumn } from 'vscode';
 
 import { DomainInfo } from '../../../common/src/DomainInfo';
 import { WebviewAdapter } from './view';
+import { BaseViewPanel } from './BaseViewPanel';
 
-export class DomainViewPanel {
+export class DomainViewPanel extends BaseViewPanel {
 
     private needsRebuild: boolean;
     private domain: DomainInfo;
     private error: Error;
 
-    constructor(public uri: Uri, private panel: WebviewAdapter) { 
+    constructor(uri: Uri, panel: WebviewAdapter) {
+        super(uri, panel);
     }
 
     setDomain(domain: DomainInfo): void {

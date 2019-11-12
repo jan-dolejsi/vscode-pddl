@@ -24,9 +24,9 @@ export class ValidatorService extends Validator {
     
     validate(domainInfo: DomainInfo, problemFiles: ProblemInfo[], onSuccess: (diagnostics: Map<string, Diagnostic[]>) => void, onError: (error: string) => void) {
         let requestHeader: any = {};
-        if(this.useAuthentication) {
+        if(this.useAuthentication && this.authentication.getSToken()) {
             requestHeader = {
-                "Authorization": "Bearer " + this.authentication.sToken
+                "Authorization": "Bearer " + this.authentication.getSToken()!
             };
         }
 

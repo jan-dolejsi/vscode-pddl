@@ -21,8 +21,9 @@ import { getObjectsInheritingFrom, getTypesInheritingFromPlusSelf } from '../../
 import { Util } from '../../../common/src/util';
 import { DocumentCodeLens, DocumentInsetCodeLens } from './view';
 import { ProblemView, ProblemRenderer, ProblemRendererOptions } from './ProblemView';
+import { GraphViewData, NetworkEdge, NetworkNode } from './GraphViewData';
 
-const CONTENT = 'modelView';
+const CONTENT = path.join('views', 'modelView');
 
 const PDDL_PROBLEM_INIT_PREVIEW_COMMAND = "pddl.problem.init.preview";
 const PDDL_PROBLEM_INIT_INSET_COMMAND = "pddl.problem.init.inset";
@@ -59,11 +60,16 @@ export class ProblemInitView extends ProblemView<ProblemInitViewOptions, Problem
         if (!problem) { return []; }
 
         let defineNode = problem.syntaxTree.getDefineNodeOrThrow();
-        let initNode = defineNode.getFirstChildOrThrow(PddlTokenType.OpenBracketOperator, /\s*:init/i);
-        return [
-            new DocumentCodeLens(document, nodeToRange(document, initNode)),
-            new DocumentInsetCodeLens(document, nodeToRange(document, initNode), document.positionAt(initNode.getStart()).line)
-        ];
+        let initNode = defineNode.getFirstChild(PddlTokenType.OpenBracketOperator, /\s*:init/i);
+        if (initNode) {
+            return [
+                new DocumentCodeLens(document, nodeToRange(document, initNode)),
+                new DocumentInsetCodeLens(document, nodeToRange(document, initNode), document.positionAt(initNode.getStart()).line)
+            ];
+        }
+        else {
+            return [];
+        }
     }
 
     async resolveCodeLens(codeLens: CodeLens, token: CancellationToken): Promise<CodeLens> {
@@ -106,14 +112,9 @@ class ProblemInitRenderer implements ProblemRenderer<ProblemInitViewOptions, Pro
 }
 
 interface ProblemInitViewData {
-    symmetricRelationshipGraph: SymmetricRelationshipGraph;
+    symmetricRelationshipGraph: GraphViewData;
     typeProperties: Map<string, TypeProperties>;
     typeRelationships: TypesRelationship[];
-}
-
-interface SymmetricRelationshipGraph {
-    nodes: NetworkNode[];
-    relationships: NetworkEdge[];
 }
 
 interface TypeProperties {
@@ -349,14 +350,3 @@ interface ProblemInitViewOptions extends ProblemRendererOptions {
     hideObjectProperties?: boolean;
     hideObjectRelationships?: boolean;
 }
-
-interface NetworkNode {
-    id: number;
-    label: string;
-}
-
-interface NetworkEdge {
-    from: number;
-    to: number;
-    label: string;
-} 

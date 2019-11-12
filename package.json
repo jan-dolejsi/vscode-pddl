@@ -25,10 +25,9 @@
     "watch": "npm run watch:common && npm run watch:client"
   },
   "devDependencies": {
-    "@types/node": "^10.2.0",
-    "typescript": "^3.0.3"
+    "tslint": "^5.20.0",
+    "typescript": "^3.7.2",
+    "@types/node": "10.14.11"
   },
-  "dependencies": {
-    "tslint": "^5.17.0"
-  }
+  "dependencies": {}
 }

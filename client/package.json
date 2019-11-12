@@ -8,7 +8,7 @@
   "publisher": "jan-dolejsi",
   "enableProposedApi": true,
   "engines": {
-    "vscode": "^1.32.0",
+    "vscode": "^1.40.0",
     "node": "^10.2.0"
   },
   "categories": [
@@ -878,8 +878,8 @@
     "@types/semver": "^6.0.0",
     "@types/tmp": "^0.1.0",
     "@types/adm-zip": "^0.4.32",
-    "tslint": "^5.17.0",
-    "typescript": "^3.0.3",
+    "tslint": "^5.20.0",
+    "typescript": "^3.7.2",
     "vsce": "^1.63.0",
     "vscode-test": "^1.0.0",
     "glob": "^7.1.4",
@@ -888,6 +888,6 @@
     "@types/glob": "^7.1.1",
     "@types/mocha": "^5.2.6",
     "@types/node": "^10.14.11",
-    "@types/vscode": "^1.32.0"
+    "@types/vscode": "^1.40.0"
   }
 }

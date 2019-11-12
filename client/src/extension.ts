@@ -40,6 +40,7 @@ import { PddlCompletionItemProvider } from './completion/PddlCompletionItemProvi
 import { ProblemInitView } from './modelView/ProblemInitView';
 import { ProblemObjectsView } from './modelView/ProblemObjectsView';
 import { DomainTypesView } from './modelView/DomainTypesView';
+import { ProblemConstraintsView } from './modelView/ProblemConstraintsView';
 
 const PDDL_CONFIGURE_PARSER = 'pddl.configureParser';
 const PDDL_LOGIN_PARSER_SERVICE = 'pddl.loginParserService';
@@ -171,6 +172,9 @@ function activateWithTelemetry(_operationId: string, context: ExtensionContext) 
 	let problemObjectsView = new ProblemObjectsView(context, codePddlWorkspace);
 	context.subscriptions.push(languages.registerCodeLensProvider(PDDL, problemObjectsView));
 
+	let problemConstraintsView = new ProblemConstraintsView(context, codePddlWorkspace);
+	context.subscriptions.push(languages.registerCodeLensProvider(PDDL, problemConstraintsView));
+
 	registerDocumentFormattingProvider(context, codePddlWorkspace);
 
 	let renameProvider = languages.registerRenameProvider(PDDL, new SymbolRenameProvider(codePddlWorkspace));
@@ -225,7 +229,7 @@ function activateWithTelemetry(_operationId: string, context: ExtensionContext) 
 		configurePlannerCommand, loginPlannerServiceCommand, updateTokensPlannerServiceCommand, completionItemProvider, completionItemProvider2,
 		renameProvider, suggestionProvider, documentSymbolProvider, definitionProvider, referencesProvider, hoverProvider,
 		planHoverProvider, planDefinitionProvider, happeningsHoverProvider, happeningsDefinitionProvider,
-		problemInitView, problemObjectsView);
+		problemInitView, problemObjectsView, problemConstraintsView);
 }
 
 export function deactivate() {

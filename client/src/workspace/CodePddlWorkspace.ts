@@ -129,8 +129,8 @@ function subscribeToWorkspace(pddlWorkspace: CodePddlWorkspace, pddlConfiguratio
 
 async function revealAction(domainInfo: DomainInfo, actionName: String) {
     let document = await workspace.openTextDocument(Uri.parse(domainInfo.fileUri));
-    let actionFound = domainInfo.actions.find(a => a.name.toLowerCase() === actionName.toLowerCase());
-    let actionRange = actionFound ? toRange(actionFound.location) : null;
+    let actionFound = domainInfo.getActions().find(a => a.name.toLowerCase() === actionName.toLowerCase());
+    let actionRange = actionFound ? toRange(actionFound.getLocation()) : null;
     let openEditor = window.visibleTextEditors.find(e => e.document.uri.toString() === document.uri.toString());
     if (openEditor) {
         openEditor.revealRange(actionRange, TextEditorRevealType.AtTop);

@@ -21,7 +21,7 @@ export class UndeclaredVariable {
         this.syntaxTree = new PddlSyntaxTreeBuilder(fileInfo.getText()).getTree();
     }
 
-    getVariable(diagnostic: Diagnostic, document: TextDocument): [Variable, PddlSyntaxNode] {
+    getVariable(diagnostic: Diagnostic, document: TextDocument): [Variable, PddlSyntaxNode] | undefined {
 
         let match = UndeclaredVariable.undeclaredVariableDiagnosticPattern.exec(diagnostic.message);
         if (!match) { return undefined; }
@@ -49,7 +49,7 @@ export class UndeclaredVariable {
     findParameterDefinition(variableUsage: PddlSyntaxNode, parameterName: string): Parameter {
         let scope = variableUsage.findParametrisableScope(parameterName);
         let parameterDefinitionNode = scope && scope.getParameterDefinition();
-        return parseParameters(parameterDefinitionNode.getText()).find(p => p.name === parameterName);
+        return parseParameters(parameterDefinitionNode.getText()).find(p => p.name.toLowerCase() === parameterName.toLowerCase());
     }
 
     createEdit(document: TextDocument, variable: Variable, node: PddlSyntaxNode): [WorkspaceEdit, VariableType] {
