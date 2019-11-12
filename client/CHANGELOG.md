@@ -10,6 +10,9 @@
 - more robust action/variable parameter parsing
 - eagerly using the Elvis operator
 - constraint partial order view
+- network/graph settings UI
+- improved icons
+- types vs objects visualized in different color
 
 ## [2.15.0] PDDL Model Visualization
 

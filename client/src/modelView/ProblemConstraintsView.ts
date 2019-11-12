@@ -20,6 +20,7 @@ import { DocumentInsetCodeLens, DocumentCodeLens } from './view';
 import { ProblemView, ProblemRendererOptions, ProblemRenderer } from './ProblemView';
 import { GraphViewData, NetworkEdge, NetworkNode } from './GraphViewData';
 import { StateSatisfyingConstraint, AfterConstraint } from '../../../common/src/constraints';
+import { ProblemViewPanel } from './ProblemViewPanel';
 
 const CONTENT = path.join('views', 'modelView');
 
@@ -89,6 +90,20 @@ export class ProblemConstraintsView extends ProblemView<ProblemConstraintsRender
 
     protected createPreviewPanelTitle(uri: Uri) {
         return `:constraints of '${path.basename(uri.fsPath)}'`;
+    }
+
+    protected async handleOnLoad(panel: ProblemViewPanel): Promise<boolean> {
+        await panel.postMessage('setOptions', {
+            "layout": {
+                "hierarchical": {
+                    "enabled": true,
+                    "levelSeparation": 50,
+                    "treeSpacing": 300,
+                    "sortMethod": "directed"
+                }
+            },
+        });
+        return super.handleOnLoad(panel);
     }
 }
 
@@ -167,7 +182,7 @@ class ProblemConstraintsRendererDelegate {
     }
 
     private addEdge(predecessorId: number, successorId: number): void {
-        this.relationships.push({ from: predecessorId, to: successorId });
+        this.relationships.push({ from: predecessorId, to: successorId, label: "after" });
     }
 
     getNodes(): NetworkNode[] {

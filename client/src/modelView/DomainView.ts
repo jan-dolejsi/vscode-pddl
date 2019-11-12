@@ -17,7 +17,7 @@ import { FileInfo } from '../../../common/src/FileInfo';
 import { CodePddlWorkspace } from '../workspace/CodePddlWorkspace';
 import { getWebViewHtml, createPddlExtensionContext, UriMap, showError } from '../utils';
 import { DomainViewPanel } from './DomainViewPanel';
-import { WebviewPanelAdapter, WebviewAdapter } from './view';
+import { WebviewPanelAdapter } from './view';
 
 /**
  * Base-class for different domain views.

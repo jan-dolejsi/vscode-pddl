@@ -13,6 +13,7 @@ export interface NetworkNode {
     id: number;
     label: string;
     shape?: string;
+    group?: string;
 }
 
 export interface NetworkEdge {

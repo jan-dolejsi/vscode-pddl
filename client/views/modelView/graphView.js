@@ -12,6 +12,11 @@ var _inverted = false;
 const TOP_DOWN = "TOP_DOWN";
 const LEFT_RIGHT = "LEFT_RIGHT";
 var _layout = TOP_DOWN;
+var _settings = false;
+var _origData = {
+  nodes: [],
+  relationships: []
+};
 
 function initialize() {
   // create a network
@@ -43,18 +48,11 @@ function initialize() {
       hierarchical: {
         enabled: true,
         direction: "DU",
-        sortMethod: "directed",
-        levelSeparation: 77,
-        nodeSpacing: 17,
-        treeSpacing: 17,
-        parentCentralization: false
+        sortMethod: "directed"
       }
     },
     physics: {
-      enabled: true,
-      hierarchicalRepulsion: {
-        centralGravity: 0
-      },
+      enabled: false,
       minVelocity: 0.75,
       solver: "hierarchicalRepulsion"
     },
@@ -76,6 +74,7 @@ function initialize() {
   })
 
   if (!vscode) { populateWithTestData(); }
+  ensureLayout();
   onLoad();
 }
 
@@ -83,10 +82,13 @@ function handleMessage(message) {
   switch (message.command) {
     case 'updateContent':
       updateGraph(message.data);
-      ensureLayout();
       break;
     case 'setInverted':
       setInverted(message.value);
+      break;
+    case 'setOptions':
+      setOptions(message.options);
+      break;
     default:
       console.log("Unexpected message: " + message.command);
   }
@@ -96,7 +98,7 @@ function handleMessage(message) {
 function populateWithTestData() {
   // for testing only
   updateGraph({
-    nodes: [{ id: 1, label: 'City' }, { id: 2, label: 'Town' }, { id: 3, label: 'Village' }, { id: 4, label: 'Capital' }],
+    nodes: [{ id: 1, label: 'City' }, { id: 2, label: 'Town nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn' }, { id: 3, label: 'Village' }, { id: 4, label: 'Capital' }],
     relationships: [{ from: 1, to: 2 }, { from: 2, to: 3 }, {from: 4, to: 2}]
   });
   setIsInset(true);
@@ -108,8 +110,9 @@ function clearNetwork() {
 }
 
 function updateGraph(data) {
+  _origData = data;
   clearNetwork();
-  nodes.add(data.nodes);
+  if (data.nodes) nodes.add(data.nodes);
   edges.add(data.relationships);
   network.fit({animation: true});
 }
@@ -153,9 +156,26 @@ function leftRight() {
 
 function setLayoutDirection(direction) {
   network.setOptions({ layout: { hierarchical: { direction: direction } } });
-  postMessage({ command: 'layout', direction: direction });
+}
+
+function setOptions(options) {
+  network.setOptions(options);
 }
 
 function fit() {
   network.fit();
+}
+
+function toggleSettings() {
+  _settings = !_settings;
+  network.setOptions({ configure: _settings });
+  document.body.style.overflow = _settings ? 'scroll' : 'hidden';
+  if (_settings) {
+    var settingsElement = document.getElementsByClassName("vis-configuration-wrapper")[0];
+    if (settingsElement) settingsElement.scrollIntoView();
+  }
+}
+
+function reset() {
+  updateGraph(_origData);
 }

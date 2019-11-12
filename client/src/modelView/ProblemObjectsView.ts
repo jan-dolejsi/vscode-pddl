@@ -93,6 +93,16 @@ export class ProblemObjectsView extends ProblemView<ProblemObjectsRendererOption
 
     protected async handleOnLoad(panel: ProblemViewPanel): Promise<boolean> {
         await panel.postMessage('setInverted', { value: true });
+        await panel.postMessage('setOptions', {
+            groups: {
+                object: {
+                    color: {
+                        background: 'lightgreen'
+                    },
+                    borderWidth: 0
+                }
+            }
+        });
         return super.handleOnLoad(panel);
     }
 }
@@ -152,8 +162,10 @@ class ProblemObjectsRendererDelegate {
 
     private toNode(entry: [string, number]): NetworkNode {
         let [entryLabel, entryId] = entry;
-        let shape = this.typeNames.has(entryLabel) ? "ellipse" : "box";
-        return { id: entryId, label: entryLabel, shape: shape };
+        let isType = this.typeNames.has(entryLabel);
+        let shape = isType ? "ellipse" : "box";
+        let group = isType ? "type" : "object";
+        return { id: entryId, label: entryLabel, shape: shape, group: group };
     }
 
     private toEdge(edge: [string, string], label: string): NetworkEdge {
