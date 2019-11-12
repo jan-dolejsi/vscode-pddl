@@ -7,8 +7,9 @@
 - clean-up
 - fix for type hierarchy parsing that miss the " - object"
 - moving views to a dedicated 'views' folder
-- more robustd
+- more robust action/variable parameter parsing
 - eagerly using the Elvis operator
+- constraint partial order view
 
 ## [2.15.0] PDDL Model Visualization
 

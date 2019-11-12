@@ -21,6 +21,7 @@ import { getObjectsInheritingFrom, getTypesInheritingFromPlusSelf } from '../../
 import { Util } from '../../../common/src/util';
 import { DocumentCodeLens, DocumentInsetCodeLens } from './view';
 import { ProblemView, ProblemRenderer, ProblemRendererOptions } from './ProblemView';
+import { GraphViewData, NetworkEdge, NetworkNode } from './GraphViewData';
 
 const CONTENT = path.join('views', 'modelView');
 
@@ -110,14 +111,9 @@ class ProblemInitRenderer implements ProblemRenderer<ProblemInitViewOptions, Pro
 }
 
 interface ProblemInitViewData {
-    symmetricRelationshipGraph: SymmetricRelationshipGraph;
+    symmetricRelationshipGraph: GraphViewData;
     typeProperties: Map<string, TypeProperties>;
     typeRelationships: TypesRelationship[];
-}
-
-interface SymmetricRelationshipGraph {
-    nodes: NetworkNode[];
-    relationships: NetworkEdge[];
 }
 
 interface TypeProperties {
@@ -353,14 +349,3 @@ interface ProblemInitViewOptions extends ProblemRendererOptions {
     hideObjectProperties?: boolean;
     hideObjectRelationships?: boolean;
 }
-
-interface NetworkNode {
-    id: number;
-    label: string;
-}
-
-interface NetworkEdge {
-    from: number;
-    to: number;
-    label: string;
-} 

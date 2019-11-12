@@ -17,13 +17,15 @@ import { PddlTokenType } from '../../../common/src/PddlTokenizer';
 import { nodeToRange } from '../utils';
 import { DocumentInsetCodeLens, DocumentCodeLens } from './view';
 import { DomainView, DomainRendererOptions, DomainRenderer } from './DomainView';
+import { GraphViewData, NetworkEdge, NetworkNode } from './GraphViewData';
+import { DomainViewPanel } from './DomainViewPanel';
 
 const CONTENT = path.join('views', 'modelView');
 
 const PDDL_DOMAIN_TYPES_PREVIEW_COMMAND = "pddl.domain.types.preview";
 const PDDL_DOMAIN_TYPES_INSET_COMMAND = "pddl.domain.types.inset";
 
-export class DomainTypesView extends DomainView<DomainTypesRendererOptions, DomainTypesViewData> implements CodeLensProvider {
+export class DomainTypesView extends DomainView<DomainTypesRendererOptions, GraphViewData> implements CodeLensProvider {
 
     constructor(context: ExtensionContext, codePddlWorkspace: CodePddlWorkspace) {
         super(context, codePddlWorkspace, new DomainTypesRenderer(), {
@@ -87,10 +89,15 @@ export class DomainTypesView extends DomainView<DomainTypesRendererOptions, Doma
     protected createPreviewPanelTitle(uri: Uri) {
         return `:types in '${path.basename(uri.fsPath)}'`;
     }
+
+    protected async handleOnLoad(panel: DomainViewPanel): Promise<boolean> {
+        await panel.postMessage('setInverted', { value: true });
+        return super.handleOnLoad(panel);
+    }
 }
 
-class DomainTypesRenderer implements DomainRenderer<DomainTypesRendererOptions, DomainTypesViewData> {
-    render(context: ExtensionContext, domain: DomainInfo, options: DomainTypesRendererOptions): DomainTypesViewData {
+class DomainTypesRenderer implements DomainRenderer<DomainTypesRendererOptions, GraphViewData> {
+    render(context: ExtensionContext, domain: DomainInfo, options: DomainTypesRendererOptions): GraphViewData {
         let renderer = new DomainTypesRendererDelegate(context, domain, options);
 
         return {
@@ -98,11 +105,6 @@ class DomainTypesRenderer implements DomainRenderer<DomainTypesRendererOptions, 
             relationships: renderer.getRelationships()
         };
     }
-}
-
-interface DomainTypesViewData {
-    nodes: NetworkNode[];
-    relationships: NetworkEdge[];
 }
 
 class DomainTypesRendererDelegate {
@@ -140,14 +142,3 @@ class DomainTypesRendererDelegate {
 
 interface DomainTypesRendererOptions extends DomainRendererOptions {
 }
-
-interface NetworkNode {
-    id: number;
-    label: string;
-}
-
-interface NetworkEdge {
-    from: number;
-    to: number;
-    label: string;
-} 

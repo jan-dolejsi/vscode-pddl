@@ -9,6 +9,7 @@ import { PreProcessor } from "./PreProcessors";
 import { PddlSyntaxTree } from "./PddlSyntaxTree";
 import { DocumentPositionResolver } from "./DocumentPositionResolver";
 import { TypeObjects } from "./DomainInfo";
+import { Constraint } from "./constraints";
 
 /**
  * Problem file.
@@ -17,6 +18,7 @@ export class ProblemInfo extends FileInfo {
     objects: TypeObjects[] = [];
     inits: TimedVariableValue[] = [];
     supplyDemands: SupplyDemand[] = [];
+    private constraints: Constraint[] = [];
     preParsingPreProcessor: PreProcessor;
 
     constructor(fileUri: string, version: number, problemName: string, public domainName: string, public readonly syntaxTree: PddlSyntaxTree, positionResolver: DocumentPositionResolver) {
@@ -65,12 +67,20 @@ export class ProblemInfo extends FileInfo {
         return this.inits;
     }
 
-    setSupplyDemands(supplyDemands: SupplyDemand[]) {
+    setSupplyDemands(supplyDemands: SupplyDemand[]): void {
         this.supplyDemands = supplyDemands;
     }
 
     getSupplyDemands(): SupplyDemand[] {
         return this.supplyDemands;
+    }
+
+    setConstraints(constraints: Constraint[]): void {
+        this.constraints = constraints;
+    }
+
+    getConstraints(): Constraint[] {
+        return this.constraints;
     }
 
     isProblem(): boolean {

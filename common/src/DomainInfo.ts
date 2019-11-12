@@ -10,6 +10,7 @@ import { PddlSyntaxTree } from "./PddlSyntaxTree";
 import { PddlRange, DocumentPositionResolver } from "./DocumentPositionResolver";
 import { PddlBracketNode, PddlSyntaxNode } from "./PddlSyntaxNode";
 import { PddlTokenType } from "./PddlTokenizer";
+import { Constraint } from "./constraints";
 
 /**
  * Domain file.
@@ -24,6 +25,7 @@ export class DomainInfo extends FileInfo {
     private constants: TypeObjects[] = [];
     private events?: Action[];
     private processes?: Action[];
+    private constraints: Constraint[] = [];
 
     constructor(fileUri: string, version: number, domainName: string, public readonly syntaxTree: PddlSyntaxTree, positionResolver: DocumentPositionResolver) {
         super(fileUri, version, domainName, positionResolver);
@@ -131,6 +133,14 @@ export class DomainInfo extends FileInfo {
 
     setProcesses(processes: Action[]) {
         this.processes = processes;
+    }
+
+    getConstraints(): Constraint[] {
+        return this.constraints;
+    }
+
+    setConstraints(constraints: Constraint[]): void {
+        this.constraints = constraints;
     }
 
     TYPES_SECTION_START = "(:types";

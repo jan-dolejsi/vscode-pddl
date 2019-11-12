@@ -65,7 +65,7 @@ export abstract class DomainView<TRendererOptions, TRenderData> extends Disposab
         if (!this.webviewPanels.get(domainUri) && !this.webviewInsets.get(domainUri)) { return; }
 
         let panelsToRefresh: DomainViewPanel[] = [];
-    
+
         // update the panel
         let panel = this.webviewPanels.get(domainUri);
         if (panel) {
@@ -106,7 +106,7 @@ export abstract class DomainView<TRendererOptions, TRenderData> extends Disposab
 
     async refreshPanelContent(previewPanel: DomainViewPanel): Promise<boolean> {
         previewPanel.setNeedsRebuild(false);
-        return this.updateContentData(previewPanel.getDomain(), previewPanel.getPanel());
+        return this.updateContentData(previewPanel.getDomain(), previewPanel);
     }
 
     async showInset(editor: TextEditor, line: number, height: number): Promise<void> {
@@ -166,9 +166,9 @@ export abstract class DomainView<TRendererOptions, TRenderData> extends Disposab
         }
     }
 
-    private async updateContentData(domain: DomainInfo, panel: WebviewAdapter): Promise<boolean> {
-        return panel.postMessage({
-            command: 'updateContent', data: this.renderer.render(this.context, domain, this.rendererOptions)
+    private async updateContentData(domain: DomainInfo, panel: DomainViewPanel): Promise<boolean> {
+        return panel.postMessage('updateContent', {
+            data: this.renderer.render(this.context, domain, this.rendererOptions)
         });
     }
 
@@ -186,6 +186,11 @@ export abstract class DomainView<TRendererOptions, TRenderData> extends Disposab
         return false;
     }
 
+    protected async handleOnLoad(panel: DomainViewPanel): Promise<boolean> {
+        await panel.postMessage('setIsInset', { value: panel.getPanel().isInset });
+        return await this.refreshPanelContent(panel);
+    }
+
     private async handleMessageCore(panel: DomainViewPanel, message: any): Promise<void> {
         console.log(`Message received from the webview: ${message.command}`);
 
@@ -197,8 +202,7 @@ export abstract class DomainView<TRendererOptions, TRenderData> extends Disposab
                 this.expandInset(panel);
                 break;
             case 'onload':
-                await panel.getPanel().postMessage({ command: 'setIsInset', value: panel.getPanel().isInset });
-                await this.refreshPanelContent(panel);
+                await this.handleOnLoad(panel);
                 break;
             default:
                 if (!this.handleMessage(panel, message)) {

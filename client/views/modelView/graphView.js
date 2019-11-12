@@ -8,6 +8,11 @@ var networkData = {
 
 var network = null;
 
+var _inverted = false;
+const TOP_DOWN = "TOP_DOWN";
+const LEFT_RIGHT = "LEFT_RIGHT";
+var _layout = TOP_DOWN;
+
 function initialize() {
   // create a network
   var container = document.getElementById("network");
@@ -78,7 +83,10 @@ function handleMessage(message) {
   switch (message.command) {
     case 'updateContent':
       updateGraph(message.data);
+      ensureLayout();
       break;
+    case 'setInverted':
+      setInverted(message.value);
     default:
       console.log("Unexpected message: " + message.command);
   }
@@ -115,12 +123,32 @@ function resize() {
   }
 }
 
+/**
+ * Sets the `inverted` fag. 
+ * @param {boolean} inverted should the direction of the graph layout be inverted?
+ */
+function setInverted(inverted) {
+  _inverted = inverted;
+  ensureLayout();
+}
+
+function ensureLayout() {
+  if (_layout === TOP_DOWN) {
+    topDown();
+  }
+  else if (_layout === LEFT_RIGHT) {
+    leftRight();
+  }
+}
+
 function topDown() {
-  setLayoutDirection('DU');
+  _layout = TOP_DOWN;
+  setLayoutDirection(_inverted ? 'DU' : 'UD');
 }
 
 function leftRight() {
-  setLayoutDirection('RL');
+  _layout = LEFT_RIGHT;
+  setLayoutDirection(_inverted ? 'RL' : 'LR');
 }
 
 function setLayoutDirection(direction) {

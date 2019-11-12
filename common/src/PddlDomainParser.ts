@@ -15,6 +15,7 @@ import { PddlSyntaxTree } from "./PddlSyntaxTree";
 import { InstantActionParser } from "./InstantActionParser";
 import { DurativeActionParser } from "./DurativeActionParser";
 import { PddlInheritanceParser } from "./PddlInheritanceParser";
+import { PddlConstraintsParser } from "./PddlConstraintsParser";
 
 /**
  * Planning Domain parser.
@@ -74,6 +75,12 @@ export class PddlDomainParser {
         const events = this.parseActionProcessOrEvent(defineNode, this.positionResolver, "event");
         this.domainInfo.setProcesses(processes);
         this.domainInfo.setEvents(events);
+        
+        let constraintsNode = defineNode.getFirstOpenBracket(':constraints');
+        if (constraintsNode) {
+            const constraints = new PddlConstraintsParser().parseConstraints(constraintsNode);
+            this.domainInfo.setConstraints(constraints);
+        }
     }
     
     static parseRequirements(defineNode: PddlSyntaxNode, fileInfo: FileInfo) {
