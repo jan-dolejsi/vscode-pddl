@@ -19,6 +19,5 @@
 			]
 		}
 	},
-	"mocha.files.glob": "common/out/test/*.js",
-	"mocha.enabled": true
+	"mocha.files.glob": "common/out/test/*.js"
 }
