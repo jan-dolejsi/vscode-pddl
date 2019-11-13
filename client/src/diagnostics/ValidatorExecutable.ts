@@ -106,11 +106,12 @@ export class ValidatorExecutable extends Validator {
     private runProcess(parserPath: string, args: string[], onOutput: (output: string) => void, onError: (error: string) => void): void {
         let child = process.spawn(parserPath, args);
     
-        var parserOutput = '';
+        var trailingLine = '';
 
         child.stdout.on('data', output => {
-            let outputString = output.toString("utf8");
-            parserOutput += outputString;
+            let outputString = trailingLine + output.toString("utf8");
+            onOutput.apply(this, [outputString]);
+            trailingLine = outputString.substr(outputString.lastIndexOf('\n'));
         });
 
         child.on("error", error => {
@@ -124,7 +125,6 @@ export class ValidatorExecutable extends Validator {
             if (code !== 0) {
                 console.log(`Parser exit code: ${code}, signal: ${signal}.`);
             }
-            onOutput.apply(this, [parserOutput]);
         });
     }
 }

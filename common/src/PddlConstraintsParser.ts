@@ -4,7 +4,7 @@
  * ------------------------------------------------------------------------------------------ */
 'use strict';
 
-import { Constraint, StateSatisfyingConstraint, Condition, AfterConstraint } from "./constraints";
+import { Constraint, NamedConditionConstraint, Condition, AfterConstraint } from "./constraints";
 import { PddlSyntaxNode } from "./PddlSyntaxNode";
 import { PddlTokenType, isOpenBracket } from "./PddlTokenizer";
 
@@ -35,8 +35,8 @@ export class PddlConstraintsParser {
         if (children[0].getToken().type === PddlTokenType.Other) {
             switch (children[0].getToken().tokenText) {
                 case 'name':
-                case 'state-satisfying':
-                    return this.parseStateSatisfying(node, children.slice(1)) || new Constraint(node);
+                case 'named-condition':
+                    return this.parseNamedCondition(node, children.slice(1)) || new Constraint(node);
                 case 'after':
                     return this.parseAfter(node, children.slice(1)) || new Constraint(node);
                 default:
@@ -49,7 +49,7 @@ export class PddlConstraintsParser {
 
     }
 
-    private parseStateSatisfying(constraintNode: PddlSyntaxNode, children: PddlSyntaxNode[]): Constraint | undefined {
+    private parseNamedCondition(constraintNode: PddlSyntaxNode, children: PddlSyntaxNode[]): Constraint | undefined {
         if (children.length < 2) { return undefined; }
 
         if (!children[0].isType(PddlTokenType.Other)) { return undefined; }
@@ -58,7 +58,7 @@ export class PddlConstraintsParser {
 
         if (isOpenBracket(children[1].getToken())) {
             let condition = new Condition(children[1]);
-            return new StateSatisfyingConstraint({ name: name, condition: condition }, constraintNode);
+            return new NamedConditionConstraint({ name: name, condition: condition }, constraintNode);
         }
         else {
             return undefined;
@@ -76,14 +76,14 @@ export class PddlConstraintsParser {
         return new AfterConstraint(predecessor!, successor!, constraintNode);
     }
 
-    private parseAfterGoal(nameOrConditionNode: PddlSyntaxNode): StateSatisfyingConstraint | undefined {
+    private parseAfterGoal(nameOrConditionNode: PddlSyntaxNode): NamedConditionConstraint | undefined {
         if (nameOrConditionNode.isType(PddlTokenType.Other)) {
             let name = nameOrConditionNode.getText();
-            return new StateSatisfyingConstraint({ name: name }, nameOrConditionNode);
+            return new NamedConditionConstraint({ name: name }, nameOrConditionNode);
         }
         else if (isOpenBracket(nameOrConditionNode.getToken())) {
             let condition = new Condition(nameOrConditionNode);
-            return new StateSatisfyingConstraint({ condition: condition }, nameOrConditionNode);
+            return new NamedConditionConstraint({ condition: condition }, nameOrConditionNode);
         } else {
             return undefined;
         }

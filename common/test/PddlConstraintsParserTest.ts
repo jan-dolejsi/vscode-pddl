@@ -7,7 +7,7 @@
 import * as assert from 'assert';
 import { PddlSyntaxTreeBuilder } from '../src/PddlSyntaxTreeBuilder';
 import { PddlConstraintsParser } from '../src/PddlConstraintsParser';
-import { StateSatisfyingConstraint, AfterConstraint } from '../src/constraints';
+import { NamedConditionConstraint, AfterConstraint } from '../src/constraints';
 
 describe('PddlConstraintsParser', () => {
 
@@ -43,10 +43,35 @@ describe('PddlConstraintsParser', () => {
 
             // THEN
             assert.strictEqual(actual.length, 1, "there should be one constraint");
-            assert.ok(actual.every(c => c instanceof StateSatisfyingConstraint), 'constraint type');
+            assert.ok(actual.every(c => c instanceof NamedConditionConstraint), 'constraint type');
             assert.deepStrictEqual(
                 actual
-                    .map(c => c as StateSatisfyingConstraint)
+                    .map(c => c as NamedConditionConstraint)
+                    .map(c => [c.name, c.condition?.node.getText()]),
+                [[name, condition]],
+                "constraint content");
+        });
+
+        it('should parse one named state-satisfying constraint', () => {
+            // GIVEN
+            let name = 'g1';
+            let condition = '(p)';
+            let constraintsPddl = `
+            (:constraints
+                (named-condition ${name} ${condition})
+            )
+            `;
+            let syntaxTree = new PddlSyntaxTreeBuilder(constraintsPddl).getTree();
+
+            // WHEN
+            let actual = new PddlConstraintsParser().parseConstraints(syntaxTree.getRootNode().getFirstOpenBracketOrThrow(':constraints'));
+
+            // THEN
+            assert.strictEqual(actual.length, 1, "there should be one constraint");
+            assert.ok(actual.every(c => c instanceof NamedConditionConstraint), 'constraint type');
+            assert.deepStrictEqual(
+                actual
+                    .map(c => c as NamedConditionConstraint)
                     .map(c => [c.name, c.condition?.node.getText()]),
                 [[name, condition]],
                 "constraint content");
@@ -68,10 +93,10 @@ describe('PddlConstraintsParser', () => {
 
             // THEN
             assert.strictEqual(actual.length, 1, "there should be one constraint");
-            assert.ok(actual.every(c => c instanceof StateSatisfyingConstraint), 'constraint type');
+            assert.ok(actual.every(c => c instanceof NamedConditionConstraint), 'constraint type');
             assert.deepStrictEqual(
                 actual
-                    .map(c => c as StateSatisfyingConstraint)
+                    .map(c => c as NamedConditionConstraint)
                     .map(c => [c.name, c.condition?.node.getText()]),
                 [[name, condition]],
                 "constraint content");
@@ -148,8 +173,8 @@ describe('PddlConstraintsParser', () => {
 
             // THEN
             assert.strictEqual(actual.length, 3, "there should be one constraint");
-            assert.ok(actual[0] instanceof StateSatisfyingConstraint, 'constraint0 type');
-            assert.ok(actual[1] instanceof StateSatisfyingConstraint, 'constraint1 type');
+            assert.ok(actual[0] instanceof NamedConditionConstraint, 'constraint0 type');
+            assert.ok(actual[1] instanceof NamedConditionConstraint, 'constraint1 type');
             assert.ok(actual[2] instanceof AfterConstraint, 'constraint2 type');
         });
     });
