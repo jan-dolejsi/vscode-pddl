@@ -6,6 +6,7 @@
 import { WorkspaceFolder, Uri } from "vscode";
 import * as afs from '../../../common/src/asyncfs';
 import * as path from 'path';
+import { strMapToObj, objToStrMap } from "../utils";
 
 export const CONFIGURATION_FILE = '.planning.domains.session.json';
 
@@ -73,20 +74,4 @@ export async function saveConfiguration(workspaceFolderUri: Uri, sessionConfigur
 	}, 4);
 
 	return afs.writeFile(path.join(workspaceFolderUri.fsPath, CONFIGURATION_FILE), sessionConfigurationString);
-}
-
-export function strMapToObj(strMap: Map<string, any>): any {
-    let obj = Object.create(null);
-    for (let [k,v] of strMap) {
-        obj[k] = v;
-    }
-    return obj;
-}
-
-function objToStrMap(obj: any): Map<string, any> {
-    let strMap = new Map();
-    for (let k of Object.keys(obj)) {
-        strMap.set(k, obj[k]);
-    }
-    return strMap;
 }

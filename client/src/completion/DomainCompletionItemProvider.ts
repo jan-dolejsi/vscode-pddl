@@ -16,6 +16,7 @@ import { DiscreteEffectCompletionItemProvider } from './DiscreteEffectCompletion
 import { ContinuousEffectCompletionItemProvider } from './ContinuousEffectCompletionItemProvider';
 import { DurativeActionEffectCompletionItemProvider } from './DurativeActionEffectCompletionItemProvider';
 import { DurativeActionConditionCompletionItemProvider } from './DurativeActionConditionCompletionItemProvider';
+import { Util } from '../../../common/src/util';
 
 export class DomainCompletionItemProvider extends AbstractCompletionItemProvider {
 
@@ -84,6 +85,9 @@ export class DomainCompletionItemProvider extends AbstractCompletionItemProvider
                 .map((suggestion, index) => this.createDefineCompletionItem(currentNode, suggestion, range, context, index))
                 .filter(item => !!item); // filter out nulls
         }
+        else if (this.insideRequirements(domainInfo, currentNode, context)) {
+            return this.createRequirementsCompletionItems(document, currentNode, context);
+        }
         else if (this.insideAction(currentNode)) {
             let nearestPrecedingKeyword = PddlStructure.getPrecedingKeywordOrSelf(currentNode);
             let supportedSectionsHere = PddlStructure.getSupportedSectionsHere(nearestPrecedingKeyword, currentNode, PddlTokenType.Keyword, PddlStructure.PDDL_ACTION_SECTIONS, []);
@@ -126,7 +130,19 @@ export class DomainCompletionItemProvider extends AbstractCompletionItemProvider
             return new DurativeActionConditionCompletionItemProvider().provide(domainInfo, context, range);
         }
 
+        if (context.triggerCharacter === '?') {
+            let scopes = currentNode.findAllParametrisableScopes();
+            let range = nodeToRange(document, currentNode);
+            return Util.flatMap(scopes.map(s => this.getParameterNames(s.getParameterDefinition())))
+                .map((paramName, index) => this.createSnippetCompletionItem(Suggestion.from(paramName, context.triggerCharacter, ''), paramName, range, context, index));
+        }
+
         return [];
+    }
+
+    private getParameterNames(parametersNode: PddlSyntaxNode): string[] {
+        return parametersNode.getChildrenOfType(PddlTokenType.Parameter, /.*/)
+            .map(n => n.getText());
     }
 
     private insideAction(currentNode: PddlSyntaxNode): boolean {

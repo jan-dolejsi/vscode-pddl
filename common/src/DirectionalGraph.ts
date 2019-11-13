@@ -30,7 +30,7 @@ export class DirectionalGraph {
         });
         return edges;
     }
-    addEdge(from: string, to: string): void {
+    addEdge(from: string, to?: string): DirectionalGraph {
         let fromVertex = this.verticesAndEdges.find(vertex => vertex[0] === from);
         if (fromVertex) {
             let edgesAlreadyInserted = fromVertex[1];
@@ -43,11 +43,13 @@ export class DirectionalGraph {
             this.verticesAndEdges.push([from, edges]);
         }
         if (to) {
-            this.addEdge(to, null);
+            this.addEdge(to, undefined);
         }
+        return this;
     }
-    getVerticesWithEdgesFrom(vertex: string): string[] {
-        return this.verticesAndEdges.find(t => t[0] === vertex)[1];
+    getVerticesWithEdgesFrom(vertex: string): string[] | undefined {
+        let verticesFound = this.verticesAndEdges.find(t => t[0] === vertex);
+        return verticesFound ? verticesFound[1] : undefined;
     }
     getVerticesWithEdgesTo(vertex: string): string[] {
         return this.verticesAndEdges
@@ -63,6 +65,7 @@ export class DirectionalGraph {
     }
     getSubtreePointingFrom(vertex: string): string[] {
         let vertices = this.getVerticesWithEdgesFrom(vertex);
+        if (!vertices) { return []; }
         let verticesSubTree = vertices
             .map(childVertex => this.getSubtreePointingFrom(childVertex))
             .reduce((x, y) => x.concat(y), []);

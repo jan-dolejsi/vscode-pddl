@@ -59,7 +59,7 @@ export class SymbolUtils {
             if (actionFound) {
                 return new ActionInfo(
                     this.createActionHover(symbol.range, actionFound),
-                    new Location(this.toUri(domainInfo.fileUri), toRange(actionFound.location)),
+                    new Location(this.toUri(domainInfo.fileUri), toRange(actionFound.getLocation())),
                     actionFound
                 );
             }

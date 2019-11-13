@@ -24,7 +24,7 @@ export class PlanFunctionEvaluator {
     }
 
     isAvailable(): boolean {
-        return this.valueSeqPath && this.valStepPath ? true : false;
+        return !!this.valueSeqPath && !!this.valStepPath;
     }
 
     getValStepPath(): string {
@@ -96,10 +96,18 @@ export class PlanFunctionEvaluator {
         let liftedVariableName = variableNameFragments[0];
         let liftedVariable = this.plan.domain.getFunction(liftedVariableName);
         if (!liftedVariable) { return liftedVariable; }
-        let allConstantsAndObjects = TypeObjects.concatObjects(this.plan.domain.constants, this.plan.problem.objects);
+        let allConstantsAndObjects = TypeObjects.concatObjects(this.plan.domain.getConstants(), this.plan.problem.objects);
         let objects = variableNameFragments.slice(1)
-            .map(objectName => allConstantsAndObjects.find(typeObj => typeObj.hasObject(objectName)).getObjectInstance(objectName));
+            .map(objectName => this.findType(allConstantsAndObjects, objectName).getObjectInstance(objectName));
         return liftedVariable.bind(objects);
+    }
+
+    private findType(allConstantsAndObjects: TypeObjects[], objectName: string): TypeObjects {
+        let typeFound = allConstantsAndObjects.find(typeObj => typeObj.hasObject(objectName));
+        if (!typeFound) {
+            throw new Error("Cannot find type with object: " + objectName);
+        }
+        return typeFound;
     }
 
     async tryAddChartValues(domainFile: string, problemFile: string, planFile: string, liftedFunction: Variable, groundedFunctions: Variable[], chartData: Map<Variable, GroundedFunctionValues>) {
@@ -122,7 +130,7 @@ export class PlanFunctionEvaluator {
 
         const valueSeqCommand = `${Util.q(this.valueSeqPath)} -T ${domainFile} ${problemFile} ${planFile} ${functions}`;
         console.log(valueSeqCommand);
-        let child = await process.execSync(valueSeqCommand);
+        let child = process.execSync(valueSeqCommand);
 
         let csv = child.toString();
         console.log(csv);

@@ -12,11 +12,24 @@ import http = require('http');
 import opn = require('open');
 
 export class Authentication {
+
+    private sToken?: string;
+    private accessToken?: string;
+    private refreshToken?: string;
+
     constructor(private authUrl: string, private authRequestEncoded: string, private clientId: string, private callbackPort: number, private timeoutInMs: number,
         private tokensvcUrl: string, private tokensvcApiKey: string, private tokensvcAccessPath: string, 
         private tokensvcValidatePath: string, private tokensvcCodePath: string, private tokensvcRefreshPath: string, private tokensvcSvctkPath: string,
-        public refreshToken: string, public accessToken: string, public sToken: string) {
+        refreshToken: string, accessToken: string, sToken: string) {
+        
+        this.refreshToken = refreshToken;
+        this.accessToken = accessToken;
+        this.sToken = sToken;
         this.display();
+    }
+
+    getSToken(): string | undefined {
+        return this.sToken;
     }
 
     display() {
@@ -42,7 +55,7 @@ export class Authentication {
         var app = express();
         app.use(bodyParser.json());
         app.use(bodyParser.urlencoded({ extended: true }));
-        var server: http.Server = null;
+        var server: http.Server;
         var thisAuthentication = this;
         app.post('/auth/sauth/callback', function (req:any, res:any, next:any) {
             server.close();
@@ -50,7 +63,7 @@ export class Authentication {
                 thisAuthentication.refreshToken = req.body.refreshtoken;
                 thisAuthentication.accessToken = req.body.accesstoken;
                 thisAuthentication.sToken = req.body.stoken;
-                onSuccess(thisAuthentication.refreshToken, thisAuthentication.accessToken, thisAuthentication.sToken);
+                onSuccess(thisAuthentication.refreshToken!, thisAuthentication.accessToken!, thisAuthentication.sToken!);
                 res.sendStatus(200);
                 next();
             }
@@ -72,22 +85,22 @@ export class Authentication {
     }
 
     refreshTokens(onSuccess: (refreshToken: string, accessToken: string, sToken: string) => void, onError: (message: string) => void) {
-        if(this.sToken === null || this.sToken === undefined || this.sToken === "") {
-            if(this.accessToken === null || this.accessToken === undefined || this.accessToken === "") {
-                if(this.refreshToken === null || this.refreshToken === undefined || this.refreshToken === "") {
-                    this.refreshToken = null;
-                    this.accessToken = null;
-                    this.sToken = null;
+        if(this.sToken === undefined || this.sToken === "") {
+            if(this.accessToken === undefined || this.accessToken === "") {
+                if(this.refreshToken === undefined || this.refreshToken === "") {
+                    this.refreshToken = undefined;
+                    this.accessToken = undefined;
+                    this.sToken = undefined;
                     onError("Refresh Tokens failed.");
                 }
                 else {
-                    this.accessToken = null;
-                    this.sToken = null;
+                    this.accessToken = undefined;
+                    this.sToken = undefined;
                     this.refreshAccessAndSToken(onSuccess, onError);
                 }
             }
             else {
-                this.sToken = null;
+                this.sToken = undefined;
                 this.refreshSToken(onSuccess, onError);
             }
         }
@@ -105,8 +118,8 @@ export class Authentication {
                 authentication.refreshSToken(onSuccess, onError);
             }
             else {
-                authentication.accessToken = null;
-                authentication.sToken = null;
+                authentication.accessToken = undefined;
+                authentication.sToken = undefined;
                 onError("Refresh Access Token failed.");
             }
             });
@@ -118,11 +131,11 @@ export class Authentication {
         function(error, response, body) {
             if(!error && response.statusCode === 200 && !!body) {
                 authentication.sToken = body.stoken;
-                onSuccess(authentication.refreshToken, authentication.accessToken, authentication.sToken);
+                onSuccess(authentication.refreshToken!, authentication.accessToken!, authentication.sToken!);
             }
             else {
-                authentication.accessToken = null;
-                authentication.sToken = null;
+                authentication.accessToken = undefined;
+                authentication.sToken = undefined;
                 onError("Refresh S Token failed.");
             }
             });
@@ -134,7 +147,7 @@ export class Authentication {
         function(error, response, body) {
             if(!error && response.statusCode === 200 && !!body) {
                 authentication.sToken = authentication.sToken;
-                onSuccess(authentication.refreshToken, authentication.accessToken, authentication.sToken);
+                onSuccess(authentication.refreshToken!, authentication.accessToken!, authentication.sToken!);
             }
             else {
                 authentication.refreshSToken(onSuccess, onError);

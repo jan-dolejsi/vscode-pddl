@@ -199,7 +199,7 @@ export async function selectFile(options: SelectFileOptions, suggestedFiles?: Fi
 
     // 3. else select a file from the local disk
     {
-        let defaultUri = options.workspaceFolder ? options.workspaceFolder.uri : undefined;
+        let defaultUri = options.workspaceFolder?.uri;
         let selectedHappeningsUris = await window.showOpenDialog({
             defaultUri: defaultUri,
             canSelectFiles: true, canSelectFolders: false,

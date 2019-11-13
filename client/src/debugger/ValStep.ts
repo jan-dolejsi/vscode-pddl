@@ -24,13 +24,13 @@ import { SimpleDocumentPositionResolver } from '../../../common/src/DocumentPosi
  */
 export class ValStep extends EventEmitter {
 
-    variableValues: TimedVariableValue[];
-    initialValues: TimedVariableValue[];
-    valStepInput: string = '';
-    outputBuffer: string = '';
-    happeningsConvertor: HappeningsToValStep;
-    verbose = false;
-    static readonly quitInstruction = 'q\n';
+    private variableValues: TimedVariableValue[];
+    private initialValues: TimedVariableValue[];
+    private valStepInput: string = '';
+    private outputBuffer: string = '';
+    private happeningsConvertor: HappeningsToValStep;
+    private verbose = false;
+    private static readonly quitInstruction = 'q\n';
 
     public static HAPPENING_EFFECTS_EVALUATED = Symbol("HAPPENING_EFFECTS_EVALUATED");
     public static NEW_HAPPENING_EFFECTS = Symbol("NEW_HAPPENING_EFFECTS");
@@ -176,7 +176,6 @@ export class ValStep extends EventEmitter {
             }
             child.stdin.write(ValStep.quitInstruction);
         });
-
     }
 
     /**
@@ -227,7 +226,7 @@ export class ValStep extends EventEmitter {
     private async createValStepArgs(): Promise<string[]> {
         // copy editor content to temp files to avoid using out-of-date content on disk
         let domainFilePath = await Util.toPddlFile('domain', this.domainInfo.getText());
-        let problemFilePath = await Util.toPddlFile('problem', this.problemInfo.getText());
+        let problemFilePath = await Util.toPddlFile('problem', this.problemInfo.getText()); // todo: this is where we are sending un-pre-processed problem text when rendering plan
 
         let args = [domainFilePath, problemFilePath];
         return args;

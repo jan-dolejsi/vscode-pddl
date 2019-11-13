@@ -1,5 +1,6 @@
 {
 	"compilerOptions": {
+		// "strict": true,   /* enable all strict type-checking options */		
 		"noUnusedLocals": true,
 		"noUnusedParameters": true,
 		"noImplicitAny": true,
@@ -9,13 +10,13 @@
 		"moduleResolution": "node",
 		"forceConsistentCasingInFileNames": true,
 		// "rootDir": ".",
-		"rootDirs": [".", "../common/."],
+		"rootDirs": ["src", "../common/src/."],
 		// "baseUrl": ".",
 		// "paths": {
 		// 	"*": ["./*", "../common/*"]
 		// },
 		"outDir": "out",
-		"lib": [ "es2016" ],
+		"lib": [ "es6" ],
 		"sourceMap": true
 	},
 	// "include": [

@@ -160,7 +160,7 @@ States evaluated: ${plan.statesEvaluated}`;
 
         let objectsHtml = '';
         if (!this.options.disableSwimLaneView && plan.domain && plan.problem) {
-            let allTypeObjects = TypeObjects.concatObjects(plan.domain.constants, plan.problem.objects);
+            let allTypeObjects = TypeObjects.concatObjects(plan.domain.getConstants(), plan.problem.objects);
 
             objectsHtml = plan.domain.getTypes()
                 .filter(type => type !== "object")
@@ -307,7 +307,7 @@ ${lineCharts}
         let subLanes = new SwimLane(1);
         let stepsInvolvingThisObject = plan.steps
             .filter(step => this.shouldDisplay(step, plan))
-            .filter(step => step.getObjects().includes(obj.toLowerCase()))
+            .filter(step => this.shouldDisplayObject(step, obj, plan))
             .map(step => this.renderSwimLameStep(step, plan, obj, subLanes))
             .join('\n');
 
@@ -318,6 +318,34 @@ ${stepsInvolvingThisObject}
                 </td>
             </tr>
 `;
+    }
+
+    private shouldDisplayObject(step: PlanStep, obj: string, plan: Plan): boolean {
+        if (!this.settings.has(plan)) {
+            return true;
+        }
+
+        let liftedAction = plan.domain.getActions().find(a => a.name.toLowerCase() === step.getActionName().toLowerCase());
+
+        if (!liftedAction) {
+            console.log('Unexpected plan action: ' + step.getActionName());
+            return true;
+        }
+
+        let fromArgument = 0;
+        do {
+            let indexOfArgument = step.getObjects().indexOf(obj.toLowerCase(), fromArgument);
+            fromArgument = indexOfArgument + 1;
+            if (indexOfArgument > -1 && indexOfArgument < liftedAction.parameters.length) {
+                let parameter = liftedAction.parameters[indexOfArgument];
+                let shouldIgnoreThisArgument = this.settings.get(plan).shouldIgnoreActionParameter(liftedAction.name, parameter.name);
+                if (!shouldIgnoreThisArgument) {
+                    return true;
+                }
+            }
+        } while (fromArgument > 0);
+
+        return false;
     }
 
     renderSwimLameStep(step: PlanStep, plan: Plan, thisObj: string, swimLanes: SwimLane): string {
@@ -449,7 +477,7 @@ ${stepsInvolvingThisObject}
     }
 
     getActionColor(step: PlanStep, domain: DomainInfo): string {
-        let actionIndex = domain.actions.findIndex(action => action.name.toLowerCase() === step.getActionName().toLowerCase());
+        let actionIndex = domain.getActions().findIndex(action => action.name.toLowerCase() === step.getActionName().toLowerCase());
         let actionColor = this.colors[actionIndex * 7 % this.colors.length];
 
         return actionColor;

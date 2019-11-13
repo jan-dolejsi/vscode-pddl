@@ -57,7 +57,31 @@ describe('PddlProblemParser', () => {
 
             assert.equal(problemInfo.getObjects("task").length, 1, 'there should be 1 object despite the requirements section');
         });
+        
+        it('parses problem with init values', () => {
+            // GIVEN
+            let problemPddl = `
+            (define (problem p1) (:domain d1)
+            (:requirements :strips :fluents)
+            
+            (:init 
+                (p1)
+                (= (f1) 1)
+            )
+            (:goal )
+            )
+            `;
+            let syntaxTree = new PddlSyntaxTreeBuilder(problemPddl).getTree();
+            let positionResolver = new SimpleDocumentPositionResolver(problemPddl);
+            let problemInfo = new ProblemInfo("uri", 1, "p1", "d1", syntaxTree, positionResolver);
 
+            // WHEN
+            new PddlProblemParser().getProblemStructure(problemInfo);
+
+            assert.strictEqual(problemInfo.getInits().length, 2, 'there should be 2 initial values');
+            assert.deepStrictEqual(problemInfo.getInits()[0], new TimedVariableValue(0, "p1", true));
+            assert.deepStrictEqual(problemInfo.getInits()[1], new TimedVariableValue(0, "f1", 1));
+        });
         
         it('parses problem with supply-demand', () => {
             // GIVEN
@@ -105,6 +129,17 @@ describe('PddlProblemParser', () => {
             assert.deepStrictEqual(variableValue, new TimedVariableValue(0, "at car1 location2", true));
         });
 
+        it('parses (not "at" predicate) fact', () => {
+            // GIVEN
+            let variableValuePddl = '(not (at car1 location2))';
+            let syntaxTree = new PddlSyntaxTreeBuilder(variableValuePddl).getTree();
+
+            // WHEN
+            let variableValue = new PddlProblemParser().parseInit(syntaxTree.getRootNode().getChildren()[0]);
+
+            assert.deepStrictEqual(variableValue, new TimedVariableValue(0, "at car1 location2", false));
+        });
+
         it('parses a numeric value', () => {
             // GIVEN
             let variableValuePddl = '(= (f o1 o2) 3.14)';
@@ -127,6 +162,17 @@ describe('PddlProblemParser', () => {
             assert.deepStrictEqual(variableValue, new TimedVariableValue(123.456, "p o1 o2", true));
         });
 
+        it('parses timed (not "at" predicate) fact', () => {
+            // GIVEN
+            let variableValuePddl = '(at 1 (not (at car1 location2)))';
+            let syntaxTree = new PddlSyntaxTreeBuilder(variableValuePddl).getTree();
+
+            // WHEN
+            let variableValue = new PddlProblemParser().parseInit(syntaxTree.getRootNode().getChildren()[0]);
+
+            assert.deepStrictEqual(variableValue, new TimedVariableValue(1, "at car1 location2", false));
+        });
+
         it('parses a timed numeric value', () => {
             // GIVEN
             let variableValuePddl = '(at 123.456 (= (f o1 o2) 3.14))';
@@ -136,6 +182,17 @@ describe('PddlProblemParser', () => {
             let variableValue = new PddlProblemParser().parseInit(syntaxTree.getRootNode().getChildren()[0]);
 
             assert.deepStrictEqual(variableValue, new TimedVariableValue(123.456, "f o1 o2", 3.14));
+        });
+
+        it('parses a (not-ready) fact', () => {
+            // GIVEN
+            let variableValuePddl = '(not-ready)';
+            let syntaxTree = new PddlSyntaxTreeBuilder(variableValuePddl).getTree();
+
+            // WHEN
+            let variableValue = new PddlProblemParser().parseInit(syntaxTree.getRootNode().getChildren()[0]);
+
+            assert.deepStrictEqual(variableValue, new TimedVariableValue(0, "not-ready", true));
         });
     });
 

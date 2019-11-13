@@ -191,7 +191,7 @@ export class PddlSyntaxNode extends TextRange {
     findParametrisableScope(parameterName: string): PddlSyntaxNode | undefined {
         let node: PddlSyntaxNode = this;
         while (!node.isDocument()) {
-            node = node.findAncestor(PddlTokenType.OpenBracketOperator, /^\(\s*(:action|:durative-action|:process|:event|:derived|forall|exists)$/);
+            node = PddlSyntaxNode.findParametrisableAncestor(node);
             if (!node) { return this.getParent(); }
             if (node.declaresParameter(parameterName)) {
                 return node;
@@ -199,6 +199,23 @@ export class PddlSyntaxNode extends TextRange {
         }
 
         return undefined;
+    }
+
+    findAllParametrisableScopes(): PddlSyntaxNode[] {
+        let scopes: PddlSyntaxNode[] = [];
+        let node: PddlSyntaxNode = this;
+        while (node && !node.isDocument()) {
+            node = PddlSyntaxNode.findParametrisableAncestor(node);
+            // if (!node) { return this.getParent(); }
+            if (node) {
+                scopes.push(node);
+            }
+        }
+        return scopes;
+    }
+
+    private static findParametrisableAncestor(node: PddlSyntaxNode): PddlSyntaxNode {
+        return node.findAncestor(PddlTokenType.OpenBracketOperator, /^\(\s*(:action|:durative-action|:process|:event|:derived|forall|sumall|exists)$/);
     }
 
     getParameterDefinition(): PddlSyntaxNode {

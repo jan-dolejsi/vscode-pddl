@@ -197,6 +197,27 @@ describe('PddlTokenizer', () => {
             assert.strictEqual(fragment0.tokenText, domainPddl);
         });
 
+        it('parses (not-ready) predicate', () => {
+            // GIVEN
+            const identifier = 'not-ready';
+            let predicatePddl = '(' + identifier;
+            let fragments: PddlToken[] = [];
+
+            // WHEN
+            // tslint:disable-next-line:no-unused-expression
+            new PddlTokenizer(predicatePddl, fragment => fragments.push(fragment));
+
+            // THEN
+            assert.strictEqual(fragments.length, 2, 'there should be one open bracket and identifier');
+            let fragment0 = fragments[0];
+            assert.strictEqual(fragment0.type, PddlTokenType.OpenBracket);
+            assert.strictEqual(fragment0.tokenText, '(');
+
+            let fragment1 = fragments[1];
+            assert.strictEqual(fragment1.type, PddlTokenType.Other);
+            assert.strictEqual(fragment1.tokenText, identifier);
+        });
+
         it('parses define domain', () => {
             // GIVEN
             let domainPddl = `(define (domain domain_name))`;

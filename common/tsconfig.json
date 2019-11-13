@@ -1,5 +1,6 @@
 {
 	"compilerOptions": {
+		//"strict": true,   /* enable all strict type-checking options */
 		"noUnusedLocals": true,
 		"noUnusedParameters": true,
 		"noImplicitAny": true,
@@ -8,9 +9,9 @@
 		"target": "es6",
 		"module": "commonjs",
 		"moduleResolution": "node",
-		"rootDir": ".",
+		"rootDirs": ["src", "test"],
 		"outDir": "out",
-		"lib": [ "es2016" ],
+		"lib": [ "es6" ],
 		"sourceMap": true
 	},
 	"exclude": [

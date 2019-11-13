@@ -5,8 +5,8 @@
 
 import { QuickDiffProvider, Uri, CancellationToken, ProviderResult, WorkspaceFolder, workspace } from "vscode";
 import * as path from 'path';
-import { compareMaps } from "../utils";
-import { SessionConfiguration, strMapToObj, SessionMode } from "./SessionConfiguration";
+import { compareMaps, strMapToObj } from "../utils";
+import { SessionConfiguration, SessionMode } from "./SessionConfiguration";
 import { getText, postJson, getJson } from "../httpUtils";
 import { checkResponseForError } from "../catalog/PlanningDomains";
 

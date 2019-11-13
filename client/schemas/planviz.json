@@ -19,6 +19,44 @@
         ]
       }
     },
+    "ignoreActionParameters": {
+      "$id": "/properties/ignoreActionParameters",
+      "type": "array",
+      "items": {
+        "$id": "/properties/ignoreActionParameters/items",
+        "type": "object",
+        "title": "Action parameters that shall be ignored by the per object swim lanes plan visualization.",
+        "required": [
+          "action",
+          "parameterPattern"
+        ],
+        "properties": {
+          "action": {
+            "$id": "#/properties/ignoreActionParameters/items/properties/action",
+            "type": "string",
+            "title": "Action name or regex pattern",
+            "default": "action_name",
+            "examples": [
+              ".+",
+              "^prefix",
+              "suffix$"
+            ],
+            "pattern": "^(.*)$"
+          },
+          "parameterPattern": {
+            "$id": "#/properties/ignoreActionParameters/items/properties/parameterPattern",
+            "type": "string",
+            "title": "Parameter name or regex pattern",
+            "default": "p",
+            "examples": [
+              "^hidden_param$",
+              "^(to|from)$"
+            ],
+            "pattern": "^(.*)$"
+          }
+        }
+      }
+    },
     "planVisualizer": {
       "$id": "/properties/planVisualizer",
       "type": "string",

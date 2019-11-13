@@ -4,7 +4,7 @@
  * ------------------------------------------------------------------------------------------ */
 'use strict';
 
-import { Uri, TextDocument, commands, ExtensionContext, workspace, window } from 'vscode';
+import { Uri, TextDocument, commands, ExtensionContext, workspace, window, TextEditorRevealType } from 'vscode';
 import { toLanguage, isAnyPddl } from './workspaceUtils';
 import { FileInfo } from '../../../common/src/FileInfo';
 import { PddlWorkspace } from '../../../common/src/PddlWorkspace';
@@ -129,7 +129,12 @@ function subscribeToWorkspace(pddlWorkspace: CodePddlWorkspace, pddlConfiguratio
 
 async function revealAction(domainInfo: DomainInfo, actionName: String) {
     let document = await workspace.openTextDocument(Uri.parse(domainInfo.fileUri));
-    let actionFound = domainInfo.actions.find(a => a.name.toLowerCase() === actionName.toLowerCase());
-    let actionRange = actionFound ? toRange(actionFound.location) : null;
-    window.showTextDocument(document.uri, { preserveFocus: true, selection: actionRange, preview: true });
+    let actionFound = domainInfo.getActions().find(a => a.name.toLowerCase() === actionName.toLowerCase());
+    let actionRange = actionFound ? toRange(actionFound.getLocation()) : null;
+    let openEditor = window.visibleTextEditors.find(e => e.document.uri.toString() === document.uri.toString());
+    if (openEditor) {
+        openEditor.revealRange(actionRange, TextEditorRevealType.AtTop);
+    } else {
+        window.showTextDocument(document.uri, { preserveFocus: true, selection: actionRange, preview: true });
+    }
 }

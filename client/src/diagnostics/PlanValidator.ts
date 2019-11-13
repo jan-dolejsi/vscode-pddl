@@ -229,7 +229,7 @@ export class PlanValidator {
     }
 
     private isDomainAction(domain: DomainInfo, problem: ProblemInfo, step: PlanStep): boolean {
-        let allActionNames = domain.actions.map(a => a.name.toLowerCase()).concat(
+        let allActionNames = domain.getActions().map(a => a.name.toLowerCase()).concat(
             problem.getSupplyDemands().map(sd => sd.getName().toLowerCase()));
 
         return allActionNames.includes(step.getActionName().toLowerCase());

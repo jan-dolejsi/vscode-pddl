@@ -1,10 +1,70 @@
 # PDDL support - What's new?
 
-## [2.14.3] Context-sensitive auto-completion suggestions
+## [2.15.1] Fixes and upgrades
 
-- Auto-completion of domain, problem file structures is context sensitive now and only suggests structures that are valid
+- upgrade to vscode 1.40
+- upgrade to TypeScript 3.7.2
+- clean-up
+- fix for type hierarchy parsing that miss the " - object"
+- moving views to a dedicated 'views' folder
+- more robust action/variable parameter parsing
+- eagerly using the Elvis operator
+- constraint partial order view
+- network/graph settings UI
+- improved icons
+- types vs objects visualized in different color
+- Document symbols for problem files
+- Domain processes and events are included into document symbols
+- Improved parsing of large domains by processing the parser output incrementally
+- Removed some 15MB from the extension package by reviewing the package content
+
+## [2.15.0] PDDL Model Visualization
+
+### Domain `:types` hierarchy and problem `:objects` and `:init` visualization
+
+A "View" _code lens_ is displayed above selected PDDL sections such as `:init` section of problem files. Clicking it will open a graphical representation of the initial state for easy review.
+So far object _properties_ and _relationships_ are displayed in a tabular form and a directed graph is available to visualize 2D-symmetric predicates or functions i.e. predicates or functions whose first two arguments are of the same type.
+For example predicate `(path ?from ?to)` or function `(distance ?a ?b)` will be visualized on a graph.
+
+![Model visualization](https://raw.githubusercontent.com/wiki/jan-dolejsi/vscode-pddl/img/PDDL_model_visualization.gif)
+
+### Excluding actions from swim-lane plan visualization by configuring selected parameters to be ignored
+
+It is now possible to exclude some action parameters from swim-lane plan visualization. This is useful for action parameters, which are just marginally involved in the action conditions, and displaying such action in the swim-lane of the given object makes the diagram confusing. To configure this, add `ignoreActionParameters` into the _domain_.planviz.json file, where _domain_ matches your domain file name. This example will exclude `?to` and `?from` parameters of any action starting with `move`. It also exclude any parameter with name ending with the `_reserved` suffix:
+
+```json
+{
+    "ignoreActionParameters": [
+        {
+            "action": "^move",
+            "parameterPattern": "^(to|from)$"
+        },
+        {
+            "action": ".+",
+            "parameterPattern": "_reserved$"
+        }
+    ]
+}
+```
+
+### Auto-completion
+
+Extended auto-completion to requirements inside `(:requirements )` and onto parameter names (i.e. symbols starting with ?).
+
+### Fixes
+
+- Large domain/problem files now parse correctly. Previously the parser output buffer was fixed to the node.js limit and beyond certain size, PDDL file errors and warnings would stop displaying.
+- Code Action to declare undeclared predicates/functions is now case insensitive (because the VAL parser reports warnings in lowercase)
+- _ValueSeq_ outputs warnings about unsatisfied pre-conditions. These now do not break the ValueSeq output parser. The warnings go to the log.
+- Fixed parsing of timed initial literals of `at` predicates.
+- Clicking on an action name in the plan will reveal it in an already open editor window, rather than opening a new panel in the same editor group.
+
+## [2.14.4] Context-sensitive auto-completion suggestions
+
+- Auto-completion of domain, problem file structures is context sensitive now and only suggests structures that are valid in the given place
 - Enable the on-type PDDL formatter to get help with shaping the whitespace around your PDDL code (namely indentation) for better readability of your models. To give it a try, enable the _Editor: Format On Type_ and _PDDL: Formatter_ setting options.
 - ValStep repro `run.cmd` batch file was updated to latest version of ValStep's syntax.
+- PDDL Problem file parsing re-worked to use the Syntax Tree
 
 ## [2.14.2] ValStep upgrade and plan line plot improvement
 
@@ -771,17 +831,16 @@ Simplified snippets and added tabstops/placeholders to them, so they are easy to
 
 ## Future work
 
-- valstep batch mode
 - Review configuration properties scope - which properties should be moved to 'application' scope?
 - Rename objects and constants
 - Auto-completion for constant/object names.
-- Any other extensions to put into extensions.json?
 - Review the ViewColumn usage following the Grid View feature availability in VS Code
 - Add a search into the virtual file system for the IPC benchmarks and adapt it to the test cases manifests for ease of use
 - Add Happenings to Problem explicit mapping
 - Interactive stepping through plans (aka debugging).
 - Icons: https://code.visualstudio.com/updates/v1_31#_updated-octicons
 - CodeAction to remove unnecessary requirements etc..
+- Predicate/function usage decoration and dependency map dispayed via the Call Hierarchy
 
 ## [Unreleased]
 
@@ -793,8 +852,9 @@ Note for open source contributors: all notable changes to the "pddl" extension w
 
 Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
 
-[Unreleased]: https://github.com/jan-dolejsi/vscode-pddl/compare/v2.14.3...HEAD
-[2.14.3]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.14.2...v2.14.3
+[Unreleased]: https://github.com/jan-dolejsi/vscode-pddl/compare/v2.15.0...HEAD
+[2.15.0]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.14.4...v2.15.0
+[2.14.4]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.14.2...v2.14.4
 [2.14.2]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.14.1...v2.14.2
 [2.14.1]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.14.0...v2.14.1
 [2.14.0]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.13.1...v2.14.0

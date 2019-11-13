@@ -14,7 +14,7 @@ export class PddlTokenizer {
      * @param lastIndexOfInterest last index of interest or `undefined` to parse the entire document
      */
     constructor(pddlText: string, callback: (token: PddlToken) => void, lastIndexOfInterest?: number) {
-        let pddlPattern = /\(\s*(:\w[\w-]*|[-\/+*]|[><]=?|define|domain|problem|and|or|not|at start|at end|over all|at|=|assign|increase|decrease|always|sometime|forall|exists|when|within|at-most-once|sometime-before|always-within|supply-demand)|\(|:[\w-]+|\(|\)|;|\?\w[\w-]*|[-+]?[0-9]*\.?[0-9]+|-|#t|\w[\w-]*|[\s]+/g;
+        let pddlPattern = /\(\s*(:\w[\w-]*|[-\/+*]|[><]=?|define|domain|problem|and|or|not|at start|at end|over all|at|=|assign|increase|decrease|always|sometime|forall|exists|when|within|at-most-once|sometime-before|always-within|supply-demand)(?!-)|\(|:[\w-]+|\(|\)|;|\?\w[\w-]*|[-+]?[0-9]*\.?[0-9]+|-|#t|\w[\w-]*|[\s]+/g;
         let endOfLinePattern = /(\n|\r\n)/g;
         let endOfLastToken = 0;
         

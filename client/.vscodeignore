@@ -7,3 +7,11 @@ src/**
 .gitignore
 tsconfig.json
 *.cmd
+.vscode-test/**
+val/**
+.vscodeignore
+package-lock.json
+tslint.json
+tsconfig.json
+*.vsix
+*.log

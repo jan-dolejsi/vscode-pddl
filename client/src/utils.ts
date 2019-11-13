@@ -10,6 +10,7 @@ import * as afs from '../../common/src/asyncfs';
 import { PddlExtensionContext } from '../../common/src/PddlExtensionContext';
 import { PddlRange } from '../../common/src/DocumentPositionResolver';
 import { PddlSyntaxNode } from '../../common/src/PddlSyntaxNode';
+import { StringifyingMap } from '../../common/src/util';
 
 export function createPddlExtensionContext(context: ExtensionContext): PddlExtensionContext {
     return {
@@ -154,4 +155,43 @@ export function toRange(pddlRange: PddlRange): Range {
 
 export function nodeToRange(document: TextDocument, node: PddlSyntaxNode): Range {
     return new Range(document.positionAt(node.getStart()), document.positionAt(node.getEnd()));
+}
+
+export class UriMap<T> extends StringifyingMap<Uri, T> {
+    protected stringifyKey(key: Uri): string {
+        return key.toString();
+    }
+}
+
+export function asSerializable(obj: any): any {
+    if (obj instanceof Map) {
+        return strMapToObj(obj);
+    }
+    else if (obj instanceof Array) {
+        return obj.map(o => asSerializable(o));
+    }
+    else if (obj instanceof Object) {
+        let serObj = Object.create(null);
+        Object.keys(obj).forEach(key => serObj[key] = asSerializable(obj[key]));
+        return serObj;
+    }
+    else {
+        return obj;
+    }
+}
+
+export function strMapToObj(strMap: Map<string, any>): any {
+    let obj = Object.create(null);
+    for (let [k, v] of strMap) {
+        obj[k] = asSerializable(v);
+    }
+    return obj;
+}
+
+export function objToStrMap(obj: any): Map<string, any> {
+    let strMap = new Map();
+    for (let k of Object.keys(obj)) {
+        strMap.set(k, obj[k]);
+    }
+    return strMap;
 }

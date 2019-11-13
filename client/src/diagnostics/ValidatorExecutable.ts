@@ -84,22 +84,47 @@ export class ValidatorExecutable extends Validator {
     }
 
     private validateOneProblem(domainFilePath: string, problemFilePath: string, onOutput: (output: string) => void, onError: (error: string) => void): void {
-        let command = this.syntax.replace('$(parser)', Util.q(this.path))
-            .replace('$(domain)', Util.q(domainFilePath))
-            .replace('$(problem)', Util.q(problemFilePath));
+        let syntaxFragments = this.syntax.split(' ');
+        if (syntaxFragments.length < 1) {
+            throw new Error('Parser syntax pattern should start with $(parser)');
+        }
 
-        this.runProcess(command, onOutput, onError);
+        let args = syntaxFragments
+            .slice(1)
+            .map(fragment => {
+                switch (fragment) {
+                    case '$(parser)': return Util.q(this.path);
+                    case '$(domain)': return Util.q(domainFilePath);
+                    case '$(problem)': return Util.q(problemFilePath);
+                    default: return fragment;
+                }
+            });
+
+        this.runProcess(Util.q(this.path), args, onOutput, onError);
     }
 
-    private runProcess(command: string, onOutput: (output: string) => void, onError: (error: string) => void): void {
+    private runProcess(parserPath: string, args: string[], onOutput: (output: string) => void, onError: (error: string) => void): void {
+        let child = process.spawn(parserPath, args);
+    
+        var trailingLine = '';
 
-        let child = process.exec(command, (error, stdout, stderr) => {
-            if (error && !child.killed) {
+        child.stdout.on('data', output => {
+            let outputString = trailingLine + output.toString("utf8");
+            onOutput.apply(this, [outputString]);
+            trailingLine = outputString.substr(outputString.lastIndexOf('\n'));
+        });
+
+        child.on("error", error => {
+            if (!child.killed) {
                 onError.apply(this, [error.message]);
-                console.log(stderr);
+                console.log(error.message);
             }
+        });
 
-            onOutput.apply(this, [stdout]);
+        child.on("close", (code, signal) => {
+            if (code !== 0) {
+                console.log(`Parser exit code: ${code}, signal: ${signal}.`);
+            }
         });
     }
 }

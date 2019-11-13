@@ -21,7 +21,7 @@ export class UndeclaredVariable {
         this.syntaxTree = new PddlSyntaxTreeBuilder(fileInfo.getText()).getTree();
     }
 
-    getVariable(diagnostic: Diagnostic, document: TextDocument): [Variable, PddlSyntaxNode] {
+    getVariable(diagnostic: Diagnostic, document: TextDocument): [Variable, PddlSyntaxNode] | undefined {
 
         let match = UndeclaredVariable.undeclaredVariableDiagnosticPattern.exec(diagnostic.message);
         if (!match) { return undefined; }
@@ -30,7 +30,7 @@ export class UndeclaredVariable {
         let lineWithUndeclaredVariable = document.lineAt(diagnostic.range.start.line);
         let variableNameMatch = lineWithUndeclaredVariable.text.match(new RegExp("\\(\\s*" + variableName + "[ |\\)]", "i"));
         if (!variableNameMatch) { return undefined; }
-        let undeclaredVariableOffset = document.offsetAt(lineWithUndeclaredVariable.range.start) + variableNameMatch.index + variableNameMatch[0].indexOf(variableName);
+        let undeclaredVariableOffset = document.offsetAt(lineWithUndeclaredVariable.range.start) + variableNameMatch.index + variableNameMatch[0].toLowerCase().indexOf(variableName);
 
         let variableUsage = this.syntaxTree.getNodeAt(undeclaredVariableOffset + 1).expand();
         if (!variableUsage) {
@@ -49,7 +49,7 @@ export class UndeclaredVariable {
     findParameterDefinition(variableUsage: PddlSyntaxNode, parameterName: string): Parameter {
         let scope = variableUsage.findParametrisableScope(parameterName);
         let parameterDefinitionNode = scope && scope.getParameterDefinition();
-        return parseParameters(parameterDefinitionNode.getText()).find(p => p.name === parameterName);
+        return parseParameters(parameterDefinitionNode.getText()).find(p => p.name.toLowerCase() === parameterName.toLowerCase());
     }
 
     createEdit(document: TextDocument, variable: Variable, node: PddlSyntaxNode): [WorkspaceEdit, VariableType] {

@@ -16,9 +16,9 @@ export class AutoCompletion implements CompletionItemProvider {
 
     // For snippet syntax read this: https://code.visualstudio.com/docs/editor/userdefinedsnippets
 
-    operatorDelegate: OperatorDelegate;
-    variableDelegate: VariableDelegate;
-    typeDelegate: TypeDelegate;
+    private operatorDelegate: OperatorDelegate;
+    private variableDelegate: VariableDelegate;
+    private typeDelegate: TypeDelegate;
 
     constructor(public codePddlWorkspace: CodePddlWorkspace) {
         this.operatorDelegate = new OperatorDelegate();
@@ -36,10 +36,10 @@ export class AutoCompletion implements CompletionItemProvider {
 }
 
 class CompletionCollector {
-    completions: CompletionItem[] = [];
+    private completions: CompletionItem[] = [];
 
-    lineText: string;
-    leadingText: string;
+    private lineText: string;
+    private leadingText: string;
 
     constructor(private readonly codePddlWorkspace: CodePddlWorkspace, private readonly document: TextDocument,
         private readonly position: Position, private readonly context: CompletionContext,

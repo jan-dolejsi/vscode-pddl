@@ -141,12 +141,13 @@ export class SuggestionProvider implements CodeActionProvider {
         return action;
     }
 
-    private createUndeclaredVariableAction(document: TextDocument, diagnostic: Diagnostic, fileInfo: FileInfo): CodeAction {
+    private createUndeclaredVariableAction(document: TextDocument, diagnostic: Diagnostic, fileInfo: FileInfo): CodeAction | undefined {
 
         let undeclaredVariableDelegate = new UndeclaredVariable(fileInfo);
 
-        let [variable, node] = undeclaredVariableDelegate.getVariable(diagnostic, document);
-        if (!variable) { return undefined; }
+        const variableNode = undeclaredVariableDelegate.getVariable(diagnostic, document);
+        if (!variableNode) { return undefined; }
+        let [variable, node] = variableNode;
 
         let [edit, type] = undeclaredVariableDelegate.createEdit(document, variable, node);
 
@@ -159,7 +160,8 @@ export class SuggestionProvider implements CodeActionProvider {
                 sectionName = "predicate";
                 break;
             default:
-                throw new Error(`Could not determine whether ${variable.getFullName()} is a predicate or a function.`);
+                console.log(`Could not determine whether ${variable.getFullName()} is a predicate or a function.`);
+                return undefined;
         }
 
         const title = `Add undeclared ${sectionName} (${variable.getFullName()})`;

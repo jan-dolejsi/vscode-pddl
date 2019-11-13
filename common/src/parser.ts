@@ -19,19 +19,21 @@ import { ProblemInfo } from "./ProblemInfo";
 export class Parser {
 
     
-    problemParser: PddlProblemParser;
+    private problemParser: PddlProblemParser;
 
     constructor(context?: PddlExtensionContext) {
         if (context) {
             this.problemParser = new PddlProblemParser(context);
+        } else {
+            this.problemParser = new PddlProblemParser();
         }
     }
 
     async tryProblem(fileUri: string, fileVersion: number, fileText: string, syntaxTree: PddlSyntaxTree, positionResolver: DocumentPositionResolver): Promise<ProblemInfo> {
-        return new PddlProblemParser().parse(fileUri, fileVersion, fileText, syntaxTree, positionResolver);
+        return this.problemParser.parse(fileUri, fileVersion, fileText, syntaxTree, positionResolver);
     }
 
-    tryDomain(fileUri: string, fileVersion: number, fileText: string, syntaxTree: PddlSyntaxTree, positionResolver: DocumentPositionResolver): DomainInfo {
+    tryDomain(fileUri: string, fileVersion: number, fileText: string, syntaxTree: PddlSyntaxTree, positionResolver: DocumentPositionResolver): DomainInfo | null {
 
         //(define (domain domain_name)
 
@@ -167,7 +169,7 @@ var languageMap = new Map<string, PddlLanguage>([
     [HAPPENINGS, PddlLanguage.HAPPENINGS]
 ]);
 
-export function toLanguageFromId(languageId: string): PddlLanguage {
+export function toLanguageFromId(languageId: string): PddlLanguage | undefined {
     return languageMap.get(languageId);
 }
 

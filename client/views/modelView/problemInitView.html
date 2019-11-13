@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="../common/vis.js" type="text/javascript"></script>
+    <script src="problemInitView.js"></script>
+    <script src="baseView.js"></script>
+    <link rel="stylesheet" type="text/css" href="baseView.css"></link>
+    <link rel="stylesheet" type="text/css" href="problemInitView.css"></link>
+    <link href="../common/vis-network.min.css" rel="stylesheet" type="text/css" />
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>AI Planning problem viewer for VS Code</title>
+</head>
+
+<body onload="initialize()" class="vscode-light">
+    <div id="objectProperties"></div>
+    <div id="relationships"></div>
+    <div id="networkSection">
+        <table class="menuBar">
+            <tr><td class="menuBarCell">
+                    <img src="img/light/move.svg" theme="light" onclick="fit()" title="Fit all nodes" class="menuButton" />
+                    <img src="img/dark/move.svg" theme="dark" onclick="fit()" title="Fit all nodes" class="menuButton" />
+            </td></tr>
+        </table>
+        <div id="network"></div>
+    </div>
+    <div id="menu">
+        <span>
+        </span>
+        <span id="insetMenu">
+            <img src="img/light/chevron-down.svg" theme="light" onclick="expandInset()" title="Expand this view vertically" class="menuButton" />
+            <img src="img/dark/chevron-down.svg" theme="dark" onclick="expandInset()" title="Expand this view vertically" class="menuButton" />
+            <img src="img/light/close.svg" theme="light" onclick="closeInset()" title="Close this view" class="menuButton" />
+            <img src="img/dark/close.svg" theme="dark" onclick="closeInset()" title="Close this view" class="menuButton" />
+        </span>
+    </div>
+</body>
+

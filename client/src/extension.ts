@@ -37,6 +37,10 @@ import { CodePddlWorkspace } from './workspace/CodePddlWorkspace';
 import { DomainDiagnostics } from './diagnostics/DomainDiagnostics';
 import { PddlOnTypeFormatter } from './formatting/PddlOnTypeFormatter';
 import { PddlCompletionItemProvider } from './completion/PddlCompletionItemProvider';
+import { ProblemInitView } from './modelView/ProblemInitView';
+import { ProblemObjectsView } from './modelView/ProblemObjectsView';
+import { DomainTypesView } from './modelView/DomainTypesView';
+import { ProblemConstraintsView } from './modelView/ProblemConstraintsView';
 
 const PDDL_CONFIGURE_PARSER = 'pddl.configureParser';
 const PDDL_LOGIN_PARSER_SERVICE = 'pddl.loginParserService';
@@ -153,11 +157,23 @@ function activateWithTelemetry(_operationId: string, context: ExtensionContext) 
 	}));
 
 	let completionItemProvider = languages.registerCompletionItemProvider(PDDL, new AutoCompletion(codePddlWorkspace), '(', ':', '-');
-	let completionItemProvider2 = languages.registerCompletionItemProvider(PDDL, new PddlCompletionItemProvider(codePddlWorkspace), '(', ':', '-');
+	let completionItemProvider2 = languages.registerCompletionItemProvider(PDDL, new PddlCompletionItemProvider(codePddlWorkspace), '(', ':', '-', '?');
 
 	let suggestionProvider = languages.registerCodeActionsProvider(PDDL, new SuggestionProvider(codePddlWorkspace), {
 		providedCodeActionKinds: SuggestionProvider.providedCodeActionKinds
 	});
+
+	let domainTypesView = new DomainTypesView(context, codePddlWorkspace);
+	context.subscriptions.push(languages.registerCodeLensProvider(PDDL, domainTypesView));
+
+	let problemInitView = new ProblemInitView(context, codePddlWorkspace);
+	context.subscriptions.push(languages.registerCodeLensProvider(PDDL, problemInitView));
+
+	let problemObjectsView = new ProblemObjectsView(context, codePddlWorkspace);
+	context.subscriptions.push(languages.registerCodeLensProvider(PDDL, problemObjectsView));
+
+	let problemConstraintsView = new ProblemConstraintsView(context, codePddlWorkspace);
+	context.subscriptions.push(languages.registerCodeLensProvider(PDDL, problemConstraintsView));
 
 	registerDocumentFormattingProvider(context, codePddlWorkspace);
 
@@ -212,7 +228,8 @@ function activateWithTelemetry(_operationId: string, context: ExtensionContext) 
 		configureParserCommand, loginParserServiceCommand, updateTokensParserServiceCommand,
 		configurePlannerCommand, loginPlannerServiceCommand, updateTokensPlannerServiceCommand, completionItemProvider, completionItemProvider2,
 		renameProvider, suggestionProvider, documentSymbolProvider, definitionProvider, referencesProvider, hoverProvider,
-		planHoverProvider, planDefinitionProvider, happeningsHoverProvider, happeningsDefinitionProvider);
+		planHoverProvider, planDefinitionProvider, happeningsHoverProvider, happeningsDefinitionProvider,
+		problemInitView, problemObjectsView, problemConstraintsView);
 }
 
 export function deactivate() {

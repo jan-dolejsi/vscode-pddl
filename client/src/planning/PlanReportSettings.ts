@@ -12,6 +12,7 @@ const { URL } = require('url');
 export class PlanReportSettings {
     settings: any = null;
     excludeActions: string[] = null;
+    ignoreActionParameters: ActionParameterPattern[];
 
     constructor(domainFileUri: string) {
         let settingsFileUri = domainFileUri.replace(/\.pddl$/, '.planviz.json');
@@ -34,11 +35,29 @@ export class PlanReportSettings {
         return !this.excludeActions.some(pattern => this.matches(pattern, planStep.getActionName()));
     }
 
+    shouldIgnoreActionParameter(actionName: string, parameterName: string): boolean {
+        if (!this.settings) { return false; }
+
+        if (this.ignoreActionParameters === null || this.ignoreActionParameters === undefined) { this.ignoreActionParameters = this.settings["ignoreActionParameters"]; }
+        if (!this.ignoreActionParameters) { return true; }
+
+        let applicableSetting = this.ignoreActionParameters.find(entry => this.matches(entry.action, actionName));
+
+        if (!applicableSetting) { return false; }
+
+        return parameterName.match(new RegExp(applicableSetting.parameterPattern, "i")) !== null;
+    }
+
     private matches(pattern: string, actionName: string): boolean {
-        return !!actionName.match(pattern);
+        return !!actionName.match(new RegExp(pattern, "i"));
     }
 
     getPlanVisualizerScript(): string {
         return this.settings && this.settings["planVisualizer"];
     }
+}
+
+interface ActionParameterPattern {
+    action: string;
+    parameterPattern: string;
 }

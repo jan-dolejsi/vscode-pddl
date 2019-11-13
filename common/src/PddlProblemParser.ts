@@ -12,10 +12,12 @@ import { PddlSyntaxTree } from "./PddlSyntaxTree";
 import { ParsingProblem, stripComments } from "./FileInfo";
 import { PreProcessingError } from "./PreProcessors";
 import { PddlExtensionContext } from "./PddlExtensionContext";
-import { ProblemInfo, TimedVariableValue, VariableValue, SupplyDemand } from "./ProblemInfo";
+import { ProblemInfo, TimedVariableValue, VariableValue, SupplyDemand, UnsupportedVariableValue } from "./ProblemInfo";
 import { PddlDomainParser } from "./PddlDomainParser";
 import { PddlSyntaxNode } from "./PddlSyntaxNode";
 import { PddlTokenType, isOpenBracket } from "./PddlTokenizer";
+import { PddlInheritanceParser } from "./PddlInheritanceParser";
+import { PddlConstraintsParser } from "./PddlConstraintsParser";
 
 /**
  * Planning Problem parser.
@@ -83,7 +85,7 @@ export class PddlProblemParser {
         let objectsNode = defineNode.getFirstOpenBracket(':objects');
         if (objectsNode) {
             let objectsText = objectsNode.getNestedNonCommentText();
-            problemInfo.setObjects(PddlDomainParser.toTypeObjects(PddlDomainParser.parseInheritance(objectsText)));
+            problemInfo.setObjects(PddlInheritanceParser.toTypeObjects(PddlInheritanceParser.parseInheritance(objectsText)));
         }
 
         let initNode = defineNode.getFirstOpenBracket(':init');
@@ -91,6 +93,12 @@ export class PddlProblemParser {
             const [values, supplyDemands] = this.parseInitSection(initNode);
             problemInfo.setInits(values);
             problemInfo.setSupplyDemands(supplyDemands);
+        }
+
+        let constraintsNode = defineNode.getFirstOpenBracket(':constraints');
+        if (constraintsNode) {
+            const constraints = new PddlConstraintsParser().parseConstraints(constraintsNode);
+            problemInfo.setConstraints(constraints);
         }
     }
 
@@ -101,7 +109,7 @@ export class PddlProblemParser {
     parseInitSection(initNode: PddlSyntaxNode): [TimedVariableValue[], SupplyDemand[]] {
         let timedVariableValues = initNode.getChildren()
             .filter(node => isOpenBracket(node.getToken()))
-            .filter(node => node.getToken().tokenText.match(/\(\s*supply-demand/i) !== null)
+            .filter(node => node.getToken().tokenText.match(/\(\s*supply-demand/i) === null)
             .map(bracket => this.parseInit(bracket));
         
         let supplyDemands = initNode.getChildrenOfType(PddlTokenType.OpenBracketOperator, /\(\s*supply-demand/i)
@@ -153,9 +161,12 @@ export class PddlProblemParser {
             return undefined;
         }
         else if (node.getToken().tokenText === '(not') {
-            let nested = node.getFirstChild(PddlTokenType.OpenBracket, /.*/);
+            let nested = node.getFirstChild(PddlTokenType.OpenBracket, /.*/) || node.getFirstChild(PddlTokenType.OpenBracketOperator, /.*/);
             if (!nested) { return undefined; }
             return this.parseVariableValue(nested).negate();
+        }
+        else if (['(forall', '(assign', '(increase', '(decrease'].includes(node.getToken().tokenText)) {
+            return new UnsupportedVariableValue(node.getText());
         }
         else {
             if (node.getChildren().some(child => isOpenBracket(child.getToken()))) { return undefined; }

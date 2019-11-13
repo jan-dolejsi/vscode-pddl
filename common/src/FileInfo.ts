@@ -11,10 +11,10 @@ import { PddlSyntaxNode } from "./PddlSyntaxNode";
  * An abstract PDDL file.
  */
 export abstract class FileInfo {
-    private text: string;
+    private text?: string;
     private status: FileStatus = FileStatus.Parsed;
     private parsingProblems: ParsingProblem[] = [];
-    private requirements: string[];
+    private requirements?: string[];
 
     constructor(public readonly fileUri: string, private version: number, public readonly name: string, private readonly positionResolver: DocumentPositionResolver) {
     }
@@ -26,7 +26,8 @@ export abstract class FileInfo {
     }
 
     getText(): string {
-        return this.text;
+        if (!this.text) { throw new Error('Accessing getText() before file was parsed'); }
+        return this.text!;
     }
 
     setText(text: string): void {
@@ -92,6 +93,7 @@ export abstract class FileInfo {
     }
 
     getTypeReferences(typeName: string): PddlRange[] {
+        if (!this.text) { return []; }
         let referenceLocations: PddlRange[] = [];
 
         let pattern = `-\\s+${typeName}\\b`;
@@ -121,7 +123,8 @@ export abstract class FileInfo {
     }
 
     getRequirements(): string[] {
-        return this.requirements;
+        if (this.requirements === undefined) { throw new Error('Accessing getRequirements() before file was parsed'); }
+        return this.requirements!;
     }
 
     getDocumentPositionResolver(): DocumentPositionResolver {
@@ -139,7 +142,7 @@ export class ParsingProblem {
      * @param lineIndex zero-based line index, where this problem was found.
      * @param columnIndex zero-based column index, where this problem was found. Default is zero.
      */
-    constructor(public problem: string, public lineIndex: number, public columnIndex: number = 0) { }
+    constructor(public problem: string, public lineIndex?: number, public columnIndex: number = 0) { }
 }
 
 export enum PddlLanguage {
@@ -162,7 +165,7 @@ export enum FileStatus { Parsed, Dirty, Validating, Validated }
 export class Variable {
     readonly name: string;
     readonly declaredNameWithoutTypes: string;
-    private location: PddlRange = null; // initialized lazily
+    private location?: PddlRange; // initialized lazily
     private documentation: string[] = []; // initialized lazily
     private unit = ''; // initialized lazily
 
@@ -172,11 +175,12 @@ export class Variable {
     }
 
     bind(objects: ObjectInstance[]): Variable {
+        const objectNames = objects.map(o => o.name).join(" ");
         if (this.parameters.length !== objects.length) {
-            throw new Error(`Invalid objects ${objects} for function ${this.getFullName()} parameters ${this.parameters}.`);
+            throw new Error(`Invalid objects '${objectNames}' for function '${this.getFullName()}' with ${this.parameters.length} parameters.`);
         }
         let fullName = this.name;
-        if (objects) { fullName += " " + objects.map(o => o.name).join(" "); }
+        if (objects) { fullName += " " + objectNames; }
         return new Variable(fullName, objects);
     }
 
@@ -213,6 +217,7 @@ export class Variable {
     }
 
     getLocation(): PddlRange {
+        if (this.location === undefined) { throw new Error('Accessing getLocation() before parsing.'); }
         return this.location;
     }
 }
