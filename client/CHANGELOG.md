@@ -13,6 +13,10 @@
 - network/graph settings UI
 - improved icons
 - types vs objects visualized in different color
+- Document symbols for problem files
+- Domain processes and events are included into document symbols
+- Improved parsing of large domains by processing the parser output incrementally
+- Removed some 15MB from the extension package by reviewing the package content
 
 ## [2.15.0] PDDL Model Visualization
 

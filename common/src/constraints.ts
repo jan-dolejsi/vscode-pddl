@@ -25,7 +25,7 @@ export class ConditionalConstraint extends Constraint {
     }
 }
 
-export class StateSatisfyingConstraint extends ConditionalConstraint {
+export class NamedConditionConstraint extends ConditionalConstraint {
     public readonly name?: string;
     constructor(definition: { name?: string, condition?: Condition }, 
         node: PddlSyntaxNode) {
@@ -39,7 +39,7 @@ export class StateSatisfyingConstraint extends ConditionalConstraint {
 }
 
 export class AfterConstraint extends Constraint {
-    constructor(public readonly predecessor: StateSatisfyingConstraint, public readonly successor: StateSatisfyingConstraint, node: PddlSyntaxNode) {
+    constructor(public readonly predecessor: NamedConditionConstraint, public readonly successor: NamedConditionConstraint, node: PddlSyntaxNode) {
         super(node);
     }
 }

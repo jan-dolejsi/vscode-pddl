@@ -859,7 +859,6 @@
     "vscode-uri": "^2.0.3",
     "await-notify": "^1.0.1",
     "express": "^4.17.1",
-    "npm": "5.5.1",
     "nunjucks": "^3.2.0",
     "open": "^6.3.0",
     "tmp": "^0.1.0",
@@ -872,6 +871,7 @@
     "semver": "^6.1.1"
   },
   "devDependencies": {
+    "npm": "5.5.1",
     "@types/express": "^4.17.0",
     "@types/request": "^2.48.1",
     "@types/semver": "^6.0.0",

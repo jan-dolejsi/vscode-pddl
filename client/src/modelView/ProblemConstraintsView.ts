@@ -19,7 +19,7 @@ import { nodeToRange } from '../utils';
 import { DocumentInsetCodeLens, DocumentCodeLens } from './view';
 import { ProblemView, ProblemRendererOptions, ProblemRenderer } from './ProblemView';
 import { GraphViewData, NetworkEdge, NetworkNode } from './GraphViewData';
-import { StateSatisfyingConstraint, AfterConstraint } from '../../../common/src/constraints';
+import { NamedConditionConstraint, AfterConstraint } from '../../../common/src/constraints';
 import { ProblemViewPanel } from './ProblemViewPanel';
 
 const CONTENT = path.join('views', 'modelView');
@@ -118,14 +118,14 @@ class ProblemConstraintsRenderer implements ProblemRenderer<ProblemConstraintsRe
     }
 }
 
-class StateSatisfyingNode {
+class NamedConditionNode {
     constructor(readonly id: number, readonly name: string, readonly definition: string) { }
 }
 
 class ProblemConstraintsRendererDelegate {
-    private nodes: Map<string, StateSatisfyingNode> = new Map();
+    private nodes: Map<string, NamedConditionNode> = new Map();
     private relationships: NetworkEdge[] = [];
-    private stateSatisfyingConstraints: StateSatisfyingConstraint[];
+    private namedConditionConstraints: NamedConditionConstraint[];
     private afterConstraints: AfterConstraint[];
     private namedStateNames = new Set<string>();
     private lastNodeIndex: number;
@@ -133,18 +133,18 @@ class ProblemConstraintsRendererDelegate {
     constructor(_context: ExtensionContext, private domain: DomainInfo, private problem: ProblemInfo, _options: ProblemConstraintsRendererOptions) {
         const allConstraints = this.domain.getConstraints().concat(this.problem.getConstraints());
 
-        this.stateSatisfyingConstraints = allConstraints
-            .filter(c => c instanceof StateSatisfyingConstraint)
-            .map(c => c as StateSatisfyingConstraint);
+        this.namedConditionConstraints = allConstraints
+            .filter(c => c instanceof NamedConditionConstraint)
+            .map(c => c as NamedConditionConstraint);
 
         this.afterConstraints = allConstraints
             .filter(c => c instanceof AfterConstraint)
             .map(c => c as AfterConstraint);
 
-        this.stateSatisfyingConstraints
-            .forEach((c, index) => this.addStateSatisfying(c, index));
+        this.namedConditionConstraints
+            .forEach((c, index) => this.addNamedCondition(c, index));
 
-        this.lastNodeIndex = this.stateSatisfyingConstraints.length;
+        this.lastNodeIndex = this.namedConditionConstraints.length;
 
         this.afterConstraints.forEach(ac => {
             let predecessorId = this.upsertGoal(ac.predecessor);
@@ -153,31 +153,31 @@ class ProblemConstraintsRendererDelegate {
         });
     }
 
-    private addStateSatisfying(stateSatisfying: StateSatisfyingConstraint, index: number): number {
-        this.nodes.set(stateSatisfying.name!, new StateSatisfyingNode(index, stateSatisfying.name!, stateSatisfying.condition!.getText()));
-        this.namedStateNames.add(stateSatisfying.name!);
+    private addNamedCondition(namedCondition: NamedConditionConstraint, index: number): number {
+        this.nodes.set(namedCondition.name!, new NamedConditionNode(index, namedCondition.name!, namedCondition.condition!.getText()));
+        this.namedStateNames.add(namedCondition.name!);
         return index;
     }
 
-    private upsertGoal(stateSatisfying: StateSatisfyingConstraint): number {
-        if (stateSatisfying.name) {
-            let detail = this.nodes.get(stateSatisfying.name!);
+    private upsertGoal(namedCondition: NamedConditionConstraint): number {
+        if (namedCondition.name) {
+            let detail = this.nodes.get(namedCondition.name!);
             if (detail) {
                 return detail.id;
             }
             else {
                 // this happens when the model is incomplete
-                return this.addStateSatisfying(stateSatisfying, this.lastNodeIndex++);
+                return this.addNamedCondition(namedCondition, this.lastNodeIndex++);
             }
         }
-        else if (stateSatisfying.condition) {
+        else if (namedCondition.condition) {
             let index = this.lastNodeIndex++;
-            let conditionText = stateSatisfying.condition!.getText();
-            this.nodes.set(conditionText, new StateSatisfyingNode(index, '', conditionText));
+            let conditionText = namedCondition.condition!.getText();
+            this.nodes.set(conditionText, new NamedConditionNode(index, '', conditionText));
             return index;
         }
         else {
-            throw new Error('Unexpected constraint: ' + stateSatisfying.toString());
+            throw new Error('Unexpected constraint: ' + namedCondition.toString());
         }
     }
 
@@ -189,7 +189,7 @@ class ProblemConstraintsRendererDelegate {
         return [...this.nodes.values()].map(entry => this.toNode(entry));
     }
 
-    private toNode(entry: StateSatisfyingNode): NetworkNode {
+    private toNode(entry: NamedConditionNode): NetworkNode {
         let shape = "box";
         let label = [entry.name, entry.definition]
             .filter(element => element && element.length > 0)
