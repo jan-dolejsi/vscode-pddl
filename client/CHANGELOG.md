@@ -831,17 +831,16 @@ Simplified snippets and added tabstops/placeholders to them, so they are easy to
 
 ## Future work
 
-- valstep batch mode
 - Review configuration properties scope - which properties should be moved to 'application' scope?
 - Rename objects and constants
 - Auto-completion for constant/object names.
-- Any other extensions to put into extensions.json?
 - Review the ViewColumn usage following the Grid View feature availability in VS Code
 - Add a search into the virtual file system for the IPC benchmarks and adapt it to the test cases manifests for ease of use
 - Add Happenings to Problem explicit mapping
 - Interactive stepping through plans (aka debugging).
 - Icons: https://code.visualstudio.com/updates/v1_31#_updated-octicons
 - CodeAction to remove unnecessary requirements etc..
+- Predicate/function usage decoration and dependency map dispayed via the Call Hierarchy
 
 ## [Unreleased]
 
