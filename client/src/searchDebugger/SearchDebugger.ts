@@ -164,7 +164,7 @@ export class SearchDebugger implements PlannerOptionsProvider {
             this.server.close();
             this.server = null;
         }
-        this.view.showDebuggerState(this.isRunning(), this.port);
+        this.view.setDebuggerState(this.isRunning(), this.port);
         this.showStatusBarItem();
     }
 

@@ -18,7 +18,7 @@ import * as path from 'path';
 import { CodePddlWorkspace } from '../workspace/CodePddlWorkspace';
 import { CONF_PDDL, PLAN_REPORT_WIDTH } from '../configuration';
 
-const CONTENT = 'planview';
+const CONTENT = path.join('views','planview');
 export const PDDL_GENERATE_PLAN_REPORT = 'pddl.planReport';
 export const PDDL_EXPORT_PLAN = 'pddl.exportPlan';
 
@@ -139,10 +139,10 @@ export class PlanView extends Disposable {
             enableFindWidget: true,
             enableCommandUris: true,
             enableScripts: true,
-            localResourceRoots: [Uri.file(path.join(this.context.extensionPath, CONTENT))]
+            localResourceRoots: [Uri.file(this.context.asAbsolutePath(CONTENT))]
         });
 
-        webViewPanel.iconPath = Uri.file(this.context.asAbsolutePath("overview/file_type_pddl_plan.svg"));
+        webViewPanel.iconPath = Uri.file(this.context.asAbsolutePath(path.join("views", "overview", "file_type_pddl_plan.svg")));
 
         let previewPanel = new PlanPreviewPanel(uri, webViewPanel);
 

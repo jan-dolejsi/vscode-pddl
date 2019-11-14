@@ -45,7 +45,7 @@ export class ProblemInitView extends ProblemView<ProblemInitViewOptions, Problem
                 retainContextWhenHidden: true,
                 enableScripts: true,
                 localResourceRoots: [
-                    Uri.file(context.extensionPath)
+                    Uri.file(context.asAbsolutePath("views"))
                 ]
             }
         },

@@ -42,7 +42,7 @@ export class ProblemObjectsView extends ProblemView<ProblemObjectsRendererOption
                 retainContextWhenHidden: true,
                 enableScripts: true,
                 localResourceRoots: [
-                    Uri.file(context.extensionPath)
+                    Uri.file(context.asAbsolutePath("views"))
                 ]
             }
         },

@@ -56,16 +56,16 @@ export class PlanReportGenerator {
         let planHtmlArr: string[] = await Promise.all(plans.map(async (plan, planIndex) => await this.renderPlan(plan, planIndex, selectedPlan)));
         let plansHtml = planHtmlArr.join("\n\n");
         let plansChartsScript = this.createPlansChartsScript(plans);
-
+        let relativePath = path.join('views', 'planview');
         let html = `<!DOCTYPE html>
         <head>
             <title>Plan report</title>
-            ${await this.includeStyle(this.asAbsolutePath('planview', 'plans.css'))}
-            ${await this.includeStyle(this.asAbsolutePath('planview', 'plan-resource-task.css'))}
-            ${await this.includeStyle(this.asAbsolutePath('planview', 'menu.css'))}
-            ${await this.includeScript(this.asAbsolutePath('planview', 'plans.js'))}
+            ${await this.includeStyle(this.asAbsolutePath(relativePath, 'plans.css'))}
+            ${await this.includeStyle(this.asAbsolutePath(relativePath, 'plan-resource-task.css'))}
+            ${await this.includeStyle(this.asAbsolutePath(relativePath, 'menu.css'))}
+            ${await this.includeScript(this.asAbsolutePath(relativePath, 'plans.js'))}
             <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
-            ${await this.includeScript(this.asAbsolutePath('planview', 'charts.js'))}
+            ${await this.includeScript(this.asAbsolutePath(relativePath, 'charts.js'))}
         </head>
         <body onload="scrollPlanSelectorIntoView(${selectedPlan})">
             <div class="planSelectors" style="display: ${planSelectorsDisplayStyle};">${planSelectors}

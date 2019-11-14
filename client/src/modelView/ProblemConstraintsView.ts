@@ -43,7 +43,7 @@ export class ProblemConstraintsView extends ProblemView<ProblemConstraintsRender
                 retainContextWhenHidden: true,
                 enableScripts: true,
                 localResourceRoots: [
-                    Uri.file(context.extensionPath)
+                    Uri.file(context.asAbsolutePath("views"))
                 ]
             }
         },

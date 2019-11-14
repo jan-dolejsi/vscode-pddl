@@ -41,7 +41,7 @@ export class DomainTypesView extends DomainView<DomainTypesRendererOptions, Grap
                 retainContextWhenHidden: true,
                 enableScripts: true,
                 localResourceRoots: [
-                    Uri.file(context.extensionPath)
+                    Uri.file(context.asAbsolutePath("views"))
                 ]
             }
         },

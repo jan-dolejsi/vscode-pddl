@@ -1,12 +1,4 @@
 
-var vscode = null;
-try {
-    vscode = acquireVsCodeApi();
-}catch(error){
-    console.error(error);
-    // swallow, so in the script can be tested in a browser
-}
-
 window.addEventListener('message', event => {
     const message = event.data;
 
@@ -18,6 +10,12 @@ window.addEventListener('message', event => {
             console.log("Unexpected message: " + message.command);
     }
 })
+
+function initialize() {
+    if (!vscode) { populateWithTestData(); }
+
+    onLoad();
+}
 
 function updateConfiguration(message) {
     document.getElementById('planner').value = message.planner;
@@ -119,59 +117,43 @@ function onPlannerOutputTargetChanged() {
 }
 
 function clonePddlSamples() {
-    postMessage({
-        command: 'clonePddlSamples'
-    })
+    postCommand('clonePddlSamples');
 }
 
 function tryHelloWorld() {
-    postMessage({
-        command: 'tryHelloWorld'
-    })
+    postCommand('tryHelloWorld');
 }
 
 function openNunjucksSample() {
-    postMessage({
-        command: 'openNunjucksSample'
-    })
+    postCommand('openNunjucksSample');
 }
 
 function installIcons() {
-    postMessage({
-        command: 'installIcons'
-    })
+    postCommand('installIcons');
 }
 
 function enableIcons() {
-    postMessage({
-        command: 'enableIcons'
-    })
+    postCommand('enableIcons');
 }
 
 function downloadValInformed() {
     postMessage({
         command: 'downloadVal',
         informedDecision: true
-    })
-}
-
-function postMessage(message) {
-    if (vscode) vscode.postMessage(message);
+    });
 }
 
 function populateWithTestData() {
-    if (!vscode) {
-        // for testing only
-        updateConfiguration({
-            planner: "planner.exe",
-            parser: "parser.exe",
-            validator: "validate.exe",
-            autoSave: "off",
-            shouldShow: true,
-            showInstallIconsAlert: true,
-            showEnableIconsAlert: true,
-            downloadValAlert: true,
-            updateValAlert: true
-        });
-    }
+    // for testing only
+    updateConfiguration({
+        planner: "planner.exe",
+        parser: "parser.exe",
+        validator: "validate.exe",
+        autoSave: "off",
+        shouldShow: true,
+        showInstallIconsAlert: true,
+        showEnableIconsAlert: true,
+        downloadValAlert: true,
+        updateValAlert: true
+    });
 }

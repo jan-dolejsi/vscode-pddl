@@ -5,62 +5,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Search View</title>
     <script src="https://www.gstatic.com/charts/loader.js" type="text/javascript"></script>
+    <script src="../common/baseWebview.js" type="text/javascript"></script>
     <script src="charts.js" type="text/javascript"></script>
     <script src="../common/vis.js" type="text/javascript"></script>
     <script src="tree.js" type="text/javascript"></script>
     <script src="search.js" type="text/javascript"></script>
     <link href="../common/vis-network.min.css" rel="stylesheet" type="text/css" />
-    <style type="text/css">
-        body {
-            height: 100%;
-        }
-        /* consider this approach: https://stackoverflow.com/questions/90178/make-a-div-fill-the-height-of-the-remaining-screen-space */
-        #network{
-            min-height: 300px;
-            height: 450px;
-            min-width: 350px;
-            border: 1px solid lightgray;
-            resize: vertical;
-            overflow: auto;
-            background: whitesmoke;
-        }
-        * {
-            box-sizing:border-box;
-        }
-
-        .left {
-            /* background-color:#2196F3; */
-            padding:10px;
-            float:left;
-            width:60%; /* The width is 60%, by default */
-            min-width: 350px;
-        }
-        .right {
-            /* background-color:#4CAF50; */
-            padding:10px;
-            float:left;
-            width:40%; /* The width is 40%, by default */
-            min-width: 300px;
-            overflow-x: auto;
-            overflow-y: auto;
-        }
-        /* Use a media query to add a break point at 650px: */
-        @media screen and (max-width:670px) {
-            .left, .right {
-                width: 100%; /* The width is 100%, when the viewport is 670px or smaller */
-            }
-        }
-        .menu {
-            display: none;
-        }
-        .toolbarButton {
-            font-size: 28px;
-            color: gray";
-        }
-        .help {
-            color: gray
-        }
-    </style>
+    <link href="search.css" rel="stylesheet" type="text/css"></link>
+    <!--CSP-->
 </head>
 <body onload="initialize()">
     <div style="float: right">
