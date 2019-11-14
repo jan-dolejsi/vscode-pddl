@@ -5,7 +5,7 @@
 'use strict';
 
 import {
-    WebviewPanel, ViewColumn, CodeLens, TextDocument, Range, Command
+    WebviewPanel, ViewColumn, CodeLens, TextDocument, Range, Command, Webview
 } from 'vscode';
 
 
@@ -17,6 +17,7 @@ export interface WebviewAdapter {
     html: string;
     postMessage(message: any): Thenable<boolean>;
     readonly isInset: boolean;
+    readonly webview: Webview;
 }
 
 export class WebviewPanelAdapter implements WebviewAdapter {
@@ -44,6 +45,9 @@ export class WebviewPanelAdapter implements WebviewAdapter {
     }
     public get isInset(): boolean {
         return false;
+    }
+    public get webview(): Webview {
+        return this.panel.webview;
     }
 }
 

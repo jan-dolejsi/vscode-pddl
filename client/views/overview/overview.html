@@ -4,7 +4,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <script src="overview.js"></script>
+    <script src="../common/baseWebview.js" type="text/javascript"></script>
+    <script src="overview.js" type="text/javascript"></script>
     <link rel="stylesheet" type="text/css" href="overview.css">
     </link>
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
@@ -12,7 +13,7 @@
     <title>AI Planning and PDDL support in VS Code</title>
 </head>
 
-<body onload="populateWithTestData()">
+<body onload="initialize()">
     <h1>AI Planning and PDDL support in VS Code</h1>
 
     <ul id="alertList" class="alertList">

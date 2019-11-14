@@ -30,17 +30,24 @@ export async function getWebViewHtml(extensionContext: PddlExtensionContext, rel
         if (attribValue.startsWith('http')) {
             return sourceElement;
         }
-        let resource = Uri.file(
-            extensionContext.asAbsolutePath(path.join(relativePath, attribValue)))
-            .with({ scheme: "vscode-resource" });
+        let resource = asWebviewUri(Uri.file(extensionContext.asAbsolutePath(path.join(relativePath, attribValue))), webview);
         return `<${elementName} ${middleBits}${attribName}="${resource}"`;
     });
 
     if (webview) {
-        html = html.replace("<!--CSP-->", createContentSecurityPolicy(webview));
+        html = html.replace("<!--CSP-->", createContentSecurityPolicy(webview!));
     }
 
     return html;
+}
+
+function asWebviewUri(localUri: Uri, webview?: Webview): Uri {
+    if (webview) {
+        return webview.asWebviewUri(localUri);
+    }
+    else {
+        return localUri.with({ scheme: "vscode-resource" });
+    }
 }
 
 function createContentSecurityPolicy(webview: Webview): string {

@@ -1,14 +1,3 @@
-var vscode = null;
-try {
-    vscode = acquireVsCodeApi();
-}catch(error){
-    console.error(error);
-    // swallow, so in the script can be tested in a browser
-}
-
-function postMessage(message) {
-    if (vscode) vscode.postMessage(message);
-}
 
 window.addEventListener('message', event => {
     const message = event.data;
@@ -192,6 +181,8 @@ function initialize() {
 
     initializeChart();
     subscribeToChartEvents();
+
+    onLoad();
 }
 
 var chartSelectEvent;
@@ -225,23 +216,23 @@ function clearStates() {
 
 function startSearchDebugger() {
     showDebuggerOn(true);
-    postMessage({command: 'startDebugger'});
+    postCommand('startDebugger');
 }
 
 function stopSearchDebugger() {
     showDebuggerOn(false);
-    postMessage({command: 'stopDebugger'});
+    postCommand('stopDebugger');
 }
 
 function restartSearchDebugger() {
-    postMessage({command: 'reset'});
+    postCommand('reset');
     showStatePlan("");
     clearStates();
 }
 
 function showDebuggerOn(on, port) {
-    stopDisplay = on ? 'inherit' : 'none';
-    startDisplay = on ? 'none' : 'inherit';
+    stopDisplay = on ? 'initial' : 'none';
+    startDisplay = on ? 'none' : 'initial';
 
     window.document.getElementById("startDebuggerButton").style.display = startDisplay;
     window.document.getElementById("stopDebuggerButton").style.display = stopDisplay;
@@ -334,7 +325,7 @@ function navigateToChildOfSelectedState(actionName) {
 }
 
 function toggleStateLog() {
-    postMessage({ command: 'toggleStateLog' });
+    postCommand('toggleStateLog');
 }
 
 function showStateLogButton(logFilePath) {

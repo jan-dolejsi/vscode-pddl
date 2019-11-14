@@ -5,7 +5,7 @@
 'use strict';
 
 import {
-    window, Uri, ViewColumn, WebviewPanel, workspace, commands
+    window, Uri, ViewColumn, WebviewPanel, workspace, commands, Webview
 } from 'vscode';
 import * as path from 'path';
 import { getWebViewHtml } from '../utils';
@@ -18,7 +18,7 @@ import { PTEST_VIEW } from './PTestCommands';
 /** Visualizes PTest results on a web view panel. */
 export class PTestReportView {
     private webViewPanel: WebviewPanel;
-    readonly CONTENT_FOLDER = "ptestReportView";
+    readonly CONTENT_FOLDER = path.join("views", "ptestReport");
 
     constructor(private context: PddlExtensionContext, private report: PTestReport) {
     }
@@ -33,7 +33,6 @@ export class PTestReportView {
     }
 
     async createPage(): Promise<void> {
-        let html = await this.getHtml();
         let iconUri = this.context.asAbsolutePath('images/icon.png');
 
         this.webViewPanel = window.createWebviewPanel(
@@ -48,11 +47,10 @@ export class PTestReportView {
                 enableFindWidget: true,
                 enableCommandUris: true,
                 enableScripts: true,
-                localResourceRoots: [Uri.file(path.join(this.context.extensionPath, this.CONTENT_FOLDER))]
+                localResourceRoots: [Uri.file(this.context.asAbsolutePath(this.CONTENT_FOLDER))]
             }
         );
 
-        this.webViewPanel.webview.html = html;
         this.webViewPanel.iconPath = Uri.file(iconUri);
 
         this.webViewPanel.onDidDispose(() => this.webViewPanel = undefined, undefined, this.context.subscriptions);
@@ -67,13 +65,13 @@ export class PTestReportView {
 
     async updatePage(): Promise<void> {
         if (this.webViewPanel) {
-            let html = await this.getHtml();
+            let html = await this.getHtml(this.webViewPanel.webview);
             this.webViewPanel.webview.html = html;
         }
     }
 
-    async getHtml(): Promise<string> {
-        let html = await getWebViewHtml(this.context, this.CONTENT_FOLDER, 'page.html');
+    async getHtml(webview: Webview): Promise<string> {
+        let html = await getWebViewHtml(this.context, this.CONTENT_FOLDER, 'page.html', webview);
 
         let tableRowsHtml = this.report.getManifests().map(manifest => this.renderManifestRow(manifest));
 
