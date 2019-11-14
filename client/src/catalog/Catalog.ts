@@ -116,9 +116,9 @@ class CatalogDataProvider implements TreeDataProvider<CatalogEntry> {
         if (!kind) {
             return null;
         } else if (kind === CatalogEntryKind.Domain) {
-            return this.context.asAbsolutePath(join('overview', 'file_type_pddl.svg'));
+            return this.context.asAbsolutePath(join('views', 'overview', 'file_type_pddl.svg'));
         } else if (kind === CatalogEntryKind.Problem) {
-            return this.context.asAbsolutePath(join('overview', 'file_type_pddl_plan.svg'));
+            return this.context.asAbsolutePath(join('views', 'overview', 'file_type_pddl_plan.svg'));
         }
     }
 

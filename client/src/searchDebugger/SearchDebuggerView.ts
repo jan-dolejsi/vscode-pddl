@@ -5,7 +5,7 @@
 'use strict';
 
 import {
-    window, ExtensionContext, Uri, ViewColumn, WebviewPanel, commands, Disposable, workspace, TextEditorRevealType, TextEditor, Range
+    window, ExtensionContext, Uri, ViewColumn, WebviewPanel, commands, Disposable, workspace, TextEditorRevealType, TextEditor, Range, Webview
 } from 'vscode';
 import * as path from 'path';
 
@@ -65,11 +65,10 @@ export class SearchDebuggerView {
             await this.createDebugView(false);
         }
 
-        this.showDebuggerState(debuggerListening, port);
+        this.setDebuggerState(debuggerListening, port);
     }
 
     async createDebugView(showOnTop: boolean): Promise<void> {
-        let html = await this.getHtml();
         let iconUri = this.context.asAbsolutePath('images/icon.png');
 
         this.webViewPanel = window.createWebviewPanel(
@@ -84,10 +83,11 @@ export class SearchDebuggerView {
                 enableFindWidget: true,
                 enableCommandUris: true,
                 enableScripts: true,
-                localResourceRoots: [Uri.file(this.context.extensionPath)]
+                localResourceRoots: [Uri.file(this.context.asAbsolutePath("views"))]
             }
         );
 
+        let html = await this.getHtml(this.webViewPanel.webview);
         this.webViewPanel.webview.html = html;
         this.webViewPanel.iconPath = Uri.file(iconUri);
 
@@ -100,7 +100,7 @@ export class SearchDebuggerView {
 
     changedViewState(webViewPanel: WebviewPanel): any {
         if (webViewPanel.visible) {
-            this.showDebuggerState(this.debuggerState, this.port);
+            this.showDebuggerState();
             if (this.stateChangedWhileViewHidden) {
                 // re-send all states
                 this.showAllStates();
@@ -115,6 +115,9 @@ export class SearchDebuggerView {
         console.log(`Message received from the webview: ${message.command}`);
 
         switch (message.command) {
+            case 'onload':
+                this.showDebuggerState();
+                break;
             case 'stateSelected':
                 try {
                     this.showStatePlan(message.stateId);
@@ -144,15 +147,23 @@ export class SearchDebuggerView {
 
     CONTENT_FOLDER = path.join('views', 'searchview');
 
-    async getHtml(): Promise<string> {
-        let html = await getWebViewHtml(createPddlExtensionContext(this.context), this.CONTENT_FOLDER, 'search.html');
-        return html;
+    async getHtml(webview: Webview): Promise<string> {
+        return getWebViewHtml(createPddlExtensionContext(this.context), this.CONTENT_FOLDER, 'search.html', webview);
     }
 
-    showDebuggerState(on: boolean, port: number): void {
+    setDebuggerState(on: boolean, port: number): void {
         this.debuggerState = on;
         this.port = port;
-        this.postMessage({ command: "debuggerState", state: { running: on ? 'on' : 'off', port: port}});
+        this.showDebuggerState();
+    }
+
+    private showDebuggerState() {
+        this.postMessage({
+            command: "debuggerState", state: {
+                running: this.debuggerState ? 'on' : 'off',
+                port: this.port
+            }
+        });
     }
 
     addState(newState: State): void {

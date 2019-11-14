@@ -5,7 +5,7 @@
 'use strict';
 
 import {
-    window, ExtensionContext, Uri, ViewColumn, WebviewPanel, commands, workspace, ConfigurationTarget, extensions, TextDocument
+    window, ExtensionContext, Uri, ViewColumn, WebviewPanel, commands, workspace, ConfigurationTarget, extensions, TextDocument, Webview
 } from 'vscode';
 
 import { PddlConfiguration } from '../configuration';
@@ -52,11 +52,10 @@ export class OverviewPage {
     }
 
     async createWelcomePage(showOnTop: boolean): Promise<void> {
-        let html = await this.getHtml();
         let iconUri = this.context.asAbsolutePath('images/icon.png');
 
         let webViewPanel = window.createWebviewPanel(
-            "pddl.Wecome",
+            "pddl.Welcome",
             "PDDL Overview",
             {
                 viewColumn: ViewColumn.Active,
@@ -67,10 +66,11 @@ export class OverviewPage {
                 enableFindWidget: true,
                 enableCommandUris: true,
                 enableScripts: true,
-                localResourceRoots: [Uri.file(path.join(this.context.extensionPath, this.CONTENT_FOLDER))]
+                localResourceRoots: [Uri.file(this.context.asAbsolutePath(this.VIEWS))]
             }
         );
 
+        let html = await this.getHtml(webViewPanel.webview);
         webViewPanel.webview.html = html;
         webViewPanel.iconPath = Uri.file(iconUri);
 
@@ -81,9 +81,6 @@ export class OverviewPage {
         this.webViewPanel = webViewPanel;
         this.context.subscriptions.push(this.webViewPanel);
 
-        // set up the view with relevant data
-        this.updatePageConfiguration();
-
         // record the last date the page was shown on top
         this.context.globalState.update(LAST_SHOWN_OVERVIEW_PAGE, new Date(Date.now()));
     }
@@ -92,6 +89,9 @@ export class OverviewPage {
         console.log(`Message received from the webview: ${message.command}`);
 
         switch (message.command) {
+            case 'onload':
+                await this.updatePageConfiguration();
+                break;
             case 'shouldShowOverview':
                 this.context.globalState.update(SHOULD_SHOW_OVERVIEW_PAGE, message.value);
                 break;
@@ -137,7 +137,8 @@ export class OverviewPage {
         }
     }
 
-    CONTENT_FOLDER = "overview";
+    VIEWS = "views";
+    CONTENT_FOLDER = path.join(this.VIEWS, "overview");
 
     async helloWorld(): Promise<void> {
         let sampleDocuments = await this.createSample('helloworld', 'Hello World!');
@@ -153,9 +154,9 @@ export class OverviewPage {
 
         // let documentsToOpen = 
         await this.openSampleFiles(sampleDocuments, ['domain.pddl', 'problem.pddl', 'problem0.json']);
-        
+
         let ptestJson = sampleDocuments.find(doc => path.basename(doc.fileName) === '.ptest.json');
-        let generatedProblemUri = ptestJson.uri.with({fragment: '0'});
+        let generatedProblemUri = ptestJson.uri.with({ fragment: '0' });
 
         await commands.executeCommand(PTEST_VIEW, generatedProblemUri);
 
@@ -223,9 +224,8 @@ export class OverviewPage {
         return sampleDocuments;
     }
 
-    async getHtml(): Promise<string> {
-        let html = getWebViewHtml(createPddlExtensionContext(this.context), this.CONTENT_FOLDER, 'overview.html');
-        return html;
+    async getHtml(webview: Webview): Promise<string> {
+        return getWebViewHtml(createPddlExtensionContext(this.context), this.CONTENT_FOLDER, 'overview.html', webview);
     }
 
     updateIconsAlerts(): void {
@@ -233,22 +233,36 @@ export class OverviewPage {
         this.updatePageConfiguration();
     }
 
-    async updatePageConfiguration(): Promise<void> {
-        if (!this.webViewPanel || !this.webViewPanel.active) { return; }
-        let message = {
+    async updatePageConfiguration(): Promise<boolean> {
+        if (!this.webViewPanel || !this.webViewPanel.active) { return false; }
+        let message: OverviewConfiguration = {
             command: 'updateConfiguration',
             planner: await this.pddlConfiguration.getPlannerPath(),
-            plannerOutputTarget: await workspace.getConfiguration("pddlPlanner").get<String>("executionTarget"),
-            parser: await this.pddlConfiguration.getParserPath(),
-            validator: await this.pddlConfiguration.getValidatorPath(),
+            plannerOutputTarget: workspace.getConfiguration("pddlPlanner").get<string>("executionTarget"),
+            parser: this.pddlConfiguration.getParserPath(),
+            validator: this.pddlConfiguration.getValidatorPath(),
             shouldShow: this.context.globalState.get<boolean>(SHOULD_SHOW_OVERVIEW_PAGE, true),
-            autoSave: workspace.getConfiguration().get<String>("files.autoSave"),
+            autoSave: workspace.getConfiguration().get<string>("files.autoSave"),
             showInstallIconsAlert: !this.iconsInstalled,
-            showEnableIconsAlert: this.iconsInstalled && workspace.getConfiguration().get<String>("workbench.iconTheme") !== "vscode-icons",
+            showEnableIconsAlert: this.iconsInstalled && workspace.getConfiguration().get<string>("workbench.iconTheme") !== "vscode-icons",
             downloadValAlert: !this.pddlConfiguration.getValidatorPath() || !(await this.val.isInstalled()),
             updateValAlert: await this.val.isNewValVersionAvailable()
             // todo: workbench.editor.revealIfOpen
         };
-        this.webViewPanel.webview.postMessage(message);
+        return this.webViewPanel.webview.postMessage(message);
     }
+}
+
+interface OverviewConfiguration {
+    command: string;
+    planner: string;
+    plannerOutputTarget: string;
+    parser: string;
+    validator: string;
+    shouldShow: boolean;
+    autoSave: string;
+    showInstallIconsAlert: boolean;
+    showEnableIconsAlert: boolean;
+    downloadValAlert: boolean;
+    updateValAlert: boolean;
 }

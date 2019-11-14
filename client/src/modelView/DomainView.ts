@@ -99,7 +99,8 @@ export abstract class DomainView<TRendererOptions, TRenderData> extends Disposab
             previewPanel.getPanel().html = "Please wait...";
         }
         previewPanel.setNeedsRebuild(false);
-        previewPanel.getPanel().html = await this.generateHtml(previewPanel.getError());
+        previewPanel.getPanel().html =
+            await this.generateHtml(previewPanel);
 
         previewPanel.setDomain(domainInfo);
     }
@@ -156,13 +157,12 @@ export abstract class DomainView<TRendererOptions, TRenderData> extends Disposab
         return panel;
     }
 
-    private async generateHtml(error?: Error): Promise<string> {
-        if (error) {
-            return error.message;
+    private async generateHtml(viewPanel: DomainViewPanel): Promise<string> {
+        if (viewPanel.getError()) {
+            return viewPanel.getError().message;
         }
         else {
-            let html = getWebViewHtml(createPddlExtensionContext(this.context), this.options.content, this.options.webviewHtmlPath);
-            return html;
+            return getWebViewHtml(createPddlExtensionContext(this.context), this.options.content, this.options.webviewHtmlPath, viewPanel.getPanel().webview);
         }
     }
 
