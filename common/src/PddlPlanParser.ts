@@ -80,7 +80,7 @@ export class PddlPlanParser {
                 this.onPlanFinished();
             }
 
-            let group: RegExpExecArray;
+            let group: RegExpExecArray | null;
             this.planStatesEvaluatedPattern.lastIndex = 0;
             this.planCostPattern.lastIndex = 0;
             if (group = this.planStatesEvaluatedPattern.exec(outputLine)) {

@@ -118,7 +118,7 @@ export function parseParameters(fullSymbolName: string): Parameter[] {
 
     let parameters: Parameter[] = [];
 
-    let group: RegExpExecArray;
+    let group: RegExpExecArray | null;
 
     while (group = parameterPattern.exec(fullSymbolName)) {
         let variables = group[1];

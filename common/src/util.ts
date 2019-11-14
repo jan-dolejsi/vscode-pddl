@@ -107,7 +107,7 @@ export abstract class StringifyingMap<K, V> {
         let keyString = this.stringifyKey(key);
         return this.map.has(keyString);
     }
-    get(key: K): V {
+    get(key: K): V | undefined {
         let keyString = this.stringifyKey(key);
         return this.map.get(keyString);
     }

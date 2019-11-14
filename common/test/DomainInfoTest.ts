@@ -27,11 +27,11 @@ describe('DomainInfo', () => {
             let range = domainInfo.getTypeLocation('tank');
 
             // THEN
-            assert.notStrictEqual(range, null, "range should not be null");
-            assert.equal(range.startLine, 5);
-            assert.equal(range.endLine, 5);
-            assert.equal(range.startCharacter, 12);
-            assert.equal(range.endCharacter, 16);
+            assert.notStrictEqual(range, undefined, "range should not be null");
+            assert.equal(range!.startLine, 5);
+            assert.equal(range!.endLine, 5);
+            assert.equal(range!.startCharacter, 12);
+            assert.equal(range!.endCharacter, 16);
         });
 
         it('finds type location in single line declaration', () => {

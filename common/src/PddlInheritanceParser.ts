@@ -5,7 +5,7 @@
 'use strict';
 
 import { DirectionalGraph } from "./DirectionalGraph";
-import { TypeObjects } from "./DomainInfo";
+import { TypeObjectMap } from "./DomainInfo";
 
 /**
  * Planning type/object inheritance parser.
@@ -42,19 +42,19 @@ export class PddlInheritanceParser {
             .filter(v => !inheritance.getVerticesWithEdgesFrom(v).length)
             .filter(orphan => orphan !== this.OBJECT);
         orphans.forEach(orphan => inheritance.addEdge(orphan, this.OBJECT));
-        
+
         return inheritance;
     }
 
-    static toTypeObjects(graph: DirectionalGraph): TypeObjects[] {
-        let typeSet = new Set<string>(graph.getEdges().map(edge => edge[1]));
-        let typeObjects: TypeObjects[] = Array.from(typeSet).map(type => new TypeObjects(type));
+    static toTypeObjects(graph: DirectionalGraph): TypeObjectMap {
+        let typeObjectMap = new TypeObjectMap();
 
         graph.getVertices().forEach(obj => {
-            graph.getVerticesWithEdgesFrom(obj).forEach(type => typeObjects.find(to => to.type === type).addObject(obj));
+            graph.getVerticesWithEdgesFrom(obj)
+                .forEach(type => typeObjectMap.add(type, obj));
         });
 
-        return typeObjects;
+        return typeObjectMap;
     }
 
 }

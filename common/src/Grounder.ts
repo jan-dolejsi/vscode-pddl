@@ -5,16 +5,16 @@
 'use strict';
 
 import { ProblemInfo } from "./ProblemInfo";
-import { DomainInfo, TypeObjects } from './DomainInfo';
+import { DomainInfo, TypeObjectMap } from './DomainInfo';
 import { Variable, ObjectInstance, Term } from './FileInfo';
 import { getObjectsInheritingFrom } from "./typeInheritance";
 
 export class Grounder {
 
-    private typeObjects: TypeObjects[];
+    private typeObjects: TypeObjectMap;
 
     constructor(private domain: DomainInfo, private problem: ProblemInfo) {
-        this.typeObjects = TypeObjects.concatObjects(this.domain.getConstants(), this.problem.getObjectsPerType());
+        this.typeObjects = this.domain.getConstants().merge(this.problem.getObjectsTypeMap());
     }
 
     getObjectsForType(typeName: string): string[] {

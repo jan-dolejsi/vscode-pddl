@@ -38,15 +38,15 @@ export class DurativeActionEffectCompletionItemProvider extends AbstractCompleti
     }
 
     static insideEffect(currentNode: PddlSyntaxNode) {
-        return currentNode.findAncestor(PddlTokenType.Keyword, /^\s*:effect$/i) !== null;
+        return currentNode.findAncestor(PddlTokenType.Keyword, /^\s*:effect$/i) !== undefined;
     }
 
     static insideDurativeActionUnqualifiedEffect(currentNode: PddlSyntaxNode): boolean {
-        return currentNode.findAncestor(PddlTokenType.OpenBracketOperator, /\(\s*:durative-action/i) !== null
-            && currentNode.findAncestor(PddlTokenType.OpenBracketOperator, /\(\s*(at start|at end)/i) === null;
+        return currentNode.findAncestor(PddlTokenType.OpenBracketOperator, /\(\s*:durative-action/i) !== undefined
+            && currentNode.findAncestor(PddlTokenType.OpenBracketOperator, /\(\s*(at start|at end)/i) === undefined;
     }
 
-    provide(_domainInfo: DomainInfo, context: CompletionContext, range: Range): CompletionItem[] | PromiseLike<CompletionItem[]> {
+    provide(_domainInfo: DomainInfo, context: CompletionContext, range: Range | null): (CompletionItem | null)[] {
         if (context.triggerKind !== CompletionTriggerKind.Invoke && context.triggerCharacter !== '(') { return []; }
 
         return [

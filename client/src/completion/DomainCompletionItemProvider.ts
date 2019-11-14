@@ -77,13 +77,16 @@ export class DomainCompletionItemProvider extends AbstractCompletionItemProvider
             }
 
             let supportedSectionsHere = PddlStructure.getSupportedSectionsHere(currentNode, currentNode, PddlTokenType.OpenBracketOperator, PddlStructure.PDDL_DOMAIN_SECTIONS, PddlStructure.PDDL_DOMAIN_STRUCTURES);
-            let range = ['(', ':'].includes(context.triggerCharacter) ? nodeToRange(document, currentNode) : null;
+            let range = context.triggerCharacter && ['(', ':'].includes(context.triggerCharacter)
+                ? nodeToRange(document, currentNode) : null;
 
-            let suggestions = supportedSectionsHere.map(s => Suggestion.from(s, context.triggerCharacter, '('));
+            let suggestions = supportedSectionsHere
+                .map(s => Suggestion.from(s, context.triggerCharacter, '('))
+                .filter(s => !!s).map(s => s!);
 
             return suggestions
                 .map((suggestion, index) => this.createDefineCompletionItem(currentNode, suggestion, range, context, index))
-                .filter(item => !!item); // filter out nulls
+                .filter(item => !!item).map(item => item!); // filter out nulls
         }
         else if (this.insideRequirements(domainInfo, currentNode, context)) {
             return this.createRequirementsCompletionItems(document, currentNode, context);
@@ -91,50 +94,60 @@ export class DomainCompletionItemProvider extends AbstractCompletionItemProvider
         else if (this.insideAction(currentNode)) {
             let nearestPrecedingKeyword = PddlStructure.getPrecedingKeywordOrSelf(currentNode);
             let supportedSectionsHere = PddlStructure.getSupportedSectionsHere(nearestPrecedingKeyword, currentNode, PddlTokenType.Keyword, PddlStructure.PDDL_ACTION_SECTIONS, []);
-            let range = ['(', ':'].includes(context.triggerCharacter) ? nodeToRange(document, currentNode) : null;
+            let range = context.triggerCharacter && ['(', ':'].includes(context.triggerCharacter)
+                ? nodeToRange(document, currentNode) : null;
 
-            let suggestions = supportedSectionsHere.map(s => Suggestion.from(s, context.triggerCharacter, ''));
+            let suggestions = supportedSectionsHere
+                .map(s => Suggestion.from(s, context.triggerCharacter, ''))
+                .filter(s => !!s).map(s => s!);
 
             return suggestions
                 .map((suggestion, index) => this.createActionCompletionItem(currentNode, suggestion, range, context, index))
-                .filter(item => !!item); // filter out nulls
+                .filter(item => !!item).map(item => item!); // filter out nulls
         }
         else if (this.insideDurativeAction(currentNode)) {
             let nearestPrecedingKeyword = PddlStructure.getPrecedingKeywordOrSelf(currentNode);
             let supportedSectionsHere = PddlStructure.getSupportedSectionsHere(nearestPrecedingKeyword, currentNode, PddlTokenType.Keyword, PddlStructure.PDDL_DURATIVE_ACTION_SECTIONS, []);
-            let range = ['(', ':'].includes(context.triggerCharacter) ? nodeToRange(document, currentNode) : null;
+            let range = context.triggerCharacter && ['(', ':'].includes(context.triggerCharacter)
+                ? nodeToRange(document, currentNode) : null;
 
-            let suggestions = supportedSectionsHere.map(s => Suggestion.from(s, context.triggerCharacter, ''));
+            let suggestions = supportedSectionsHere
+                .map(s => Suggestion.from(s, context.triggerCharacter, ''))
+                .filter(s => !!s).map(s => s!);
 
             return suggestions
                 .map((suggestion, index) => this.createDurativeActionCompletionItem(currentNode, suggestion, range, context, index))
-                .filter(item => !!item); // filter out nulls
+                .filter(item => !!item).map(item => item!); // filter out nulls
         }
         else if (DurativeActionEffectCompletionItemProvider.insideEffect(currentNode)) {
-            let completions: CompletionItem[] = [];
+            let completions: (CompletionItem | null)[] = [];
             let range = context.triggerCharacter === '(' ? nodeToRange(document, currentNode) : null;
 
             if (DurativeActionEffectCompletionItemProvider.inside(currentNode)) {
-                completions.push(... await new DurativeActionEffectCompletionItemProvider().provide(domainInfo, context, range));
+                completions.push(... new DurativeActionEffectCompletionItemProvider().provide(domainInfo, context, range));
             }
             if (DiscreteEffectCompletionItemProvider.inside(currentNode)) {
-                completions.push(... await new DiscreteEffectCompletionItemProvider().provide(domainInfo, context, range));
+                completions.push(... new DiscreteEffectCompletionItemProvider().provide(domainInfo, context, range));
             }
             if (ContinuousEffectCompletionItemProvider.inside(currentNode)) {
                 completions.push(... await new ContinuousEffectCompletionItemProvider().provide(domainInfo, context, range));
             }
             // completions.push(...this.addIconGallery());
-            return completions;
+            return completions
+                .filter(c => !!c).map(c => c!);
         } else if (DurativeActionConditionCompletionItemProvider.inside(currentNode)) {
             let range = context.triggerCharacter === '(' ? nodeToRange(document, currentNode) : null;
-            return new DurativeActionConditionCompletionItemProvider().provide(domainInfo, context, range);
+            return new DurativeActionConditionCompletionItemProvider()
+                .provide(domainInfo, context, range)
+                .filter(c => !!c).map(c => c!);
         }
 
         if (context.triggerCharacter === '?') {
             let scopes = currentNode.findAllParametrisableScopes();
             let range = nodeToRange(document, currentNode);
             return Util.flatMap(scopes.map(s => this.getParameterNames(s.getParameterDefinition())))
-                .map((paramName, index) => this.createSnippetCompletionItem(Suggestion.from(paramName, context.triggerCharacter, ''), paramName, range, context, index));
+                .map((paramName, index) => this.createSnippetCompletionItem(Suggestion.from(paramName, context.triggerCharacter, ''), paramName, range, context, index))
+                .filter(c => !!c).map(c => c!);
         }
 
         return [];
@@ -162,7 +175,7 @@ export class DomainCompletionItemProvider extends AbstractCompletionItemProvider
 
     private readonly DURATION_SNIPPET = ":duration ${2|(= ?duration 1),(> ?duration 0),(<= ?duration 10),(and (>= ?duration 1)(<= ?duration 2))|}";
 
-    createDefineCompletionItem(_currentNode: PddlSyntaxNode, suggestion: Suggestion, range: Range, context: CompletionContext, index: number): CompletionItem | null {
+    createDefineCompletionItem(_currentNode: PddlSyntaxNode, suggestion: Suggestion, range: Range | null, context: CompletionContext, index: number): CompletionItem | null {
         if (!suggestion) { return null; }
         switch (suggestion.sectionName) {
             case PddlStructure.DOMAIN:
@@ -235,8 +248,7 @@ export class DomainCompletionItemProvider extends AbstractCompletionItemProvider
         }
     }
 
-    createActionCompletionItem(_currentNode: PddlSyntaxNode, suggestion: Suggestion, range: Range, context: CompletionContext, index: number): CompletionItem | null {
-        if (!suggestion) { return null; }
+    createActionCompletionItem(_currentNode: PddlSyntaxNode, suggestion: Suggestion, range: Range | null, context: CompletionContext, index: number): CompletionItem | null {
         switch (suggestion.sectionName) {
             case PddlStructure.PARAMETERS:
                 return this.createParametersCompletionItem(suggestion, range, context, index);
@@ -248,12 +260,11 @@ export class DomainCompletionItemProvider extends AbstractCompletionItemProvider
         }
     }
 
-    private createParametersCompletionItem(suggestion: Suggestion, range: Range, context: CompletionContext, index: number): CompletionItem {
+    private createParametersCompletionItem(suggestion: Suggestion, range: Range | null, context: CompletionContext, index: number): CompletionItem | null {
         return this.createSnippetCompletionItem(suggestion, ":parameters ($0)", range, context, index);
     }
 
-    createDurativeActionCompletionItem(_currentNode: PddlSyntaxNode, suggestion: Suggestion, range: Range, context: CompletionContext, index: number): CompletionItem | null {
-        if (!suggestion) { return null; }
+    createDurativeActionCompletionItem(_currentNode: PddlSyntaxNode, suggestion: Suggestion, range: Range | null, context: CompletionContext, index: number): CompletionItem | null {
         switch (suggestion.sectionName) {
             case PddlStructure.PARAMETERS:
                 return this.createParametersCompletionItem(suggestion, range, context, index);

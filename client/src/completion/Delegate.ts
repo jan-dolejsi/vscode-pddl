@@ -5,7 +5,7 @@
 'use strict';
 
 import { CompletionItem, CompletionItemKind, MarkdownString, SnippetString } from 'vscode';
-import { DomainInfo, TypeObjects } from '../../../common/src/DomainInfo';
+import { DomainInfo, TypeObjectMap } from '../../../common/src/DomainInfo';
 import { Variable } from '../../../common/src/FileInfo';
 
 export abstract class Delegate {
@@ -42,10 +42,10 @@ export abstract class Delegate {
             .join(',');
     }
 
-    getObjects(allTypeObjects: TypeObjects[], types: string[]): string[] {
-        return allTypeObjects
-            .filter(typeObjects => types.includes(typeObjects.type))
-            .map(typeObjects => typeObjects.getObjects())
+    getObjects(allTypeObjects: TypeObjectMap, types: string[]): string[] {
+        return types.map(typeName => allTypeObjects.getTypeCaseInsensitive(typeName))
+            .filter(typeObjects => !!typeObjects)
+            .map(typeObjects => typeObjects!.getObjects())
             .reduce((x, y) => x.concat(y), []); // flat map
     }
 

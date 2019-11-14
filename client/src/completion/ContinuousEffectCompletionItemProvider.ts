@@ -55,10 +55,10 @@ export class ContinuousEffectCompletionItemProvider extends AbstractCompletionIt
     }
 
     private static insideProcess(currentNode: PddlSyntaxNode) {
-        return currentNode.findAncestor(PddlTokenType.OpenBracketOperator, /\(\s*:process/i) !== null;
+        return currentNode.findAncestor(PddlTokenType.OpenBracketOperator, /\(\s*:process/i) !== undefined;
     }
 
-    provide(domainInfo: DomainInfo, context: CompletionContext, range: Range): CompletionItem[] | PromiseLike<CompletionItem[]> {
+    provide(domainInfo: DomainInfo, context: CompletionContext, range: Range | null): (CompletionItem | null)[] {
         if (context.triggerKind !== CompletionTriggerKind.Invoke && context.triggerCharacter !== '(') { return []; }
 
         let functions = domainInfo.getFunctions();

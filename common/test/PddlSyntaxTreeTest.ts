@@ -435,7 +435,7 @@ describe('PddlSyntaxNode', () => {
             let actual = paramNode.findAncestor(PddlTokenType.OpenBracketOperator, /^\(\s*:action$/);
 
             // THEN
-            assert.strictEqual(actual, null);
+            assert.strictEqual(actual, undefined);
         });
 
         it('finds ancestor', () => {
@@ -448,7 +448,7 @@ describe('PddlSyntaxNode', () => {
 
             // THEN
             assert.ok(actual);
-            assert.strictEqual(actual.getToken().tokenText, '(:action');
+            assert.strictEqual(actual!.getToken().tokenText, '(:action');
         });
     });
 

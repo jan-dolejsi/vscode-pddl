@@ -117,7 +117,7 @@ export class PddlStructure {
 
     static getPrecedingKeywordOrSelf(node: PddlSyntaxNode): PddlSyntaxNode {
         let parent = node.getParent();
-        if (parent.isType(PddlTokenType.Keyword)) {
+        if (parent && parent.isType(PddlTokenType.Keyword)) {
             return parent;
         }
         else {

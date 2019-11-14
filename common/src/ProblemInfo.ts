@@ -8,18 +8,18 @@ import { FileInfo, PddlLanguage } from "./FileInfo";
 import { PreProcessor } from "./PreProcessors";
 import { PddlSyntaxTree } from "./PddlSyntaxTree";
 import { DocumentPositionResolver } from "./DocumentPositionResolver";
-import { TypeObjects } from "./DomainInfo";
+import { TypeObjectMap } from "./DomainInfo";
 import { Constraint } from "./constraints";
 
 /**
  * Problem file.
  */
 export class ProblemInfo extends FileInfo {
-    objects: TypeObjects[] = [];
+    objects = new TypeObjectMap();
     inits: TimedVariableValue[] = [];
     supplyDemands: SupplyDemand[] = [];
     private constraints: Constraint[] = [];
-    preParsingPreProcessor: PreProcessor;
+    preParsingPreProcessor: PreProcessor | undefined;
 
     constructor(fileUri: string, version: number, problemName: string, public domainName: string, public readonly syntaxTree: PddlSyntaxTree, positionResolver: DocumentPositionResolver) {
         super(fileUri, version, problemName, positionResolver);
@@ -29,7 +29,7 @@ export class ProblemInfo extends FileInfo {
         this.preParsingPreProcessor = preProcessor;
     }
     
-    getPreParsingPreProcessor(): PreProcessor {
+    getPreParsingPreProcessor(): PreProcessor | undefined {
         return this.preParsingPreProcessor;
     }
 
@@ -37,18 +37,15 @@ export class ProblemInfo extends FileInfo {
         return PddlLanguage.PDDL;
     }
 
-    setObjects(objects: TypeObjects[]): void {
+    setObjects(objects: TypeObjectMap): void {
         this.objects = objects;
     }
 
     getObjects(type: string): string[] {
-        let thisTypesObjects = this.objects.find(to => to.type === type);
-
-        if (!thisTypesObjects) { return []; }
-        else { return thisTypesObjects.getObjects(); }
+        return (this.objects.getTypeCaseInsensitive(type)?.getObjects()) || [];
     }
 
-    getObjectsPerType(): TypeObjects[] {
+    getObjectsTypeMap(): TypeObjectMap {
         return this.objects;
     }
 

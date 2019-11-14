@@ -25,12 +25,13 @@ export class PddlDomainParser {
     
     constructor(fileUri: string, fileVersion: number, fileText: string, domainNode: PddlSyntaxNode, syntaxTree: PddlSyntaxTree, private positionResolver: DocumentPositionResolver) {
         let domainNameNode = domainNode.getFirstChild(PddlTokenType.Other, /./);
-        if (!domainNameNode) { return null; }
-        let domainName = domainNameNode.getToken().tokenText;
+        if (domainNameNode) {
+            let domainName = domainNameNode.getToken().tokenText;
 
-        this.domainInfo = new DomainInfo(fileUri, fileVersion, domainName, syntaxTree, positionResolver);
-        this.domainInfo.setText(fileText);
-        this.parseDomainStructure();
+            this.domainInfo = new DomainInfo(fileUri, fileVersion, domainName, syntaxTree, positionResolver);
+            this.domainInfo.setText(fileText);
+            this.parseDomainStructure();
+        }
     }
 
     getDomain(): DomainInfo {

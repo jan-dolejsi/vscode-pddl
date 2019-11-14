@@ -51,7 +51,7 @@ export class PddlProblemParser {
                 problemInfo.addProblems([new ParsingProblem(parsingError.message, parsingError.line, parsingError.column)]);
             }
             else {
-                let line = preProcessor ? positionResolver.resolveToPosition(preProcessor.metaDataLineOffset).line : 0;
+                let line = positionResolver.resolveToPosition(preProcessor?.metaDataLineOffset || 0).line;
                 problemInfo.addProblems([new ParsingProblem(ex.message || ex, line, 0)]);
             }
             problemInfo.setPreParsingPreProcessor(preProcessor);

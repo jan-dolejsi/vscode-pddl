@@ -34,7 +34,8 @@ describe('Parser', () => {
 
             // THEN
             assert.notStrictEqual(domainInfo, null, 'domain should not be null');
-            assert.strictEqual(domainInfo.name, 'domain_name');
+            if (domainInfo === null) { return; }
+            assert.strictEqual(domainInfo!.name, 'domain_name');
         });
 
         it('should return null on non-domain PDDL', () => {

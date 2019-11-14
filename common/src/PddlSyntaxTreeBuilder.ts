@@ -27,7 +27,8 @@ export class PddlSyntaxTreeBuilder {
     getBreadcrumbs(symbolIndex: number | undefined): PddlToken[] {
         let breadcrumbs: PddlToken[] = [];
 
-        let nodeAtIndex = symbolIndex === undefined ? this.currentLeaf : this.tree.getNodeAt(symbolIndex);
+        let nodeAtIndex: PddlSyntaxNode | undefined =
+            symbolIndex === undefined ? this.currentLeaf : this.tree.getNodeAt(symbolIndex);
 
         do {
             breadcrumbs.push(nodeAtIndex.getToken());

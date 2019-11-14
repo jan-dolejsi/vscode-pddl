@@ -19,7 +19,7 @@ export class PlanTimeSeriesParser {
 
         this.warnings = lines.filter(line => line.includes(':'));
 
-        let currentFunctionValues: FunctionValues = null;
+        let currentFunctionValues: FunctionValues | null = null;
 
         lines
             .filter(line => !line.includes(':'))

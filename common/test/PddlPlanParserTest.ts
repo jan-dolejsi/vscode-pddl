@@ -15,8 +15,8 @@ describe('PddlPlanParser', () => {
 
         it('parses single-durative-action plan', () => {
             // GIVEN
-            let domainInfo: DomainInfo = null;
-            let problemInfo: ProblemInfo = null;
+            let domainInfo: DomainInfo | undefined;
+            let problemInfo: ProblemInfo | undefined;
             let planText = '1: (action) [20]';
 
             // WHEN
@@ -39,8 +39,8 @@ describe('PddlPlanParser', () => {
 
         it('parses empty document', () => {
             // GIVEN
-            let domainInfo: DomainInfo = null;
-            let problemInfo: ProblemInfo = null;
+            let domainInfo: DomainInfo | undefined;
+            let problemInfo: ProblemInfo | undefined;
             let planText = '';
 
             // WHEN

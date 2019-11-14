@@ -98,7 +98,7 @@ class StateValues {
         this.values.set(functionName, value);
     }
 
-    getValue(functionName: String): number {
+    getValue(functionName: String): number | undefined{
         return this.values.get(functionName);
     }
 }

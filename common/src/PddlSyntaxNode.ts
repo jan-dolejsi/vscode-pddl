@@ -175,7 +175,7 @@ export class PddlSyntaxNode extends TextRange {
         return this.maxChildEnd;
     }
 
-    findAncestor(type: PddlTokenType, pattern: RegExp): PddlSyntaxNode | null {
+    findAncestor(type: PddlTokenType, pattern: RegExp): PddlSyntaxNode | undefined {
         let parent = this.parent;
 
         while(parent.isNotType(PddlTokenType.Document)) {
@@ -185,7 +185,7 @@ export class PddlSyntaxNode extends TextRange {
             parent = parent.parent;
         }
 
-        return null;
+        return undefined;
     }
     
     findParametrisableScope(parameterName: string): PddlSyntaxNode | undefined {
@@ -193,7 +193,7 @@ export class PddlSyntaxNode extends TextRange {
         while (!node.isDocument()) {
             node = PddlSyntaxNode.findParametrisableAncestor(node);
             if (!node) { return this.getParent(); }
-            if (node.declaresParameter(parameterName)) {
+            else if (node.declaresParameter(parameterName)) {
                 return node;
             }
         }
@@ -214,7 +214,7 @@ export class PddlSyntaxNode extends TextRange {
         return scopes;
     }
 
-    private static findParametrisableAncestor(node: PddlSyntaxNode): PddlSyntaxNode {
+    private static findParametrisableAncestor(node: PddlSyntaxNode): PddlSyntaxNode | undefined {
         return node.findAncestor(PddlTokenType.OpenBracketOperator, /^\(\s*(:action|:durative-action|:process|:event|:derived|forall|sumall|exists)$/);
     }
 
@@ -298,7 +298,7 @@ export class PddlSyntaxNode extends TextRange {
 /** Specialized tree node for open/close bracket pair. */
 export class PddlBracketNode extends PddlSyntaxNode {
     private closeToken: PddlToken;
-    private _isClosed: boolean;
+    private _isClosed = false;
 
     /**
      * Sets the bracket close token.

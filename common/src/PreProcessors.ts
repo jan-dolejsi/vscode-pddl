@@ -172,9 +172,11 @@ export class NunjucksPreProcessor extends PreProcessor {
 }
 
 export class PreProcessingError implements Error {
-    name: string;
     stack?: string;
-    constructor(public message: string, public line: number, public column: number) {
+    constructor(public readonly message: string, public readonly line: number, public readonly column: number) {
+    }
 
+    get name(): string {
+        return 'pre-processing_error';
     }
 }

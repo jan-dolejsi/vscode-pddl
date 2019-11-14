@@ -29,6 +29,7 @@ describe('DerivedVariableParser', () => {
 
             // THEN
             assert.ok(derivedPredicate, 'there should be one derived predicate');
+            if (derivedPredicate === null) { assert.fail("should not happen"); }
             assert.strictEqual(derivedPredicate.name, 'can-lift');
             assert.equal(derivedPredicate.parameters.length, 2);
             assert.ok(derivedPredicate.getDocumentation().join('\n').startsWith('can lift'));
@@ -48,9 +49,9 @@ describe('DerivedVariableParser', () => {
 
             // THEN
             assert.ok(derivedFunction, 'there should be one derived function');
-            assert.strictEqual(derivedFunction.name, 'c');
-            assert.equal(derivedFunction.parameters.length, 0);
-            assert.deepStrictEqual(derivedFunction.getLocation(), new PddlRange(0, 8, 0, 33));
+            assert.strictEqual(derivedFunction!.name, 'c');
+            assert.equal(derivedFunction!.parameters.length, 0);
+            assert.deepStrictEqual(derivedFunction!.getLocation(), new PddlRange(0, 8, 0, 33));
         });
     });
 });
