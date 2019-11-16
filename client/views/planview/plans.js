@@ -12,6 +12,10 @@ function postMessage(message) {
     if (vscode) vscode.postMessage(message);
 }
 
+function postCommand(command) {
+    postMessage({ command: command });
+}
+
 function showPlan(planIndex) {
     // remember the index of the plan that is being shown for later manipulation
     selectedPlan = planIndex;

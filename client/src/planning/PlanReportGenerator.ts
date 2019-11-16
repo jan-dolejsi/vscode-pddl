@@ -432,7 +432,7 @@ ${stepsInvolvingThisObject}
     }
 
     renderMenu(): string {
-        return `    <div class="menu">&#x2630;
+        return `    <div class="menu" oncontextmenu="postCommand('showMenu')">&#x2630;
         <span class="menutooltip">
             <a href="#" onClick="openInBrowser()">Generate plan report</a>
             <a href="#" onClick="savePlanToFile()">Export as .plan file...</a>

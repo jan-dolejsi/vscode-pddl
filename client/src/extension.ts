@@ -9,7 +9,7 @@ import { workspace, window, ExtensionContext, commands, languages } from 'vscode
 import { Planning } from './planning/planning';
 import { PddlWorkspace } from '../../common/src/PddlWorkspace';
 import { PDDL, PLAN, HAPPENINGS } from '../../common/src/parser';
-import { PddlConfiguration } from './configuration';
+import { PddlConfiguration, PDDL_CONFIGURE_COMMAND } from './configuration';
 import { Authentication } from '../../common/src/Authentication';
 import { AutoCompletion } from './completion/AutoCompletion';
 import { SymbolRenameProvider } from './symbols/SymbolRenameProvider';
@@ -30,7 +30,7 @@ import { SearchDebugger } from './searchDebugger/SearchDebugger';
 import { PlanningDomainsSessions } from './session/PlanningDomainsSessions';
 import { PddlFormatProvider } from './formatting/PddlFormatProvider';
 import { Val } from './validation/Val';
-import { createPddlExtensionContext } from './utils';
+import { createPddlExtensionContext, showError } from './utils';
 import { AssociationProvider } from './workspace/AssociationProvider';
 import { SuggestionProvider } from './symbols/SuggestionProvider';
 import { CodePddlWorkspace } from './workspace/CodePddlWorkspace';
@@ -221,6 +221,10 @@ function activateWithTelemetry(_operationId: string, context: ExtensionContext) 
 			console.log('PDDL Formatter enabled.');
 		}
 	});
+	
+	let configureCommand = commands.registerCommand(PDDL_CONFIGURE_COMMAND, (configurationName: string) => {
+		pddlConfiguration.askConfiguration(configurationName).catch(showError);
+	});
 
 	// Push the disposables to the context's subscriptions so that the
 	// client can be deactivated on extension deactivation
@@ -229,7 +233,7 @@ function activateWithTelemetry(_operationId: string, context: ExtensionContext) 
 		configurePlannerCommand, loginPlannerServiceCommand, updateTokensPlannerServiceCommand, completionItemProvider, completionItemProvider2,
 		renameProvider, suggestionProvider, documentSymbolProvider, definitionProvider, referencesProvider, hoverProvider,
 		planHoverProvider, planDefinitionProvider, happeningsHoverProvider, happeningsDefinitionProvider,
-		problemInitView, problemObjectsView, problemConstraintsView);
+		problemInitView, problemObjectsView, problemConstraintsView, configureCommand);
 }
 
 export function deactivate() {

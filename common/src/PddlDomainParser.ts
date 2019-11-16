@@ -21,8 +21,8 @@ import { PddlConstraintsParser } from "./PddlConstraintsParser";
  * Planning Domain parser.
  */
 export class PddlDomainParser {
-    private domainInfo: DomainInfo;
-    
+    private domainInfo: DomainInfo | undefined;
+
     constructor(fileUri: string, fileVersion: number, fileText: string, domainNode: PddlSyntaxNode, syntaxTree: PddlSyntaxTree, private positionResolver: DocumentPositionResolver) {
         let domainNameNode = domainNode.getFirstChild(PddlTokenType.Other, /./);
         if (domainNameNode) {
@@ -34,11 +34,12 @@ export class PddlDomainParser {
         }
     }
 
-    getDomain(): DomainInfo {
+    getDomain(): DomainInfo | undefined {
         return this.domainInfo;
     }
 
     private parseDomainStructure(): void {
+        if (this.domainInfo === undefined) { return; }
 
         let defineNode = this.domainInfo.syntaxTree.getDefineNodeOrThrow();
         PddlDomainParser.parseRequirements(defineNode, this.domainInfo);
@@ -76,14 +77,14 @@ export class PddlDomainParser {
         const events = this.parseActionProcessOrEvent(defineNode, this.positionResolver, "event");
         this.domainInfo.setProcesses(processes);
         this.domainInfo.setEvents(events);
-        
+
         let constraintsNode = defineNode.getFirstOpenBracket(':constraints');
         if (constraintsNode) {
             const constraints = new PddlConstraintsParser().parseConstraints(constraintsNode);
             this.domainInfo.setConstraints(constraints);
         }
     }
-    
+
     static parseRequirements(defineNode: PddlSyntaxNode, fileInfo: FileInfo) {
         let requirementsNode = defineNode.getFirstOpenBracket(':requirements');
         if (requirementsNode) {
@@ -97,18 +98,16 @@ export class PddlDomainParser {
     static parseDerived(defineNode: PddlSyntaxNode, positionResolver: DocumentPositionResolver): Variable[] {
         return defineNode.getChildrenOfType(PddlTokenType.OpenBracketOperator, /\(\s*:derived$/)
             .map(derivedNode => new DerivedVariablesParser(derivedNode, positionResolver).getVariable())
-            .filter(derived => !!derived);
+            .filter(derived => !!derived).map(derived => derived!);
     }
 
     parseActionProcessOrEvent(defineNode: PddlSyntaxNode, positionResolver: DocumentPositionResolver, keyword: string): Action[] {
         return defineNode.getChildrenOfType(PddlTokenType.OpenBracketOperator, new RegExp("\\(\\s*:" + keyword + "$"))
-            .map(actionNode => new InstantActionParser(actionNode, positionResolver).getAction())
-            .filter(action => !!action);
+            .map(actionNode => new InstantActionParser(actionNode, positionResolver).getAction());
     }
 
     parseDurativeActions(defineNode: PddlSyntaxNode, positionResolver: DocumentPositionResolver): Action[] {
         return defineNode.getChildrenOfType(PddlTokenType.OpenBracketOperator, /\(\s*:durative-action$/)
-            .map(actionNode => new DurativeActionParser(actionNode, positionResolver).getAction())
-            .filter(action => !!action);
+            .map(actionNode => new DurativeActionParser(actionNode, positionResolver).getAction());
     }
 }

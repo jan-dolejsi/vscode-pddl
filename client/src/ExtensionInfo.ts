@@ -9,9 +9,11 @@ import { extensions } from 'vscode';
 export class ExtensionInfo {
     private extensionId: string;
     private extensionVersion: string;
+    public static readonly EXTENSION_ID = "jan-dolejsi.pddl";
 
-    constructor() {
-        let extension = extensions.getExtension("jan-dolejsi.pddl");
+    constructor(extensionId = ExtensionInfo.EXTENSION_ID) {
+        let extension = extensions.getExtension(extensionId);
+        if (extension === undefined) { throw new Error('Extension not found: ' + ExtensionInfo.EXTENSION_ID); }
         this.extensionId = extension.id;
         this.extensionVersion = <string>extension.packageJSON["version"];
     }

@@ -19,7 +19,7 @@ import { nodeToRange } from '../utils';
 import { DocumentInsetCodeLens, DocumentCodeLens } from './view';
 import { ProblemView, ProblemRendererOptions, ProblemRenderer } from './ProblemView';
 import { GraphViewData, NetworkEdge, NetworkNode } from './GraphViewData';
-import { NamedConditionConstraint, AfterConstraint } from '../../../common/src/constraints';
+import { NamedConditionConstraint, AfterConstraint, StrictlyAfterConstraint } from '../../../common/src/constraints';
 import { ProblemViewPanel } from './ProblemViewPanel';
 
 const CONTENT = path.join('views', 'modelView');
@@ -51,10 +51,10 @@ export class ProblemConstraintsView extends ProblemView<ProblemConstraintsRender
         );
     }
 
-    async provideCodeLenses(document: TextDocument, token: CancellationToken): Promise<CodeLens[]> {
-        if (token.isCancellationRequested) { return null; }
+    async provideCodeLenses(document: TextDocument, token: CancellationToken): Promise<CodeLens[] | undefined> {
+        if (token.isCancellationRequested) { return undefined; }
         let problem = await this.parseProblem(document);
-        if (token.isCancellationRequested) { return null; }
+        if (token.isCancellationRequested) { return undefined; }
         if (!problem) { return []; }
 
         let defineNode = problem.syntaxTree.getDefineNodeOrThrow();
@@ -127,7 +127,6 @@ class ProblemConstraintsRendererDelegate {
     private relationships: NetworkEdge[] = [];
     private namedConditionConstraints: NamedConditionConstraint[];
     private afterConstraints: AfterConstraint[];
-    private namedStateNames = new Set<string>();
     private lastNodeIndex: number;
 
     constructor(_context: ExtensionContext, private domain: DomainInfo, private problem: ProblemInfo, _options: ProblemConstraintsRendererOptions) {
@@ -149,13 +148,14 @@ class ProblemConstraintsRendererDelegate {
         this.afterConstraints.forEach(ac => {
             let predecessorId = this.upsertGoal(ac.predecessor);
             let successorId = this.upsertGoal(ac.successor);
-            this.addEdge(predecessorId, successorId);
+            let label = ac instanceof StrictlyAfterConstraint ? 'strictly-after' : 'after';
+            this.addEdge(predecessorId, successorId, label);
         });
     }
 
     private addNamedCondition(namedCondition: NamedConditionConstraint, index: number): number {
-        this.nodes.set(namedCondition.name!, new NamedConditionNode(index, namedCondition.name!, namedCondition.condition!.getText()));
-        this.namedStateNames.add(namedCondition.name!);
+        let key = namedCondition.name || namedCondition.condition?.getText() || "unnamed";
+        this.nodes.set(key, new NamedConditionNode(index, namedCondition.name || "", namedCondition.condition?.getText() || "unspecified condition"));
         return index;
     }
 
@@ -171,18 +171,21 @@ class ProblemConstraintsRendererDelegate {
             }
         }
         else if (namedCondition.condition) {
-            let index = this.lastNodeIndex++;
             let conditionText = namedCondition.condition!.getText();
-            this.nodes.set(conditionText, new NamedConditionNode(index, '', conditionText));
-            return index;
+            if (this.nodes.has(conditionText)) {
+                return this.nodes.get(conditionText)!.id;
+            }
+            else {
+                return this.addNamedCondition(namedCondition, this.lastNodeIndex++);
+            }
         }
         else {
             throw new Error('Unexpected constraint: ' + namedCondition.toString());
         }
     }
 
-    private addEdge(predecessorId: number, successorId: number): void {
-        this.relationships.push({ from: predecessorId, to: successorId, label: "after" });
+    private addEdge(predecessorId: number, successorId: number, label: string): void {
+        this.relationships.push({ from: predecessorId, to: successorId, label: label });
     }
 
     getNodes(): NetworkNode[] {
@@ -191,6 +194,7 @@ class ProblemConstraintsRendererDelegate {
 
     private toNode(entry: NamedConditionNode): NetworkNode {
         let shape = "box";
+        // concatenate the name and definition if both are provided
         let label = [entry.name, entry.definition]
             .filter(element => element && element.length > 0)
             .join(': ');

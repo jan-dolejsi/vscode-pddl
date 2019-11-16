@@ -7,6 +7,7 @@ import { PDDLParserSettings } from './Settings';
 
 import { ensureAbsolutePath, isHttp } from './utils';
 import { VAL_DOWNLOAD_COMMAND } from './validation/valCommand';
+import { ExtensionInfo } from './ExtensionInfo';
 
 export const EXECUTABLE_OR_SERVICE = 'executableOrService';
 export const PDDL_PARSER = 'pddlParser';
@@ -32,6 +33,7 @@ export const PLAN_REPORT_EXPORT_WIDTH = 'planReport.exportWidth';
 export const PLAN_REPORT_WIDTH = 'planReport.width';
 export const PLANNER_VAL_STEP_PATH = CONF_PDDL + "." + VAL_STEP_PATH;
 export const PLANNER_VALUE_SEQ_PATH = CONF_PDDL + "." + VALUE_SEQ_PATH;
+export const PDDL_CONFIGURE_COMMAND = CONF_PDDL + "." + "configure";
 
 export class PddlConfiguration {
 
@@ -39,11 +41,10 @@ export class PddlConfiguration {
     }
 
     getEpsilonTimeStep(): number {
-        return vscode.workspace.getConfiguration().get(PLANNER_EPSILON_TIMESTEP);
+        return vscode.workspace.getConfiguration().get(PLANNER_EPSILON_TIMESTEP, 1e-3);
     }
 
-    getParserPath(): string {
-        // this may be 'undefined'
+    getParserPath(): string | undefined {
         let configuredPath = vscode.workspace.getConfiguration().get<string>(PARSER_EXECUTABLE_OR_SERVICE);
         return ensureAbsolutePath(configuredPath, this.context);
     }
@@ -87,7 +88,7 @@ export class PddlConfiguration {
         }
     }
 
-    async askNewParserPath() {
+    async askNewParserPath(): Promise<string | undefined> {
         let existingValue = vscode.workspace.getConfiguration().get<string>(PARSER_EXECUTABLE_OR_SERVICE);
 
         let newParserPath = await vscode.window.showInputBox({
@@ -104,9 +105,10 @@ export class PddlConfiguration {
 
             let newParserScope = await this.askConfigurationScope();
 
-            if (!newParserScope) { return null; }
+            if (!newParserScope) { return undefined; }
 
             let configurationToUpdate = this.getConfigurationForScope(newParserScope);
+            if (!configurationToUpdate) { return undefined; }
 
             if (!isHttp(newParserPath)) {
                 this.askParserOptions(newParserScope);
@@ -119,8 +121,8 @@ export class PddlConfiguration {
         return newParserPath;
     }
 
-    async askParserOptions(scope: ScopeQuickPickItem) {
-        let existingValue: string = vscode.workspace.getConfiguration().get(PARSER_EXECUTABLE_OPTIONS);
+    async askParserOptions(scope: ScopeQuickPickItem): Promise<string | undefined> {
+        let existingValue = vscode.workspace.getConfiguration().get<string>(PARSER_EXECUTABLE_OPTIONS);
 
         let newParserOptions = await vscode.window.showInputBox({
             prompt: "In case you use command line switches and options, override the default syntax. For more info, see (the wiki)[https://github.com/jan-dolejsi/vscode-pddl/wiki/Configuring-the-PDDL-parser].",
@@ -133,6 +135,7 @@ export class PddlConfiguration {
             // todo: validate that this parser actually works by sending a dummy request to it
 
             let configurationToUpdate = this.getConfigurationForScope(scope);
+            if (!configurationToUpdate) { return undefined; }
 
             // Update the value in the target
             configurationToUpdate.update(PARSER_EXECUTABLE_OPTIONS, newParserOptions, scope.target);
@@ -203,18 +206,18 @@ export class PddlConfiguration {
         configuration.update(PLANNER_SERVICE_AUTHENTICATION_S_TOKEN, stoken, target);
     }
 
-    async getPlannerPath(workingFolder?: vscode.Uri): Promise<string> {
-        let plannerPath: string = vscode.workspace.getConfiguration(PDDL_PLANNER, workingFolder).get(EXECUTABLE_OR_SERVICE);
+    async getPlannerPath(workingFolder?: vscode.Uri): Promise<string | undefined> {
+        let plannerPath = vscode.workspace.getConfiguration(PDDL_PLANNER, workingFolder).get<string>(EXECUTABLE_OR_SERVICE);
 
         if (!plannerPath) {
             plannerPath = await this.askNewPlannerPath();
         }
 
-        return plannerPath; // this may be 'undefined'
+        return plannerPath; // this may be 'undefined', if the user canceled
     }
 
-    async askNewPlannerPath() {
-        let existingValue: string = vscode.workspace.getConfiguration(PDDL_PLANNER, null).get(EXECUTABLE_OR_SERVICE);
+    async askNewPlannerPath(): Promise<string | undefined> {
+        let existingValue = vscode.workspace.getConfiguration(PDDL_PLANNER, null).get<string>(EXECUTABLE_OR_SERVICE);
 
         let newPlannerPath = await vscode.window.showInputBox({
             prompt: "Enter PDDL planner path local command or web service URL",
@@ -231,8 +234,9 @@ export class PddlConfiguration {
 
             let newPlannerScope = await this.askConfigurationScope();
 
-            if (!newPlannerScope) { return null; }
+            if (!newPlannerScope) { return undefined; }
             let configurationToUpdate = this.getConfigurationForScope(newPlannerScope);
+            if (!configurationToUpdate) { return undefined; }
 
             if (!isHttp(newPlannerPath)) {
                 this.askPlannerSyntax(newPlannerScope);
@@ -245,8 +249,8 @@ export class PddlConfiguration {
         return newPlannerPath;
     }
 
-    async askPlannerSyntax(scope: ScopeQuickPickItem) {
-        let existingValue: string = vscode.workspace.getConfiguration().get(PLANNER_EXECUTABLE_OPTIONS);
+    async askPlannerSyntax(scope: ScopeQuickPickItem): Promise<string | undefined> {
+        let existingValue = vscode.workspace.getConfiguration().get<string>(PLANNER_EXECUTABLE_OPTIONS);
 
         let newPlannerOptions = await vscode.window.showInputBox({
             prompt: "In case you use command line switches and options, override the default syntax. For more info, see (the wiki)[https://github.com/jan-dolejsi/vscode-pddl/wiki/Configuring-the-PDDL-planner].",
@@ -259,6 +263,7 @@ export class PddlConfiguration {
             // todo: validate that this planner actually works by sending a dummy request to it
 
             let configurationToUpdate = this.getConfigurationForScope(scope);
+            if (!configurationToUpdate) { return undefined; }
 
             // Update the value in the target
             configurationToUpdate.update(PLANNER_EXECUTABLE_OPTIONS, newPlannerOptions, scope.target);
@@ -267,33 +272,33 @@ export class PddlConfiguration {
         return newPlannerOptions;
     }
 
-    getPlannerSyntax(): string {
+    getPlannerSyntax(): string | undefined {
         return vscode.workspace.getConfiguration().get<string>(PLANNER_EXECUTABLE_OPTIONS);
     }
 
-    getValueSeqPath(): string {
+    getValueSeqPath(): string | undefined {
         let configuredPath = vscode.workspace.getConfiguration().get<string>(PLANNER_VALUE_SEQ_PATH);
         return ensureAbsolutePath(configuredPath, this.context);
     }
 
-    getValidatorPath(): string {
+    getValidatorPath(): string | undefined {
         let configuredPath = vscode.workspace.getConfiguration(CONF_PDDL).get<string>(VALIDATION_PATH);
         return ensureAbsolutePath(configuredPath, this.context);
     }
 
-    async askNewValidatorPath(): Promise<string> {
+    async askNewValidatorPath(): Promise<string | undefined> {
         let configuredPath = await this.askAndUpdatePath(VALIDATION_PATH, "Validate tool");
         return ensureAbsolutePath(configuredPath, this.context);
     }
 
-    async getValStepPath(): Promise<string> {
+    async getValStepPath(): Promise<string | undefined> {
         let configuredPath = await this.getOrAskPath(VAL_STEP_PATH, "ValStep executable");
         return ensureAbsolutePath(configuredPath, this.context);
     }
 
-    async getOrAskPath(configName: string, configFriendlyName: string): Promise<string> {
+    async getOrAskPath(configName: string, configFriendlyName: string): Promise<string | undefined> {
         let configurationSection = vscode.workspace.getConfiguration(CONF_PDDL);
-        let configValue: string = configurationSection.get(configName);
+        let configValue = configurationSection.get<string>(configName);
         if (!configValue) {
             configValue = await this.askAndUpdatePath(configName, configFriendlyName);
         }
@@ -301,7 +306,7 @@ export class PddlConfiguration {
         return configValue;
     }
 
-    async suggestUpdatingPath(configName: string, configFriendlyName: string): Promise<string> {
+    async suggestUpdatingPath(configName: string, configFriendlyName: string): Promise<string | undefined> {
         let configureOption: vscode.MessageItem = { title: `Select ${configFriendlyName}...` };
         let notNowOption: vscode.MessageItem = { title: "Not now", isCloseAffordance: true };
 
@@ -309,7 +314,7 @@ export class PddlConfiguration {
             `${configFriendlyName} is not configured.`,
             ...[configureOption, notNowOption]);
 
-        let configValue: string = undefined;
+        let configValue: string | undefined;
 
         if (choice === configureOption) {
             configValue = await this.askAndUpdatePath(configName, configFriendlyName);
@@ -318,19 +323,19 @@ export class PddlConfiguration {
         return configValue;
     }
 
-    async askAndUpdatePath(configName: string, configFriendlyName: string): Promise<string> {
-        let seletedUris = await vscode.window.showOpenDialog({
+    async askAndUpdatePath(configName: string, configFriendlyName: string): Promise<string | undefined> {
+        let selectedUris = await vscode.window.showOpenDialog({
             canSelectFiles: true,
             canSelectFolders: false, canSelectMany: false,
             openLabel: `Select ${configFriendlyName}`
         });
 
-        let configValue: string = undefined;
+        let configValue: string | undefined;
 
-        if (seletedUris) {
-            configValue = seletedUris[0].fsPath;
+        if (selectedUris) {
+            configValue = selectedUris[0].fsPath;
             let scopeToUpdate = await this.askConfigurationScope();
-            if (!scopeToUpdate) { return null; }
+            if (!scopeToUpdate) { return undefined; }
             let configurationSection = vscode.workspace.getConfiguration(CONF_PDDL);
             configurationSection.update(configName, configValue, scopeToUpdate.target);
         }
@@ -338,7 +343,7 @@ export class PddlConfiguration {
         return configValue;
     }
 
-    async askConfigurationScope(): Promise<ScopeQuickPickItem> {
+    async askConfigurationScope(): Promise<ScopeQuickPickItem | undefined> {
         let availableScopes: ScopeQuickPickItem[] = [
             { label: 'This machine (default)', description: 'Selected tool will be used for all domain/problem files on this computer.', target: vscode.ConfigurationTarget.Global }
         ];
@@ -357,10 +362,11 @@ export class PddlConfiguration {
         return selectedScope;
     }
 
-    async moveConfiguration(configuration: vscode.WorkspaceConfiguration, legacyConfigName: string, configName: string) {
-        let legacyConfig = configuration.inspect(legacyConfigName);
+    async moveConfiguration<T>(configuration: vscode.WorkspaceConfiguration, legacyConfigName: string, configName: string): Promise<void> {
+        let legacyConfig = configuration.inspect<T>(legacyConfigName);
+        if (!legacyConfig) { return; }
 
-        let target: vscode.ConfigurationTarget;
+        let target: vscode.ConfigurationTarget | undefined;
 
         if (legacyConfig.workspaceFolderValue) {
             target = vscode.ConfigurationTarget.WorkspaceFolder;
@@ -372,12 +378,12 @@ export class PddlConfiguration {
             await configuration.update(configName, legacyConfig.defaultValue, vscode.ConfigurationTarget.Global);
         }
         if (target) {
-            await configuration.update(configName, configuration.get(legacyConfigName), target);
+            await configuration.update(configName, configuration.get<T>(legacyConfigName), target);
             await configuration.update(legacyConfigName, null, target);
         }
     }
 
-    getConfigurationForScope(scope: ScopeQuickPickItem): vscode.WorkspaceConfiguration {
+    getConfigurationForScope(scope: ScopeQuickPickItem): vscode.WorkspaceConfiguration | undefined {
 
         if (scope.target === vscode.ConfigurationTarget.WorkspaceFolder) {
             // let workspaceFolder = await vscode.window.showWorkspaceFolderPick({ placeHolder: 'Pick Workspace Folder to which this setting should be applied' })
@@ -386,7 +392,7 @@ export class PddlConfiguration {
             // 	// *Get the configuration for the workspace folder
             // 	const configuration = vscode.workspace.getConfiguration('', workspaceFolder.uri);
             vscode.window.showErrorMessage("Workspace folder not supported");
-            return null;
+            return undefined;
         }
         else {
             return vscode.workspace.getConfiguration();
@@ -399,9 +405,101 @@ export class PddlConfiguration {
 
         return configuration;
     }
+
+    async askConfiguration(configName: string): Promise<void> {
+        let thisExtension = vscode.extensions.getExtension(ExtensionInfo.EXTENSION_ID);
+        if (thisExtension === undefined) { return; } // something odd!
+        let configurationElement = thisExtension.packageJSON["contributes"]["configuration"]["properties"][configName];
+
+        if (!configurationElement) {
+            throw new Error("Configuration not found: " + configName);
+        }
+
+        if (["number", "integer"].includes(configurationElement["type"])) {
+            return this.askNumberConfiguration(configName, configurationElement);
+        }
+        else if (configurationElement["enum"] !== undefined) {
+            return this.askEnumConfiguration(configName, configurationElement);
+        }
+    }
+
+    async askEnumConfiguration(configName: string, configurationElement: any): Promise<void> {
+        let items: vscode.QuickPickItem[] = [];
+        const enumNames = configurationElement["enum"];
+        const enumDescriptions = configurationElement["enumDescriptions"];
+
+        let currentValue = vscode.workspace.getConfiguration().get<string>(configName, <string>configurationElement["default"]);
+
+        for (let index = 0; index < enumNames.length; index++) {
+            const itemLabel = enumNames[index];
+            const description = enumDescriptions && index < enumDescriptions.length ?
+                enumDescriptions[index] : undefined;
+
+            items.push({
+                label: itemLabel,
+                description: description,
+                picked: itemLabel === currentValue
+            });
+        }
+
+        let itemSelected = await vscode.window.showQuickPick(items, {
+            placeHolder: configurationElement["description"]
+        });
+
+        if (itemSelected === undefined) { return; }
+
+        await vscode.workspace.getConfiguration().update(configName, itemSelected.label);
+    }
+
+    async askNumberConfiguration(configName: string, configurationElement: any): Promise<void> {
+        let currentValue = vscode.workspace.getConfiguration().get<number>(configName, <number>configurationElement["default"]);
+
+        let hint: string | undefined;
+        let parser: (enteredValue: string) => number;
+
+        const valueType = configurationElement["type"];
+        switch (valueType) {
+            case "integer":
+                hint = "Value must be a decimal integer.";
+                parser = enteredValueAsString => Number.parseInt(enteredValueAsString);
+                break;
+            default:
+                hint = "Value must be a number.";
+                parser = enteredValueAsString => Number.parseFloat(enteredValueAsString);
+                break;
+        }
+
+        let minimum = configurationElement["minimum"];
+        let maximum = configurationElement["maximum"];
+
+        let enteredValueAsString = await vscode.window.showInputBox({
+            prompt: configurationElement["description"],
+            value: currentValue.toString(),
+            validateInput: (enteredValueAsString: string) => {
+                let enteredValue = parser.apply(this, [enteredValueAsString]); 
+
+                if (Number.isNaN(enteredValue)) { return hint; }
+
+                if (minimum !== undefined && minimum > enteredValue) {
+                    return `Minimum: ${minimum}`;
+                } 
+
+                if (maximum !== undefined && maximum < enteredValue) {
+                    return `Maximum: ${maximum}`;
+                } 
+
+                return null;
+            },
+            placeHolder: "Value"
+        });
+
+        if (enteredValueAsString === undefined) { return; }
+
+        await vscode.workspace.getConfiguration().update(configName, parser(enteredValueAsString));
+    }
 }
 
-class ScopeQuickPickItem implements vscode.QuickPickItem {
+interface ScopeQuickPickItem extends vscode.QuickPickItem {
     label: string;
     description: string;
     target: vscode.ConfigurationTarget;

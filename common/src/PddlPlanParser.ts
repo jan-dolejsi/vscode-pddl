@@ -22,7 +22,7 @@ export class PddlPlanParser {
     private planBuilder: PlanBuilder;
     private endOfBufferToBeParsedNextTime = '';
 
-    private xmlPlanBuilder: XmlPlanBuilder;
+    private xmlPlanBuilder: XmlPlanBuilder | undefined;
 
     constructor(private domain: DomainInfo, private problem: ProblemInfo, public readonly options: PddlPlanParserOptions, private onPlanReady?: (plans: Plan[]) => void) {
         this.planBuilder = new PlanBuilder(options.epsilon);
@@ -60,7 +60,7 @@ export class PddlPlanParser {
                 this.xmlPlanBuilder.getPlanSteps()
                     .then(steps => {
                         steps.forEach(step => this.appendStep(step));
-                        this.xmlPlanBuilder = null;
+                        this.xmlPlanBuilder = undefined;
                         this.onPlanFinished();
                     })
                     .catch(reason => {
@@ -113,7 +113,7 @@ export class PddlPlanParser {
             this.endOfBufferToBeParsedNextTime = '';
         }
         if (this.planBuilder.getSteps().length > 0 ||
-            this.plans.length < this.options.minimumPlansExpected) {
+            this.plans.length < (this.options.minimumPlansExpected || 1)) {
             this.plans.push(this.planBuilder.build(this.domain, this.problem));
             this.planBuilder = new PlanBuilder(this.options.epsilon);
         }
@@ -138,8 +138,8 @@ export class PddlPlanParser {
  * Utility for incremental plan building as it is being parsed.
  */
 export class PlanBuilder {
-    statesEvaluated: number;
-    cost: number;
+    statesEvaluated: number | undefined;
+    cost: number | undefined;
     private steps: PlanStep[] = [];
 
     outputText = ""; // for information only

@@ -14,7 +14,7 @@ import { PddlSyntaxTreeBuilder } from '../../../common/src/PddlSyntaxTreeBuilder
 import { ProblemInfo } from '../../../common/src/ProblemInfo';
 import { DomainInfo } from '../../../common/src/DomainInfo';
 import { PddlLanguage } from '../../../common/src/FileInfo';
-import { PddlConfiguration, CONF_PDDL, PLAN_REPORT_EXPORT_WIDTH } from '../configuration';
+import { PddlConfiguration, CONF_PDDL, PLAN_REPORT_EXPORT_WIDTH, PDDL_CONFIGURE_COMMAND } from '../configuration';
 import { Plan } from '../../../common/src/Plan';
 import { PlannerResponseHandler } from './PlannerResponseHandler';
 import { PlannerExecutable } from './PlannerExecutable';
@@ -78,7 +78,7 @@ export class Planning implements PlannerResponseHandler {
 
         context.subscriptions.push(commands.registerCommand(PDDL_GENERATE_PLAN_REPORT, async (plans: Plan[], selectedPlan: number) => {
             if (plans !== null) {
-                let width = workspace.getConfiguration(CONF_PDDL).get<number>(PLAN_REPORT_EXPORT_WIDTH);
+                let width = workspace.getConfiguration(CONF_PDDL).get<number>(PLAN_REPORT_EXPORT_WIDTH, 200);
                 await new PlanReportGenerator(context, { displayWidth: width, selfContained: true }).export(plans, selectedPlan);
             } else {
                 window.showErrorMessage("There is no plan to export.");
@@ -127,6 +127,8 @@ export class Planning implements PlannerResponseHandler {
                 this.output.show();
             }
         }));
+
+        context.subscriptions.push(commands.registerCommand("pddl.configureTarget", () => commands.executeCommand(PDDL_CONFIGURE_COMMAND, "pddlPlanner.executionTarget")));
     }
 
     addOptionsProvider(optionsProvider: PlannerOptionsProvider) {

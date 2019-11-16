@@ -46,7 +46,7 @@ export class PddlStructure {
     static readonly DURATION = ':duration';
     static readonly CONDITION = ':condition';
     static readonly PDDL_DURATIVE_ACTION_SECTIONS = [PddlStructure.PARAMETERS, PddlStructure.DURATION, PddlStructure.CONDITION, PddlStructure.EFFECT];
-    
+
     static findPrecedingSection(newSectionName: string, defineNode: PddlSyntaxNode, supportedSections: string[]): PddlSyntaxNode {
         let precedingSections = PddlStructure.getPrecedingSections(newSectionName, supportedSections);
         // let followingSections = PddlStructure.getFollowingSections(newSectionName, supportedSections);

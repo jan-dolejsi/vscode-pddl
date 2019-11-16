@@ -37,10 +37,10 @@ describe('TypeObjectMap', () => {
             assert.strictEqual(map.length, 1, "size should be one");
             const object1TypeObjects = map.getTypeOf(objectName);
             assert.ok(object1TypeObjects, "there should be type for object1");
-            assert.strictEqual(object1TypeObjects.type, typeName, "type name matches");
+            assert.strictEqual(object1TypeObjects!.type, typeName, "type name matches");
             const type1TypeObjects = map.getTypeCaseInsensitive(typeName);
             assert.ok(type1TypeObjects, "type objects for type1");
-            assert.deepStrictEqual(type1TypeObjects.getObjects(), [objectName], "object names");
+            assert.deepStrictEqual(type1TypeObjects!.getObjects(), [objectName], "object names");
         });
 
         it('should add one type and two objects', () => {
@@ -59,14 +59,14 @@ describe('TypeObjectMap', () => {
 
             const object1TypeObjects = map.getTypeOf(object1Name);
             assert.ok(object1TypeObjects, "there should be type for object1");
-            assert.strictEqual(object1TypeObjects.type, typeName, "type name matches");
+            assert.strictEqual(object1TypeObjects!.type, typeName, "type name matches");
 
             const object2TypeObjects = map.getTypeOf(object2Name);
             assert.ok(object2TypeObjects, "there should be type for object2");
 
             const type1TypeObjects = map.getTypeCaseInsensitive(typeName);
             assert.ok(type1TypeObjects, "type objects for type1");
-            assert.deepStrictEqual(type1TypeObjects.getObjects(), [object1Name, object2Name], "object names");
+            assert.deepStrictEqual(type1TypeObjects!.getObjects(), [object1Name, object2Name], "object names");
         });
         
         it('should add two types with one object each', () => {
@@ -86,19 +86,19 @@ describe('TypeObjectMap', () => {
 
             const object1TypeObjects = map.getTypeOf(object1Name);
             assert.ok(object1TypeObjects, "there should be type for object1");
-            assert.strictEqual(object1TypeObjects.type, type1Name, "object1 type name matches");
+            assert.strictEqual(object1TypeObjects!.type, type1Name, "object1 type name matches");
 
             const object2TypeObjects = map.getTypeOf(object2Name);
             assert.ok(object2TypeObjects, "there should be type for object2");
-            assert.strictEqual(object2TypeObjects.type, type2Name, "object2 type name matches");
+            assert.strictEqual(object2TypeObjects!.type, type2Name, "object2 type name matches");
 
             const type1TypeObjects = map.getTypeCaseInsensitive(type1Name);
             assert.ok(type1TypeObjects, "type objects for type1");
-            assert.deepStrictEqual(type1TypeObjects.getObjects(), [object1Name], "object names");
+            assert.deepStrictEqual(type1TypeObjects!.getObjects(), [object1Name], "object names");
 
             const type2TypeObjects = map.getTypeCaseInsensitive(type2Name);
             assert.ok(type2TypeObjects, "type objects for type2");
-            assert.deepStrictEqual(type2TypeObjects.getObjects(), [object2Name], "object names");
+            assert.deepStrictEqual(type2TypeObjects!.getObjects(), [object2Name], "object names");
         });
     });
 
@@ -118,10 +118,10 @@ describe('TypeObjectMap', () => {
             assert.strictEqual(map.length, 1, "size should be one");
             const object1TypeObjects = map.getTypeOf(objectName);
             assert.ok(object1TypeObjects, "there should be type for object1");
-            assert.strictEqual(object1TypeObjects.type, typeName, "type name matches");
+            assert.strictEqual(object1TypeObjects!.type, typeName, "type name matches");
             const type1TypeObjects = map.getTypeCaseInsensitive(typeName);
             assert.ok(type1TypeObjects, "type objects for type1");
-            assert.deepStrictEqual(type1TypeObjects.getObjects(), [objectName], "object names");
+            assert.deepStrictEqual(type1TypeObjects!.getObjects(), [objectName], "object names");
         });
 
         it('should add one type and two objects', () => {
@@ -139,14 +139,14 @@ describe('TypeObjectMap', () => {
 
             const object1TypeObjects = map.getTypeOf(object1Name);
             assert.ok(object1TypeObjects, "there should be type for object1");
-            assert.strictEqual(object1TypeObjects.type, typeName, "type name matches");
+            assert.strictEqual(object1TypeObjects!.type, typeName, "type name matches");
 
             const object2TypeObjects = map.getTypeOf(object2Name);
             assert.ok(object2TypeObjects, "there should be type for object2");
 
             const type1TypeObjects = map.getTypeCaseInsensitive(typeName);
             assert.ok(type1TypeObjects, "type objects for type1");
-            assert.deepStrictEqual(type1TypeObjects.getObjects(), [object1Name, object2Name], "object names");
+            assert.deepStrictEqual(type1TypeObjects!.getObjects(), [object1Name, object2Name], "object names");
         });
         
         it('should add two types with one object each', () => {
@@ -166,19 +166,19 @@ describe('TypeObjectMap', () => {
 
             const object1TypeObjects = map.getTypeOf(object1Name);
             assert.ok(object1TypeObjects, "there should be type for object1");
-            assert.strictEqual(object1TypeObjects.type, type1Name, "object1 type name matches");
+            assert.strictEqual(object1TypeObjects!.type, type1Name, "object1 type name matches");
 
             const object2TypeObjects = map.getTypeOf(object2Name);
             assert.ok(object2TypeObjects, "there should be type for object2");
-            assert.strictEqual(object2TypeObjects.type, type2Name, "object2 type name matches");
+            assert.strictEqual(object2TypeObjects!.type, type2Name, "object2 type name matches");
 
             const type1TypeObjects = map.getTypeCaseInsensitive(type1Name);
             assert.ok(type1TypeObjects, "type objects for type1");
-            assert.deepStrictEqual(type1TypeObjects.getObjects(), [object1Name], "object names");
+            assert.deepStrictEqual(type1TypeObjects!.getObjects(), [object1Name], "object names");
 
             const type2TypeObjects = map.getTypeCaseInsensitive(type2Name);
             assert.ok(type2TypeObjects, "type objects for type2");
-            assert.deepStrictEqual(type2TypeObjects.getObjects(), [object2Name], "object names");
+            assert.deepStrictEqual(type2TypeObjects!.getObjects(), [object2Name], "object names");
         });
     });
 });

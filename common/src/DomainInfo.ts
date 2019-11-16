@@ -295,7 +295,7 @@ export abstract class Action {
 }
 
 export class InstantAction extends Action {
-    constructor(name: string | undefined, parameters: Parameter[], public readonly preCondition: PddlBracketNode, public readonly effect: PddlBracketNode) {
+    constructor(name: string | undefined, parameters: Parameter[], public readonly preCondition?: PddlBracketNode, public readonly effect?: PddlBracketNode) {
         super(name, parameters);
     }
 
@@ -306,9 +306,9 @@ export class InstantAction extends Action {
 
 export class DurativeAction extends Action {
     constructor(name: string | undefined, parameters: Parameter[],
-        public readonly duration: PddlBracketNode,
-        public readonly condition: PddlBracketNode,
-        public readonly effect: PddlBracketNode) {
+        public readonly duration?: PddlBracketNode,
+        public readonly condition?: PddlBracketNode,
+        public readonly effect?: PddlBracketNode) {
         super(name, parameters);
     }
 

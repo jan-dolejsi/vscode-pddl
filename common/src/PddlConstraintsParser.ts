@@ -4,7 +4,7 @@
  * ------------------------------------------------------------------------------------------ */
 'use strict';
 
-import { Constraint, NamedConditionConstraint, Condition, AfterConstraint } from "./constraints";
+import { Constraint, NamedConditionConstraint, Condition, AfterConstraint, StrictlyAfterConstraint } from "./constraints";
 import { PddlSyntaxNode } from "./PddlSyntaxNode";
 import { PddlTokenType, isOpenBracket } from "./PddlTokenizer";
 
@@ -33,12 +33,15 @@ export class PddlConstraintsParser {
         }
 
         if (children[0].getToken().type === PddlTokenType.Other) {
-            switch (children[0].getToken().tokenText) {
+            const token = children[0].getToken().tokenText.toLowerCase();
+            const strictlyAfterToken = 'strictly-after';
+            switch (token) {
                 case 'name':
                 case 'named-condition':
                     return this.parseNamedCondition(node, children.slice(1)) || new Constraint(node);
+                case strictlyAfterToken:
                 case 'after':
-                    return this.parseAfter(node, children.slice(1)) || new Constraint(node);
+                    return this.parseAfter(node, children.slice(1), token === strictlyAfterToken) || new Constraint(node);
                 default:
                     return new Constraint(node);
             }
@@ -65,7 +68,7 @@ export class PddlConstraintsParser {
         }
     }
 
-    private parseAfter(constraintNode: PddlSyntaxNode, children: PddlSyntaxNode[]): Constraint | undefined {
+    private parseAfter(constraintNode: PddlSyntaxNode, children: PddlSyntaxNode[], strictly: boolean): Constraint | undefined {
         if (children.length < 2) { return undefined; }
 
         let predecessor = this.parseAfterGoal(children[0]);
@@ -73,7 +76,11 @@ export class PddlConstraintsParser {
 
         if (!(predecessor || successor)) { return undefined; }
 
-        return new AfterConstraint(predecessor!, successor!, constraintNode);
+        if (strictly) {
+            return new StrictlyAfterConstraint(predecessor!, successor!, constraintNode);
+        } else {
+            return new AfterConstraint(predecessor!, successor!, constraintNode);
+        }
     }
 
     private parseAfterGoal(nameOrConditionNode: PddlSyntaxNode): NamedConditionConstraint | undefined {

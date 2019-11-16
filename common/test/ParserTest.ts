@@ -52,7 +52,7 @@ describe('Parser', () => {
             let domainInfo = subject.tryDomain('file:///file', 0, fileText, syntaxTree, positionResolver);
 
             // THEN
-            assert.strictEqual(domainInfo, null, 'domain should be null');
+            assert.strictEqual(domainInfo, undefined, 'domain should be null');
         });
     });
 });

@@ -327,6 +327,10 @@
       {
         "command": "pddl.downloadVal",
         "title": "PDDL: Download VAL tools"
+      },
+      {
+        "command": "pddl.configureTarget",
+        "title": "PDDL: Configure planner output target..."
       }
     ],
     "menus": {
@@ -611,6 +615,7 @@
         },
         "pddlPlanner.executionTarget": {
           "scope": "window",
+          "description": "Target to direct the planner output to.",
           "enum": [
             "Output window",
             "Terminal",
@@ -736,12 +741,14 @@
         "pddl.planReport.width": {
           "title": "PDDL: Plan visualization width (in pixels)",
           "type": "integer",
-          "default": 200
+          "default": 200,
+          "minimum": 200
         },
         "pddl.planReport.exportWidth": {
           "title": "PDDL: Plan Report width (in pixels) for exporting",
           "type": "integer",
-          "default": 1000
+          "default": 1000,
+          "minimum": 500
         },
         "pddl.formatter": {
           "type": "boolean",

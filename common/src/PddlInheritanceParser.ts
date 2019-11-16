@@ -31,7 +31,7 @@ export class PddlInheritanceParser {
         while (match = pattern.exec(declarationText)) {
             // is this a group with inheritance?
             let fragments = match[0].split(/\s-/);
-            let parent = fragments.length > 1 ? fragments[1].trim() : null;
+            let parent = fragments.length > 1 ? fragments[1].trim() : undefined;
             let children = fragments[0].trim().split(/\s+/g);
 
             children.forEach(childType => inheritance.addEdge(childType, parent));
@@ -39,7 +39,7 @@ export class PddlInheritanceParser {
 
         // connect orphan types to the 'object' type
         let orphans = inheritance.getVertices()
-            .filter(v => !inheritance.getVerticesWithEdgesFrom(v).length)
+            .filter(v => !inheritance.getVerticesWithEdgesFrom(v)?.length || 0)
             .filter(orphan => orphan !== this.OBJECT);
         orphans.forEach(orphan => inheritance.addEdge(orphan, this.OBJECT));
 
@@ -51,7 +51,7 @@ export class PddlInheritanceParser {
 
         graph.getVertices().forEach(obj => {
             graph.getVerticesWithEdgesFrom(obj)
-                .forEach(type => typeObjectMap.add(type, obj));
+                ?.forEach(type => typeObjectMap.add(type, obj));
         });
 
         return typeObjectMap;
