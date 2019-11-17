@@ -61,7 +61,7 @@ describe('InstantActionParser', () => {
             // THEN
             assert.ok(action, 'there should be an action parsed');
             assert.strictEqual(action.name, 'action1');
-            assert.strictEqual(action.preCondition.getText(), '(p)');
+            assert.strictEqual(action.preCondition?.getText(), '(p)');
             assert.deepStrictEqual(action.getLocation(), new PddlRange(0, 0, 0, 34));
         });
 
@@ -75,7 +75,7 @@ describe('InstantActionParser', () => {
             // THEN
             assert.ok(action, 'there should be an action parsed');
             assert.strictEqual(action.name, 'action1');
-            assert.strictEqual(action.effect.getText(), '(and (p))');
+            assert.strictEqual(action.effect?.getText(), '(and (p))');
         });
     });
 });

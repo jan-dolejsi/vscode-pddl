@@ -59,7 +59,7 @@ export class PddlSyntaxTreeBuilder {
     }
 
     private onToken(token: PddlToken): void {
-        if (token.getStart() > this.symbolIndex) { return; }
+        if (this.symbolIndex && (token.getStart() > this.symbolIndex)) { return; }
         switch (token.type) {
             case PddlTokenType.Keyword:
                 this.closeKeyword();
@@ -78,7 +78,10 @@ export class PddlSyntaxTreeBuilder {
     }
 
     private closeCurrentSibling() {
-        this.currentLeaf = this.currentLeaf.getParent();
+        if (this.currentLeaf.getParent() === undefined) {
+            throw new Error("Assertion error: closing a leaf node that has no parent.");
+        }
+        this.currentLeaf = this.currentLeaf.getParent()!;
     }
 
     private addChild(token: PddlToken) {
@@ -117,24 +120,24 @@ export class PddlSyntaxTreeBuilder {
         this.closeSibling(token => token.type === PddlTokenType.Keyword, token => isOpenBracket(token));
     }
 
-    private closeSibling(isSibling: (token: PddlToken) => boolean, isParent: (token: PddlToken) => boolean): PddlSyntaxNode {
+    private closeSibling(isSibling: (token: PddlToken) => boolean, isParent: (token: PddlToken) => boolean): PddlSyntaxNode | undefined {
         // exit out of the other nested token(s)
         while (!isSibling(this.currentLeaf.getToken()) && !isParent(this.currentLeaf.getToken())) {
             if (this.currentLeaf.getParent() === undefined) {
-                return null;
+                return undefined;
             } else {
-                this.currentLeaf = this.currentLeaf.getParent();
+                this.closeCurrentSibling();
             }
         }
 
         // exit out the parent token
         if (isSibling(this.currentLeaf.getToken()) && !isParent(this.currentLeaf.getToken())) {
             let sibling = this.currentLeaf;
-            this.currentLeaf = this.currentLeaf.getParent();
+            this.closeCurrentSibling();
             return sibling;
         }
         else {
-            return null;
+            return undefined;
         }
     }
 }

@@ -270,15 +270,15 @@ export class PddlSyntaxNode extends TextRange {
 
     getPrecedingSiblings(type: PddlTokenType, centralNode?: PddlSyntaxNode): PddlSyntaxNode[] {
         let siblings = this.getSiblings(type, /.*/);
-        centralNode = centralNode || this;
-        let precedingSiblings = siblings.filter(sibling => sibling.getStart() < centralNode.getStart());
+        let centralNodeStart = (centralNode || this).getStart();
+        let precedingSiblings = siblings.filter(sibling => sibling.getStart() < centralNodeStart);
         return precedingSiblings;
     }
 
     getFollowingSiblings(type: PddlTokenType, centralNode?: PddlSyntaxNode): PddlSyntaxNode[] {
         let siblings = this.getSiblings(type, /.*/);
-        centralNode = centralNode || this;
-        let followingSiblings = siblings.filter(sibling => sibling.getStart() > centralNode.getStart());
+        let centralNodeStart = (centralNode || this).getStart();
+        let followingSiblings = siblings.filter(sibling => sibling.getStart() > centralNodeStart);
         return followingSiblings;
     }
 

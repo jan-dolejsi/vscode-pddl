@@ -8,6 +8,11 @@ import * as assert from 'assert';
 import { PddlPlanParser } from '../src/PddlPlanParser';
 import { DomainInfo } from '../src/DomainInfo';
 import { ProblemInfo } from '../src/ProblemInfo';
+import { PddlSyntaxTree } from '../src/PddlSyntaxTree';
+import { SimpleDocumentPositionResolver } from '../src/DocumentPositionResolver';
+
+const dummyDomain = new DomainInfo('uri', 1, '', new PddlSyntaxTree(), new SimpleDocumentPositionResolver(''));
+const dummyProblem = new ProblemInfo('uri', 1, 'name', 'name', new PddlSyntaxTree(), new SimpleDocumentPositionResolver(''));
 
 describe('PddlPlanParser', () => {
 
@@ -15,12 +20,10 @@ describe('PddlPlanParser', () => {
 
         it('parses single-durative-action plan', () => {
             // GIVEN
-            let domainInfo: DomainInfo | undefined;
-            let problemInfo: ProblemInfo | undefined;
             let planText = '1: (action) [20]';
 
             // WHEN
-            let parser = new PddlPlanParser(domainInfo, problemInfo, { epsilon: 1e-3 });
+            let parser = new PddlPlanParser(dummyDomain, dummyProblem, { epsilon: 1e-3 });
             parser.appendBuffer(planText);
             parser.onPlanFinished();
             let plans = parser.getPlans();
@@ -39,12 +42,10 @@ describe('PddlPlanParser', () => {
 
         it('parses empty document', () => {
             // GIVEN
-            let domainInfo: DomainInfo | undefined;
-            let problemInfo: ProblemInfo | undefined;
             let planText = '';
 
             // WHEN
-            let parser = new PddlPlanParser(domainInfo, problemInfo, { epsilon: 1e-3, minimumPlansExpected: 1 });
+            let parser = new PddlPlanParser(dummyDomain, dummyProblem, { epsilon: 1e-3, minimumPlansExpected: 1 });
             parser.appendBuffer(planText);
             parser.onPlanFinished();
             let plans = parser.getPlans();
@@ -55,8 +56,6 @@ describe('PddlPlanParser', () => {
 
         it('parses empty plan with only meta-data', () => {
             // GIVEN
-            let domainInfo: DomainInfo = null;
-            let problemInfo: ProblemInfo = null;
             let planText = `;;!domain: d1
             ;;!problem: p1
             
@@ -65,7 +64,7 @@ describe('PddlPlanParser', () => {
             ; States evaluated: 10`;
 
             // WHEN
-            let parser = new PddlPlanParser(domainInfo, problemInfo, { epsilon: 1e-3, minimumPlansExpected: 1 });
+            let parser = new PddlPlanParser(dummyDomain, dummyProblem, { epsilon: 1e-3, minimumPlansExpected: 1 });
             parser.appendBuffer(planText);
             parser.onPlanFinished();
             let plans = parser.getPlans();
@@ -80,8 +79,6 @@ describe('PddlPlanParser', () => {
 
         it('parses xml plan', async () => {
             // GIVEN
-            let domainInfo: DomainInfo = null;
-            let problemInfo: ProblemInfo = null;
             let planText = `States evaluated: 51
             <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
             <Plan>
@@ -112,12 +109,13 @@ describe('PddlPlanParser', () => {
             End of plan print-out.`;
 
             // WHEN
-            var parser: PddlPlanParser;
+            var parser: PddlPlanParser | null = null;
             await new Promise((resolve, _reject) => {
-                parser = new PddlPlanParser(domainInfo, problemInfo, { epsilon: 1e-3, minimumPlansExpected: 1 }, _plans => resolve());
+                parser = new PddlPlanParser(dummyDomain, dummyProblem, { epsilon: 1e-3, minimumPlansExpected: 1 }, _plans => resolve());
                 parser.appendBuffer(planText);
             });
-            let plans = parser.getPlans();
+            if (!parser) { assert.fail("launching plan parser failed"); }
+            let plans = parser!.getPlans();
 
             // THEN
             assert.strictEqual(plans.length, 1, 'there should be one plan');
@@ -134,8 +132,6 @@ describe('PddlPlanParser', () => {
 
         it('parses xml with temporal plan', async () => {
             // GIVEN
-            let domainInfo: DomainInfo = null;
-            let problemInfo: ProblemInfo = null;
             let planText = `States evaluated: 51
             <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
             <Plan>
@@ -182,12 +178,13 @@ describe('PddlPlanParser', () => {
             End of plan print-out.`;
 
             // WHEN
-            var parser: PddlPlanParser;
+            var parser: PddlPlanParser | null = null;
             await new Promise((resolve, _reject) => {
-                parser = new PddlPlanParser(domainInfo, problemInfo, { epsilon: 1e-3, minimumPlansExpected: 1 }, _plans => resolve());
+                parser = new PddlPlanParser(dummyDomain, dummyProblem, { epsilon: 1e-3, minimumPlansExpected: 1 }, _plans => resolve());
                 parser.appendBuffer(planText);
             });
-            let plans = parser.getPlans();
+            if (!parser) { assert.fail("launching plan parser failed"); }
+            let plans = parser!.getPlans();
 
             // THEN
             assert.strictEqual(plans.length, 1, 'there should be one plan');

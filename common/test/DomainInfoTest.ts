@@ -21,7 +21,10 @@ describe('DomainInfo', () => {
             tank)
             `;
 
-            let domainInfo = createPddlDomainParser(domainPddl).getDomain();           
+            let domainInfo = createPddlDomainParser(domainPddl).getDomain();
+            if (domainInfo === undefined) {
+                assert.fail("could not parse domain");
+            }
 
             // WHEN
             let range = domainInfo.getTypeLocation('tank');
@@ -37,17 +40,18 @@ describe('DomainInfo', () => {
         it('finds type location in single line declaration', () => {
             // GIVEN
             const domainPddl = `(define (domain generator) (:types generator tankstelle tank)`;
-            let domainInfo = createPddlDomainParser(domainPddl).getDomain();           
-            
+            let domainInfo = createPddlDomainParser(domainPddl).getDomain();
+            if (domainInfo === undefined) { assert.fail('should parse'); }
+
             // WHEN
             let range = domainInfo.getTypeLocation('tank');
 
             // THEN
-            assert.notStrictEqual(range, null, "range should not be null");
-            assert.equal(range.startLine, 0);
-            assert.equal(range.endLine, 0);
-            assert.equal(range.startCharacter, 56);
-            assert.equal(range.endCharacter, 56 + 4);
+            assert.notStrictEqual(range, undefined, "range should not be null");
+            assert.equal(range!.startLine, 0);
+            assert.equal(range!.endLine, 0);
+            assert.equal(range!.startCharacter, 56);
+            assert.equal(range!.endCharacter, 56 + 4);
         });
     });
 
@@ -83,8 +87,9 @@ describe('DomainInfo', () => {
                 )
             )
             `;
-            let domainInfo = createPddlDomainParser(domainPddl).getDomain();           
-            
+            let domainInfo = createPddlDomainParser(domainPddl).getDomain();
+            if (domainInfo === undefined) { assert.fail('should parse'); }
+
             // WHEN
             let ranges = domainInfo.getTypeReferences('generator');
 
@@ -129,6 +134,7 @@ describe('DomainInfo', () => {
 )
 )`;
             let domainInfo = createPddlDomainParser(domainPddl).getDomain();
+            if (domainInfo === undefined) { assert.fail('should parse'); }
             assert.deepStrictEqual(domainInfo.getTypes(), ['tt1'], 'there should be 1 type');
             assert.deepStrictEqual(domainInfo.getPredicates().map(p => p.name), ['p3'], 'there should be 1 predicate');
             let p3 = domainInfo.getPredicates()[0];
@@ -138,7 +144,7 @@ describe('DomainInfo', () => {
 
             // THEN
             assert.strictEqual(p3ReferenceRanges.length, 4, 'there should be 3 references to predicate p3');
-            assert.deepStrictEqual(p3ReferenceRanges[0], new PddlRange(13, 4, 13, 14), "the first reference location should be"); 
+            assert.deepStrictEqual(p3ReferenceRanges[0], new PddlRange(13, 4, 13, 14), "the first reference location should be");
         });
 
         it('find no predicate references', () => {
@@ -160,6 +166,7 @@ describe('DomainInfo', () => {
 )
 )`;
             let domainInfo = createPddlDomainParser(domainPddl).getDomain();
+            if (domainInfo === undefined) { assert.fail('should parse'); }
             assert.deepStrictEqual(domainInfo.getPredicates().map(p => p.name), ['p0'], 'there should be 1 predicate');
             let p0 = domainInfo.getPredicates()[0];
 

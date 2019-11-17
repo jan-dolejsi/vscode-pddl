@@ -192,8 +192,9 @@ describe('DirectionalGraph', () => {
             var targets = graph.getVerticesWithEdgesFrom(origin);
 
             // then
-            assert.equal(targets.length, 1);
-            assert.equal(targets[0], target);
+            assert.ok(targets !== undefined);
+            assert.equal(targets!.length, 1);
+            assert.equal(targets![0], target);
         });
 
         it('should return no vertices with edge from target', () => {
@@ -206,7 +207,7 @@ describe('DirectionalGraph', () => {
             var targets = graph.getVerticesWithEdgesFrom(target);
 
             // then
-            assert.equal(targets.length, 0);
+            assert.equal(targets?.length, 0);
         });
     });
 

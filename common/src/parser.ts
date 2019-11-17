@@ -29,7 +29,7 @@ export class Parser {
         }
     }
 
-    async tryProblem(fileUri: string, fileVersion: number, fileText: string, syntaxTree: PddlSyntaxTree, positionResolver: DocumentPositionResolver): Promise<ProblemInfo> {
+    async tryProblem(fileUri: string, fileVersion: number, fileText: string, syntaxTree: PddlSyntaxTree, positionResolver: DocumentPositionResolver): Promise<ProblemInfo | undefined> {
         return this.problemParser.parse(fileUri, fileVersion, fileText, syntaxTree, positionResolver);
     }
 

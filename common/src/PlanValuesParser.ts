@@ -98,7 +98,9 @@ class StateValues {
         this.values.set(functionName, value);
     }
 
-    getValue(functionName: String): number | undefined{
-        return this.values.get(functionName);
+    getValue(functionName: String): number {
+        return this.values.has(functionName) ?
+            this.values.get(functionName)!
+            : Number.NaN;
     }
 }

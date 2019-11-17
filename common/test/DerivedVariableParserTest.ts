@@ -28,12 +28,11 @@ describe('DerivedVariableParser', () => {
             let derivedPredicate = parser.getVariable();
 
             // THEN
-            assert.ok(derivedPredicate, 'there should be one derived predicate');
-            if (derivedPredicate === null) { assert.fail("should not happen"); }
-            assert.strictEqual(derivedPredicate.name, 'can-lift');
-            assert.equal(derivedPredicate.parameters.length, 2);
-            assert.ok(derivedPredicate.getDocumentation().join('\n').startsWith('can lift'));
-            assert.deepStrictEqual(derivedPredicate.getLocation(), new PddlRange(2, 12, 3, 43));
+            assert.ok(derivedPredicate !== undefined, 'there should be one derived predicate');
+            assert.strictEqual(derivedPredicate!.name, 'can-lift');
+            assert.equal(derivedPredicate!.parameters.length, 2);
+            assert.ok(derivedPredicate!.getDocumentation().join('\n').startsWith('can lift'));
+            assert.deepStrictEqual(derivedPredicate!.getLocation(), new PddlRange(2, 12, 3, 43));
         });
 
         it('parses derived function', () => {

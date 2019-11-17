@@ -27,8 +27,8 @@ export class ProblemParserPreProcessor {
         }
     }
 
-    createPreProcessor(templatedProblem: string): PreProcessor | null {
-        let preProcessor: PreProcessor | null = null;
+    createPreProcessor(templatedProblem: string): PreProcessor | undefined {
+        let preProcessor: PreProcessor | undefined;
 
         this.problemCompletePattern.lastIndex = 0;
         let match = this.problemCompletePattern.exec(templatedProblem);

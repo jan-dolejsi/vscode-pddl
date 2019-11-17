@@ -87,7 +87,7 @@ export class Util {
      * @param arrayOfArrays array of arrays to be flattened to single dimentional array
      */
     static flatMap<T>(arrayOfArrays: Array<Array<T>>): Array<T> {
-        return [].concat.apply([], arrayOfArrays);
+        return new Array<T>().concat.apply(new Array<T>(), arrayOfArrays);
     }
 
     static distinct<T>(array: Array<T>): Array<T> {
