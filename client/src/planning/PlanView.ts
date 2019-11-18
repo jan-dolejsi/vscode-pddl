@@ -52,6 +52,14 @@ export class PlanView extends Disposable {
                 this.setNeedsRebuild(doc);
             }
         }));
+
+        context.subscriptions.push(workspace.onDidChangeConfiguration(e => {
+            if (e.affectsConfiguration(CONF_PDDL + '.' + PLAN_REPORT_WIDTH)) {
+                // preview width configuration was updated --> rebuild all views
+                this.webviewPanels.forEach(panel => panel.setNeedsRebuild(true));
+                this.rebuild();
+            }
+        }));
     }
 
     setPlannerOutput(plans: Plan[], reveal: boolean): void {
@@ -162,7 +170,7 @@ export class PlanView extends Disposable {
             return previewPanel.getError()!.message;
         }
         else {
-            let width = workspace.getConfiguration(CONF_PDDL).get<number>(PLAN_REPORT_WIDTH, 1000);
+            let width = workspace.getConfiguration(CONF_PDDL).get<number>(PLAN_REPORT_WIDTH, 300);
             return new PlanReportGenerator(this.context, { displayWidth: width, selfContained: false })
                 .generateHtml(previewPanel.getPlans());
         }
@@ -185,12 +193,6 @@ export class PlanView extends Disposable {
         console.log(`Message received from the webview: ${message.command}`);
 
         switch (message.command) {
-            case 'savePlanToFile':
-                commands.executeCommand(PDDL_EXPORT_PLAN, previewPanel.getSelectedPlan());
-                break;
-            case 'openInBrowser':
-                commands.executeCommand(PDDL_GENERATE_PLAN_REPORT, previewPanel.getPlans(), previewPanel.getSelectedPlanIndex());
-                break;
             case 'selectPlan':
                 let planIndex: number = message.planIndex;
                 previewPanel.setSelectedPlanIndex(planIndex);
@@ -205,8 +207,7 @@ export class PlanView extends Disposable {
 
     // tslint:disable-next-line:no-unused-expression
     async showMenu(previewPanel: PlanPreviewPanel): Promise<void> {
-        const pddlPlanWidth = "pddl.planReport.width";
-        let selectedItem = await new Menu([
+        await new Menu([
             {
                 label: "$(browser) Generate plan report",
                 detail: "Creates a self-contained HTML file and opens it in a default browser",
@@ -221,26 +222,19 @@ export class PlanView extends Disposable {
             },
             {
                 label: "$(arrow-both) Change width...",
-                detail: "Select the width in pixels for the plan rendering",
+                detail: "Select the width for the plan preview (in pixels)",
                 command: PDDL_CONFIGURE_COMMAND,
-                args: [pddlPlanWidth]
+                args: [CONF_PDDL + '.' + PLAN_REPORT_WIDTH]
             },
             {
                 label: "$(arrow-both) $(browser) Change report width...",
-                detail: "Select the width of the exported report in pixels",
+                detail: "Select the width of the next exported report (in pixels)",
                 command: PDDL_CONFIGURE_COMMAND,
                 args: ["pddl.planReport.exportWidth"]
             }
         ],
             { placeHolder: 'Select an action...' }
         ).show();
-
-        if (selectedItem !== undefined) {
-            if (selectedItem.command === PDDL_CONFIGURE_COMMAND &&
-                selectedItem.args && selectedItem.args[0] === pddlPlanWidth) {
-                this.updateContent(previewPanel);
-            }
-        }
     }
 }
 
@@ -259,8 +253,8 @@ async function getPlanDocument(dotDocumentUri: Uri | undefined): Promise<TextDoc
 
 class PlanPreviewPanel {
 
-    needsRebuild = false;
-    width: number = 200;
+    private needsRebuild = false;
+    private width: number = 200;
     selectedPlanIndex = 0;
     plans: Plan[] = [];
     error: Error | undefined;

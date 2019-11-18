@@ -44,11 +44,3 @@ function scrollPlanSelectorIntoView(planIndex) {
         if (parseInt(div.getAttribute('plan')) == planIndex) div.scrollIntoViewIfNeeded();
     });
 }
-
-function savePlanToFile() {
-    postMessage({ "command": "savePlanToFile" });
-}
-
-function openInBrowser() {
-    postMessage({ "command": "openInBrowser" });
-}

@@ -17,6 +17,7 @@
 - Domain processes and events are included into document symbols
 - Improved parsing of large domains by processing the parser output incrementally
 - Removed some 15MB from the extension package by reviewing the package content
+- New plan preview menu with more options including preview width dimension.
 
 ## [2.15.0] PDDL Model Visualization
 
