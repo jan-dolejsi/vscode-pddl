@@ -18,6 +18,7 @@
 - Improved parsing of large domains by processing the parser output incrementally
 - Removed some 15MB from the extension package by reviewing the package content
 - New plan preview menu with more options including preview width dimension.
+- New location for the VAL binaries download under VS Code extension global storage path. The binaries now survive extension upgrade. Terminal window is open on linux to suggest the user to chmod the binaries.
 
 ## [2.15.0] PDDL Model Visualization
 
