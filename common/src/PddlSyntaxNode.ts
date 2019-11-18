@@ -215,7 +215,6 @@ export class PddlSyntaxNode extends TextRange {
         let node: PddlSyntaxNode | undefined = this;
         while (node && !node.isDocument()) {
             node = PddlSyntaxNode.findParametrisableAncestor(node);
-            // if (!node) { return this.getParent(); }
             if (node) {
                 scopes.push(node);
             }
@@ -254,18 +253,19 @@ export class PddlSyntaxNode extends TextRange {
         return (parameterDefinition!==undefined) && pattern.test(parameterDefinition);
     }
 
-    expand(): PddlSyntaxNode | undefined {
-        var node: PddlSyntaxNode | undefined = this;
+    expand(): PddlSyntaxNode {
+        var node: PddlSyntaxNode = this;
         while (node && !isOpenBracket(node.getToken()) && !node.isDocument()) {
-            node = node.getParent();
+            var parentNode = node.getParent();
+            if (parentNode !== undefined) {
+                node = parentNode;
+            }
+            else {
+                break;
+            }
         }
 
-        if (node && node.isDocument()) {
-            return undefined;
-        }
-        else {
-            return node;
-        }
+        return node;
     }
 
     getPrecedingSiblings(type: PddlTokenType, centralNode?: PddlSyntaxNode): PddlSyntaxNode[] {

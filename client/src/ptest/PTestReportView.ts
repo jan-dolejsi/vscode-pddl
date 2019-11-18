@@ -17,7 +17,7 @@ import { PTEST_VIEW } from './PTestCommands';
 
 /** Visualizes PTest results on a web view panel. */
 export class PTestReportView {
-    private webViewPanel: WebviewPanel;
+    private webViewPanel: WebviewPanel | undefined;
     readonly CONTENT_FOLDER = path.join("views", "ptestReport");
 
     constructor(private context: PddlExtensionContext, private report: PTestReport) {
@@ -92,7 +92,7 @@ export class PTestReportView {
     }
 
     renderTestRow(test: Test): string {
-        let testResult = this.report.getTestResult(test);
+        let testResult = this.report.getTestResultOrThrow(test);
         let elapsedTime = testResult.elapsedTime ? `${(testResult.elapsedTime / 1000).toFixed(2)}` : '';
         let viewTestLink = `<a  href="#" onclick="openTest('${test.getUri().toString()}')" title="Open test case.">&#128065;</a>`;
         return `<tr><td>${test.getLabel()} ${viewTestLink}</td><td>${testResult.outcomeChar}</td><td>${elapsedTime}</td><td>${testResult.error || ""}</td></tr>`;

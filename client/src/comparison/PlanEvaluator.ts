@@ -20,6 +20,8 @@ export class PlanEvaluator {
 
         const valStepPath = await this.pddlConfiguration.getValStepPath();
 
+        if (valStepPath === undefined) { throw new Error('ValStep path not set.'); }
+
         return await new ValStep(domainInfo, problemInfo)
             .executeBatch(valStepPath, "", happenings);
     }

@@ -30,7 +30,7 @@ export function isHappenings(doc: TextDocument): boolean {
     return doc.languageId === HAPPENINGS && doc.uri.scheme !== "git";
 }
 
-export function toLanguage(doc: TextDocument): PddlLanguage {
+export function toLanguage(doc: TextDocument): PddlLanguage | undefined {
     return toLanguageFromId(doc.languageId);
 }
 
@@ -119,14 +119,14 @@ export interface DomainAndProblem {
     readonly problem: ProblemInfo;
 }
 
-export async function selectHappenings(): Promise<string> {
+export async function selectHappenings(): Promise<string | undefined> {
     // is a happenings file currently active?
     if (window.activeTextEditor && isHappenings(window.activeTextEditor.document)) {
         return window.activeTextEditor.document.uri.fsPath;
     }
 
-    let workspaceFolder = window.activeTextEditor && window.activeTextEditor.document ?
-        workspace.getWorkspaceFolder(window.activeTextEditor.document.uri) : null;
+    let workspaceFolder = window.activeTextEditor && window.activeTextEditor.document &&
+        workspace.getWorkspaceFolder(window.activeTextEditor.document.uri);
 
     let happeningsUri = await selectFile({
         language: PddlLanguage.HAPPENINGS,
@@ -137,11 +137,22 @@ export async function selectHappenings(): Promise<string> {
         workspaceFolder: workspaceFolder
     });
 
-    window.showTextDocument(happeningsUri);
-    return happeningsUri.fsPath;
+    if (happeningsUri) {
+        window.showTextDocument(happeningsUri);
+        return happeningsUri.fsPath;
+    }
+    else {
+        return undefined;
+    }
 }
 
-async function selectTextDocument(options: SelectFileOptions, textDocuments: TextDocument[]): Promise<TextDocument> {
+/**
+ * Lets the user select a text document in the workspace.
+ * @param options select file options
+ * @param textDocuments text documents to pick from
+ * @returns selected document, or null if the user canceled, or undefined, if the user wants to select another document from the disk
+ */
+async function selectTextDocument(options: SelectFileOptions, textDocuments: TextDocument[]): Promise<TextDocument | null | undefined> {
     let openDocumentPicks = textDocuments.map(d => new TextDocumentQuickPickItem(d));
     let items: DocumentQuickPickItem[] = [...openDocumentPicks, anotherDocumentQuickPickItem];
     let selectedOpenDocument = await window.showQuickPick(items, { canPickMany: false, placeHolder: options.promptMessage });
@@ -155,18 +166,18 @@ async function selectTextDocument(options: SelectFileOptions, textDocuments: Tex
 }
 
 /**
- * Selects a document given th criteria in the _options_
+ * Selects a document given the criteria in the _options_
  * @param options select file options
  * @param suggestedFiles files that the PddlWorkspace identified as candidates
  */
-export async function selectFile(options: SelectFileOptions, suggestedFiles?: FileInfo[]): Promise<Uri> {
+export async function selectFile(options: SelectFileOptions, suggestedFiles?: FileInfo[]): Promise<Uri | undefined> {
     // 0. is one of the suggested text documents the right one?
     if (suggestedFiles && suggestedFiles.length) {
         let openFileInfoPicks = suggestedFiles.map(d => new SuggestedFileInfoQuickPickItem(d));
         let items: FileInfoQuickPickItem[] = [...openFileInfoPicks, anotherDocumentFileInfoQuickPickItem];
         let selectedPick = await window.showQuickPick(items, { canPickMany: false, placeHolder: options.promptMessage });
         if (!selectedPick) {
-            return null;
+            return undefined;
         } else if (selectedPick !== anotherDocumentFileInfoQuickPickItem) {
             return Uri.parse(selectedPick.getFileInfo().fileUri);
         }
@@ -179,7 +190,7 @@ export async function selectFile(options: SelectFileOptions, suggestedFiles?: Fi
         if (selectedTextDocument) {
             return selectedTextDocument.uri;
         } else if (selectedTextDocument === null) {
-            return null;
+            return undefined;
         }
     }
 
@@ -191,7 +202,7 @@ export async function selectFile(options: SelectFileOptions, suggestedFiles?: Fi
         let items = [...workspaceFilePicks, anotherLocalFileQuickPickItem];
         let workspaceFileUriPicked = await window.showQuickPick(items, { canPickMany: false, placeHolder: options.promptMessage });
         if (!workspaceFileUriPicked) {
-            return null;
+            return undefined;
         } else if (workspaceFileUriPicked !== anotherLocalFileQuickPickItem) {
             return workspaceFileUriPicked.getUri();
         }
@@ -213,7 +224,7 @@ export async function selectFile(options: SelectFileOptions, suggestedFiles?: Fi
         }
         else {
             // nothing was selected
-            return null;
+            return undefined;
         }
     }
 }

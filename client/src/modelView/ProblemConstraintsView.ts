@@ -69,14 +69,14 @@ export class ProblemConstraintsView extends ProblemView<ProblemConstraintsRender
         }
     }
 
-    async resolveCodeLens(codeLens: CodeLens, token: CancellationToken): Promise<CodeLens> {
+    async resolveCodeLens(codeLens: CodeLens, token: CancellationToken): Promise<CodeLens | undefined> {
         if (!(codeLens instanceof DocumentCodeLens)) {
-            return null;
+            return undefined;
         }
-        if (token.isCancellationRequested) { return null; }
-        let [domain] = await this.getProblemAndDomain(codeLens.getDocument());
-        if (!domain) { return null; }
-        if (token.isCancellationRequested) { return null; }
+        if (token.isCancellationRequested) { return undefined; }
+        let domainAndProblem = await this.getProblemAndDomain(codeLens.getDocument());
+        if (!domainAndProblem) { return undefined; }
+        if (token.isCancellationRequested) { return undefined; }
 
         if (codeLens instanceof DocumentInsetCodeLens) {
             codeLens.command = { command: PDDL_PROBLEM_CONSTRAINTS_INSET_COMMAND, title: 'View inset', arguments: [codeLens.getDocument().uri, codeLens.getLine()] };

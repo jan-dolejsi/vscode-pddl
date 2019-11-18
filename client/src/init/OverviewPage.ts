@@ -265,10 +265,10 @@ export class OverviewPage {
 
 interface OverviewConfiguration {
     command: string;
-    planner: string;
+    planner?: string;
     plannerOutputTarget: string;
-    parser: string;
-    validator: string;
+    parser?: string;
+    validator?: string;
     shouldShow: boolean;
     autoSave: string;
     showInstallIconsAlert: boolean;

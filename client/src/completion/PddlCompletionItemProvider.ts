@@ -15,18 +15,18 @@ import { UnknownPddlCompletionItemProvider } from './UnknownPddlCompletionItemPr
 
 export class PddlCompletionItemProvider implements CompletionItemProvider {
     
-    private domainProvider: DomainCompletionItemProvider;
-    private problemProvider: ProblemCompletionItemProvider;
-    private unknownProvider: UnknownPddlCompletionItemProvider;
+    private domainProvider: DomainCompletionItemProvider | undefined;
+    private problemProvider: ProblemCompletionItemProvider | undefined;
+    private unknownProvider: UnknownPddlCompletionItemProvider | undefined;
 
     // For snippet syntax read this: https://code.visualstudio.com/docs/editor/userdefinedsnippets
     
     constructor(private codePddlWorkspace: CodePddlWorkspace) {
     }
 
-    async provideCompletionItems(document: TextDocument, position: Position, token: CancellationToken, context: CompletionContext): Promise<CompletionItem[]> {
-        if (token.isCancellationRequested) { return null; }
-        let fileInfo = this.codePddlWorkspace ? await this.codePddlWorkspace.upsertAndParseFile(document) : null;
+    async provideCompletionItems(document: TextDocument, position: Position, token: CancellationToken, context: CompletionContext): Promise<CompletionItem[] | undefined> {
+        if (token.isCancellationRequested) { return undefined; }
+        let fileInfo = await this.codePddlWorkspace?.upsertAndParseFile(document);
 
         if (fileInfo instanceof DomainInfo) {
             return await (this.domainProvider || (this.domainProvider = new DomainCompletionItemProvider())).provide(document, <DomainInfo>fileInfo, position, context);

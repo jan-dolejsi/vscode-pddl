@@ -59,7 +59,7 @@ export abstract class DomainView<TRendererOptions, TRenderData> extends Disposab
         });
     }
 
-    async refreshDomain(domainInfo: DomainInfo) {
+    async refreshDomain(domainInfo: DomainInfo): Promise<void> {
         const domainUri = Uri.parse(domainInfo.fileUri);
         // if no panel was created, skip
         if (!this.webviewPanels.get(domainUri) && !this.webviewInsets.get(domainUri)) { return; }
@@ -159,7 +159,7 @@ export abstract class DomainView<TRendererOptions, TRenderData> extends Disposab
 
     private async generateHtml(viewPanel: DomainViewPanel): Promise<string> {
         if (viewPanel.getError()) {
-            return viewPanel.getError().message;
+            return viewPanel.getError()!.message;
         }
         else {
             return getWebViewHtml(createPddlExtensionContext(this.context), this.options.content, this.options.webviewHtmlPath, viewPanel.getPanel().webview);
@@ -175,7 +175,7 @@ export abstract class DomainView<TRendererOptions, TRenderData> extends Disposab
     async parseDomain(domainDocument: TextDocument): Promise<DomainInfo | undefined> {
         let fileInfo = await this.codePddlWorkspace.upsertAndParseFile(domainDocument);
 
-        if (!fileInfo.isDomain()) {
+        if (!fileInfo?.isDomain()) {
             return undefined;
         }
 
@@ -213,12 +213,12 @@ export abstract class DomainView<TRendererOptions, TRenderData> extends Disposab
 
 }
 
-async function getDomainDocument(dotDocumentUri: Uri | undefined): Promise<TextDocument> {
+async function getDomainDocument(dotDocumentUri: Uri | undefined): Promise<TextDocument | undefined> {
     if (dotDocumentUri) {
         return await workspace.openTextDocument(dotDocumentUri);
     } else {
-        if (window.activeTextEditor !== null && isPddl(window.activeTextEditor.document)) {
-            return window.activeTextEditor.document;
+        if (window.activeTextEditor !== undefined && isPddl(window.activeTextEditor.document)) {
+            return window.activeTextEditor!.document;
         }
         else {
             return undefined;

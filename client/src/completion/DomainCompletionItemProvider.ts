@@ -145,7 +145,12 @@ export class DomainCompletionItemProvider extends AbstractCompletionItemProvider
         if (context.triggerCharacter === '?') {
             let scopes = currentNode.findAllParametrisableScopes();
             let range = nodeToRange(document, currentNode);
-            return Util.flatMap(scopes.map(s => this.getParameterNames(s.getParameterDefinition())))
+            let parameterNamesFromAllScopes = scopes
+                .map(s => s.getParameterDefinition())
+                .filter(paramNode => !!paramNode).map(paramNode => paramNode!)
+                .map(paramNode => this.getParameterNames(paramNode));
+            
+            return Util.flatMap(parameterNamesFromAllScopes)
                 .map((paramName, index) => this.createSnippetCompletionItem(Suggestion.from(paramName, context.triggerCharacter, ''), paramName, range, context, index))
                 .filter(c => !!c).map(c => c!);
         }

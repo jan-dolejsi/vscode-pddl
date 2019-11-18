@@ -23,7 +23,7 @@ export class SymbolInfoProvider implements DocumentSymbolProvider, DefinitionPro
         this.symbolUtils = new SymbolUtils(pddlWorkspace);
     }
 
-    async provideHover(document: TextDocument, position: Position, token: CancellationToken): Promise<Hover> {
+    async provideHover(document: TextDocument, position: Position, token: CancellationToken): Promise<Hover | null> {
         if (token.isCancellationRequested) { return null; }
         await this.symbolUtils.assertFileParsed(document);
 
@@ -31,7 +31,7 @@ export class SymbolInfoProvider implements DocumentSymbolProvider, DefinitionPro
         return info?.hover;
     }
 
-    async provideReferences(document: TextDocument, position: Position, context: ReferenceContext, token: CancellationToken): Promise<Location[]> {
+    async provideReferences(document: TextDocument, position: Position, context: ReferenceContext, token: CancellationToken): Promise<Location[] | null> {
         if (token.isCancellationRequested) { return null; }
         await this.symbolUtils.assertFileParsed(document);
 
@@ -41,7 +41,7 @@ export class SymbolInfoProvider implements DocumentSymbolProvider, DefinitionPro
         return this.symbolUtils.findSymbolReferences(document, info, context.includeDeclaration);
     }
 
-    async provideDefinition(document: TextDocument, position: Position, token: CancellationToken): Promise<Location | Location[]> {
+    async provideDefinition(document: TextDocument, position: Position, token: CancellationToken): Promise<Location | Location[] | null> {
         if (token.isCancellationRequested) { return null; }
         await this.symbolUtils.assertFileParsed(document);
 
@@ -49,26 +49,39 @@ export class SymbolInfoProvider implements DocumentSymbolProvider, DefinitionPro
         return info?.location;
     }
 
-    async provideDocumentSymbols(document: TextDocument, token: CancellationToken): Promise<SymbolInformation[] | DocumentSymbol[]> {
+    async provideDocumentSymbols(document: TextDocument, token: CancellationToken): Promise<SymbolInformation[] | DocumentSymbol[] | null> {
         if (token.isCancellationRequested) { return null; }
         await this.symbolUtils.assertFileParsed(document);
 
         let fileInfo = this.pddlWorkspace.getFileInfo(document);
 
-        if (fileInfo.isDomain()) {
+        if (fileInfo?.isDomain()) {
 
             let domainInfo = <DomainInfo>fileInfo;
 
             let containerName = '';
 
-            let actionSymbols = domainInfo.getActions().map(action =>
-                new SymbolInformation(action.name, SymbolKind.Module, containerName, SymbolUtils.toLocation(document, action.getLocation())));
+            let actionSymbols = domainInfo.getActions()
+                // only support those that have a name and where the location is known
+                .filter(action => action.name && action.getLocation())
+                .map(action =>
+                    new SymbolInformation(action.name!, SymbolKind.Module, containerName, SymbolUtils.toLocation(document, action.getLocation()!)));
 
-            let processSymbols = domainInfo.getProcesses().map(process =>
-                new SymbolInformation(process.name, SymbolKind.Struct, containerName, SymbolUtils.toLocation(document, process.getLocation())));
+            if (!domainInfo.getProcesses()) { throw new Error(`Domain not parsed yet: ` + domainInfo.fileUri);}
+            
+            let processSymbols = domainInfo.getProcesses()!
+                // only support those that have a name and where the location is known
+                .filter(process => process.name && process.getLocation())
+                .map(process =>
+                    new SymbolInformation(process.name!, SymbolKind.Struct, containerName, SymbolUtils.toLocation(document, process.getLocation()!)));
 
-            let eventSymbols = domainInfo.getEvents().map(event =>
-                new SymbolInformation(event.name, SymbolKind.Event, containerName, SymbolUtils.toLocation(document, event.getLocation())));
+            if (!domainInfo.getEvents()) { throw new Error(`Domain not parsed yet: ` + domainInfo.fileUri);}
+
+            let eventSymbols = domainInfo.getEvents()!
+                // only support those that have a name and where the location is known
+                .filter(event => event.name && event.getLocation())
+                .map(event =>
+                    new SymbolInformation(event.name!, SymbolKind.Event, containerName, SymbolUtils.toLocation(document, event.getLocation()!)));
 
             let predicateSymbols = domainInfo.getPredicates().map(variable =>
                 new SymbolInformation(variable.declaredName, SymbolKind.Boolean, containerName, SymbolUtils.toLocation(document, variable.getLocation())));
@@ -80,7 +93,7 @@ export class SymbolInfoProvider implements DocumentSymbolProvider, DefinitionPro
 
             return symbols;
         }
-        else if (fileInfo.isProblem()) {
+        else if (fileInfo?.isProblem()) {
             let problemInfo = <ProblemInfo>fileInfo;
 
             try {
@@ -92,7 +105,7 @@ export class SymbolInfoProvider implements DocumentSymbolProvider, DefinitionPro
         return [];
     }
 
-    async provideProblemSymbols(document: TextDocument, problemInfo: ProblemInfo, token: CancellationToken): Promise<DocumentSymbol[]> {
+    async provideProblemSymbols(document: TextDocument, problemInfo: ProblemInfo, token: CancellationToken): Promise<DocumentSymbol[] | null> {
         if (token.isCancellationRequested) { return null; }
         let defineNode = problemInfo.syntaxTree.getDefineNode();
 

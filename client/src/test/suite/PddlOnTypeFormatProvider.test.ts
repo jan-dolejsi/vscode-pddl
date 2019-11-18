@@ -12,7 +12,7 @@ let formatProvider: PddlOnTypeFormatter;
 suite('PDDL on-type formatter Test Suite', () => {
     before(async () => {
         vscode.window.showInformationMessage('Start all tests.');
-        formatProvider = new PddlOnTypeFormatter(null, true);
+        formatProvider = new PddlOnTypeFormatter(undefined, true);
     });
 
     test('should indent nested text on new-line char', async () => {
@@ -111,7 +111,7 @@ async function testFormatter(inputTextHead: string, ch: string, inputTextTail: s
     
     // WHEN
     let edits = await formatProvider.provideOnTypeFormattingEdits(doc, position, ch, options, new vscode.CancellationTokenSource().token);
-    await Promise.all(edits.map(edit => editor.edit(builder => reBuild(builder, edit))));
+    await Promise.all(edits!.map(edit => editor.edit(builder => reBuild(builder, edit))));
     
     // THEN
     let startSelectionAfter = editor.selection.start;

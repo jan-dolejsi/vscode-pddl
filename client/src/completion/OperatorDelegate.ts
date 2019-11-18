@@ -10,7 +10,7 @@ import { PDDL } from '../../../common/src/parser';
 
 export class OperatorDelegate extends Delegate {
 
-    operatorItems: CompletionItem[];
+    operatorItems: CompletionItem[] | undefined;
 
     constructor() {
         super();

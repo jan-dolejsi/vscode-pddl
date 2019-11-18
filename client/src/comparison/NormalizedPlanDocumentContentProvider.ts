@@ -23,7 +23,7 @@ import { SimpleDocumentPositionResolver } from '../../../common/src/DocumentPosi
  */
 export class NormalizedPlanDocumentContentProvider implements TextDocumentContentProvider {
     private _onDidChange = new EventEmitter<Uri>();
-    private timeout: NodeJS.Timeout;
+    private timeout: NodeJS.Timeout | undefined;
     private changingUris: Uri[] = [];
 
     constructor(private pddlWorkspace: PddlWorkspace, private configuration: PddlConfiguration,
@@ -48,7 +48,7 @@ export class NormalizedPlanDocumentContentProvider implements TextDocumentConten
     }
 
     updateChangedPlans(): void {
-        this.timeout = null;
+        this.timeout = undefined;
         this.changingUris.forEach(uri => this._onDidChange.fire(uri));
         this.changingUris = [];
     }
@@ -130,7 +130,8 @@ class PlanParserAndNormalizer {
             + "\n; Normalized plan:\n"
             + origText.split('\n')
                 .map((origLine, idx) => this.parseLine(origLine, idx))
-                .filter(step => step !== null && step !== undefined)
+                .filter(step => step !== undefined)
+                .map(step => step!)
                 .sort(compare)
                 .map(step => step.toPddl())
                 .join('\n');
@@ -138,12 +139,12 @@ class PlanParserAndNormalizer {
         return normalizedText;
     }
 
-    parseLine(line: string, lineIdx: number): PlanStep {
+    parseLine(line: string, lineIdx: number): PlanStep | undefined {
         PddlPlanParser.planStepPattern.lastIndex = 0;
         let group = PddlPlanParser.planStepPattern.exec(line);
 
         if (!group) {
-            return null;
+            return undefined;
         } else {
             // this line is a plan step
             let time = group[2] ? parseFloat(group[2]) : this.makespan;

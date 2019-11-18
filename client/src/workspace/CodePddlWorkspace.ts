@@ -18,36 +18,51 @@ import { ProblemInfo } from '../../../common/src/ProblemInfo';
 
 
 export class CodePddlWorkspace {
-    constructor(public readonly pddlWorkspace: PddlWorkspace, pddlConfiguration: PddlConfiguration, context: ExtensionContext) {
+
+    /**
+     * VS Code wrapper for the PDDL workspace model
+     * @param pddlWorkspace underlying PDDL workspace model
+     * @param context Code extension context. When not supplied, the instance is for testing only.
+     * @param pddlConfiguration pddl extension configuration. When not supplied , the instance is for testing only.
+     */
+    private constructor(public readonly pddlWorkspace: PddlWorkspace, context?: ExtensionContext, pddlConfiguration?: PddlConfiguration) {
         let revealActionCommand = commands.registerCommand('pddl.revealAction', (domainFileUri: Uri, actionName: String) => {
             revealAction(<DomainInfo>pddlWorkspace.getFileInfo(domainFileUri.toString()), actionName);
         });
 
         if (context) { // unit tests do not clean-up
-            subscribeToWorkspace(this, pddlConfiguration, context);
+            subscribeToWorkspace(this, context, pddlConfiguration);
             context.subscriptions.push(revealActionCommand);
         }
     }
 
-    static getInstanceForTestingOnly(pddlWorkspace: PddlWorkspace): CodePddlWorkspace {
-        return new CodePddlWorkspace(pddlWorkspace, null, null);
+    static getInstance(pddlWorkspace: PddlWorkspace, context: ExtensionContext, pddlConfiguration: PddlConfiguration) {
+        return new CodePddlWorkspace(pddlWorkspace, context, pddlConfiguration);
     }
 
-    upsertFile(document: TextDocument, force: boolean = false): Promise<FileInfo> {
-        return this.pddlWorkspace.upsertFile(document.uri.toString(),
-            toLanguage(document), document.version, document.getText(),
+    static getInstanceForTestingOnly(pddlWorkspace: PddlWorkspace): CodePddlWorkspace {
+        return new CodePddlWorkspace(pddlWorkspace);
+    }
+
+    async upsertFile(document: TextDocument, force: boolean = false): Promise<FileInfo | undefined> {
+        const language = toLanguage(document);
+        if (language === undefined) { return undefined; }
+        return await this.pddlWorkspace.upsertFile(document.uri.toString(),
+            language, document.version, document.getText(),
             this.createPositionResolver(document), force);
     }
 
-    upsertAndParseFile(document: TextDocument): Promise<FileInfo> {
-        return this.pddlWorkspace.upsertAndParseFile(document.uri.toString(), toLanguage(document), document.version, document.getText(), this.createPositionResolver(document));
+    async upsertAndParseFile(document: TextDocument): Promise<FileInfo | undefined> {
+        const language = toLanguage(document);
+        if (language === undefined) { return undefined; }
+        return this.pddlWorkspace.upsertAndParseFile(document.uri.toString(), language, document.version, document.getText(), this.createPositionResolver(document));
     }
 
-    getFileInfoByUri<T extends FileInfo>(uri: Uri): T {
+    getFileInfoByUri<T extends FileInfo>(uri: Uri): T | undefined {
         return this.pddlWorkspace.getFileInfo(uri.toString());
     }
 
-    getFileInfo<T extends FileInfo>(document: TextDocument): T {
+    getFileInfo<T extends FileInfo>(document: TextDocument): T | undefined {
         return this.getFileInfoByUri(document.uri);
     }
 
@@ -82,7 +97,7 @@ export class CodePddlWorkspace {
     }
 }
 
-function subscribeToWorkspace(pddlWorkspace: CodePddlWorkspace, pddlConfiguration: PddlConfiguration, context: ExtensionContext): void {
+function subscribeToWorkspace(pddlWorkspace: CodePddlWorkspace, context: ExtensionContext, pddlConfiguration?: PddlConfiguration): void {
     // add all open documents
     workspace.textDocuments
         .filter(textDoc => isAnyPddl(textDoc))
@@ -107,7 +122,7 @@ function subscribeToWorkspace(pddlWorkspace: CodePddlWorkspace, pddlConfiguratio
             pddlWorkspace.pddlWorkspace.getAllFilesIf<ProblemInfo>(f => f.isProblem())
 
                 .filter(problemInfo => !!problemInfo.getPreParsingPreProcessor())
-                .filter(problemInfo => problemInfo.getPreParsingPreProcessor().getInputFiles().some(inputFile => docEvent.document.fileName.endsWith(inputFile)))
+                .filter(problemInfo => problemInfo.getPreParsingPreProcessor()!.getInputFiles().some(inputFile => docEvent.document.fileName.endsWith(inputFile)))
                 .forEach(async (problemInfo) => {
                     let problemFile = await workspace.openTextDocument(Uri.parse(problemInfo.fileUri));
                     pddlWorkspace.upsertFile(problemFile, true);
@@ -120,19 +135,19 @@ function subscribeToWorkspace(pddlWorkspace: CodePddlWorkspace, pddlConfiguratio
         if (isAnyPddl(textDoc) && CodePddlWorkspace.isRealDocument(textDoc)) { await pddlWorkspace.removeFile(textDoc); }
     }));
 
-    workspace.onDidChangeConfiguration(_ => {
-        if (pddlConfiguration) {
+    if (pddlConfiguration) {
+        workspace.onDidChangeConfiguration(_ => {
             pddlWorkspace.setEpsilon(pddlConfiguration.getEpsilonTimeStep());
-        }
-    });
+        });
+    }
 }
 
 async function revealAction(domainInfo: DomainInfo, actionName: String) {
     let document = await workspace.openTextDocument(Uri.parse(domainInfo.fileUri));
-    let actionFound = domainInfo.getActions().find(a => a.name.toLowerCase() === actionName.toLowerCase());
-    let actionRange = actionFound ? toRange(actionFound.getLocation()) : null;
+    let actionFound = domainInfo.getActions().find(a => a?.name?.toLowerCase() === actionName.toLowerCase());
+    let actionRange = actionFound && actionFound.getLocation() && toRange(actionFound.getLocation()!);
     let openEditor = window.visibleTextEditors.find(e => e.document.uri.toString() === document.uri.toString());
-    if (openEditor) {
+    if (openEditor && actionRange) {
         openEditor.revealRange(actionRange, TextEditorRevealType.AtTop);
     } else {
         window.showTextDocument(document.uri, { preserveFocus: true, selection: actionRange, preview: true });

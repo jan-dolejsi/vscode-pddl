@@ -25,8 +25,8 @@ export const PDDL_EXPORT_PLAN = 'pddl.exportPlan';
 
 export class PlanView extends Disposable {
 
-    webviewPanels = new Map<Uri, PlanPreviewPanel>();// todo: replace with UriMap
-    timeout: NodeJS.Timer | undefined;
+    private webviewPanels = new Map<Uri, PlanPreviewPanel>();// todo: replace with UriMap
+    private timeout: NodeJS.Timer | undefined;
     public static readonly PLANNER_OUTPUT_URI = Uri.parse("pddl://planner/output");
 
     constructor(private context: ExtensionContext, private codePddlWorkspace: CodePddlWorkspace) {
@@ -95,7 +95,7 @@ export class PlanView extends Disposable {
     }
 
     dispose(): void {
-        clearTimeout(this.timeout);
+        if (this.timeout) { clearTimeout(this.timeout); }
     }
 
     rebuild(): void {
@@ -159,10 +159,10 @@ export class PlanView extends Disposable {
 
     private async getPreviewHtml(previewPanel: PlanPreviewPanel): Promise<string> {
         if (previewPanel.getError()) {
-            return previewPanel.getError().message;
+            return previewPanel.getError()!.message;
         }
         else {
-            let width = workspace.getConfiguration(CONF_PDDL).get<number>(PLAN_REPORT_WIDTH);
+            let width = workspace.getConfiguration(CONF_PDDL).get<number>(PLAN_REPORT_WIDTH, 1000);
             return new PlanReportGenerator(this.context, { displayWidth: width, selfContained: false })
                 .generateHtml(previewPanel.getPlans());
         }
@@ -236,18 +236,19 @@ export class PlanView extends Disposable {
         ).show();
 
         if (selectedItem !== undefined) {
-            if (selectedItem.command === PDDL_CONFIGURE_COMMAND && selectedItem.args[0] === pddlPlanWidth) {
+            if (selectedItem.command === PDDL_CONFIGURE_COMMAND &&
+                selectedItem.args && selectedItem.args[0] === pddlPlanWidth) {
                 this.updateContent(previewPanel);
             }
         }
     }
 }
 
-async function getPlanDocument(dotDocumentUri: Uri | undefined): Promise<TextDocument> {
+async function getPlanDocument(dotDocumentUri: Uri | undefined): Promise<TextDocument | undefined> {
     if (dotDocumentUri) {
         return await workspace.openTextDocument(dotDocumentUri);
     } else {
-        if (window.activeTextEditor !== null && isPlan(window.activeTextEditor.document)) {
+        if (window.activeTextEditor !== undefined && isPlan(window.activeTextEditor.document)) {
             return window.activeTextEditor.document;
         }
         else {
@@ -258,11 +259,11 @@ async function getPlanDocument(dotDocumentUri: Uri | undefined): Promise<TextDoc
 
 class PlanPreviewPanel {
 
-    needsRebuild: boolean;
-    width: number;
+    needsRebuild = false;
+    width: number = 200;
     selectedPlanIndex = 0;
-    plans: Plan[];
-    error: Error;
+    plans: Plan[] = [];
+    error: Error | undefined;
 
     constructor(public uri: Uri, private panel: WebviewPanel) { }
 
@@ -282,7 +283,7 @@ class PlanPreviewPanel {
         return this.selectedPlanIndex;
     }
 
-    getSelectedPlan(): Plan {
+    getSelectedPlan(): Plan | undefined {
         if (this.plans.length > 0) { return this.plans[this.selectedPlanIndex]; }
         else { return undefined; }
     }
@@ -290,7 +291,7 @@ class PlanPreviewPanel {
     setPlans(plans: Plan[]): void {
         this.plans = plans;
         this.selectedPlanIndex = plans ? plans.length - 1 : 0;
-        this.error = null;
+        this.error = undefined;
         this.setNeedsRebuild(true);
     }
 
@@ -298,7 +299,7 @@ class PlanPreviewPanel {
         this.error = ex;
     }
 
-    getError(): Error {
+    getError(): Error | undefined {
         return this.error;
     }
 

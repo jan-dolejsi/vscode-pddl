@@ -51,7 +51,7 @@ export class StateToPlan {
 
 /** Helps pairing corresponding start and end happenings. */
 class PlanStepBuilder {
-    end: SearchHappening;
+    end: SearchHappening | undefined;
 
     constructor(public readonly start: SearchHappening) {
 
@@ -83,7 +83,7 @@ class PlanStepBuilder {
         if (!matchingName) { return false; }
 
         if (endHappening.shotCounter === -1) {
-            return this.end === null || this.end === undefined;
+            return this.end === undefined;
         }
         else {
             return this.start.shotCounter === endHappening.shotCounter;
