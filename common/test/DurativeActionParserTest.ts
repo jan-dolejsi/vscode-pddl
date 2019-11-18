@@ -61,7 +61,7 @@ describe('DurativeActionParser', () => {
             // THEN
             assert.ok(action, 'there should be an action parsed');
             assert.strictEqual(action.name, 'action1', 'action name');
-            assert.strictEqual(action.duration.getText(), '(= ?duration 1)', 'duration');
+            assert.strictEqual(action.duration?.getText(), '(= ?duration 1)', 'duration');
         });
 
         it('extracts action with single predicate pre-condition', () => {
@@ -74,7 +74,7 @@ describe('DurativeActionParser', () => {
             // THEN
             assert.ok(action, 'there should be an action parsed');
             assert.strictEqual(action.name, 'action1');
-            assert.strictEqual(action.condition.getText(), '(at start (p))');
+            assert.strictEqual(action.condition?.getText(), '(at start (p))');
         });
 
         it('extracts action with simple conjunction effect', () => {
@@ -87,7 +87,7 @@ describe('DurativeActionParser', () => {
             // THEN
             assert.ok(action, 'there should be an action parsed');
             assert.strictEqual(action.name, 'action1');
-            assert.strictEqual(action.effect.getText(), '(and (at end (p)))');
+            assert.strictEqual(action.effect?.getText(), '(and (at end (p)))');
         });
     });
 });

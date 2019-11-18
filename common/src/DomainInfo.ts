@@ -22,7 +22,7 @@ export class DomainInfo extends FileInfo {
     private actions: Action[] = [];
     private typeInheritance: DirectionalGraph = new DirectionalGraph();
     private typeLocations = new Map<string, PddlRange>();
-    private constants: TypeObjects[] = [];
+    private constants: TypeObjectMap = new TypeObjectMap();
     private events?: Action[];
     private processes?: Action[];
     private constraints: Constraint[] = [];
@@ -51,9 +51,9 @@ export class DomainInfo extends FileInfo {
         this.functions = functions;
     }
 
-    getFunction(liftedVariableNeme: string): Variable | undefined {
+    getFunction(liftedVariableName: string): Variable | undefined {
         return this.functions
-            .find(variable => variable.name.toLocaleLowerCase() === liftedVariableNeme.toLocaleLowerCase());
+            .find(variable => variable.name.toLocaleLowerCase() === liftedVariableName.toLocaleLowerCase());
     }
 
     getLiftedFunction(groundedVariable: Variable): Variable | undefined {
@@ -93,12 +93,12 @@ export class DomainInfo extends FileInfo {
         }
     }
 
-    setConstants(constants: TypeObjects[]): void {
+    setConstants(constants: TypeObjectMap): void {
         if (constants === undefined || constants === null) { throw new Error("Constants must be defined or empty."); }
         this.constants = constants;
     }
 
-    getConstants(): TypeObjects[] {
+    getConstants(): TypeObjectMap {
         return this.constants;
     }
 
@@ -174,21 +174,77 @@ export class DomainInfo extends FileInfo {
     }
 }
 
+export class TypeObjectMap {
+    private typeNameToTypeObjectMap = new Map<string, TypeObjects>();
+    private objectNameToTypeObjectMap = new Map<string, TypeObjects>();
+
+    get length(): number {
+        return this.typeNameToTypeObjectMap.size;
+    }
+
+    merge(other: TypeObjectMap): TypeObjectMap {
+        other.valuesArray()
+            .forEach(typeObj => this.addAll(typeObj.type, typeObj.getObjects()));
+        return this;
+    }
+
+    add(type: string, objectName: string): TypeObjectMap {
+        this._upsert(type, typeObjects => {
+            typeObjects.addObject(objectName);
+            // store map of object-to-type
+            this.objectNameToTypeObjectMap.set(objectName.toLowerCase(), typeObjects);
+        });
+        return this;
+    }
+
+    addAll(type: string, objects: string[]): TypeObjectMap {
+        this._upsert(type, typeObjects => {
+            typeObjects.addAllObjects(objects);
+            // store map of object-to-type
+            objects.forEach(objName => {
+                this.objectNameToTypeObjectMap.set(objName.toLowerCase(), typeObjects);
+            });
+        });
+
+        return this;
+    }
+
+    private _upsert(type: string, inserter: (typeObjects: TypeObjects) => void): void {
+        let typeFound = this.getTypeCaseInsensitive(type) || new TypeObjects(type);
+
+        inserter.apply(this, [typeFound]);
+
+        this.typeNameToTypeObjectMap.set(type.toLowerCase(), typeFound);
+    }
+
+    private valuesArray(): TypeObjects[] {
+        return [...this.typeNameToTypeObjectMap.values()];
+    }
+
+    getTypeCaseInsensitive(type: string): TypeObjects | undefined {
+        return this.typeNameToTypeObjectMap.get(type.toLowerCase());
+    }
+
+    getTypeOf(objectName: string): TypeObjects | undefined {
+        return this.objectNameToTypeObjectMap.get(objectName.toLowerCase());
+    }
+}
 
 /**
  * Holds objects belonging to the same type.
  */
 export class TypeObjects {
-    private objects: string[] = [];
+    private objects = new Set<string>();
 
     constructor(public readonly type: string) { }
 
     getObjects(): string[] {
-        return this.objects;
+        return [...this.objects.keys()];
     }
 
-    addObject(obj: string): void {
-        this.objects.push(obj);
+    addObject(obj: string): TypeObjects {
+        this.objects.add(obj);
+        return this;
     }
 
     addAllObjects(objects: string[]): TypeObjects {
@@ -198,30 +254,13 @@ export class TypeObjects {
     }
 
     hasObject(objectName: string): boolean {
-        return this.objects.some(o => o.toLowerCase() === objectName.toLowerCase());
+        return [...this.objects.keys()]
+            .some(o => o.toLowerCase() === objectName.toLowerCase());
     }
 
     getObjectInstance(objectName: string): ObjectInstance {
         return new ObjectInstance(objectName, this.type);
     }
-
-    static concatObjects(constants: TypeObjects[], objects: TypeObjects[]): TypeObjects[] {
-        let mergedObjects: TypeObjects[] = [];
-
-        constants.concat(objects).forEach(typeObj => {
-            let typeFound = mergedObjects.find(to1 => to1.type === typeObj.type);
-
-            if (!typeFound) {
-                typeFound = new TypeObjects(typeObj.type);
-                mergedObjects.push(typeFound);
-            }
-
-            typeFound.addAllObjects(typeObj.objects);
-        });
-
-        return mergedObjects;
-    }
-
 }
 
 export abstract class Action {
@@ -236,7 +275,7 @@ export abstract class Action {
         this.location = location;
     }
 
-    getLocation(): PddlRange | undefined{
+    getLocation(): PddlRange | undefined {
         return this.location;
     }
 
@@ -249,10 +288,14 @@ export abstract class Action {
     }
 
     abstract isDurative(): boolean;
+
+    getNameOrEmpty(): string {
+        return this.name || '';
+    }
 }
 
 export class InstantAction extends Action {
-    constructor(name: string | undefined, parameters: Parameter[], public readonly preCondition: PddlBracketNode, public readonly effect: PddlBracketNode) {
+    constructor(name: string | undefined, parameters: Parameter[], public readonly preCondition?: PddlBracketNode, public readonly effect?: PddlBracketNode) {
         super(name, parameters);
     }
 
@@ -262,10 +305,10 @@ export class InstantAction extends Action {
 }
 
 export class DurativeAction extends Action {
-    constructor(name: string, parameters: Parameter[],
-        public readonly duration: PddlBracketNode,
-        public readonly condition: PddlBracketNode,
-        public readonly effect: PddlBracketNode) {
+    constructor(name: string | undefined, parameters: Parameter[],
+        public readonly duration?: PddlBracketNode,
+        public readonly condition?: PddlBracketNode,
+        public readonly effect?: PddlBracketNode) {
         super(name, parameters);
     }
 

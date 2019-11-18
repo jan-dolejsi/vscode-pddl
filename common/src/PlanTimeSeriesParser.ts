@@ -19,7 +19,7 @@ export class PlanTimeSeriesParser {
 
         this.warnings = lines.filter(line => line.includes(':'));
 
-        let currentFunctionValues: FunctionValues = null;
+        let currentFunctionValues: FunctionValues | null = null;
 
         lines
             .filter(line => !line.includes(':'))
@@ -52,14 +52,16 @@ export class PlanTimeSeriesParser {
 
         this.warnings.forEach(w => console.log('ValueSeq: ' + w));
 
-        this.addFunctionValues(currentFunctionValues);
+        if (currentFunctionValues) {
+            this.addFunctionValues(currentFunctionValues);
+        }
     }
 
     private addFunctionValues(newFunctionValues: FunctionValues): void {
         this.functionValues.set(newFunctionValues.variable, newFunctionValues);
     }
 
-    getFunctionValues(variable: Variable): FunctionValues {
+    getFunctionValues(variable: Variable): FunctionValues | undefined {
         return this.functionValues.get(variable);
     }
 
@@ -67,7 +69,10 @@ export class PlanTimeSeriesParser {
         let groundedFunctions = [...this.functionValues.keys()]
             .filter(var1 => var1.name === liftedVariable.name);
 
-        return groundedFunctions.map(f => this.functionValues.get(f));
+        return groundedFunctions
+            .map(f => this.functionValues.get(f))
+            .filter(f => !!f)
+            .map(f => f!);
     }
 
     getFunctionData(liftedVariable: Variable): FunctionsValues {
@@ -76,7 +81,7 @@ export class PlanTimeSeriesParser {
         let groundedFunctions = functionValues.map(fv => fv.variable);
 
         let states: StateValues[] = functionValues.reduce((previousValues, currentValues) =>
-            PlanTimeSeriesParser.join(previousValues, currentValues), []);
+            PlanTimeSeriesParser.join(previousValues, currentValues), new Array<StateValues>());
 
         let data = states.map(state => state.toNumbers(groundedFunctions));
 
@@ -159,7 +164,9 @@ export class StateValues {
     }
 
     getValue(variable: Variable): number {
-        return this.values.get(variable);
+        return this.values.has(variable) ?
+            this.values.get(variable)! :
+            Number.NaN;
     }
 
     toNumbers(variables: Variable[]): number[] {

@@ -10,7 +10,7 @@ import {
 
 import * as path from 'path';
 
-import { DomainInfo, TypeObjects } from '../../../common/src/DomainInfo';
+import { DomainInfo } from '../../../common/src/DomainInfo';
 import { SwimLane } from '../../../common/src/SwimLane';
 import { PlanStep, PlanStepCommitment } from '../../../common/src/PlanStep';
 import { HappeningType } from '../../../common/src/HappeningsInfo';
@@ -47,7 +47,7 @@ export class PlanReportGenerator {
     async generateHtml(plans: Plan[], planId: number = -1): Promise<string> {
         let selectedPlan = planId < 0 ? plans.length - 1 : planId;
 
-        let maxCost = Math.max(...plans.map(plan => plan.cost));
+        let maxCost = Math.max(...plans.map(plan => plan.cost || 0));
 
         let planSelectors = plans.map((plan, planIndex) => this.renderPlanSelector(plan, planIndex, selectedPlan, maxCost)).join(" ");
 
@@ -89,7 +89,7 @@ export class PlanReportGenerator {
         let className = "planSelector";
         if (planIndex === selectedPlan) { className += " planSelector-selected"; }
 
-        let normalizedCost = plan.cost / maxCost * 100;
+        let normalizedCost = (plan.cost || 0) / maxCost * 100;
         let costRounded = plan.cost ? plan.cost.toFixed(DIGITS) : NaN;
         let tooltip = `Plan #${planIndex}
 Metric value / cost: ${plan.cost}
@@ -104,13 +104,13 @@ States evaluated: ${plan.statesEvaluated}`;
 
     shouldDisplay(planStep: PlanStep, plan: Plan): boolean {
         if (this.settings.has(plan)) {
-            return this.settings.get(plan).shouldDisplay(planStep);
+            return this.settings.get(plan)?.shouldDisplay(planStep) || true;
         }
         else { return true; }
     }
 
     async renderPlan(plan: Plan, planIndex: number, selectedPlan: number): Promise<string> {
-        let planVisualizerPath: string;
+        let planVisualizerPath: string | undefined;
         if (plan.domain) {
             const settings = new PlanReportSettings(plan.domain.fileUri);
             planVisualizerPath = settings.getPlanVisualizerScript();
@@ -160,12 +160,12 @@ States evaluated: ${plan.statesEvaluated}`;
 
         let objectsHtml = '';
         if (!this.options.disableSwimLaneView && plan.domain && plan.problem) {
-            let allTypeObjects = TypeObjects.concatObjects(plan.domain.getConstants(), plan.problem.objects);
+            let allTypeObjects = plan.domain.getConstants().merge(plan.problem.objects);
 
             objectsHtml = plan.domain.getTypes()
                 .filter(type => type !== "object")
                 .map(type => {
-                    let typeObjects = allTypeObjects.find(to => to.type === type);
+                    let typeObjects = allTypeObjects.getTypeCaseInsensitive(type);
                     return typeObjects
                         ? this.renderTypeSwimLanes(type, typeObjects.getObjects(), plan)
                         : '';
@@ -185,7 +185,7 @@ ${objectsHtml}
         let lineChartScripts = '';
 
         if (!this.options.disableLinePlots && plan.domain && plan.problem) {
-            let groupByLifted = workspace.getConfiguration(CONF_PDDL).get<boolean>(PLAN_REPORT_LINE_PLOT_GROUP_BY_LIFTED);
+            let groupByLifted = workspace.getConfiguration(CONF_PDDL).get<boolean>(PLAN_REPORT_LINE_PLOT_GROUP_BY_LIFTED, true);
             let evaluator = new PlanFunctionEvaluator(valueSeqPath, valStepPath, plan, groupByLifted);
 
             if (evaluator.isAvailable()) {
@@ -203,7 +203,10 @@ ${objectsHtml}
                     });
                 } catch (err) {
                     console.log(err);
-                    this.handleValStepError(err, evaluator.getValStepPath());
+                    const valStepPath = evaluator.getValStepPath();
+                    if (valStepPath) {
+                        this.handleValStepError(err, valStepPath);
+                    }
                 }
             }
             else {
@@ -254,7 +257,7 @@ ${lineCharts}
         if (plan.hasHelpfulActions()) {
             let fromTop = planHeadLength * this.planStepHeight;
             let fromLeft = this.toViewCoordinates(plan.now, plan);
-            let text = plan.helpfulActions.map((helpfulAction, index) => this.renderHelpfulAction(index, helpfulAction)).join(', ');
+            let text = plan.helpfulActions!.map((helpfulAction, index) => this.renderHelpfulAction(index, helpfulAction)).join(', ');
             return `\n        <div class="planstep" style="top: ${fromTop}px; left: ${fromLeft}px; margin-top: 3px">▶ ${text}</div>`;
         }
         else {
@@ -325,10 +328,10 @@ ${stepsInvolvingThisObject}
             return true;
         }
 
-        let liftedAction = plan.domain.getActions().find(a => a.name.toLowerCase() === step.getActionName().toLowerCase());
+        let liftedAction = plan.domain.getActions().find(a => a.getNameOrEmpty().toLowerCase() === step.getActionName().toLowerCase());
 
         if (!liftedAction) {
-            console.log('Unexpected plan action: ' + step.getActionName());
+            console.debug('Unexpected plan action: ' + step.getActionName());
             return true;
         }
 
@@ -338,7 +341,7 @@ ${stepsInvolvingThisObject}
             fromArgument = indexOfArgument + 1;
             if (indexOfArgument > -1 && indexOfArgument < liftedAction.parameters.length) {
                 let parameter = liftedAction.parameters[indexOfArgument];
-                let shouldIgnoreThisArgument = this.settings.get(plan).shouldIgnoreActionParameter(liftedAction.name, parameter.name);
+                let shouldIgnoreThisArgument = this.settings.get(plan)?.shouldIgnoreActionParameter(liftedAction.name!, parameter.name);
                 if (!shouldIgnoreThisArgument) {
                     return true;
                 }
@@ -429,7 +432,7 @@ ${stepsInvolvingThisObject}
     }
 
     renderMenu(): string {
-        return `    <div class="menu">&#x2630;
+        return `    <div class="menu" oncontextmenu="postCommand('showMenu')">&#x2630;
         <span class="menutooltip">
             <a href="#" onClick="openInBrowser()">Generate plan report</a>
             <a href="#" onClick="savePlanToFile()">Export as .plan file...</a>
@@ -472,15 +475,18 @@ ${stepsInvolvingThisObject}
     }
 
     /** Converts the _time_ argument to view coordinates */
-    toViewCoordinates(time: number, plan: Plan): number {
-        return time / plan.makespan * this.options.displayWidth;
+    toViewCoordinates(time: number | undefined, plan: Plan): number {
+        return (time || 0) / plan.makespan * this.options.displayWidth;
     }
 
     getActionColor(step: PlanStep, domain: DomainInfo): string {
-        let actionIndex = domain.getActions().findIndex(action => action.name.toLowerCase() === step.getActionName().toLowerCase());
-        let actionColor = this.colors[actionIndex * 7 % this.colors.length];
-
-        return actionColor;
+        let actionIndex = domain.getActions().findIndex(action => action.getNameOrEmpty().toLowerCase() === step.getActionName().toLowerCase());
+        if (actionIndex < 0) {
+            return 'gray';
+        }
+        else {
+            return this.colors[actionIndex * 7 % this.colors.length];
+        }
     }
 
     colors = ['#ff0000', '#ff4000', '#ff8000', '#ffbf00', '#ffff00', '#bfff00', '#80ff00', '#40ff00', '#00ff00', '#00ff40', '#00ff80', '#00ffbf', '#00ffff', '#00bfff', '#0080ff', '#0040ff', '#0000ff', '#4000ff', '#8000ff', '#bf00ff', '#ff00ff', '#ff00bf', '#ff0080', '#ff0040'];

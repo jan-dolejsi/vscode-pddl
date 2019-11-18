@@ -33,7 +33,7 @@ export class UndeclaredVariable {
         let undeclaredVariableOffset = document.offsetAt(lineWithUndeclaredVariable.range.start) + variableNameMatch.index + variableNameMatch[0].toLowerCase().indexOf(variableName);
 
         let variableUsage = this.syntaxTree.getNodeAt(undeclaredVariableOffset + 1).expand();
-        if (!variableUsage) {
+        if (variableUsage.isDocument()) {
             console.log("Undeclared predicate/function was not found: " + variableName);
             return undefined;
         }

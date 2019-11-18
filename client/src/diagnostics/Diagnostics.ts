@@ -32,7 +32,7 @@ import { CodePddlWorkspace } from '../workspace/CodePddlWorkspace';
  */
 export class Diagnostics extends Disposable {
 
-    timeout: NodeJS.Timer;
+    timeout: NodeJS.Timer | undefined;
     validator: Validator;
     pddlParserSettings: PDDLParserSettings;
 
@@ -258,7 +258,7 @@ export class Diagnostics extends Disposable {
                 this.validator.syntax !== this.pddlParserSettings.executableOptions ||
                 this.validator.customPattern !== this.pddlParserSettings.problemPattern
             )) {
-            if (isHttp(this.pddlConfiguration.getParserPath())) {
+            if (this.pddlConfiguration.getParserPath() && isHttp(this.pddlConfiguration.getParserPath())) {
                 // is a service
                 let authentication = new Authentication(
                     this.pddlParserSettings.serviceAuthenticationUrl,

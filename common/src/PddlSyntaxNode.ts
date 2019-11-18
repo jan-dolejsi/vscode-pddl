@@ -80,7 +80,7 @@ export class PddlSyntaxNode extends TextRange {
             .filter(node => node.getToken().tokenText.match(pattern));
     }
 
-    getFirstChild(type: PddlTokenType, pattern: RegExp): PddlSyntaxNode {
+    getFirstChild(type: PddlTokenType, pattern: RegExp): PddlSyntaxNode | undefined {
         return this.children.filter(c => c.getToken().type === type)
             .find(node => node.getToken().tokenText.match(pattern));
     }
@@ -114,7 +114,7 @@ export class PddlSyntaxNode extends TextRange {
             try {
                 if (test(child)) { callback(child); }
             }
-            catch(_e) {
+            catch (_e) {
                 // swallow
             }
             finally {
@@ -127,7 +127,7 @@ export class PddlSyntaxNode extends TextRange {
      * Finds the bracket nested inside the `:keyword`.
      * @param keyword keyword name e.g. 'precondition' to match ':precondition (*)' 
      */
-    getKeywordOpenBracket(keyword: string): PddlBracketNode {
+    getKeywordOpenBracket(keyword: string): PddlBracketNode | undefined {
         let keywordNode = this.getFirstChild(PddlTokenType.Keyword, new RegExp(":" + keyword + "$", "i"));
 
         if (!keywordNode) {
@@ -159,12 +159,21 @@ export class PddlSyntaxNode extends TextRange {
         let nestedText = '';
         this.getNestedChildren()
             .filter(node => node.isNotType(PddlTokenType.Comment))
-            .forEach(node => { nestedText = nestedText + node.getText(); });
+            .forEach(node => { nestedText = nestedText + node.getNonCommentText(); });
         return nestedText;
     }
 
     getText(): string {
         return this.getToken().tokenText + this.getNestedText();
+    }
+
+    getNonCommentText(): string {
+        if (this.isNotType(PddlTokenType.Comment)) {
+            return this.getToken().tokenText + this.getNestedNonCommentText();
+        }
+        else {
+            return '';
+        }
     }
 
     getStart(): number {
@@ -175,25 +184,25 @@ export class PddlSyntaxNode extends TextRange {
         return this.maxChildEnd;
     }
 
-    findAncestor(type: PddlTokenType, pattern: RegExp): PddlSyntaxNode | null {
+    findAncestor(type: PddlTokenType, pattern: RegExp): PddlSyntaxNode | undefined {
         let parent = this.parent;
 
-        while(parent.isNotType(PddlTokenType.Document)) {
+        while (parent && parent.isNotType(PddlTokenType.Document)) {
             if (parent.isType(type) && pattern.test(parent.getToken().tokenText)) {
                 return parent;
             }
             parent = parent.parent;
         }
 
-        return null;
+        return undefined;
     }
-    
+
     findParametrisableScope(parameterName: string): PddlSyntaxNode | undefined {
-        let node: PddlSyntaxNode = this;
+        let node: PddlSyntaxNode | undefined = this;
         while (!node.isDocument()) {
             node = PddlSyntaxNode.findParametrisableAncestor(node);
             if (!node) { return this.getParent(); }
-            if (node.declaresParameter(parameterName)) {
+            else if (node.declaresParameter(parameterName)) {
                 return node;
             }
         }
@@ -203,10 +212,9 @@ export class PddlSyntaxNode extends TextRange {
 
     findAllParametrisableScopes(): PddlSyntaxNode[] {
         let scopes: PddlSyntaxNode[] = [];
-        let node: PddlSyntaxNode = this;
+        let node: PddlSyntaxNode | undefined = this;
         while (node && !node.isDocument()) {
             node = PddlSyntaxNode.findParametrisableAncestor(node);
-            // if (!node) { return this.getParent(); }
             if (node) {
                 scopes.push(node);
             }
@@ -214,11 +222,11 @@ export class PddlSyntaxNode extends TextRange {
         return scopes;
     }
 
-    private static findParametrisableAncestor(node: PddlSyntaxNode): PddlSyntaxNode {
+    private static findParametrisableAncestor(node: PddlSyntaxNode): PddlSyntaxNode | undefined {
         return node.findAncestor(PddlTokenType.OpenBracketOperator, /^\(\s*(:action|:durative-action|:process|:event|:derived|forall|sumall|exists)$/);
     }
 
-    getParameterDefinition(): PddlSyntaxNode {
+    getParameterDefinition(): PddlSyntaxNode | undefined {
         if (this.getToken().tokenText.match(/:action|:durative-action|:process|:event/)) {
             // this node is expected to have a :parameters keyword
             return this.getKeywordOpenBracket('parameters');
@@ -240,42 +248,43 @@ export class PddlSyntaxNode extends TextRange {
     declaresParameter(parameterName: string): boolean {
         let parametersNode = this.getParameterDefinition();
         let parameterDefinition = parametersNode && parametersNode.getNestedText();
-        
-        let pattern = new RegExp("\\?"+parameterName+"\\b");
-        return parameterDefinition && pattern.test(parameterDefinition);
+
+        let pattern = new RegExp("\\?" + parameterName + "\\b");
+        return (parameterDefinition!==undefined) && pattern.test(parameterDefinition);
     }
 
     expand(): PddlSyntaxNode {
         var node: PddlSyntaxNode = this;
-        while (!isOpenBracket(node.getToken()) && !node.isDocument()) {
-            node = node.getParent();
+        while (node && !isOpenBracket(node.getToken()) && !node.isDocument()) {
+            var parentNode = node.getParent();
+            if (parentNode !== undefined) {
+                node = parentNode;
+            }
+            else {
+                break;
+            }
         }
 
-        if (node.isDocument()) {
-            return undefined;
-        }
-        else {
-            return node;
-        }
+        return node;
     }
 
     getPrecedingSiblings(type: PddlTokenType, centralNode?: PddlSyntaxNode): PddlSyntaxNode[] {
         let siblings = this.getSiblings(type, /.*/);
-        centralNode = centralNode || this;
-        let precedingSiblings = siblings.filter(sibling => sibling.getStart() < centralNode.getStart());
+        let centralNodeStart = (centralNode || this).getStart();
+        let precedingSiblings = siblings.filter(sibling => sibling.getStart() < centralNodeStart);
         return precedingSiblings;
     }
 
     getFollowingSiblings(type: PddlTokenType, centralNode?: PddlSyntaxNode): PddlSyntaxNode[] {
         let siblings = this.getSiblings(type, /.*/);
-        centralNode = centralNode || this;
-        let followingSiblings = siblings.filter(sibling => sibling.getStart() > centralNode.getStart());
+        let centralNodeStart = (centralNode || this).getStart();
+        let followingSiblings = siblings.filter(sibling => sibling.getStart() > centralNodeStart);
         return followingSiblings;
     }
 
-    private getSiblings(type: PddlTokenType, pattern: RegExp) {
+    private getSiblings(type: PddlTokenType, pattern: RegExp): PddlSyntaxNode[] {
         if (this.isRoot()) { return []; }
-        return this.getParent().getChildrenOfType(type, pattern);
+        return this.getParent()?.getChildrenOfType(type, pattern) || [];
     }
 
     isDocument(): boolean {
@@ -297,8 +306,8 @@ export class PddlSyntaxNode extends TextRange {
 
 /** Specialized tree node for open/close bracket pair. */
 export class PddlBracketNode extends PddlSyntaxNode {
-    private closeToken: PddlToken;
-    private _isClosed: boolean;
+    private closeToken: PddlToken | undefined;
+    private _isClosed = false;
 
     /**
      * Sets the bracket close token.
@@ -311,7 +320,7 @@ export class PddlBracketNode extends PddlSyntaxNode {
         this.recalculateEnd(token);
     }
 
-    getCloseBracket(): PddlToken {
+    getCloseBracket(): PddlToken | undefined {
         return this.closeToken;
     }
 
@@ -325,6 +334,10 @@ export class PddlBracketNode extends PddlSyntaxNode {
     }
 
     getText(): string {
-        return this.getToken().tokenText + this.getNestedText() + this.closeToken.tokenText;
+        return super.getText() + (this.closeToken?.tokenText || '');
+    }
+
+    getNonCommentText(): string {
+        return super.getNonCommentText() + (this.closeToken?.tokenText || '');
     }
 }

@@ -75,9 +75,9 @@ export function checkResponseForError(response: any) {
 }
 
 function compareCatalogEntry(a: CatalogEntry, b: CatalogEntry) {
-    if (a.label < b.label) {
+    if (a.label && b.label && a.label < b.label) {
         return -1;
-    } else if (a.label > b.label) {
+    } else if (a.label && b.label && a.label > b.label) {
         return 1;
     }
     else {

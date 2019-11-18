@@ -34,7 +34,8 @@ describe('Parser', () => {
 
             // THEN
             assert.notStrictEqual(domainInfo, null, 'domain should not be null');
-            assert.strictEqual(domainInfo.name, 'domain_name');
+            if (domainInfo === null) { return; }
+            assert.strictEqual(domainInfo!.name, 'domain_name');
         });
 
         it('should return null on non-domain PDDL', () => {
@@ -51,7 +52,7 @@ describe('Parser', () => {
             let domainInfo = subject.tryDomain('file:///file', 0, fileText, syntaxTree, positionResolver);
 
             // THEN
-            assert.strictEqual(domainInfo, null, 'domain should be null');
+            assert.strictEqual(domainInfo, undefined, 'domain should be null');
         });
     });
 });
@@ -191,8 +192,9 @@ describe('DirectionalGraph', () => {
             var targets = graph.getVerticesWithEdgesFrom(origin);
 
             // then
-            assert.equal(targets.length, 1);
-            assert.equal(targets[0], target);
+            assert.ok(targets !== undefined);
+            assert.equal(targets!.length, 1);
+            assert.equal(targets![0], target);
         });
 
         it('should return no vertices with edge from target', () => {
@@ -205,7 +207,7 @@ describe('DirectionalGraph', () => {
             var targets = graph.getVerticesWithEdgesFrom(target);
 
             // then
-            assert.equal(targets.length, 0);
+            assert.equal(targets?.length, 0);
         });
     });
 

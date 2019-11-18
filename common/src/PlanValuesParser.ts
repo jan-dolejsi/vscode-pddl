@@ -99,6 +99,8 @@ class StateValues {
     }
 
     getValue(functionName: String): number {
-        return this.values.get(functionName);
+        return this.values.has(functionName) ?
+            this.values.get(functionName)!
+            : Number.NaN;
     }
 }

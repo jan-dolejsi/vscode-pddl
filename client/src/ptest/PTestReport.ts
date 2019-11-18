@@ -12,10 +12,11 @@ import { TestOutcome, Test } from './Test';
 import { PTestReportView } from './PTestReportView';
 import { PddlExtensionContext } from '../PddlExtensionContext';
 import { PTEST_REPORT_VIEW } from './PTestCommands';
+import { StringifyingMap } from '../../../common/src/util';
 
 /** Gathers the output of running PDDL Test cases and summarizes them into a WebView table. */
 export class PTestReport implements Disposable {
-    private view: PTestReportView;
+    private view: PTestReportView | undefined;
     private manifests = new ManifestMap();
 
     constructor(private context: PddlExtensionContext, private outputWindow: OutputChannel) {
@@ -34,13 +35,13 @@ export class PTestReport implements Disposable {
 
     addManifestIfAbsent(manifest: TestsManifest): void {
         if (this.manifests.putIfAbsent(manifest, () => new TestResultMap())) {
-            this.view.updatePage();
+            if (this.view) { this.view.updatePage(); }
         }
     }
 
     upsertTestResult(test: Test, result: TestResult): void {
         this.manifests.putIfAbsent(test.getManifest(), () => new TestResultMap());
-        let testMap = this.manifests.get(test.getManifest());
+        let testMap = this.manifests.get(test.getManifest())!;
         testMap.set(test, result);
         if (this.view) { this.view.updatePage(); }
     }
@@ -54,12 +55,27 @@ export class PTestReport implements Disposable {
         return this.manifests.keyList();
     }
 
-    getTestCases(manifest: TestsManifest): Test[] {
-        return this.manifests.get(manifest).keyList();
+    getManifestTestResultsOrThrow(manifest: TestsManifest): TestResultMap {
+        if (this.manifests.has(manifest)) {
+            return this.manifests.get(manifest)!;
+        }
+        else {
+            throw new Error(`Manifest not found: ` + manifest.uri.toString());
+        }
     }
 
-    getTestResult(test: Test): TestResult {
-        return this.manifests.get(test.getManifest()).get(test);
+    getTestCases(manifest: TestsManifest): Test[] {
+        return this.getManifestTestResultsOrThrow(manifest)!.keyList();
+    }
+
+    getTestResultOrThrow(test: Test): TestResult {
+        const results = this.getManifestTestResultsOrThrow(test.getManifest());
+        if (results.has(test)) {
+            return results.get(test)!;
+        }
+        else {
+            throw new Error(`Test not found in the result set: ` + test.getUri().toString());
+        }
     }
 
     outputTestResult(test: Test, outcome: TestOutcome, elapsedTime: number, error?: string) {
@@ -126,75 +142,6 @@ export class TestResult {
 
     }
 }
-
-/**
- * Map that stringifies the key objects in order to leverage
- * the javascript native Map and preserve key uniqueness.
- */
-abstract class StringifyingMap<K, V> {
-    private map = new Map<string, V>();
-    private keyMap = new Map<string, K>();
-
-    has(key: K): boolean {
-        let keyString = this.stringifyKey(key);
-        return this.map.has(keyString);
-    }
-    get(key: K): V {
-        let keyString = this.stringifyKey(key);
-        return this.map.get(keyString);
-    }
-    set(key: K, value: V): StringifyingMap<K, V> {
-        let keyString = this.stringifyKey(key);
-        this.map.set(keyString, value);
-        this.keyMap.set(keyString, key);
-        return this;
-    }
-
-    /**
-     * Puts new key/value if key is absent.
-     * @param key key
-     * @param defaultValue default value factory
-     */
-    putIfAbsent(key: K, defaultValue: () => V): boolean {
-        if (!this.has(key)) {
-            let value = defaultValue();
-            this.set(key, value);
-            return true;
-        }
-        return false;
-    }
-
-    keys(): IterableIterator<K> {
-        return this.keyMap.values();
-    }
-
-    keyList(): K[] {
-        return [...this.keys()];
-    }
-
-    delete(key: K): boolean {
-        let keyString = this.stringifyKey(key);
-        let flag = this.map.delete(keyString);
-        this.keyMap.delete(keyString);
-        return flag;
-    }
-
-    clear(): void {
-        this.map.clear();
-        this.keyMap.clear();
-    }
-
-    size(): number {
-        return this.map.size;
-    }
-
-    /**
-     * Turns the `key` object to a primitive `string` for the underlying `Map`
-     * @param key key to be stringified
-     */
-    protected abstract stringifyKey(key: K): string;
-}
-
 
 class ManifestMap extends StringifyingMap<TestsManifest, TestResultMap> {
     protected stringifyKey(key: TestsManifest): string {

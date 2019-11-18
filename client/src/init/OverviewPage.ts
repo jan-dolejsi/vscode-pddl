@@ -22,8 +22,8 @@ export const LAST_SHOWN_OVERVIEW_PAGE = 'lastShownOverviewPage';
 
 export class OverviewPage {
 
-    private webViewPanel: WebviewPanel;
-    private iconsInstalled: boolean;
+    private webViewPanel?: WebviewPanel;
+    private iconsInstalled = false;
 
     private readonly ICONS_EXTENSION_NAME = "vscode-icons-team.vscode-icons";
 
@@ -143,6 +143,8 @@ export class OverviewPage {
     async helloWorld(): Promise<void> {
         let sampleDocuments = await this.createSample('helloworld', 'Hello World!');
 
+        if (!sampleDocuments) { return; } // canceled
+
         let documentsToOpen = await this.openSampleFiles(sampleDocuments, ['domain.pddl', 'problem.pddl']);
 
         let workingDirectory = path.dirname(documentsToOpen[0].fileName);
@@ -152,11 +154,15 @@ export class OverviewPage {
     async openNunjucksSample(): Promise<void> {
         let sampleDocuments = await this.createSample('nunjucks', 'Nunjucks template sample');
 
+        if (!sampleDocuments) { return; } // canceled
+
         // let documentsToOpen = 
         await this.openSampleFiles(sampleDocuments, ['domain.pddl', 'problem.pddl', 'problem0.json']);
 
-        let ptestJson = sampleDocuments.find(doc => path.basename(doc.fileName) === '.ptest.json');
-        let generatedProblemUri = ptestJson.uri.with({ fragment: '0' });
+        const ptestJsonName = '.ptest.json';
+        let ptestJson = sampleDocuments.find(doc => path.basename(doc.fileName) === ptestJsonName);
+        if (!ptestJson) { throw new Error("Could not find " + ptestJsonName);}
+        let generatedProblemUri = ptestJson!.uri.with({ fragment: '0' });
 
         await commands.executeCommand(PTEST_VIEW, generatedProblemUri);
 
@@ -173,13 +179,15 @@ export class OverviewPage {
             throw new Error('One or more sample files were not found: ' + fileNamesToOpen);
         }
 
-        for (let index = 0; index < documentsToOpen.length; index++) {
+        let validDocumentsToOpen = documentsToOpen.map(v => v!);
+
+        for (let index = 0; index < validDocumentsToOpen.length; index++) {
             const doc = sampleDocuments[index];
             const viewColumn: ViewColumn = this.indexToViewColumn(index);
             await window.showTextDocument(doc, { viewColumn: viewColumn, preview: false });
         }
 
-        return documentsToOpen;
+        return validDocumentsToOpen;
     }
 
     indexToViewColumn(index: number): ViewColumn {
@@ -192,8 +200,8 @@ export class OverviewPage {
         }
     }
 
-    async createSample(subDirectory: string, sampleName: string): Promise<TextDocument[]> {
-        let folder: Uri = undefined;
+    async createSample(subDirectory: string, sampleName: string): Promise<TextDocument[] | undefined> {
+        let folder: Uri | undefined;
 
         if (!workspace.workspaceFolders || workspace.workspaceFolders.length === 0) {
             let folders = await window.showOpenDialog({ canSelectFiles: false, canSelectFolders: true, canSelectMany: false, openLabel: `Select folder for the '${sampleName}' sample...` });
@@ -204,8 +212,10 @@ export class OverviewPage {
             folder = workspace.workspaceFolders[0].uri;
         } else {
             let selectedFolder = await window.showWorkspaceFolderPick({ placeHolder: `Select workspace folder for the '${sampleName}' sample...` });
-            folder = selectedFolder.uri;
+            folder = selectedFolder?.uri;
         }
+
+        if (!folder) { return undefined; }
 
         let sampleFiles = await afs.readdir(this.context.asAbsolutePath(path.join(this.CONTENT_FOLDER, subDirectory)));
 
@@ -213,7 +223,7 @@ export class OverviewPage {
             .map(async (sampleFile) => {
                 let sampleResourcePath = this.context.asAbsolutePath(path.join(this.CONTENT_FOLDER, subDirectory, sampleFile));//'overview/helloWorld/domain.pddl'
                 let sampleText = await afs.readFile(sampleResourcePath, { encoding: "utf-8" });
-                let sampleTargetPath = path.join(folder.fsPath, sampleFile);//"helloWorldDomain.pddl"
+                let sampleTargetPath = path.join(folder!.fsPath, sampleFile);//"helloWorldDomain.pddl"
                 if (await afs.exists(sampleTargetPath)) { throw new Error(`File '${sampleFile}' already exists.`); }
                 await afs.writeFile(sampleTargetPath, sampleText, { encoding: "utf-8" });
                 let sampleDocument = await workspace.openTextDocument(sampleTargetPath);
@@ -238,11 +248,11 @@ export class OverviewPage {
         let message: OverviewConfiguration = {
             command: 'updateConfiguration',
             planner: await this.pddlConfiguration.getPlannerPath(),
-            plannerOutputTarget: workspace.getConfiguration("pddlPlanner").get<string>("executionTarget"),
+            plannerOutputTarget: workspace.getConfiguration("pddlPlanner").get<string>("executionTarget", "Output window"),
             parser: this.pddlConfiguration.getParserPath(),
             validator: this.pddlConfiguration.getValidatorPath(),
             shouldShow: this.context.globalState.get<boolean>(SHOULD_SHOW_OVERVIEW_PAGE, true),
-            autoSave: workspace.getConfiguration().get<string>("files.autoSave"),
+            autoSave: workspace.getConfiguration().get<string>("files.autoSave", "off"),
             showInstallIconsAlert: !this.iconsInstalled,
             showEnableIconsAlert: this.iconsInstalled && workspace.getConfiguration().get<string>("workbench.iconTheme") !== "vscode-icons",
             downloadValAlert: !this.pddlConfiguration.getValidatorPath() || !(await this.val.isInstalled()),
@@ -255,10 +265,10 @@ export class OverviewPage {
 
 interface OverviewConfiguration {
     command: string;
-    planner: string;
+    planner?: string;
     plannerOutputTarget: string;
-    parser: string;
-    validator: string;
+    parser?: string;
+    validator?: string;
     shouldShow: boolean;
     autoSave: string;
     showInstallIconsAlert: boolean;

@@ -221,7 +221,7 @@ export abstract class ProblemView<TRendererOptions, TRenderData> extends Disposa
 
     private async generateHtml(viewPanel: ProblemViewPanel): Promise<string> {
         if (viewPanel.getError()) {
-            return viewPanel.getError().message;
+            return viewPanel.getError()!.message;
         }
         else {
             return getWebViewHtml(createPddlExtensionContext(this.context), this.options.content, this.options.webviewHtmlPath, viewPanel.getPanel().webview);
@@ -237,7 +237,7 @@ export abstract class ProblemView<TRendererOptions, TRenderData> extends Disposa
     async parseProblem(problemDocument: TextDocument): Promise<ProblemInfo | undefined> {
         let fileInfo = await this.codePddlWorkspace.upsertAndParseFile(problemDocument);
 
-        if (!fileInfo.isProblem()) {
+        if (!fileInfo?.isProblem()) {
             return undefined;
         }
 
@@ -294,11 +294,11 @@ export abstract class ProblemView<TRendererOptions, TRenderData> extends Disposa
 
 }
 
-async function getProblemDocument(dotDocumentUri: Uri | undefined): Promise<TextDocument> {
+async function getProblemDocument(dotDocumentUri: Uri | undefined): Promise<TextDocument | undefined> {
     if (dotDocumentUri) {
         return await workspace.openTextDocument(dotDocumentUri);
     } else {
-        if (window.activeTextEditor !== null && isPddl(window.activeTextEditor.document)) {
+        if (window.activeTextEditor !== undefined && isPddl(window.activeTextEditor.document)) {
             return window.activeTextEditor.document;
         }
         else {

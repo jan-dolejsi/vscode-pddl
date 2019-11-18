@@ -40,7 +40,7 @@ export class PlanComparer implements Disposable {
                     return;
                 }
 
-                let leftFileUri = selectedFiles.find(otherFileUri => otherFileUri.toString() !== rightPlanUri.toString());
+                let leftFileUri = selectedFiles.find(otherFileUri => otherFileUri.toString() !== rightPlanUri.toString())!;
                 let leftTextDocument = await workspace.openTextDocument(leftFileUri);
 
                 if (toLanguage(leftTextDocument) !== PddlLanguage.PLAN) {

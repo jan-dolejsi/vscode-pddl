@@ -62,15 +62,15 @@ export class DiscreteEffectCompletionItemProvider extends AbstractCompletionItem
     }
 
     static insideDurativeActionDiscreteEffect(currentNode: PddlSyntaxNode): boolean {
-        return currentNode.findAncestor(PddlTokenType.OpenBracketOperator, /\(\s*:durative-action/i) !== null
-            && currentNode.findAncestor(PddlTokenType.OpenBracketOperator, /\(\s*(at start|at end)/i) !== null;
+        return currentNode.findAncestor(PddlTokenType.OpenBracketOperator, /\(\s*:durative-action/i) !== undefined
+            && currentNode.findAncestor(PddlTokenType.OpenBracketOperator, /\(\s*(at start|at end)/i) !== undefined;
     }
 
     private static insideActionOrEvent(currentNode: PddlSyntaxNode) {
-        return currentNode.findAncestor(PddlTokenType.OpenBracketOperator, /\(\s*:(action|event)/i) !== null;
+        return currentNode.findAncestor(PddlTokenType.OpenBracketOperator, /\(\s*:(action|event)/i) !== undefined;
     }
 
-    provide(domainInfo: DomainInfo, context: CompletionContext, range: Range): CompletionItem[] | PromiseLike<CompletionItem[]> {
+    provide(domainInfo: DomainInfo, context: CompletionContext, range: Range | null): (CompletionItem | null)[] {
         if (context.triggerKind !== CompletionTriggerKind.Invoke && context.triggerCharacter !== '(') { return []; }
 
         let functions = domainInfo.getFunctions();

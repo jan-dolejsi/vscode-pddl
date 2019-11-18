@@ -11,8 +11,8 @@ const { URL } = require('url');
 
 export class PlanReportSettings {
     settings: any = null;
-    excludeActions: string[] = null;
-    ignoreActionParameters: ActionParameterPattern[];
+    excludeActions: string[] | undefined;
+    ignoreActionParameters: ActionParameterPattern[] | undefined;
 
     constructor(domainFileUri: string) {
         let settingsFileUri = domainFileUri.replace(/\.pddl$/, '.planviz.json');
@@ -30,7 +30,10 @@ export class PlanReportSettings {
     shouldDisplay(planStep: PlanStep): boolean {
         if (!this.settings) { return true; }
 
-        if (this.excludeActions === null || this.excludeActions === undefined) { this.excludeActions = this.settings["excludeActions"]; }
+        if (this.excludeActions === undefined) {
+            this.excludeActions = this.settings["excludeActions"];
+        }
+        
         if (!this.excludeActions) { return true; }
         return !this.excludeActions.some(pattern => this.matches(pattern, planStep.getActionName()));
     }
@@ -38,7 +41,7 @@ export class PlanReportSettings {
     shouldIgnoreActionParameter(actionName: string, parameterName: string): boolean {
         if (!this.settings) { return false; }
 
-        if (this.ignoreActionParameters === null || this.ignoreActionParameters === undefined) { this.ignoreActionParameters = this.settings["ignoreActionParameters"]; }
+        if (this.ignoreActionParameters === undefined) { this.ignoreActionParameters = this.settings["ignoreActionParameters"]; }
         if (!this.ignoreActionParameters) { return true; }
 
         let applicableSetting = this.ignoreActionParameters.find(entry => this.matches(entry.action, actionName));

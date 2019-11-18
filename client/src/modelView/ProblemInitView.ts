@@ -9,9 +9,9 @@ import {
     ExtensionContext, TextDocument, CodeLens, CancellationToken, CodeLensProvider
 } from 'vscode';
 
-import { DomainInfo, TypeObjects } from '../../../common/src/DomainInfo';
+import { DomainInfo } from '../../../common/src/DomainInfo';
 import { ProblemInfo, TimedVariableValue } from '../../../common/src/ProblemInfo';
-import { Variable, ObjectInstance, Parameter } from '../../../common/src/FileInfo';
+import { Variable, ObjectInstance, Parameter, Term } from '../../../common/src/FileInfo';
 
 import * as path from 'path';
 import { CodePddlWorkspace } from '../workspace/CodePddlWorkspace';
@@ -53,7 +53,7 @@ export class ProblemInitView extends ProblemView<ProblemInitViewOptions, Problem
         );
     }
 
-    async provideCodeLenses(document: TextDocument, token: CancellationToken): Promise<CodeLens[]> {
+    async provideCodeLenses(document: TextDocument, token: CancellationToken): Promise<CodeLens[] | null> {
         if (token.isCancellationRequested) { return null; }
         let problem = await this.parseProblem(document);
         if (token.isCancellationRequested) { return null; }
@@ -72,13 +72,14 @@ export class ProblemInitView extends ProblemView<ProblemInitViewOptions, Problem
         }
     }
 
-    async resolveCodeLens(codeLens: CodeLens, token: CancellationToken): Promise<CodeLens> {
+    async resolveCodeLens(codeLens: CodeLens, token: CancellationToken): Promise<CodeLens | null> {
         if (!(codeLens instanceof DocumentCodeLens)) {
             return null;
         }
         if (token.isCancellationRequested) { return null; }
-        let [domain] = await this.getProblemAndDomain(codeLens.getDocument());
-        if (!domain) { return null; }
+        let domainAndProblem = await this.getProblemAndDomain(codeLens.getDocument());
+        if (!domainAndProblem) { return null; }
+
         if (token.isCancellationRequested) { return null; }
 
         if (codeLens instanceof DocumentInsetCodeLens) {
@@ -175,7 +176,7 @@ class ProblemInitRendererDelegate {
     }
 
     private constructTypeProperties(type: string): void {
-        let typeObjects = TypeObjects.concatObjects(this.domain.getConstants(), this.problem.getObjectsPerType()).find(t => t.type === type);
+        let typeObjects = this.domain.getConstants().merge(this.problem.getObjectsTypeMap()).getTypeCaseInsensitive(type);
         if (!typeObjects) { return; }
         let objects = typeObjects.getObjects();
 
@@ -208,7 +209,7 @@ class ProblemInitRendererDelegate {
         };
     }
 
-    private getInitValue(groundedVariable: Variable): TimedVariableValue  {
+    private getInitValue(groundedVariable: Variable): TimedVariableValue | undefined {
         let firstInit = this.problem.getInits()
             .filter(init => init.isSupported)
             .filter(viv => viv.getVariableName().toLowerCase() === groundedVariable.getFullName().toLowerCase())
@@ -272,8 +273,8 @@ class ProblemInitRendererDelegate {
         
         if (liftedVariable) {
             liftedVariable.parameters
-                .forEach((term: Parameter, index) =>
-                    parameters.set(term.name, init.getVariableName().split(' ')[index + 1]));
+                .forEach((term: Term, index) =>
+                    parameters.set((<Parameter>term).name, init.getVariableName().split(' ')[index + 1]));
         }
         else {
             init.getVariableName().split(' ').slice(1)
@@ -287,8 +288,7 @@ class ProblemInitRendererDelegate {
     }
 
     private getObjects(type: string): string[] {
-        return getObjectsInheritingFrom(
-            TypeObjects.concatObjects(this.domain.getConstants(), this.problem.getObjectsPerType()),
+        return getObjectsInheritingFrom(this.domain.getConstants().merge(this.problem.getObjectsTypeMap()),
             type,
             this.domain.getTypeInheritance());
     }
@@ -298,7 +298,10 @@ class ProblemInitRendererDelegate {
     }
 
     private addRelationship(initialValue: TimedVariableValue): void {
-        this.relationships.push(this.toEdge(initialValue));
+        let edge = this.toEdge(initialValue);
+        if (edge) {
+            this.relationships.push(edge);
+        }
     }
 
     getNodes(): NetworkNode[] {
@@ -310,7 +313,7 @@ class ProblemInitRendererDelegate {
         return { id: entryId, label: entryLabel };
     }
 
-    private toEdge(initialValue: TimedVariableValue): NetworkEdge {
+    private toEdge(initialValue: TimedVariableValue): NetworkEdge | null {
         let variableNameParts = initialValue.getVariableName().split(' ');
         let fromName = variableNameParts[1];
         let toName = variableNameParts[2];
@@ -328,7 +331,15 @@ class ProblemInitRendererDelegate {
             // this is a timed-initial literal/fluent
             label += ' @ ' + initialValue.getTime();
         }
-        return { from: this.nodes.get(fromName), to: this.nodes.get(toName), label: label };
+        const fromId = this.nodes.get(fromName);
+        const toId = this.nodes.get(toName);
+        if (fromId !== undefined && toId !== undefined) {
+            return { from: fromId, to: toId, label: label };
+        }
+        else {
+            console.log(`One or more nodes not found: ${fromName}, ${toName}`);
+            return null;
+        }
     }
 
     getRelationships(): NetworkEdge[] {

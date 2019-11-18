@@ -6,7 +6,7 @@
 
 import { CompletionItem, CompletionContext, SnippetString, MarkdownString, CompletionItemKind } from 'vscode';
 import { ProblemInfo } from '../../../common/src/ProblemInfo';
-import { DomainInfo, TypeObjects } from '../../../common/src/DomainInfo';
+import { DomainInfo, TypeObjectMap } from '../../../common/src/DomainInfo';
 import { Variable } from '../../../common/src/FileInfo';
 import { ContextDelegate } from './ContextDelegate';
 import { Delegate } from './Delegate';
@@ -32,7 +32,7 @@ export class ProblemInitDelegate extends ContextDelegate {
     }
 
     createSymmetricInit(problemFileInfo: ProblemInfo, domainFile: DomainInfo): void {
-        let allTypeObjects = TypeObjects.concatObjects(domainFile.getConstants(), problemFileInfo.getObjectsPerType());
+        let allTypeObjects = domainFile.getConstants().merge(problemFileInfo.getObjectsTypeMap());
 
         let symmetricPredicates = this.getSymmetricPredicates(domainFile);
 
@@ -56,7 +56,7 @@ export class ProblemInitDelegate extends ContextDelegate {
     }
 
     createSymmetricPredicateAndFunctionInitItem(symmetricPredicates: Variable[], symmetricFunctions: Variable[],
-        domainFile: DomainInfo, allTypeObjects: TypeObjects[]): void {
+        domainFile: DomainInfo, allTypeObjects: TypeObjectMap): void {
         let typesInvolved = this.getTypesInvolved(symmetricPredicates.concat(symmetricFunctions), domainFile);
         let objectsDefined = this.getObjects(allTypeObjects, typesInvolved);
         let objectNames = objectsDefined
@@ -76,7 +76,7 @@ export class ProblemInitDelegate extends ContextDelegate {
     }
 
     createSymmetricPredicateInitItem(symmetricPredicates: Variable[],
-        domainFile: DomainInfo, allTypeObjects: TypeObjects[]): void {
+        domainFile: DomainInfo, allTypeObjects: TypeObjectMap): void {
 
         let typesInvolved = this.getTypesInvolved(symmetricPredicates, domainFile);
         let objectsDefined = this.getObjects(allTypeObjects, typesInvolved);
@@ -97,7 +97,7 @@ export class ProblemInitDelegate extends ContextDelegate {
     }
 
     createSymmetricFunctionInitItem(symmetricFunctions: Variable[],
-        domainFile: DomainInfo, allTypeObjects: TypeObjects[]): void {
+        domainFile: DomainInfo, allTypeObjects: TypeObjectMap): void {
         let typesInvolved = this.getTypesInvolved(symmetricFunctions, domainFile);
         let objectsDefined = this.getObjects(allTypeObjects, typesInvolved);
         let objectNames = objectsDefined
@@ -116,7 +116,7 @@ export class ProblemInitDelegate extends ContextDelegate {
         this.completions.push(item);
 
     }
-    createSequencePredicateInitItem(symmetricPredicate: Variable, allTypeObjects: TypeObjects[]): void {
+    createSequencePredicateInitItem(symmetricPredicate: Variable, allTypeObjects: TypeObjectMap): void {
 
         // note for the sequence case we do not consider type inheritance
         let typeInvolved = symmetricPredicate.parameters[0].type;

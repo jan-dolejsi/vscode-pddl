@@ -1,6 +1,6 @@
 {
 	"compilerOptions": {
-		//"strict": true,   /* enable all strict type-checking options */
+		"strict": true,   /* enable all strict type-checking options */
 		"noUnusedLocals": true,
 		"noUnusedParameters": true,
 		"noImplicitAny": true,

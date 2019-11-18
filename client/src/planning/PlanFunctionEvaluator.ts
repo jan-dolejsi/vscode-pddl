@@ -9,7 +9,6 @@ import * as process from 'child_process';
 import { Variable } from '../../../common/src/FileInfo';
 import { Grounder } from '../../../common/src/Grounder';
 import { PlanInfo } from '../../../common/src/parser';
-import { TypeObjects } from '../../../common/src/DomainInfo';
 import { Plan } from "../../../common/src/Plan";
 import { Util } from '../../../common/src/util';
 import { PlanTimeSeriesParser } from '../../../common/src/PlanTimeSeriesParser';
@@ -19,7 +18,7 @@ export class PlanFunctionEvaluator {
 
     private grounder: Grounder;
 
-    constructor(private valueSeqPath: string, private valStepPath: string, private plan: Plan, private shouldGroupByLifted: boolean) {
+    constructor(private valueSeqPath: string | undefined, private valStepPath: string | undefined, private plan: Plan, private shouldGroupByLifted: boolean) {
         this.grounder = new Grounder(this.plan.domain, this.plan.problem);
     }
 
@@ -27,7 +26,7 @@ export class PlanFunctionEvaluator {
         return !!this.valueSeqPath && !!this.valStepPath;
     }
 
-    getValStepPath(): string {
+    getValStepPath(): string | undefined {
         return this.valStepPath;
     }
 
@@ -48,7 +47,9 @@ export class PlanFunctionEvaluator {
 
         await Promise.all(liftedFunctions.map(async (liftedFunction) => {
             let groundedFunctions = changingFunctionsGrouped.get(liftedFunction);
-            await this.addChartValues(domainFile, problemFile, planFile, liftedFunction, groundedFunctions, chartData);
+            if (groundedFunctions) {
+                await this.addChartValues(domainFile, problemFile, planFile, liftedFunction, groundedFunctions, chartData);
+            }
         }));
 
         return chartData;
@@ -59,12 +60,14 @@ export class PlanFunctionEvaluator {
 
         variables.forEach(var1 => {
             let lifted = this.plan.domain.getLiftedFunction(var1);
-            let grounded = grouped.get(lifted);
+            if (lifted) {
+                let grounded = grouped.get(lifted);
 
-            if (grounded) {
-                grounded.push(var1);
-            } else {
-                grouped.set(lifted, [var1]);
+                if (grounded) {
+                    grounded.push(var1);
+                } else {
+                    grouped.set(lifted, [var1]);
+                }
             }
         });
 
@@ -80,6 +83,7 @@ export class PlanFunctionEvaluator {
     }
 
     async getChangingGroundedFunctions(): Promise<Variable[]> {
+        if (!this.valStepPath) { return []; }
         let happenings = PlanInfo.getHappenings(this.plan.steps);
 
         let finalStateValues = await new ValStep(this.plan.domain, this.plan.problem).executeBatch(this.valStepPath, "", happenings);
@@ -88,27 +92,22 @@ export class PlanFunctionEvaluator {
 
         return finalStateValues
             .map(value => this.getFunction(value.getVariableName()))
-            .filter(variable => variable); // filter out null values
+            .filter(variable => !!variable) // filter out null values
+            .map(v => v!);
     }
 
-    getFunction(variableName: string): Variable {
+    getFunction(variableName: string): Variable | null {
         let variableNameFragments = variableName.split(" ");
         let liftedVariableName = variableNameFragments[0];
         let liftedVariable = this.plan.domain.getFunction(liftedVariableName);
-        if (!liftedVariable) { return liftedVariable; }
-        let allConstantsAndObjects = TypeObjects.concatObjects(this.plan.domain.getConstants(), this.plan.problem.objects);
+        if (!liftedVariable) { return null; }
+        let allConstantsAndObjects = this.plan.domain.getConstants().merge(this.plan.problem.objects);
         let objects = variableNameFragments.slice(1)
-            .map(objectName => this.findType(allConstantsAndObjects, objectName).getObjectInstance(objectName));
+            .map(objectName => allConstantsAndObjects.getTypeOf(objectName)?.getObjectInstance(objectName))
+            .filter(o => !!o).map(o => o!);
         return liftedVariable.bind(objects);
     }
 
-    private findType(allConstantsAndObjects: TypeObjects[], objectName: string): TypeObjects {
-        let typeFound = allConstantsAndObjects.find(typeObj => typeObj.hasObject(objectName));
-        if (!typeFound) {
-            throw new Error("Cannot find type with object: " + objectName);
-        }
-        return typeFound;
-    }
 
     async tryAddChartValues(domainFile: string, problemFile: string, planFile: string, liftedFunction: Variable, groundedFunctions: Variable[], chartData: Map<Variable, GroundedFunctionValues>) {
         try {
@@ -127,7 +126,9 @@ export class PlanFunctionEvaluator {
             .map(name => name.toLowerCase())
             .join(' ')
             .toLowerCase();
-
+        
+        if (!this.valueSeqPath) { throw new Error('Check first Evaluator#isAvailable()'); }
+        
         const valueSeqCommand = `${Util.q(this.valueSeqPath)} -T ${domainFile} ${problemFile} ${planFile} ${functions}`;
         console.log(valueSeqCommand);
         let child = process.execSync(valueSeqCommand);
@@ -157,7 +158,7 @@ class GroundedFunctionValues {
         this.values = values.map(row => row.map(v => this.undefinedToNull(v)));
     }
 
-    undefinedToNull(value: number): number {
+    undefinedToNull(value: number): number | null {
         return value === undefined ? null : value;
     }
 

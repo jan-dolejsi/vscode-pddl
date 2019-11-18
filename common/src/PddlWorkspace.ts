@@ -29,7 +29,7 @@ class Folder {
         return this.files.has(fileUri);
     }
 
-    get(fileUri: string): FileInfo {
+    get(fileUri: string): FileInfo | undefined {
         return this.files.get(fileUri);
     }
 
@@ -47,7 +47,7 @@ class Folder {
         return this.files.delete(fileUri);
     }
 
-    getProblemFileWithName(problemName: string): ProblemInfo {
+    getProblemFileWithName(problemName: string): ProblemInfo | undefined {
         return Array.from(this.files.values())
             .filter(value => value.isProblem())
             .map(value => <ProblemInfo>value)
@@ -78,7 +78,7 @@ function lowerCaseEquals(first: string, second: string): boolean {
 export class PddlWorkspace extends EventEmitter {
     folders: Map<string, Folder> = new Map<string, Folder>();
     parser: Parser;
-    timeout: NodeJS.Timer;
+    timeout: NodeJS.Timer | undefined;
     defaultTimerDelayInSeconds = 1;
 
     public static INSERTED = Symbol("INSERTED");
@@ -119,7 +119,7 @@ export class PddlWorkspace extends EventEmitter {
 
         let folder = this.upsertFolder(folderPath);
 
-        let fileInfo: FileInfo = folder.get(fileUri);
+        let fileInfo = folder.get(fileUri);
         if (fileInfo) {
             if (fileInfo.update(fileVersion, fileText, force)) {
                 this.scheduleParsing();
@@ -241,7 +241,7 @@ export class PddlWorkspace extends EventEmitter {
             this.folders.set(folderPath, folder);
         }
         else {
-            folder = this.folders.get(folderPath);
+            folder = this.folders.get(folderPath)!;
         }
 
         return folder;
@@ -256,9 +256,9 @@ export class PddlWorkspace extends EventEmitter {
         let folderPath = PddlWorkspace.getFolderPath(documentUri);
 
         if (this.folders.has(folderPath)) {
-            let folder = this.folders.get(folderPath);
+            let folder = this.folders.get(folderPath)!;
             if (folder.hasFile(documentUri)) {
-                let documentInfo = folder.get(documentUri);
+                let documentInfo = folder.get(documentUri)!;
 
                 this.emit(PddlWorkspace.REMOVING, documentInfo);
                 return folder.remove(documentInfo);
@@ -273,31 +273,32 @@ export class PddlWorkspace extends EventEmitter {
             || this.planToProblemMap.has(documentUri) || [...this.planToProblemMap.values()].includes(documentUri);
     }
 
-    getFileInfo<T extends FileInfo>(fileUri: string): T {
+    getFileInfo<T extends FileInfo>(fileUri: string): T | undefined {
         let folderPath = PddlWorkspace.getFolderPath(fileUri);
 
         if (this.folders.has(folderPath)) {
-            let folder = this.folders.get(folderPath);
+            let folder = this.folders.get(folderPath)!;
             let fileInfo = folder.get(fileUri);
 
             return <T>fileInfo; // or null if the file did not exist in the folder
         }
 
         // folder does not exist
-        return null;
+        return undefined;
     }
 
     getProblemFiles(domainInfo: DomainInfo): ProblemInfo[] {
         let folder = this.folders.get(PddlWorkspace.getFolderPath(domainInfo.fileUri));
 
         // find problem files in the same folder that match the domain name
-        let problemFiles = folder.getProblemFilesFor(domainInfo);
+        let problemFiles = folder?.getProblemFilesFor(domainInfo) || [];
 
         return problemFiles;
     }
 
     getPlanFiles(problemInfo: ProblemInfo): PlanInfo[] {
         let folder = this.folders.get(PddlWorkspace.getFolderPath(problemInfo.fileUri));
+        if (folder === undefined) { return []; }
 
         // find plan files in the same folder that match the domain and problem names
         return Array.from(folder.files.values())
@@ -309,6 +310,7 @@ export class PddlWorkspace extends EventEmitter {
 
     getHappeningsFiles(problemInfo: ProblemInfo): HappeningsInfo[] {
         let folder = this.folders.get(PddlWorkspace.getFolderPath(problemInfo.fileUri));
+        if (folder === undefined) { return []; }
 
         // find happenings files in the same folder that match the domain and problem names
         return Array.from(folder.files.values())
@@ -323,7 +325,7 @@ export class PddlWorkspace extends EventEmitter {
 
         this.folders.forEach(folder => {
             folder.files.forEach((fileInfo) => {
-                if (predicate.apply(this, [fileInfo])) { selectedFiles.push(fileInfo); }
+                if (predicate.apply(this, [fileInfo as T])) { selectedFiles.push(fileInfo); }
             });
         });
 
@@ -349,7 +351,7 @@ export class PddlWorkspace extends EventEmitter {
      * @returns corresponding domain file if fileInfo is a problem file,
      * or `fileInfo` itself if the `fileInfo` is a domain file, or `null` otherwise.
      */
-    asDomain(fileInfo: FileInfo): DomainInfo {
+    asDomain(fileInfo: FileInfo): DomainInfo | undefined{
         if (fileInfo.isDomain()) {
             return <DomainInfo>fileInfo;
         }
@@ -358,19 +360,14 @@ export class PddlWorkspace extends EventEmitter {
         }
         else if (fileInfo.isPlan()) {
             var problemFile1 = this.getProblemFileForPlan(<PlanInfo>fileInfo);
-            if (problemFile1) {
-                return this.getDomainFileFor(problemFile1);
-            }
-            else {
-                return null;
-            }
+            return problemFile1 && this.getDomainFileFor(problemFile1);
         }
         else if (fileInfo.isHappenings()) {
             var problemFile2 = this.getProblemFileForHappenings(<HappeningsInfo>fileInfo);
-            return this.getDomainFileFor(problemFile2);
+            return problemFile2 && this.getDomainFileFor(problemFile2);
         }
         else {
-            return null;
+            return undefined;
         }
     }
 
@@ -389,13 +386,14 @@ export class PddlWorkspace extends EventEmitter {
     getDomainFilesFor(problemFile: ProblemInfo): DomainInfo[] {
         // does an explicit association exist?
         if (this.problemToDomainMap.has(problemFile.fileUri)) {
-            let domainFileUri = this.problemToDomainMap.get(problemFile.fileUri);
-            return [this.getFileInfo<DomainInfo>(domainFileUri)];
+            let domainFileUri = this.problemToDomainMap.get(problemFile.fileUri)!;
+            let associatedDomain = this.getFileInfo<DomainInfo>(domainFileUri);
+            return associatedDomain ? [associatedDomain] : [];
         }
         else {
             let folder = this.folders.get(PddlWorkspace.getFolderPath(problemFile.fileUri));
 
-            if (!folder) { return null; }
+            if (!folder) { return []; }
 
             // find domain files in the same folder that match the problem's domain name
             let domainFiles = folder.getDomainFilesFor(problemFile);
@@ -409,11 +407,11 @@ export class PddlWorkspace extends EventEmitter {
      * @param problemFile problem file info
      * @returns matching domain file, if exactly one exists in the same folder. `null` otherwise
      */
-    getDomainFileFor(problemFile: ProblemInfo): DomainInfo {
+    getDomainFileFor(problemFile: ProblemInfo): DomainInfo | undefined {
         // find domain files in the same folder that match the problem's domain name
         let domainFiles = this.getDomainFilesFor(problemFile);
 
-        return domainFiles.length === 1 ? domainFiles[0] : null;
+        return domainFiles.length === 1 ? domainFiles[0] : undefined;
     }
 
     /** Explicit associations between plan files and problem files. */
@@ -423,34 +421,24 @@ export class PddlWorkspace extends EventEmitter {
         this.planToProblemMap.set(planUri, problemFileInfo.fileUri);
     }
 
-    getProblemFileForPlan(planInfo: PlanInfo): ProblemInfo {
-        let problemFileInfo: ProblemInfo;
-
+    getProblemFileForPlan(planInfo: PlanInfo): ProblemInfo | undefined {
         // does an explicit association exist?
         if (this.planToProblemMap.has(planInfo.fileUri)) {
-            let problemFileUri = this.planToProblemMap.get(planInfo.fileUri);
-            problemFileInfo = this.getFileInfo<ProblemInfo>(problemFileUri);
+            let problemFileUri = this.planToProblemMap.get(planInfo.fileUri)!;
+            return this.getFileInfo<ProblemInfo>(problemFileUri);
         }
         else {
             let folder = this.getFolderOf(planInfo);
-            if (!folder) { return null; }
-            problemFileInfo = folder.getProblemFileWithName(planInfo.problemName);
+            if (!folder) { return undefined; }
+            return folder.getProblemFileWithName(planInfo.problemName);
         }
-
-        return problemFileInfo;
     }
 
-    getProblemFileForHappenings(happeningsInfo: HappeningsInfo): ProblemInfo {
-        let problemFileInfo: ProblemInfo;
-
-        let folder = this.getFolderOf(happeningsInfo);
-        if (!folder) { return null; }
-        problemFileInfo = folder.getProblemFileWithName(happeningsInfo.problemName);
-
-        return problemFileInfo;
+    getProblemFileForHappenings(happeningsInfo: HappeningsInfo): ProblemInfo | undefined {
+        return this.getFolderOf(happeningsInfo)?.getProblemFileWithName(happeningsInfo.problemName);
     }
 
-    getFolderOf(fileInfo: FileInfo): Folder {
+    getFolderOf(fileInfo: FileInfo): Folder | undefined {
         return this.folders.get(PddlWorkspace.getFolderPath(fileInfo.fileUri));
     }
 }

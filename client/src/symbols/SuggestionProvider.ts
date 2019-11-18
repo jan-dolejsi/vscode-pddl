@@ -39,25 +39,26 @@ export class SuggestionProvider implements CodeActionProvider {
         if (token.isCancellationRequested) { return []; }
 
         let fileInfo = await this.workspace.upsertFile(document);
+        if (fileInfo === undefined) { throw new Error(`Not a PDDL file: ` + document.uri.toString()); }
         let syntaxTree = new PddlSyntaxTreeBuilder(fileInfo.getText()).getTree();
 
         let insertSnippetCodeActions = context.diagnostics
             .filter(diagnostic => diagnostic.code === SuggestionProvider.CONTENT_NOT_RECOGNIZED)
-            .map(diagnostic => this.createSnippetSuggestions(document, diagnostic, range, fileInfo, syntaxTree));
+            .map(diagnostic => this.createSnippetSuggestions(document, diagnostic, range, fileInfo!, syntaxTree));
 
         if (token.isCancellationRequested) { return []; }
 
         let missingRequirement = context.diagnostics
             .filter(diagnostic => diagnostic.message.match(MissingRequirements.undeclaredRequirementDiagnosticPattern))
-            .map(diagnostic => this.createMissingRequirementAction(document, diagnostic, fileInfo))
-            .filter(action => action !== undefined);
+            .map(diagnostic => this.createMissingRequirementAction(document, diagnostic, fileInfo!))
+            .filter(action => !!action).map(action => action!);
 
         if (token.isCancellationRequested) { return []; }
 
         let undeclaredVariable = context.diagnostics
             .filter(diagnostic => diagnostic.message.match(UndeclaredVariable.undeclaredVariableDiagnosticPattern))
-            .map(diagnostic => this.createUndeclaredVariableAction(document, diagnostic, fileInfo))
-            .filter(action => action !== undefined);
+            .map(diagnostic => this.createUndeclaredVariableAction(document, diagnostic, fileInfo!))
+            .filter(action => action !== undefined).map(action => action!);
 
         if (token.isCancellationRequested) { return []; }
 
@@ -89,7 +90,7 @@ export class SuggestionProvider implements CodeActionProvider {
     private createTest(document: TextDocument, preProcessor: PreProcessor): Test {
         let test = new Test(preProcessor.toString(), "", "this should not be used",
             basename(document.uri.fsPath), "", preProcessor, []);
-        test.setManifest(new TestsManifest(undefined, undefined, undefined, document.uri)); // only the uri is needed
+        test.setManifest(new TestsManifest('unused', 'unused', 'unused', document.uri)); // only the uri is needed
         return test;
     }
 
@@ -125,11 +126,12 @@ export class SuggestionProvider implements CodeActionProvider {
         return codeActions;
     }
 
-    private createMissingRequirementAction(document: TextDocument, diagnostic: Diagnostic, fileInfo: FileInfo): CodeAction {
+    private createMissingRequirementAction(document: TextDocument, diagnostic: Diagnostic, fileInfo: FileInfo): CodeAction | undefined {
 
         let missingRequirementsDelegate = new MissingRequirements(fileInfo);
 
         let requirementName = missingRequirementsDelegate.getRequirementName(diagnostic.message);
+        if (!requirementName) { return undefined; }
 
         let edit = missingRequirementsDelegate.createEdit(document, requirementName);
 

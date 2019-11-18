@@ -10,7 +10,7 @@ import { Util } from "./util";
 import { DocumentPositionResolver } from "./DocumentPositionResolver";
 import { PddlSyntaxTree } from "./PddlSyntaxTree";
 import { ParsingProblem, stripComments } from "./FileInfo";
-import { PreProcessingError } from "./PreProcessors";
+import { PreProcessingError, PreProcessor } from "./PreProcessors";
 import { PddlExtensionContext } from "./PddlExtensionContext";
 import { ProblemInfo, TimedVariableValue, VariableValue, SupplyDemand, UnsupportedVariableValue } from "./ProblemInfo";
 import { PddlDomainParser } from "./PddlDomainParser";
@@ -24,7 +24,7 @@ import { PddlConstraintsParser } from "./PddlConstraintsParser";
  */
 export class PddlProblemParser {
 
-    private problemPreParser: ProblemParserPreProcessor;
+    private problemPreParser: ProblemParserPreProcessor | undefined;
     private problemPattern = /^\s*\(define\s*\(problem\s+(\S+)\s*\)\s*\(:domain\s+(\S+)\s*\)/gi;
 
     constructor(context?: PddlExtensionContext) {
@@ -33,15 +33,15 @@ export class PddlProblemParser {
         }
     }
 
-    async parse(fileUri: string, fileVersion: number, fileText: string, syntaxTree: PddlSyntaxTree, positionResolver: DocumentPositionResolver): Promise<ProblemInfo> {
+    async parse(fileUri: string, fileVersion: number, fileText: string, syntaxTree: PddlSyntaxTree, positionResolver: DocumentPositionResolver): Promise<ProblemInfo | undefined> {
         let filePath = Util.fsPath(fileUri);
         let workingDirectory = dirname(filePath);
-        let preProcessor = null;
+        let preProcessor: PreProcessor | undefined;
 
         try {
             if (this.problemPreParser) {
                 preProcessor = this.problemPreParser.createPreProcessor(fileText);
-                fileText = await this.problemPreParser.process(preProcessor, fileText, workingDirectory);
+                fileText = await this.problemPreParser.process(preProcessor!, fileText, workingDirectory);
             }
         } catch (ex) {
             let problemInfo = new ProblemInfo(fileUri, fileVersion, "unknown", "unknown", PddlSyntaxTree.EMPTY, positionResolver);
@@ -51,10 +51,10 @@ export class PddlProblemParser {
                 problemInfo.addProblems([new ParsingProblem(parsingError.message, parsingError.line, parsingError.column)]);
             }
             else {
-                let line = preProcessor ? positionResolver.resolveToPosition(preProcessor.metaDataLineOffset).line : 0;
+                let line = positionResolver.resolveToPosition(preProcessor?.metaDataLineOffset || 0).line;
                 problemInfo.addProblems([new ParsingProblem(ex.message || ex, line, 0)]);
             }
-            problemInfo.setPreParsingPreProcessor(preProcessor);
+            if (preProcessor) { problemInfo.setPreParsingPreProcessor(preProcessor); }
             return problemInfo;
         }
 
@@ -70,11 +70,11 @@ export class PddlProblemParser {
             let problemInfo = new ProblemInfo(fileUri, fileVersion, problemName, domainName, syntaxTree, positionResolver);
             problemInfo.setText(fileText);
             this.getProblemStructure(problemInfo);
-            problemInfo.setPreParsingPreProcessor(preProcessor);
+            if (preProcessor) { problemInfo.setPreParsingPreProcessor(preProcessor); }
             return problemInfo;
         }
         else {
-            return null;
+            return undefined;
         }
     }
 
@@ -110,15 +110,17 @@ export class PddlProblemParser {
         let timedVariableValues = initNode.getChildren()
             .filter(node => isOpenBracket(node.getToken()))
             .filter(node => node.getToken().tokenText.match(/\(\s*supply-demand/i) === null)
-            .map(bracket => this.parseInit(bracket));
+            .map(bracket => this.parseInit(bracket))
+            .filter(init => !!init).map(init => init!);
         
         let supplyDemands = initNode.getChildrenOfType(PddlTokenType.OpenBracketOperator, /\(\s*supply-demand/i)
-            .map(bracket => this.parseSupplyDemand(bracket));
+            .map(bracket => this.parseSupplyDemand(bracket))
+            .filter(sd => !!sd).map(sd => sd!);
         
         return [timedVariableValues, supplyDemands];
     }
     
-    parseInit(bracket: PddlSyntaxNode): TimedVariableValue {
+    parseInit(bracket: PddlSyntaxNode): TimedVariableValue | undefined {
 
         if (bracket.getToken().tokenText === '(at') {
             let tokens = bracket.getNonWhitespaceChildren()
@@ -127,7 +129,7 @@ export class PddlProblemParser {
             if (tokens.length > 1) {
                 let time = parseFloat(tokens[0].getText());
                 if (!Number.isNaN(time)) {
-                    let variableValue: VariableValue = this.parseVariableValue(tokens[1]);
+                    let variableValue = this.parseVariableValue(tokens[1]);
                     if (variableValue) {
                         return TimedVariableValue.from(time, variableValue);
                     }
@@ -162,8 +164,12 @@ export class PddlProblemParser {
         }
         else if (node.getToken().tokenText === '(not') {
             let nested = node.getFirstChild(PddlTokenType.OpenBracket, /.*/) || node.getFirstChild(PddlTokenType.OpenBracketOperator, /.*/);
-            if (!nested) { return undefined; }
-            return this.parseVariableValue(nested).negate();
+            if (!nested) {
+                return undefined;
+            }
+            else {
+                return this.parseVariableValue(nested)?.negate();
+            }
         }
         else if (['(forall', '(assign', '(increase', '(decrease'].includes(node.getToken().tokenText)) {
             return new UnsupportedVariableValue(node.getText());

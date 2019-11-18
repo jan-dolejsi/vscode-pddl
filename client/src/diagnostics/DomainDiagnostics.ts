@@ -46,7 +46,7 @@ export class DomainDiagnostics {
         this.diagnosticCollection.set(Uri.parse(domainInfo.fileUri), diagnostics);
     }
 
-    toUnusedDiagnostic(domainInfo: DomainInfo, variable: Variable, variableType: string): Diagnostic {
+    toUnusedDiagnostic(domainInfo: DomainInfo, variable: Variable, variableType: string): Diagnostic | undefined {
         let references = domainInfo.getVariableReferences(variable);
 
         if (references.length === 1) {
@@ -56,6 +56,6 @@ export class DomainDiagnostics {
             return diagnostic;
         }
 
-        return null;
+        return undefined;
     }
 }

@@ -44,11 +44,14 @@ export class AbstractCompletionItemProvider {
         return currentNode.getParent() === requirementsNode;
     }
 
-    protected createSnippetCompletionItem(suggestion: Suggestion, snippet: string, range: Range, _context: CompletionContext, index: number): CompletionItem {
+    protected createSnippetCompletionItem(suggestion: Suggestion | null, snippet: string, range: Range | null, _context: CompletionContext, index: number): CompletionItem | null {
+        if (suggestion === null) { return null; }
         let suggestionDetail = this.suggestionDetails.get(suggestion.sectionName);
         let completionItem = new CompletionItem(suggestion.sectionName, (suggestionDetail && suggestionDetail.kind) || CompletionItemKind.Keyword);
         completionItem.insertText = new SnippetString(snippet);
+        
         if (range) { completionItem.range = range; }
+        
         if (suggestionDetail) {
             completionItem.detail = suggestionDetail.detail;
             completionItem.documentation = suggestionDetail.documentation;
@@ -67,10 +70,22 @@ export class AbstractCompletionItemProvider {
     }
 
     protected createRequirementsCompletionItems(document: TextDocument, currentNode: PddlSyntaxNode, context: CompletionContext): CompletionItem[] | PromiseLike<CompletionItem[]> {
-        let range = ['(', ':'].includes(context.triggerCharacter) ? nodeToRange(document, currentNode) : null;
+        let range = context.triggerCharacter && ['(', ':'].includes(context.triggerCharacter)
+            ? nodeToRange(document, currentNode) : null;
+        
         const requirements = ['strips', 'typing', 'negative-preconditions', 'disjunctive-preconditions', 'equality', 'existential-preconditions', 'universal-preconditions', 'quantified-preconditions', 'conditional-effects', 'fluents', 'numeric-fluents', 'object-fluents', 'adl', 'durative-actions', 'duration-inequalities', 'continuous-effects', 'derived-predicates', 'derived-functions', 'timed-initial-literals', 'timed-effects', 'preferences', 'constraints', 'action-costs', 'timed-initial-fluents', 'time'];
         return requirements.map(r => ':' + r)
-            .map((r, index) => this.createSnippetCompletionItem(Suggestion.from(r, context.triggerCharacter, ''), r, range, context, index));
+            .map((r, index) => {
+                const suggestion = Suggestion.from(r, context.triggerCharacter, '');
+                if (suggestion) {
+                    return this.createSnippetCompletionItem(suggestion, r, range, context, index);
+                }
+                else {
+                    return null;
+                }
+            })
+            .filter(s => !!s)
+            .map(s => s!);
     }
 
     protected addIconGallery(): CompletionItem[] {
@@ -112,7 +127,7 @@ export class Suggestion {
         this.filterText = filterTextPrefix + sectionName;
     }
 
-    static from(sectionName: string, triggerCharacter: string, filterTextPrefix: string): Suggestion | null {
+    static from(sectionName: string, triggerCharacter: string | undefined, filterTextPrefix: string): Suggestion | null {
         if (triggerCharacter === ':' && !sectionName.startsWith(':')) {
             return null;
         }

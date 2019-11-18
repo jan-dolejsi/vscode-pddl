@@ -41,6 +41,7 @@ export class PddlSyntaxTree {
         else {
             // todo: use binary search among children
             let firstMatchingChild = parent.getChildren().find(node => node.includesIndex(symbolIndex));
+            if (!firstMatchingChild) { throw new Error("Assertion failed: there should be a child at index: " + symbolIndex); }
             return this.getChildNodeAt(firstMatchingChild, symbolIndex);
         }
     }

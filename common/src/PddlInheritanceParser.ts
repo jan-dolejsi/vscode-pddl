@@ -5,7 +5,7 @@
 'use strict';
 
 import { DirectionalGraph } from "./DirectionalGraph";
-import { TypeObjects } from "./DomainInfo";
+import { TypeObjectMap } from "./DomainInfo";
 
 /**
  * Planning type/object inheritance parser.
@@ -31,7 +31,7 @@ export class PddlInheritanceParser {
         while (match = pattern.exec(declarationText)) {
             // is this a group with inheritance?
             let fragments = match[0].split(/\s-/);
-            let parent = fragments.length > 1 ? fragments[1].trim() : null;
+            let parent = fragments.length > 1 ? fragments[1].trim() : undefined;
             let children = fragments[0].trim().split(/\s+/g);
 
             children.forEach(childType => inheritance.addEdge(childType, parent));
@@ -39,22 +39,22 @@ export class PddlInheritanceParser {
 
         // connect orphan types to the 'object' type
         let orphans = inheritance.getVertices()
-            .filter(v => !inheritance.getVerticesWithEdgesFrom(v).length)
+            .filter(v => !inheritance.getVerticesWithEdgesFrom(v)?.length || 0)
             .filter(orphan => orphan !== this.OBJECT);
         orphans.forEach(orphan => inheritance.addEdge(orphan, this.OBJECT));
-        
+
         return inheritance;
     }
 
-    static toTypeObjects(graph: DirectionalGraph): TypeObjects[] {
-        let typeSet = new Set<string>(graph.getEdges().map(edge => edge[1]));
-        let typeObjects: TypeObjects[] = Array.from(typeSet).map(type => new TypeObjects(type));
+    static toTypeObjects(graph: DirectionalGraph): TypeObjectMap {
+        let typeObjectMap = new TypeObjectMap();
 
         graph.getVertices().forEach(obj => {
-            graph.getVerticesWithEdgesFrom(obj).forEach(type => typeObjects.find(to => to.type === type).addObject(obj));
+            graph.getVerticesWithEdgesFrom(obj)
+                ?.forEach(type => typeObjectMap.add(type, obj));
         });
 
-        return typeObjects;
+        return typeObjectMap;
     }
 
 }

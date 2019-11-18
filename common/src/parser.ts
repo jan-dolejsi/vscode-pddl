@@ -29,19 +29,19 @@ export class Parser {
         }
     }
 
-    async tryProblem(fileUri: string, fileVersion: number, fileText: string, syntaxTree: PddlSyntaxTree, positionResolver: DocumentPositionResolver): Promise<ProblemInfo> {
+    async tryProblem(fileUri: string, fileVersion: number, fileText: string, syntaxTree: PddlSyntaxTree, positionResolver: DocumentPositionResolver): Promise<ProblemInfo | undefined> {
         return this.problemParser.parse(fileUri, fileVersion, fileText, syntaxTree, positionResolver);
     }
 
-    tryDomain(fileUri: string, fileVersion: number, fileText: string, syntaxTree: PddlSyntaxTree, positionResolver: DocumentPositionResolver): DomainInfo | null {
+    tryDomain(fileUri: string, fileVersion: number, fileText: string, syntaxTree: PddlSyntaxTree, positionResolver: DocumentPositionResolver): DomainInfo | undefined {
 
         //(define (domain domain_name)
 
         let defineNode = syntaxTree.getDefineNode();
-        if (!defineNode) { return null; }
+        if (!defineNode) { return undefined; }
 
         let domainNode = defineNode.getFirstOpenBracket('domain');
-        if (!domainNode) { return null; }
+        if (!domainNode) { return undefined; }
 
         return new PddlDomainParser(fileUri, fileVersion, fileText, domainNode, syntaxTree, positionResolver).getDomain();
     }

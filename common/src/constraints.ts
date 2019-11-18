@@ -15,7 +15,7 @@ export class Condition {
     constructor(public readonly node: PddlSyntaxNode) { }
 
     getText(): string {
-        return this.node.getText();
+        return this.node.getNonCommentText();
     }
 }
 
@@ -41,5 +41,11 @@ export class NamedConditionConstraint extends ConditionalConstraint {
 export class AfterConstraint extends Constraint {
     constructor(public readonly predecessor: NamedConditionConstraint, public readonly successor: NamedConditionConstraint, node: PddlSyntaxNode) {
         super(node);
+    }
+}
+
+export class StrictlyAfterConstraint extends AfterConstraint {
+    constructor(predecessor: NamedConditionConstraint, successor: NamedConditionConstraint, node: PddlSyntaxNode) {
+        super(predecessor, successor, node);
     }
 }

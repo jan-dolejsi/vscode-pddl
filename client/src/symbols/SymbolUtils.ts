@@ -21,6 +21,7 @@ export class SymbolUtils {
 
     getSymbolInfo(document: TextDocument, position: Position): SymbolInfo {
         let fileInfo = this.workspace.getFileInfo(document);
+        if (!fileInfo) { throw new Error(`Pddl file not found in the PDDL workspace model: ` + document.uri.toString()); }
 
         let domainInfo = this.workspace.pddlWorkspace.asDomain(fileInfo);
         if (!domainInfo) { return null; }
@@ -146,11 +147,11 @@ export class SymbolUtils {
         };
     }
 
-    getSymbolAtPosition(document: TextDocument, position: Position): Symbol {
+    getSymbolAtPosition(document: TextDocument, position: Position): Symbol | undefined{
         let wordContext = this.getWordAtDocumentPosition(document, position);
 
         // is the position not a word, or within comments?
-        if (wordContext === null || wordContext === undefined || wordContext.before.includes(';')) { return null; }
+        if (wordContext === null || wordContext === undefined || wordContext.before.includes(';')) { return undefined; }
 
         return new Symbol(wordContext.word, wordContext.range, wordContext.line);
     }
@@ -160,7 +161,7 @@ export class SymbolUtils {
         return new Hover(markdownString, range);
     }
 
-    createSymbolMarkdownDocumentation(title: string, symbolName: string, documentation: string[]) {
+    createSymbolMarkdownDocumentation(title: string | undefined, symbolName: string, documentation: string[]): MarkdownString {
         let markdownString = new MarkdownString(title ? `**${title}**` : undefined);
         markdownString.appendCodeblock(symbolName, 'pddl');
         documentation.forEach(d => markdownString.appendText(END_LINE + END_LINE).appendMarkdown(d));

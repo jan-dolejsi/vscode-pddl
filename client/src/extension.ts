@@ -9,7 +9,7 @@ import { workspace, window, ExtensionContext, commands, languages } from 'vscode
 import { Planning } from './planning/planning';
 import { PddlWorkspace } from '../../common/src/PddlWorkspace';
 import { PDDL, PLAN, HAPPENINGS } from '../../common/src/parser';
-import { PddlConfiguration } from './configuration';
+import { PddlConfiguration, PDDL_CONFIGURE_COMMAND } from './configuration';
 import { Authentication } from '../../common/src/Authentication';
 import { AutoCompletion } from './completion/AutoCompletion';
 import { SymbolRenameProvider } from './symbols/SymbolRenameProvider';
@@ -30,7 +30,7 @@ import { SearchDebugger } from './searchDebugger/SearchDebugger';
 import { PlanningDomainsSessions } from './session/PlanningDomainsSessions';
 import { PddlFormatProvider } from './formatting/PddlFormatProvider';
 import { Val } from './validation/Val';
-import { createPddlExtensionContext } from './utils';
+import { createPddlExtensionContext, showError } from './utils';
 import { AssociationProvider } from './workspace/AssociationProvider';
 import { SuggestionProvider } from './symbols/SuggestionProvider';
 import { CodePddlWorkspace } from './workspace/CodePddlWorkspace';
@@ -80,7 +80,7 @@ function activateWithTelemetry(_operationId: string, context: ExtensionContext) 
 	let pddlContext = createPddlExtensionContext(context);
 
 	let pddlWorkspace = new PddlWorkspace(pddlConfiguration.getEpsilonTimeStep(), pddlContext);
-	let codePddlWorkspace = new CodePddlWorkspace(pddlWorkspace, pddlConfiguration, context);
+	let codePddlWorkspace = CodePddlWorkspace.getInstance(pddlWorkspace, context, pddlConfiguration);
 	let planning = new Planning(codePddlWorkspace, pddlConfiguration, context);
 	let planValidator = new PlanValidator(planning.output, codePddlWorkspace, pddlConfiguration, context);
 	let happeningsValidator = new HappeningsValidator(planning.output, codePddlWorkspace, pddlConfiguration, context);
@@ -95,11 +95,13 @@ function activateWithTelemetry(_operationId: string, context: ExtensionContext) 
 	let loginParserServiceCommand = commands.registerCommand(PDDL_LOGIN_PARSER_SERVICE, () => {
 		let scopePromise = pddlConfiguration.askConfigurationScope();
 		scopePromise.then((scope) => {
+			if (scope === undefined) { return; } // canceled
 			let configuration = pddlConfiguration.getConfigurationForScope(scope);
+			if (configuration === undefined) { return; }
 			let authentication = createAuthentication(pddlConfiguration);
 			authentication.login(
 				(refreshtoken: string, accesstoken: string, stoken: string) => {
-					pddlConfiguration.savePddlParserAuthenticationTokens(configuration, refreshtoken, accesstoken, stoken, scope.target);
+					pddlConfiguration.savePddlParserAuthenticationTokens(configuration!, refreshtoken, accesstoken, stoken, scope.target);
 					window.showInformationMessage("Login successful.");
 				},
 				(message: string) => { window.showErrorMessage('Login failure: ' + message); });
@@ -109,11 +111,13 @@ function activateWithTelemetry(_operationId: string, context: ExtensionContext) 
 	let updateTokensParserServiceCommand = commands.registerCommand(PDDL_UPDATE_TOKENS_PARSER_SERVICE, () => {
 		let scopePromise = pddlConfiguration.askConfigurationScope();
 		scopePromise.then((scope) => {
+			if (scope === undefined) { return; } // canceled
 			let configuration = pddlConfiguration.getConfigurationForScope(scope);
+			if (configuration === undefined) { return; }
 			let authentication = createAuthentication(pddlConfiguration);
 			authentication.login(
 				(refreshtoken: string, accesstoken: string, stoken: string) => {
-					pddlConfiguration.savePddlParserAuthenticationTokens(configuration, refreshtoken, accesstoken, stoken, scope.target);
+					pddlConfiguration.savePddlParserAuthenticationTokens(configuration!, refreshtoken, accesstoken, stoken, scope.target);
 					window.showInformationMessage("Tokens refreshed and saved.");
 				},
 				(message: string) => { window.showErrorMessage('Couldn\'t refresh the tokens, try to login: ' + message); });
@@ -127,11 +131,13 @@ function activateWithTelemetry(_operationId: string, context: ExtensionContext) 
 	let loginPlannerServiceCommand = commands.registerCommand(PDDL_LOGIN_PLANNER_SERVICE, () => {
 		let scopePromise = pddlConfiguration.askConfigurationScope();
 		scopePromise.then((scope) => {
+			if (scope === undefined) { return; } // canceled
 			let configuration = pddlConfiguration.getConfigurationForScope(scope);
+			if (configuration === undefined) { return; }
 			let authentication = createAuthentication(pddlConfiguration);
 			authentication.login(
 				(refreshtoken: string, accesstoken: string, stoken: string) => {
-					pddlConfiguration.savePddlPlannerAuthenticationTokens(configuration, refreshtoken, accesstoken, stoken, scope.target);
+					pddlConfiguration.savePddlPlannerAuthenticationTokens(configuration!, refreshtoken, accesstoken, stoken, scope.target);
 					window.showInformationMessage("Login successful.");
 				},
 				(message: string) => { window.showErrorMessage('Login failure: ' + message); });
@@ -141,11 +147,13 @@ function activateWithTelemetry(_operationId: string, context: ExtensionContext) 
 	let updateTokensPlannerServiceCommand = commands.registerCommand(PDDL_UPDATE_TOKENS_PLANNER_SERVICE, () => {
 		let scopePromise = pddlConfiguration.askConfigurationScope();
 		scopePromise.then((scope) => {
+			if (scope === undefined) { return; } // canceled
 			let configuration = pddlConfiguration.getConfigurationForScope(scope);
+			if (configuration === undefined) { return; }
 			let authentication = createAuthentication(pddlConfiguration);
 			authentication.login(
 				(refreshtoken: string, accesstoken: string, stoken: string) => {
-					pddlConfiguration.savePddlPlannerAuthenticationTokens(configuration, refreshtoken, accesstoken, stoken, scope.target);
+					pddlConfiguration.savePddlPlannerAuthenticationTokens(configuration!, refreshtoken, accesstoken, stoken, scope.target);
 					window.showInformationMessage("Tokens refreshed and saved.");
 				},
 				(message: string) => { window.showErrorMessage('Couldn\'t refresh the tokens, try to login: ' + message); });
@@ -221,6 +229,10 @@ function activateWithTelemetry(_operationId: string, context: ExtensionContext) 
 			console.log('PDDL Formatter enabled.');
 		}
 	});
+	
+	let configureCommand = commands.registerCommand(PDDL_CONFIGURE_COMMAND, (configurationName: string) => {
+		pddlConfiguration.askConfiguration(configurationName).catch(showError);
+	});
 
 	// Push the disposables to the context's subscriptions so that the
 	// client can be deactivated on extension deactivation
@@ -229,7 +241,7 @@ function activateWithTelemetry(_operationId: string, context: ExtensionContext) 
 		configurePlannerCommand, loginPlannerServiceCommand, updateTokensPlannerServiceCommand, completionItemProvider, completionItemProvider2,
 		renameProvider, suggestionProvider, documentSymbolProvider, definitionProvider, referencesProvider, hoverProvider,
 		planHoverProvider, planDefinitionProvider, happeningsHoverProvider, happeningsDefinitionProvider,
-		problemInitView, problemObjectsView, problemConstraintsView);
+		problemInitView, problemObjectsView, problemConstraintsView, configureCommand);
 }
 
 export function deactivate() {
@@ -238,10 +250,10 @@ export function deactivate() {
 
 function createAuthentication(pddlConfiguration: PddlConfiguration): Authentication {
 	let configuration = pddlConfiguration.getPddlParserServiceAuthenticationConfiguration();
-	return new Authentication(configuration.url, configuration.requestEncoded, configuration.clientId, configuration.callbackPort, configuration.timeoutInMs,
-		configuration.tokensvcUrl, configuration.tokensvcApiKey, configuration.tokensvcAccessPath, configuration.tokensvcValidatePath,
-		configuration.tokensvcCodePath, configuration.tokensvcRefreshPath, configuration.tokensvcSvctkPath,
-		configuration.refreshToken, configuration.accessToken, configuration.sToken);
+	return new Authentication(configuration.url!, configuration.requestEncoded!, configuration.clientId!, configuration.callbackPort!, configuration.timeoutInMs!,
+		configuration.tokensvcUrl!, configuration.tokensvcApiKey!, configuration.tokensvcAccessPath!, configuration.tokensvcValidatePath!,
+		configuration.tokensvcCodePath!, configuration.tokensvcRefreshPath!, configuration.tokensvcSvctkPath!,
+		configuration.refreshToken!, configuration.accessToken!, configuration.sToken!);
 }
 
 function registerDocumentFormattingProvider(context: ExtensionContext, pddlWorkspace: CodePddlWorkspace): boolean {

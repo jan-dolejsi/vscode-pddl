@@ -10,7 +10,7 @@ import * as assert from 'assert';
 import { Grounder } from '../src/Grounder';
 import { PddlSyntaxTree } from '../src/PddlSyntaxTree';
 import { SimpleDocumentPositionResolver } from '../src/DocumentPositionResolver';
-import { DomainInfo, TypeObjects } from '../src/DomainInfo';
+import { DomainInfo, TypeObjectMap } from '../src/DomainInfo';
 import { DirectionalGraph } from '../src/DirectionalGraph';
 
 describe('Grounder', () => {
@@ -50,7 +50,7 @@ describe('Grounder', () => {
             let problem = new ProblemInfo("file://fake", 1, "problem1", "domain1", PddlSyntaxTree.EMPTY, createPositionResolver());
             let type1 = "type1";
             let object1 = "object1";
-            problem.setObjects([new TypeObjects(type1).addAllObjects([object1])]);
+            problem.setObjects(new TypeObjectMap().addAll(type1, [object1]));
             let liftedVariable = new Variable("cost", [new Parameter("p1", type1)]);
 
             // WHEN
@@ -69,7 +69,7 @@ describe('Grounder', () => {
             let child = "child";
             let object1 = "object1";
             domain.setTypeInheritance(new DirectionalGraph().addEdge("child", "parent"));
-            problem.setObjects([new TypeObjects(child).addAllObjects([object1])]);
+            problem.setObjects(new TypeObjectMap().add(child, object1));
             let liftedVariable = new Variable("cost", [new Parameter("p1", parent)]);
 
             // WHEN
@@ -87,7 +87,7 @@ describe('Grounder', () => {
             let type1 = "type1";
             let object1 = "object1";
             let object2 = "object2";
-            problem.setObjects([new TypeObjects(type1).addAllObjects([object1, object2])]);
+            problem.setObjects(new TypeObjectMap().addAll(type1, [object1, object2]));
             let liftedVariable = new Variable("cost", [new Parameter("p1", type1)]);
 
             // WHEN
@@ -103,7 +103,7 @@ describe('Grounder', () => {
             let type1 = "type1";
             let object1 = "object1";
             let object2 = "object2";
-            problem.setObjects([new TypeObjects(type1).addAllObjects([object1, object2])]);
+            problem.setObjects(new TypeObjectMap().addAll(type1, [object1, object2]));
             let liftedVariable = new Variable("cost", [new Parameter("p1", type1), new Parameter("p2", type1)]);
 
             // WHEN
@@ -121,7 +121,7 @@ describe('Grounder', () => {
             let type1 = "type1";
             let object1 = "object1";
             let object2 = "object2";
-            problem.setObjects([new TypeObjects(type1).addAllObjects([object1, object2])]);
+            problem.setObjects(new TypeObjectMap().addAll(type1, [object1, object2]));
             domain.setTypeInheritance(new DirectionalGraph().addEdge(type1, "object"));
 
             // WHEN
@@ -145,10 +145,10 @@ describe('Grounder', () => {
             let type2object1 = "t2object1";
             let type2object2 = "t2object2";
 
-            problem.setObjects([
-                new TypeObjects(type1).addAllObjects([type1object1, type1object2]),
-                new TypeObjects(type2).addAllObjects([type2object1, type2object2])
-            ]);
+            problem.setObjects(new TypeObjectMap()
+                .addAll(type1, [type1object1, type1object2])
+                .addAll(type2, [type2object1, type2object2])
+            );
 
             // WHEN
             let objects = new Grounder(domain, problem).getObjects([type1, type2]);
@@ -167,7 +167,7 @@ describe('Grounder', () => {
             let type1 = "type1";
             let object1 = "object1";
             let object2 = "object2";
-            problem.setObjects([new TypeObjects(type1).addAllObjects([object1, object2])]);
+            problem.setObjects(new TypeObjectMap().addAll(type1, [object1, object2]));
 
             // WHEN
             let objects = new Grounder(domain, problem).getObjectPermutations([type1]);
@@ -189,10 +189,10 @@ describe('Grounder', () => {
             let type2object1 = "t2object1";
             let type2object2 = "t2object2";
 
-            problem.setObjects([
-                new TypeObjects(type1).addAllObjects([type1object1, type1object2]),
-                new TypeObjects(type2).addAllObjects([type2object1, type2object2])
-            ]);
+            problem.setObjects(new TypeObjectMap()
+                .addAll(type1, [type1object1, type1object2])
+                .addAll(type2, [type2object1, type2object2])
+            );
 
             // WHEN
             assert.throws(() => {

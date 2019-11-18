@@ -5,7 +5,7 @@
 'use strict';
 
 import {
-    window, extensions, ExtensionContext, MessageItem, Uri, commands, ViewColumn, workspace, ConfigurationTarget
+    window, ExtensionContext, MessageItem, Uri, commands, ViewColumn, workspace, ConfigurationTarget
 } from 'vscode';
 
 import { PddlConfiguration } from '../configuration';
@@ -15,6 +15,7 @@ import { OverviewPage, SHOULD_SHOW_OVERVIEW_PAGE } from './OverviewPage';
 import * as afs from '../../../common/src/asyncfs';
 import { Val } from '../validation/Val';
 import { ValDownloadReminder } from '../validation/ValDownloadReminder';
+import { ExtensionInfo } from '../ExtensionInfo';
 
 enum TipResponse { Ok, Later, Next }
 
@@ -132,11 +133,11 @@ export class StartUp {
     }
 
     async showWhatsNew(): Promise<boolean> {
-        let thisExtension = extensions.getExtension("jan-dolejsi.pddl");
-        let currentVersion = thisExtension.packageJSON["version"];
+        let currentVersion = new ExtensionInfo(ExtensionInfo.EXTENSION_ID).getVersion();
         var lastValue = this.context.globalState.get(this.WHATS_NEW_SHOWN_FOR_VERSION, "0.0.0");
 
         let lastInstalledDiff = diff(currentVersion, lastValue);
+        if (lastInstalledDiff === null) { return false; } // something odd
         if (['major', 'minor'].includes(lastInstalledDiff)) {
 
             if (true) {

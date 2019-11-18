@@ -13,8 +13,8 @@ import { parseParameters } from "./VariablesParser";
  * `(:derived (<p> ?x ?y - type) <condition> )`
  */
 export class DerivedVariablesParser {
-    private conditionNode: PddlSyntaxNode;
-    variable: Variable;
+    private conditionNode: PddlSyntaxNode | undefined;
+    private variable: Variable | undefined;
 
     constructor(derivedNode: PddlSyntaxNode, positionResolver: DocumentPositionResolver) {
         let children = derivedNode.getNonWhitespaceChildren()
@@ -40,7 +40,7 @@ export class DerivedVariablesParser {
     }
 
     static getDocumentationAbove(derivedNode: PddlSyntaxNode): string[] {
-        let siblingNodes = derivedNode.getParent().getChildren();
+        let siblingNodes = derivedNode.getParent()?.getChildren() || [];
 
         let indexOfThisNode = siblingNodes.indexOf(derivedNode);
 
@@ -61,11 +61,11 @@ export class DerivedVariablesParser {
         }
     }
 
-    getVariable(): Variable {
+    getVariable(): Variable | undefined {
         return this.variable;
     }
 
-    getConditionNode(): PddlSyntaxNode {
+    getConditionNode(): PddlSyntaxNode | undefined {
         return this.conditionNode;
     }
 }

@@ -132,8 +132,8 @@ export function showError(reason: any): void {
  * Absolute path, unless it relied on a %path% location (i.e. there was no dirname). 
  * @param configuredPath a configured path to an executable
  */
-export function ensureAbsolutePath(configuredPath: string, context: ExtensionContext): string {
-    if (!configuredPath) { return configuredPath; }
+export function ensureAbsolutePath(configuredPath: string | undefined, context: ExtensionContext): string | undefined {
+    if (!configuredPath) { return undefined; }
 
     if (isHttp(configuredPath)) {
         return configuredPath;

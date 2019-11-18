@@ -4,11 +4,11 @@
 * ------------------------------------------------------------------------------------------ */
 'use strict';
 
-import { TypeObjects } from "./DomainInfo";
+import { TypeObjectMap } from "./DomainInfo";
 import { DirectionalGraph } from "./DirectionalGraph";
 import { Util } from "./util";
 
-export function getObjectsInheritingFrom(allObjects: TypeObjects[], type: string, typeInheritance: DirectionalGraph): string[] {
+export function getObjectsInheritingFrom(allObjects: TypeObjectMap, type: string, typeInheritance: DirectionalGraph): string[] {
     let subTypes = getTypesInheritingFromPlusSelf(type, typeInheritance);
     let subTypesObjects = subTypes.map(subType => getObjectsOfType(allObjects, subType));
     return Util.flatMap<string>(subTypesObjects);
@@ -18,7 +18,7 @@ export function getTypesInheritingFromPlusSelf(type: string, typeInheritance: Di
     return [type].concat(typeInheritance.getSubtreePointingTo(type));
 }
 
-function getObjectsOfType(allObjects: TypeObjects[], type: string): string[] {
-    let thisTypeObjects = allObjects.find(o => o.type === type);
+function getObjectsOfType(allObjects: TypeObjectMap, type: string): string[] {
+    let thisTypeObjects = allObjects.getTypeCaseInsensitive(type);
     return thisTypeObjects ? thisTypeObjects.getObjects() : [];
 }

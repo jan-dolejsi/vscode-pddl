@@ -28,8 +28,8 @@ export class ProblemPattern {
             // escape all dots
             .split('.').join("\\.");
 
-        let dummy, pattern, flags, order: string;
-        [dummy, pattern, flags, order] = patternWithMatchGroupOrder.split('/');dummy;
+        let pattern, flags, order: string;
+        [pattern, flags, order] = patternWithMatchGroupOrder.split('/').slice(1);
         
         pattern = pattern.replace('$(filePaths)', fileNamesJoint);
 
@@ -50,9 +50,9 @@ export class ProblemPattern {
         return parseInt(match[this.mapIndex(2)]) -1;
     }
 
-    getCharacter(match: RegExpExecArray): number {
+    getCharacter(match: RegExpExecArray): number | undefined {
         let index = this.mapIndex(3);
-        return index ? parseInt(match[index]) -1 : null;
+        return index ? parseInt(match[index]) -1 : undefined;
     }
 
     getMessage(match: RegExpExecArray): string {
@@ -62,7 +62,7 @@ export class ProblemPattern {
     getRange(match: RegExpExecArray): Range{
         let line = this.getLine(match);
         let character = this.getCharacter(match);
-        return character != null ? 
+        return character !== undefined ? 
             Validator.createRange(line, character) :
             Validator.createLineRange(line);
     }

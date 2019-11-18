@@ -16,16 +16,16 @@ import { PddlSyntaxNode } from '../../../common/src/PddlSyntaxNode';
 
 export class PddlOnTypeFormatter implements OnTypeFormattingEditProvider {
 
-    constructor(private pddlWorkspace: CodePddlWorkspace, private testMode = false) {
+    constructor(private pddlWorkspace?: CodePddlWorkspace, private testMode = false) {
     }
 
-    async provideOnTypeFormattingEdits(document: TextDocument, position: Position, ch: string, options: FormattingOptions, token: CancellationToken): Promise<TextEdit[]> {
+    async provideOnTypeFormattingEdits(document: TextDocument, position: Position, ch: string, options: FormattingOptions, token: CancellationToken): Promise<TextEdit[] | undefined> {
         let fileInfo = this.pddlWorkspace && await this.pddlWorkspace.upsertAndParseFile(document);
-        if (token.isCancellationRequested) { return null; }
+        if (token.isCancellationRequested) { return undefined; }
         let offset = document.offsetAt(position);
 
         if (fileInfo && (fileInfo.getLanguage() !== PddlLanguage.PDDL)) {
-            return null;
+            return undefined;
         }
 
         let tree: PddlSyntaxTree;
@@ -96,9 +96,10 @@ export class PddlOnTypeFormatter implements OnTypeFormattingEditProvider {
         }
     }
 
-    getParentStartCharacterIndent(currentNode: PddlSyntaxNode, document: TextDocument): string {
-        let parent = currentNode.getParent().expand();
-        if (!parent) { return null; }
+    getParentStartCharacterIndent(currentNode: PddlSyntaxNode, document: TextDocument): string | null {
+        let parent = currentNode.getParent()?.expand();
+        if (parent === undefined) { throw new Error(`Unexpected PDDL structure in ${currentNode.getText()}`);}
+        if (parent.isDocument()) { return null; }
         else {
             let lineOfParent = document.lineAt(document.positionAt(parent.getStart()).line);
             let firstNonWhitespaceCharacter = lineOfParent.firstNonWhitespaceCharacterIndex;

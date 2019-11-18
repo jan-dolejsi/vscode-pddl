@@ -20,7 +20,7 @@ export class PddlTokenizer {
         
         lastIndexOfInterest = lastIndexOfInterest === undefined ? Number.MAX_SAFE_INTEGER : lastIndexOfInterest;
 
-        let match: RegExpExecArray;
+        let match: RegExpExecArray | null;
         while(match = pddlPattern.exec(pddlText)) {
             if (match.index > endOfLastToken) {
                 callback(new PddlToken(PddlTokenType.Other, pddlText.substring(endOfLastToken, match.index), endOfLastToken));

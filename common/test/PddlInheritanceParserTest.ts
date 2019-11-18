@@ -43,7 +43,7 @@ describe('PddlInheritanceParser', () => {
             let graph = PddlInheritanceParser.parseInheritance(`${child} - ${parent}`);
             assert.ok(graph.getVertices().includes(parent), 'should include parent');
             assert.ok(graph.getVertices().includes(child), 'should include child');
-            assert.ok(graph.getVerticesWithEdgesFrom(child).includes(parent), 'child should have parent');
+            assert.ok(graph.getVerticesWithEdgesFrom(child)?.includes(parent), 'child should have parent');
             assert.deepStrictEqual(graph.getVerticesWithEdgesFrom(parent), [PddlInheritanceParser.OBJECT], 'parent should not have parent');
         });
 
@@ -53,7 +53,7 @@ describe('PddlInheritanceParser', () => {
             let graph = PddlInheritanceParser.parseInheritance(child + "\n- " + parent);
             assert.ok(graph.getVertices().includes(parent), 'should include parent');
             assert.ok(graph.getVertices().includes(child), 'should include child');
-            assert.ok(graph.getVerticesWithEdgesFrom(child).includes(parent), 'child should have parent');
+            assert.ok(graph.getVerticesWithEdgesFrom(child)?.includes(parent), 'child should have parent');
             assert.deepStrictEqual(graph.getVerticesWithEdgesFrom(parent), [PddlInheritanceParser.OBJECT], 'parent should not have parent');
         });
 
@@ -65,8 +65,8 @@ describe('PddlInheritanceParser', () => {
             assert.ok(graph.getVertices().includes(parent), 'should include parent');
             assert.ok(graph.getVertices().includes(child1), 'should include child1');
             assert.ok(graph.getVertices().includes(child2), 'should include child2');
-            assert.ok(graph.getVerticesWithEdgesFrom(child1).includes(parent), 'child1 should have parent');
-            assert.ok(graph.getVerticesWithEdgesFrom(child2).includes(parent), 'child2 should have parent');
+            assert.ok(graph.getVerticesWithEdgesFrom(child1)?.includes(parent), 'child1 should have parent');
+            assert.ok(graph.getVerticesWithEdgesFrom(child2)?.includes(parent), 'child2 should have parent');
             assert.deepStrictEqual(graph.getVerticesWithEdgesFrom(parent), [PddlInheritanceParser.OBJECT], 'parent should not have parent');
         });
 
@@ -79,7 +79,7 @@ describe('PddlInheritanceParser', () => {
             assert.ok(graph.getVertices().includes(child), 'should include child');
             assert.ok(graph.getVertices().includes(orphan), 'should include orphan');
 
-            assert.ok(graph.getVerticesWithEdgesFrom(child).includes(parent), 'child should have parent');
+            assert.ok(graph.getVerticesWithEdgesFrom(child)?.includes(parent), 'child should have parent');
             assert.deepStrictEqual(graph.getVerticesWithEdgesFrom(parent), [PddlInheritanceParser.OBJECT], 'parent should not have parent');
             assert.deepStrictEqual(graph.getVerticesWithEdgesFrom(orphan), [PddlInheritanceParser.OBJECT], 'orphan should not have "object" parent');
         });
@@ -90,10 +90,10 @@ describe('PddlInheritanceParser', () => {
             let parent2 = 'parent2';
             let child2 = 'child2';
             let graph = PddlInheritanceParser.parseInheritance(`${child1} - ${parent1} ${child2} - ${parent2}`);
-            assert.ok(graph.getVerticesWithEdgesFrom(child1).includes(parent1), 'child1 should have parent1');
-            assert.ok(graph.getVerticesWithEdgesFrom(child2).includes(parent2), 'child2 should have parent2');
-            assert.ok(graph.getVerticesWithEdgesFrom(parent1).includes(PddlInheritanceParser.OBJECT), 'parent1 should inherit from object');
-            assert.ok(graph.getVerticesWithEdgesFrom(parent2).includes(PddlInheritanceParser.OBJECT), 'parent2 should inherit from object');
+            assert.ok(graph.getVerticesWithEdgesFrom(child1)?.includes(parent1), 'child1 should have parent1');
+            assert.ok(graph.getVerticesWithEdgesFrom(child2)?.includes(parent2), 'child2 should have parent2');
+            assert.ok(graph.getVerticesWithEdgesFrom(parent1)?.includes(PddlInheritanceParser.OBJECT), 'parent1 should inherit from object');
+            assert.ok(graph.getVerticesWithEdgesFrom(parent2)?.includes(PddlInheritanceParser.OBJECT), 'parent2 should inherit from object');
         });
     });
 
@@ -107,9 +107,10 @@ describe('PddlInheritanceParser', () => {
             let typeObjects = PddlInheritanceParser.toTypeObjects(graph);
 
             assert.strictEqual(typeObjects.length, 1, 'there should be 1 type');
-            assert.strictEqual(typeObjects[0].type, type1, 'the type should be type1');
-            assert.strictEqual(typeObjects[0].getObjects().length, 1, 'the # of objects should be 1');
-            assert.strictEqual(typeObjects[0].getObjects()[0], object1, 'the object should be object1');
+            const type1ObjectsMap = typeObjects.getTypeCaseInsensitive(type1);
+            assert.ok(type1ObjectsMap !== undefined, 'the type should be type1');
+            assert.strictEqual(type1ObjectsMap!.getObjects().length, 1, 'the # of objects should be 1');
+            assert.strictEqual(type1ObjectsMap!.getObjects()[0], object1, 'the object should be object1');
         });
 
         it('should form 2object-type map', () => {
@@ -123,9 +124,10 @@ describe('PddlInheritanceParser', () => {
             let typeObjects = PddlInheritanceParser.toTypeObjects(graph);
 
             assert.strictEqual(typeObjects.length, 1, 'there should be 1 type');
-            assert.equal(typeObjects[0].type, type1, 'the type should be type1');
-            assert.ok(typeObjects[0].hasObject(object1), 'the object should be object1');
-            assert.ok(typeObjects[0].hasObject(object2), 'the object should be object2');
+            const type1ObjectsMap = typeObjects.getTypeCaseInsensitive(type1);
+            assert.ok(type1ObjectsMap !== undefined, 'the type should be type1');
+            assert.ok(type1ObjectsMap!.hasObject(object1), 'the object should be object1');
+            assert.ok(type1ObjectsMap!.hasObject(object2), 'the object should be object2');
         });
     });
 });

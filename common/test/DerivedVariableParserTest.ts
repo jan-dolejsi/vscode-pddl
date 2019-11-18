@@ -28,11 +28,11 @@ describe('DerivedVariableParser', () => {
             let derivedPredicate = parser.getVariable();
 
             // THEN
-            assert.ok(derivedPredicate, 'there should be one derived predicate');
-            assert.strictEqual(derivedPredicate.name, 'can-lift');
-            assert.equal(derivedPredicate.parameters.length, 2);
-            assert.ok(derivedPredicate.getDocumentation().join('\n').startsWith('can lift'));
-            assert.deepStrictEqual(derivedPredicate.getLocation(), new PddlRange(2, 12, 3, 43));
+            assert.ok(derivedPredicate !== undefined, 'there should be one derived predicate');
+            assert.strictEqual(derivedPredicate!.name, 'can-lift');
+            assert.equal(derivedPredicate!.parameters.length, 2);
+            assert.ok(derivedPredicate!.getDocumentation().join('\n').startsWith('can lift'));
+            assert.deepStrictEqual(derivedPredicate!.getLocation(), new PddlRange(2, 12, 3, 43));
         });
 
         it('parses derived function', () => {
@@ -48,9 +48,9 @@ describe('DerivedVariableParser', () => {
 
             // THEN
             assert.ok(derivedFunction, 'there should be one derived function');
-            assert.strictEqual(derivedFunction.name, 'c');
-            assert.equal(derivedFunction.parameters.length, 0);
-            assert.deepStrictEqual(derivedFunction.getLocation(), new PddlRange(0, 8, 0, 33));
+            assert.strictEqual(derivedFunction!.name, 'c');
+            assert.equal(derivedFunction!.parameters.length, 0);
+            assert.deepStrictEqual(derivedFunction!.getLocation(), new PddlRange(0, 8, 0, 33));
         });
     });
 });

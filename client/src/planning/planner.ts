@@ -12,7 +12,7 @@ import { PddlPlanParser } from '../../../common/src/PddlPlanParser';
 
 export abstract class Planner {
 
-    planningProcessKilled: boolean;
+    planningProcessKilled: boolean = false;
 
     constructor(protected readonly plannerPath: string) {
 

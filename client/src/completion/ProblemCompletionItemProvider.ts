@@ -31,7 +31,7 @@ export class ProblemCompletionItemProvider extends AbstractCompletionItemProvide
 
         if (currentNode.isType(PddlTokenType.Document) ||
             (currentNode.isType(PddlTokenType.Whitespace) || currentNode.isType(PddlTokenType.Comment))
-            && currentNode.getParent().isType(PddlTokenType.Document)) {
+            && currentNode.getParent() && currentNode.getParent()!.isType(PddlTokenType.Document)) {
             let items: CompletionItem[] = [];
             {
                 let item = new CompletionItem(";;!pre-parsing:command", CompletionItemKind.Snippet);
@@ -65,13 +65,16 @@ export class ProblemCompletionItemProvider extends AbstractCompletionItemProvide
             }
 
             let supportedSectionsHere = PddlStructure.getSupportedSectionsHere(currentNode, currentNode, PddlTokenType.OpenBracketOperator, PddlStructure.PDDL_PROBLEM_SECTIONS, []);
-            let range = ['(', ':'].includes(context.triggerCharacter) ? nodeToRange(document, currentNode) : null;
+            let range = context.triggerCharacter && ['(', ':'].includes(context.triggerCharacter)
+                ? nodeToRange(document, currentNode) : null;
 
-            let suggestions = supportedSectionsHere.map(s => Suggestion.from(s, context.triggerCharacter, '('));
+            let suggestions = supportedSectionsHere
+                .map(s => Suggestion.from(s, context.triggerCharacter, '('))
+                .filter(s => !!s).map(s => s!);
 
             return suggestions
                 .map((suggestion, index) => this.createDefineCompletionItem(currentNode, suggestion, range, context, index))
-                .filter(item => !!item); // filter out nulls
+                .filter(item => !!item).map(item => item!); // filter out nulls
         }
         else if (this.insideRequirements(problemInfo, currentNode, context)) {
             return this.createRequirementsCompletionItems(document, currentNode, context);
@@ -80,8 +83,7 @@ export class ProblemCompletionItemProvider extends AbstractCompletionItemProvide
         return [];
     }
 
-    createDefineCompletionItem(_currentNode: PddlSyntaxNode, suggestion: Suggestion, range: Range, context: CompletionContext, index: number): any {
-        if (!suggestion) { return null; }
+    createDefineCompletionItem(_currentNode: PddlSyntaxNode, suggestion: Suggestion, range: Range | null, context: CompletionContext, index: number): CompletionItem | null {
 
         switch (suggestion.sectionName) {
             case PddlStructure.PROBLEM:

@@ -12,9 +12,9 @@ import { BaseViewPanel } from './BaseViewPanel';
 
 export class DomainViewPanel extends BaseViewPanel {
 
-    private needsRebuild: boolean;
-    private domain: DomainInfo;
-    private error: Error;
+    private needsRebuild = false;
+    private domain: DomainInfo | undefined;
+    private error: Error | undefined;
 
     constructor(uri: Uri, panel: WebviewAdapter) {
         super(uri, panel);
@@ -22,7 +22,7 @@ export class DomainViewPanel extends BaseViewPanel {
 
     setDomain(domain: DomainInfo): void {
         this.domain = domain;
-        this.error = null;
+        this.error = undefined;
         this.setNeedsRebuild(true);
     }
 
@@ -30,16 +30,19 @@ export class DomainViewPanel extends BaseViewPanel {
         this.error = ex;
     }
 
-    getError(): Error {
+    getError(): Error | undefined {
         return this.error;
     }
 
     getDomain(): DomainInfo {
+        if (!this.domain) {
+            throw new Error(`Check if the panel was initialized by calling 'isInitialized' first.`);
+        }
         return this.domain;
     }
 
     reveal(displayColumn?: ViewColumn): void {
-        this.panel.reveal(displayColumn);
+        this.panel.reveal(displayColumn || ViewColumn.Beside);
     }
 
     close() {

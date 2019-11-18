@@ -74,10 +74,14 @@ export class AssociationProvider {
         console.log(`Associated ${problemDocument.uri} to ${planUri}.`);
         // re-validate the plan file
         let planInfo = this.codePddlWorkspace.getFileInfoByUri(planUri);
-        this.codePddlWorkspace.pddlWorkspace.invalidateDiagnostics(planInfo);
+        if (planInfo !== undefined) {
+            this.codePddlWorkspace.pddlWorkspace.invalidateDiagnostics(planInfo);
+        } else {
+            console.log("Plan not found in the workspace model: " + planUri);
+        }
     }
 
-    private async associateDomain(problemUri: Uri, suggestedFiles?: FileInfo[]): Promise<TextDocument> {
+    private async associateDomain(problemUri: Uri, suggestedFiles?: FileInfo[]): Promise<TextDocument | undefined> {
         let domainUri = await selectFile({
             language: PddlLanguage.PDDL,
             promptMessage: 'Select the matching domain file...',
@@ -92,7 +96,7 @@ export class AssociationProvider {
             return domainDocument;
         }
         else {
-            return null;
+            return undefined;
         }
     }
     private async associateDomainToProblem(problemUri: Uri, domainDocument: TextDocument): Promise<void> {
@@ -102,6 +106,9 @@ export class AssociationProvider {
         }
         let domainInfo = <DomainInfo>parsedFileInfo;
         let problemInfo = this.codePddlWorkspace.getFileInfoByUri<ProblemInfo>(problemUri);
+        if (problemInfo === undefined) { 
+            throw new Error(`Problem file ${problemUri} not found in the workspace model.`);
+        }
 
         this.codePddlWorkspace.pddlWorkspace.associateProblemToDomain(problemInfo, domainInfo);
         console.log(`Associated ${domainDocument.uri} to ${problemUri}.`);

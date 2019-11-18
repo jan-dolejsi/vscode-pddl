@@ -9,7 +9,7 @@ import {
     ExtensionContext, TextDocument, CodeLens, CancellationToken, CodeLensProvider
 } from 'vscode';
 
-import { DomainInfo, TypeObjects } from '../../../common/src/DomainInfo';
+import { DomainInfo, TypeObjectMap } from '../../../common/src/DomainInfo';
 import { ProblemInfo } from '../../../common/src/ProblemInfo';
 
 import * as path from 'path';
@@ -50,7 +50,7 @@ export class ProblemObjectsView extends ProblemView<ProblemObjectsRendererOption
         );
     }
 
-    async provideCodeLenses(document: TextDocument, token: CancellationToken): Promise<CodeLens[]> {
+    async provideCodeLenses(document: TextDocument, token: CancellationToken): Promise<CodeLens[] | null> {
         if (token.isCancellationRequested) { return null; }
         let problem = await this.parseProblem(document);
         if (token.isCancellationRequested) { return null; }
@@ -69,13 +69,13 @@ export class ProblemObjectsView extends ProblemView<ProblemObjectsRendererOption
         }
     }
 
-    async resolveCodeLens(codeLens: CodeLens, token: CancellationToken): Promise<CodeLens> {
+    async resolveCodeLens(codeLens: CodeLens, token: CancellationToken): Promise<CodeLens | null> {
         if (!(codeLens instanceof DocumentCodeLens)) {
             return null;
         }
         if (token.isCancellationRequested) { return null; }
-        let [domain] = await this.getProblemAndDomain(codeLens.getDocument());
-        if (!domain) { return null; }
+        let domainAndProblem = await this.getProblemAndDomain(codeLens.getDocument());
+        if (!domainAndProblem) { return null; }
         if (token.isCancellationRequested) { return null; }
 
         if (codeLens instanceof DocumentInsetCodeLens) {
@@ -123,12 +123,12 @@ class ProblemObjectsRendererDelegate {
 
     private nodes: Map<string, number> = new Map();
     private relationships: NetworkEdge[] = [];
-    private objectsAndConstantsPerType: TypeObjects[];
+    private objectsAndConstantsPerType: TypeObjectMap;
     private lastIndex: number;
     private typeNames = new Set<string>();
 
     constructor(_context: ExtensionContext, private domain: DomainInfo, private problem: ProblemInfo, _options: ProblemObjectsRendererOptions) {
-        this.objectsAndConstantsPerType = TypeObjects.concatObjects(this.domain.getConstants(), this.problem.getObjectsPerType());
+        this.objectsAndConstantsPerType = this.domain.getConstants().merge(this.problem.getObjectsTypeMap());
 
         domain.getTypesInclObject().forEach((t, index) => {
             this.nodes.set(t, index);
@@ -141,7 +141,7 @@ class ProblemObjectsRendererDelegate {
     }
 
     private addObjects(typeName: string): void {
-        let objectsOfType = this.objectsAndConstantsPerType.find(element => element.type === typeName);
+        let objectsOfType = this.objectsAndConstantsPerType.getTypeCaseInsensitive(typeName);
         if (objectsOfType) {
             let objects = objectsOfType.getObjects();
             objects.forEach((objectName, index) => {
@@ -154,7 +154,10 @@ class ProblemObjectsRendererDelegate {
     }
 
     private addEdge(edge: [string, string], label: string): void {
-        this.relationships.push(this.toEdge(edge, label));
+        const networkEdge = this.toEdge(edge, label);
+        if (networkEdge) {
+            this.relationships.push(networkEdge);
+        }
     }
 
     getNodes(): NetworkNode[] {
@@ -169,9 +172,17 @@ class ProblemObjectsRendererDelegate {
         return { id: entryId, label: entryLabel, shape: shape, group: group };
     }
 
-    private toEdge(edge: [string, string], label: string): NetworkEdge {
+    private toEdge(edge: [string, string], label: string): NetworkEdge | null {
         let [from, to] = edge;
-        return { from: this.nodes.get(from), to: this.nodes.get(to), label: label };
+        const fromId = this.nodes.get(from);
+        const toId = this.nodes.get(to);
+        if (fromId !== undefined && toId !== undefined) {
+            return { from: fromId, to: toId, label: label };
+        }
+        else {
+            console.log(`One or more nodes not found: ${from}, ${to}`);
+            return null;
+        }
     }
 
     getRelationships(): NetworkEdge[] {

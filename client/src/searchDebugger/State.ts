@@ -8,8 +8,8 @@ import { SearchHappening } from "./SearchHappening";
 import { HelpfulAction } from "../../../common/src/Plan";
 
 export class State {
-    public h: number;
-    public totalMakespan: number;
+    public h: number | undefined;
+    public totalMakespan: number | undefined;
     public relaxedPlan: SearchHappening[];
     public helpfulActions: HelpfulAction[];
     public isDeadEnd: boolean;

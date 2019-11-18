@@ -13,10 +13,10 @@ import { BaseViewPanel } from './BaseViewPanel';
 
 export class ProblemViewPanel extends BaseViewPanel {
 
-    private needsRebuild: boolean;
-    private problem: ProblemInfo;
-    private error: Error;
-    private domain: DomainInfo;
+    private needsRebuild = false;
+    private problem: ProblemInfo | undefined;
+    private error: Error | undefined;
+    private domain: DomainInfo | undefined;
 
     constructor(uri: Uri, panel: WebviewAdapter) {
         super(uri, panel);
@@ -25,7 +25,7 @@ export class ProblemViewPanel extends BaseViewPanel {
     setDomainAndProblem(domain: DomainInfo, problem: ProblemInfo): void {
         this.domain = domain;
         this.problem = problem;
-        this.error = null;
+        this.error = undefined;
         this.setNeedsRebuild(true);
     }
 
@@ -33,20 +33,30 @@ export class ProblemViewPanel extends BaseViewPanel {
         this.error = ex;
     }
 
-    getError(): Error {
+    getError(): Error | undefined {
         return this.error;
     }
 
+    isInitialized(): boolean {
+        return !!this.domain && !!this.problem;
+    }
+
     getDomain(): DomainInfo {
-        return this.domain;
+        if (!this.domain) {
+            throw new Error(`Check if the panel was initialized by calling 'isInitialized' first.`);
+        }
+        return this.domain!;
     }
 
     getProblem(): ProblemInfo {
-        return this.problem;
+        if (!this.problem) {
+            throw new Error(`Check if the panel was initialized by calling 'isInitialized' first.`);
+        }
+        return this.problem!;
     }
 
     reveal(displayColumn?: ViewColumn): void {
-        this.panel.reveal(displayColumn);
+        this.panel.reveal(displayColumn || ViewColumn.Beside);
     }
 
     close() {

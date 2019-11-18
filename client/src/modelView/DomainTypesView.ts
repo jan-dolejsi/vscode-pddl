@@ -49,10 +49,10 @@ export class DomainTypesView extends DomainView<DomainTypesRendererOptions, Grap
         );
     }
 
-    async provideCodeLenses(document: TextDocument, token: CancellationToken): Promise<CodeLens[]> {
-        if (token.isCancellationRequested) { return null; }
+    async provideCodeLenses(document: TextDocument, token: CancellationToken): Promise<CodeLens[] | undefined> {
+        if (token.isCancellationRequested) { return undefined; }
         let domain = await this.parseDomain(document);
-        if (token.isCancellationRequested) { return null; }
+        if (token.isCancellationRequested) { return undefined; }
         if (!domain) { return []; }
 
         let defineNode = domain.syntaxTree.getDefineNodeOrThrow();
@@ -68,14 +68,14 @@ export class DomainTypesView extends DomainView<DomainTypesRendererOptions, Grap
         }
     }
 
-    async resolveCodeLens(codeLens: CodeLens, token: CancellationToken): Promise<CodeLens> {
+    async resolveCodeLens(codeLens: CodeLens, token: CancellationToken): Promise<CodeLens | undefined> {
         if (!(codeLens instanceof DocumentCodeLens)) {
-            return null;
+            return undefined;
         }
-        if (token.isCancellationRequested) { return null; }
+        if (token.isCancellationRequested) { return undefined; }
         let domain = await this.parseDomain(codeLens.getDocument());
-        if (!domain) { return null; }
-        if (token.isCancellationRequested) { return null; }
+        if (!domain) { return undefined; }
+        if (token.isCancellationRequested) { return undefined; }
 
         if (codeLens instanceof DocumentInsetCodeLens) {
             codeLens.command = { command: PDDL_DOMAIN_TYPES_INSET_COMMAND, title: 'View inset', arguments: [codeLens.getDocument().uri, codeLens.getLine()] };
@@ -133,7 +133,7 @@ class DomainTypesRendererDelegate {
 
     toEdge(edge: [string, string]): NetworkEdge {
         let [from, to] = edge;
-        return { from: this.nodes.get(from), to: this.nodes.get(to), label: 'extends' };
+        return { from: this.nodes.get(from) || -1, to: this.nodes.get(to) || -1 , label: 'extends' };
     }
 
     getRelationships(): NetworkEdge[] {

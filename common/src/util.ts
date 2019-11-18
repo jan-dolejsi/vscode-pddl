@@ -87,7 +87,7 @@ export class Util {
      * @param arrayOfArrays array of arrays to be flattened to single dimentional array
      */
     static flatMap<T>(arrayOfArrays: Array<Array<T>>): Array<T> {
-        return [].concat.apply([], arrayOfArrays);
+        return new Array<T>().concat.apply(new Array<T>(), arrayOfArrays);
     }
 
     static distinct<T>(array: Array<T>): Array<T> {
@@ -107,7 +107,7 @@ export abstract class StringifyingMap<K, V> {
         let keyString = this.stringifyKey(key);
         return this.map.has(keyString);
     }
-    get(key: K): V {
+    get(key: K): V | undefined {
         let keyString = this.stringifyKey(key);
         return this.map.get(keyString);
     }

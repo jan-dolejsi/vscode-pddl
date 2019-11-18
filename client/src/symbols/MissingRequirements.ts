@@ -18,7 +18,7 @@ export class MissingRequirements {
         this.syntaxTree = new PddlSyntaxTreeBuilder(fileInfo.getText()).getTree();
     }
 
-    getRequirementName(diagnosticMessage: string): string {
+    getRequirementName(diagnosticMessage: string): string | undefined {
         let match = MissingRequirements.undeclaredRequirementDiagnosticPattern.exec(diagnosticMessage);
         if (!match) { return undefined; }
         let requirementName = ':' + match[1];

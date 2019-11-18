@@ -27,12 +27,12 @@ describe('PlanTimeSeriesParser', () => {
             let parser = new PlanTimeSeriesParser([function1], csvData);
 
             // THEN
-            assert.ok(parser.getFunctionValues(function1), "there should be values for this function")
+            assert.ok(parser.getFunctionValues(function1), "there should be values for this function");
             let functionValues = parser.getFunctionValues(function1);
-            assert.equal(functionValues.getLegend(), "param1 param2");
-            assert.equal(functionValues.variable, function1);
-            assert.equal(functionValues.values.length, 2, "there should be 2 x/y points");
-            let values = functionValues.values;
+            assert.equal(functionValues?.getLegend(), "param1 param2");
+            assert.equal(functionValues?.variable, function1);
+            assert.equal(functionValues?.values.length, 2, "there should be 2 x/y points");
+            let values = functionValues?.values;
             assert.deepEqual(values, [[0, 10], [1, 11]]);
         });
 
@@ -55,18 +55,18 @@ describe('PlanTimeSeriesParser', () => {
             let parser = new PlanTimeSeriesParser([function1, function2], csvData);
 
             // THEN
-            assert.ok(parser.getFunctionValues(function1), "there should be values for this function1")
+            assert.ok(parser.getFunctionValues(function1), "there should be values for this function1");
             let functionValues1 = parser.getFunctionValues(function1);
-            assert.equal(functionValues1.getLegend(), "");
-            assert.equal(functionValues1.variable, function1);
-            let values1 = functionValues1.values;
+            assert.equal(functionValues1?.getLegend(), "");
+            assert.equal(functionValues1?.variable, function1);
+            let values1 = functionValues1?.values;
             assert.deepEqual(values1, [[0, 10], [1, 11]]);
 
-            assert.ok(parser.getFunctionValues(function2), "there should be values for this function2")
+            assert.ok(parser.getFunctionValues(function2), "there should be values for this function2");
             let functionValues2 = parser.getFunctionValues(function2);
-            assert.equal(functionValues2.getLegend(), "");
-            assert.equal(functionValues2.variable, function2);
-            let values2 = functionValues2.values;
+            assert.equal(functionValues2?.getLegend(), "");
+            assert.equal(functionValues2?.variable, function2);
+            let values2 = functionValues2?.values;
             assert.deepEqual(values2, [[0, 5], [1.5, 7]]);
         });
     });
@@ -94,7 +94,7 @@ describe('PlanTimeSeriesParser', () => {
             let parser = new PlanTimeSeriesParser([function1, function2], csvData);
 
             // THEN
-            assert.equal(parser.getGroundedFunctionsValues(liftedFunction).length, 2, "there should be two results for this liftedFunction")
+            assert.equal(parser.getGroundedFunctionsValues(liftedFunction).length, 2, "there should be two results for this liftedFunction");
         });
     });
    
@@ -111,7 +111,7 @@ describe('PlanTimeSeriesParser', () => {
             let parser = new PlanTimeSeriesParser([function1], csvData);
 
             // THEN
-            assert.ok(parser.getFunctionData(function1), "there should be values for this function")
+            assert.ok(parser.getFunctionData(function1), "there should be values for this function");
             let functionValues = parser.getFunctionData(function1);
             assert.equal(functionValues.values.length, 2, "there should be 2 x-y points");
             assert.deepEqual(functionValues.values, [[0, 10], [1, 11]]);
@@ -184,9 +184,9 @@ describe('PlanTimeSeriesParser', () => {
 
             // THEN
             assert.equal(states.length, 2, "there should be two states");
-            assert.equal(states[0].time, 0);
+            assert.equal(states[0].time, 0, "time of first data point");
             assert.equal(states[0].getValue(function1), 0, "expected value");
-            assert.equal(states[1].time, time);
+            assert.equal(states[1].time, time, "time of second data point");
             assert.equal(states[1].getValue(function1), value, "expected value");
         });
     });
