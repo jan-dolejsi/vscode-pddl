@@ -126,7 +126,7 @@ export abstract class DomainView<TRendererOptions, TRenderData> extends Disposab
             );
             newInitInset.onDidDispose(() => {
                 let insets = this.webviewInsets.get(domainUri);
-                insets.delete(editor);
+                insets?.delete(editor);
             });
             
             let domainViewPanel = new DomainViewPanel(domainUri, new WebviewInsetAdapter(newInitInset));

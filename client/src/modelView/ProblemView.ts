@@ -157,7 +157,7 @@ export abstract class ProblemView<TRendererOptions, TRenderData> extends Disposa
             );
             newInitInset.onDidDispose(() => {
                 let insets = this.webviewInsets.get(problemUri);
-                insets.delete(editor);
+                insets?.delete(editor);
             });
             
             let problemViewPanel = new ProblemViewPanel(problemUri, new WebviewInsetAdapter(newInitInset));
