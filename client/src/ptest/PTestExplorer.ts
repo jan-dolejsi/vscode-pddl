@@ -24,6 +24,7 @@ import { PTestReport } from './PTestReport';
 import { showError } from '../utils';
 import { CodePddlWorkspace } from '../workspace/CodePddlWorkspace';
 import { PTEST_VIEW_PROBLEM, PTEST_VIEW, PTEST_REVEAL } from './PTestCommands';
+import { DEFAULT_EPSILON } from '../configuration';
 
 /**
  * PDDL Test Explorer pane.
@@ -348,7 +349,7 @@ export class PTestExplorer {
         if (actualPlan.steps.length !== expectedPlan.steps.length) { return false; }
         if (actualPlan.steps.length === 0) { return true; }
 
-        let epsilon = workspace.getConfiguration().get<number>("pddlPlanner.epsilonTimeStep");
+        let epsilon = workspace.getConfiguration().get<number>("pddlPlanner.epsilonTimeStep", DEFAULT_EPSILON);
 
         if (!PlanStep.equalsWithin(actualPlan.makespan, expectedPlan.makespan, epsilon)) { return false; }
 

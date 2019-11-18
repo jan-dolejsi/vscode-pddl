@@ -22,7 +22,6 @@ import { PddlConfiguration } from '../configuration';
  * Delegate for handling requests to run the planner and visualize the plans.
  */
 export class PlanComparer implements Disposable {
-    epsilon = 1e-3;
 
     provider: NormalizedPlanDocumentContentProvider;
     normalizedPlanScheme = 'normalized-pddl-plan';

@@ -9,6 +9,7 @@ import { sleep } from '../utils';
 import { SearchHappening, MockSearchHappening, MockHelpfulAction } from './SearchHappening';
 import { HappeningType } from "../../../common/src/HappeningsInfo";
 import { HelpfulAction } from "../../../common/src/Plan";
+import { DEFAULT_EPSILON } from '../configuration';
 
 export class MockSearch {
     url: string;
@@ -297,7 +298,7 @@ class MockState {
     static lastStateId = -1;
 }
 
-const EPSILON = 1e-3;
+const EPSILON = DEFAULT_EPSILON;
 
 class RelaxedPlanBuilder {
 

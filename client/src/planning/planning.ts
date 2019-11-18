@@ -49,7 +49,6 @@ const PDDL_CONVERT_HAPPENINGS_TO_PLAN = 'pddl.convertHappeningsToPlan';
  */
 export class Planning implements PlannerResponseHandler {
     output: OutputChannel;
-    epsilon = 1e-3;
 
     planner: Planner;
     plans: Plan[];
