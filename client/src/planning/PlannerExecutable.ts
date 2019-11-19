@@ -22,7 +22,7 @@ import { Plan } from "../../../common/src/Plan";
 export class PlannerExecutable extends Planner {
 
     // this property stores the reference to the planner child process, while planning is in progress
-    private child: process.ChildProcess;
+    private child: process.ChildProcess | undefined;
 
     constructor(plannerPath: string, private plannerOptions: string, private plannerSyntax: string, private workingDirectory: string) {
         super(plannerPath);
@@ -61,13 +61,13 @@ export class PlannerExecutable extends Planner {
                 (error, _stdout, _stderr) => {
                     planParser.onPlanFinished();
 
-                    if (error && !thisPlanner.child.killed && !thisPlanner.planningProcessKilled) {
+                    if (error && !thisPlanner.child?.killed && !thisPlanner.planningProcessKilled) {
                         reject(error);
                     }
 
                     let plans = planParser.getPlans();
                     resolve(plans); // todo: should we resolve() even if we reject()ed above?
-                    thisPlanner.child = null;
+                    thisPlanner.child = undefined;
                 });
 
             thisPlanner.child.stdout.on('data', (data: any) => {

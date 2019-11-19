@@ -15,8 +15,8 @@ export class SymbolRenameProvider implements RenameProvider {
         this.symbolUtils = new SymbolUtils(pddlWorkspace);
     }
 
-    async provideRenameEdits(document: TextDocument, position: Position, newName: string, token: CancellationToken): Promise<WorkspaceEdit> {
-        if (token.isCancellationRequested) { return null; }
+    async provideRenameEdits(document: TextDocument, position: Position, newName: string, token: CancellationToken): Promise<WorkspaceEdit | undefined> {
+        if (token.isCancellationRequested) { return undefined; }
         await this.symbolUtils.assertFileParsed(document);
 
         let symbolInfo = this.symbolUtils.getSymbolInfo(document, position);
@@ -62,9 +62,9 @@ export class SymbolRenameProvider implements RenameProvider {
             || symbolInfo instanceof ParameterInfo;
     }
 
-    async prepareRename(document: TextDocument, position: Position, token: CancellationToken): Promise<Range>{
-        if (token.isCancellationRequested) { return null; }
+    async prepareRename(document: TextDocument, position: Position, token: CancellationToken): Promise<Range | undefined>{
         await this.symbolUtils.assertFileParsed(document);
+        if (token.isCancellationRequested) { return undefined; }
 
         let symbolInfo = this.symbolUtils.getSymbolInfo(document, position);
 

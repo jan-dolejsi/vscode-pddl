@@ -8,6 +8,8 @@ import { Plan } from './Plan';
 import { PlanStep } from './PlanStep';
 import { ProblemInfo } from './ProblemInfo';
 import { DomainInfo } from './DomainInfo';
+import { PddlSyntaxTree } from './PddlSyntaxTree';
+import { SimpleDocumentPositionResolver } from './DocumentPositionResolver';
  
 /**
  * Parses plan in the PDDL form incrementally - line/buffer at a time.
@@ -131,6 +133,21 @@ export class PddlPlanParser {
      */
     getPlans(): Plan[] {
         return this.plans;
+    }
+
+    static parseOnePlan(planText: string, planPath: string, epsilon: number) {
+        let dummyDomain = new DomainInfo('uri', 1, 'domain', PddlSyntaxTree.EMPTY, new SimpleDocumentPositionResolver(''));
+        let dummyProblem = new ProblemInfo('uri', 1, 'problem', 'domain', PddlSyntaxTree.EMPTY, new SimpleDocumentPositionResolver(''));
+        let parser = new PddlPlanParser(dummyDomain, dummyProblem, { minimumPlansExpected: 1, epsilon: epsilon });
+        parser.appendBuffer(planText);
+        parser.onPlanFinished();
+        let plans = parser.getPlans();
+        if (plans.length === 1) {
+            return plans[0];
+        }
+        else {
+            throw new Error(`Unexpected number of expected plans (${plans.length}) in file ${planPath}.`);
+        }
     }
 }
 
