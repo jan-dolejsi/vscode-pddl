@@ -24,6 +24,7 @@ import { PTestReport } from './PTestReport';
 import { showError } from '../utils';
 import { CodePddlWorkspace } from '../workspace/CodePddlWorkspace';
 import { PTEST_VIEW_PROBLEM, PTEST_VIEW, PTEST_REVEAL } from './PTestCommands';
+import { DEFAULT_EPSILON } from '../configuration';
 
 /**
  * PDDL Test Explorer pane.
@@ -70,8 +71,8 @@ export class PTestExplorer {
     }
 
     async saveProblemAs(): Promise<void> {
-        let generatedDocument = window.activeTextEditor.document;
-        if (!generatedDocument) { return; }
+        let generatedDocument = window.activeTextEditor?.document;
+        if (generatedDocument === undefined) { return; }
         let options: SaveDialogOptions = {
             saveLabel: "Save as PDDL problem",
             filters: {
@@ -84,8 +85,8 @@ export class PTestExplorer {
             let uri = await window.showSaveDialog(options);
             if (!uri) { return; }
             let newDocument = await workspace.openTextDocument(uri.with({ scheme: 'untitled' }));
-            let editor = await window.showTextDocument(newDocument, window.activeTextEditor.viewColumn);
-            await editor.edit(edit => edit.insert(new Position(0, 0), generatedDocument.getText()));
+            let editor = await window.showTextDocument(newDocument, window.activeTextEditor?.viewColumn);
+            await editor.edit(edit => edit.insert(new Position(0, 0), generatedDocument!.getText()));
         } catch (ex) {
             console.log(ex);
         }
@@ -156,7 +157,7 @@ export class PTestExplorer {
     }
 
     async openProblemFile(test: Test, column: ViewColumn): Promise<void> {
-        let uri: Uri = null;
+        let uri: Uri;
 
         if (test.getPreProcessor()) {
             uri = this.generatedDocumentContentProvider.mapUri(test);
@@ -348,7 +349,7 @@ export class PTestExplorer {
         if (actualPlan.steps.length !== expectedPlan.steps.length) { return false; }
         if (actualPlan.steps.length === 0) { return true; }
 
-        let epsilon = workspace.getConfiguration().get<number>("pddlPlanner.epsilonTimeStep");
+        let epsilon = workspace.getConfiguration().get<number>("pddlPlanner.epsilonTimeStep", DEFAULT_EPSILON);
 
         if (!PlanStep.equalsWithin(actualPlan.makespan, expectedPlan.makespan, epsilon)) { return false; }
 
@@ -364,17 +365,8 @@ export class PTestExplorer {
 
     loadPlan(expectedPlanPath: string): Plan {
         let expectedPlanText = readFileSync(expectedPlanPath, { encoding: "utf-8" });
-        let epsilon = workspace.getConfiguration().get<number>("pddlPlanner.epsilonTimeStep");
-        let parser = new PddlPlanParser(null, null, { minimumPlansExpected: 1, epsilon: epsilon });
-        parser.appendBuffer(expectedPlanText);
-        parser.onPlanFinished();
-        let plans = parser.getPlans();
-        if (plans.length === 1) {
-            return plans[0];
-        }
-        else {
-            throw new Error(`Unexpected number of expected plans (${plans.length}) in file ${expectedPlanPath}.`);
-        }
+        let epsilon = workspace.getConfiguration().get<number>("pddlPlanner.epsilonTimeStep", DEFAULT_EPSILON);
+        return PddlPlanParser.parseOnePlan(expectedPlanText, expectedPlanPath, epsilon);
     }
 
     async assertValid(test: Test): Promise<boolean> {

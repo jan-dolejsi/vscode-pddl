@@ -29,8 +29,8 @@ export class UndeclaredVariable {
 
         let lineWithUndeclaredVariable = document.lineAt(diagnostic.range.start.line);
         let variableNameMatch = lineWithUndeclaredVariable.text.match(new RegExp("\\(\\s*" + variableName + "[ |\\)]", "i"));
-        if (!variableNameMatch) { return undefined; }
-        let undeclaredVariableOffset = document.offsetAt(lineWithUndeclaredVariable.range.start) + variableNameMatch.index + variableNameMatch[0].toLowerCase().indexOf(variableName);
+        if (variableNameMatch === null) { return undefined; }
+        let undeclaredVariableOffset = document.offsetAt(lineWithUndeclaredVariable.range.start) + variableNameMatch.index! + variableNameMatch[0].toLowerCase().indexOf(variableName);
 
         let variableUsage = this.syntaxTree.getNodeAt(undeclaredVariableOffset + 1).expand();
         if (variableUsage.isDocument()) {
@@ -43,19 +43,28 @@ export class UndeclaredVariable {
 
         let parameters = parameterNames.map(param => this.findParameterDefinition(variableUsage, param));
 
-        return [new Variable(variableName, parameters), variableUsage];
+        if (parameters.some(p => !p)) {
+            console.log("Undeclared predicate/function has some unexpected parameters: " + variableName);
+            return undefined;
+        }
+
+        let validParameters = parameters.map(p => p as Parameter);
+
+        return [new Variable(variableName, validParameters), variableUsage];
     }
 
-    findParameterDefinition(variableUsage: PddlSyntaxNode, parameterName: string): Parameter {
+    findParameterDefinition(variableUsage: PddlSyntaxNode, parameterName: string): Parameter | undefined {
         let scope = variableUsage.findParametrisableScope(parameterName);
         let parameterDefinitionNode = scope && scope.getParameterDefinition();
-        return parseParameters(parameterDefinitionNode.getText()).find(p => p.name.toLowerCase() === parameterName.toLowerCase());
+        return parameterDefinitionNode &&
+            parseParameters(parameterDefinitionNode.getText())
+                .find(p => p.name.toLowerCase() === parameterName.toLowerCase());
     }
 
     createEdit(document: TextDocument, variable: Variable, node: PddlSyntaxNode): [WorkspaceEdit, VariableType] {
         var type = VariableType.Undecided;
         while (type === VariableType.Undecided && !node.isDocument()) {
-            node = node.getParent();
+            node = node.getParent()!;
             if (node.isType(PddlTokenType.OpenBracketOperator)) {
                 switch (node.getToken().tokenText) {
                     case "(+":
@@ -128,7 +137,7 @@ export class UndeclaredVariable {
 
         let indent: string;
         if (config.get<boolean>('insertSpaces')) {
-            let tabSize = config.get<number>('tabSize');
+            let tabSize = config.get<number>('tabSize', 4);
             indent = ' '.repeat(tabSize * indentLevel);
         }
         else {

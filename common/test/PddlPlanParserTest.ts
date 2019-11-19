@@ -13,6 +13,7 @@ import { SimpleDocumentPositionResolver } from '../src/DocumentPositionResolver'
 
 const dummyDomain = new DomainInfo('uri', 1, '', new PddlSyntaxTree(), new SimpleDocumentPositionResolver(''));
 const dummyProblem = new ProblemInfo('uri', 1, 'name', 'name', new PddlSyntaxTree(), new SimpleDocumentPositionResolver(''));
+const EPSILON = 1e-3;
 
 describe('PddlPlanParser', () => {
 
@@ -23,7 +24,7 @@ describe('PddlPlanParser', () => {
             let planText = '1: (action) [20]';
 
             // WHEN
-            let parser = new PddlPlanParser(dummyDomain, dummyProblem, { epsilon: 1e-3 });
+            let parser = new PddlPlanParser(dummyDomain, dummyProblem, { epsilon: EPSILON });
             parser.appendBuffer(planText);
             parser.onPlanFinished();
             let plans = parser.getPlans();
@@ -45,7 +46,7 @@ describe('PddlPlanParser', () => {
             let planText = '';
 
             // WHEN
-            let parser = new PddlPlanParser(dummyDomain, dummyProblem, { epsilon: 1e-3, minimumPlansExpected: 1 });
+            let parser = new PddlPlanParser(dummyDomain, dummyProblem, { epsilon: EPSILON, minimumPlansExpected: 1 });
             parser.appendBuffer(planText);
             parser.onPlanFinished();
             let plans = parser.getPlans();
@@ -64,7 +65,7 @@ describe('PddlPlanParser', () => {
             ; States evaluated: 10`;
 
             // WHEN
-            let parser = new PddlPlanParser(dummyDomain, dummyProblem, { epsilon: 1e-3, minimumPlansExpected: 1 });
+            let parser = new PddlPlanParser(dummyDomain, dummyProblem, { epsilon: EPSILON, minimumPlansExpected: 1 });
             parser.appendBuffer(planText);
             parser.onPlanFinished();
             let plans = parser.getPlans();
@@ -111,7 +112,7 @@ describe('PddlPlanParser', () => {
             // WHEN
             var parser: PddlPlanParser | null = null;
             await new Promise((resolve, _reject) => {
-                parser = new PddlPlanParser(dummyDomain, dummyProblem, { epsilon: 1e-3, minimumPlansExpected: 1 }, _plans => resolve());
+                parser = new PddlPlanParser(dummyDomain, dummyProblem, { epsilon: EPSILON, minimumPlansExpected: 1 }, _plans => resolve());
                 parser.appendBuffer(planText);
             });
             if (!parser) { assert.fail("launching plan parser failed"); }
@@ -180,7 +181,7 @@ describe('PddlPlanParser', () => {
             // WHEN
             var parser: PddlPlanParser | null = null;
             await new Promise((resolve, _reject) => {
-                parser = new PddlPlanParser(dummyDomain, dummyProblem, { epsilon: 1e-3, minimumPlansExpected: 1 }, _plans => resolve());
+                parser = new PddlPlanParser(dummyDomain, dummyProblem, { epsilon: EPSILON, minimumPlansExpected: 1 }, _plans => resolve());
                 parser.appendBuffer(planText);
             });
             if (!parser) { assert.fail("launching plan parser failed"); }

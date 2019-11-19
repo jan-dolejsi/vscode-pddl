@@ -33,7 +33,7 @@ import { CodePddlWorkspace } from '../workspace/CodePddlWorkspace';
 export class Diagnostics extends Disposable {
 
     timeout: NodeJS.Timer | undefined;
-    validator: Validator;
+    validator: Validator | undefined;
     pddlParserSettings: PDDLParserSettings;
 
     private defaultTimerDelayInSeconds = 3;
@@ -141,6 +141,7 @@ export class Diagnostics extends Disposable {
 
     validatePddlDocumentByUri(fileUri: string, scheduleFurtherValidation: boolean): void {
         let fileInfo = this.codePddlWorkspace.pddlWorkspace.getFileInfo(fileUri);
+        if (!fileInfo) { throw new Error(`File not found in the PDDL workspace: ${fileUri}`); }
         this.validatePddlDocument(fileInfo, scheduleFurtherValidation);
     }
 
@@ -215,7 +216,7 @@ export class Diagnostics extends Disposable {
 
             let domainFile = this.getDomainFileFor(problemInfo);
 
-            if (domainFile !== null && domainFile !== undefined) {
+            if (domainFile) {
                 this.validateDomainAndProblems(domainFile, [problemInfo], scheduleFurtherValidation);
             }
         }
@@ -237,7 +238,7 @@ export class Diagnostics extends Disposable {
         domainInfo.setStatus(FileStatus.Validating);
         problemFiles.forEach(p => p.setStatus(FileStatus.Validating));
 
-        let validator = this.createValidator();
+        let validator = this.createValidator(this.pddlConfiguration.getParserPath()!);
         if (!validator) { return; }
 
         validator.validate(domainInfo, problemFiles, (diagnostics) => {
@@ -252,13 +253,15 @@ export class Diagnostics extends Disposable {
         });
     }
 
-    createValidator(): Validator {
-        if (!this.validator || this.validator.path !== this.pddlConfiguration.getParserPath()
+    createValidator(newParserPath: string): Validator {
+
+        if (!this.validator || this.validator.path !== newParserPath
             || (this.validator instanceof ValidatorExecutable) && (
                 this.validator.syntax !== this.pddlParserSettings.executableOptions ||
                 this.validator.customPattern !== this.pddlParserSettings.problemPattern
             )) {
-            if (this.pddlConfiguration.getParserPath() && isHttp(this.pddlConfiguration.getParserPath())) {
+            
+            if (isHttp(newParserPath)) {
                 // is a service
                 let authentication = new Authentication(
                     this.pddlParserSettings.serviceAuthenticationUrl,
@@ -276,10 +279,10 @@ export class Diagnostics extends Disposable {
                     this.pddlParserSettings.serviceAuthenticationRefreshToken,
                     this.pddlParserSettings.serviceAuthenticationAccessToken,
                     this.pddlParserSettings.serviceAuthenticationSToken);
-                return this.validator = new ValidatorService(this.pddlConfiguration.getParserPath(), this.pddlParserSettings.serviceAuthenticationEnabled, authentication);
+                return this.validator = new ValidatorService(newParserPath, this.pddlParserSettings.serviceAuthenticationEnabled, authentication);
             }
             else {
-                return this.validator = new ValidatorExecutable(this.pddlConfiguration.getParserPath(), this.pddlParserSettings.executableOptions, this.pddlParserSettings.problemPattern);
+                return this.validator = new ValidatorExecutable(newParserPath, this.pddlParserSettings.executableOptions, this.pddlParserSettings.problemPattern);
             }
         }
         else {
@@ -291,7 +294,7 @@ export class Diagnostics extends Disposable {
         diagnostics.forEach((diagnostics, fileUri) => this.diagnosticCollection.set(Uri.parse(fileUri), diagnostics));
     }
 
-    getDomainFileFor(problemFile: ProblemInfo): DomainInfo {
+    getDomainFileFor(problemFile: ProblemInfo): DomainInfo | undefined {
         try {
             return getDomainFileForProblem(problemFile, this.codePddlWorkspace);
         }
@@ -299,7 +302,7 @@ export class Diagnostics extends Disposable {
             if (err instanceof NoDomainAssociated) {
                 this.sendDiagnosticInfo(problemFile.fileUri, err.message, NoDomainAssociated.DIAGNOSTIC_CODE);
                 problemFile.setStatus(FileStatus.Validated);
-                return null;
+                return undefined;
             }
             throw err;
         }
@@ -337,5 +340,5 @@ function toDiagnostics(problems: ParsingProblem[]): Diagnostic[] {
 }
 
 function toDiagnostic(problem: ParsingProblem): Diagnostic {
-    return createDiagnostic(problem.lineIndex, problem.columnIndex, problem.problem, DiagnosticSeverity.Error);
+    return createDiagnostic(problem.lineIndex || 0, problem.columnIndex, problem.problem, DiagnosticSeverity.Error);
 }

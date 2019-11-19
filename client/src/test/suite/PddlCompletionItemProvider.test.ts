@@ -456,7 +456,7 @@ suite('PDDL Completion Item Provider', () => {
 function assertSnippetIncludes(items: vscode.CompletionItem[], filterText: string, needle: string) {
     const item = items.find(item => item.filterText === filterText);
     assert.ok(item, `Item '${filterText}' should be included`);
-    const snippet = (<vscode.SnippetString>item.insertText);
+    const snippet = (<vscode.SnippetString>item!.insertText);
     assert.ok(snippet.value.includes(needle), `snippet '${snippet.value}' should include ${needle}`);
 }
 
@@ -508,6 +508,7 @@ async function testDomainProvider(inputTextHead: string, ch: string, inputTextTa
     let domainNode = tree.getDefineNodeOrThrow().getFirstOpenBracketOrThrow('domain');
     let positionResolver = new CodeDocumentPositionResolver(doc);
     let domainInfo = new PddlDomainParser('file://testProblem.pddl', 1, initialText, domainNode, tree, positionResolver).getDomain();
+    if (!domainInfo) { throw new Error(`Unable to parse test domain.`); }
 
     return await new DomainCompletionItemProvider().provide(doc, domainInfo, position, context);
 }

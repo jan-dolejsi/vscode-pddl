@@ -34,6 +34,7 @@ export const PLAN_REPORT_WIDTH = 'planReport.width';
 export const PLANNER_VAL_STEP_PATH = CONF_PDDL + "." + VAL_STEP_PATH;
 export const PLANNER_VALUE_SEQ_PATH = CONF_PDDL + "." + VALUE_SEQ_PATH;
 export const PDDL_CONFIGURE_COMMAND = CONF_PDDL + "." + "configure";
+export const DEFAULT_EPSILON = 1e-3;
 
 export class PddlConfiguration {
 
@@ -41,7 +42,7 @@ export class PddlConfiguration {
     }
 
     getEpsilonTimeStep(): number {
-        return vscode.workspace.getConfiguration().get(PLANNER_EPSILON_TIMESTEP, 1e-3);
+        return vscode.workspace.getConfiguration().get(PLANNER_EPSILON_TIMESTEP, DEFAULT_EPSILON);
     }
 
     getParserPath(): string | undefined {

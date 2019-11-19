@@ -35,11 +35,13 @@ export class DomainDiagnostics {
     validateDomain(domainInfo: DomainInfo) {
         let predicateDiagnostic = domainInfo.getPredicates()
             .map(p => this.toUnusedDiagnostic(domainInfo, p, 'predicate'))
-            .filter(diagnostic => !!diagnostic);
+            .filter(diagnostic => !!diagnostic)
+            .map(diagnostics => diagnostics!);
 
         let functionDiagnostic = domainInfo.getFunctions()
             .map(p => this.toUnusedDiagnostic(domainInfo, p, 'function'))
-            .filter(diagnostic => !!diagnostic);
+            .filter(diagnostic => !!diagnostic)
+            .map(diagnostics => diagnostics!);
 
         let diagnostics = predicateDiagnostic.concat(functionDiagnostic);
 

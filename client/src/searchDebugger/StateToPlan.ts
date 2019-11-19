@@ -12,6 +12,7 @@ import { PlanStep, PlanStepCommitment } from "../../../common/src/PlanStep";
 import { HappeningType } from "../../../common/src/HappeningsInfo";
 import { SearchHappening } from "./SearchHappening";
 import { equalsCaseInsensitive } from "../utils";
+import { DEFAULT_EPSILON } from "../configuration";
 
 export class StateToPlan {
 
@@ -90,12 +91,10 @@ class PlanStepBuilder {
         }
     }
 
-    static readonly EPSILON = 1e-3;
-
     toPalStep(stateTime: number): PlanStep {
         let isDurative = this.start.kind === HappeningType.START;
 
-        var duration = PlanStepBuilder.EPSILON;
+        var duration = DEFAULT_EPSILON;
         if (isDurative) {
             if (this.end) {
                 duration = this.end.earliestTime - this.start.earliestTime;

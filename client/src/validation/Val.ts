@@ -20,7 +20,11 @@ export class Val {
     /** File that contains version info of last downloaded VAL binaries. */
     valVersionPath: string;
 
+    private readonly binaryStorage: string;
+
     constructor(private context: ExtensionContext) {
+        this.binaryStorage = this.context.globalStoragePath;
+
         context.subscriptions.push(commands.registerCommand(VAL_DOWNLOAD_COMMAND, async (options: ValDownloadOptions) => {
             try {
                 let userAgreesToDownload = (options && options.bypassConsent) || await this.promptForConsent();
@@ -36,7 +40,11 @@ export class Val {
 
     /** Directory where VAL binaries are to be downloaded locally. */
     getValPath(): string {
-        return path.join(this.context.extensionPath, Val.VAL_DIR);
+        return path.join(this.binaryStorage, Val.VAL_DIR);
+    }
+
+    private asAbsoluteStoragePath(relativePath: string): string {
+        return path.join(this.binaryStorage, relativePath);
     }
 
     private async promptForConsent(): Promise<boolean> {
@@ -47,8 +55,8 @@ export class Val {
 
     async downloadConfigureAndCleanUp(): Promise<void> {
         let wasValInstalled = await this.isInstalled();
-        let previousVersion: ValVersion = wasValInstalled ? await this.readVersion() : null;
-        let newVersion: ValVersion;
+        let previousVersion = wasValInstalled ? await this.readVersion() : undefined;
+        let newVersion: ValVersion | undefined;
         try {
 
             await this.downloadAndConfigure();
@@ -59,28 +67,35 @@ export class Val {
             if (wasValInstalled && previousVersion && newVersion) {
                 if (previousVersion.buildId !== newVersion.buildId) {
                     console.log(`The ${previousVersion.version} and the ${newVersion.version} differ, cleaning-up the old version.`);
-                    let filesAbsPaths = previousVersion.files.map(f => path.join(this.context.extensionPath, f));
+                    let filesAbsPaths = previousVersion.files.map(f => this.asAbsoluteStoragePath(f));
                     await this.deleteAll(filesAbsPaths);
                 }
+            }
+
+            if (newVersion) {
+                this.promptChmod(newVersion);
             }
         }
     }
 
     private getLatestStableValBuildId(): number {
-        return workspace.getConfiguration().get<number>("pddl.validatorVersion");
+        return workspace.getConfiguration().get<number>("pddl.validatorVersion")!;
     }
 
     private async downloadAndConfigure(): Promise<void> {
 
         let buildId = this.getLatestStableValBuildId();
-        let artifactName = Val.getArtifactName();
+        let artifactName = Val.getBuildArtifactName();
         if (!artifactName) {
             this.unsupportedOperatingSystem();
             return;
         }
 
+        await afs.mkdirIfDoesNotExist(this.binaryStorage, 0o755);
+        await afs.mkdirIfDoesNotExist(this.getValPath(), 0o755);
+
         let zipPath = path.join(this.getValPath(), "drop.zip");
-        await afs.mkdirIfDoesNotExist(path.dirname(zipPath), 0o644);
+        await afs.mkdirIfDoesNotExist(path.dirname(zipPath), 0o755);
 
         let url = `https://dev.azure.com/schlumberger/4e6bcb11-cd68-40fe-98a2-e3777bfec0a6/_apis/build/builds/${buildId}/artifacts?artifactName=${artifactName}&api-version=5.2-preview.5&%24format=zip`;
 
@@ -116,7 +131,7 @@ export class Val {
         await afs.unlink(zipPath);
 
         let wasValInstalled = await this.isInstalled();
-        let previousVersion = wasValInstalled ? await this.readVersion() : null;
+        let previousVersion = wasValInstalled ? await this.readVersion() : undefined;
 
         let valToolFileRelativePaths = valToolFileNames.map(fileName => path.join(Val.VAL_DIR, fileName));
         let newValVersion = { buildId: buildId, version: version, files: valToolFileRelativePaths };
@@ -199,7 +214,7 @@ export class Val {
         }
     }
 
-    static getArtifactName(): string {
+    static getBuildArtifactName(): string | null {
         switch (os.platform()) {
             case "win32":
                 switch (os.arch()) {
@@ -239,7 +254,7 @@ export class Val {
      * @param newValVersion val version just downloaded
      * @param oldValVersion val version from which we are upgrading
      */
-    private async updateConfigurationPaths(newValVersion: ValVersion, oldValVersion: ValVersion): Promise<void> {
+    private async updateConfigurationPaths(newValVersion: ValVersion, oldValVersion?: ValVersion): Promise<void> {
         let fileToConfig = new Map<string, string>();
         fileToConfig.set("Parser", PARSER_EXECUTABLE_OR_SERVICE);
         fileToConfig.set("Validate", CONF_PDDL + '.' + VALIDATION_PATH);
@@ -249,10 +264,15 @@ export class Val {
         for (const toolName of fileToConfig.keys()) {
             let oldToolPath = findValToolPath(oldValVersion, toolName);
             let newToolPath = findValToolPath(newValVersion, toolName);
+            if (!newToolPath) {
+                console.log(`Tool ${toolName} not found in the downloaded archive.`);
+            }
 
             let configKey = fileToConfig.get(toolName);
 
-            this.updateConfigurationPath(configKey, newToolPath, oldToolPath);
+            if (configKey && newToolPath) {
+                this.updateConfigurationPath(configKey, newToolPath, oldToolPath);
+            }
         }
     }
 
@@ -260,9 +280,9 @@ export class Val {
      * Updates the configuration path for the configuration key, unless it was explicitly set by the user.
      * @param configKey configuration key in the form prefix.postfix
      * @param newToolPath the location of the currently downloaded/unzipped tool
-     * @param oldToolPath the location of the previously downloaded/unzipped tool
+     * @param oldToolPath the location of the previously downloaded/unzipped tool (if known)
      */
-    private async updateConfigurationPath(configKey: string, newToolPath: string, oldToolPath: string): Promise<void> {
+    private async updateConfigurationPath(configKey: string, newToolPath: string, oldToolPath?: string): Promise<void> {
         let oldValue = workspace.getConfiguration().inspect(configKey);
         if (!oldValue) {
             console.log("configuration not declared: " + configKey);
@@ -273,13 +293,16 @@ export class Val {
 
         let normOldToolPath = this.normalizePathIfValid(oldToolPath);
 
-        // was the oldValue empty, or did it match the oldToolPath? Overwrite it!
-        if (configuredGlobalValue === null || configuredGlobalValue === undefined || normConfiguredGlobalValue === normOldToolPath) {
+        // was the oldValue empty?
+        if (configuredGlobalValue === undefined
+            // or did it match the oldToolPath? 
+            || normConfiguredGlobalValue === normOldToolPath) {
+            // Overwrite it!
             await workspace.getConfiguration().update(configKey, newToolPath, ConfigurationTarget.Global);
         }
     }
 
-    private normalizePathIfValid(pathToNormalize: string): string {
+    private normalizePathIfValid(pathToNormalize?: string): string | undefined {
         return pathToNormalize ? path.normalize(pathToNormalize) : pathToNormalize;
     }
 
@@ -292,6 +315,19 @@ export class Val {
 
         return latestStableValBuildId > installedVersion.buildId;
     }
+    
+    private promptChmod(newVersion: ValVersion): void {
+        if (os.platform() !== 'linux') { return; }
+
+        let executablePath = newVersion.files.find(file => path.basename(file).startsWith('Validate'));
+        if (!executablePath) { throw new Error(`'Validate' not found among downloaded files.`); }
+        let absoluteExecutablePath = this.asAbsoluteStoragePath(path.dirname(executablePath));
+        let terminal = window.createTerminal({ name: 'VAL Chmod prompt', cwd: absoluteExecutablePath });
+        terminal.show(false);
+        terminal.sendText('ls', true);
+        terminal.sendText('Please allow the above VAL binaries to execute on your system using chmod. Currently VS Code uses: Validate, ValStep, ValueSeq and Parser, including the dynamic libraries.', false);
+        window.showWarningMessage('Please use the terminal window to grant the downloaded binaries the right to execute on your system.', { modal: true });
+    }
 }
 
 interface ValVersion {
@@ -302,11 +338,11 @@ interface ValVersion {
 
 /**
  * Finds the path of given VAL tool in the given version.
- * @param valVersion VAL version manifest
+ * @param valVersion VAL version manifest (if known)
  * @param toolName tool name for which we are looking for its path
  * @returns corresponding path, or _undefined_ if the _valVersion_ argument is null or undefined
  */
-function findValToolPath(valVersion: ValVersion, toolName: string): string {
+function findValToolPath(valVersion: ValVersion | undefined, toolName: string): string | undefined {
     if (!valVersion) { return undefined; }
     let pattern = new RegExp("\\b" + toolName + "(?:\\.exe)?$");
     return valVersion.files.find(filePath => pattern.test(filePath));
