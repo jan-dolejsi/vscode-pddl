@@ -132,7 +132,7 @@ export function showError(reason: any): void {
  * Absolute path, unless it relied on a %path% location (i.e. there was no dirname). 
  * @param configuredPath a configured path to an executable
  */
-export function ensureAbsolutePath(configuredPath: string | undefined, context: ExtensionContext): string | undefined {
+export function ensureAbsoluteGlobalStoragePath(configuredPath: string | undefined, context: ExtensionContext): string | undefined {
     if (!configuredPath) { return undefined; }
 
     if (isHttp(configuredPath)) {
@@ -144,7 +144,7 @@ export function ensureAbsolutePath(configuredPath: string | undefined, context: 
         return configuredPath;
     }
     else {
-        return context.asAbsolutePath(configuredPath);
+        return path.join(context.globalStoragePath, configuredPath);
     }
 }
 

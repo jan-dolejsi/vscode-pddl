@@ -21,7 +21,7 @@ import { PlanReportSettings } from './PlanReportSettings';
 import { VAL_STEP_PATH, CONF_PDDL, VALUE_SEQ_PATH, PLAN_REPORT_LINE_PLOT_GROUP_BY_LIFTED } from '../configuration';
 import * as afs from '../../../common/src/asyncfs';
 import { ValStepError, ValStep } from '../debugger/ValStep';
-import { ensureAbsolutePath } from '../utils';
+import { ensureAbsoluteGlobalStoragePath } from '../utils';
 import { PddlWorkspace } from '../../../common/src/PddlWorkspace';
 const DIGITS = 4;
 
@@ -178,8 +178,8 @@ ${objectsHtml}
         </table>
     </div>`;
 
-        let valStepPath = ensureAbsolutePath(workspace.getConfiguration(CONF_PDDL).get<string>(VAL_STEP_PATH), this.context);
-        let valueSeqPath = ensureAbsolutePath(workspace.getConfiguration(CONF_PDDL).get<string>(VALUE_SEQ_PATH), this.context);
+        let valStepPath = ensureAbsoluteGlobalStoragePath(workspace.getConfiguration(CONF_PDDL).get<string>(VAL_STEP_PATH), this.context);
+        let valueSeqPath = ensureAbsoluteGlobalStoragePath(workspace.getConfiguration(CONF_PDDL).get<string>(VALUE_SEQ_PATH), this.context);
 
         let lineCharts = `    <div class="lineChart" plan="${planIndex}" style="display: ${styleDisplay};margin-top: 20px;">\n`;
         let lineChartScripts = '';

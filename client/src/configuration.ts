@@ -5,7 +5,7 @@
 import * as vscode from 'vscode';
 import { PDDLParserSettings } from './Settings';
 
-import { ensureAbsolutePath, isHttp } from './utils';
+import { ensureAbsoluteGlobalStoragePath, isHttp } from './utils';
 import { VAL_DOWNLOAD_COMMAND } from './validation/valCommand';
 import { ExtensionInfo } from './ExtensionInfo';
 
@@ -47,7 +47,7 @@ export class PddlConfiguration {
 
     getParserPath(): string | undefined {
         let configuredPath = vscode.workspace.getConfiguration().get<string>(PARSER_EXECUTABLE_OR_SERVICE);
-        return ensureAbsolutePath(configuredPath, this.context);
+        return ensureAbsoluteGlobalStoragePath(configuredPath, this.context);
     }
 
     NEVER_SETUP_PARSER = 'neverSetupParser';
@@ -279,22 +279,22 @@ export class PddlConfiguration {
 
     getValueSeqPath(): string | undefined {
         let configuredPath = vscode.workspace.getConfiguration().get<string>(PLANNER_VALUE_SEQ_PATH);
-        return ensureAbsolutePath(configuredPath, this.context);
+        return ensureAbsoluteGlobalStoragePath(configuredPath, this.context);
     }
 
     getValidatorPath(): string | undefined {
         let configuredPath = vscode.workspace.getConfiguration(CONF_PDDL).get<string>(VALIDATION_PATH);
-        return ensureAbsolutePath(configuredPath, this.context);
+        return ensureAbsoluteGlobalStoragePath(configuredPath, this.context);
     }
 
     async askNewValidatorPath(): Promise<string | undefined> {
         let configuredPath = await this.askAndUpdatePath(VALIDATION_PATH, "Validate tool");
-        return ensureAbsolutePath(configuredPath, this.context);
+        return ensureAbsoluteGlobalStoragePath(configuredPath, this.context);
     }
 
     async getValStepPath(): Promise<string | undefined> {
         let configuredPath = await this.getOrAskPath(VAL_STEP_PATH, "ValStep executable");
-        return ensureAbsolutePath(configuredPath, this.context);
+        return ensureAbsoluteGlobalStoragePath(configuredPath, this.context);
     }
 
     async getOrAskPath(configName: string, configFriendlyName: string): Promise<string | undefined> {

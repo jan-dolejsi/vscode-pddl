@@ -18,7 +18,7 @@ export class Val {
     /** Directory where VAL binaries are to be downloaded locally. */
     static readonly VAL_DIR = "val";
     /** File that contains version info of last downloaded VAL binaries. */
-    valVersionPath: string;
+    private valVersionPath: string;
 
     private readonly binaryStorage: string;
 
@@ -296,7 +296,9 @@ export class Val {
         // was the oldValue empty?
         if (configuredGlobalValue === undefined
             // or did it match the oldToolPath? 
-            || normConfiguredGlobalValue === normOldToolPath) {
+            || normConfiguredGlobalValue === normOldToolPath
+            // or does the path not exist anyway?
+            || oldToolPath && !await afs.exists(this.asAbsoluteStoragePath(oldToolPath))) {
             // Overwrite it!
             await workspace.getConfiguration().update(configKey, newToolPath, ConfigurationTarget.Global);
         }
@@ -315,7 +317,7 @@ export class Val {
 
         return latestStableValBuildId > installedVersion.buildId;
     }
-    
+
     private promptChmod(newVersion: ValVersion): void {
         if (os.platform() !== 'linux') { return; }
 
