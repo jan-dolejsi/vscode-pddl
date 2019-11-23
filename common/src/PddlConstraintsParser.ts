@@ -27,7 +27,7 @@ export class PddlConstraintsParser {
     }
 
     private parseChild(node: PddlSyntaxNode): Constraint | undefined {
-        let children = node.getNonWhitespaceChildren();
+        let children = node.getNonWhitespaceNonCommentChildren();
         if (children.length === 0 && node.getToken().tokenText === '(') {
             return new Constraint(node);
         }

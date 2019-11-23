@@ -67,6 +67,10 @@ export class PddlSyntaxNode extends TextRange {
         return this.getNestedChildren().filter(c => c.getToken().type !== PddlTokenType.Whitespace);
     }
 
+    getNonWhitespaceNonCommentChildren(): PddlSyntaxNode[] {
+        return this.getNonWhitespaceChildren().filter(c => c.getToken().type !== PddlTokenType.Comment);
+    }
+
     getSingleNonWhitespaceChild(): PddlSyntaxNode {
         let nonWhitespaceChildren = this.getNonWhitespaceChildren();
         if (nonWhitespaceChildren.length !== 1) {

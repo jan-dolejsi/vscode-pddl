@@ -151,6 +151,8 @@ class ProblemConstraintsRendererDelegate {
             let label = ac instanceof StrictlyAfterConstraint ? 'strictly-after' : 'after';
             this.addEdge(predecessorId, successorId, label);
         });
+
+        this.addTetheredGoal();
     }
 
     private addNamedCondition(namedCondition: NamedConditionConstraint, index: number): number {
@@ -182,6 +184,27 @@ class ProblemConstraintsRendererDelegate {
         else {
             throw new Error('Unexpected constraint: ' + namedCondition.toString());
         }
+    }
+
+    addTetheredGoal() {
+        const pattern = /\((start|end)\s+of\s*(.+)\s*\)/i;
+        [...this.nodes.keys()].forEach(nodeStartName => {
+            let matchStart = pattern.exec(nodeStartName);
+            if (matchStart) {
+                if (matchStart[1] === "start") {
+                    let actionName = matchStart[2];
+
+                    [...this.nodes.keys()].find(nodeEndName => {
+                        let matchEnd = pattern.exec(nodeEndName);
+                        if (matchEnd &&
+                            matchEnd[1] === "end" &&
+                            matchEnd[2] === actionName) {
+                            this.addEdge(this.nodes.get(nodeStartName)!.id, this.nodes.get(nodeEndName)!.id, "durative-action");
+                        }
+                    });
+                    }
+            }
+        });
     }
 
     private addEdge(predecessorId: number, successorId: number, label: string): void {
