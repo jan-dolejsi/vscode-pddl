@@ -25,7 +25,7 @@ suite('Domain formatter Test Suite', () => {
     (:requirements :strips)
 )`;
 
-        await testFormatter(inputText, expectedText, { insertSpaces: true, tabSize: 4});
+        await testFormatter(inputText, expectedText, { insertSpaces: true, tabSize: 4 });
     });
 
     testDisabled('Formats types', async () => {
@@ -38,7 +38,7 @@ suite('Domain formatter Test Suite', () => {
     )
 )`;
 
-        await testFormatter(inputText, expectedText, { insertSpaces: true, tabSize: 4});
+        await testFormatter(inputText, expectedText, { insertSpaces: true, tabSize: 4 });
     });
 
     testDisabled('Formats types with inheritance', async () => {
@@ -52,10 +52,10 @@ suite('Domain formatter Test Suite', () => {
     )
 )`;
 
-        await testFormatter(inputText, expectedText, { insertSpaces: true, tabSize: 4});
+        await testFormatter(inputText, expectedText, { insertSpaces: true, tabSize: 4 });
     });
 
-    testDisabled('Removes trailing whitespace', async() => {
+    testDisabled('Removes trailing whitespace', async () => {
         assert.fail('Not implemented yet');
     });
 });
@@ -65,14 +65,19 @@ async function testFormatter(initialText: string, expectedText: string, options:
     let doc = await vscode.workspace.openTextDocument({ language: 'pddl-do-not-load-extension', content: initialText });
     let editor = await vscode.window.showTextDocument(doc);
     let startSelectionBefore = editor.selection.start;
-    
+
     // move the cursor into the text
-    await vscode.commands.executeCommand("cursorMove", {to: 'right'});
-    
+    await vscode.commands.executeCommand("cursorMove", { to: 'right' });
+
     // WHEN
     let edits = await formatProvider.provideDocumentFormattingEdits(doc, options, new vscode.CancellationTokenSource().token);
-    await Promise.all(edits.map(edit => editor.edit(builder => reBuild(builder, edit))));
-    
+    if (edits) {
+        await Promise.all(edits.map(edit => editor.edit(builder => reBuild(builder, edit))));
+    }
+    else {
+        assert.fail('no edits returned');
+    }
+
     // THEN
     let startSelectionAfter = editor.selection.start;
     let textAfter = doc.getText();
@@ -80,6 +85,6 @@ async function testFormatter(initialText: string, expectedText: string, options:
     assert.deepStrictEqual(startSelectionAfter, startSelectionBefore, "cursor position should be the same");
 }
 
-function reBuild(builder: vscode.TextEditorEdit, edit: vscode.TextEdit){
+function reBuild(builder: vscode.TextEditorEdit, edit: vscode.TextEdit) {
     return builder.replace(edit.range, edit.newText);
 }

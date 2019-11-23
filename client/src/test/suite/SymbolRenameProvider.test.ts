@@ -39,7 +39,7 @@ suite('SymbolRenameProvider Test Suite', () => {
 		let renameProvider = new SymbolRenameProvider(CodePddlWorkspace.getInstanceForTestingOnly(new PddlWorkspace(.3)));
 
 		let typeEdits = await renameProvider.provideRenameEdits(doc, new vscode.Position(0, 40), "asdf", tokenSource.token);
-		assert.strictEqual(typeEdits.size, 1);
+		assert.strictEqual(typeEdits?.size, 1, "there should be N edits");
 	});
 
 });
