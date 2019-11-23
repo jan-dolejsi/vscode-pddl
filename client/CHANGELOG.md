@@ -11,8 +11,8 @@
 - eagerly using the Elvis operator
 - constraint partial order view
 - network/graph settings UI
-- improved icons
-- types vs objects visualized in different color
+- improved view icons
+- types vs objects visualized in different color per request from Gilles
 - Document symbols for problem files
 - Domain processes and events are included into document symbols
 - Improved parsing of large domains by processing the parser output incrementally
@@ -854,7 +854,8 @@ Note for open source contributors: all notable changes to the "pddl" extension w
 
 Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
 
-[Unreleased]: https://github.com/jan-dolejsi/vscode-pddl/compare/v2.15.0...HEAD
+[Unreleased]: https://github.com/jan-dolejsi/vscode-pddl/compare/v2.15.1...HEAD
+[2.15.1]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.15.0...v2.15.1
 [2.15.0]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.14.4...v2.15.0
 [2.14.4]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.14.2...v2.14.4
 [2.14.2]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.14.1...v2.14.2
