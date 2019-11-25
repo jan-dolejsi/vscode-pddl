@@ -123,7 +123,7 @@ export class Jinja2PreProcessor extends PythonPreProcessor {
 export class NunjucksPreProcessor extends PreProcessor {
     nunjucksEnv: nunjucks.Environment;
 
-    constructor(public dataFileName: string, metaDataLine: string, metaDataLineOffset: number, preserveWhitespace: boolean) {
+    constructor(public dataFileName: string, metaDataLine: string | undefined, metaDataLineOffset: number, preserveWhitespace: boolean) {
         super(metaDataLine, metaDataLineOffset);
         this.nunjucksEnv = nunjucks.configure({ trimBlocks: false, lstripBlocks: !preserveWhitespace, throwOnUndefined: true });
         this.nunjucksEnv.addFilter('map', function (array, attribute) {

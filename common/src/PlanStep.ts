@@ -11,7 +11,7 @@ export class PlanStep {
     private objects: string[];
 
     constructor(private readonly time: number, public readonly fullActionName: string,
-        public readonly isDurative: boolean, private readonly duration: number,
+        public readonly isDurative: boolean, private readonly duration: number | undefined,
         public readonly lineIndex: number | undefined, public readonly commitment?: PlanStepCommitment) {
         let nameFragments = fullActionName.split(' ');
         this.actionName = nameFragments[0];
@@ -35,16 +35,16 @@ export class PlanStep {
     }
 
     getEndTime(): number {
-        return this.isDurative ? this.time + this.duration : this.time;
+        return this.isDurative ? this.time + this.duration! : this.time;
     }
 
-    getDuration(): number {
+    getDuration(): number | undefined {
         return this.duration;
     }
 
     equals(other: PlanStep, epsilon: number): boolean {
         if (this.isDurative) {
-            if (!other.isDurative || !PlanStep.equalsWithin(this.duration, other.duration, epsilon)) {
+            if (!other.isDurative || !PlanStep.equalsWithin(this.duration!, other.duration!, epsilon)) {
                 return false;
             }
         }
@@ -61,7 +61,7 @@ export class PlanStep {
         let output = "";
         if (this.time !== null && this.time !== undefined) { output += `${this.time.toFixed(5)}: `; }
         output += `(${this.fullActionName})`;
-        if (this.isDurative) { output += ` [${this.duration.toFixed(5)}]`; }
+        if (this.isDurative) { output += ` [${this.duration?.toFixed(5)}]`; }
         return output;
     }
 

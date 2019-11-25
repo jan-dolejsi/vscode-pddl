@@ -25,9 +25,17 @@ export class PddlPlanParser {
     private endOfBufferToBeParsedNextTime = '';
 
     private xmlPlanBuilder: XmlPlanBuilder | undefined;
+    private planTimeScale = 1;
 
     constructor(private domain: DomainInfo, private problem: ProblemInfo, public readonly options: PddlPlanParserOptions, private onPlanReady?: (plans: Plan[]) => void) {
         this.planBuilder = new PlanBuilder(options.epsilon);
+    }
+
+    setPlanMetaData(makespan: number, metric: number, statesEvaluated: number, _elapsedTimeInSeconds: number, planTimeScale: number) {
+        this.planBuilder.makespan = makespan;
+        this.planBuilder.cost = metric;
+        this.planBuilder.statesEvaluated = statesEvaluated;
+        this.planTimeScale = planTimeScale;
     }
 
     /**
@@ -56,7 +64,7 @@ export class PddlPlanParser {
     appendLine(outputLine: string): void {
 
         if (this.xmlPlanBuilder || XmlPlanBuilder.isXmlStart(outputLine)) {
-            (this.xmlPlanBuilder || (this.xmlPlanBuilder = new XmlPlanBuilder())).appendLine(outputLine);
+            (this.xmlPlanBuilder || (this.xmlPlanBuilder = new XmlPlanBuilder(this.planTimeScale))).appendLine(outputLine);
             if (this.xmlPlanBuilder.isComplete()) {
                 // extract plan
                 this.xmlPlanBuilder.getPlanSteps()
@@ -69,6 +77,7 @@ export class PddlPlanParser {
                         console.log(reason);
                     });
             }
+            return;
         }
 
         let planStep = this.planBuilder.parse(outputLine, undefined);
@@ -211,6 +220,8 @@ class XmlPlanBuilder {
 
     private xmlText = '';
 
+    constructor(private readonly planTimeScale: number) { }
+
     static isXmlStart(outputLine: string): boolean {
         return outputLine.match(/<\?xml /) !== null;
     }
@@ -225,7 +236,6 @@ class XmlPlanBuilder {
 
     async getPlanSteps(): Promise<PlanStep[]> {
         const xml2js = require('xml2js');
-        const pxd = require('parse-xsd-duration');
         let parser = new xml2js.Parser();
         var plan: any;
         try {
@@ -239,17 +249,22 @@ class XmlPlanBuilder {
             //const happeningId = happening.HappeningID[0];
             if (happening.Happening[0].ActionStart) {
                 const actionStart = happening.Happening[0].ActionStart[0];
-                const startTime = pxd.default(actionStart.ExpectedStartTime[0]);
+                const startTime = this.parseTimeStamp(actionStart.ExpectedStartTime[0]);
                 const actionName = actionStart.Name[0];
                 const actionParameters = actionStart.Parameters 
                     ? ' ' + actionStart.Parameters[0].Parameter.map((p: any) => p.Symbol[0]).join(' ') 
                     : '';
                 const isDurative = actionStart.ExpectedDuration !== undefined;
-                const duration = isDurative ? pxd.default(actionStart.ExpectedDuration[0]) : null;
+                const duration = isDurative ? this.parseTimeStamp(actionStart.ExpectedDuration[0]) : undefined;
                 steps.push(new PlanStep(startTime, actionName + actionParameters, isDurative, duration, -1));
             }
         }
         return steps;
+    }
+
+    private parseTimeStamp(timestamp: any) {
+        const pxd = require('parse-xsd-duration');
+        return pxd.default(timestamp) / this.planTimeScale;
     }
 }
 

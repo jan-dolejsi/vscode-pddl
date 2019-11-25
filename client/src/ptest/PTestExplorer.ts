@@ -96,6 +96,10 @@ export class PTestExplorer {
     async openDefinition(node: PTestNode): Promise<void> {
         if (node.kind === PTestNodeKind.Test) {
             let test = Test.fromUri(node.resource, this.context);
+            if (test === null) {
+                throw new Error("No test found at: " + node.resource);
+            }
+
             let manifest = test.getManifest();
             let manifestDocument = await workspace.openTextDocument(manifest.uri);
 
@@ -103,7 +107,7 @@ export class PTestExplorer {
 
             if (test.getLabel()) {
                 let manifestText: string = await promises.readFile(manifest.path, { encoding: "utf8" });
-                let lineIdx = manifestText.split('\n').findIndex(line => new RegExp(`"label"\\s*:\\s*"${test.getLabel()}"`).test(line));
+                let lineIdx = manifestText.split('\n').findIndex(line => new RegExp(`"label"\\s*:\\s*"${test?.getLabel()}"`).test(line));
 
                 await window.showTextDocument(manifestDocument.uri, { preview: true, viewColumn: ViewColumn.One, selection: new Range(lineIdx, 0, lineIdx, Number.MAX_SAFE_INTEGER) });
             }
@@ -130,7 +134,7 @@ export class PTestExplorer {
                 const previewOnly = test.getExpectedPlans().length === 1;
 
                 test.getExpectedPlans().forEach(async (expectedPlan) => {
-                    let path = test.toAbsolutePath(expectedPlan);
+                    let path = test!.toAbsolutePath(expectedPlan);
                     let planDocument = await workspace.openTextDocument(path);
                     await window.showTextDocument(planDocument.uri, { preview: previewOnly, viewColumn: ViewColumn.Three });
                 });
@@ -287,7 +291,7 @@ export class PTestExplorer {
 
                 if (result.outcome === PlanningOutcome.FAILURE) {
                     this.outputTestResult(test, TestOutcome.FAILED, result.elapsedTime, result.error);
-                    reject(new Error(result.error));
+                    reject(new Error(result.error || "Unknown error while planning."));
                     return;
                 } else if (result.outcome === PlanningOutcome.KILLED) {
                     this.outputTestResult(test, TestOutcome.SKIPPED, result.elapsedTime, 'Killed by the user.');

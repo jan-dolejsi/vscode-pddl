@@ -128,6 +128,10 @@ export function showError(reason: any): void {
     window.showErrorMessage(reason.message);
 }
 
+export function throwForUndefined<T>(part: string): T {
+    throw new Error(`No ${part} defined.`);
+}
+
 /**
  * Absolute path, unless it relied on a %path% location (i.e. there was no dirname). 
  * @param configuredPath a configured path to an executable

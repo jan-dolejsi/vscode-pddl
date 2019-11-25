@@ -35,7 +35,7 @@ export class GeneratedDocumentContentProvider implements TextDocumentContentProv
         workspace.onDidChangeTextDocument(e => {
             // check if the changing document represents input data for a pre-processor
             this.uriMap.forEach((testCase: Test, uri: string) => {
-                let inputChanged = testCase.getPreProcessor().getInputFiles()
+                let inputChanged = testCase.getPreProcessor()?.getInputFiles()
                     .some(inputFileName => e.document.fileName.endsWith(inputFileName));
 
                 if (inputChanged) {
@@ -80,7 +80,7 @@ export class GeneratedDocumentContentProvider implements TextDocumentContentProv
         let documentText = problemDocument.getText();
 
         try {
-            let preProcessedProblemText =  await test.getPreProcessor().transform(documentText, dirname(test.getManifest().path), this.outputWindow);
+            let preProcessedProblemText =  await test.getPreProcessor()?.transform(documentText, dirname(test.getManifest().path), this.outputWindow) || "No pre-processor configured.";
             // force parsing of the generated problem
             this.pddlWorkspace.pddlWorkspace.upsertFile(uri.toString(), PddlLanguage.PDDL, 0, preProcessedProblemText, new SimpleDocumentPositionResolver(preProcessedProblemText), true);
             return preProcessedProblemText;

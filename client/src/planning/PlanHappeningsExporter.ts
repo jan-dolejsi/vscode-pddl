@@ -24,7 +24,7 @@ export class PlanHappeningsExporter {
         this.computeHappeningsText(this.planDocument.getText());
     }
 
-    public async export() {
+    public async export(): Promise<void> {
         let defaultPlanHappeningsPath = PlanExporter.replaceExtension(this.planDocument.uri.fsPath, '.happenings');
 
         let options: SaveDialogOptions = {
@@ -38,7 +38,7 @@ export class PlanHappeningsExporter {
 
         try {
             let uri = await window.showSaveDialog(options);
-            if (uri == undefined) return; // canceled by user
+            if (uri === undefined) { return; } // canceled by user
 
             await exportToAndShow(this.happeningsText, uri);
         } catch (ex) {
@@ -69,10 +69,14 @@ export class PlanHappeningsExporter {
                 }
 
                 let happening = this.parseStepAndEnqueueEnd(line);
+                if (happening) {
+                    this.flushHappeningsBefore(happening.time);
 
-                this.flushHappeningsBefore(happening.time);
-
-                this.outputHappening(happening);
+                    this.outputHappening(happening);
+                }
+                else {
+                    console.log("Error parsing happening: " + line);
+                }
             }
         });
 
@@ -84,7 +88,7 @@ export class PlanHappeningsExporter {
         this.flushComments();
     }
 
-    parseStepAndEnqueueEnd(line: string): Happening {
+    parseStepAndEnqueueEnd(line: string): Happening | null {
         PddlPlanParser.planStepPattern.lastIndex = 0;
         let group = PddlPlanParser.planStepPattern.exec(line);
 
@@ -114,7 +118,7 @@ export class PlanHappeningsExporter {
     getActionCount(action: string): number {
         let prevCount = -1;
         if (this.actionCounter.has(action)){
-            prevCount = this.actionCounter.get(action);
+            prevCount = this.actionCounter.get(action)!;
         }
 
         let newCount = prevCount +1;

@@ -1,5 +1,10 @@
 # PDDL support - What's new?
 
+## [Unreleased] Fixes
+
+- async planner service output parsing to support more than JSON
+- async planner service ptest support for local configuration.json file
+
 ## [2.15.1] Fixes and upgrades
 
 - upgrade to vscode 1.40
@@ -842,11 +847,8 @@ Simplified snippets and added tabstops/placeholders to them, so they are easy to
 - Interactive stepping through plans (aka debugging).
 - Icons: https://code.visualstudio.com/updates/v1_31#_updated-octicons
 - CodeAction to remove unnecessary requirements etc..
-- Predicate/function usage decoration and dependency map dispayed via the Call Hierarchy
-
-## [Unreleased]
-
-* more precise context sensitive auto completion
+- Predicate/function usage decoration and dependency map displayed via the Call Hierarchy
+- more precise context sensitive auto completion
 
 ## Note to contributors
 

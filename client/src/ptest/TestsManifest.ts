@@ -18,14 +18,15 @@ export class TestsManifest {
     path: string;
     testCases: Test[] = [];
 
-    constructor(public defaultDomain: string, public defaultProblem: string, public defaultOptions: string, public uri: Uri) {
+    constructor(public readonly defaultDomain: string | undefined, public readonly defaultProblem: string | undefined,
+        public readonly defaultOptions: string | undefined, public readonly uri: Uri) {
         this.path = uri.fsPath;
     }
 
     static fromJSON(path: string, json: any, context: PddlExtensionContext) {
-        let defaultDomain = json["defaultDomain"];
-        let defaultProblem = json["defaultProblem"];
-        let defaultOptions = json["defaultOptions"];
+        let defaultDomain: string | undefined = json["defaultDomain"];
+        let defaultProblem: string | undefined = json["defaultProblem"];
+        let defaultOptions: string | undefined = json["defaultOptions"];
         let uri = Uri.file(path);
 
         let manifest = new TestsManifest(defaultDomain, defaultProblem, defaultOptions, uri);
@@ -47,9 +48,9 @@ export class TestsManifest {
 
     async store(): Promise<void> {
         let obj: any = {};
-        if (this.defaultDomain !== null) { obj["defaultDomain"] = this.defaultDomain; }
-        if (this.defaultProblem !== null) { obj["defaultProblem"] = this.defaultProblem; }
-        if (this.defaultOptions !== null) { obj["defaultOptions"] = this.defaultOptions; }
+        if (this.defaultDomain !== undefined) { obj["defaultDomain"] = this.defaultDomain; }
+        if (this.defaultProblem !== undefined) { obj["defaultProblem"] = this.defaultProblem; }
+        if (this.defaultOptions !== undefined) { obj["defaultOptions"] = this.defaultOptions; }
         let cases: Test[] = [];
         this.testCases.forEach(test => cases.push(test.toJSON()));
         if (cases.length > 0) { obj["cases"] = cases; }
