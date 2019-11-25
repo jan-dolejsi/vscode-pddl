@@ -16,6 +16,7 @@ import { toLanguage, isPlan } from '../workspace/workspaceUtils';
 
 import { NormalizedPlanDocumentContentProvider } from './NormalizedPlanDocumentContentProvider';
 import { PddlConfiguration } from '../configuration';
+import { instrumentOperationAsVsCodeCommand } from "vscode-extension-telemetry-wrapper";
 
 
 /**
@@ -32,7 +33,7 @@ export class PlanComparer implements Disposable {
         this.provider = new NormalizedPlanDocumentContentProvider(pddlWorkspace, pddlConfiguration, true);
         this.disposables.push(workspace.registerTextDocumentContentProvider(this.normalizedPlanScheme, this.provider));
 
-        this.disposables.push(commands.registerCommand("pddl.plan.compareNormalized",
+        this.disposables.push(instrumentOperationAsVsCodeCommand("pddl.plan.compareNormalized",
             async (rightPlanUri: Uri, selectedFiles: Uri[]) => {
                 if (selectedFiles.length !== 2) {
                     window.showErrorMessage("Hold down the Ctrl/Command key and select two plan files.");
@@ -54,7 +55,7 @@ export class PlanComparer implements Disposable {
             })
         );
 
-        this.disposables.push(commands.registerCommand("pddl.plan.normalize", async (uri: Uri) => {
+        this.disposables.push(instrumentOperationAsVsCodeCommand("pddl.plan.normalize", async (uri: Uri) => {
             if (!uri && window.activeTextEditor) { uri = window.activeTextEditor.document.uri; }
             let planDoc = await workspace.openTextDocument(uri);
             if (!isPlan(planDoc)) {

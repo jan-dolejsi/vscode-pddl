@@ -16,6 +16,7 @@ import * as afs from '../../../common/src/asyncfs';
 import { Val } from '../validation/Val';
 import { VAL_DOWNLOAD_COMMAND, ValDownloadOptions } from '../validation/valCommand';
 import { PTEST_VIEW } from '../ptest/PTestCommands';
+import { instrumentOperationAsVsCodeCommand } from "vscode-extension-telemetry-wrapper";
 
 export const SHOULD_SHOW_OVERVIEW_PAGE = 'shouldShowOverviewPage';
 export const LAST_SHOWN_OVERVIEW_PAGE = 'lastShownOverviewPage';
@@ -28,7 +29,7 @@ export class OverviewPage {
     private readonly ICONS_EXTENSION_NAME = "vscode-icons-team.vscode-icons";
 
     constructor(private context: ExtensionContext, private pddlConfiguration: PddlConfiguration, private val: Val) {
-        commands.registerCommand("pddl.showOverview", () => this.showWelcomePage(true));
+        instrumentOperationAsVsCodeCommand("pddl.showOverview", () => this.showWelcomePage(true));
         workspace.onDidChangeConfiguration(_ => this.updatePageConfiguration(), undefined, this.context.subscriptions);
         extensions.onDidChange(() => this.updateIconsAlerts(), this.context.subscriptions);
         this.updateIconsAlerts();

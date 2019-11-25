@@ -5,7 +5,7 @@
 'use strict';
 
 import {
-    window, workspace, commands, Uri,
+    window, workspace, Uri,
     ViewColumn, ExtensionContext, TextDocument, Disposable, Event, EventEmitter, TextEditor, WebviewOptions, WebviewPanelOptions
 } from 'vscode';
 
@@ -18,6 +18,7 @@ import { CodePddlWorkspace } from '../workspace/CodePddlWorkspace';
 import { getWebViewHtml, createPddlExtensionContext, UriMap, showError } from '../utils';
 import { DomainViewPanel } from './DomainViewPanel';
 import { WebviewPanelAdapter } from './view';
+import { instrumentOperationAsVsCodeCommand } from "vscode-extension-telemetry-wrapper";
 
 /**
  * Base-class for different domain views.
@@ -37,14 +38,14 @@ export abstract class DomainView<TRendererOptions, TRenderData> extends Disposab
 
         super(() => this.dispose());
 
-        context.subscriptions.push(commands.registerCommand(options.viewCommand, async domainUri => {
+        context.subscriptions.push(instrumentOperationAsVsCodeCommand(options.viewCommand, async domainUri => {
             let domainDocument = await getDomainDocument(domainUri);
             if (domainDocument) {
                 return this.revealOrCreatePreview(domainDocument, ViewColumn.Beside).catch(showError);
             }
         }));
 
-        context.subscriptions.push(commands.registerCommand(options.insetViewCommand, async (domainUri: Uri, line: number) => {
+        context.subscriptions.push(instrumentOperationAsVsCodeCommand(options.insetViewCommand, async (domainUri: Uri, line: number) => {
             if (window.activeTextEditor && domainUri && line) {
                 if (domainUri.toString() === window.activeTextEditor.document.uri.toString()) {
                     this.showInset(window.activeTextEditor, line, options.insetHeight).catch(showError);

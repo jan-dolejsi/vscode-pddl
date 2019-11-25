@@ -4,7 +4,7 @@
  * ------------------------------------------------------------------------------------------ */
 'use strict';
 
-import { workspace, window, ExtensionContext, commands, languages } from 'vscode';
+import { workspace, window, ExtensionContext, languages } from 'vscode';
 
 import { Planning } from './planning/planning';
 import { PddlWorkspace } from '../../common/src/PddlWorkspace';
@@ -24,7 +24,7 @@ import { HappeningsValidator } from './diagnostics/HappeningsValidator';
 import { PlanComparer } from './comparison/PlanComparer';
 import { Catalog } from './catalog/Catalog';
 
-import { initialize, instrumentOperation } from "vscode-extension-telemetry-wrapper";
+import { initialize, instrumentOperation, instrumentOperationAsVsCodeCommand } from "vscode-extension-telemetry-wrapper";
 import { KEY } from './TelemetryInstrumentation';
 import { SearchDebugger } from './searchDebugger/SearchDebugger';
 import { PlanningDomainsSessions } from './session/PlanningDomainsSessions';
@@ -85,14 +85,14 @@ function activateWithTelemetry(_operationId: string, context: ExtensionContext) 
 	let planValidator = new PlanValidator(planning.output, codePddlWorkspace, pddlConfiguration, context);
 	let happeningsValidator = new HappeningsValidator(planning.output, codePddlWorkspace, pddlConfiguration, context);
 
-	let configureParserCommand = commands.registerCommand(PDDL_CONFIGURE_PARSER, () => {
+	let configureParserCommand = instrumentOperationAsVsCodeCommand(PDDL_CONFIGURE_PARSER, () => {
 		pddlConfiguration.askNewParserPath();
 	});
 
 	let searchDebugger = new SearchDebugger(context);
 	planning.addOptionsProvider(searchDebugger);
 
-	let loginParserServiceCommand = commands.registerCommand(PDDL_LOGIN_PARSER_SERVICE, () => {
+	let loginParserServiceCommand = instrumentOperationAsVsCodeCommand(PDDL_LOGIN_PARSER_SERVICE, () => {
 		let scopePromise = pddlConfiguration.askConfigurationScope();
 		scopePromise.then((scope) => {
 			if (scope === undefined) { return; } // canceled
@@ -108,7 +108,7 @@ function activateWithTelemetry(_operationId: string, context: ExtensionContext) 
 		});
 	});
 
-	let updateTokensParserServiceCommand = commands.registerCommand(PDDL_UPDATE_TOKENS_PARSER_SERVICE, () => {
+	let updateTokensParserServiceCommand = instrumentOperationAsVsCodeCommand(PDDL_UPDATE_TOKENS_PARSER_SERVICE, () => {
 		let scopePromise = pddlConfiguration.askConfigurationScope();
 		scopePromise.then((scope) => {
 			if (scope === undefined) { return; } // canceled
@@ -124,11 +124,11 @@ function activateWithTelemetry(_operationId: string, context: ExtensionContext) 
 		});
 	});
 
-	let configurePlannerCommand = commands.registerCommand(PDDL_CONFIGURE_PLANNER, () => {
+	let configurePlannerCommand = instrumentOperationAsVsCodeCommand(PDDL_CONFIGURE_PLANNER, () => {
 		pddlConfiguration.askNewPlannerPath();
 	});
 
-	let loginPlannerServiceCommand = commands.registerCommand(PDDL_LOGIN_PLANNER_SERVICE, () => {
+	let loginPlannerServiceCommand = instrumentOperationAsVsCodeCommand(PDDL_LOGIN_PLANNER_SERVICE, () => {
 		let scopePromise = pddlConfiguration.askConfigurationScope();
 		scopePromise.then((scope) => {
 			if (scope === undefined) { return; } // canceled
@@ -144,7 +144,7 @@ function activateWithTelemetry(_operationId: string, context: ExtensionContext) 
 		});
 	});
 
-	let updateTokensPlannerServiceCommand = commands.registerCommand(PDDL_UPDATE_TOKENS_PLANNER_SERVICE, () => {
+	let updateTokensPlannerServiceCommand = instrumentOperationAsVsCodeCommand(PDDL_UPDATE_TOKENS_PLANNER_SERVICE, () => {
 		let scopePromise = pddlConfiguration.askConfigurationScope();
 		scopePromise.then((scope) => {
 			if (scope === undefined) { return; } // canceled
@@ -160,7 +160,7 @@ function activateWithTelemetry(_operationId: string, context: ExtensionContext) 
 		});
 	});
 
-	context.subscriptions.push(commands.registerCommand(PDDL_CONFIGURE_VALIDATOR, () => {
+	context.subscriptions.push(instrumentOperationAsVsCodeCommand(PDDL_CONFIGURE_VALIDATOR, () => {
 		pddlConfiguration.askNewValidatorPath();
 	}));
 
@@ -230,7 +230,7 @@ function activateWithTelemetry(_operationId: string, context: ExtensionContext) 
 		}
 	});
 	
-	let configureCommand = commands.registerCommand(PDDL_CONFIGURE_COMMAND, (configurationName: string) => {
+	let configureCommand = instrumentOperationAsVsCodeCommand(PDDL_CONFIGURE_COMMAND, (configurationName: string) => {
 		pddlConfiguration.askConfiguration(configurationName).catch(showError);
 	});
 

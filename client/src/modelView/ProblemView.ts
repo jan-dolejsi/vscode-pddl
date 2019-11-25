@@ -5,9 +5,10 @@
 'use strict';
 
 import {
-    window, workspace, commands, Uri,
+    window, workspace, Uri,
     ViewColumn, ExtensionContext, TextDocument, Disposable, Event, EventEmitter, TextEditor, WebviewOptions, WebviewPanelOptions
 } from 'vscode';
+import { instrumentOperationAsVsCodeCommand } from "vscode-extension-telemetry-wrapper";
 
 import { isPddl, getDomainFileForProblem } from '../workspace/workspaceUtils';
 import { DomainInfo } from '../../../common/src/DomainInfo';
@@ -38,14 +39,14 @@ export abstract class ProblemView<TRendererOptions, TRenderData> extends Disposa
 
         super(() => this.dispose());
 
-        context.subscriptions.push(commands.registerCommand(options.viewCommand, async problemUri => {
+        context.subscriptions.push(instrumentOperationAsVsCodeCommand(options.viewCommand, async problemUri => {
             let problemDocument = await getProblemDocument(problemUri);
             if (problemDocument) {
                 return this.revealOrCreatePreview(problemDocument, ViewColumn.Beside).catch(showError);
             }
         }));
 
-        context.subscriptions.push(commands.registerCommand(options.insetViewCommand, async (problemUri: Uri, line: number) => {
+        context.subscriptions.push(instrumentOperationAsVsCodeCommand(options.insetViewCommand, async (problemUri: Uri, line: number) => {
             if (window.activeTextEditor && problemUri && line) {
                 if (problemUri.toString() === window.activeTextEditor.document.uri.toString()) {
                     this.showInset(window.activeTextEditor, line, options.insetHeight).catch(showError);

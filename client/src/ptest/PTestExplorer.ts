@@ -7,6 +7,7 @@
 import {
     workspace, TreeView, window, commands, ViewColumn, Uri, ProgressLocation, Range, SaveDialogOptions, Position, Disposable
 } from 'vscode';
+import { instrumentOperationAsVsCodeCommand } from "vscode-extension-telemetry-wrapper";
 import { dirname } from 'path';
 import { readFileSync, promises } from 'fs';
 import * as afs from '../../../common/src/asyncfs';
@@ -42,22 +43,22 @@ export class PTestExplorer {
         this.pTestViewer = window.createTreeView('pddl.tests.explorer', { treeDataProvider: this.pTestTreeDataProvider, showCollapseAll: true });
         this.subscribe(this.pTestViewer);
 
-        this.subscribe(commands.registerCommand('pddl.tests.refresh', () => this.pTestTreeDataProvider.refresh()));
-        this.subscribe(commands.registerCommand('pddl.tests.run', node => this.runTest(node).catch(showError)));
-        this.subscribe(commands.registerCommand('pddl.tests.runAll', node => this.findAndRunTests(node).catch(showError)));
-        this.subscribe(commands.registerCommand(PTEST_VIEW, nodeOrUri => {
+        this.subscribe(instrumentOperationAsVsCodeCommand('pddl.tests.refresh', () => this.pTestTreeDataProvider.refresh()));
+        this.subscribe(instrumentOperationAsVsCodeCommand('pddl.tests.run', node => this.runTest(node).catch(showError)));
+        this.subscribe(instrumentOperationAsVsCodeCommand('pddl.tests.runAll', node => this.findAndRunTests(node).catch(showError)));
+        this.subscribe(instrumentOperationAsVsCodeCommand(PTEST_VIEW, nodeOrUri => {
             if (nodeOrUri instanceof Uri) {
                 this.openTestByUri(<Uri>nodeOrUri).catch(showError);
             } else {
                 this.openTest(nodeOrUri).catch(showError);
             }
         }));
-        this.subscribe(commands.registerCommand(PTEST_VIEW_PROBLEM, test => this.openProblemFile(test, ViewColumn.Beside).catch(showError)));
-        this.subscribe(commands.registerCommand('pddl.tests.viewDefinition', node => this.openDefinition(node).catch(showError)));
-        this.subscribe(commands.registerCommand('pddl.tests.viewExpectedPlans', node => this.openExpectedPlans(node).catch(showError)));
-        this.subscribe(commands.registerCommand('pddl.tests.problemSaveAs', () => this.saveProblemAs().catch(showError)));
+        this.subscribe(instrumentOperationAsVsCodeCommand(PTEST_VIEW_PROBLEM, test => this.openProblemFile(test, ViewColumn.Beside).catch(showError)));
+        this.subscribe(instrumentOperationAsVsCodeCommand('pddl.tests.viewDefinition', node => this.openDefinition(node).catch(showError)));
+        this.subscribe(instrumentOperationAsVsCodeCommand('pddl.tests.viewExpectedPlans', node => this.openExpectedPlans(node).catch(showError)));
+        this.subscribe(instrumentOperationAsVsCodeCommand('pddl.tests.problemSaveAs', () => this.saveProblemAs().catch(showError)));
 
-        this.subscribe(commands.registerCommand(PTEST_REVEAL, nodeUri =>
+        this.subscribe(instrumentOperationAsVsCodeCommand(PTEST_REVEAL, nodeUri =>
             this.pTestViewer.reveal(this.pTestTreeDataProvider.findNodeByResource(nodeUri), { select: true, expand: true }))
         );
 

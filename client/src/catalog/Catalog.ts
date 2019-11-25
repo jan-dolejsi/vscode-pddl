@@ -9,6 +9,7 @@ import { CatalogEntry, CatalogEntryKind, Collection, Domain, Problem } from './C
 import { PlanningDomains } from './PlanningDomains';
 import request = require('request');
 import { join } from 'path';
+import { instrumentOperationAsVsCodeCommand } from "vscode-extension-telemetry-wrapper";
 
 const COMMAND_SHOW_DOMAIN_PROBLEM = 'pddl.planning.domains.show';
 export const HTTPDDL = 'httpddl';
@@ -25,7 +26,7 @@ export class Catalog {
         context.subscriptions.push(workspace.registerTextDocumentContentProvider(HTTPDDL, catalogContentProvider));
         context.subscriptions.push(workspace.registerTextDocumentContentProvider(HTTPLAN, new CatalogPlanProvider()));
 
-        context.subscriptions.push(commands.registerCommand(COMMAND_SHOW_DOMAIN_PROBLEM,
+        context.subscriptions.push(instrumentOperationAsVsCodeCommand(COMMAND_SHOW_DOMAIN_PROBLEM,
             (domain_url: string, problem_url: string, plan_url: string) =>
                 this.showProblem(domain_url, problem_url, plan_url)));
     }

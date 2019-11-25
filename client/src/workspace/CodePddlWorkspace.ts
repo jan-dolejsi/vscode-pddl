@@ -4,7 +4,8 @@
  * ------------------------------------------------------------------------------------------ */
 'use strict';
 
-import { Uri, TextDocument, commands, ExtensionContext, workspace, window, TextEditorRevealType } from 'vscode';
+import { Uri, TextDocument, ExtensionContext, workspace, window, TextEditorRevealType } from 'vscode';
+import { instrumentOperationAsVsCodeCommand } from "vscode-extension-telemetry-wrapper";
 import { toLanguage, isAnyPddl } from './workspaceUtils';
 import { FileInfo } from '../../../common/src/FileInfo';
 import { PddlWorkspace } from '../../../common/src/PddlWorkspace';
@@ -26,7 +27,7 @@ export class CodePddlWorkspace {
      * @param pddlConfiguration pddl extension configuration. When not supplied , the instance is for testing only.
      */
     private constructor(public readonly pddlWorkspace: PddlWorkspace, context?: ExtensionContext, pddlConfiguration?: PddlConfiguration) {
-        let revealActionCommand = commands.registerCommand('pddl.revealAction', (domainFileUri: Uri, actionName: String) => {
+        let revealActionCommand = instrumentOperationAsVsCodeCommand('pddl.revealAction', (domainFileUri: Uri, actionName: String) => {
             revealAction(<DomainInfo>pddlWorkspace.getFileInfo(domainFileUri.toString()), actionName);
         });
 

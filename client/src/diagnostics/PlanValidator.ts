@@ -22,6 +22,7 @@ import { DomainAndProblem, getDomainAndProblemForPlan, isPlan, NoProblemAssociat
 import { showError } from '../utils';
 import { VAL_DOWNLOAD_COMMAND } from '../validation/valCommand';
 import { CodePddlWorkspace } from '../workspace/CodePddlWorkspace';
+import { instrumentOperationAsVsCodeCommand } from "vscode-extension-telemetry-wrapper";
 
 export const PDDL_PLAN_VALIDATE = 'pddl.plan.validate';
 
@@ -32,7 +33,7 @@ export class PlanValidator {
 
     constructor(private output: OutputChannel, public codePddlWorkspace: CodePddlWorkspace, public plannerConfiguration: PddlConfiguration, context: ExtensionContext) {
 
-        context.subscriptions.push(commands.registerCommand(PDDL_PLAN_VALIDATE,
+        context.subscriptions.push(instrumentOperationAsVsCodeCommand(PDDL_PLAN_VALIDATE,
             async (planUri: Uri) => this.validateActiveDocument(planUri).catch(showError)));
     }
 

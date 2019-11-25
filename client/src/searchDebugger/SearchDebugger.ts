@@ -4,7 +4,8 @@
  * ------------------------------------------------------------------------------------------ */
 'use strict';
 
-import { ExtensionContext, commands, window, workspace, StatusBarItem, StatusBarAlignment } from "vscode";
+import { ExtensionContext, window, workspace, StatusBarItem, StatusBarAlignment } from "vscode";
+import { instrumentOperationAsVsCodeCommand } from "vscode-extension-telemetry-wrapper";
 
 import * as express from 'express';
 import bodyParser = require('body-parser');
@@ -26,10 +27,10 @@ export class SearchDebugger implements PlannerOptionsProvider {
     static readonly TOGGLE_COMMAND = "pddl.searchDebugger.toggle";
 
     constructor(private context: ExtensionContext) {
-        this.context.subscriptions.push(commands.registerCommand("pddl.searchDebugger.start", () => this.tryStart()));
-        this.context.subscriptions.push(commands.registerCommand("pddl.searchDebugger.stop", () => this.tryStop()));
-        this.context.subscriptions.push(commands.registerCommand("pddl.searchDebugger.reset", () => this.reset()));
-        this.context.subscriptions.push(commands.registerCommand("pddl.searchDebugger.mock", () => this.mock()));
+        this.context.subscriptions.push(instrumentOperationAsVsCodeCommand("pddl.searchDebugger.start", () => this.tryStart()));
+        this.context.subscriptions.push(instrumentOperationAsVsCodeCommand("pddl.searchDebugger.stop", () => this.tryStop()));
+        this.context.subscriptions.push(instrumentOperationAsVsCodeCommand("pddl.searchDebugger.reset", () => this.reset()));
+        this.context.subscriptions.push(instrumentOperationAsVsCodeCommand("pddl.searchDebugger.mock", () => this.mock()));
 
         this.view = new SearchDebuggerView(this.context);
     }
@@ -194,7 +195,7 @@ export class SearchDebugger implements PlannerOptionsProvider {
             this.statusBarItem = window.createStatusBarItem(StatusBarAlignment.Right);
             this.context.subscriptions.push(this.statusBarItem);
 
-            this.context.subscriptions.push(commands.registerCommand(SearchDebugger.TOGGLE_COMMAND, () => this.toggle()));
+            this.context.subscriptions.push(instrumentOperationAsVsCodeCommand(SearchDebugger.TOGGLE_COMMAND, () => this.toggle()));
             this.statusBarItem.command = SearchDebugger.TOGGLE_COMMAND;
             this.statusBarItem.show();
         }

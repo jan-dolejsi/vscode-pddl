@@ -8,6 +8,7 @@ import {
     window, workspace, commands, OutputChannel, Uri,
     MessageItem, ExtensionContext, ProgressLocation, EventEmitter, Event, CancellationToken, Progress, QuickPickItem
 } from 'vscode';
+import { instrumentOperationAsVsCodeCommand } from "vscode-extension-telemetry-wrapper";
 
 import { PddlWorkspace } from '../../../common/src/PddlWorkspace';
 import { PddlSyntaxTreeBuilder } from '../../../common/src/PddlSyntaxTreeBuilder';
@@ -63,7 +64,7 @@ export class Planning implements PlannerResponseHandler {
 
         context.subscriptions.push(this.planView = new PlanView(context, codePddlWorkspace));
 
-        context.subscriptions.push(commands.registerCommand('pddl.planAndDisplayResult',
+        context.subscriptions.push(instrumentOperationAsVsCodeCommand('pddl.planAndDisplayResult',
             async (domainUri: Uri, problemUri: Uri, workingFolder: string, options: string) => {
                 if (problemUri) {
                     await this.planByUri(domainUri, problemUri, workingFolder, options).catch(showError);
@@ -73,9 +74,9 @@ export class Planning implements PlannerResponseHandler {
             })
         );
 
-        context.subscriptions.push(commands.registerCommand(PDDL_STOP_PLANNER, () => this.stopPlanner()));
+        context.subscriptions.push(instrumentOperationAsVsCodeCommand(PDDL_STOP_PLANNER, () => this.stopPlanner()));
 
-        context.subscriptions.push(commands.registerCommand(PDDL_GENERATE_PLAN_REPORT, async (plans: Plan[], selectedPlan: number) => {
+        context.subscriptions.push(instrumentOperationAsVsCodeCommand(PDDL_GENERATE_PLAN_REPORT, async (plans: Plan[], selectedPlan: number) => {
             if (plans !== null) {
                 let width = workspace.getConfiguration(CONF_PDDL).get<number>(PLAN_REPORT_EXPORT_WIDTH, 200);
                 await new PlanReportGenerator(context, { displayWidth: width, selfContained: true }).export(plans, selectedPlan);
@@ -84,7 +85,7 @@ export class Planning implements PlannerResponseHandler {
             }
         }));
 
-        context.subscriptions.push(commands.registerCommand(PDDL_EXPORT_PLAN, (plan: Plan) => {
+        context.subscriptions.push(instrumentOperationAsVsCodeCommand(PDDL_EXPORT_PLAN, (plan: Plan) => {
             if (plan) {
                 new PlanExporter(plan).export();
             } else {
@@ -92,7 +93,7 @@ export class Planning implements PlannerResponseHandler {
             }
         }));
 
-        context.subscriptions.push(commands.registerCommand(PDDL_CONVERT_PLAN_TO_HAPPENINGS, async () => {
+        context.subscriptions.push(instrumentOperationAsVsCodeCommand(PDDL_CONVERT_PLAN_TO_HAPPENINGS, async () => {
             if (window.activeTextEditor && isPlan(window.activeTextEditor.document)) {
                 let epsilon = plannerConfiguration.getEpsilonTimeStep();
                 new PlanHappeningsExporter(window.activeTextEditor.document, epsilon).export();
@@ -101,7 +102,7 @@ export class Planning implements PlannerResponseHandler {
             }
         }));
 
-        context.subscriptions.push(commands.registerCommand(PDDL_CONVERT_HAPPENINGS_TO_PLAN, async () => {
+        context.subscriptions.push(instrumentOperationAsVsCodeCommand(PDDL_CONVERT_HAPPENINGS_TO_PLAN, async () => {
             if (window.activeTextEditor && isHappenings(window.activeTextEditor.document)) {
                 let epsilon = plannerConfiguration.getEpsilonTimeStep();
                 new HappeningsPlanExporter(window.activeTextEditor.document, epsilon).export();
@@ -110,7 +111,7 @@ export class Planning implements PlannerResponseHandler {
             }
         }));
 
-        context.subscriptions.push(commands.registerCommand("pddl.syntaxTree", () => {
+        context.subscriptions.push(instrumentOperationAsVsCodeCommand("pddl.syntaxTree", () => {
             if (window.activeTextEditor && isPddl(window.activeTextEditor.document)) {
                 let index = window.activeTextEditor.document.offsetAt(window.activeTextEditor.selection.active);
                 const pddlSyntaxTreeBuilder = new PddlSyntaxTreeBuilder(window.activeTextEditor.document.getText());
@@ -127,7 +128,7 @@ export class Planning implements PlannerResponseHandler {
             }
         }));
 
-        context.subscriptions.push(commands.registerCommand("pddl.configureTarget", () => commands.executeCommand(PDDL_CONFIGURE_COMMAND, "pddlPlanner.executionTarget")));
+        context.subscriptions.push(instrumentOperationAsVsCodeCommand("pddl.configureTarget", () => commands.executeCommand(PDDL_CONFIGURE_COMMAND, "pddlPlanner.executionTarget")));
     }
 
     addOptionsProvider(optionsProvider: PlannerOptionsProvider) {

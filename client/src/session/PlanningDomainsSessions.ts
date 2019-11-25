@@ -5,6 +5,7 @@
 'use strict';
 
 import { ExtensionContext, window, Uri, commands, workspace, Disposable, WorkspaceFolder, QuickPickItem, ViewColumn, SourceControl, env } from 'vscode';
+import { instrumentOperationAsVsCodeCommand } from "vscode-extension-telemetry-wrapper";
 import { firstIndex, showError } from '../utils';
 import * as afs from '../../../common/src/asyncfs';
 import * as path from 'path';
@@ -36,47 +37,47 @@ export class PlanningDomainsSessions {
 
         this.subscribe(window.registerUriHandler(new SessionUriHandler()));
 
-        this.subscribe(commands.registerCommand(SESSION_COMMAND_LOAD,
+        this.subscribe(instrumentOperationAsVsCodeCommand(SESSION_COMMAND_LOAD,
             (sessionId?: string, workspaceUri?: Uri) => {
                 this.tryOpenSession(context, sessionId, workspaceUri);
             }));
 
         this.subscribe(workspace.registerTextDocumentContentProvider(SESSION_SCHEME, this.sessionDocumentContentProvider));
 
-        this.subscribe(commands.registerCommand("pddl.planning.domains.session.refresh", async (sourceControlPane: SourceControl) => {
+        this.subscribe(instrumentOperationAsVsCodeCommand("pddl.planning.domains.session.refresh", async (sourceControlPane: SourceControl) => {
             let sourceControl = await this.pickSourceControl(sourceControlPane);
             if (sourceControl) { sourceControl.refresh(); }
         }));
-        this.subscribe(commands.registerCommand(SESSION_COMMAND_REFRESH_ALL, async () => {
+        this.subscribe(instrumentOperationAsVsCodeCommand(SESSION_COMMAND_REFRESH_ALL, async () => {
             this.sessionSourceControlRegister.forEach(async sourceControl => await sourceControl.refresh());
         }));
-        this.subscribe(commands.registerCommand("pddl.planning.domains.session.discard", async (sourceControlPane: SourceControl) => {
+        this.subscribe(instrumentOperationAsVsCodeCommand("pddl.planning.domains.session.discard", async (sourceControlPane: SourceControl) => {
             let sourceControl = await this.pickSourceControl(sourceControlPane);
             if (sourceControl) { sourceControl.resetFilesToCheckedOutVersion(); }
         }));
-        this.subscribe(commands.registerCommand(SESSION_COMMAND_CHECKOUT,
+        this.subscribe(instrumentOperationAsVsCodeCommand(SESSION_COMMAND_CHECKOUT,
             async (sourceControl: SessionSourceControl, newVersion?: number) => {
                 sourceControl = sourceControl || await this.pickSourceControl();
                 if (sourceControl) { sourceControl.tryCheckout(newVersion); }
             }));
-        this.subscribe(commands.registerCommand("pddl.planning.domains.session.commit", async (sourceControlPane: SourceControl) => {
+        this.subscribe(instrumentOperationAsVsCodeCommand("pddl.planning.domains.session.commit", async (sourceControlPane: SourceControl) => {
             let sourceControl = await this.pickSourceControl(sourceControlPane);
             if (sourceControl) { sourceControl.commitAll(); }
         }));
-        this.subscribe(commands.registerCommand("pddl.planning.domains.session.open", async (sourceControlPane: SourceControl) => {
+        this.subscribe(instrumentOperationAsVsCodeCommand("pddl.planning.domains.session.open", async (sourceControlPane: SourceControl) => {
             let sourceControl = await this.pickSourceControl(sourceControlPane);
             if (sourceControl) { this.openInBrowser(sourceControl.getSession()).catch(showError); }
         }));
-        this.subscribe(commands.registerCommand("pddl.planning.domains.session.duplicate", async (sourceControlPane: SourceControl) => {
+        this.subscribe(instrumentOperationAsVsCodeCommand("pddl.planning.domains.session.duplicate", async (sourceControlPane: SourceControl) => {
             let sourceControl = await this.pickSourceControl(sourceControlPane);
             if (sourceControl) { this.duplicateAsWritable(sourceControl).catch(showError); }
         }));
-        this.subscribe(commands.registerCommand("pddl.planning.domains.session.share", async (sourceControlPane: SourceControl) => {
+        this.subscribe(instrumentOperationAsVsCodeCommand("pddl.planning.domains.session.share", async (sourceControlPane: SourceControl) => {
             let sourceControl = await this.pickSourceControl(sourceControlPane);
             if (sourceControl) { this.shareByEmail(sourceControl.getSession(), 'someone@somewhere.else', false).catch(showError); }
         }));
 
-        this.subscribe(commands.registerCommand("pddl.planning.domains.session.generateClassroom", async (sourceControlPane: SourceControl) => {
+        this.subscribe(instrumentOperationAsVsCodeCommand("pddl.planning.domains.session.generateClassroom", async (sourceControlPane: SourceControl) => {
             let sourceControl = await this.pickSourceControl(sourceControlPane);
             if (sourceControl) { this.generateClassroom(sourceControl); }
         }));
