@@ -236,7 +236,9 @@ export class OverviewPage {
     }
 
     async getHtml(webview: Webview): Promise<string> {
-        return getWebViewHtml(createPddlExtensionContext(this.context), this.CONTENT_FOLDER, 'overview.html', webview);
+        return getWebViewHtml(createPddlExtensionContext(this.context), {
+            relativePath: this.CONTENT_FOLDER, htmlFileName: 'overview.html'
+        }, webview);
     }
 
     updateIconsAlerts(): void {

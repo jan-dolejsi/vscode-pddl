@@ -71,7 +71,9 @@ export class PTestReportView {
     }
 
     async getHtml(webview: Webview): Promise<string> {
-        let html = await getWebViewHtml(this.context, this.CONTENT_FOLDER, 'page.html', webview);
+        let html = await getWebViewHtml(this.context, {
+            relativePath: this.CONTENT_FOLDER, htmlFileName: 'page.html'
+        }, webview);
 
         let tableRowsHtml = this.report.getManifests().map(manifest => this.renderManifestRow(manifest));
 

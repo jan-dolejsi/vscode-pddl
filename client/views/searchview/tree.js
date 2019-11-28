@@ -31,7 +31,8 @@ function createTree() {
                 blockShifting: true,
                 edgeMinimization: true,
                 parentCentralization: true,
-                levelSeparation: 180
+                levelSeparation: 180,
+                shakeTowards: "roots" // vs. "leaves"
             }
         },
         interaction: {
@@ -166,7 +167,7 @@ function toNode(newState) {
         if (newState.isDeadEnd) {
             node['group'] = 'deadEnd';
         } else if (newState.h == 0) {
-            node['group'] = 'goal';
+            node['group'] = 'goal'; // todo: this is a wrong assumption
         }
     }
     return node;
@@ -221,9 +222,11 @@ function showPlanOnTree(planStates) {
 function selectTreeNode(id) {
     if (id !== null) {
         network.selectNodes([id]);
+        network.focus(id, { animation: true, locked: false})
     }
     else {
         network.selectNodes([]);
+        network.releaseNode();
     }
 }
 

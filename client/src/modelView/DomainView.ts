@@ -163,7 +163,10 @@ export abstract class DomainView<TRendererOptions, TRenderData> extends Disposab
             return viewPanel.getError()!.message;
         }
         else {
-            return getWebViewHtml(createPddlExtensionContext(this.context), this.options.content, this.options.webviewHtmlPath, viewPanel.getPanel().webview);
+            return getWebViewHtml(createPddlExtensionContext(this.context), {
+                relativePath: this.options.content,
+                htmlFileName: this.options.webviewHtmlPath
+            }, viewPanel.getPanel().webview);
         }
     }
 

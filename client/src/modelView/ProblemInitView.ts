@@ -106,7 +106,8 @@ class ProblemInitRenderer implements ProblemRenderer<ProblemInitViewOptions, Pro
                 relationships: renderer.getRelationships()
             },
             typeProperties: asSerializable(renderer.getTypeProperties()),
-            typeRelationships: asSerializable(renderer.getTypeRelationships())
+            typeRelationships: asSerializable(renderer.getTypeRelationships()),
+            scalarValues: asSerializable(renderer.getScalarValues())
         };
     }
 }
@@ -115,6 +116,7 @@ interface ProblemInitViewData {
     symmetricRelationshipGraph: GraphViewData;
     typeProperties: Map<string, TypeProperties>;
     typeRelationships: TypesRelationship[];
+    scalarValues: Map<string, number | boolean>;
 }
 
 interface TypeProperties {
@@ -138,10 +140,14 @@ class ProblemInitRendererDelegate {
     private relationships: NetworkEdge[] = [];
     private typeProperties: Map<string, TypeProperties> = new Map();
     private typeRelationships = new Array<TypesRelationship>();
+    private scalarValues = new Map<string, boolean | number | string>();
 
-    constructor(_context: ExtensionContext, private domain: DomainInfo, private problem: ProblemInfo, options: ProblemInitViewOptions) {
+    constructor(_context: ExtensionContext, private domain: DomainInfo, private problem: ProblemInfo, private options: ProblemInitViewOptions) {
         if (!options.hide2dGraph) {
             this.construct2dGraphData();
+        }
+        if (!options.hideScalarValues) {
+            this.constructScalarValues();
         }
         if (!options.hideObjectProperties) {
             this.constructObjectProperties();
@@ -151,15 +157,37 @@ class ProblemInitRendererDelegate {
         }
     }
 
+    private constructScalarValues() {
+        let scalarVariables = this.domain.getPredicates().concat(this.domain.getFunctions())
+            .filter(v => v.parameters.length === 0);
+
+        let scalarInits = scalarVariables
+            .map(v => <VariableInitialValueTuple>{ variable: v, value: this.getInitValue(v) });
+
+        scalarInits.forEach(init => this.addScalar(init));
+    }
+
+    private addScalar(initValue: VariableInitialValueTuple): void {
+        const variableName = initValue.variable.getFullName();
+        if (!this.scalarValues.has(variableName)) { // this is where we are throwing away TILs/TIFs
+            this.scalarValues.set(variableName,
+                initValue.value?.getValue() !== undefined ? initValue.value?.getValue() : "undefined");
+        }
+    }
+
     private construct2dGraphData(): void {
         let symmetric2dPredicates = this.domain.getPredicates()
-            .filter(v => ProblemInitRendererDelegate.is2DSymmetric(v));
+            .filter(v => this.is2DGraphable(v));
         let symmetric2dFunctions = this.domain.getFunctions()
-            .filter(v => ProblemInitRendererDelegate.is2DSymmetric(v));
+            .filter(v => this.is2DGraphable(v));
         let symmetric2dVariables = symmetric2dFunctions.concat(symmetric2dPredicates);
 
-        let relatableTypes: string[] = Util.distinct(symmetric2dVariables
-            .map(v => v.parameters[0].type));
+        let relatableTypes: string[] = Util.distinct(
+            Util.flatMap(symmetric2dVariables
+                .map(v => [v.parameters[0].type, v.parameters[1].type])
+            )
+        );
+
         let relatableAndInheritedTypes = Util.distinct(Util.flatMap(relatableTypes.map(type => getTypesInheritingFromPlusSelf(type, this.domain.getTypeInheritance()))));
         relatableAndInheritedTypes.forEach(type => this.getObjects(type).forEach(obj => this.addNode(obj)));
 
@@ -168,6 +196,11 @@ class ProblemInitRendererDelegate {
             .filter(init => symmetric2dVariables.some(v => v.matchesShortNameCaseInsensitive(init.getLiftedVariableName())));
 
         symmetric2dInits.forEach(init => this.addRelationship(init));
+    }
+
+    private is2DGraphable(v: Variable): unknown {
+        return ProblemInitRendererDelegate.is2D(v) &&
+            (!this.options.graph2dSymmetricOnly || ProblemInitRendererDelegate.is2DSymmetric(v));
     }
 
     private constructObjectProperties(): void {
@@ -216,7 +249,7 @@ class ProblemInitRendererDelegate {
             .find(_ => true);
 
         // todo: do not ignore viv.getTime()
-        
+
         return firstInit;
     }
 
@@ -224,6 +257,10 @@ class ProblemInitRendererDelegate {
         let applicableTypes = getTypesInheritingFromPlusSelf(type, this.domain.getTypeInheritance());
         return variable.parameters.length === 1
             && applicableTypes.includes(variable.parameters[0].type);
+    }
+
+    getScalarValues(): Map<string, boolean | number | string> {
+        return this.scalarValues;
     }
 
     getTypeProperties(): Map<string, TypeProperties> {
@@ -237,9 +274,9 @@ class ProblemInitRendererDelegate {
     private constructObjectRelationships(): void {
         let binaryRelationships = this.domain.getPredicates().concat(this.domain.getFunctions())
             .filter(v => v.parameters.length === 2);
-        
+
         let relationshipPerTypes = Util.groupBy(binaryRelationships, r => r.parameters.map(p => p.type).join(','));
-        
+
         relationshipPerTypes
             .forEach((relationships, typeNames) =>
                 this.constructTypesRelationships(typeNames.split(','), relationships));
@@ -254,22 +291,22 @@ class ProblemInitRendererDelegate {
 
         this.typeRelationships.push({
             types: typeObjectsMap,
-            relationships: relationshipsMap 
+            relationships: relationshipsMap
         });
     }
 
     private createTypeRelationships(relationship: Variable): RelationshipValue[] {
         let applicableInits = this.problem.getInits()
             .filter(init => relationship.matchesShortNameCaseInsensitive(init.getLiftedVariableName()));
-        
+
         return applicableInits.map(init => this.createRelationshipValue(init));
     }
-    
+
     private createRelationshipValue(init: TimedVariableValue): RelationshipValue {
         let parameters = new Map<string, string>();
         let liftedVariable = this.domain.getPredicates().concat(this.domain.getFunctions())
             .find(v => v.name.toLowerCase() === init.getLiftedVariableName().toLowerCase());
-        
+
         if (liftedVariable) {
             liftedVariable.parameters
                 .forEach((term: Term, index) =>
@@ -279,7 +316,7 @@ class ProblemInitRendererDelegate {
             init.getVariableName().split(' ').slice(1)
                 .forEach((term, index) => parameters.set(index.toString(), term));
         }
-        
+
         return {
             parameters: parameters,
             value: init.getValue()
@@ -350,13 +387,24 @@ class ProblemInitRendererDelegate {
      * @param variable predicate/function to test
      */
     static is2DSymmetric(variable: Variable): unknown {
-        return variable.parameters.length >= 2
+        return ProblemInitRendererDelegate.is2D(variable)
             && variable.parameters[0].type === variable.parameters[1].type;
+    }
+
+    private static is2D(variable: Variable) {
+        return variable.parameters.length >= 2;
     }
 }
 
 interface ProblemInitViewOptions extends ProblemRendererOptions {
+    hideScalarValues?: boolean;
+    graph2dSymmetricOnly?: boolean;
     hide2dGraph?: boolean;
     hideObjectProperties?: boolean;
     hideObjectRelationships?: boolean;
+}
+
+interface VariableInitialValueTuple {
+    variable: Variable;
+    value: TimedVariableValue | undefined;
 }

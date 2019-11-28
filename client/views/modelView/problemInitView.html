@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <script src="../common/vis.js" type="text/javascript"></script>
+    <script src="../common/vis-network.min.js" type="text/javascript"></script>
     <script src="../common/baseWebview.js" type="text/javascript"></script>
     <script src="problemInitView.js"></script>
     <script src="baseView.js"></script>
@@ -17,8 +17,10 @@
 </head>
 
 <body onload="initialize()" class="vscode-light">
+    <div id="scalarValues"></div>
     <div id="objectProperties"></div>
     <div id="relationships"></div>
+    <div class="hint">Warning: Timed Initial Literals and Fluents are not supported yet.</div>
     <div id="networkSection">
         <table class="menuBar">
             <tr><td class="menuBarCell">

@@ -6,6 +6,7 @@
 
 import { FileInfo, PddlLanguage, ParsingProblem } from "./FileInfo";
 import { DocumentPositionResolver } from "./DocumentPositionResolver";
+import { PddlSyntaxTree } from "./PddlSyntaxTree";
 
 /**
  * Plan happenings file.
@@ -15,7 +16,7 @@ export class HappeningsInfo extends FileInfo {
     private happenings: Happening[] = [];
 
     constructor(fileUri: string, version: number, public problemName: string, public domainName: string, text: string, positionResolver: DocumentPositionResolver) {
-        super(fileUri, version, problemName, positionResolver);
+        super(fileUri, version, problemName, PddlSyntaxTree.EMPTY, positionResolver);
         this.setText(text);
     }
 

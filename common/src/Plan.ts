@@ -14,8 +14,8 @@ export class Plan {
     statesEvaluated?: number;
     cost?: number;
 
-    constructor(public readonly steps: PlanStep[], public readonly domain: DomainInfo,
-        public readonly problem: ProblemInfo,
+    constructor(public readonly steps: PlanStep[], public readonly domain?: DomainInfo,
+        public readonly problem?: ProblemInfo,
         public readonly now?: number,
         public readonly helpfulActions?: HelpfulAction[]) {
         this.makespan = steps.length ? Math.max(...steps.map(step => step.getEndTime())) : 0;

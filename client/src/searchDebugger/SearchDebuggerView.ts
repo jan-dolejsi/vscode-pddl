@@ -18,26 +18,25 @@ import { ProblemInfo } from '../../../common/src/ProblemInfo';
 import { DomainInfo } from '../../../common/src/DomainInfo';
 
 export class SearchDebuggerView {
-    private webViewPanel: WebviewPanel;
+    private webViewPanel: WebviewPanel | undefined;
     private subscriptions: Disposable[] = [];
-    private search: StateResolver;
-    private stateChangedWhileViewHidden: boolean;
-    private stateLogFile: Uri;
-    private stateLogFileEnabled: boolean;
-    private stateLogEditor: TextEditor;
+    private search: StateResolver | undefined;
+    private stateChangedWhileViewHidden = false;
+    private stateLogFile: Uri | undefined;
+    private stateLogEditor: TextEditor | undefined;
     private stateLogLineCache = new Map<string, number>();
-    private domain: DomainInfo;
-    private problem: ProblemInfo;
+    private domain: DomainInfo | undefined;
+    private problem: ProblemInfo | undefined;
 
     // cached values
-    private debuggerState: boolean;
-    private port: number;
+    private debuggerState: boolean | undefined;
+    private port: number | undefined;
 
     constructor(private context: ExtensionContext) {
     }
 
     isVisible(): boolean {
-        return this.webViewPanel && this.webViewPanel.visible;
+        return this.webViewPanel !== undefined && this.webViewPanel.visible;
     }
 
     observe(search: StateResolver): void {
@@ -57,15 +56,13 @@ export class SearchDebuggerView {
         this.problem = problem;
     }
 
-    async showDebugView(debuggerListening: boolean, port: number): Promise<void> {
-        if (this.webViewPanel) {
+    async showDebugView(): Promise<void> {
+        if (this.webViewPanel !== undefined) {
             this.webViewPanel.reveal();
         }
         else {
             await this.createDebugView(false);
         }
-
-        this.setDebuggerState(debuggerListening, port);
     }
 
     async createDebugView(showOnTop: boolean): Promise<void> {
@@ -95,7 +92,7 @@ export class SearchDebuggerView {
         this.webViewPanel.webview.onDidReceiveMessage(message => this.handleMessage(message), undefined, this.context.subscriptions);
         this.webViewPanel.onDidChangeViewState(event => this.changedViewState(event.webviewPanel));
 
-        this.context.subscriptions.push(this.webViewPanel);
+        this.context.subscriptions.push(this.webViewPanel); // todo: this may not be necessary
     }
 
     changedViewState(webViewPanel: WebviewPanel): any {
@@ -148,7 +145,13 @@ export class SearchDebuggerView {
     CONTENT_FOLDER = path.join('views', 'searchview');
 
     async getHtml(webview: Webview): Promise<string> {
-        return getWebViewHtml(createPddlExtensionContext(this.context), this.CONTENT_FOLDER, 'search.html', webview);
+        const googleCharts = Uri.parse("https://www.gstatic.com/charts/");
+        return getWebViewHtml(createPddlExtensionContext(this.context), {
+            relativePath: this.CONTENT_FOLDER, htmlFileName: 'search.html',
+            externalImages: [Uri.parse('data:')],
+            externalScripts: [googleCharts],
+            externalStyles: [googleCharts]
+        }, webview);
     }
 
     setDebuggerState(on: boolean, port: number): void {
@@ -177,7 +180,7 @@ export class SearchDebuggerView {
     }
 
     showAllStates(): void {
-        let allStates = this.search.getStates();
+        let allStates = this.search?.getStates() || [];
         new Promise(_ => this.postMessage({ command: 'showAllStates', state: allStates }))
             .catch(reason => console.log(reason));
     }
@@ -196,7 +199,7 @@ export class SearchDebuggerView {
     }
 
     private postMessage(message: { command: string; state: any; }) {
-        if (this.webViewPanel) {
+        if (this.webViewPanel !== undefined) {
             this.webViewPanel.webview.postMessage(message);
 
             if (!this.webViewPanel.visible) {
@@ -206,7 +209,7 @@ export class SearchDebuggerView {
     }
 
     async showStatePlan(stateId: number): Promise<void> {
-        if (!this.search) { return void 0; }
+        if (this.search === undefined) { return void 0; }
         if (stateId === null) { return void 0; }
         let state = this.search.getState(stateId);
         let statePlan = new StateToPlan(this.domain, this.problem).convert(state);
@@ -219,12 +222,12 @@ export class SearchDebuggerView {
     clear() {
         this.postMessage({ command: 'clear', state: 'n/a' });
         this.stateLogLineCache.clear();
-        this.domain = null;
-        this.problem = null;
+        this.domain = undefined;
+        this.problem = undefined;
     }
 
     async toggleStateLog(): Promise<void> {
-        if (this.stateLogFileEnabled) {
+        if (this.stateLogFile !== undefined) {
             this.postMessage({ command: 'stateLog', state: null });
         }
         else {
@@ -234,11 +237,10 @@ export class SearchDebuggerView {
             this.stateLogEditor = await window.showTextDocument(await workspace.openTextDocument(this.stateLogFile), { preserveFocus: true, viewColumn: ViewColumn.Beside });
             this.postMessage({ command: 'stateLog', state: this.stateLogFile.fsPath });
         }
-        this.stateLogFileEnabled = !this.stateLogFileEnabled;
     }
 
     async scrollStateLog(stateId: number): Promise<void> {
-        if (!this.stateLogFileEnabled || !this.stateLogEditor) { return; }
+        if (!this.stateLogFile || !this.stateLogEditor || !this.search) { return; }
         let state = this.search.getState(stateId);
         if (!state) { return; }
 
@@ -247,12 +249,12 @@ export class SearchDebuggerView {
         }
 
         if (this.stateLogLineCache.has(state.origId)) {
-            let cachedLineId = this.stateLogLineCache.get(state.origId);
+            let cachedLineId = this.stateLogLineCache.get(state.origId)!;
             this.stateLogEditor.revealRange(new Range(cachedLineId, 0, cachedLineId + 1, 0), TextEditorRevealType.AtTop);
             return;
         }
 
-        let pattern = workspace.getConfiguration("pddlSearchDebugger").get<string>("stateLogPattern");
+        let pattern = workspace.getConfiguration("pddlSearchDebugger").get<string>("stateLogPattern", "");
 
         for (let lineIdx = 0; lineIdx < this.stateLogEditor.document.lineCount; lineIdx++) {
             const logLine = this.stateLogEditor.document.lineAt(lineIdx);

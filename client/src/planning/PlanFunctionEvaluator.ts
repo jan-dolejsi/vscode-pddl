@@ -101,7 +101,7 @@ export class PlanFunctionEvaluator {
         let liftedVariableName = variableNameFragments[0];
         let liftedVariable = this.plan.domain.getFunction(liftedVariableName);
         if (!liftedVariable) { return null; }
-        let allConstantsAndObjects = this.plan.domain.getConstants().merge(this.plan.problem.objects);
+        let allConstantsAndObjects = this.plan.domain.getConstants().merge(this.plan.problem.getObjectsTypeMap());
         let objects = variableNameFragments.slice(1)
             .map(objectName => allConstantsAndObjects.getTypeOf(objectName)?.getObjectInstance(objectName))
             .filter(o => !!o).map(o => o!);

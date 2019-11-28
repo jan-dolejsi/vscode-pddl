@@ -22,23 +22,36 @@ export function createPddlExtensionContext(context: ExtensionContext): PddlExten
     };
 }
 
-export async function getWebViewHtml(extensionContext: PddlExtensionContext, relativePath: string, htmlFileName: string, webview?: Webview) {
-    let overviewHtmlPath = extensionContext.asAbsolutePath(path.join(relativePath, htmlFileName));
+export async function getWebViewHtml(extensionContext: PddlExtensionContext, options: WebViewHtmlOptions, webview?: Webview) {
+    let overviewHtmlPath = extensionContext.asAbsolutePath(path.join(options.relativePath, options.htmlFileName));
     let html = await afs.readFile(overviewHtmlPath, { encoding: "utf-8", flag: 'r' });
 
     html = html.replace(/<(script|img|link) ([^>]*)(src|href)="([^"]+)"/g, (sourceElement: string, elementName: string, middleBits: string, attribName: string, attribValue: string) => {
         if (attribValue.startsWith('http')) {
             return sourceElement;
         }
-        let resource = asWebviewUri(Uri.file(extensionContext.asAbsolutePath(path.join(relativePath, attribValue))), webview);
+        let resource = asWebviewUri(Uri.file(extensionContext.asAbsolutePath(path.join(options.relativePath, attribValue))), webview);
         return `<${elementName} ${middleBits}${attribName}="${resource}"`;
     });
 
     if (webview) {
-        html = html.replace("<!--CSP-->", createContentSecurityPolicy(webview!));
+        html = html.replace("<!--CSP-->", createContentSecurityPolicy(webview!, options));
     }
 
     return html;
+}
+
+export interface WebViewHtmlOptions {
+    /** Relative path in the extension instal directory, where the `htmlFileName` is placed. */
+    relativePath: string;
+    /** Html file name inside the `relativePath` directory. */
+    htmlFileName: string;
+    /** Locations of any external scripts, e.g. https://www.gstatic.com/charts/ */
+    externalScripts?: Uri[];
+    /** Locations of any external styles, e.g. https://www.gstatic.com/charts/ */
+    externalStyles?: Uri[];
+    /** Locations of any external images, e.g. https://somewhere, or data: */   
+    externalImages?: Uri[];
 }
 
 function asWebviewUri(localUri: Uri, webview?: Webview): Uri {
@@ -50,9 +63,12 @@ function asWebviewUri(localUri: Uri, webview?: Webview): Uri {
     }
 }
 
-function createContentSecurityPolicy(webview: Webview): string {
+function createContentSecurityPolicy(webview: Webview, options: WebViewHtmlOptions): string {
+    let externalStyles = options.externalStyles?.map(uri => uri.toString()).join(" ") || "";
+    let externalScripts = options.externalScripts?.map(uri => uri.toString()).join(" ") || "";
+    let externalImages = options.externalImages?.map(uri => uri.toString()).join(" ") || "";
     return `<meta http-equiv="Content-Security-Policy"
-\t\tcontent="default-src 'none'; img-src ${webview.cspSource} https:; script-src ${webview.cspSource} 'unsafe-inline'; style-src ${webview.cspSource} 'unsafe-inline';"
+\t\tcontent="default-src 'none'; img-src ${webview.cspSource} ${externalImages} https:; script-src ${webview.cspSource} ${externalScripts} 'unsafe-inline'; style-src ${webview.cspSource} ${externalStyles} 'unsafe-inline';"
 \t/>`;
 }
 

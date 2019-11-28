@@ -28,7 +28,7 @@ export class MessageParser {
         var assignedStateId: number;
         if (this.stateIdPattern) {
             this.stateIdPattern.lastIndex = 0;
-            var match: RegExpMatchArray;
+            var match: RegExpMatchArray | null;
             if (match = origId.match(this.stateIdPattern)) {
                 assignedStateId = parseInt(match[1]);
             }
@@ -60,7 +60,7 @@ export class MessageParser {
 
         let planHead = state.planHead.map((h: any) => this.parseSearchHappening(h, false));
 
-        let actionName = state.appliedAction ? this.createActionName(this.parseSearchHappening(state.appliedAction, false)) : null;
+        let actionName = state.appliedAction ? this.createActionName(this.parseSearchHappening(state.appliedAction, false)) : undefined;
 
         return new State(assignedStateId, state.id, state.g, state.earliestTime, planHead,
             parentId, actionName);

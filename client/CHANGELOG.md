@@ -4,6 +4,12 @@
 
 - async planner service output parsing to support more than JSON
 - async planner service ptest support for local configuration.json file
+- vis-network upgraded to v6.4.4
+- fix for stricter Webview content security policy that came with VS Code 1.40.2
+- fix for domain type hierarchy view that mishandled 0 index as undefined and missed an edge
+- initial state visualization: added unparametrised functions/predicates, added asymmetric predicates/functions to the relationship graph.
+- search debugger search tree pans the network view to keep the selected node in the view.
+- fixed the bulk renaming of predicates/functions that did not propagate to problem files.
 
 ## [2.15.1] Fixes and upgrades
 

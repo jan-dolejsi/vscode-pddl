@@ -15,18 +15,24 @@ import { MessageParser } from "./MessageParser";
 import { MockSearch } from "./MockSearch";
 import { SearchDebuggerView } from "./SearchDebuggerView";
 import { PlannerOptionsProvider, PlanningRequestContext } from "../planning/PlannerOptionsProvider";
+import { PddlConfiguration } from "../configuration";
 
 export class SearchDebugger implements PlannerOptionsProvider {
 
-    private server: http.Server;
-    private search: Search;
+    private server: http.Server | null = null;
+    private search: Search | undefined; // lazy init
     private port = 0; //port is randomized
     private view: SearchDebuggerView;
-    private messageParser: MessageParser;
-    private statusBarItem: StatusBarItem;
+    private messageParser: MessageParser | undefined; // lazy init
+    private statusBarItem: StatusBarItem | undefined; // lazy init
     static readonly TOGGLE_COMMAND = "pddl.searchDebugger.toggle";
 
-    constructor(private context: ExtensionContext) {
+    private readonly CONFIG_PDDL_SEARCH_DEBUGGER = "pddlSearchDebugger";
+    private readonly CONF_DEFAULT_PORT = "defaultPort";
+    private readonly CONF_STATE_ID_PATTERN = "stateIdPattern";
+    private readonly CONFIG_PLANNER_OPTION = "plannerCommandLine";
+
+    constructor(private context: ExtensionContext, private pddlConfiguration: PddlConfiguration) {
         this.context.subscriptions.push(instrumentOperationAsVsCodeCommand("pddl.searchDebugger.start", () => this.tryStart()));
         this.context.subscriptions.push(instrumentOperationAsVsCodeCommand("pddl.searchDebugger.stop", () => this.tryStop()));
         this.context.subscriptions.push(instrumentOperationAsVsCodeCommand("pddl.searchDebugger.reset", () => this.reset()));
@@ -42,7 +48,8 @@ export class SearchDebugger implements PlannerOptionsProvider {
                 this.view.setDomainAndProblem(context.domain, context.problem);
             }
 
-            let commandLine = workspace.getConfiguration("pddlSearchDebugger").get<string>("plannerCommandLine");
+            let commandLine = workspace.getConfiguration(this.CONFIG_PDDL_SEARCH_DEBUGGER).get<string>(this.CONFIG_PLANNER_OPTION);
+            if (!commandLine) { throw new Error(`Missing planner command-line option configuration: ${this.CONFIG_PDDL_SEARCH_DEBUGGER}.${this.CONFIG_PLANNER_OPTION}`); }
             return commandLine.replace('$(port)', this.port.toString());
         }
         else {
@@ -66,67 +73,74 @@ export class SearchDebugger implements PlannerOptionsProvider {
     }
 
     isRunning(): boolean {
-        return this.server !== null && this.server !== undefined;
+        return this.server !== null && this.server.listening;
     }
 
     startAndShow(): void {
         if (!this.isRunning()) {
             this.startServer();
         }
-        this.view.showDebugView(this.isRunning(), this.port);
+        this.view.showDebugView();
         this.showStatusBarItem();
     }
 
     private startServer(): void {
-        if (!this.search) {
+        if (!this.search || !this.messageParser) {
             this.search = new Search();
-            var stateIdPattern: RegExp = this.getStateIdPattern();
+            var stateIdPattern = this.getStateIdPattern();
             this.messageParser = new MessageParser(this.search, stateIdPattern);
             this.view.observe(this.search);
         }
 
-        var app: express.Application = this.createApplication();
+        var app: express.Application = this.createApplication(this.search, this.messageParser);
 
-        let defaultPort = workspace.getConfiguration("pddlSearchDebugger").get<number>("defaultPort");
+        let defaultPort = workspace.getConfiguration(this.CONFIG_PDDL_SEARCH_DEBUGGER).get<number>(this.CONF_DEFAULT_PORT, 0);
 
         this.port = defaultPort > 0 ? defaultPort : 8000 + Math.floor(Math.random() * 1000);
-        let retryCount = defaultPort > 0 ? 1 : 100;
         this.server = http.createServer(app);
-        this.server.on('error', e => window.showErrorMessage(e.message));
-        for (; retryCount > 0; retryCount--) {
-            try {
-                this.server.listen(this.port, "127.0.0.1"); // listen to the local loop-back IP address
-                break;
-            } catch (ex) {
-                console.log(`Cannot listen to port ${this.port}: ` + ex);
-                this.port--;
+        this.server.on('error', e => {
+            window.showErrorMessage(e.message);
+            if ((<any>e)['code'] === "EADDRINUSE") {
+                this.pddlConfiguration.askConfiguration(this.CONFIG_PDDL_SEARCH_DEBUGGER + "." + this.CONF_DEFAULT_PORT);
             }
-        }
-        console.log("Search debugger listening at port " + this.port);
+        });
+        this.server.on("listening", () => {
+            console.log("Search debugger listening at port " + this.port);
+            this.showStatus();
+        });
+        this.server.on("close", () => {
+            console.log("Search debugger closed");
+            this.server = null;
+            this.showStatus();
+        });
+
+        this.server.listen(this.port, "127.0.0.1"); // listen to the local loop-back IP address only
     }
 
-    private getStateIdPattern() {
-        let stateIdPatternAsString = workspace.getConfiguration("pddlSearchDebugger").get<string>("stateIdPattern");
-        var stateIdPattern: RegExp = null;
+    private getStateIdPattern(): RegExp {
+        let stateIdPatternAsString = workspace.getConfiguration(this.CONFIG_PDDL_SEARCH_DEBUGGER).get<string>(this.CONF_STATE_ID_PATTERN);
+        if (!stateIdPatternAsString) { throw new Error(`Missing configuration: ${this.CONFIG_PDDL_SEARCH_DEBUGGER}.${this.CONF_STATE_ID_PATTERN}`); }
+        var stateIdPattern: RegExp;
         try {
             stateIdPattern = new RegExp(stateIdPatternAsString);
         }
         catch (ex) {
             console.log("Invalid stateIdPattern regular expression: " + ex);
+            throw new Error(`Invalid regular expression in configuration: ${this.CONFIG_PDDL_SEARCH_DEBUGGER}.${this.CONF_STATE_ID_PATTERN}`);
+            // todo: this.pddlConfiguration.askConfiguration(this.CONFIG_PDDL_SEARCH_DEBUGGER + "." + this.CONF_STATE_ID_PATTERN);
         }
         return stateIdPattern;
     }
 
-    private createApplication() {
+    private createApplication(search: Search, messageParser: MessageParser): express.Application {
         var app: express.Application = express();
         app.use(bodyParser.json());
         app.get('/about', function (_req: express.Request, res: express.Response, _next: express.NextFunction) {
             res.status(200).send('Hello, world!');
         });
-        const serviceDebugger = this;
         app.post('/state/initial', function (req: express.Request, res: express.Response, _next: express.NextFunction) {
             try {
-                serviceDebugger.search.addInitialState(serviceDebugger.messageParser.parseInitialState(req.body));
+                search.addInitialState(messageParser.parseInitialState(req.body));
                 res.status(201).end();
             }
             catch (ex) {
@@ -135,17 +149,17 @@ export class SearchDebugger implements PlannerOptionsProvider {
             }
         });
         app.post('/state', function (req: express.Request, res: express.Response, _next: express.NextFunction) {
-            serviceDebugger.search.addState(serviceDebugger.messageParser.parseState(req.body));
+            search.addState(messageParser.parseState(req.body));
             res.status(201).end();
         });
         // todo: the next one should be a 'patch' verb for '/state' path
         app.post('/state/heuristic', function (req: express.Request, res: express.Response, _next: express.NextFunction) {
-            serviceDebugger.search.update(serviceDebugger.messageParser.parseEvaluatedState(req.body));
+            search.update(messageParser.parseEvaluatedState(req.body));
             res.status(200).end();
         });
 
         app.post('/plan', function (req: express.Request, res: express.Response, _next: express.NextFunction) {
-            serviceDebugger.search.setPlan(serviceDebugger.messageParser.parseState(req.body));
+            search.setPlan(messageParser.parseState(req.body));
             res.status(200).end();
         });
         return app;
@@ -156,15 +170,18 @@ export class SearchDebugger implements PlannerOptionsProvider {
             this.stop();
         }
         catch (ex) {
-            window.showErrorMessage("Error stopping search debug listener: " + ex);
+            window.showErrorMessage("Error stopping search debug listener: " + (ex.message || ex));
         }
     }
 
     stop(): void {
-        if (this.server) {
+        if (this.server !== null) {
             this.server.close();
-            this.server = null;
         }
+        this.showStatus();
+    }
+
+    showStatus(): void {
         this.view.setDebuggerState(this.isRunning(), this.port);
         this.showStatusBarItem();
     }

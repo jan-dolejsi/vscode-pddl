@@ -424,7 +424,7 @@ export class PddlConfiguration {
         }
     }
 
-    async askEnumConfiguration(configName: string, configurationElement: any): Promise<void> {
+    private async askEnumConfiguration(configName: string, configurationElement: any): Promise<void> {
         let items: vscode.QuickPickItem[] = [];
         const enumNames = configurationElement["enum"];
         const enumDescriptions = configurationElement["enumDescriptions"];
@@ -452,7 +452,7 @@ export class PddlConfiguration {
         await vscode.workspace.getConfiguration().update(configName, itemSelected.label);
     }
 
-    async askNumberConfiguration(configName: string, configurationElement: any): Promise<void> {
+    private async askNumberConfiguration(configName: string, configurationElement: any): Promise<void> {
         let currentValue = vscode.workspace.getConfiguration().get<number>(configName, <number>configurationElement["default"]);
 
         let hint: string | undefined;

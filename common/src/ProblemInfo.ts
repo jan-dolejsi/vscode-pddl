@@ -15,14 +15,14 @@ import { Constraint } from "./constraints";
  * Problem file.
  */
 export class ProblemInfo extends FileInfo {
-    objects = new TypeObjectMap();
-    inits: TimedVariableValue[] = [];
-    supplyDemands: SupplyDemand[] = [];
+    private objects = new TypeObjectMap();
+    private inits: TimedVariableValue[] = [];
+    private supplyDemands: SupplyDemand[] = [];
     private constraints: Constraint[] = [];
-    preParsingPreProcessor: PreProcessor | undefined;
+    private preParsingPreProcessor: PreProcessor | undefined;
 
-    constructor(fileUri: string, version: number, problemName: string, public domainName: string, public readonly syntaxTree: PddlSyntaxTree, positionResolver: DocumentPositionResolver) {
-        super(fileUri, version, problemName, positionResolver);
+    constructor(fileUri: string, version: number, problemName: string, public domainName: string, readonly syntaxTree: PddlSyntaxTree, positionResolver: DocumentPositionResolver) {
+        super(fileUri, version, problemName, syntaxTree, positionResolver);
     }
 
     setPreParsingPreProcessor(preProcessor: PreProcessor) {

@@ -42,7 +42,7 @@ export class PlanReportSettings {
         if (!this.settings) { return false; }
 
         if (this.ignoreActionParameters === undefined) { this.ignoreActionParameters = this.settings["ignoreActionParameters"]; }
-        if (!this.ignoreActionParameters) { return true; }
+        if (!this.ignoreActionParameters) { return false; }
 
         let applicableSetting = this.ignoreActionParameters.find(entry => this.matches(entry.action, actionName));
 

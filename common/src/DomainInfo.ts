@@ -8,7 +8,7 @@ import { DirectionalGraph } from "./DirectionalGraph";
 import { FileInfo, Variable, PddlLanguage, ObjectInstance, Parameter } from "./FileInfo";
 import { PddlSyntaxTree } from "./PddlSyntaxTree";
 import { PddlRange, DocumentPositionResolver } from "./DocumentPositionResolver";
-import { PddlBracketNode, PddlSyntaxNode } from "./PddlSyntaxNode";
+import { PddlBracketNode } from "./PddlSyntaxNode";
 import { PddlTokenType } from "./PddlTokenizer";
 import { Constraint } from "./constraints";
 
@@ -27,8 +27,8 @@ export class DomainInfo extends FileInfo {
     private processes?: Action[];
     private constraints: Constraint[] = [];
 
-    constructor(fileUri: string, version: number, domainName: string, public readonly syntaxTree: PddlSyntaxTree, positionResolver: DocumentPositionResolver) {
-        super(fileUri, version, domainName, positionResolver);
+    constructor(fileUri: string, version: number, domainName: string, readonly syntaxTree: PddlSyntaxTree, positionResolver: DocumentPositionResolver) {
+        super(fileUri, version, domainName, syntaxTree, positionResolver);
     }
 
     getLanguage(): PddlLanguage {
@@ -147,30 +147,6 @@ export class DomainInfo extends FileInfo {
 
     getTypeLocation(type: string): PddlRange | undefined {
         return this.typeLocations.get(type);
-    }
-
-    getVariableReferences(variable: Variable): PddlRange[] {
-
-        let referenceLocations: PddlRange[] = [];
-
-        this.syntaxTree.getDefineNode().getChildrenRecursively(node => this.isVariableReference(node, variable),
-            node => referenceLocations.push(this.getRange(node)));
-
-        return referenceLocations;
-    }
-
-    private isVariableReference(node: PddlSyntaxNode, variable: Variable): boolean {
-        if (node.getToken().type !== PddlTokenType.OpenBracket) {
-            return false;
-        }
-
-        let nonWhiteSpaceChildren = node.getNonWhitespaceChildren();
-        if (nonWhiteSpaceChildren.length < 1) {
-            return false;
-        }
-        let variableNameNode = nonWhiteSpaceChildren[0];
-        return variableNameNode.getToken().type === PddlTokenType.Other
-            && variableNameNode.getToken().tokenText.toLowerCase() === variable.name.toLowerCase();
     }
 }
 
