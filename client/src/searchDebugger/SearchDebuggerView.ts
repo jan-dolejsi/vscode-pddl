@@ -212,6 +212,7 @@ export class SearchDebuggerView {
         if (this.search === undefined) { return void 0; }
         if (stateId === null) { return void 0; }
         let state = this.search.getState(stateId);
+        if (!state) { return; }
         let statePlan = new StateToPlan(this.domain, this.problem).convert(state);
         let planHtml = await new PlanReportGenerator(this.context,
             { displayWidth: 200, selfContained: false, disableLinePlots: true, disableSwimLaneView: false, disableHamburgerMenu: true })

@@ -19,16 +19,17 @@ import { nodeToRange, toRange } from '../utils';
 export class SymbolUtils {
     constructor(public workspace: CodePddlWorkspace) { }
 
-    getSymbolInfo(document: TextDocument, position: Position): SymbolInfo {
+    getSymbolInfo(document: TextDocument, position: Position): SymbolInfo | undefined {
         let fileInfo = this.workspace.getFileInfo(document);
         if (!fileInfo) { throw new Error(`Pddl file not found in the PDDL workspace model: ` + document.uri.toString()); }
 
         let domainInfo = this.workspace.pddlWorkspace.asDomain(fileInfo);
-        if (!domainInfo) { return null; }
+        if (!domainInfo) { return undefined; }
 
-        let symbol = this.getSymbolAtPosition(document, position);
+        let symbolAtPosition = this.getSymbolAtPosition(document, position);
 
-        if (!symbol) { return null; }
+        if (symbolAtPosition === undefined) { return undefined; }
+        let symbol = symbolAtPosition!;
 
         if (symbol.isPrefixedBy('(')) {
             let symbolName = symbol.name.toLowerCase();
@@ -56,11 +57,11 @@ export class SymbolUtils {
                     derivedFound
                 );
             }
-            let actionFound = domainInfo.getActions().find(a => a.name.toLowerCase() === symbolName);
-            if (actionFound) {
+            let actionFound = domainInfo.getActions().find(a => a.name?.toLowerCase() === symbolName);
+            if (actionFound && actionFound.getLocation()) {
                 return new ActionInfo(
                     this.createActionHover(symbol.range, actionFound),
-                    new Location(this.toUri(domainInfo.fileUri), toRange(actionFound.getLocation())),
+                    new Location(this.toUri(domainInfo.fileUri), toRange(actionFound.getLocation()!)),
                     actionFound
                 );
             }
@@ -69,10 +70,12 @@ export class SymbolUtils {
 
             if (domainInfo.getTypes().includes(symbol.name)) {
                 let parents = domainInfo.getTypeInheritance().getVerticesWithEdgesFrom(symbol.name);
-                let inheritsFromText = parents.length > 0 ? "Inherits from: " + parents.join(', ') : "";
+                let inheritsFromText = parents && parents.length > 0 ? "Inherits from: " + parents.join(', ') : "";
+                const typeLocation = domainInfo.getTypeLocation(symbol.name);
+                if (!typeLocation) { return undefined; }
                 return new TypeInfo(
                     this.createHover(symbol.range, 'Type', symbol.name, [inheritsFromText]),
-                    new Location(this.toUri(domainInfo.fileUri), toRange(domainInfo.getTypeLocation(symbol.name))),
+                    new Location(this.toUri(domainInfo.fileUri), toRange(typeLocation)),
                     symbol.name
                 );
             }
@@ -81,8 +84,9 @@ export class SymbolUtils {
             if (fileInfo.isDomain()) {
                 let parameterNode = domainInfo.syntaxTree.getNodeAt(document.offsetAt(symbol.range.start));
 
-                let scopeNode: PddlSyntaxNode = parameterNode.findParametrisableScope(symbol.name);
-                let indexOfParamDeclaration = scopeNode ?
+                let scopeNode = parameterNode.findParametrisableScope(symbol.name);
+                if (scopeNode) {
+                    let indexOfParamDeclaration = scopeNode ?
                     scopeNode.getText().indexOf('?' + symbol.name) :
                     parameterNode.getStart();
 
@@ -92,18 +96,19 @@ export class SymbolUtils {
                     scopeNode,
                     symbol.name
                 );
+                }
             }
         }
 
         // we return an answer only if we find something
         // otherwise no hover information is given
-        return null;
+        return undefined;
     }
 
-    getWordAtDocumentPosition(document: TextDocument, position: Position): WordOnPositionContext {
+    getWordAtDocumentPosition(document: TextDocument, position: Position): WordOnPositionContext | undefined {
         // find the word at the position leveraging the TextDocument facility
         let wordRange = document.getWordRangeAtPosition(position, /\w[-\w]*/);
-        if (!wordRange || wordRange.isEmpty || !wordRange.isSingleLine) { return null; }
+        if (!wordRange || wordRange.isEmpty || !wordRange.isSingleLine) { return undefined; }
 
         let word = document.getText(wordRange);
         let lineIdx = wordRange.start.line;
@@ -114,22 +119,22 @@ export class SymbolUtils {
         return { before: before, word: word, after: after, range: wordRange, line: line };
     }
 
-    leadingSymbolPattern = /([\w_][\w_-]*)$/gi;
-    followingSymbolPattern = /^([\w_-]+)/gi;
+    private readonly leadingSymbolPattern = /([\w_][\w_-]*)$/gi;
+    private readonly followingSymbolPattern = /^([\w_-]+)/gi;
 
-    getWordAtTextPosition(text: string, position: Position): WordOnPositionContext {
+    getWordAtTextPosition(text: string, position: Position): WordOnPositionContext | undefined {
         let line = text.split('\n')[position.line];
         let leadingText = line.substring(0, position.character);
         let followingText = line.substring(position.character - 1);
 
         this.leadingSymbolPattern.lastIndex = 0;
         let match = this.leadingSymbolPattern.exec(leadingText); //todo: this pattern does not match, if the word was selected
-        if (!match) { return null; }
+        if (!match) { return undefined; }
         let leadingSymbolPart = match[1];
 
         this.followingSymbolPattern.lastIndex = 0;
         match = this.followingSymbolPattern.exec(followingText);
-        if (!match) { return null; }
+        if (!match) { return undefined; }
         let followingSymbolPart = match[1];
 
         let symbolName = leadingSymbolPart + followingSymbolPart.substr(1);
@@ -147,11 +152,11 @@ export class SymbolUtils {
         };
     }
 
-    getSymbolAtPosition(document: TextDocument, position: Position): Symbol | undefined{
+    getSymbolAtPosition(document: TextDocument, position: Position): Symbol | undefined {
         let wordContext = this.getWordAtDocumentPosition(document, position);
 
         // is the position not a word, or within comments?
-        if (wordContext === null || wordContext === undefined || wordContext.before.includes(';')) { return undefined; }
+        if (wordContext === undefined || wordContext.before.includes(';')) { return undefined; }
 
         return new Symbol(wordContext.word, wordContext.range, wordContext.line);
     }
@@ -170,10 +175,10 @@ export class SymbolUtils {
 
     createActionHover(range: Range, action: Action): Hover {
         let label = 'Action';
-        if (action.isDurative) { label = 'Durative ' + label; }
+        if (action.isDurative()) { label = 'Durative ' + label; }
 
         let doc = new MarkdownString(`**${label}**`)
-            .appendCodeblock(action.name, 'pddl');
+            .appendCodeblock(action.name || "", 'pddl');
 
         if (action.parameters.length) {
             doc = doc.appendMarkdown('Parameters:' + END_LINE + END_LINE);
@@ -185,11 +190,15 @@ export class SymbolUtils {
         return new Hover(doc, range);
     }
 
-    findSymbolReferences(document: TextDocument, symbol: SymbolInfo, includeDeclaration: boolean): Location[] {
+    findSymbolReferences(document: TextDocument, symbol: SymbolInfo, includeDeclaration: boolean): Location[] | undefined {
         let fileInfo = this.workspace.getFileInfo(document);
-
-        let domainInfo = this.workspace.pddlWorkspace.asDomain(fileInfo);
-        if (!domainInfo) { return null; }
+        if (!fileInfo) {
+            console.log(`File ${document.uri.toString()} not know to the PDDL workspace.`);
+            return undefined;
+        }
+        let domainInfoFound = this.workspace.pddlWorkspace.asDomain(fileInfo);
+        if (!domainInfoFound) { return undefined; }
+        let domainInfo = domainInfoFound!;
 
         let problemFiles = this.workspace.pddlWorkspace.getProblemFiles(domainInfo);
 

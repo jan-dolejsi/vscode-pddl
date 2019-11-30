@@ -67,20 +67,20 @@ export abstract class ProblemView<TRendererOptions, TRenderData> extends Disposa
     async refreshDomainProblems(domainInfo: DomainInfo): Promise<void> {
         let promises = this.codePddlWorkspace.pddlWorkspace
             .getProblemFiles(domainInfo)
-            .map(async problemInfo => await this.refreshProblem(problemInfo));
+            .map(async problemInfo => await this.refreshProblem(problemInfo, domainInfo));
         
         await Promise.all(promises);
     }
 
-    async refreshProblem(problemInfo: ProblemInfo) {
+    async refreshProblem(problemInfo: ProblemInfo, domainInfo?: DomainInfo) {
         const problemUri = Uri.parse(problemInfo.fileUri);
         // if no panel was created, skip
         if (!this.webviewPanels.get(problemUri) && !this.webviewInsets.get(problemUri)) { return; }
 
+        let domainInfoAssigned: DomainInfo;
         let error: Error;
-        let domainInfo: DomainInfo;
         try {
-            domainInfo = getDomainFileForProblem(problemInfo, this.codePddlWorkspace);
+            domainInfoAssigned = domainInfo || getDomainFileForProblem(problemInfo, this.codePddlWorkspace);
         }
         catch (ex) {
             error = ex;
@@ -102,7 +102,7 @@ export abstract class ProblemView<TRendererOptions, TRenderData> extends Disposa
 
         panelsToRefresh.forEach(async panel => {
             if (!error) {
-                panel.setDomainAndProblem(domainInfo, problemInfo);
+                panel.setDomainAndProblem(domainInfoAssigned, problemInfo);
             }
             else {
                 panel.setError(error);

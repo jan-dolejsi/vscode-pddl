@@ -62,19 +62,19 @@ export class Search implements StateResolver {
         this.states.set(state.id, state);
         this._onStateUpdated.fire(state);
 
-        if (Number.isFinite(state.h) && state.h < this.bestStateHeuristic) {
-            this.bestStateHeuristic = state.h;
+        if (state.isEvaluated && !state.isDeadEnd && state.h! < this.bestStateHeuristic) {
+            this.bestStateHeuristic = state.h!;
             this._onBetterState.fire(state);
         }
     }
 
     showPlan(goalState: State): void {
         let plan: State[] = [];
-        var state = goalState;
-        while(state !== null) {
+        var state: State | undefined = goalState;
+        while(state !== undefined) {
             state.isPlan = true;
             plan.push(state);
-            state = state.parentId !== undefined ? this.states.get(state.parentId) : null;
+            state = state.parentId !== undefined ? this.states.get(state.parentId) : undefined;
         }
         this._onPlanFound.fire(plan);
     }
@@ -87,7 +87,7 @@ export class Search implements StateResolver {
         this.showPlan(goalState);
     }
 
-    getState(stateId: number): State {
+    getState(stateId: number): State | undefined {
         return this.states.get(stateId);
     }
 

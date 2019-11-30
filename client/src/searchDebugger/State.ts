@@ -10,10 +10,11 @@ import { HelpfulAction } from "../../../common/src/Plan";
 export class State {
     public h: number | undefined;
     public totalMakespan: number | undefined;
-    public relaxedPlan: SearchHappening[];
-    public helpfulActions: HelpfulAction[];
-    public isDeadEnd: boolean;
-    public isPlan: boolean;
+    public relaxedPlan: SearchHappening[] | undefined;
+    public helpfulActions: HelpfulAction[] | undefined;
+    public isDeadEnd: boolean | undefined;
+    public isPlan: boolean = false;
+    private _isEvaluated = false;
 
     constructor(public readonly id: number, public readonly origId: string, public readonly g: number,
         public readonly earliestTime: number, public readonly planHead: SearchHappening[],
@@ -25,22 +26,28 @@ export class State {
         return new State(0, "0", 0, 0, []);
     }
 
+    get isEvaluated(): boolean {
+        return this._isEvaluated;
+    }
+
     evaluate(h: number, totalMakespan: number, helpfulActions: HelpfulAction[], relaxedPlan: SearchHappening[]): State {
         this.h = h;
         this.totalMakespan = totalMakespan;
         this.helpfulActions = helpfulActions;
         this.relaxedPlan = relaxedPlan;
         this.isDeadEnd = false;
+        this._isEvaluated = true;
 
         return this;
     }
 
-    deadEnd(): State {
+    setDeadEnd(): State {
         this.h = Number.POSITIVE_INFINITY;
         this.totalMakespan = Number.POSITIVE_INFINITY;
         this.helpfulActions = [];
         this.relaxedPlan = [];
         this.isDeadEnd = true;
+        this._isEvaluated = true;
 
         return this;
     }

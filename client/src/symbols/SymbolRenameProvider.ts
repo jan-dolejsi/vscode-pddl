@@ -29,6 +29,9 @@ export class SymbolRenameProvider implements RenameProvider {
         }
 
         let references = this.symbolUtils.findSymbolReferences(document, symbolInfo, true);
+        if (!references) {
+            return undefined;
+        }
 
         let origName = document.getText(this.getWordRangeAtPosition(document, position));
 

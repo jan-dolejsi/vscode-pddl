@@ -10,6 +10,8 @@
 - initial state visualization: added unparametrised functions/predicates, added asymmetric predicates/functions to the relationship graph.
 - search debugger search tree pans the network view to keep the selected node in the view.
 - fixed the bulk renaming of predicates/functions that did not propagate to problem files.
+- fixed issue in object hierarchy graphic that was showing deleted objects
+- filtering workspace events to avoid event bursts
 
 ## [2.15.1] Fixes and upgrades
 

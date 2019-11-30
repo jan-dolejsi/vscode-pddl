@@ -159,9 +159,10 @@ export class TypeObjectMap {
     }
 
     merge(other: TypeObjectMap): TypeObjectMap {
-        other.valuesArray()
-            .forEach(typeObj => this.addAll(typeObj.type, typeObj.getObjects()));
-        return this;
+        let mergedMap = new TypeObjectMap();
+        this.valuesArray().concat(other.valuesArray())
+            .forEach(typeObj => mergedMap.addAll(typeObj.type, typeObj.getObjects()));
+        return mergedMap;
     }
 
     add(type: string, objectName: string): TypeObjectMap {

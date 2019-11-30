@@ -76,7 +76,7 @@ export class ValidatorService extends Validator {
 
                 let location: string = messages[i].location;
 
-                let fileUri: string = null;
+                let fileUri: string | undefined;
                 if (location === "DOMAIN") {
                     fileUri = domainInfo.fileUri;
                 }
@@ -93,7 +93,9 @@ export class ValidatorService extends Validator {
 
                 let range = this.toRange(messages[i].position);
 
-                diagnostics.get(fileUri).push(new Diagnostic(range, messages[i].message, severity));
+                if (fileUri !== undefined) {
+                    diagnostics.get(fileUri)?.push(new Diagnostic(range, messages[i].message, severity));
+                }
             }
 
             // Send the computed diagnostics to VSCode.

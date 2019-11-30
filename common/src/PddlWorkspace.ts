@@ -76,10 +76,10 @@ function lowerCaseEquals(first: string, second: string): boolean {
 }
 
 export class PddlWorkspace extends EventEmitter {
-    folders: Map<string, Folder> = new Map<string, Folder>();
-    parser: Parser;
-    timeout: NodeJS.Timer | undefined;
-    defaultTimerDelayInSeconds = 1;
+    public readonly folders: Map<string, Folder> = new Map<string, Folder>();
+    public readonly parser: Parser;
+    private parsingTimeout: NodeJS.Timer | undefined;
+    private defaultTimerDelayInSeconds = 1;
 
     public static INSERTED = Symbol("INSERTED");
     public static UPDATED = Symbol("UPDATED");
@@ -142,14 +142,14 @@ export class PddlWorkspace extends EventEmitter {
             this.markPlansAsDirty(<ProblemInfo>fileInfo);
         }
 
-        this.emit(PddlWorkspace.UPDATED, fileInfo);
-        this.emit(PddlWorkspace.INSERTED, fileInfo);
+        this.emitIfNew(PddlWorkspace.UPDATED, fileInfo);
+        this.emitIfNew(PddlWorkspace.INSERTED, fileInfo);
         return fileInfo;
     }
 
     invalidateDiagnostics(fileInfo: FileInfo): void {
         fileInfo.setStatus(FileStatus.Parsed);
-        this.emit(PddlWorkspace.UPDATED, fileInfo);
+        this.emitIfNew(PddlWorkspace.UPDATED, fileInfo);
     }
 
     markProblemsAsDirty(domainInfo: DomainInfo): void {
@@ -166,11 +166,11 @@ export class PddlWorkspace extends EventEmitter {
 
     scheduleParsing(): void {
         this.cancelScheduledParsing();
-        this.timeout = setTimeout(() => this.parseAllDirty(), this.defaultTimerDelayInSeconds * 1000);
+        this.parsingTimeout = setTimeout(() => this.parseAllDirty(), this.defaultTimerDelayInSeconds * 1000);
     }
 
     private cancelScheduledParsing(): void {
-        if (this.timeout) { clearTimeout(this.timeout); }
+        if (this.parsingTimeout) { clearTimeout(this.parsingTimeout); }
     }
 
     private parseAllDirty(): void {
@@ -182,17 +182,35 @@ export class PddlWorkspace extends EventEmitter {
 
     async reParseFile(fileInfo: FileInfo): Promise<FileInfo> {
         let folderPath = PddlWorkspace.getFolderPath(fileInfo.fileUri);
-
         let folder = this.upsertFolder(folderPath);
 
         folder.remove(fileInfo);
         fileInfo = await this.parseFile(fileInfo.fileUri, fileInfo.getLanguage(), fileInfo.getVersion(), fileInfo.getText(), fileInfo.getDocumentPositionResolver());
         folder.add(fileInfo);
-        this.emit(PddlWorkspace.UPDATED, fileInfo);
+
+        this.emitIfNew(PddlWorkspace.UPDATED, fileInfo);
 
         return fileInfo;
     }
 
+    private lastVersionUpdateEmitted = new Map<string, number>();
+
+    /**
+     * Emit event, unless it is stale
+     * @param fileInfo file concerned
+     */
+    private emitIfNew(symbol: symbol, fileInfo: FileInfo): void {
+        if (symbol === PddlWorkspace.UPDATED) {
+            let lastVersion = this.lastVersionUpdateEmitted.get(fileInfo.fileUri);
+            if (lastVersion !== undefined && fileInfo.getVersion() <= lastVersion) {
+                return;
+            }
+            else {
+                this.lastVersionUpdateEmitted.set(fileInfo.fileUri, fileInfo.getVersion());
+            }
+        }
+        this.emit(symbol, fileInfo);
+    }
     private async parseFile(fileUri: string, language: PddlLanguage, fileVersion: number, fileText: string, positionResolver: DocumentPositionResolver): Promise<FileInfo> {
         if (language === PddlLanguage.PDDL) {
             const parser = new PddlSyntaxTreeBuilder(fileText);
@@ -202,13 +220,13 @@ export class PddlWorkspace extends EventEmitter {
             if (domainInfo) {
                 this.appendOffendingTokenToParsingProblems(domainInfo, parser, positionResolver);
                 return domainInfo;
-            } else {
-                let problemInfo = await this.parser.tryProblem(fileUri, fileVersion, fileText, syntaxTree, positionResolver);
+            } 
 
-                if (problemInfo) {
-                    this.appendOffendingTokenToParsingProblems(problemInfo, parser, positionResolver);
-                    return problemInfo;
-                }
+            let problemInfo = await this.parser.tryProblem(fileUri, fileVersion, fileText, syntaxTree, positionResolver);
+
+            if (problemInfo) {
+                this.appendOffendingTokenToParsingProblems(problemInfo, parser, positionResolver);
+                return problemInfo;
             }
 
             let unknownFile = new UnknownFileInfo(fileUri, fileVersion, positionResolver);
@@ -260,7 +278,7 @@ export class PddlWorkspace extends EventEmitter {
             if (folder.hasFile(documentUri)) {
                 let documentInfo = folder.get(documentUri)!;
 
-                this.emit(PddlWorkspace.REMOVING, documentInfo);
+                this.emitIfNew(PddlWorkspace.REMOVING, documentInfo);
                 return folder.remove(documentInfo);
             }
         }

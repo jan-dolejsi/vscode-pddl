@@ -94,7 +94,7 @@ export class MessageParser {
         }
 
         if (!state.hasOwnProperty('h')) {
-            return stateFound.deadEnd();
+            return stateFound.setDeadEnd();
         }
         else {
 
