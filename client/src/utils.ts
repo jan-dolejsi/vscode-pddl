@@ -5,10 +5,10 @@
 'use strict';
 
 import * as path from 'path';
-import { ExtensionContext, Uri, workspace, window, Range, TextDocument, Webview } from 'vscode';
+import { ExtensionContext, Uri, workspace, window, Range, TextDocument, Webview, Position } from 'vscode';
 import * as afs from '../../common/src/asyncfs';
 import { PddlExtensionContext } from '../../common/src/PddlExtensionContext';
-import { PddlRange } from '../../common/src/DocumentPositionResolver';
+import { PddlRange, PddlPosition } from '../../common/src/DocumentPositionResolver';
 import { PddlSyntaxNode } from '../../common/src/PddlSyntaxNode';
 import { StringifyingMap } from '../../common/src/util';
 
@@ -182,6 +182,10 @@ export function toRange(pddlRange: PddlRange): Range {
 
 export function nodeToRange(document: TextDocument, node: PddlSyntaxNode): Range {
     return new Range(document.positionAt(node.getStart()), document.positionAt(node.getEnd()));
+}
+
+export function toPosition(position: PddlPosition): Position {
+    return new Position(position.line, position.character);
 }
 
 export class UriMap<T> extends StringifyingMap<Uri, T> {

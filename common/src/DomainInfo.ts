@@ -76,6 +76,18 @@ export class DomainInfo extends FileInfo {
         return this.actions;
     }
 
+    getStructures(): Action[] {
+        let structures = new Array<Action>();
+        structures.push(...this.getActions());
+        if (this.getEvents()) {
+            structures.push(...this.getEvents()!);
+        }
+        if (this.getProcesses()) {
+            structures.push(...this.getProcesses()!);
+        }
+        return structures;
+    }
+
     getTypeInheritance(): DirectionalGraph {
         return this.typeInheritance;
     }
@@ -240,7 +252,7 @@ export class TypeObjects {
     }
 }
 
-export abstract class Action {
+export abstract class PddlDomainConstruct {
     private location?: PddlRange; // initialized lazily
     private documentation: string[] = []; // initialized lazily
 
@@ -264,11 +276,14 @@ export abstract class Action {
         return this.documentation;
     }
 
-    abstract isDurative(): boolean;
-
     getNameOrEmpty(): string {
         return this.name || '';
     }
+}
+
+export abstract class Action extends PddlDomainConstruct {
+
+    abstract isDurative(): boolean;
 }
 
 export class InstantAction extends Action {
@@ -291,5 +306,11 @@ export class DurativeAction extends Action {
 
     isDurative(): boolean {
         return true;
+    }
+}
+
+export class UnrecognizedStructure extends PddlDomainConstruct {
+    constructor() {
+        super("unrecognized", []);
     }
 }

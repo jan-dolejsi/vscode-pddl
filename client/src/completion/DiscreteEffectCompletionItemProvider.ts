@@ -7,12 +7,11 @@
 import { CompletionItem, CompletionContext, MarkdownString, CompletionItemKind, Range, CompletionTriggerKind } from 'vscode';
 import { PDDL } from '../../../common/src/parser';
 import { DomainInfo } from '../../../common/src/DomainInfo';
-import { PddlTokenType } from '../../../common/src/PddlTokenizer';
 import { PddlSyntaxNode } from '../../../common/src/PddlSyntaxNode';
+import { ModelHierarchy } from '../../../common/src/ModelHierarchy';
 import { AbstractCompletionItemProvider, Suggestion } from './AbstractCompletionItemProvider';
 import { Delegate } from './Delegate';
 import { requires, toSelection } from './DomainCompletionItemProvider';
-import { DurativeActionEffectCompletionItemProvider } from './DurativeActionEffectCompletionItemProvider';
 
 export class DiscreteEffectCompletionItemProvider extends AbstractCompletionItemProvider {
 
@@ -56,18 +55,9 @@ export class DiscreteEffectCompletionItemProvider extends AbstractCompletionItem
     }
 
     static inside(currentNode: PddlSyntaxNode) {
-        return DurativeActionEffectCompletionItemProvider.insideEffect(currentNode)
-            && (DiscreteEffectCompletionItemProvider.insideActionOrEvent(currentNode)
-                || DiscreteEffectCompletionItemProvider.insideDurativeActionDiscreteEffect(currentNode));
-    }
-
-    static insideDurativeActionDiscreteEffect(currentNode: PddlSyntaxNode): boolean {
-        return currentNode.findAncestor(PddlTokenType.OpenBracketOperator, /\(\s*:durative-action/i) !== undefined
-            && currentNode.findAncestor(PddlTokenType.OpenBracketOperator, /\(\s*(at start|at end)/i) !== undefined;
-    }
-
-    private static insideActionOrEvent(currentNode: PddlSyntaxNode) {
-        return currentNode.findAncestor(PddlTokenType.OpenBracketOperator, /\(\s*:(action|event)/i) !== undefined;
+        return ModelHierarchy.isInsideEffect(currentNode)
+            && (ModelHierarchy.isInsideActionOrEvent(currentNode)
+                || ModelHierarchy.isInsideDurativeActionDiscreteEffect(currentNode));
     }
 
     provide(domainInfo: DomainInfo, context: CompletionContext, range: Range | null): (CompletionItem | null)[] {

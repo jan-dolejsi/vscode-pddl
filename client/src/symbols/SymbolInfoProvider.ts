@@ -17,7 +17,7 @@ import { PddlTokenType } from '../../../common/src/PddlTokenizer';
 import { PddlSyntaxNode } from '../../../common/src/PddlSyntaxNode';
 
 export class SymbolInfoProvider implements DocumentSymbolProvider, DefinitionProvider, ReferenceProvider, HoverProvider {
-    symbolUtils: SymbolUtils;
+    private symbolUtils: SymbolUtils;
 
     constructor(public pddlWorkspace: CodePddlWorkspace) {
         this.symbolUtils = new SymbolUtils(pddlWorkspace);

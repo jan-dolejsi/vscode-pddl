@@ -5,8 +5,15 @@
 
 export abstract class DocumentPositionResolver {
     abstract resolveToPosition(offset: number): PddlPosition;
+    
     resolveToRange(start: number, end: number): PddlRange {
         return PddlRange.from(this.resolveToPosition(start), this.resolveToPosition(end));
+    }
+
+    rangeIncludesOffset(range: PddlRange, offset: number): boolean {
+        let positionAtOffset = this.resolveToPosition(offset);
+
+        return range.includes(positionAtOffset); 
     }
 }
 
@@ -41,6 +48,15 @@ export class SimpleDocumentPositionResolver extends DocumentPositionResolver {
 export class PddlPosition {
     constructor(public readonly line: number, public readonly character: number) {
     }
+
+    atOrBefore(other: PddlPosition): boolean {
+        if (this.line === other.line) {
+            return this.character <= other.character;
+        }
+        else {
+            return this.line < other.line;
+        }
+    }
 }
 
 /**
@@ -56,5 +72,17 @@ export class PddlRange {
 
     static from(start: PddlPosition, end: PddlPosition): PddlRange {
         return new PddlRange(start.line, start.character, end.line, end.character);
+    }
+
+    includes(positionAtOffset: PddlPosition): boolean {
+        return this.start.atOrBefore(positionAtOffset) && positionAtOffset.atOrBefore(this.end);
+    }
+
+    get start(): PddlPosition {
+        return new PddlPosition(this.startLine, this.startCharacter);
+    }
+    
+    get end(): PddlPosition {
+        return new PddlPosition(this.endLine, this.endCharacter);
     }
 }

@@ -1,7 +1,8 @@
 # PDDL support - What's new?
 
-## [Unreleased] Fixes
+## [2.15.2] Predicate and function references
 
+- predicate/function references in hover and decorations (image needed)
 - async planner service output parsing to support more than JSON
 - async planner service ptest support for local configuration.json file
 - vis-network upgraded to v6.4.4
@@ -864,7 +865,8 @@ Note for open source contributors: all notable changes to the "pddl" extension w
 
 Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
 
-[Unreleased]: https://github.com/jan-dolejsi/vscode-pddl/compare/v2.15.1...HEAD
+[Unreleased]: https://github.com/jan-dolejsi/vscode-pddl/compare/v2.15.2...HEAD
+[2.15.2]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.15.1...v2.15.2
 [2.15.1]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.15.0...v2.15.1
 [2.15.0]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.14.4...v2.15.0
 [2.14.4]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.14.2...v2.14.4

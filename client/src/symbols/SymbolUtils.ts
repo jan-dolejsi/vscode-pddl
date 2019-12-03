@@ -292,25 +292,25 @@ export class SymbolInfo {
 }
 
 export class VariableInfo extends SymbolInfo {
-    constructor(public hover: Hover, public location: Location, public variable: Variable) {
+    constructor(hover: Hover, location: Location, public readonly variable: Variable) {
         super(hover, location);
     }
 }
 
 export class TypeInfo extends SymbolInfo {
-    constructor(public hover: Hover, public location: Location, public type: string) {
+    constructor(hover: Hover, location: Location, public type: string) {
         super(hover, location);
     }
 }
 
 export class ActionInfo extends SymbolInfo {
-    constructor(public hover: Hover, public location: Location, public action: Action) {
+    constructor(hover: Hover, location: Location, public action: Action) {
         super(hover, location);
     }
 }
 
 export class ParameterInfo extends SymbolInfo {
-    constructor(public hover: Hover, public location: Location,
+    constructor(hover: Hover, location: Location,
         public readonly scopeNode: PddlSyntaxNode, public readonly name: string) {
         super(hover, location);
     }

@@ -41,6 +41,7 @@ import { ProblemInitView } from './modelView/ProblemInitView';
 import { ProblemObjectsView } from './modelView/ProblemObjectsView';
 import { DomainTypesView } from './modelView/DomainTypesView';
 import { ProblemConstraintsView } from './modelView/ProblemConstraintsView';
+import { ModelHierarchyProvider } from './symbols/ModelHierarchyProvider';
 
 const PDDL_CONFIGURE_PARSER = 'pddl.configureParser';
 const PDDL_LOGIN_PARSER_SERVICE = 'pddl.loginParserService';
@@ -186,6 +187,9 @@ function activateWithTelemetry(_operationId: string, context: ExtensionContext) 
 	registerDocumentFormattingProvider(context, codePddlWorkspace);
 
 	let renameProvider = languages.registerRenameProvider(PDDL, new SymbolRenameProvider(codePddlWorkspace));
+	
+	let modelHierarchyProvider = new ModelHierarchyProvider(context, codePddlWorkspace);
+	context.subscriptions.push(languages.registerHoverProvider(PDDL, modelHierarchyProvider));
 
 	let symbolInfoProvider = new SymbolInfoProvider(codePddlWorkspace);
 
@@ -194,6 +198,7 @@ function activateWithTelemetry(_operationId: string, context: ExtensionContext) 
 	let referencesProvider = languages.registerReferenceProvider(PDDL, symbolInfoProvider);
 	let hoverProvider = languages.registerHoverProvider(PDDL, symbolInfoProvider);
 	let diagnosticCollection = languages.createDiagnosticCollection(PDDL);
+	
 	let diagnostics = new Diagnostics(codePddlWorkspace, diagnosticCollection, pddlConfiguration,
 		planValidator, happeningsValidator);
 
