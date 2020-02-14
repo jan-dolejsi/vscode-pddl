@@ -17,8 +17,6 @@ import { Val } from '../validation/Val';
 import { ValDownloadReminder } from '../validation/ValDownloadReminder';
 import { ExtensionInfo } from '../ExtensionInfo';
 
-enum TipResponse { Ok, Later, Next }
-
 const LATER = 'LATER';
 const NEVER = 'NEVER';
 const ACCEPTED = 'ACCEPTED';
@@ -34,73 +32,15 @@ export class StartUp {
     atStartUp(): void {
         this.showOverviewPage();
         this.showWhatsNew();
-        this.showTips();
         this.suggestFolderIsOpen();
         this.suggestAutoSave();
 
         new ValDownloadReminder(this.context, this.val).suggestValDownloadConfigurationIfAbsent();
     }
 
-    NEXT_TIP_TO_SHOW = 'nextTipToShow';
     WHATS_NEW_SHOWN_FOR_VERSION = 'whatsNewShownForVersion';
     ACCEPTED_TO_WRITE_A_REVIEW = 'acceptedToWriteAReview';
     NEVER_AUTO_SAVE = 'neverAutoSave';
-
-    async showTips(): Promise<boolean> {
-        var tipsPath = this.context.asAbsolutePath('tips.txt');
-        var tips: string[] = (await afs.readFile(tipsPath, 'utf-8')).split("\n");
-
-        var nextTipToShow = this.context.globalState.get(this.NEXT_TIP_TO_SHOW, 0);
-
-        let shouldContinue = true;
-        for (let index = nextTipToShow; index < tips.length && shouldContinue; index++) {
-            const tip = tips[index];
-
-            // skip tips that were removed subsequently as obsolete
-            if (tip.trim() === "") {
-                nextTipToShow++;
-                continue;
-            }
-
-            var response = await this.showTip(tip);
-            switch (response) {
-                case TipResponse.Ok:
-                    shouldContinue = false;
-                    nextTipToShow++;
-                    break;
-                case TipResponse.Later:
-                    shouldContinue = false;
-                    break;
-                case TipResponse.Next:
-                    nextTipToShow++;
-                    break;
-            }
-        }
-
-        if (nextTipToShow === tips.length) {
-            this.askForReview();
-        }
-
-        this.context.globalState.update(this.NEXT_TIP_TO_SHOW, nextTipToShow);
-
-        return true;
-    }
-
-    async showTip(tip: string): Promise<TipResponse> {
-        let optionOk: MessageItem = { title: "OK, got it." };
-        let optionLater: MessageItem = { title: "Remind me later." };
-        let optionNext: MessageItem = { title: "Show next tip..." };
-        let options: MessageItem[] = [optionOk, optionLater, optionNext];
-
-        let choice = await window.showInformationMessage(tip, ...options);
-
-        switch (choice) {
-            case optionOk: return TipResponse.Ok;
-            case optionLater: return TipResponse.Later;
-            case optionNext: return TipResponse.Next;
-            default: return TipResponse.Later;
-        }
-    }
 
     suggestFolderIsOpen(): void {
         // The PDDL extension works best if you open VS Code in a specific folder. Use File > Open Folder ...
@@ -174,7 +114,7 @@ export class StartUp {
     }
 
     async askForReview(): Promise<void> {
-        // what was the user response last time? 
+        // what was the user response last time?
         var accepted = this.context.globalState.get(this.ACCEPTED_TO_WRITE_A_REVIEW, LATER);
 
         if (accepted === LATER) {
