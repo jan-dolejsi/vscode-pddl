@@ -1,5 +1,13 @@
 # PDDL support - What's new?
 
+## Work in progress
+
+- fixed generated problem file/tab name for the pre-parse preview
+- demoted Jinja2 errors to make it possible to edit the files
+- Configuration selector menu shows current value
+- Introduced configuration to disable the model hierarchy decorator (for perf reasons)
+- added PDDL3.1 `undefined` to syntax highlighting
+
 ## [2.15.2] Predicate and function references
 
 - predicate/function references in hover and decorations (image needed)

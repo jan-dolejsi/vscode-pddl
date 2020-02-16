@@ -755,6 +755,11 @@
           "default": false,
           "description": "Enable PDDL formatter (default is 'false'). Warning: this is an experimental feature - work in progress."
         },
+        "pddl.modelHierarchy": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable the PDDL model hierarchy decorator (predicate and function usage)"
+        },
         "pddlSearchDebugger.defaultPort": {
           "type": "integer",
           "description": "Search debugger static port. If not specified (or set to zero, the port is randomized for security reasons).",

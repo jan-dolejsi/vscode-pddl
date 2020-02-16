@@ -18,6 +18,18 @@ except ImportError:
 # read the template from the standard input
 template_text = "".join(sys.stdin.readlines())
 
+def tif_filter(time: float, value: float, *function_name) -> str:
+    assignment = "(= ({}) {})".format(' '.join(function_name), value)
+    return "(at {} {})".format(time, assignment) if time > 0\
+        else assignment
+
+def map_filter(value: any, attribute_name: str, default=None) -> any:
+    """ map filter to translate value object to its selected attribute """
+    if hasattr(value, attribute_name):
+        return value[attribute_name]
+    else:
+        return default
+
 def main(args):
     """ Transforms the problem file streamed in through the standard input using JSON the data file passed via command-line argument. """
     if len(args) < 1:
@@ -30,6 +42,8 @@ def main(args):
         input_data = json.load(fp)
 
     template = Template(template_text)
+    template.environment.filters['tif'] = tif_filter
+    template.environment.filters['mapattr'] = map_filter
 
     rendered = template.render(data=input_data)
 
