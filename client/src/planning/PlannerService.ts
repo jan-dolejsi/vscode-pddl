@@ -13,10 +13,11 @@ import { DomainInfo } from '../../../common/src/DomainInfo';
 import { PddlPlanParser } from '../../../common/src/PddlPlanParser';
 import { PlanStep } from '../../../common/src/PlanStep';
 import { Authentication } from '../../../common/src/Authentication';
+import { window } from 'vscode';
 
 export abstract class PlannerService extends Planner {
 
-    constructor(plannerPath: string, private useAuthentication: boolean, private authentication: Authentication) {
+    constructor(plannerPath: string, private authentication?: Authentication) {
         super(plannerPath);
     }
 
@@ -31,10 +32,14 @@ export abstract class PlannerService extends Planner {
         parent.handleOutput(`Planning service: ${this.plannerPath}\nDomain: ${domainFileInfo.name}, Problem: ${problemFileInfo.name}\n`);
 
         let requestHeader: any = {};
-        if (this.useAuthentication && this.authentication.getSToken() !== undefined) {
+        if (this.authentication && this.authentication.getSToken() !== undefined) {
             requestHeader = {
                 "Authorization": "Bearer " + this.authentication.getSToken()!
             };
+        }
+
+        if (parent.providePlannerOptions({ domain: domainFileInfo, problem: problemFileInfo }).length > 0) {
+            window.showWarningMessage("Search Debugger is not supported by planning services. Only planner executable may support it.");
         }
 
         let requestBody = await this.createRequestBody(domainFileInfo, problemFileInfo);
@@ -53,7 +58,7 @@ export abstract class PlannerService extends Planner {
                     return;
                 }
 
-                if (that.useAuthentication) {
+                if (that.authentication) {
                     if (httpResponse) {
                         if (httpResponse.statusCode === 400) {
                             let message = "Authentication failed. Please login or update tokens.";

@@ -20,9 +20,10 @@ export class PlannerAsyncService extends PlannerService {
 
     timeout = 60; //this default is overridden by info from the configuration!
     asyncMode = false;
+    planTimeScale = 1;
 
-    constructor(plannerPath: string, private plannerConfiguration: Uri, useAuthentication: boolean, authentication: Authentication) {
-        super(plannerPath, useAuthentication, authentication);
+    constructor(plannerPath: string, private plannerConfiguration: Uri, authentication?: Authentication) {
+        super(plannerPath, authentication);
     }
 
     getTimeout(): number {
@@ -37,10 +38,12 @@ export class PlannerAsyncService extends PlannerService {
         let configuration = await this.getConfiguration();
         if (!configuration) { return null; }
 
-        configuration.planFormat = 'JSON';
+        configuration.planFormat = configuration.planFormat || 'JSON';
         if ("timeout" in configuration) {
             this.timeout = configuration.timeout;
         }
+
+        this.planTimeScale = PlannerAsyncService.getPlanTimeScale(configuration);
 
         return {
             'domain': {
@@ -57,14 +60,34 @@ export class PlannerAsyncService extends PlannerService {
         };
     }
 
+    static getPlanTimeScale(configuration: any): number {
+        const planTimeUnit = configuration['planTimeUnit'];
+        switch (planTimeUnit) {
+            case "MINUTE":
+                return 60;
+            case "MILLISECOND":
+                return 1 / 1000;
+            case "HOUR":
+                return 60 * 60;
+            case "SECOND":
+            default:
+                return 1;
+        }
+    }
+
     processServerResponseBody(responseBody: any, planParser: PddlPlanParser, parent: PlannerResponseHandler, resolve: (plans: Plan[]) => void, reject: (error: Error) => void): void {
-        let _timedout = false;
+        let _timedOut = false;
         let response_status: string = responseBody['status']['status'];
         if (["STOPPED", "SEARCHING_BETTER_PLAN"].includes(response_status)) {
-            _timedout = responseBody['status']['reason'] === "TIMEOUT";
+            _timedOut = responseBody['status']['reason'] === "TIMEOUT";
             if (responseBody['plans'].length > 0) {
                 let plansJson = responseBody['plans'];
-                plansJson.forEach((plan: any) => this.parsePlan(plan, planParser));
+                try {
+                    plansJson.forEach((plan: any) => this.parsePlan(plan, planParser));
+                }
+                catch (err) {
+                    reject(err);
+                }
 
                 let plans = planParser.getPlans();
                 if (plans.length > 0) { parent.handleOutput(plans[0].getText() + '\n'); }
@@ -85,27 +108,42 @@ export class PlannerAsyncService extends PlannerService {
             return;
         }
         else if (["NOT_INITIALIZED", "INITIATING", "SEARCHING_INITIAL_PLAN"].includes(response_status)) {
-            _timedout = true;
+            _timedOut = true;
             let error = `After timeout ${this.timeout} the status is ${response_status}`;
             reject(new Error(error));
             return;
         }
 
-        console.log(_timedout);
+        console.log(_timedOut);
     }
 
     parsePlan(plan: any, planParser: PddlPlanParser): void {
-        let _makespan: number = plan['makespan'];
-        let _metric: number = plan['metricValue'];
+        let makespan: number = plan['makespan'];
+        let metric: number = plan['metricValue'];
         let search_performance_info = plan['searchPerformanceInfo'];
-        let _states_evaluated: number = search_performance_info['statesEvaluated'];
-        let _elapsedTimeInSeconds = parseFloat(search_performance_info['timeElapsed']) / 1000;
-        let planSteps = JSON.parse(plan['content']);
-        this.parsePlanSteps(planSteps, planParser);
+        let statesEvaluated: number = search_performance_info['statesEvaluated'];
+        let elapsedTimeInSeconds = parseFloat(search_performance_info['timeElapsed']) / 1000;
 
-        planParser.onPlanFinished();
+        planParser.setPlanMetaData(makespan, metric, statesEvaluated, elapsedTimeInSeconds, this.planTimeScale);
 
-        console.log("Not implemented further." + _makespan + _metric + _states_evaluated + _elapsedTimeInSeconds + planSteps);
+        const planFormat: string | undefined = plan['format'];
+        if (planFormat && planFormat.toLowerCase() === 'json') {
+            let planSteps = JSON.parse(plan['content']);
+            this.parsePlanSteps(planSteps, planParser);
+            planParser.onPlanFinished();
+        }
+        else if (planFormat && planFormat.toLowerCase() === 'tasks') {
+            let planText = plan['content'];
+            planParser.appendLine(planText);
+            planParser.onPlanFinished();
+        }
+        else if (planFormat && planFormat.toLowerCase() === 'xplan') {
+            let planText = plan['content'];
+            planParser.appendLine(planText); // the underlying 
+        }
+        else {
+            throw new Error('Unsupported plan format: ' + planFormat);
+        }
     }
 
     async getConfiguration(): Promise<any> {
@@ -113,7 +151,9 @@ export class PlannerAsyncService extends PlannerService {
             return this.createDefaultConfiguration();
         }
         else {
-            let configurationDoc = await workspace.openTextDocument(this.plannerConfiguration);
+            let configurationAbsPath = this.plannerConfiguration.fsPath;
+
+            let configurationDoc = await workspace.openTextDocument(configurationAbsPath);
             let configurationString = configurationDoc.getText();
             return JSON.parse(configurationString);
         }

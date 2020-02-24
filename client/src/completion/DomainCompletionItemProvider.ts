@@ -17,6 +17,7 @@ import { ContinuousEffectCompletionItemProvider } from './ContinuousEffectComple
 import { DurativeActionEffectCompletionItemProvider } from './DurativeActionEffectCompletionItemProvider';
 import { DurativeActionConditionCompletionItemProvider } from './DurativeActionConditionCompletionItemProvider';
 import { Util } from '../../../common/src/util';
+import { ModelHierarchy } from '../../../common/src/ModelHierarchy';
 
 export class DomainCompletionItemProvider extends AbstractCompletionItemProvider {
 
@@ -119,7 +120,7 @@ export class DomainCompletionItemProvider extends AbstractCompletionItemProvider
                 .map((suggestion, index) => this.createDurativeActionCompletionItem(currentNode, suggestion, range, context, index))
                 .filter(item => !!item).map(item => item!); // filter out nulls
         }
-        else if (DurativeActionEffectCompletionItemProvider.insideEffect(currentNode)) {
+        else if (ModelHierarchy.isInsideEffect(currentNode)) {
             let completions: (CompletionItem | null)[] = [];
             let range = context.triggerCharacter === '(' ? nodeToRange(document, currentNode) : null;
 

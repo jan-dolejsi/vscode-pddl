@@ -34,6 +34,10 @@ export class PddlSyntaxNode extends TextRange {
         return this.parent;
     }
 
+    isLeaveBracket(): boolean {
+        return this.getNestedChildren().every(child => child.isNotType(PddlTokenType.OpenBracket));
+    }
+
     getToken(): PddlToken {
         return this.token;
     }

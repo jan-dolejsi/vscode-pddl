@@ -12,14 +12,15 @@ export enum PlanningOutcome { SUCCESS, FAILURE, KILLED }
  * Outcome of the planner execution.
  */
 export class PlanningResult {
-    constructor(public outcome: PlanningOutcome, public plans: Plan[], public elapsedTime: number, public error: string) { }
+    constructor(public readonly outcome: PlanningOutcome, public readonly plans: Plan[],
+        public readonly elapsedTime: number, public readonly error?: string) { }
 
     /**
      * Creates the result instance for the case of successful planner execution.
      * @param plans plans
      */
     static success(plans: Plan[], elapsedTime: number): PlanningResult{
-        return new PlanningResult(PlanningOutcome.SUCCESS, plans, elapsedTime, null);
+        return new PlanningResult(PlanningOutcome.SUCCESS, plans, elapsedTime, undefined);
     }
 
     /**
@@ -34,6 +35,6 @@ export class PlanningResult {
      * Creates the result instance for the case of planner killed by the user.
      */
     static killed(){
-        return new PlanningResult(PlanningOutcome.KILLED, [], Number.NaN, null);
+        return new PlanningResult(PlanningOutcome.KILLED, [], Number.NaN, undefined);
     }
 }

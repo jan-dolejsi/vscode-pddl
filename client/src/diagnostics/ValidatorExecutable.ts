@@ -65,19 +65,19 @@ export class ValidatorExecutable extends Validator {
         let distinctOutputs: string[] = [];
 
         patterns.forEach(pattern => {
-            let match: RegExpExecArray;
+            let match: RegExpExecArray | null;
             while (match = pattern.regEx.exec(output)) {
                 // only report each warning/error once
                 if (distinctOutputs.includes(match[0])) { continue; }
                 distinctOutputs.push(match[0]);
                 
-                let pathUriTuple = pathToUriMap.find(tuple => tuple[0] === pattern.getFilePath(match));
+                let pathUriTuple = pathToUriMap.find(tuple => tuple[0] === pattern.getFilePath(match!));
 
                 if (!pathUriTuple) { continue; } // this is not a file of interest
 
                 let uri = pathUriTuple[1];
-                let diagnostic = new Diagnostic(pattern.getRange(match), pattern.getMessage(match),Validator.toSeverity(pattern.getSeverity(match)));
-                diagnostics.get(uri).push(diagnostic);
+                let diagnostic = new Diagnostic(pattern.getRange(match), pattern.getMessage(match), Validator.toSeverity(pattern.getSeverity(match)));
+                diagnostics.get(uri)?.push(diagnostic);
             }
         });
 

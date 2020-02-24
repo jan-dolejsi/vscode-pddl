@@ -88,7 +88,7 @@ export class SuggestionProvider implements CodeActionProvider {
     }
 
     private createTest(document: TextDocument, preProcessor: PreProcessor): Test {
-        let test = new Test(preProcessor.toString(), "", "this should not be used",
+        let test = new Test(preProcessor.getLabel(), "", "this should not be used",
             basename(document.uri.fsPath), "", preProcessor, []);
         test.setManifest(new TestsManifest('unused', 'unused', 'unused', document.uri)); // only the uri is needed
         return test;

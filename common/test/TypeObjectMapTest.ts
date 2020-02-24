@@ -102,7 +102,6 @@ describe('TypeObjectMap', () => {
         });
     });
 
-    
     describe('#addAll', () => {
         it('should add one type and object', () => {
             // GIVEN
@@ -179,6 +178,59 @@ describe('TypeObjectMap', () => {
             const type2TypeObjects = map.getTypeCaseInsensitive(type2Name);
             assert.ok(type2TypeObjects, "type objects for type2");
             assert.deepStrictEqual(type2TypeObjects!.getObjects(), [object2Name], "object names");
+        });
+    });
+
+    describe('#merge', () => {
+        it('merges two distinct maps', () => {
+            // GIVEN
+            let map1 = new TypeObjectMap();
+            const typeName1 = "type1";
+            const objectName1 = "object1";
+            map1.addAll(typeName1, [objectName1]);
+
+            let map2 = new TypeObjectMap();
+            const typeName2 = "type2";
+            const objectName2 = "object2";
+            map2.addAll(typeName2, [objectName2]);
+
+            // WHEN
+            let mergedMap = map1.merge(map2);
+
+            // THEN
+            assert.strictEqual(map1.length, 1, "map1 should not be modified");
+            assert.deepStrictEqual(map1.getTypeCaseInsensitive(typeName1)?.getObjects(), [objectName1], "map1 should have the same content");
+
+            assert.strictEqual(map2.length, 1, "map1 should not be modified");
+            assert.deepStrictEqual(map2.getTypeCaseInsensitive(typeName2)?.getObjects(), [objectName2], "map2 should have the same content");
+
+            assert.deepStrictEqual(mergedMap.getTypeCaseInsensitive(typeName1)?.getObjects(), [objectName1], "merged map should have type1");
+            assert.deepStrictEqual(mergedMap.getTypeCaseInsensitive(typeName2)?.getObjects(), [objectName2], "merged map should have type2");
+        });
+
+        it('merges two maps with object', () => {
+            // GIVEN
+            let map1 = new TypeObjectMap();
+            const typeName1 = "type1";
+            const objectName1 = "object1";
+            map1.addAll(typeName1, [objectName1]);
+
+            let map2 = new TypeObjectMap();
+            const objectName2 = "object2";
+            map2.addAll(typeName1, [objectName2]);
+
+            // WHEN
+            let mergedMap = map1.merge(map2);
+
+            // THEN
+            assert.strictEqual(map1.length, 1, "map1 should not be modified");
+            assert.deepStrictEqual(map1.getTypeCaseInsensitive(typeName1)?.getObjects(), [objectName1], "map1 should have the same content");
+
+            assert.strictEqual(map2.length, 1, "map1 should not be modified");
+            assert.deepStrictEqual(map2.getTypeCaseInsensitive(typeName1)?.getObjects(), [objectName2], "map2 should have the same content");
+
+            assert.deepStrictEqual(mergedMap.getTypeCaseInsensitive(typeName1)?.getObjects(), [objectName1, objectName2], "merged map should have type1");
+            assert.deepStrictEqual(mergedMap.length, 1, "merged map should have one type only");
         });
     });
 });

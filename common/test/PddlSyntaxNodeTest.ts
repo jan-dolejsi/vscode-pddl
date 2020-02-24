@@ -594,4 +594,30 @@ describe('PddlSyntaxNode', () => {
             assert.strictEqual(actual!.getText(), '(p ?p1 ?p2)');
         });
     });
+
+    describe('#isLeaveBracket()', () => {
+        it('predicate is a leave bracket', () => {
+            // GIVEN
+            let originalPddl = `(define (p))`;
+            let node = new PddlSyntaxTreeBuilder(originalPddl).getTree().getNodeAt(originalPddl.indexOf('(p)'));
+
+            // WHEN
+            let actual = node.isLeaveBracket();
+
+            // THEN
+            assert.strictEqual(actual, true, "(p) shall be a leave bracket node");
+        });
+
+        it('(not (p)) is a leave bracket', () => {
+            // GIVEN
+            let originalPddl = `(define (not (p)))`;
+            let node = new PddlSyntaxTreeBuilder(originalPddl).getTree().getNodeAt(originalPddl.indexOf('(not') + 1);
+
+            // WHEN
+            let actual = node.isLeaveBracket();
+
+            // THEN
+            assert.strictEqual(actual, false, "(not (p)) shall NOT be a leave bracket node");
+        });
+    });
 });

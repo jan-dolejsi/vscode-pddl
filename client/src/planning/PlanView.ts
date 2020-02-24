@@ -5,9 +5,10 @@
 'use strict';
 
 import {
-    window, workspace, commands, Uri,
+    window, workspace, Uri,
     ViewColumn, ExtensionContext, TextDocument, WebviewPanel, Disposable, TextDocumentChangeEvent
 } from 'vscode';
+import { instrumentOperationAsVsCodeCommand } from "vscode-extension-telemetry-wrapper";
 
 import { isPlan, getDomainAndProblemForPlan } from '../workspace/workspaceUtils';
 import { PlanReportGenerator } from './PlanReportGenerator';
@@ -32,7 +33,7 @@ export class PlanView extends Disposable {
     constructor(private context: ExtensionContext, private codePddlWorkspace: CodePddlWorkspace) {
         super(() => this.dispose());
 
-        context.subscriptions.push(commands.registerCommand("pddl.plan.preview", async planUri => {
+        context.subscriptions.push(instrumentOperationAsVsCodeCommand("pddl.plan.preview", async planUri => {
             let dotDocument = await getPlanDocument(planUri);
             if (dotDocument) {
                 return this.revealOrCreatePreview(dotDocument, ViewColumn.Beside);

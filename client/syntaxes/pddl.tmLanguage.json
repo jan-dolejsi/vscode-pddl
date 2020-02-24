@@ -120,6 +120,10 @@
 					"match": "\\b(assign|increase|decrease|forall|exists)\\b"
 				},
 				{
+					"name": "keyword.other.undefined",
+					"match": "\\b(undefined)\\b"
+				},
+				{
 					"name": "keyword.other.metric",
 					"match": "\\b(minimize|maximize)\\b"
 				}

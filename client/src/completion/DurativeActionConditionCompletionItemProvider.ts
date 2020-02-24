@@ -7,7 +7,7 @@
 import { CompletionItem, CompletionContext, MarkdownString, Range, CompletionTriggerKind, CompletionItemKind } from 'vscode';
 import { PDDL } from '../../../common/src/parser';
 import { DomainInfo } from '../../../common/src/DomainInfo';
-import { PddlTokenType } from '../../../common/src/PddlTokenizer';
+import { ModelHierarchy } from '../../../common/src/ModelHierarchy';
 import { PddlSyntaxNode } from '../../../common/src/PddlSyntaxNode';
 import { AbstractCompletionItemProvider, Suggestion } from './AbstractCompletionItemProvider';
 import { requires } from './DomainCompletionItemProvider';
@@ -38,18 +38,9 @@ export class DurativeActionConditionCompletionItemProvider extends AbstractCompl
             CompletionItemKind.Property);
     }
 
-    static inside(currentNode: PddlSyntaxNode) {
-        return DurativeActionConditionCompletionItemProvider.insideCondition(currentNode)
-            && DurativeActionConditionCompletionItemProvider.insideDurativeActionUnqualifiedCondition(currentNode);
-    }
-
-    static insideCondition(currentNode: PddlSyntaxNode) {
-        return currentNode.findAncestor(PddlTokenType.Keyword, /^\s*:condition$/i) !== undefined;
-    }
-
-    static insideDurativeActionUnqualifiedCondition(currentNode: PddlSyntaxNode): boolean {
-        return currentNode.findAncestor(PddlTokenType.OpenBracketOperator, /^\(\s*:durative-action/i) !== undefined
-            && currentNode.findAncestor(PddlTokenType.OpenBracketOperator, /^\(\s*(at start|at end|over all)/i) === undefined;
+    static inside(currentNode: PddlSyntaxNode): boolean {
+        return ModelHierarchy.isInsideCondition(currentNode)
+            && ModelHierarchy.isInsideDurativeActionUnqualifiedCondition(currentNode);
     }
 
     provide(_domainInfo: DomainInfo, context: CompletionContext, range: Range | null): (CompletionItem | null)[] {

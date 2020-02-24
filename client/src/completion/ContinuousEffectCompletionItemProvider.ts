@@ -7,12 +7,11 @@
 import { CompletionItem, CompletionContext, MarkdownString, CompletionItemKind, Range, CompletionTriggerKind } from 'vscode';
 import { PDDL } from '../../../common/src/parser';
 import { DomainInfo } from '../../../common/src/DomainInfo';
-import { PddlTokenType } from '../../../common/src/PddlTokenizer';
+import { ModelHierarchy } from '../../../common/src/ModelHierarchy';
 import { PddlSyntaxNode } from '../../../common/src/PddlSyntaxNode';
 import { AbstractCompletionItemProvider, Suggestion } from './AbstractCompletionItemProvider';
 import { Delegate } from './Delegate';
 import { toSelection, requires } from './DomainCompletionItemProvider';
-import { DurativeActionEffectCompletionItemProvider } from './DurativeActionEffectCompletionItemProvider';
 
 export class ContinuousEffectCompletionItemProvider extends AbstractCompletionItemProvider {
 
@@ -49,13 +48,9 @@ export class ContinuousEffectCompletionItemProvider extends AbstractCompletionIt
     }
 
     static inside(currentNode: PddlSyntaxNode) {
-        return DurativeActionEffectCompletionItemProvider.insideEffect(currentNode)
-            && (ContinuousEffectCompletionItemProvider.insideProcess(currentNode)
-                || DurativeActionEffectCompletionItemProvider.insideDurativeActionUnqualifiedEffect(currentNode));
-    }
-
-    private static insideProcess(currentNode: PddlSyntaxNode) {
-        return currentNode.findAncestor(PddlTokenType.OpenBracketOperator, /\(\s*:process/i) !== undefined;
+        return ModelHierarchy.isInsideEffect(currentNode)
+            && (ModelHierarchy.isInsideProcess(currentNode)
+                || ModelHierarchy.isInsideDurativeActionUnqualifiedEffect(currentNode));
     }
 
     provide(domainInfo: DomainInfo, context: CompletionContext, range: Range | null): (CompletionItem | null)[] {

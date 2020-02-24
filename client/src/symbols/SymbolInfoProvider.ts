@@ -17,22 +17,22 @@ import { PddlTokenType } from '../../../common/src/PddlTokenizer';
 import { PddlSyntaxNode } from '../../../common/src/PddlSyntaxNode';
 
 export class SymbolInfoProvider implements DocumentSymbolProvider, DefinitionProvider, ReferenceProvider, HoverProvider {
-    symbolUtils: SymbolUtils;
+    private symbolUtils: SymbolUtils;
 
     constructor(public pddlWorkspace: CodePddlWorkspace) {
         this.symbolUtils = new SymbolUtils(pddlWorkspace);
     }
 
-    async provideHover(document: TextDocument, position: Position, token: CancellationToken): Promise<Hover | null> {
-        if (token.isCancellationRequested) { return null; }
+    async provideHover(document: TextDocument, position: Position, token: CancellationToken): Promise<Hover | undefined> {
+        if (token.isCancellationRequested) { return undefined; }
         await this.symbolUtils.assertFileParsed(document);
 
         let info = this.symbolUtils.getSymbolInfo(document, position);
         return info?.hover;
     }
 
-    async provideReferences(document: TextDocument, position: Position, context: ReferenceContext, token: CancellationToken): Promise<Location[] | null> {
-        if (token.isCancellationRequested) { return null; }
+    async provideReferences(document: TextDocument, position: Position, context: ReferenceContext, token: CancellationToken): Promise<Location[] | undefined> {
+        if (token.isCancellationRequested) { return undefined; }
         await this.symbolUtils.assertFileParsed(document);
 
         let info = this.symbolUtils.getSymbolInfo(document, position);
@@ -41,8 +41,8 @@ export class SymbolInfoProvider implements DocumentSymbolProvider, DefinitionPro
         return this.symbolUtils.findSymbolReferences(document, info, context.includeDeclaration);
     }
 
-    async provideDefinition(document: TextDocument, position: Position, token: CancellationToken): Promise<Location | Location[] | null> {
-        if (token.isCancellationRequested) { return null; }
+    async provideDefinition(document: TextDocument, position: Position, token: CancellationToken): Promise<Location | undefined> {
+        if (token.isCancellationRequested) { return undefined; }
         await this.symbolUtils.assertFileParsed(document);
 
         let info = this.symbolUtils.getSymbolInfo(document, position);

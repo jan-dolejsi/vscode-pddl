@@ -8,6 +8,8 @@ import {
     window, workspace, commands, OutputChannel, Uri,
     MessageItem, ExtensionContext, ProgressLocation, EventEmitter, Event, CancellationToken, Progress, QuickPickItem
 } from 'vscode';
+import { instrumentOperationAsVsCodeCommand } from "vscode-extension-telemetry-wrapper";
+import * as path from 'path';
 
 import { PddlWorkspace } from '../../../common/src/PddlWorkspace';
 import { PddlSyntaxTreeBuilder } from '../../../common/src/PddlSyntaxTreeBuilder';
@@ -50,9 +52,9 @@ const PDDL_CONVERT_HAPPENINGS_TO_PLAN = 'pddl.convertHappeningsToPlan';
 export class Planning implements PlannerResponseHandler {
     output: OutputChannel;
 
-    planner: Planner;
-    plans: Plan[];
-    planningProcessKilled: boolean;
+    planner: Planner | null = null;
+    plans: Plan[] = [];
+    planningProcessKilled = false;
     planView: PlanView;
     optionProviders: PlannerOptionsProvider[] = [];
     userOptionsProvider: PlannerUserOptionsSelector;
@@ -63,8 +65,8 @@ export class Planning implements PlannerResponseHandler {
 
         context.subscriptions.push(this.planView = new PlanView(context, codePddlWorkspace));
 
-        context.subscriptions.push(commands.registerCommand('pddl.planAndDisplayResult',
-            async (domainUri: Uri, problemUri: Uri, workingFolder: string, options: string) => {
+        context.subscriptions.push(instrumentOperationAsVsCodeCommand('pddl.planAndDisplayResult',
+            async (domainUri: Uri, problemUri: Uri, workingFolder: string, options?: string) => {
                 if (problemUri) {
                     await this.planByUri(domainUri, problemUri, workingFolder, options).catch(showError);
                 } else {
@@ -73,9 +75,9 @@ export class Planning implements PlannerResponseHandler {
             })
         );
 
-        context.subscriptions.push(commands.registerCommand(PDDL_STOP_PLANNER, () => this.stopPlanner()));
+        context.subscriptions.push(instrumentOperationAsVsCodeCommand(PDDL_STOP_PLANNER, () => this.stopPlanner()));
 
-        context.subscriptions.push(commands.registerCommand(PDDL_GENERATE_PLAN_REPORT, async (plans: Plan[], selectedPlan: number) => {
+        context.subscriptions.push(instrumentOperationAsVsCodeCommand(PDDL_GENERATE_PLAN_REPORT, async (plans: Plan[], selectedPlan: number) => {
             if (plans !== null) {
                 let width = workspace.getConfiguration(CONF_PDDL).get<number>(PLAN_REPORT_EXPORT_WIDTH, 200);
                 await new PlanReportGenerator(context, { displayWidth: width, selfContained: true }).export(plans, selectedPlan);
@@ -84,7 +86,7 @@ export class Planning implements PlannerResponseHandler {
             }
         }));
 
-        context.subscriptions.push(commands.registerCommand(PDDL_EXPORT_PLAN, (plan: Plan) => {
+        context.subscriptions.push(instrumentOperationAsVsCodeCommand(PDDL_EXPORT_PLAN, (plan: Plan) => {
             if (plan) {
                 new PlanExporter(plan).export();
             } else {
@@ -92,7 +94,7 @@ export class Planning implements PlannerResponseHandler {
             }
         }));
 
-        context.subscriptions.push(commands.registerCommand(PDDL_CONVERT_PLAN_TO_HAPPENINGS, async () => {
+        context.subscriptions.push(instrumentOperationAsVsCodeCommand(PDDL_CONVERT_PLAN_TO_HAPPENINGS, async () => {
             if (window.activeTextEditor && isPlan(window.activeTextEditor.document)) {
                 let epsilon = plannerConfiguration.getEpsilonTimeStep();
                 new PlanHappeningsExporter(window.activeTextEditor.document, epsilon).export();
@@ -101,7 +103,7 @@ export class Planning implements PlannerResponseHandler {
             }
         }));
 
-        context.subscriptions.push(commands.registerCommand(PDDL_CONVERT_HAPPENINGS_TO_PLAN, async () => {
+        context.subscriptions.push(instrumentOperationAsVsCodeCommand(PDDL_CONVERT_HAPPENINGS_TO_PLAN, async () => {
             if (window.activeTextEditor && isHappenings(window.activeTextEditor.document)) {
                 let epsilon = plannerConfiguration.getEpsilonTimeStep();
                 new HappeningsPlanExporter(window.activeTextEditor.document, epsilon).export();
@@ -110,7 +112,7 @@ export class Planning implements PlannerResponseHandler {
             }
         }));
 
-        context.subscriptions.push(commands.registerCommand("pddl.syntaxTree", () => {
+        context.subscriptions.push(instrumentOperationAsVsCodeCommand("pddl.syntaxTree", () => {
             if (window.activeTextEditor && isPddl(window.activeTextEditor.document)) {
                 let index = window.activeTextEditor.document.offsetAt(window.activeTextEditor.selection.active);
                 const pddlSyntaxTreeBuilder = new PddlSyntaxTreeBuilder(window.activeTextEditor.document.getText());
@@ -127,15 +129,15 @@ export class Planning implements PlannerResponseHandler {
             }
         }));
 
-        context.subscriptions.push(commands.registerCommand("pddl.configureTarget", () => commands.executeCommand(PDDL_CONFIGURE_COMMAND, "pddlPlanner.executionTarget")));
+        context.subscriptions.push(instrumentOperationAsVsCodeCommand("pddl.configureTarget", () => commands.executeCommand(PDDL_CONFIGURE_COMMAND, "pddlPlanner.executionTarget")));
     }
 
     addOptionsProvider(optionsProvider: PlannerOptionsProvider) {
         this.optionProviders.push(optionsProvider);
     }
 
-    providePlannerOptions(context: PlanningRequestContext): string {
-        return this.optionProviders.map(provider => provider.providePlannerOptions(context)).join(' ');
+    providePlannerOptions(context: PlanningRequestContext): string[] {
+        return this.optionProviders.map(provider => provider.providePlannerOptions(context));
     }
 
     /**
@@ -173,8 +175,9 @@ export class Planning implements PlannerResponseHandler {
         this.output.clear();
 
         const activeDocument = window.activeTextEditor.document;
-        if (!activeDocument) { return null; }
+        if (!activeDocument) { return; }
         const activeFileInfo = await this.codePddlWorkspace.upsertAndParseFile(activeDocument);
+        if (activeFileInfo === undefined) { throw new Error('Selected file is not a PDDL document.'); }
 
         let problemFileInfo: ProblemInfo;
         let domainFileInfo: DomainInfo;
@@ -239,7 +242,7 @@ export class Planning implements PlannerResponseHandler {
 
     private readonly _onPlansFound = new EventEmitter<PlanningResult>();
     public onPlansFound: Event<PlanningResult> = this._onPlansFound.event;
-    private progressUpdater: ElapsedTimeProgressUpdater;
+    private progressUpdater: ElapsedTimeProgressUpdater | undefined;
 
     private establishWorkingDirectory(activeDocument: import("vscode").TextDocument, problemFileInfo: ProblemInfo, domainFileInfo: DomainInfo) {
         let workingDirectory = "";
@@ -257,7 +260,7 @@ export class Planning implements PlannerResponseHandler {
 
     private async parseDomain(domainFileUri: Uri): Promise<DomainInfo> {
         let fileInfo = await this.codePddlWorkspace.upsertAndParseFile(await workspace.openTextDocument(domainFileUri));
-        if (!fileInfo.isDomain()) {
+        if (fileInfo && !fileInfo.isDomain()) {
             throw new Error("Selected file is not a domain file.");
         }
         else {
@@ -302,7 +305,7 @@ export class Planning implements PlannerResponseHandler {
             });
 
             this.progressUpdater = new ElapsedTimeProgressUpdater(progress, token);
-            return this.planner.plan(domainFileInfo, problemFileInfo, planParser, this);
+            return this.planner!.plan(domainFileInfo, problemFileInfo, planParser, this);
         })
             .then(plans => this.onPlannerFinished(plans), reason => this.onPlannerFailed(reason));
     }
@@ -312,6 +315,7 @@ export class Planning implements PlannerResponseHandler {
     }
 
     onPlannerFinished(plans: Plan[]): void {
+        if (!this.progressUpdater) { return; }
         let elapsedTime = this.progressUpdater.getElapsedTimeInMilliSecs();
         this.progressUpdater.setFinished();
         let result = this.planningProcessKilled ? PlanningResult.killed() : PlanningResult.success(plans, elapsedTime);
@@ -323,6 +327,7 @@ export class Planning implements PlannerResponseHandler {
     }
 
     onPlannerFailed(reason: any): void {
+        if (!this.progressUpdater) { return; }
         this.progressUpdater.setFinished();
         this._onPlansFound.fire(PlanningResult.failure(reason.toString()));
 
@@ -344,7 +349,7 @@ export class Planning implements PlannerResponseHandler {
 
         // the working directory may be virtual, replace it
         if (!await afs.exists(workingDirectory)) {
-            if (workspace.workspaceFolders.length) {
+            if (workspace.workspaceFolders?.length) {
                 return workspace.workspaceFolders[0].uri.fsPath;
             }
             else {
@@ -367,7 +372,7 @@ export class Planning implements PlannerResponseHandler {
      * @param options planner options or a path of a configuration file
      * @returns `Planner` instance of the configured planning engine
      */
-    async createPlanner(workingDirectory: string, options?: string): Promise<Planner> {
+    async createPlanner(workingDirectory: string, options?: string): Promise<Planner | null> {
         let plannerPath = await this.plannerConfiguration.getPlannerPath(Uri.file(workingDirectory));
         if (!plannerPath) { return null; }
 
@@ -375,7 +380,7 @@ export class Planning implements PlannerResponseHandler {
 
         if (isHttp(plannerPath)) {
             let useAuthentication = this.plannerConfiguration.isPddlPlannerServiceAuthenticationEnabled();
-            let authentication = null;
+            let authentication = undefined;
             if (useAuthentication) {
                 let configuration = this.plannerConfiguration.getPddlPlannerServiceAuthenticationConfiguration();
                 authentication = new Authentication(configuration.url, configuration.requestEncoded, configuration.clientId, configuration.callbackPort, configuration.timeoutInMs,
@@ -386,14 +391,14 @@ export class Planning implements PlannerResponseHandler {
 
             if (plannerPath.endsWith("/solve")) {
                 options = await this.getPlannerLineOptions(options);
-                if (options === null || options === undefined) { return null; }
+                if (options === undefined) { return null; }
 
-                return new PlannerSyncService(plannerPath, options, useAuthentication, authentication);
+                return new PlannerSyncService(plannerPath, options, authentication);
             }
             else if (plannerPath.endsWith("/request")) {
-                let configuration = options ? Uri.parse(options) : await new PlannerConfigurationSelector(Uri.file(workingDirectory)).getConfiguration();
-                if (!configuration) { return null; }
-                return new PlannerAsyncService(plannerPath, configuration, useAuthentication, authentication);
+                let configuration = options ? this.toAbsoluteUri(options, workingDirectory) : await new PlannerConfigurationSelector(Uri.file(workingDirectory)).getConfiguration();
+                if (!configuration) { return null; } // canceled by user
+                return new PlannerAsyncService(plannerPath, configuration, authentication);
             }
             else {
                 throw new Error("Planning service not supported: " + plannerPath);
@@ -401,17 +406,24 @@ export class Planning implements PlannerResponseHandler {
         }
         else {
             options = await this.getPlannerLineOptions(options);
-            if (options === null) { return null; }
+            if (options === undefined) { return null; }
 
-            let plannerSyntax = await this.plannerConfiguration.getPlannerSyntax();
-            if (plannerSyntax === null) { return null; }
+            let plannerSyntax = this.plannerConfiguration.getPlannerSyntax();
+            if (plannerSyntax === undefined) { return null; }
 
             return new PlannerExecutable(plannerPath, options, plannerSyntax, workingDirectory);
         }
     }
 
-    async getPlannerLineOptions(options: string): Promise<string> {
-        if (options === null || options === undefined) {
+    private toAbsoluteUri(configPath: string, workingDirectory: string): Uri {
+        let absoluteConfigPath = path.isAbsolute(configPath) ?
+            configPath :
+            path.join(workingDirectory, configPath);
+        return Uri.file(absoluteConfigPath);
+    }
+
+    async getPlannerLineOptions(options: string | undefined): Promise<string | undefined> {
+        if (options === undefined) {
             return await this.userOptionsProvider.getPlannerOptions();
         }
         else {
@@ -436,7 +448,7 @@ export class Planning implements PlannerResponseHandler {
                     "Yes, send my PDDL to this service.",
                     "No, I do not want to send this PDDL to this service."
                 );
-                let consentGiven = answer && answer.toLowerCase().startsWith("yes");
+                let consentGiven = answer !== undefined && answer.toLowerCase().startsWith("yes");
                 consents[plannerPath] = consentGiven;
                 this.context.globalState.update(this.PLANNING_SERVICE_CONSENTS, consents);
                 return consentGiven;
@@ -480,7 +492,7 @@ export class Planning implements PlannerResponseHandler {
     }
 }
 
-class ProcessErrorMessageItem implements MessageItem {
+interface ProcessErrorMessageItem extends MessageItem {
     title: string;
     isCloseAffordance?: boolean;
     setPlanner: boolean;
@@ -488,7 +500,7 @@ class ProcessErrorMessageItem implements MessageItem {
 
 class ElapsedTimeProgressUpdater {
     startTime = new Date();
-    finished: boolean;
+    finished = false;
 
     constructor(private progress: Progress<{ message?: string; increment?: number }>,
         private token: CancellationToken) {

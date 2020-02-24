@@ -12,7 +12,7 @@ export class PlannerConfigurationSelector {
     constructor(private problemPath: Uri) {
     }
 
-    async getConfiguration(): Promise<Uri> {
+    async getConfiguration(): Promise<Uri | null> {
         let selectedItem = await window.showQuickPick<PlannerConfigurationItem>([useDefaultsItem, selectedConfigurationItem], { placeHolder: 'Select planner configuration from a .json file...' });
         if (!selectedItem) { return null; }
 
@@ -31,7 +31,7 @@ export class PlannerConfigurationSelector {
         }
     }
 
-    async selectConfigurationFile(): Promise<Uri> {
+    async selectConfigurationFile(): Promise<Uri | null> {
         let selectedUris = await window.showOpenDialog({
             canSelectMany: false, filters: {
                 'Planner Configuration JSON': ['plannerConfiguration.json'],

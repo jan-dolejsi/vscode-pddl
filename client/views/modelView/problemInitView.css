@@ -27,3 +27,7 @@ table.objectValues tr th:nth-child(even) {
 table.objectValues tr:nth-child(even) {
     background: rgba(125, 125, 125, .1);
 }
+div.hint {
+    font-size: -1;
+    opacity: .5;
+}

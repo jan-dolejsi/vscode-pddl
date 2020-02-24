@@ -5,8 +5,9 @@
 'use strict';
 
 import {
-    window, commands, OutputChannel, ExtensionContext, TextDocument, Diagnostic, Uri, DiagnosticSeverity
+    window, OutputChannel, ExtensionContext, TextDocument, Diagnostic, Uri, DiagnosticSeverity
 } from 'vscode';
+import { instrumentOperationAsVsCodeCommand } from "vscode-extension-telemetry-wrapper";
 
 import * as process from 'child_process';
 
@@ -31,7 +32,7 @@ export class HappeningsValidator {
 
     constructor(private output: OutputChannel, public codePddlWorkspace: CodePddlWorkspace, public plannerConfiguration: PddlConfiguration, context: ExtensionContext) {
 
-        context.subscriptions.push(commands.registerCommand(PDDL_HAPPENINGS_VALIDATE,
+        context.subscriptions.push(instrumentOperationAsVsCodeCommand(PDDL_HAPPENINGS_VALIDATE,
             async () => {
                 if (window.activeTextEditor && isHappenings(window.activeTextEditor.document)) {
                     try {

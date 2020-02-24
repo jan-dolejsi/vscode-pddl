@@ -47,6 +47,7 @@ function initialize() {
 function handleMessage(message) {
   switch (message.command) {
     case 'updateContent':
+      updateScalarValues(message.data.scalarValues);
       updateGraph(message.data.symmetricRelationshipGraph);
       updateObjectProperties(message.data.typeProperties);
       // console.log(JSON.stringify(message.data.typeRelationships));
@@ -167,6 +168,23 @@ function updateGraph(data) {
 
   var container = document.getElementById("networkSection");
   container.style.display = data.nodes.length > 0 ? 'initial' : 'none';
+}
+
+function updateScalarValues(data) {
+  var container = document.getElementById("scalarValues");
+  var header = `<table class="objectValues">
+  <tr><th></th><th>value</th></tr>`;
+  var footer = `</table>`
+  container.innerHTML = header +
+    Object.keys(data)
+      .sort((a, b) => a.localeCompare(b))
+      .map(variableName => createScalarValuesTableRow(variableName, data[variableName]))
+      .join('\n') +
+    footer;
+}
+
+function createScalarValuesTableRow(variableName, value) {
+  return `<tr><th>${variableName}</th><td>${value}</td></tr>`;
 }
 
 /**

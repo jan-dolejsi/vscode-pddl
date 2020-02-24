@@ -35,7 +35,7 @@ export class GeneratedDocumentContentProvider implements TextDocumentContentProv
         workspace.onDidChangeTextDocument(e => {
             // check if the changing document represents input data for a pre-processor
             this.uriMap.forEach((testCase: Test, uri: string) => {
-                let inputChanged = testCase.getPreProcessor().getInputFiles()
+                let inputChanged = testCase.getPreProcessor()?.getInputFiles()
                     .some(inputFileName => e.document.fileName.endsWith(inputFileName));
 
                 if (inputChanged) {
@@ -58,7 +58,7 @@ export class GeneratedDocumentContentProvider implements TextDocumentContentProv
         let problemTemplateWithoutExtension = problemTemplatePath.replace('.pddl', '');
 
         if (test.getLabel()) {
-            problemPath = join(problemTemplateWithoutExtension + ` (${test.getLabel()}).pddl`);
+            problemPath = join(problemTemplateWithoutExtension + ` (${this.sanitizePath(test.getLabel())}).pddl`);
         }
         else {
             problemPath = problemTemplateWithoutExtension + ` (${testIdx}).pddl`;
@@ -71,6 +71,10 @@ export class GeneratedDocumentContentProvider implements TextDocumentContentProv
         return uri;
     }
 
+    sanitizePath(path: string): string {
+        return path.split(/[\\\/]/).join('_');
+    }
+
     async provideTextDocumentContent(uri: Uri, token: CancellationToken): Promise<string> {
         let test = this.uriMap.get(uri.toString());
         if (!test) { return `Document ${uri.toString()} not found in the content provider's map.`; }
@@ -80,12 +84,12 @@ export class GeneratedDocumentContentProvider implements TextDocumentContentProv
         let documentText = problemDocument.getText();
 
         try {
-            let preProcessedProblemText =  await test.getPreProcessor().transform(documentText, dirname(test.getManifest().path), this.outputWindow);
+            let preProcessedProblemText =  await test.getPreProcessor()?.transform(documentText, dirname(test.getManifest().path), this.outputWindow) ?? "No pre-processor configured.";
             // force parsing of the generated problem
             this.pddlWorkspace.pddlWorkspace.upsertFile(uri.toString(), PddlLanguage.PDDL, 0, preProcessedProblemText, new SimpleDocumentPositionResolver(preProcessedProblemText), true);
             return preProcessedProblemText;
         } catch (ex) {
-            return `Problem file '${basename(uri.fsPath)}' failed to generate: ${ex.message}`;
+            return `;;Problem file '${basename(uri.fsPath)}' failed to generate: ${ex.message}\n\n` + documentText;
         }
     }
 }

@@ -90,6 +90,9 @@ export class MockSearch {
         });
     }
 
+    /**
+     * the `patch` method will be useful when the contract migrates `patch` HTTP verb.
+     */
     // private async patch(path: string, content: any): Promise<void> {
     //     return await new Promise<void>((resolve, reject) => {
     //         request.patch(this.url + path, { json: content }, (error, httpResponse, _httpBody) => {
@@ -108,15 +111,15 @@ export class MockSearch {
     //     });
     // }
 
-    private state0: MockStateContext;
-    private state0_0: MockStateContext;
-    private state0_1: MockStateContext;
-    private state0_0_0: MockStateContext;
-    private state0_0_1: MockStateContext;
-    private state0_1_0: MockStateContext;
-    private state0_1_1: MockStateContext;
-    private state0_1_0_0: MockStateContext;
-    private state0_1_0_0_0: MockStateContext;
+    private state0: MockStateContext | undefined;
+    private state0_0: MockStateContext | undefined;
+    private state0_1: MockStateContext | undefined;
+    private state0_0_0: MockStateContext | undefined;
+    private state0_0_1: MockStateContext | undefined;
+    private state0_1_0: MockStateContext | undefined;
+    private state0_1_1: MockStateContext | undefined;
+    private state0_1_0_0: MockStateContext | undefined;
+    private state0_1_0_0_0: MockStateContext | undefined;
 
     private readonly events = [
         new MockStateContextEvent("post-initial", this.state0 = MockStateContext.createInitial()),
@@ -228,11 +231,11 @@ class MockStateSearchContext {
 class MockStateContext {
 
     static createInitial(): MockStateContext {
-        return new MockStateContext(MockState.createInitial(), 0, EPSILON, null, [], null);
+        return new MockStateContext(MockState.createInitial(), 0, EPSILON, undefined, [], undefined);
     }
 
     constructor(public readonly state: MockState, public readonly g: number, public readonly earliestTime: number,
-        public readonly appliedAction: MockSearchHappening,
+        public readonly appliedAction: MockSearchHappening | undefined,
         public readonly planHead: SearchHappening[], public readonly parentId?: string) {
     }
 

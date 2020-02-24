@@ -6,6 +6,8 @@
 
 import { PddlRange, DocumentPositionResolver } from "./DocumentPositionResolver";
 import { PddlSyntaxNode } from "./PddlSyntaxNode";
+import { PddlSyntaxTree } from "./PddlSyntaxTree";
+import { PddlTokenType } from "./PddlTokenizer";
 
 /**
  * An abstract PDDL file.
@@ -16,7 +18,7 @@ export abstract class FileInfo {
     private parsingProblems: ParsingProblem[] = [];
     private requirements?: string[];
 
-    constructor(public readonly fileUri: string, private version: number, public readonly name: string, private readonly positionResolver: DocumentPositionResolver) {
+    constructor(public readonly fileUri: string, private version: number, public readonly name: string, public readonly syntaxTree: PddlSyntaxTree, private readonly positionResolver: DocumentPositionResolver) {
     }
 
     abstract getLanguage(): PddlLanguage;
@@ -88,8 +90,29 @@ export abstract class FileInfo {
         return this.parsingProblems;
     }
 
-    getVariableReferences(_variable: Variable): PddlRange[] {
-        return [];
+
+    getVariableReferences(variable: Variable): PddlRange[] {
+
+        let referenceLocations: PddlRange[] = [];
+
+        this.syntaxTree.getDefineNode().getChildrenRecursively(node => this.isVariableReference(node, variable),
+            node => referenceLocations.push(this.getRange(node)));
+
+        return referenceLocations;
+    }
+
+    private isVariableReference(node: PddlSyntaxNode, variable: Variable): boolean {
+        if (node.getToken().type !== PddlTokenType.OpenBracket) {
+            return false;
+        }
+
+        let nonWhiteSpaceChildren = node.getNonWhitespaceChildren();
+        if (nonWhiteSpaceChildren.length < 1) {
+            return false;
+        }
+        let variableNameNode = nonWhiteSpaceChildren[0];
+        return variableNameNode.getToken().type === PddlTokenType.Other
+            && variableNameNode.getToken().tokenText.toLowerCase() === variable.name.toLowerCase();
     }
 
     getTypeReferences(typeName: string): PddlRange[] {

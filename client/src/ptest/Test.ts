@@ -9,6 +9,7 @@ import { join, dirname } from 'path';
 import { TestsManifest } from './TestsManifest';
 import { PreProcessor, CommandPreProcessor, NunjucksPreProcessor, PythonPreProcessor, Jinja2PreProcessor } from "../../../common/src/PreProcessors";
 import { PddlExtensionContext } from '../../../common/src/PddlExtensionContext';
+import { throwForUndefined } from '../utils';
 
 export enum TestOutcome { UNKNOWN, SUCCESS, FAILED, SKIPPED, IN_PROGRESS }
 
@@ -36,8 +37,8 @@ export class Test {
         private description: string,
         private domain: string,
         private problem: string,
-        private options: string,
-        private preProcessor: PreProcessor,
+        private options: string | undefined,
+        private preProcessor: PreProcessor | undefined,
         private expectedPlans: string[]) {
 
         }
@@ -51,7 +52,7 @@ export class Test {
         let expectedPlans = json[EXPECTED_PLANS] || [];
 
         let preProcessSettings = json[PRE_PROCESSOR];
-        let preProcessor: PreProcessor = null;
+        let preProcessor: PreProcessor | undefined;
 
         if(preProcessSettings) {
             let kind = preProcessSettings[PRE_PROCESSOR_KIND];
@@ -101,7 +102,7 @@ export class Test {
     }
 
     getDomain(): string {
-        return this.domain || this.manifest.defaultDomain;
+        return this.domain || this.manifest.defaultDomain || throwForUndefined('domain');
     }
 
     getDomainUri(): Uri {
@@ -109,7 +110,7 @@ export class Test {
     }
 
     getProblem(): string {
-        return this.problem || this.manifest.defaultProblem;
+        return this.problem || this.manifest.defaultProblem || throwForUndefined("problem");
     }
 
     getProblemUri(): Uri {
@@ -128,11 +129,11 @@ export class Test {
         return this.description;
     }
 
-    getOptions(): string {
+    getOptions(): string | undefined {
         return this.options || this.manifest.defaultOptions;
     }
 
-    getPreProcessor(): PreProcessor {
+    getPreProcessor(): PreProcessor | undefined {
         return this.preProcessor;
     }
 
@@ -148,7 +149,7 @@ export class Test {
         return join(dirname(this.manifest.path), fileName);
     }
 
-    static fromUri(uri: Uri, context: PddlExtensionContext): Test {
+    static fromUri(uri: Uri, context: PddlExtensionContext): Test | null {
         let testIndex = parseInt(uri.fragment);
         if (Number.isFinite(testIndex)) {
             let manifest = TestsManifest.load(uri.fsPath, context);

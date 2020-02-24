@@ -4,7 +4,8 @@
  * ------------------------------------------------------------------------------------------ */
 'use strict';
 
-import { CodeActionKind, ExtensionContext, commands, languages, Uri, workspace, TextDocument } from 'vscode';
+import { CodeActionKind, ExtensionContext, languages, Uri, workspace, TextDocument } from 'vscode';
+import { instrumentOperationAsVsCodeCommand } from "vscode-extension-telemetry-wrapper";
 import { PLAN, PDDL, HAPPENINGS } from '../../../common/src/parser';
 import { ProblemInfo } from '../../../common/src/ProblemInfo';
 import { DomainInfo } from '../../../common/src/DomainInfo';
@@ -23,12 +24,12 @@ export const COMMAND_ASSOCIATE_DOMAIN = 'pddl.workspace.associateDomain';
 export class AssociationProvider {
     constructor(context: ExtensionContext, private codePddlWorkspace: CodePddlWorkspace) {
         context.subscriptions.push(
-            commands.registerCommand(COMMAND_ASSOCIATE_PROBLEM, (planUri: Uri) =>
+            instrumentOperationAsVsCodeCommand(COMMAND_ASSOCIATE_PROBLEM, (planUri: Uri) =>
                 this.associateProblem(planUri).catch(showError))
         );
 
         context.subscriptions.push(
-            commands.registerCommand(COMMAND_ASSOCIATE_DOMAIN, async (problemUri: Uri) => {
+            instrumentOperationAsVsCodeCommand(COMMAND_ASSOCIATE_DOMAIN, async (problemUri: Uri) => {
                 let problemDocument = await workspace.openTextDocument(problemUri);
                 const problemFileInfo = <ProblemInfo>codePddlWorkspace.getFileInfo(problemDocument);
                 this.associateDomain(problemUri, codePddlWorkspace.pddlWorkspace.getDomainFilesFor(problemFileInfo)).catch(showError);

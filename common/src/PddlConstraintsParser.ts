@@ -32,7 +32,7 @@ export class PddlConstraintsParser {
             return new Constraint(node);
         }
 
-        if (children[0].getToken().type === PddlTokenType.Other) {
+        if (children.length > 0 && children[0].getToken().type === PddlTokenType.Other) {
             const token = children[0].getToken().tokenText.toLowerCase();
             const strictlyAfterToken = 'strictly-after';
             switch (token) {

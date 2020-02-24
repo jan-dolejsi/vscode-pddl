@@ -5,9 +5,10 @@
 'use strict';
 
 import {
-    window, workspace, commands, Uri,
+    window, workspace, Uri,
     ViewColumn, ExtensionContext, TextDocument, Disposable, Event, EventEmitter, TextEditor, WebviewOptions, WebviewPanelOptions
 } from 'vscode';
+import { instrumentOperationAsVsCodeCommand } from "vscode-extension-telemetry-wrapper";
 
 import { isPddl, getDomainFileForProblem } from '../workspace/workspaceUtils';
 import { DomainInfo } from '../../../common/src/DomainInfo';
@@ -38,14 +39,14 @@ export abstract class ProblemView<TRendererOptions, TRenderData> extends Disposa
 
         super(() => this.dispose());
 
-        context.subscriptions.push(commands.registerCommand(options.viewCommand, async problemUri => {
+        context.subscriptions.push(instrumentOperationAsVsCodeCommand(options.viewCommand, async problemUri => {
             let problemDocument = await getProblemDocument(problemUri);
             if (problemDocument) {
                 return this.revealOrCreatePreview(problemDocument, ViewColumn.Beside).catch(showError);
             }
         }));
 
-        context.subscriptions.push(commands.registerCommand(options.insetViewCommand, async (problemUri: Uri, line: number) => {
+        context.subscriptions.push(instrumentOperationAsVsCodeCommand(options.insetViewCommand, async (problemUri: Uri, line: number) => {
             if (window.activeTextEditor && problemUri && line) {
                 if (problemUri.toString() === window.activeTextEditor.document.uri.toString()) {
                     this.showInset(window.activeTextEditor, line, options.insetHeight).catch(showError);
@@ -66,20 +67,20 @@ export abstract class ProblemView<TRendererOptions, TRenderData> extends Disposa
     async refreshDomainProblems(domainInfo: DomainInfo): Promise<void> {
         let promises = this.codePddlWorkspace.pddlWorkspace
             .getProblemFiles(domainInfo)
-            .map(async problemInfo => await this.refreshProblem(problemInfo));
+            .map(async problemInfo => await this.refreshProblem(problemInfo, domainInfo));
         
         await Promise.all(promises);
     }
 
-    async refreshProblem(problemInfo: ProblemInfo) {
+    async refreshProblem(problemInfo: ProblemInfo, domainInfo?: DomainInfo) {
         const problemUri = Uri.parse(problemInfo.fileUri);
         // if no panel was created, skip
         if (!this.webviewPanels.get(problemUri) && !this.webviewInsets.get(problemUri)) { return; }
 
+        let domainInfoAssigned: DomainInfo;
         let error: Error;
-        let domainInfo: DomainInfo;
         try {
-            domainInfo = getDomainFileForProblem(problemInfo, this.codePddlWorkspace);
+            domainInfoAssigned = domainInfo || getDomainFileForProblem(problemInfo, this.codePddlWorkspace);
         }
         catch (ex) {
             error = ex;
@@ -101,7 +102,7 @@ export abstract class ProblemView<TRendererOptions, TRenderData> extends Disposa
 
         panelsToRefresh.forEach(async panel => {
             if (!error) {
-                panel.setDomainAndProblem(domainInfo, problemInfo);
+                panel.setDomainAndProblem(domainInfoAssigned, problemInfo);
             }
             else {
                 panel.setError(error);
@@ -224,7 +225,9 @@ export abstract class ProblemView<TRendererOptions, TRenderData> extends Disposa
             return viewPanel.getError()!.message;
         }
         else {
-            return getWebViewHtml(createPddlExtensionContext(this.context), this.options.content, this.options.webviewHtmlPath, viewPanel.getPanel().webview);
+            return getWebViewHtml(createPddlExtensionContext(this.context), {
+                relativePath: this.options.content, htmlFileName: this.options.webviewHtmlPath
+            }, viewPanel.getPanel().webview);
         }
     }
 

@@ -4,7 +4,8 @@
  * ------------------------------------------------------------------------------------------ */
 'use strict';
 
-import { commands, ExtensionContext, window, ProgressLocation, workspace, ConfigurationTarget } from 'vscode';
+import { ExtensionContext, window, ProgressLocation, workspace, ConfigurationTarget } from 'vscode';
+import { instrumentOperationAsVsCodeCommand } from "vscode-extension-telemetry-wrapper";
 import * as path from 'path';
 import { getFile } from '../httpUtils';
 import * as afs from '../../../common/src/asyncfs';
@@ -25,7 +26,7 @@ export class Val {
     constructor(private context: ExtensionContext) {
         this.binaryStorage = this.context.globalStoragePath;
 
-        context.subscriptions.push(commands.registerCommand(VAL_DOWNLOAD_COMMAND, async (options: ValDownloadOptions) => {
+        context.subscriptions.push(instrumentOperationAsVsCodeCommand(VAL_DOWNLOAD_COMMAND, async (options: ValDownloadOptions) => {
             try {
                 let userAgreesToDownload = (options && options.bypassConsent) || await this.promptForConsent();
                 if (!userAgreesToDownload) { return; }

@@ -18,7 +18,7 @@ import { Plan, HelpfulAction } from '../../../common/src/Plan';
 import { Util } from '../../../common/src/util';
 import { PlanFunctionEvaluator } from './PlanFunctionEvaluator';
 import { PlanReportSettings } from './PlanReportSettings';
-import { VAL_STEP_PATH, CONF_PDDL, VALUE_SEQ_PATH, PLAN_REPORT_LINE_PLOT_GROUP_BY_LIFTED } from '../configuration';
+import { VAL_STEP_PATH, CONF_PDDL, VALUE_SEQ_PATH, PLAN_REPORT_LINE_PLOT_GROUP_BY_LIFTED, DEFAULT_EPSILON } from '../configuration';
 import * as afs from '../../../common/src/asyncfs';
 import { ValStepError, ValStep } from '../debugger/ValStep';
 import { ensureAbsoluteGlobalStoragePath } from '../utils';
@@ -60,6 +60,9 @@ export class PlanReportGenerator {
         let html = `<!DOCTYPE html>
         <head>
             <title>Plan report</title>
+            <meta http-equiv="Content-Security-Policy"
+                content="default-src 'none'; img-src vscode-resource: https: data:; script-src vscode-resource: https://www.gstatic.com/charts/ 'unsafe-inline'; style-src vscode-resource: https://www.gstatic.com/charts/ 'unsafe-inline';"
+            />    
             ${await this.includeStyle(this.asAbsolutePath(relativePath, 'plans.css'))}
             ${await this.includeStyle(this.asAbsolutePath(relativePath, 'plan-resource-task.css'))}
             ${await this.includeStyle(this.asAbsolutePath(relativePath, 'menu.css'))}
@@ -104,7 +107,7 @@ States evaluated: ${plan.statesEvaluated}`;
 
     shouldDisplay(planStep: PlanStep, plan: Plan): boolean {
         if (this.settings.has(plan)) {
-            return this.settings.get(plan)?.shouldDisplay(planStep) || true;
+            return this.settings.get(plan)!.shouldDisplay(planStep);
         }
         else { return true; }
     }
@@ -120,7 +123,7 @@ States evaluated: ${plan.statesEvaluated}`;
         let styleDisplay = planIndex === selectedPlan ? "block" : "none";
 
         let stateViz = '';
-        if (planVisualizerPath) {
+        if (planVisualizerPath && plan.domain) {
             let absPath = path.join(PddlWorkspace.getFolderPath(plan.domain.fileUri), planVisualizerPath);
             try{
                 delete require.cache[require.resolve(absPath)];
@@ -160,7 +163,7 @@ States evaluated: ${plan.statesEvaluated}`;
 
         let objectsHtml = '';
         if (!this.options.disableSwimLaneView && plan.domain && plan.problem) {
-            let allTypeObjects = plan.domain.getConstants().merge(plan.problem.objects);
+            let allTypeObjects = plan.domain.getConstants().merge(plan.problem.getObjectsTypeMap());
 
             objectsHtml = plan.domain.getTypes()
                 .filter(type => type !== "object")
@@ -328,7 +331,8 @@ ${stepsInvolvingThisObject}
             return true;
         }
 
-        let liftedAction = plan.domain.getActions().find(a => a.getNameOrEmpty().toLowerCase() === step.getActionName().toLowerCase());
+        let liftedAction = plan.domain?.getActions()
+            .find(a => a.getNameOrEmpty().toLowerCase() === step.getActionName().toLowerCase());
 
         if (!liftedAction) {
             console.debug('Unexpected plan action: ' + step.getActionName());
@@ -390,16 +394,16 @@ ${stepsInvolvingThisObject}
     }
 
     toActionTooltip(step: PlanStep): string {
-        let durationRow = step.isDurative ?
-            `<tr><td class="actionToolTip">Duration: </td><td class="actionToolTip">${step.getDuration().toFixed(DIGITS)}</td></tr>
+        let durationRow = step.isDurative && step.getDuration() !== undefined ?
+            `<tr><td class="actionToolTip">Duration: </td><td class="actionToolTip">${step.getDuration()!.toFixed(DIGITS)}</td></tr>
             <tr><td class="actionToolTip">End: </td><td class="actionToolTip">${step.getEndTime().toFixed(DIGITS)}</td></tr>` :
             '';
         return `<table><tr><th colspan="2" class="actionToolTip">${step.getActionName()} ${step.getObjects().join(' ')}</th></tr><tr><td class="actionToolTip" style="width:50px">Start:</td><td class="actionToolTip">${step.getStartTime().toFixed(DIGITS)}</td></tr>${durationRow}</table>`;
     }
 
     toActionTooltipPlain(step: PlanStep): string {
-        let durationRow = step.isDurative ?
-            `Duration: ${step.getDuration().toFixed(DIGITS)}, End: ${step.getEndTime().toFixed(DIGITS)}` :
+        let durationRow = step.isDurative && step.getDuration() !== undefined?
+            `Duration: ${step.getDuration()!.toFixed(DIGITS)}, End: ${step.getEndTime().toFixed(DIGITS)}` :
             '';
 
         let startTime = step.getStartTime() !== undefined ?
@@ -436,16 +440,16 @@ ${stepsInvolvingThisObject}
     }
 
     computePlanHeadDuration(step: PlanStep, plan: Plan): number {
-        if (plan.now === undefined) { return step.getDuration(); }
+        if (plan.now === undefined) { return step.getDuration() || DEFAULT_EPSILON; }
         else if (step.getEndTime() < plan.now) {
-            if (step.commitment === PlanStepCommitment.Committed) { return step.getDuration(); }
+            if (step.commitment === PlanStepCommitment.Committed) { return step.getDuration() || DEFAULT_EPSILON; }
             else { return 0; } // the end was not committed yet
         }
         else if (step.getStartTime() >= plan.now) { return 0; }
         else {
             switch (step.commitment) {
                 case PlanStepCommitment.Committed:
-                    return step.getDuration();
+                    return step.getDuration() || DEFAULT_EPSILON;
                 case PlanStepCommitment.EndsInRelaxedPlan:
                     return 0;
                 case PlanStepCommitment.StartsInRelaxedPlan:
@@ -465,7 +469,7 @@ ${stepsInvolvingThisObject}
     computeRelaxedWidth(step: PlanStep, plan: Plan): number {
         let planHeadDuration = this.computePlanHeadDuration(step, plan);
         // remove the part of the planStep duration that belongs to the planhead part
-        let relaxedDuration = step.getDuration() - planHeadDuration;
+        let relaxedDuration = (step.getDuration() || DEFAULT_EPSILON) - planHeadDuration;
         return this.toViewCoordinates(relaxedDuration, plan);
     }
 
@@ -474,9 +478,10 @@ ${stepsInvolvingThisObject}
         return (time || 0) / plan.makespan * this.options.displayWidth;
     }
 
-    getActionColor(step: PlanStep, domain: DomainInfo): string {
-        let actionIndex = domain.getActions().findIndex(action => action.getNameOrEmpty().toLowerCase() === step.getActionName().toLowerCase());
-        if (actionIndex < 0) {
+    getActionColor(step: PlanStep, domain?: DomainInfo): string {
+        let actionIndex = domain?.getActions()
+            .findIndex(action => action.getNameOrEmpty().toLowerCase() === step.getActionName().toLowerCase());
+        if (actionIndex === undefined || actionIndex < 0) {
             return 'gray';
         }
         else {

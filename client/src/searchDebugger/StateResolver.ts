@@ -16,7 +16,7 @@ export interface StateResolver {
 
     onPlanFound: Event<State[]>;
 
-    getState(stateId: number): State;
+    getState(stateId: number): State | undefined;
 
     getStates(): State[];
 }

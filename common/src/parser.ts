@@ -99,7 +99,7 @@ export class PlanInfo extends FileInfo {
     steps: PlanStep[] = [];
 
     constructor(fileUri: string, version: number, public problemName: string, public domainName: string, text: string, positionResolver: DocumentPositionResolver) {
-        super(fileUri, version, problemName, positionResolver);
+        super(fileUri, version, problemName, PddlSyntaxTree.EMPTY, positionResolver);
         this.setText(text);
     }
 
@@ -144,7 +144,7 @@ export class PlanInfo extends FileInfo {
 
 export class UnknownFileInfo extends FileInfo {
     constructor(fileUri: string, version: number, positionResolver: DocumentPositionResolver) {
-        super(fileUri, version, "", positionResolver);
+        super(fileUri, version, "", PddlSyntaxTree.EMPTY, positionResolver);
     }
 
     getLanguage(): PddlLanguage {

@@ -8,7 +8,7 @@ import { DirectionalGraph } from "./DirectionalGraph";
 import { FileInfo, Variable, PddlLanguage, ObjectInstance, Parameter } from "./FileInfo";
 import { PddlSyntaxTree } from "./PddlSyntaxTree";
 import { PddlRange, DocumentPositionResolver } from "./DocumentPositionResolver";
-import { PddlBracketNode, PddlSyntaxNode } from "./PddlSyntaxNode";
+import { PddlBracketNode } from "./PddlSyntaxNode";
 import { PddlTokenType } from "./PddlTokenizer";
 import { Constraint } from "./constraints";
 
@@ -27,8 +27,8 @@ export class DomainInfo extends FileInfo {
     private processes?: Action[];
     private constraints: Constraint[] = [];
 
-    constructor(fileUri: string, version: number, domainName: string, public readonly syntaxTree: PddlSyntaxTree, positionResolver: DocumentPositionResolver) {
-        super(fileUri, version, domainName, positionResolver);
+    constructor(fileUri: string, version: number, domainName: string, readonly syntaxTree: PddlSyntaxTree, positionResolver: DocumentPositionResolver) {
+        super(fileUri, version, domainName, syntaxTree, positionResolver);
     }
 
     getLanguage(): PddlLanguage {
@@ -74,6 +74,18 @@ export class DomainInfo extends FileInfo {
 
     getActions(): Action[] {
         return this.actions;
+    }
+
+    getStructures(): Action[] {
+        let structures = new Array<Action>();
+        structures.push(...this.getActions());
+        if (this.getEvents()) {
+            structures.push(...this.getEvents()!);
+        }
+        if (this.getProcesses()) {
+            structures.push(...this.getProcesses()!);
+        }
+        return structures;
     }
 
     getTypeInheritance(): DirectionalGraph {
@@ -148,30 +160,6 @@ export class DomainInfo extends FileInfo {
     getTypeLocation(type: string): PddlRange | undefined {
         return this.typeLocations.get(type);
     }
-
-    getVariableReferences(variable: Variable): PddlRange[] {
-
-        let referenceLocations: PddlRange[] = [];
-
-        this.syntaxTree.getDefineNode().getChildrenRecursively(node => this.isVariableReference(node, variable),
-            node => referenceLocations.push(this.getRange(node)));
-
-        return referenceLocations;
-    }
-
-    private isVariableReference(node: PddlSyntaxNode, variable: Variable): boolean {
-        if (node.getToken().type !== PddlTokenType.OpenBracket) {
-            return false;
-        }
-
-        let nonWhiteSpaceChildren = node.getNonWhitespaceChildren();
-        if (nonWhiteSpaceChildren.length < 1) {
-            return false;
-        }
-        let variableNameNode = nonWhiteSpaceChildren[0];
-        return variableNameNode.getToken().type === PddlTokenType.Other
-            && variableNameNode.getToken().tokenText.toLowerCase() === variable.name.toLowerCase();
-    }
 }
 
 export class TypeObjectMap {
@@ -183,9 +171,10 @@ export class TypeObjectMap {
     }
 
     merge(other: TypeObjectMap): TypeObjectMap {
-        other.valuesArray()
-            .forEach(typeObj => this.addAll(typeObj.type, typeObj.getObjects()));
-        return this;
+        let mergedMap = new TypeObjectMap();
+        this.valuesArray().concat(other.valuesArray())
+            .forEach(typeObj => mergedMap.addAll(typeObj.type, typeObj.getObjects()));
+        return mergedMap;
     }
 
     add(type: string, objectName: string): TypeObjectMap {
@@ -263,7 +252,7 @@ export class TypeObjects {
     }
 }
 
-export abstract class Action {
+export abstract class PddlDomainConstruct {
     private location?: PddlRange; // initialized lazily
     private documentation: string[] = []; // initialized lazily
 
@@ -287,11 +276,14 @@ export abstract class Action {
         return this.documentation;
     }
 
-    abstract isDurative(): boolean;
-
     getNameOrEmpty(): string {
         return this.name || '';
     }
+}
+
+export abstract class Action extends PddlDomainConstruct {
+
+    abstract isDurative(): boolean;
 }
 
 export class InstantAction extends Action {
@@ -314,5 +306,11 @@ export class DurativeAction extends Action {
 
     isDurative(): boolean {
         return true;
+    }
+}
+
+export class UnrecognizedStructure extends PddlDomainConstruct {
+    constructor() {
+        super("unrecognized", []);
     }
 }

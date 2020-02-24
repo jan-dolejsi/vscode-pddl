@@ -133,7 +133,16 @@ class DomainTypesRendererDelegate {
 
     toEdge(edge: [string, string]): NetworkEdge {
         let [from, to] = edge;
-        return { from: this.nodes.get(from) || -1, to: this.nodes.get(to) || -1 , label: 'extends' };
+        return { from: this.getNodeId(from), to: this.getNodeId(to) , label: 'extends' };
+    }
+
+    private getNodeId(from: string): number {
+        let nodeId = this.nodes.get(from);
+        if (nodeId === undefined) {
+            return -1;
+        } else {
+            return nodeId;
+        }
     }
 
     getRelationships(): NetworkEdge[] {

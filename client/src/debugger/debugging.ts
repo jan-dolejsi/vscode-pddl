@@ -16,6 +16,7 @@ import { HappeningsExecutor } from './HappeningsExecutor';
 import { DebuggingSessionFiles } from './DebuggingSessionFiles';
 import { HappeningsToPlanResumeCasesConvertor } from './HappeningsToPlanResumeCasesConvertor';
 import { CodePddlWorkspace } from '../workspace/CodePddlWorkspace';
+import { instrumentOperationAsVsCodeCommand } from "vscode-extension-telemetry-wrapper";
 
 /*
  * Set the following compile time flag to true if the
@@ -30,7 +31,7 @@ export class Debugging {
 
 	constructor(context: vscode.ExtensionContext, private pddlWorkspace: CodePddlWorkspace, public plannerConfiguration: PddlConfiguration) {
 
-		context.subscriptions.push(vscode.commands.registerCommand('pddl.selectAndActivateHappenings', async(config) => {
+		context.subscriptions.push(instrumentOperationAsVsCodeCommand('pddl.selectAndActivateHappenings', async(config) => {
 			config;
 			return await selectHappenings();
 		}));
@@ -40,7 +41,7 @@ export class Debugging {
 		context.subscriptions.push(vscode.debug.registerDebugConfigurationProvider('pddl-happenings', provider));
 		context.subscriptions.push(provider);
 
-		context.subscriptions.push(vscode.commands.registerCommand('pddl.happenings.debug', () => {
+		context.subscriptions.push(instrumentOperationAsVsCodeCommand('pddl.happenings.debug', () => {
 			return this.startDebugging();
 		}));
 

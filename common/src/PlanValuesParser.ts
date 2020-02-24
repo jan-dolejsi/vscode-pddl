@@ -33,7 +33,7 @@ export class PlanValuesParser {
                 planStepFunctionValues.slice(1, 1 + functions.length));
 
             if (this.describesDurativeAction(planStepFunctionValues)) {
-                this.addState(planStep.getStartTime() + planStep.getDuration(),
+                this.addState(planStep.getStartTime() + (planStep.getDuration() || 1e-3),
                     planStepFunctionValues.slice(1 + functions.length));
             }
         });

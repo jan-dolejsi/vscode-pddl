@@ -15,8 +15,8 @@ import { PlannerService } from './PlannerService';
 /** Wraps the `/solve` planning web service interface. */
 export class PlannerSyncService extends PlannerService {
 
-    constructor(plannerPath: string, private plannerOptions: string, useAuthentication: boolean, authentication: Authentication) {
-        super(plannerPath, useAuthentication, authentication);
+    constructor(plannerPath: string, private plannerOptions: string, authentication?: Authentication) {
+        super(plannerPath, authentication);
     }
 
     createUrl(): string {

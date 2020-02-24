@@ -38,24 +38,24 @@ export class PddlProblemParser {
         let workingDirectory = dirname(filePath);
         let preProcessor: PreProcessor | undefined;
 
-        try {
-            if (this.problemPreParser) {
+        if (this.problemPreParser) {
+            try {
                 preProcessor = this.problemPreParser.createPreProcessor(fileText);
                 fileText = await this.problemPreParser.process(preProcessor!, fileText, workingDirectory);
+            } catch (ex) {
+                let problemInfo = new ProblemInfo(fileUri, fileVersion, "unknown", "unknown", PddlSyntaxTree.EMPTY, positionResolver);
+                problemInfo.setText(fileText);
+                if (ex instanceof PreProcessingError) {
+                    let parsingError = <PreProcessingError>ex;
+                    problemInfo.addProblems([new ParsingProblem(parsingError.message, parsingError.line, parsingError.column)]);
+                }
+                else {
+                    let line = positionResolver.resolveToPosition(preProcessor?.metaDataLineOffset || 0).line;
+                    problemInfo.addProblems([new ParsingProblem(ex.message || ex, line, 0)]);
+                }
+                if (preProcessor) { problemInfo.setPreParsingPreProcessor(preProcessor); }
+                return problemInfo;
             }
-        } catch (ex) {
-            let problemInfo = new ProblemInfo(fileUri, fileVersion, "unknown", "unknown", PddlSyntaxTree.EMPTY, positionResolver);
-            problemInfo.setText(fileText);
-            if (ex instanceof PreProcessingError) {
-                let parsingError = <PreProcessingError>ex;
-                problemInfo.addProblems([new ParsingProblem(parsingError.message, parsingError.line, parsingError.column)]);
-            }
-            else {
-                let line = positionResolver.resolveToPosition(preProcessor?.metaDataLineOffset || 0).line;
-                problemInfo.addProblems([new ParsingProblem(ex.message || ex, line, 0)]);
-            }
-            if (preProcessor) { problemInfo.setPreParsingPreProcessor(preProcessor); }
-            return problemInfo;
         }
 
         let pddlText = stripComments(fileText);
@@ -112,14 +112,14 @@ export class PddlProblemParser {
             .filter(node => node.getToken().tokenText.match(/\(\s*supply-demand/i) === null)
             .map(bracket => this.parseInit(bracket))
             .filter(init => !!init).map(init => init!);
-        
+
         let supplyDemands = initNode.getChildrenOfType(PddlTokenType.OpenBracketOperator, /\(\s*supply-demand/i)
             .map(bracket => this.parseSupplyDemand(bracket))
             .filter(sd => !!sd).map(sd => sd!);
-        
+
         return [timedVariableValues, supplyDemands];
     }
-    
+
     parseInit(bracket: PddlSyntaxNode): TimedVariableValue | undefined {
 
         if (bracket.getToken().tokenText === '(at') {

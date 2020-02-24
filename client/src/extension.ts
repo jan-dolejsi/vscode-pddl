@@ -4,7 +4,7 @@
  * ------------------------------------------------------------------------------------------ */
 'use strict';
 
-import { workspace, window, ExtensionContext, commands, languages } from 'vscode';
+import { workspace, window, ExtensionContext, languages } from 'vscode';
 
 import { Planning } from './planning/planning';
 import { PddlWorkspace } from '../../common/src/PddlWorkspace';
@@ -24,7 +24,7 @@ import { HappeningsValidator } from './diagnostics/HappeningsValidator';
 import { PlanComparer } from './comparison/PlanComparer';
 import { Catalog } from './catalog/Catalog';
 
-import { initialize, instrumentOperation } from "vscode-extension-telemetry-wrapper";
+import { initialize, instrumentOperation, instrumentOperationAsVsCodeCommand } from "vscode-extension-telemetry-wrapper";
 import { KEY } from './TelemetryInstrumentation';
 import { SearchDebugger } from './searchDebugger/SearchDebugger';
 import { PlanningDomainsSessions } from './session/PlanningDomainsSessions';
@@ -41,6 +41,7 @@ import { ProblemInitView } from './modelView/ProblemInitView';
 import { ProblemObjectsView } from './modelView/ProblemObjectsView';
 import { DomainTypesView } from './modelView/DomainTypesView';
 import { ProblemConstraintsView } from './modelView/ProblemConstraintsView';
+import { ModelHierarchyProvider } from './symbols/ModelHierarchyProvider';
 
 const PDDL_CONFIGURE_PARSER = 'pddl.configureParser';
 const PDDL_LOGIN_PARSER_SERVICE = 'pddl.loginParserService';
@@ -85,14 +86,14 @@ function activateWithTelemetry(_operationId: string, context: ExtensionContext) 
 	let planValidator = new PlanValidator(planning.output, codePddlWorkspace, pddlConfiguration, context);
 	let happeningsValidator = new HappeningsValidator(planning.output, codePddlWorkspace, pddlConfiguration, context);
 
-	let configureParserCommand = commands.registerCommand(PDDL_CONFIGURE_PARSER, () => {
+	let configureParserCommand = instrumentOperationAsVsCodeCommand(PDDL_CONFIGURE_PARSER, () => {
 		pddlConfiguration.askNewParserPath();
 	});
 
-	let searchDebugger = new SearchDebugger(context);
+	let searchDebugger = new SearchDebugger(context, pddlConfiguration);
 	planning.addOptionsProvider(searchDebugger);
 
-	let loginParserServiceCommand = commands.registerCommand(PDDL_LOGIN_PARSER_SERVICE, () => {
+	let loginParserServiceCommand = instrumentOperationAsVsCodeCommand(PDDL_LOGIN_PARSER_SERVICE, () => {
 		let scopePromise = pddlConfiguration.askConfigurationScope();
 		scopePromise.then((scope) => {
 			if (scope === undefined) { return; } // canceled
@@ -108,7 +109,7 @@ function activateWithTelemetry(_operationId: string, context: ExtensionContext) 
 		});
 	});
 
-	let updateTokensParserServiceCommand = commands.registerCommand(PDDL_UPDATE_TOKENS_PARSER_SERVICE, () => {
+	let updateTokensParserServiceCommand = instrumentOperationAsVsCodeCommand(PDDL_UPDATE_TOKENS_PARSER_SERVICE, () => {
 		let scopePromise = pddlConfiguration.askConfigurationScope();
 		scopePromise.then((scope) => {
 			if (scope === undefined) { return; } // canceled
@@ -124,11 +125,11 @@ function activateWithTelemetry(_operationId: string, context: ExtensionContext) 
 		});
 	});
 
-	let configurePlannerCommand = commands.registerCommand(PDDL_CONFIGURE_PLANNER, () => {
+	let configurePlannerCommand = instrumentOperationAsVsCodeCommand(PDDL_CONFIGURE_PLANNER, () => {
 		pddlConfiguration.askNewPlannerPath();
 	});
 
-	let loginPlannerServiceCommand = commands.registerCommand(PDDL_LOGIN_PLANNER_SERVICE, () => {
+	let loginPlannerServiceCommand = instrumentOperationAsVsCodeCommand(PDDL_LOGIN_PLANNER_SERVICE, () => {
 		let scopePromise = pddlConfiguration.askConfigurationScope();
 		scopePromise.then((scope) => {
 			if (scope === undefined) { return; } // canceled
@@ -144,7 +145,7 @@ function activateWithTelemetry(_operationId: string, context: ExtensionContext) 
 		});
 	});
 
-	let updateTokensPlannerServiceCommand = commands.registerCommand(PDDL_UPDATE_TOKENS_PLANNER_SERVICE, () => {
+	let updateTokensPlannerServiceCommand = instrumentOperationAsVsCodeCommand(PDDL_UPDATE_TOKENS_PLANNER_SERVICE, () => {
 		let scopePromise = pddlConfiguration.askConfigurationScope();
 		scopePromise.then((scope) => {
 			if (scope === undefined) { return; } // canceled
@@ -160,7 +161,7 @@ function activateWithTelemetry(_operationId: string, context: ExtensionContext) 
 		});
 	});
 
-	context.subscriptions.push(commands.registerCommand(PDDL_CONFIGURE_VALIDATOR, () => {
+	context.subscriptions.push(instrumentOperationAsVsCodeCommand(PDDL_CONFIGURE_VALIDATOR, () => {
 		pddlConfiguration.askNewValidatorPath();
 	}));
 
@@ -186,7 +187,12 @@ function activateWithTelemetry(_operationId: string, context: ExtensionContext) 
 	registerDocumentFormattingProvider(context, codePddlWorkspace);
 
 	let renameProvider = languages.registerRenameProvider(PDDL, new SymbolRenameProvider(codePddlWorkspace));
-
+	
+	if (workspace.getConfiguration("pddl").get<boolean>("modelHierarchy")) {
+		let modelHierarchyProvider = new ModelHierarchyProvider(context, codePddlWorkspace);
+		context.subscriptions.push(languages.registerHoverProvider(PDDL, modelHierarchyProvider));
+	}
+	
 	let symbolInfoProvider = new SymbolInfoProvider(codePddlWorkspace);
 
 	let documentSymbolProvider = languages.registerDocumentSymbolProvider(PDDL, symbolInfoProvider);
@@ -194,6 +200,7 @@ function activateWithTelemetry(_operationId: string, context: ExtensionContext) 
 	let referencesProvider = languages.registerReferenceProvider(PDDL, symbolInfoProvider);
 	let hoverProvider = languages.registerHoverProvider(PDDL, symbolInfoProvider);
 	let diagnosticCollection = languages.createDiagnosticCollection(PDDL);
+	
 	let diagnostics = new Diagnostics(codePddlWorkspace, diagnosticCollection, pddlConfiguration,
 		planValidator, happeningsValidator);
 
@@ -230,9 +237,11 @@ function activateWithTelemetry(_operationId: string, context: ExtensionContext) 
 		}
 	});
 	
-	let configureCommand = commands.registerCommand(PDDL_CONFIGURE_COMMAND, (configurationName: string) => {
+	let configureCommand = instrumentOperationAsVsCodeCommand(PDDL_CONFIGURE_COMMAND, (configurationName: string) => {
 		pddlConfiguration.askConfiguration(configurationName).catch(showError);
 	});
+
+	console.log('PDDL Extension initialized.');
 
 	// Push the disposables to the context's subscriptions so that the
 	// client can be deactivated on extension deactivation

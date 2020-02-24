@@ -176,28 +176,28 @@ export class PddlConfiguration {
         configuration.update(PARSER_SERVICE_AUTHENTICATION_S_TOKEN, stoken, target);
     }
 
-    isPddlPlannerServiceAuthenticationEnabled() {
-        return vscode.workspace.getConfiguration().get<boolean>(PDDL_PLANNER + '.serviceAuthenticationEnabled');
+    isPddlPlannerServiceAuthenticationEnabled(): boolean{
+        return vscode.workspace.getConfiguration().get<boolean>(PDDL_PLANNER + '.serviceAuthenticationEnabled', false);
     }
 
-    getPddlPlannerServiceAuthenticationConfiguration() {
+    getPddlPlannerServiceAuthenticationConfiguration(): PlannerServiceAuthenticationConfiguration {
         let configuration = vscode.workspace.getConfiguration();
         return {
-            url: configuration.get<string>(PDDL_PLANNER + '.serviceAuthenticationUrl'),
-            requestEncoded: configuration.get<string>(PDDL_PLANNER + '.serviceAuthenticationRequestEncoded'),
-            clientId: configuration.get<string>(PDDL_PLANNER + '.serviceAuthenticationClientId'),
-            callbackPort: configuration.get<number>(PDDL_PLANNER + '.serviceAuthenticationCallbackPort'),
-            timeoutInMs: configuration.get<number>(PDDL_PLANNER + '.serviceAuthenticationTimeoutInMs'),
-            tokensvcUrl: configuration.get<string>(PDDL_PLANNER + '.serviceAuthenticationTokensvcUrl'),
-            tokensvcApiKey: configuration.get<string>(PDDL_PLANNER + '.serviceAuthenticationTokensvcApiKey'),
-            tokensvcAccessPath: configuration.get<string>(PDDL_PLANNER + '.serviceAuthenticationTokensvcAccessPath'),
-            tokensvcValidatePath: configuration.get<string>(PDDL_PLANNER + '.serviceAuthenticationTokensvcValidatePath'),
-            tokensvcCodePath: configuration.get<string>(PDDL_PLANNER + '.serviceAuthenticationTokensvcCodePath'),
-            tokensvcRefreshPath: configuration.get<string>(PDDL_PLANNER + '.serviceAuthenticationTokensvcRefreshPath'),
-            tokensvcSvctkPath: configuration.get<string>(PDDL_PLANNER + '.serviceAuthenticationTokensvcSvctkPath'),
-            refreshToken: configuration.get<string>(PLANNER_SERVICE_AUTHENTICATION_REFRESH_TOKEN),
-            accessToken: configuration.get<string>(PLANNER_SERVICE_AUTHENTICATION_ACCESS_TOKEN),
-            sToken: configuration.get<string>(PLANNER_SERVICE_AUTHENTICATION_S_TOKEN),
+            url: configuration.get<string>(PDDL_PLANNER + '.serviceAuthenticationUrl', ''),
+            requestEncoded: configuration.get<string>(PDDL_PLANNER + '.serviceAuthenticationRequestEncoded', ''),
+            clientId: configuration.get<string>(PDDL_PLANNER + '.serviceAuthenticationClientId', ''),
+            callbackPort: configuration.get<number>(PDDL_PLANNER + '.serviceAuthenticationCallbackPort', 0),
+            timeoutInMs: configuration.get<number>(PDDL_PLANNER + '.serviceAuthenticationTimeoutInMs', 0),
+            tokensvcUrl: configuration.get<string>(PDDL_PLANNER + '.serviceAuthenticationTokensvcUrl', ""),
+            tokensvcApiKey: configuration.get<string>(PDDL_PLANNER + '.serviceAuthenticationTokensvcApiKey', ""),
+            tokensvcAccessPath: configuration.get<string>(PDDL_PLANNER + '.serviceAuthenticationTokensvcAccessPath', ""),
+            tokensvcValidatePath: configuration.get<string>(PDDL_PLANNER + '.serviceAuthenticationTokensvcValidatePath', ""),
+            tokensvcCodePath: configuration.get<string>(PDDL_PLANNER + '.serviceAuthenticationTokensvcCodePath', ""),
+            tokensvcRefreshPath: configuration.get<string>(PDDL_PLANNER + '.serviceAuthenticationTokensvcRefreshPath', ""),
+            tokensvcSvctkPath: configuration.get<string>(PDDL_PLANNER + '.serviceAuthenticationTokensvcSvctkPath', ""),
+            refreshToken: configuration.get<string>(PLANNER_SERVICE_AUTHENTICATION_REFRESH_TOKEN, ""),
+            accessToken: configuration.get<string>(PLANNER_SERVICE_AUTHENTICATION_ACCESS_TOKEN, ""),
+            sToken: configuration.get<string>(PLANNER_SERVICE_AUTHENTICATION_S_TOKEN, ""),
         };
     }
 
@@ -424,7 +424,7 @@ export class PddlConfiguration {
         }
     }
 
-    async askEnumConfiguration(configName: string, configurationElement: any): Promise<void> {
+    private async askEnumConfiguration(configName: string, configurationElement: any): Promise<void> {
         let items: vscode.QuickPickItem[] = [];
         const enumNames = configurationElement["enum"];
         const enumDescriptions = configurationElement["enumDescriptions"];
@@ -444,7 +444,7 @@ export class PddlConfiguration {
         }
 
         let itemSelected = await vscode.window.showQuickPick(items, {
-            placeHolder: configurationElement["description"]
+            placeHolder: configurationElement["description"] + ` (current value: ${currentValue})`
         });
 
         if (itemSelected === undefined) { return; }
@@ -452,7 +452,7 @@ export class PddlConfiguration {
         await vscode.workspace.getConfiguration().update(configName, itemSelected.label);
     }
 
-    async askNumberConfiguration(configName: string, configurationElement: any): Promise<void> {
+    private async askNumberConfiguration(configName: string, configurationElement: any): Promise<void> {
         let currentValue = vscode.workspace.getConfiguration().get<number>(configName, <number>configurationElement["default"]);
 
         let hint: string | undefined;
@@ -505,4 +505,22 @@ interface ScopeQuickPickItem extends vscode.QuickPickItem {
     description: string;
     target: vscode.ConfigurationTarget;
     uri?: vscode.Uri;
+}
+
+interface PlannerServiceAuthenticationConfiguration {
+    url: string;
+    requestEncoded: string;
+    clientId: string;
+    callbackPort: number;
+    timeoutInMs: number;
+    tokensvcUrl: string;
+    tokensvcApiKey: string;
+    tokensvcAccessPath: string;
+    tokensvcValidatePath: string;
+    tokensvcCodePath: string;
+    tokensvcRefreshPath: string;
+    tokensvcSvctkPath: string;
+    refreshToken: string;
+    accessToken: string;
+    sToken: string;
 }

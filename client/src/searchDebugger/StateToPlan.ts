@@ -16,7 +16,7 @@ import { DEFAULT_EPSILON } from "../configuration";
 
 export class StateToPlan {
 
-    constructor(private domain: DomainInfo, private problem: ProblemInfo) { }
+    constructor(private domain?: DomainInfo, private problem?: ProblemInfo) { }
 
     convert(state: State): Plan {
 

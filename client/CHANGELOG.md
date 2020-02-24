@@ -1,5 +1,30 @@
 # PDDL support - What's new?
 
+## [2.15.3] Bug fixes
+
+- Fixed generated problem file/tab name for the pre-parse preview
+- Support for spaces in problem template pre-process command-line
+- Demoted Jinja2 errors to parsing problems make it possible to edit the files
+- Configuration selector menu shows current value
+- Introduced configuration to disable the model hierarchy decorator (for perf reasons)
+- Added PDDL3.1 `undefined` to syntax highlighting
+- To address the [Issue #49](https://github.com/jan-dolejsi/vscode-pddl/issues/49) confusion why the search debugger is not displaying anything, when a planning service is called, the extension will now show a warning message that the search debugger config switch is being ignored.
+- Removed tips that were not effective at teaching how to use the more hidden features [Issue #47](https://github.com/jan-dolejsi/vscode-pddl/issues/49) as suggested and fixed by [@boramalper](https://github.com/jan-dolejsi/vscode-pddl/pull/48)
+
+## [2.15.2] Predicate and function references
+
+- predicate/function references in hover and decorations (image needed)
+- async planner service output parsing to support more than JSON
+- async planner service ptest support for local configuration.json file
+- vis-network upgraded to v6.4.4
+- fix for stricter Webview content security policy that came with VS Code 1.40.2
+- fix for domain type hierarchy view that mishandled 0 index as undefined and missed an edge
+- initial state visualization: added unparametrised functions/predicates, added asymmetric predicates/functions to the relationship graph.
+- search debugger search tree pans the network view to keep the selected node in the view.
+- fixed the bulk renaming of predicates/functions that did not propagate to problem files.
+- fixed issue in object hierarchy graphic that was showing deleted objects
+- filtering workspace events to avoid event bursts
+
 ## [2.15.1] Fixes and upgrades
 
 - upgrade to vscode 1.40
@@ -842,11 +867,8 @@ Simplified snippets and added tabstops/placeholders to them, so they are easy to
 - Interactive stepping through plans (aka debugging).
 - Icons: https://code.visualstudio.com/updates/v1_31#_updated-octicons
 - CodeAction to remove unnecessary requirements etc..
-- Predicate/function usage decoration and dependency map dispayed via the Call Hierarchy
-
-## [Unreleased]
-
-* more precise context sensitive auto completion
+- Predicate/function usage decoration and dependency map displayed via the Call Hierarchy
+- more precise context sensitive auto completion
 
 ## Note to contributors
 
@@ -854,7 +876,9 @@ Note for open source contributors: all notable changes to the "pddl" extension w
 
 Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
 
-[Unreleased]: https://github.com/jan-dolejsi/vscode-pddl/compare/v2.15.1...HEAD
+[Unreleased]: https://github.com/jan-dolejsi/vscode-pddl/compare/v2.15.3...HEAD
+[2.15.3]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.15.2...v2.15.3
+[2.15.2]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.15.1...v2.15.2
 [2.15.1]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.15.0...v2.15.1
 [2.15.0]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.14.4...v2.15.0
 [2.14.4]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.14.2...v2.14.4
