@@ -6,7 +6,7 @@ import * as vscode from 'vscode';
 
 export class PlannerUserOptionsSelector {
 
-    private NO_OPTIONS: OptionsQuickPickItem = { label: 'No options.', options: '', description: '' };
+    private NO_OPTIONS: OptionsQuickPickItem = { label: 'No options (use defaults)', options: '', description: '' };
     private optionsHistory: OptionsQuickPickItem[] = [ this.NO_OPTIONS, { label: 'Specify options...', newValue: true, options: '', description: '' }];
 
     async getPlannerOptions(): Promise<string | undefined> {

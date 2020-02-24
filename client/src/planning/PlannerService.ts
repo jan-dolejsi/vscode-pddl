@@ -13,6 +13,7 @@ import { DomainInfo } from '../../../common/src/DomainInfo';
 import { PddlPlanParser } from '../../../common/src/PddlPlanParser';
 import { PlanStep } from '../../../common/src/PlanStep';
 import { Authentication } from '../../../common/src/Authentication';
+import { window } from 'vscode';
 
 export abstract class PlannerService extends Planner {
 
@@ -35,6 +36,10 @@ export abstract class PlannerService extends Planner {
             requestHeader = {
                 "Authorization": "Bearer " + this.authentication.getSToken()!
             };
+        }
+
+        if (parent.providePlannerOptions({ domain: domainFileInfo, problem: problemFileInfo }).length > 0) {
+            window.showWarningMessage("Search Debugger is not supported by planning services. Only planner executable may support it.");
         }
 
         let requestBody = await this.createRequestBody(domainFileInfo, problemFileInfo);

@@ -136,8 +136,8 @@ export class Planning implements PlannerResponseHandler {
         this.optionProviders.push(optionsProvider);
     }
 
-    providePlannerOptions(context: PlanningRequestContext): string {
-        return this.optionProviders.map(provider => provider.providePlannerOptions(context)).join(' ');
+    providePlannerOptions(context: PlanningRequestContext): string[] {
+        return this.optionProviders.map(provider => provider.providePlannerOptions(context));
     }
 
     /**

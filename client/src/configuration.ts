@@ -444,7 +444,7 @@ export class PddlConfiguration {
         }
 
         let itemSelected = await vscode.window.showQuickPick(items, {
-            placeHolder: configurationElement["description"]
+            placeHolder: configurationElement["description"] + ` (current value: ${currentValue})`
         });
 
         if (itemSelected === undefined) { return; }

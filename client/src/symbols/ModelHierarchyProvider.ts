@@ -200,7 +200,7 @@ export class ModelHierarchyProvider implements HoverProvider {
             }
 
         } else {
-            throw new Error("Method not implemented.");
+            return undefined;
         }
     }
 

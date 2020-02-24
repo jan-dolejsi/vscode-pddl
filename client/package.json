@@ -4,7 +4,7 @@
   "description": "Planning Domain Description Language support",
   "author": "Jan Dolejsi",
   "license": "MIT",
-  "version": "2.15.2",
+  "version": "2.15.3",
   "publisher": "jan-dolejsi",
   "engines": {
     "vscode": "^1.40.0",
@@ -754,6 +754,11 @@
           "type": "boolean",
           "default": false,
           "description": "Enable PDDL formatter (default is 'false'). Warning: this is an experimental feature - work in progress."
+        },
+        "pddl.modelHierarchy": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable the PDDL model hierarchy decorator (predicate and function usage)"
         },
         "pddlSearchDebugger.defaultPort": {
           "type": "integer",

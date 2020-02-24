@@ -188,9 +188,11 @@ function activateWithTelemetry(_operationId: string, context: ExtensionContext) 
 
 	let renameProvider = languages.registerRenameProvider(PDDL, new SymbolRenameProvider(codePddlWorkspace));
 	
-	let modelHierarchyProvider = new ModelHierarchyProvider(context, codePddlWorkspace);
-	context.subscriptions.push(languages.registerHoverProvider(PDDL, modelHierarchyProvider));
-
+	if (workspace.getConfiguration("pddl").get<boolean>("modelHierarchy")) {
+		let modelHierarchyProvider = new ModelHierarchyProvider(context, codePddlWorkspace);
+		context.subscriptions.push(languages.registerHoverProvider(PDDL, modelHierarchyProvider));
+	}
+	
 	let symbolInfoProvider = new SymbolInfoProvider(codePddlWorkspace);
 
 	let documentSymbolProvider = languages.registerDocumentSymbolProvider(PDDL, symbolInfoProvider);
@@ -238,6 +240,8 @@ function activateWithTelemetry(_operationId: string, context: ExtensionContext) 
 	let configureCommand = instrumentOperationAsVsCodeCommand(PDDL_CONFIGURE_COMMAND, (configurationName: string) => {
 		pddlConfiguration.askConfiguration(configurationName).catch(showError);
 	});
+
+	console.log('PDDL Extension initialized.');
 
 	// Push the disposables to the context's subscriptions so that the
 	// client can be deactivated on extension deactivation

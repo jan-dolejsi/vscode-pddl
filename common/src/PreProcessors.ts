@@ -19,6 +19,7 @@ export abstract class PreProcessor {
     abstract transform(input: string, workingDirectory: string, outputWindow: OutputAdaptor): Promise<string>;
     abstract toString(): string;
     abstract getInputFiles(): string[];
+    abstract getLabel(): string;
 
     protected removeMetaDataLine(text: string) {
         let pattern = /^;;\s*!pre-parsing:/;
@@ -47,13 +48,25 @@ export class CommandPreProcessor extends PreProcessor {
         return [];
     }
 
+    getLabel(): string {
+        return this.command;
+    }
+
+    handleError(error: Error): void {
+        throw new PreProcessingError(error.message, 0, 0);
+    }
+
+    handleErrorAsync(error: Error, reject: (message: any) => void): void {
+        reject(new PreProcessingError(error.message, 0, 0));
+    }
+
     async transform(input: string, workingDirectory: string, outputWindow: OutputAdaptor): Promise<string> {
 
-        let command = this.command + ' ' + this.args.join(' ');
         let that = this;
 
         return new Promise<string>(function (resolve, reject) {
-            let childProcess = process.exec(command,
+            let childProcess = process.execFile(that.command,
+                that.args,
                 {
                     cwd: workingDirectory
                 },
@@ -66,10 +79,8 @@ export class CommandPreProcessor extends PreProcessor {
                     if (error) {
                         outputWindow.appendLine('Failed to transform the problem file.');
                         outputWindow.appendLine(error.message);
-                        outputWindow.show();
-                        reject(error);
+                        that.handleErrorAsync(error, reject);
                         resolve(input);
-                        return;
                     }
                     else {
                         resolve(that.removeMetaDataLine(stdout));
@@ -95,8 +106,33 @@ export class PythonPreProcessor extends CommandPreProcessor {
         return this.args;
     }
 
+    getLabel(): string {
+        return this.args.join(' ');
+    }
+
     static fromJson(_json: any): any {
         throw new Error("For Jinja2 pre-processor, use the constructor instead");
+    }
+
+    private static readonly JINJA2_TEMPLATE_SYNTAX_ERROR_PREFIX = 'jinja2.exceptions.TemplateSyntaxError: ';
+    private static readonly PYTHON_JSON_DECODER = 'json.decoder.JSONDecodeError: ';
+
+    handleErrorAsync(error: Error, reject: (message: any) => void): void {
+        let errorLines = error.message.split('\n');
+        
+        let templateSyntaxError = errorLines.find(row => row.startsWith(PythonPreProcessor.JINJA2_TEMPLATE_SYNTAX_ERROR_PREFIX));
+        if (templateSyntaxError) {
+            reject(new PreProcessingError(templateSyntaxError.substring(PythonPreProcessor.JINJA2_TEMPLATE_SYNTAX_ERROR_PREFIX.length), 0, 0));
+            return;
+        }
+        
+        let pythonJsonError = errorLines.find(row => row.startsWith(PythonPreProcessor.PYTHON_JSON_DECODER));
+        if (pythonJsonError) {
+            reject(new PreProcessingError('JSON Error: ' + pythonJsonError.substring(PythonPreProcessor.PYTHON_JSON_DECODER.length), 0, 0));
+            return;
+        }
+        
+        super.handleErrorAsync(error, reject);
     }
 }
 
@@ -114,6 +150,10 @@ export class Jinja2PreProcessor extends PythonPreProcessor {
 
     getInputFiles(): string[] {
         return [this.dataFileName];
+    }
+
+    getLabel(): string {
+        return this.dataFileName;
     }
 }
 
@@ -137,6 +177,10 @@ export class NunjucksPreProcessor extends PreProcessor {
 
     getInputFiles(): string[] {
         return [this.dataFileName];
+    }
+
+    getLabel(): string {
+        return this.dataFileName;
     }
 
     toString(): string {
