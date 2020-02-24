@@ -3,7 +3,8 @@
 ## [2.15.3] Bug fixes
 
 - Fixed generated problem file/tab name for the pre-parse preview
-- Demoted Jinja2 errors to make it possible to edit the files
+- Support for spaces in problem template pre-process command-line
+- Demoted Jinja2 errors to parsing problems make it possible to edit the files
 - Configuration selector menu shows current value
 - Introduced configuration to disable the model hierarchy decorator (for perf reasons)
 - Added PDDL3.1 `undefined` to syntax highlighting
