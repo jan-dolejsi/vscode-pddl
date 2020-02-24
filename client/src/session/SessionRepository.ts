@@ -3,7 +3,8 @@
  * Licensed under the MIT License. See License.txt in the project root for license information.
  * ------------------------------------------------------------------------------------------ */
 
-import { QuickDiffProvider, Uri, CancellationToken, ProviderResult, WorkspaceFolder, workspace } from "vscode";
+import { QuickDiffProvider, window, Uri, CancellationToken, ProviderResult, WorkspaceFolder, workspace } from "vscode";
+import * as vscode from 'vscode';
 import * as path from 'path';
 import { compareMaps, strMapToObj } from "../utils";
 import { SessionConfiguration, SessionMode } from "./SessionConfiguration";
@@ -198,7 +199,6 @@ export async function duplicateSession(session: SessionContent): Promise<string>
 }
 
 const SAVE_TABS_PLUGIN_NAME = "save-tabs";
-const SOLVER_PLUGIN_NAME = "solver";
 
 /**
  * Fetches session from the planning.domains server.
@@ -240,11 +240,26 @@ async function getRawSession(sessionConfiguration: SessionConfiguration): Promis
 	if (pluginsMatch = SESSION_PLUGINS_PATTERN.exec(sessionContent)) {
 		let rawPlugins = JSON.parse(pluginsMatch[1]);
 
-		[SAVE_TABS_PLUGIN_NAME, SOLVER_PLUGIN_NAME].forEach(pluginName => {
-			if (rawPlugins.hasOwnProperty(pluginName)) {
-				plugins.set(pluginName, toRawSessionPlugin(pluginName, rawPlugins[pluginName]));
+		// Save all of the plugins found (even if we don't use them all)
+		for (let pluginName in rawPlugins) {
+			plugins.set(pluginName, toRawSessionPlugin(pluginName, rawPlugins[pluginName]));
+
+			// Process vscode injection components
+			if (rawPlugins[pluginName]['settings'].hasOwnProperty('vscode-injection')) {
+				// Confirm with user (since we're using eval)
+				let answer = await window.showQuickPick(["Yes", "No"],
+					{ placeHolder: `Allow code injection from ${pluginName} extension?` });
+				if (answer === "Yes") {
+					try {
+						var vscode_settings = {vscode: vscode};
+						var cb = eval(rawPlugins[pluginName]['settings']['vscode-injection']);
+						cb(rawPlugins[pluginName]['settings'], vscode_settings);
+					} catch (ex) {
+						throw new Error("Failed to run plugin's vscode injection code: " + ex);
+					}
+				}
 			}
-		});
+		}
 	}
 	else {
 		console.log("Malformed saved session plugins. Could not extract session plugins. Session content:" + sessionContent);
