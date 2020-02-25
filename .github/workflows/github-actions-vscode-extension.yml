@@ -19,7 +19,6 @@ jobs:
     runs-on: ${{ matrix.os }}
 
     steps:
-      - continue-on-error: false
       - uses: actions/checkout@v2
       - name: Use Node.js ${{ matrix.node-version }}
         uses: actions/setup-node@v1
@@ -50,9 +49,15 @@ jobs:
         working-directory: client
 
   publish:
+    needs: build
     runs-on: ubuntu-latest
     steps:
-      - continue-on-error: true
+      - uses: actions/checkout@v2
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v1
+        with:
+          node-version: 10.16
+
       - name: Publish extension to marketplace
         if: success() && github.ref == 'refs/heads/master'
         run: | 
@@ -61,3 +66,4 @@ jobs:
         working-directory: client
         env: 
           VSCE_TOKEN: ${{ secrets.VSCE_TOKEN }}
+        continue-on-error: true
