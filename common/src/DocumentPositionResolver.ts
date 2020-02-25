@@ -3,6 +3,11 @@
  * Licensed under the MIT License. See License.txt in the project root for license information.
  * ------------------------------------------------------------------------------------------ */
 
+import { PddlSyntaxNode } from "./PddlSyntaxNode";
+
+/**
+ * Abstract document position resolve. It translates document text offsets to Position or Range.
+ */
 export abstract class DocumentPositionResolver {
     abstract resolveToPosition(offset: number): PddlPosition;
     
@@ -14,6 +19,10 @@ export abstract class DocumentPositionResolver {
         let positionAtOffset = this.resolveToPosition(offset);
 
         return range.includes(positionAtOffset); 
+    }
+
+    nodeToRange(node: PddlSyntaxNode): PddlRange {
+        return this.resolveToRange(node.getStart(), node.getEnd());
     }
 }
 

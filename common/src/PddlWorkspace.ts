@@ -309,7 +309,7 @@ export class PddlWorkspace extends EventEmitter {
         let folder = this.folders.get(PddlWorkspace.getFolderPath(domainInfo.fileUri));
 
         // find problem files in the same folder that match the domain name
-        let problemFiles = folder?.getProblemFilesFor(domainInfo) || [];
+        let problemFiles = folder?.getProblemFilesFor(domainInfo) ?? [];
 
         return problemFiles;
     }

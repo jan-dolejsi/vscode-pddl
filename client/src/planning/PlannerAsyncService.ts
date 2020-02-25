@@ -38,7 +38,7 @@ export class PlannerAsyncService extends PlannerService {
         let configuration = await this.getConfiguration();
         if (!configuration) { return null; }
 
-        configuration.planFormat = configuration.planFormat || 'JSON';
+        configuration.planFormat = configuration.planFormat ?? 'JSON';
         if ("timeout" in configuration) {
             this.timeout = configuration.timeout;
         }

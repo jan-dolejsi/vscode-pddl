@@ -29,15 +29,27 @@ export class PddlCompletionItemProvider implements CompletionItemProvider {
         let fileInfo = await this.codePddlWorkspace?.upsertAndParseFile(document);
 
         if (fileInfo instanceof DomainInfo) {
-            return await (this.domainProvider || (this.domainProvider = new DomainCompletionItemProvider())).provide(document, <DomainInfo>fileInfo, position, context);
+            return await this.getOrCreateDomainCompletionItemProvider().provide(document, <DomainInfo>fileInfo, position, context);
         }
         else if (fileInfo instanceof ProblemInfo) {
-            return await (this.problemProvider || (this.problemProvider = new ProblemCompletionItemProvider())).provide(document, <ProblemInfo>fileInfo, position, context);
+            return await this.getOrCreateProblemCompletionItemProvider().provide(document, <ProblemInfo>fileInfo, position, context);
         }
         else if (fileInfo instanceof UnknownFileInfo || fileInfo === null) {
-            return await (this.unknownProvider || (this.unknownProvider = new UnknownPddlCompletionItemProvider())).provide(document, position, context);
+            return await this.getOrCreateUnknownFileItemProvider().provide(document, position, context);
         } 
 
         return [];
+    }
+
+    private getOrCreateDomainCompletionItemProvider() {
+        return this.domainProvider ?? (this.domainProvider = new DomainCompletionItemProvider());
+    }
+
+    private getOrCreateProblemCompletionItemProvider() {
+        return this.problemProvider ?? (this.problemProvider = new ProblemCompletionItemProvider());
+    }
+
+    private getOrCreateUnknownFileItemProvider() {
+        return this.unknownProvider ?? (this.unknownProvider = new UnknownPddlCompletionItemProvider());
     }
 }

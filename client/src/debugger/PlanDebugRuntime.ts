@@ -20,13 +20,16 @@ export interface HappeningBreakpoint {
 export class PlanDebugRuntime extends EventEmitter {
 
 	// the initial (and one and only) file we are 'debugging'
-	private _sourceFile: string;
-	public get sourceFile() {
+	private _sourceFile: string | undefined;
+	public get sourceFile(): string {
+		if (!this._sourceFile) {
+			throw new Error("Debugger not initialized");
+		}
 		return this._sourceFile;
 	}
 
 	// the contents (= lines) of the one and only file
-	private _sourceLines: string[];
+	private _sourceLines: string[] | undefined;
 
 	// This is the next line that will be 'executed'
 	private _currentLine = 0;
@@ -50,6 +53,10 @@ export class PlanDebugRuntime extends EventEmitter {
 
 		this.loadSource(program);
 		this._currentLine = -1;
+
+		if (!this._sourceFile) {
+			throw new Error("Debugger not initialized");
+		}
 
 		this.verifyBreakpoints(this._sourceFile);
 
@@ -80,6 +87,9 @@ export class PlanDebugRuntime extends EventEmitter {
 	 * Returns a fake 'stacktrace' where every 'stackframe' is a word from the current line.
 	 */
 	public stack(startFrame: number, endFrame: number): any {
+		if (!this._sourceLines) {
+			throw new Error("Debugger is not initialized.");
+		}
 
 		const words = this._sourceLines[this._currentLine].trim().split(/\s+/);
 
@@ -154,7 +164,11 @@ export class PlanDebugRuntime extends EventEmitter {
 	 * Run through the file.
 	 * If stepEvent is specified only run a single step and emit the stepEvent.
 	 */
-	private run(reverse = false, stepEvent?: string) {
+	private run(reverse = false, stepEvent?: string): void {
+		if (!this._sourceLines) {
+			throw new Error("Debugger is not initialized.");
+		}
+
 		if (reverse) {
 			for (let ln = this._currentLine-1; ln >= 0; ln--) {
 				if (this.fireEventsForLine(ln, stepEvent)) {
@@ -178,12 +192,16 @@ export class PlanDebugRuntime extends EventEmitter {
 	}
 
 	private verifyBreakpoints(path: string) : void {
+		if (!this._sourceLines) {
+			throw new Error("Debugger is not initialized.");
+		}
+
 		let bps = this._breakPoints.get(path);
 		if (bps) {
 			this.loadSource(path);
 			bps.forEach(bp => {
-				if (!bp.verified && bp.line < this._sourceLines.length) {
-					const srcLine = this._sourceLines[bp.line].trim();
+				if (!bp.verified && bp.line < this._sourceLines!.length) {
+					const srcLine = this._sourceLines![bp.line].trim();
 
 					// if a line is empty or starts with '+' we don't allow to set a breakpoint but move the breakpoint down
 					if (srcLine.length === 0 || srcLine.indexOf('+') === 0) {
@@ -209,6 +227,10 @@ export class PlanDebugRuntime extends EventEmitter {
 	 * Returns true is execution needs to stop.
 	 */
 	private fireEventsForLine(ln: number, stepEvent?: string): boolean {
+
+		if (!this._sourceFile || !this._sourceLines) {
+			throw new Error("Debugger not initialized.");
+		}
 
 		const line = this._sourceLines[ln].trim();
 

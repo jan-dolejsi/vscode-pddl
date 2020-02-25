@@ -66,6 +66,7 @@ export async function activate(context: ExtensionContext) {
 	}
 	catch (ex) {
 		// sadly, the next line never gets triggered, even if the activateWithTelemetry fails
+		console.error("Error during PDDL extension activation: " + (ex.message ?? ex));
 		window.showErrorMessage("There was an error starting the PDDL extension: " + ex.message);
 	}
 }

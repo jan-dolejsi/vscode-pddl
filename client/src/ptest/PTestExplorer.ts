@@ -15,7 +15,7 @@ import { Test, TestOutcome } from './Test';
 import { PTestTreeDataProvider, PTestNode, PTestNodeKind } from './PTestTreeDataProvider';
 import { GeneratedDocumentContentProvider } from './GeneratedDocumentContentProvider';
 import { Planning } from '../planning/planning';
-import { PlanningOutcome } from '../planning/PlanningResult';
+import { PlanningOutcome, PlanningResult } from '../planning/PlanningResult';
 import { Plan } from '../../../common/src/Plan';
 import { PddlPlanParser } from '../../../common/src/PddlPlanParser';
 import { TestsManifest } from './TestsManifest';
@@ -291,7 +291,7 @@ export class PTestExplorer {
 
                 if (result.outcome === PlanningOutcome.FAILURE) {
                     this.outputTestResult(test, TestOutcome.FAILED, result.elapsedTime, result.error);
-                    reject(new Error(result.error || "Unknown error while planning."));
+                    reject(new Error(result.error ?? "Unknown error while planning."));
                     return;
                 } else if (result.outcome === PlanningOutcome.KILLED) {
                     this.outputTestResult(test, TestOutcome.SKIPPED, result.elapsedTime, 'Killed by the user.');
@@ -308,7 +308,7 @@ export class PTestExplorer {
                         this.assertMatchesAnExpectedPlan(result, test);
                     }
                     catch (err) {
-                        this.outputTestResult(test, TestOutcome.FAILED, result.elapsedTime, "Failed to compare plan to expected plans. Error: " + err.message || err);
+                        this.outputTestResult(test, TestOutcome.FAILED, result.elapsedTime, "Failed to compare plan to expected plans. Error: " + err.message ?? err);
                     }
                 }
                 else {
@@ -328,7 +328,7 @@ export class PTestExplorer {
         });
     }
 
-    private assertMatchesAnExpectedPlan(result: import("c:/NotBackedUp/c/GitHub/vscode-pddl/client/src/planning/PlanningResult").PlanningResult, test: Test) {
+    private assertMatchesAnExpectedPlan(result: PlanningResult, test: Test) {
         let success = result.plans.every(plan => test.getExpectedPlans()
             .map(expectedPlanFileName => test.toAbsolutePath(expectedPlanFileName))
             .some(expectedPlanPath => this.areSame(plan, this.loadPlan(expectedPlanPath))));

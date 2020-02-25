@@ -47,7 +47,7 @@ export class AbstractCompletionItemProvider {
     protected createSnippetCompletionItem(suggestion: Suggestion | null, snippet: string, range: Range | null, _context: CompletionContext, index: number): CompletionItem | null {
         if (suggestion === null) { return null; }
         let suggestionDetail = this.suggestionDetails.get(suggestion.sectionName);
-        let completionItem = new CompletionItem(suggestion.sectionName, (suggestionDetail && suggestionDetail.kind) || CompletionItemKind.Keyword);
+        let completionItem = new CompletionItem(suggestion.sectionName, suggestionDetail?.kind ?? CompletionItemKind.Keyword);
         completionItem.insertText = new SnippetString(snippet);
         
         if (range) { completionItem.range = range; }

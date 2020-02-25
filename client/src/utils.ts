@@ -64,9 +64,9 @@ function asWebviewUri(localUri: Uri, webview?: Webview): Uri {
 }
 
 function createContentSecurityPolicy(webview: Webview, options: WebViewHtmlOptions): string {
-    let externalStyles = options.externalStyles?.map(uri => uri.toString()).join(" ") || "";
-    let externalScripts = options.externalScripts?.map(uri => uri.toString()).join(" ") || "";
-    let externalImages = options.externalImages?.map(uri => uri.toString()).join(" ") || "";
+    let externalStyles = options.externalStyles?.map(uri => uri.toString()).join(" ") ?? "";
+    let externalScripts = options.externalScripts?.map(uri => uri.toString()).join(" ") ?? "";
+    let externalImages = options.externalImages?.map(uri => uri.toString()).join(" ") ?? "";
     return `<meta http-equiv="Content-Security-Policy"
 \t\tcontent="default-src 'none'; img-src ${webview.cspSource} ${externalImages} https:; script-src ${webview.cspSource} ${externalScripts} 'unsafe-inline'; style-src ${webview.cspSource} ${externalStyles} 'unsafe-inline';"
 \t/>`;
@@ -146,6 +146,15 @@ export function showError(reason: any): void {
 
 export function throwForUndefined<T>(part: string): T {
     throw new Error(`No ${part} defined.`);
+}
+
+export function assertDefined<T>(value: T | undefined, message: string): T {
+    if (value === undefined || value === null) {
+        throw new Error("Assertion error: " + message);
+    }
+    else {
+        return value!;
+    }
 }
 
 /**

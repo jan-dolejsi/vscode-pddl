@@ -180,7 +180,7 @@ export class SearchDebuggerView {
     }
 
     showAllStates(): void {
-        let allStates = this.search?.getStates() || [];
+        let allStates = this.search?.getStates() ?? [];
         new Promise(_ => this.postMessage({ command: 'showAllStates', state: allStates }))
             .catch(reason => console.log(reason));
     }
@@ -189,7 +189,7 @@ export class SearchDebuggerView {
         try {
             this.showStatePlan(state.id);
         } catch (ex) {
-            window.showErrorMessage(ex.message || ex);
+            window.showErrorMessage(ex.message ?? ex);
         }
     }
 

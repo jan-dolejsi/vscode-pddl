@@ -42,7 +42,7 @@ export class ProblemInfo extends FileInfo {
     }
 
     getObjects(type: string): string[] {
-        return (this.objects.getTypeCaseInsensitive(type)?.getObjects()) || [];
+        return (this.objects.getTypeCaseInsensitive(type)?.getObjects()) ?? [];
     }
 
     getObjectsTypeMap(): TypeObjectMap {

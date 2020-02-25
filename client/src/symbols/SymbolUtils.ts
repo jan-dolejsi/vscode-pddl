@@ -58,10 +58,10 @@ export class SymbolUtils {
                 );
             }
             let actionFound = domainInfo.getActions().find(a => a.name?.toLowerCase() === symbolName);
-            if (actionFound && actionFound.getLocation()) {
+            if (actionFound) {
                 return new ActionInfo(
                     this.createActionHover(symbol.range, actionFound),
-                    new Location(this.toUri(domainInfo.fileUri), toRange(actionFound.getLocation()!)),
+                    new Location(this.toUri(domainInfo.fileUri), toRange(actionFound.getLocation())),
                     actionFound
                 );
             }
@@ -178,7 +178,7 @@ export class SymbolUtils {
         if (action.isDurative()) { label = 'Durative ' + label; }
 
         let doc = new MarkdownString(`**${label}**`)
-            .appendCodeblock(action.name || "", 'pddl');
+            .appendCodeblock(action.name ?? "", 'pddl');
 
         if (action.parameters.length) {
             doc = doc.appendMarkdown('Parameters:' + END_LINE + END_LINE);

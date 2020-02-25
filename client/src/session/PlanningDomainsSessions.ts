@@ -9,6 +9,7 @@ import { instrumentOperationAsVsCodeCommand } from "vscode-extension-telemetry-w
 import { firstIndex, showError } from '../utils';
 import * as afs from '../../../common/src/asyncfs';
 import * as path from 'path';
+import * as opn from 'open';
 import { SessionDocumentContentProvider } from './SessionDocumentContentProvider';
 import { SessionSourceControl, SESSION_COMMAND_LOAD, SESSION_COMMAND_CHECKOUT, SESSION_COMMAND_REFRESH_ALL } from './SessionSourceControl';
 import { SESSION_SCHEME, SessionContent, checkSession } from './SessionRepository';
@@ -16,6 +17,7 @@ import { isSessionFolder, readSessionConfiguration, saveConfiguration, SessionMo
 import { SessionUriHandler } from './SessionUriHandler';
 import { StudentNameParser, StudentName } from './StudentNameParser';
 import { Classroom, StudentSession } from './Classroom';
+import { ChildProcess } from 'child_process';
 
 /**
  * Handles the life-cycle of the planning-domains sessions.
@@ -28,7 +30,7 @@ export class PlanningDomainsSessions {
     private sessionSourceControlRegister = new Map<Uri, SessionSourceControl>(); // todo: replace with UriMap
 
     /** Triggers update of the labels in the status bar, so the relative fuzzy time keeps accurate. */
-    private refreshTimer: NodeJS.Timeout;
+    private refreshTimer: NodeJS.Timeout | undefined;
 
     constructor(private context: ExtensionContext) {
         this.sessionDocumentContentProvider = new SessionDocumentContentProvider();
@@ -90,7 +92,7 @@ export class PlanningDomainsSessions {
                 });
 
             } catch (ex) {
-                window.showErrorMessage(ex.message || ex);
+                window.showErrorMessage(ex.message ?? ex);
             } finally {
                 // dispose source control for removed workspace folders
                 e.removed.forEach(wf => {
@@ -106,8 +108,8 @@ export class PlanningDomainsSessions {
 
     async pickSourceControl(sourceControlPane?: SourceControl): Promise<SessionSourceControl | undefined> {
         if (sourceControlPane) {
-            let rootUri: Uri = sourceControlPane.rootUri;
-            return this.sessionSourceControlRegister.get(rootUri);
+            let rootUri = sourceControlPane.rootUri;
+            return rootUri ? this.sessionSourceControlRegister.get(rootUri) : undefined;
         }
 
         // todo: when/if the SourceControl exposes a 'selected' property, use that instead
@@ -144,7 +146,7 @@ export class PlanningDomainsSessions {
             await this.openSession(context, sessionId, workspaceUri);
         }
         catch (ex) {
-            window.showErrorMessage(ex.message || ex);
+            window.showErrorMessage(ex.message ?? ex);
             console.log(ex);
         }
     }
@@ -156,7 +158,7 @@ export class PlanningDomainsSessions {
         }
 
         if (!sessionId) {
-            sessionId = (await window.showInputBox({ prompt: 'Paste Planning.Domains session hash', placeHolder: 'hash e.g. XOacXgN1V7', value: 'XOacXgN1V7' })) || '';
+            sessionId = (await window.showInputBox({ prompt: 'Paste Planning.Domains session hash', placeHolder: 'hash e.g. XOacXgN1V7' })) ?? '';
         }
 
         let mode: SessionMode = (await checkSession(sessionId))[0];
@@ -206,7 +208,7 @@ export class PlanningDomainsSessions {
 
         if (this.sessionSourceControlRegister.size === 0 && this.refreshTimer) {
             clearInterval(this.refreshTimer);
-            this.refreshTimer = null;
+            this.refreshTimer = undefined;
         }
     }
 
@@ -250,11 +252,17 @@ export class PlanningDomainsSessions {
         }
     }
 
-    async selectWorkspaceFolder(folderUri: Uri, sessionId: string, mode: SessionMode): Promise<WorkspaceFolder | undefined> {
+    /**
+     * Selects or validates the pre-determined workspace folder to clone into.
+     * @param folderUri pre-determined folder
+     * @param sessionId session ID
+     * @param mode read/write mode
+     */
+    async selectWorkspaceFolder(folderUri: Uri | undefined, sessionId: string, mode: SessionMode): Promise<WorkspaceFolder | undefined> {
         var selectedFolder: WorkspaceFolder | undefined;
         var workspaceFolderUri: Uri | undefined;
         var workspaceFolderIndex: number | undefined;
-        var folderOpeningMode: FolderOpeningMode;
+        var folderOpeningMode: FolderOpeningMode | undefined;
 
         const sessionConfiguration = toSessionConfiguration(sessionId, mode);
 
@@ -270,7 +278,7 @@ export class PlanningDomainsSessions {
                     await afs.mkdirIfDoesNotExist(folderUri.fsPath, 0o777);
                 } else if (!(await afs.stat(folderUri.fsPath)).isDirectory()) {
                     window.showErrorMessage("Selected path is not a directory.");
-                    return null;
+                    return undefined;
                 }
                 workspaceFolderUri = folderUri;
             }
@@ -289,14 +297,14 @@ export class PlanningDomainsSessions {
                 }
             }
 
-            let selectedFolderPick: WorkspaceFolderPick =
+            let selectedFolderPick =
                 folderPicks.length === 1 ?
                     folderPicks[0] :
                     await window.showQuickPick(folderPicks, {
                         canPickMany: false, ignoreFocusOut: true, placeHolder: 'Pick workspace folder to create files in.'
                     });
 
-            if (!selectedFolderPick) { return null; }
+            if (!selectedFolderPick) { return undefined; }
 
             if (selectedFolderPick instanceof ExistingWorkspaceFolderPick) {
                 selectedFolder = selectedFolderPick.workspaceFolder;
@@ -310,7 +318,7 @@ export class PlanningDomainsSessions {
         if (!workspaceFolderUri && !selectedFolder) {
             let folderUris = await window.showOpenDialog({ canSelectFolders: true, canSelectFiles: false, canSelectMany: false, openLabel: 'Select folder' });
             if (!folderUris) {
-                return null;
+                return undefined;
             }
 
             workspaceFolderUri = folderUris[0];
@@ -318,7 +326,11 @@ export class PlanningDomainsSessions {
             workspaceFolderIndex = workspace.workspaceFolders && firstIndex(workspace.workspaceFolders, (folder1: any) => folder1.uri.toString() === workspaceFolderUri!.toString());
         }
 
-        if (! await this.clearWorkspaceFolder(workspaceFolderUri)) { return null; }
+        if (!workspaceFolderUri) {
+            throw new Error("failed assertion: workspace folder must have been selected");
+        }
+
+        if (!await this.clearWorkspaceFolder(workspaceFolderUri)) { return undefined; }
 
         // save folder configuration
         await saveConfiguration(workspaceFolderUri, sessionConfiguration);
@@ -339,7 +351,7 @@ export class PlanningDomainsSessions {
         return selectedFolder;
     }
 
-    async clearWorkspaceFolder(workspaceFolderUri: Uri): Promise<boolean> {
+    async clearWorkspaceFolder(workspaceFolderUri: Uri | undefined): Promise<boolean | undefined> {
 
         if (!workspaceFolderUri) { return undefined; }
 
@@ -375,14 +387,14 @@ export class PlanningDomainsSessions {
         return env.openExternal(Uri.parse(sessionUri));
     }
 
-    async shareByEmail(session: SessionConfiguration, email: string, readWrite: boolean): Promise<boolean> {
+    async shareByEmail(session: SessionConfiguration, email: string, readWrite: boolean): Promise<ChildProcess> {
         let subject = `Planning.Domains session ${readWrite ? session.writeHash : session.hash}`;
         let body = `Open session in your browser: ${this.createBrowserUri(session, readWrite)}
 Open session in Visual Studio Code: ${this.createVSCodeUri(session, readWrite)}`;
 
         let mailTo = `mailto:${email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body).replace('%23', '#')}`;
 
-        return env.openExternal(Uri.parse(mailTo));
+        return opn(mailTo);
     }
 
     private createBrowserUri(session: SessionConfiguration, readWrite: boolean): string {
@@ -421,7 +433,7 @@ Open session in Visual Studio Code: ${this.createVSCodeUri(session, readWrite)}`
 
         let studentNameInput = await window.showInputBox({
             ignoreFocusOut: true, prompt: 'List the student names/emails',
-            placeHolder: 'Example: Student1; name@domain.com; Student2 <name@domain.com>',
+            placeHolder: 'Example: John Doe; student1@domain.com; Alice von Wunderland <alice@wunderland-blah-blah.com>',
             validateInput: input => studentNameParser.validateClassroomNames(input)
         });
 
@@ -438,8 +450,8 @@ Open session in Visual Studio Code: ${this.createVSCodeUri(session, readWrite)}`
 
         // email students their session address
         let emailPromises = studentSessions
-            .filter(studentSession => studentSession.identity.email)
-            .map(session => this.shareByEmail(session.sessionConfiguration, session.identity.email, true));
+            .filter(studentSession => !!studentSession.identity.email)
+            .map(session => this.shareByEmail(session.sessionConfiguration, session.identity.email!, true));
 
         await Promise.all(emailPromises);
 
@@ -477,18 +489,17 @@ class RepositoryPick implements QuickPickItem {
 }
 
 abstract class WorkspaceFolderPick implements QuickPickItem {
-    label: string;
-    constructor(public folderOpeningMode: FolderOpeningMode) { }
+    constructor(private _label: string, public folderOpeningMode: FolderOpeningMode) { }
+
+    get label(): string { 
+        return this._label;
+    }
 }
 
 class ExistingWorkspaceFolderPick extends WorkspaceFolderPick {
 
     constructor(public readonly workspaceFolder: WorkspaceFolder, private content: string[]) {
-        super(FolderOpeningMode.AddToWorkspace);
-    }
-
-    get label(): string {
-        return this.workspaceFolder.name;
+        super(workspaceFolder.name, FolderOpeningMode.AddToWorkspace);
     }
 
     get description(): string {
@@ -496,13 +507,15 @@ class ExistingWorkspaceFolderPick extends WorkspaceFolderPick {
     }
 
     get detail(): string {
-        return this.content.length ? `${this.content.length} files/directories may need to be removed..` : null;
+        return this.content.length ?
+            `${this.content.length} files/directories may need to be removed..` :
+            ''; // this should not happen
     }
 }
 
 class NewWorkspaceFolderPick extends WorkspaceFolderPick {
-    constructor(public label: string, folderOpeningMode: FolderOpeningMode) {
-        super(folderOpeningMode);
+    constructor(label: string, folderOpeningMode: FolderOpeningMode) {
+        super(label, folderOpeningMode);
     }
 }
 

@@ -14,7 +14,7 @@ export class Menu {
         let selectedItem = await window.showQuickPick(this.items, this.options, token);
 
         if (selectedItem !== undefined) {
-            await commands.executeCommand(selectedItem.command, ...(selectedItem.args || []));
+            await commands.executeCommand(selectedItem.command, ...(selectedItem.args ?? []));
         }
 
         return selectedItem;

@@ -44,7 +44,7 @@ export class ProblemParserPreProcessor {
                         preProcessor = new PythonPreProcessor(this.context.pythonPath(), match[3], args1, match[0], match.index);
                     } catch (err) {
                         console.log(err);
-                        throw new PreProcessingError(err.message || err, 0, 0);
+                        throw new PreProcessingError(err.message ?? err, 0, 0);
                     }
                     break;
                 case "nunjucks":
@@ -52,7 +52,7 @@ export class ProblemParserPreProcessor {
                         preProcessor = new NunjucksPreProcessor(match[6], match[0], match.index, true);
                     } catch (err) {
                         console.log(err);
-                        throw new PreProcessingError(err.message || err, 0, 0);
+                        throw new PreProcessingError(err.message ?? err, 0, 0);
                     }
                     break;
                 case "jinja2":
@@ -61,7 +61,7 @@ export class ProblemParserPreProcessor {
                         preProcessor = new Jinja2PreProcessor(this.context.pythonPath(), this.context.extensionPath, match[6], match[0], match.index);
                     } catch (err) {
                         console.log(err);
-                        throw new PreProcessingError(err.message || err, 0, 0);
+                        throw new PreProcessingError(err.message ?? err, 0, 0);
                     }
                     break;
                 default:

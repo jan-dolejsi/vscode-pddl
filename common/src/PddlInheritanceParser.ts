@@ -39,7 +39,7 @@ export class PddlInheritanceParser {
 
         // connect orphan types to the 'object' type
         let orphans = inheritance.getVertices()
-            .filter(v => !inheritance.getVerticesWithEdgesFrom(v)?.length || 0)
+            .filter(v => !inheritance.getVerticesWithEdgesFrom(v)?.length ?? 0)
             .filter(orphan => orphan !== this.OBJECT);
         orphans.forEach(orphan => inheritance.addEdge(orphan, this.OBJECT));
 

@@ -42,7 +42,7 @@ export class DomainViewPanel extends BaseViewPanel {
     }
 
     reveal(displayColumn?: ViewColumn): void {
-        this.panel.reveal(displayColumn || ViewColumn.Beside);
+        this.panel.reveal(displayColumn ?? ViewColumn.Beside);
     }
 
     close() {

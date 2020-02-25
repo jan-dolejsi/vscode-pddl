@@ -101,7 +101,7 @@ export class OverviewPage {
                     await this.helloWorld();
                 }
                 catch (ex) {
-                    window.showErrorMessage(ex.message || ex);
+                    window.showErrorMessage(ex.message ?? ex);
                 }
                 break;
             case 'openNunjucksSample':
@@ -109,7 +109,7 @@ export class OverviewPage {
                     await this.openNunjucksSample();
                 }
                 catch (ex) {
-                    window.showErrorMessage(ex.message || ex);
+                    window.showErrorMessage(ex.message ?? ex);
                 }
                 break;
             case 'clonePddlSamples':

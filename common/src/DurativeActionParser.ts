@@ -44,11 +44,10 @@ export class DurativeActionParser {
         let durationNode = actionNode.getKeywordOpenBracket('duration');
         let conditionNode = actionNode.getKeywordOpenBracket('condition');
         let effectNode = actionNode.getKeywordOpenBracket('effect');
-        
-        this.action = new DurativeAction(actionName, parameters, durationNode, conditionNode, effectNode);
         let location = PddlRange.from(positionResolver
             .resolveToPosition(actionNode.getStart()), positionResolver.resolveToPosition(actionNode.getEnd()));
-        this.action.setLocation(location);
+        
+        this.action = new DurativeAction(actionName, parameters, location, durationNode, conditionNode, effectNode);
         this.action.setDocumentation(DerivedVariablesParser.getDocumentationAbove(actionNode));
     }
 

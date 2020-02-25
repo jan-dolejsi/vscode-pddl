@@ -53,7 +53,7 @@ export abstract class FileInfo {
     }
 
     update(version: number, text: string, force: boolean = false): boolean {
-        let isNewerVersion = version > this.version || force;
+        let isNewerVersion = (version > this.version) || force;
         if (isNewerVersion) {
             this.setStatus(FileStatus.Dirty);
             this.version = version;

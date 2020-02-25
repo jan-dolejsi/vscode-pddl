@@ -128,7 +128,7 @@ export class HappeningsExecutor {
     }
 
     createRange(happening: Happening): vscode.Range {
-        let line = happening.lineIndex || 0;
+        let line = happening.lineIndex ?? 0;
         return new vscode.Range(line, 0, line, 100);
     }
 }

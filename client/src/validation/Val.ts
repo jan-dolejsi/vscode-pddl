@@ -28,11 +28,11 @@ export class Val {
 
         context.subscriptions.push(instrumentOperationAsVsCodeCommand(VAL_DOWNLOAD_COMMAND, async (options: ValDownloadOptions) => {
             try {
-                let userAgreesToDownload = (options && options.bypassConsent) || await this.promptForConsent();
+                let userAgreesToDownload = options?.bypassConsent ?? await this.promptForConsent();
                 if (!userAgreesToDownload) { return; }
                 await this.downloadConfigureAndCleanUp();
             } catch (ex) {
-                window.showErrorMessage(ex.message || ex);
+                window.showErrorMessage(ex.message ?? ex);
             }
         }));
 

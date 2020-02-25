@@ -3,28 +3,31 @@
  * Licensed under the MIT License. See License.txt in the project root for license information.
  * ------------------------------------------------------------------------------------------ */
 
-import { QuickDiffProvider, Uri, CancellationToken, ProviderResult, WorkspaceFolder, workspace } from "vscode";
+import { QuickDiffProvider, Uri, CancellationToken, WorkspaceFolder, workspace } from "vscode";
 import * as path from 'path';
-import { compareMaps, strMapToObj } from "../utils";
+import { compareMaps, strMapToObj, throwForUndefined, assertDefined } from "../utils";
 import { SessionConfiguration, SessionMode } from "./SessionConfiguration";
 import { getText, postJson, getJson } from "../httpUtils";
 import { checkResponseForError } from "../catalog/PlanningDomains";
 
 /** Represents one Planning.Domains session and meta-data. */
 export class SessionContent implements SessionConfiguration {
-	constructor(public readonly hash: string, public readonly writeHash: string, public readonly versionDate: number,
+	constructor(public readonly hash: string | undefined, public readonly writeHash: string | undefined, public readonly versionDate: number,
 		public readonly files: Map<string, string>, public readonly plugins: Map<string, RawSessionPlugin>) { }
 
-	static from(configuration: SessionConfiguration): SessionContent {
-		return new SessionContent(configuration.hash, configuration.writeHash, configuration.versionDate, configuration.files, new Map());
+	static from(configuration: SessionConfiguration, versionDate: number): SessionContent {
+		if (configuration.files === undefined) {
+			throw new Error("Failed assertion: SessionConfiguration.files undefined");
+		}
+		return new SessionContent(configuration.hash, configuration.writeHash, versionDate, configuration.files, new Map());
 	}
 
 	canCommit(): boolean {
 		return this.writeHash !== null && this.writeHash !== undefined;
 	}
 
-	getHash() {
-		return this.writeHash || this.hash;
+	getHash(): string {
+		return this.writeHash ?? this.hash ?? throwForUndefined("One of read/write hash codes must be set.");
 	}
 }
 
@@ -37,17 +40,22 @@ export const SESSION_SCHEME = 'planning.domains.session';
 /** This binds the local and remote repository. */
 export class SessionRepository implements QuickDiffProvider {
 
-	sessionHash: string;
+	private sessionHash: string;
 
 	constructor(private readonly workspaceFolder: WorkspaceFolder, session: SessionContent) {
-		this.sessionHash = session.hash;
+		this.sessionHash = session.getHash();
 	}
 
-	provideOriginalResource?(uri: Uri, _: CancellationToken): ProviderResult<Uri> {
+	provideOriginalResource(uri: Uri, _: CancellationToken): Uri | undefined {
 		// converts the local file uri to planning.domains.session:sessionId/file.ext
 		let workspaceFolder = workspace.getWorkspaceFolder(uri);
+		if (workspaceFolder) {
 		let fileName = workspace.asRelativePath(uri, false);
 		return SessionRepository.createDocumentUri(workspaceFolder.uri, fileName);
+		}
+		else {
+			return undefined;
+		}
 	}
 
 	static createDocumentUri(workspaceFolder: Uri, fileName: string): Uri {
@@ -62,6 +70,13 @@ export class SessionRepository implements QuickDiffProvider {
 	 */
 	createLocalResourcePath(fileName: string) {
 		return path.join(this.workspaceFolder.uri.fsPath, fileName);
+	}
+
+	/**
+	 * Returns write or read session hash
+	 */
+	getSessionHash(): string {
+		return this.sessionHash;
 	}
 }
 
@@ -132,7 +147,7 @@ export async function uploadSession(session: SessionContent): Promise<SessionCon
 	// re-place the saved tabs in the plugins
 	let newPluginList = [...rawLatestSession.plugins.keys()]
 		.map(oldPluginName => {
-			let oldPlugin = rawLatestSession.plugins.get(oldPluginName);
+			let oldPlugin = rawLatestSession.plugins.get(oldPluginName)!;
 			let newPlugin: RawSessionPlugin;
 			if (oldPlugin.name === SAVE_TABS_PLUGIN_NAME) {
 				newPlugin = {
@@ -212,7 +227,7 @@ async function getRawSession(sessionConfiguration: SessionConfiguration): Promis
 	let sessionContent = await getText(url);
 
 	if (sessionContent.match(/not found/i)) {
-		throw new Error(`Session ${sessionConfiguration.writeHash || sessionConfiguration.hash} not found.`);
+		throw new Error(`Session ${sessionConfiguration.writeHash ?? sessionConfiguration.hash} not found.`);
 	}
 
 	var sessionDetails: string;
@@ -255,7 +270,7 @@ async function getRawSession(sessionConfiguration: SessionConfiguration): Promis
 		throw new Error("Saved session contains no saved tabs.");
 	}
 
-	var domainFilesString = plugins.get(SAVE_TABS_PLUGIN_NAME).settingsAsString;
+	var domainFilesString = plugins.get(SAVE_TABS_PLUGIN_NAME)!.settingsAsString;
 
 	return {
 		sessionDetails: sessionDetails,
@@ -263,7 +278,7 @@ async function getRawSession(sessionConfiguration: SessionConfiguration): Promis
 		sessionDate: sessionDate,
 		readOnlyHash: readOnlyHash,
 		readWriteHash: readWriteHash,
-		domainFilesAsString: domainFilesString,
+		domainFilesAsString: assertDefined(domainFilesString, "save-tabs plugin settings"),
 		plugins: plugins,
 	};
 }
@@ -291,6 +306,6 @@ function toRawSessionPlugin(name: string, json: any): RawSessionPlugin {
 interface RawSessionPlugin {
 	readonly name: string;
 	readonly url: string;
-	readonly settingsAsString: string;
+	readonly settingsAsString: string | undefined;
 	readonly settings: any;
 }

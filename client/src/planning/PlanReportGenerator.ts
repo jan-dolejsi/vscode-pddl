@@ -47,7 +47,7 @@ export class PlanReportGenerator {
     async generateHtml(plans: Plan[], planId: number = -1): Promise<string> {
         let selectedPlan = planId < 0 ? plans.length - 1 : planId;
 
-        let maxCost = Math.max(...plans.map(plan => plan.cost || 0));
+        let maxCost = Math.max(...plans.map(plan => plan.cost ?? 0));
 
         let planSelectors = plans.map((plan, planIndex) => this.renderPlanSelector(plan, planIndex, selectedPlan, maxCost)).join(" ");
 
@@ -92,7 +92,7 @@ export class PlanReportGenerator {
         let className = "planSelector";
         if (planIndex === selectedPlan) { className += " planSelector-selected"; }
 
-        let normalizedCost = (plan.cost || 0) / maxCost * 100;
+        let normalizedCost = (plan.cost ?? 0) / maxCost * 100;
         let costRounded = plan.cost ? plan.cost.toFixed(DIGITS) : NaN;
         let tooltip = `Plan #${planIndex}
 Metric value / cost: ${plan.cost}
@@ -440,16 +440,16 @@ ${stepsInvolvingThisObject}
     }
 
     computePlanHeadDuration(step: PlanStep, plan: Plan): number {
-        if (plan.now === undefined) { return step.getDuration() || DEFAULT_EPSILON; }
+        if (plan.now === undefined) { return step.getDuration() ?? DEFAULT_EPSILON; }
         else if (step.getEndTime() < plan.now) {
-            if (step.commitment === PlanStepCommitment.Committed) { return step.getDuration() || DEFAULT_EPSILON; }
+            if (step.commitment === PlanStepCommitment.Committed) { return step.getDuration() ?? DEFAULT_EPSILON; }
             else { return 0; } // the end was not committed yet
         }
         else if (step.getStartTime() >= plan.now) { return 0; }
         else {
             switch (step.commitment) {
                 case PlanStepCommitment.Committed:
-                    return step.getDuration() || DEFAULT_EPSILON;
+                    return step.getDuration() ?? DEFAULT_EPSILON;
                 case PlanStepCommitment.EndsInRelaxedPlan:
                     return 0;
                 case PlanStepCommitment.StartsInRelaxedPlan:
@@ -469,13 +469,13 @@ ${stepsInvolvingThisObject}
     computeRelaxedWidth(step: PlanStep, plan: Plan): number {
         let planHeadDuration = this.computePlanHeadDuration(step, plan);
         // remove the part of the planStep duration that belongs to the planhead part
-        let relaxedDuration = (step.getDuration() || DEFAULT_EPSILON) - planHeadDuration;
+        let relaxedDuration = (step.getDuration() ?? DEFAULT_EPSILON) - planHeadDuration;
         return this.toViewCoordinates(relaxedDuration, plan);
     }
 
     /** Converts the _time_ argument to view coordinates */
     toViewCoordinates(time: number | undefined, plan: Plan): number {
-        return (time || 0) / plan.makespan * this.options.displayWidth;
+        return (time ?? 0) / plan.makespan * this.options.displayWidth;
     }
 
     getActionColor(step: PlanStep, domain?: DomainInfo): string {

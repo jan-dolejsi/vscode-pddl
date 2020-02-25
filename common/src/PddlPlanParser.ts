@@ -124,7 +124,7 @@ export class PddlPlanParser {
             this.endOfBufferToBeParsedNextTime = '';
         }
         if (this.planBuilder.getSteps().length > 0 ||
-            this.plans.length < (this.options.minimumPlansExpected || 1)) {
+            this.plans.length < (this.options.minimumPlansExpected ?? 1)) {
             this.plans.push(this.planBuilder.build(this.domain, this.problem));
             this.planBuilder = new PlanBuilder(this.options.epsilon);
         }

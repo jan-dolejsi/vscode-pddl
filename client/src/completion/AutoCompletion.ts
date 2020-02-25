@@ -81,7 +81,7 @@ class CompletionCollector {
     createProblemCompletionItems(problemFileInfo: ProblemInfo): void {
         let folder = this.codePddlWorkspace.pddlWorkspace.getFolderOf(problemFileInfo);
         // find domain files in the same folder that match the problem's domain name
-        let domainFiles = folder?.getDomainFilesFor(problemFileInfo) || [];
+        let domainFiles = folder?.getDomainFilesFor(problemFileInfo) ?? [];
 
         if (this.isInInit()) {
             new ProblemInitDelegate(this.completions, this.context).createProblemInitCompletionItems(problemFileInfo, domainFiles);

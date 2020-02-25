@@ -40,7 +40,7 @@ export class DerivedVariablesParser {
     }
 
     static getDocumentationAbove(derivedNode: PddlSyntaxNode): string[] {
-        let siblingNodes = derivedNode.getParent()?.getChildren() || [];
+        let siblingNodes = derivedNode.getParent()?.getChildren() ?? [];
 
         let indexOfThisNode = siblingNodes.indexOf(derivedNode);
 
