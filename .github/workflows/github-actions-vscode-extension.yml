@@ -49,15 +49,21 @@ jobs:
           vsce package
         working-directory: client
 
-  publish:
-    runs-on: ubuntu-latest
-    steps:
-      - continue-on-error: true
-      - name: Publish extension to marketplace
-        if: success() && github.ref == 'refs/heads/master'
-        run: | 
-          npm install -g vsce
-          vsce publish -p $VSCE_TOKEN
-        working-directory: client
-        env: 
-          VSCE_TOKEN: ${{ secrets.VSCE_TOKEN }}
+  # publish:
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - continue-on-error: true
+  #     - uses: actions/checkout@v2
+  #     - name: Use Node.js ${{ matrix.node-version }}
+  #       uses: actions/setup-node@v1
+  #       with:
+  #         node-version: 10.16
+
+  #     - name: Publish extension to marketplace
+  #       if: success() && github.ref == 'refs/heads/master'
+  #       run: | 
+  #         npm install -g vsce
+  #         vsce publish -p $VSCE_TOKEN
+  #       working-directory: client
+  #       env: 
+  #         VSCE_TOKEN: ${{ secrets.VSCE_TOKEN }}
