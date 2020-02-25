@@ -34,9 +34,6 @@ jobs:
     - run: npm run compile
       working-directory: client
 
-    - name: Tree
-      run: tree ${{github.workspace}}
-
     - name: Test Extension
       if: success()
       run: npm test
