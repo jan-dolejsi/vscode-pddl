@@ -58,6 +58,9 @@ jobs:
         with:
           node-version: 10.16
 
+      - name: NPM Install
+        run: npm install
+
       - name: Publish extension to marketplace
         if: success() && github.ref == 'refs/heads/master'
         run: | 
