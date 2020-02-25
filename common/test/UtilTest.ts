@@ -13,7 +13,7 @@ describe('Util', () => {
 
     describe('#fsPath', () => {
         it('should handle tpddl schema and windows file name', () => {
-            let uri = URI.file('c:\\folder\\file.txt').with({ scheme: 'tpddl' }).toString();
+            let uri = URI.file(path.join('c:','folder','file.txt')).with({ scheme: 'tpddl' }).toString();
             let fileName = Util.fsPath(uri);
             assert.equal(fileName, path.join('c:', 'folder', 'file.txt'));
         });
@@ -25,7 +25,7 @@ describe('Util', () => {
         });
 
         it('should handle file schema and windows file name', () => {
-            let uri = URI.file('c:\\folder\\file.txt').toString();
+            let uri = URI.file(path.join('c:','folder','file.txt')).toString();
             let fileName = Util.fsPath(uri);
             assert.equal(fileName, path.join('c:', 'folder', 'file.txt'));
         });

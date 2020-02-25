@@ -1,6 +1,11 @@
 # Contributing to `vscode-pddl` extension
 
-Are you looking for the [End-user documentation](client/README.md).
+[![Downloads](https://vsmarketplacebadge.apphb.com/downloads/jan-dolejsi.pddl.svg?subject=Downloads)](https://marketplace.visualstudio.com/items?itemName=jan-dolejsi.pddl)
+[![Installs](https://vsmarketplacebadge.apphb.com/installs/jan-dolejsi.pddl.svg?subject=Installations)](https://marketplace.visualstudio.com/items?itemName=jan-dolejsi.pddl)
+[![Ratings](https://vsmarketplacebadge.apphb.com/rating-star/jan-dolejsi.pddl.svg?subject=Reviews)](https://marketplace.visualstudio.com/items?itemName=jan-dolejsi.pddl&ssr=false#review-details)
+[![VS Code PDDL Extension CI/CD](https://img.shields.io/github/workflow/status/jan-dolejsi/vscode-pddl/Build/master.svg?logo=github)](https://github.com/jan-dolejsi/vscode-pddl/actions?query=workflow%3ABuild)
+
+Are you looking for the [End-user documentation](client/README.md)?
 
 ## Building extension
 
@@ -19,6 +24,10 @@ npm install -g vsce
 The extension must be packaged on computers that have the `npm` version <= 5.5.1 installed globally. This is because of an issue with optional dependencies that `vsce` is wrongly enforcing via the `npm list --production --parsable --depth=99999` command.
 
 Extension packaging and publishing is automated by the `client/publish.cmd` script - obviously only defined for Windows.
+
+## Testing the extension
+
+Run `npm test` when all VS Code windows are closed.
 
 ## Making a release
 

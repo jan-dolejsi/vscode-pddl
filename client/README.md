@@ -1,5 +1,10 @@
 # Planning Domain Description Language Support
 
+[![Downloads](https://vsmarketplacebadge.apphb.com/downloads/jan-dolejsi.pddl.svg?subject=Downloads)](https://marketplace.visualstudio.com/items?itemName=jan-dolejsi.pddl)
+[![Installs](https://vsmarketplacebadge.apphb.com/installs/jan-dolejsi.pddl.svg?subject=Installations)](https://marketplace.visualstudio.com/items?itemName=jan-dolejsi.pddl)
+[![Ratings](https://vsmarketplacebadge.apphb.com/rating-star/jan-dolejsi.pddl.svg?subject=Reviews)](https://marketplace.visualstudio.com/items?itemName=jan-dolejsi.pddl&ssr=false#review-details)
+[![VS Code PDDL Extension CI/CD](https://img.shields.io/github/workflow/status/jan-dolejsi/vscode-pddl/Build/master.svg?logo=github)](https://github.com/jan-dolejsi/vscode-pddl/actions?query=workflow%3ABuild)
+
 This extension makes VS Code a great place for modeling planning domains.
 
 This extension brings PDDL to the family of first-class languages with the level of support on par with c#, python or javascript. It aims to help the novice and empower the expert by following features:

@@ -25,7 +25,6 @@ import { PlanComparer } from './comparison/PlanComparer';
 import { Catalog } from './catalog/Catalog';
 
 import { initialize, instrumentOperation, instrumentOperationAsVsCodeCommand } from "vscode-extension-telemetry-wrapper";
-import { KEY } from './TelemetryInstrumentation';
 import { SearchDebugger } from './searchDebugger/SearchDebugger';
 import { PlanningDomainsSessions } from './session/PlanningDomainsSessions';
 import { PddlFormatProvider } from './formatting/PddlFormatProvider';
@@ -58,6 +57,7 @@ export async function activate(context: ExtensionContext) {
 	let extensionInfo = new ExtensionInfo();
 
 	// initialize the instrumentation wrapper
+	const KEY: string = process.env.VSCODE_PDDL_TELEMETRY_TOKEN || null;// MUST NOT BE STORED!!
 	await initialize(extensionInfo.getId(), extensionInfo.getVersion(), KEY);
 
 	try {
