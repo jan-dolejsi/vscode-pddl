@@ -83,7 +83,7 @@ export class NoProblemAssociated extends Error {
 
 export class NoDomainAssociated extends Error {
     constructor(public readonly problem: ProblemInfo, message?: string) {
-        super(message || NoDomainAssociated.getMessage(problem));
+        super(message ?? NoDomainAssociated.getMessage(problem));
     }
 
     static readonly DIAGNOSTIC_CODE = "NoAssociatedDomain";

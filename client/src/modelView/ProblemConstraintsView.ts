@@ -156,8 +156,8 @@ class ProblemConstraintsRendererDelegate {
     }
 
     private addNamedCondition(namedCondition: NamedConditionConstraint, index: number): number {
-        let key = namedCondition.name || namedCondition.condition?.getText() || "unnamed";
-        this.nodes.set(key, new NamedConditionNode(index, namedCondition.name || "", namedCondition.condition?.getText() || "unspecified condition"));
+        let key = namedCondition.name ?? namedCondition.condition?.getText() ?? "unnamed";
+        this.nodes.set(key, new NamedConditionNode(index, namedCondition.name ?? "", namedCondition.condition?.getText() ?? "unspecified condition"));
         return index;
     }
 

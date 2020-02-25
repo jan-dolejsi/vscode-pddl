@@ -80,7 +80,7 @@ export abstract class ProblemView<TRendererOptions, TRenderData> extends Disposa
         let domainInfoAssigned: DomainInfo;
         let error: Error;
         try {
-            domainInfoAssigned = domainInfo || getDomainFileForProblem(problemInfo, this.codePddlWorkspace);
+            domainInfoAssigned = domainInfo ?? getDomainFileForProblem(problemInfo, this.codePddlWorkspace);
         }
         catch (ex) {
             error = ex;

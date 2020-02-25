@@ -62,26 +62,23 @@ export class SymbolInfoProvider implements DocumentSymbolProvider, DefinitionPro
             let containerName = '';
 
             let actionSymbols = domainInfo.getActions()
-                // only support those that have a name and where the location is known
-                .filter(action => action.name && action.getLocation())
                 .map(action =>
-                    new SymbolInformation(action.name!, SymbolKind.Module, containerName, SymbolUtils.toLocation(document, action.getLocation()!)));
+                    new SymbolInformation(action.name ?? "unnamed action", SymbolKind.Module, containerName,
+                        SymbolUtils.toLocation(document, action.getLocation())));
 
             if (!domainInfo.getProcesses()) { throw new Error(`Domain not parsed yet: ` + domainInfo.fileUri);}
             
             let processSymbols = domainInfo.getProcesses()!
-                // only support those that have a name and where the location is known
-                .filter(process => process.name && process.getLocation())
                 .map(process =>
-                    new SymbolInformation(process.name!, SymbolKind.Struct, containerName, SymbolUtils.toLocation(document, process.getLocation()!)));
+                    new SymbolInformation(process.name ?? "unnamed process", SymbolKind.Struct, containerName,
+                        SymbolUtils.toLocation(document, process.getLocation())));
 
             if (!domainInfo.getEvents()) { throw new Error(`Domain not parsed yet: ` + domainInfo.fileUri);}
 
             let eventSymbols = domainInfo.getEvents()!
-                // only support those that have a name and where the location is known
-                .filter(event => event.name && event.getLocation())
                 .map(event =>
-                    new SymbolInformation(event.name!, SymbolKind.Event, containerName, SymbolUtils.toLocation(document, event.getLocation()!)));
+                    new SymbolInformation(event.name ?? "unnamed event", SymbolKind.Event, containerName,
+                        SymbolUtils.toLocation(document, event.getLocation())));
 
             let predicateSymbols = domainInfo.getPredicates().map(variable =>
                 new SymbolInformation(variable.declaredName, SymbolKind.Boolean, containerName, SymbolUtils.toLocation(document, variable.getLocation())));

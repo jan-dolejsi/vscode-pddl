@@ -57,7 +57,7 @@ suite('PDDL Completion Item Provider', () => {
         let items = await testDomainProvider(inputTextHead, ch, inputTextTail, { triggerKind: vscode.CompletionTriggerKind.Invoke, triggerCharacter: ch });
 
         // THEN
-        assert.deepStrictEqual(items.map(i => i.filterText || i.label), [
+        assert.deepStrictEqual(items.map(i => i.filterText ?? i.label), [
             // '(domain',
             '(:requirements',
             '(:types',
@@ -83,7 +83,7 @@ suite('PDDL Completion Item Provider', () => {
         let items = await testDomainProvider(inputTextHead, ch, inputTextTail, { triggerKind: vscode.CompletionTriggerKind.TriggerCharacter, triggerCharacter: ch });
 
         // THEN
-        assert.deepStrictEqual(items.map(i => i.filterText || i.label), [
+        assert.deepStrictEqual(items.map(i => i.filterText ?? i.label), [
             // '(domain',
             '(:requirements',
             '(:types',
@@ -109,7 +109,7 @@ suite('PDDL Completion Item Provider', () => {
         let items = await testDomainProvider(inputTextHead, ch, inputTextTail, { triggerKind: vscode.CompletionTriggerKind.TriggerCharacter, triggerCharacter: ch });
 
         // THEN
-        assert.deepStrictEqual(items.map(i => i.filterText || i.label), [
+        assert.deepStrictEqual(items.map(i => i.filterText ?? i.label), [
             '(:requirements',
             '(:types',
             '(:constants',
@@ -136,7 +136,7 @@ suite('PDDL Completion Item Provider', () => {
         let items = await testDomainProvider(inputTextHead, ch, inputTextTail, { triggerKind: vscode.CompletionTriggerKind.Invoke, triggerCharacter: ch });
 
         // THEN
-        items.some(item => (item.filterText || item.label) === ':strips');
+        items.some(item => (item.filterText ?? item.label) === ':strips');
         items.forEach(item => assert.strictEqual(item.range, undefined, `Range of ${item.label} should be undefined`));
     });
 
@@ -150,7 +150,7 @@ suite('PDDL Completion Item Provider', () => {
         let items = await testDomainProvider(inputTextHead, ch, inputTextTail, { triggerKind: vscode.CompletionTriggerKind.TriggerCharacter, triggerCharacter: ch });
 
         // THEN
-        items.some(item => (item.filterText || item.label) === ':strips');
+        items.some(item => (item.filterText ?? item.label) === ':strips');
         items.forEach(item => assert.deepStrictEqual(item.range, new vscode.Range(0, inputTextHead.length, 0, inputTextHead.length + 1), `Range of '${item.label}'`));
     });
 
@@ -166,7 +166,7 @@ suite('PDDL Completion Item Provider', () => {
         let items = await testDomainProvider(inputTextHead, ch, inputTextTail, { triggerKind: vscode.CompletionTriggerKind.Invoke, triggerCharacter: ch });
 
         // THEN
-        assert.deepStrictEqual(items.map(i => i.filterText || i.label), [
+        assert.deepStrictEqual(items.map(i => i.filterText ?? i.label), [
             ':parameters',
             ':precondition',
             ':effect',
@@ -184,7 +184,7 @@ suite('PDDL Completion Item Provider', () => {
         let items = await testDomainProvider(inputTextHead, ch, inputTextTail, { triggerKind: vscode.CompletionTriggerKind.Invoke, triggerCharacter: ch });
 
         // THEN
-        assert.deepStrictEqual(items.map(i => i.filterText || i.label), [
+        assert.deepStrictEqual(items.map(i => i.filterText ?? i.label), [
             ':parameters',
             ':precondition',
             ':effect',
@@ -202,7 +202,7 @@ suite('PDDL Completion Item Provider', () => {
         let items = await testDomainProvider(inputTextHead, ch, inputTextTail, { triggerKind: vscode.CompletionTriggerKind.Invoke, triggerCharacter: ch });
 
         // THEN
-        assert.deepStrictEqual(items.map(i => i.filterText || i.label), [
+        assert.deepStrictEqual(items.map(i => i.filterText ?? i.label), [
             ':effect',
         ]);
         items.forEach(item => assert.deepStrictEqual(item.range, new vscode.Range(1, 0, 1, 1), `Range of '${item.label}'`));
@@ -220,7 +220,7 @@ suite('PDDL Completion Item Provider', () => {
         let items = await testDomainProvider(inputTextHead, ch, inputTextTail, { triggerKind: vscode.CompletionTriggerKind.Invoke, triggerCharacter: ch });
 
         // THEN
-        assert.deepStrictEqual(items.map(i => i.filterText || i.label), [
+        assert.deepStrictEqual(items.map(i => i.filterText ?? i.label), [
             ':parameters',
             ':duration',
             ':condition',
@@ -239,7 +239,7 @@ suite('PDDL Completion Item Provider', () => {
         let items = await testDomainProvider(inputTextHead, ch, inputTextTail, { triggerKind: vscode.CompletionTriggerKind.Invoke, triggerCharacter: ch });
 
         // THEN
-        assert.deepStrictEqual(items.map(i => i.filterText || i.label), [
+        assert.deepStrictEqual(items.map(i => i.filterText ?? i.label), [
             ':parameters',
             ':duration',
             ':condition',
@@ -262,7 +262,7 @@ suite('PDDL Completion Item Provider', () => {
         // THEN
         assertSnippetIncludes(items, "(not", 'p1,p2');
         assertSnippetIncludes(items, "(assign", '(assign (${1:new_function}) ${2:0})$0');
-        assert.deepStrictEqual(items.map(i => i.filterText || i.label), [
+        assert.deepStrictEqual(items.map(i => i.filterText ?? i.label), [
             '(not',
             '(assign',
             '(increase',
@@ -285,7 +285,7 @@ suite('PDDL Completion Item Provider', () => {
         // THEN
         assertSnippetIncludes(items, "(not", 'p1,p2');
         assertSnippetIncludes(items, "(assign", '(assign (${1:new_function}) ${2:0})$0');
-        assert.deepStrictEqual(items.map(i => i.filterText || i.label), [
+        assert.deepStrictEqual(items.map(i => i.filterText ?? i.label), [
             '(not',
             '(assign',
             '(increase',
@@ -309,7 +309,7 @@ suite('PDDL Completion Item Provider', () => {
         // THEN
         assertSnippetIncludes(items, "(increase", 'f1');
         assertSnippetIncludes(items, "(decrease", '(decrease (${1|f1|}) (* #t ${2:1.0}))$0');
-        assert.deepStrictEqual(items.map(i => i.filterText || i.label), [
+        assert.deepStrictEqual(items.map(i => i.filterText ?? i.label), [
             '(at start',
             '(at end',
             '(increase',
@@ -331,7 +331,7 @@ suite('PDDL Completion Item Provider', () => {
         // THEN
         assertSnippetIncludes(items, "(increase", 'f1');
         assertSnippetIncludes(items, "(decrease", '(decrease (${1|f1|}) (* #t ${2:1.0}))$0');
-        assert.deepStrictEqual(items.map(i => i.filterText || i.label), [
+        assert.deepStrictEqual(items.map(i => i.filterText ?? i.label), [
             '(increase',
             '(decrease',
             '(forall',
@@ -352,7 +352,7 @@ suite('PDDL Completion Item Provider', () => {
         let items = await testDomainProvider(inputTextHead, ch, inputTextTail, { triggerKind: vscode.CompletionTriggerKind.Invoke, triggerCharacter: ch });
 
         // THEN
-        assert.deepStrictEqual(items.map(i => i.filterText || i.label), [
+        assert.deepStrictEqual(items.map(i => i.filterText ?? i.label), [
             '(at start',
             '(at end',
             '(over all',
@@ -372,7 +372,7 @@ suite('PDDL Completion Item Provider', () => {
         let items = await testDomainProvider(inputTextHead, ch, inputTextTail, { triggerKind: vscode.CompletionTriggerKind.TriggerCharacter, triggerCharacter: ch });
 
         // THEN
-        assert.deepStrictEqual(items.map(i => i.filterText || i.label), [
+        assert.deepStrictEqual(items.map(i => i.filterText ?? i.label), [
             '?pfa',
             '?pa-1',
             '?pa_2',
@@ -393,7 +393,7 @@ suite('PDDL Completion Item Provider', () => {
         let items = await testProblemProvider(inputTextHead, ch, inputTextTail, { triggerKind: vscode.CompletionTriggerKind.Invoke, triggerCharacter: ch });
     
         // THEN
-        assert.deepStrictEqual(items.map(i => i.filterText || i.label), [
+        assert.deepStrictEqual(items.map(i => i.filterText ?? i.label), [
             '(problem',
             '(:domain',
             '(:requirements',
@@ -416,7 +416,7 @@ suite('PDDL Completion Item Provider', () => {
         let items = await testProblemProvider(inputTextHead, ch, inputTextTail, { triggerKind: vscode.CompletionTriggerKind.TriggerCharacter, triggerCharacter: ch });
     
         // THEN
-        assert.deepStrictEqual(items.map(i => i.filterText || i.label), [
+        assert.deepStrictEqual(items.map(i => i.filterText ?? i.label), [
             '(problem',
             '(:domain',
             '(:requirements',
@@ -439,7 +439,7 @@ suite('PDDL Completion Item Provider', () => {
         let items = await testProblemProvider(inputTextHead, ch, inputTextTail, { triggerKind: vscode.CompletionTriggerKind.TriggerCharacter, triggerCharacter: ch });
     
         // THEN
-        assert.deepStrictEqual(items.map(i => i.filterText || i.label), [
+        assert.deepStrictEqual(items.map(i => i.filterText ?? i.label), [
             '(:domain',
             '(:requirements',
             '(:objects',

@@ -106,7 +106,6 @@ export class DomainInfo extends FileInfo {
     }
 
     setConstants(constants: TypeObjectMap): void {
-        if (constants === undefined || constants === null) { throw new Error("Constants must be defined or empty."); }
         this.constants = constants;
     }
 
@@ -199,7 +198,7 @@ export class TypeObjectMap {
     }
 
     private _upsert(type: string, inserter: (typeObjects: TypeObjects) => void): void {
-        let typeFound = this.getTypeCaseInsensitive(type) || new TypeObjects(type);
+        let typeFound = this.getTypeCaseInsensitive(type) ?? new TypeObjects(type);
 
         inserter.apply(this, [typeFound]);
 
@@ -253,18 +252,14 @@ export class TypeObjects {
 }
 
 export abstract class PddlDomainConstruct {
-    private location?: PddlRange; // initialized lazily
     private documentation: string[] = []; // initialized lazily
 
-    constructor(public readonly name: string | undefined, public readonly parameters: Parameter[]) {
+    constructor(public readonly name: string | undefined, public readonly parameters: Parameter[],
+        public readonly location: PddlRange) {
 
     }
 
-    setLocation(location: PddlRange) {
-        this.location = location;
-    }
-
-    getLocation(): PddlRange | undefined {
+    getLocation(): PddlRange {
         return this.location;
     }
 
@@ -277,7 +272,7 @@ export abstract class PddlDomainConstruct {
     }
 
     getNameOrEmpty(): string {
-        return this.name || '';
+        return this.name ?? '';
     }
 }
 
@@ -287,8 +282,9 @@ export abstract class Action extends PddlDomainConstruct {
 }
 
 export class InstantAction extends Action {
-    constructor(name: string | undefined, parameters: Parameter[], public readonly preCondition?: PddlBracketNode, public readonly effect?: PddlBracketNode) {
-        super(name, parameters);
+    constructor(name: string | undefined, parameters: Parameter[], location: PddlRange,
+        public readonly preCondition?: PddlBracketNode, public readonly effect?: PddlBracketNode) {
+        super(name, parameters, location);
     }
 
     isDurative(): boolean {
@@ -297,11 +293,11 @@ export class InstantAction extends Action {
 }
 
 export class DurativeAction extends Action {
-    constructor(name: string | undefined, parameters: Parameter[],
+    constructor(name: string | undefined, parameters: Parameter[], location: PddlRange,
         public readonly duration?: PddlBracketNode,
         public readonly condition?: PddlBracketNode,
         public readonly effect?: PddlBracketNode) {
-        super(name, parameters);
+        super(name, parameters, location);
     }
 
     isDurative(): boolean {
@@ -310,7 +306,7 @@ export class DurativeAction extends Action {
 }
 
 export class UnrecognizedStructure extends PddlDomainConstruct {
-    constructor() {
-        super("unrecognized", []);
+    constructor(range: PddlRange) {
+        super("unrecognized", [], range);
     }
 }

@@ -41,7 +41,7 @@ export class SessionSourceControl implements vscode.Disposable {
 	private _onRepositoryChange = new vscode.EventEmitter<SessionContent>();
 	private timeout?: NodeJS.Timer;
 	private session!: SessionContent;
-	private isRefreshing: boolean;
+	private isRefreshing = false;
 
 	constructor(context: vscode.ExtensionContext, private readonly workspaceFolder: vscode.WorkspaceFolder, session: SessionContent, overwrite: boolean) {
 		this.sessionScm = vscode.scm.createSourceControl('planningDomainsSession', 'Session #' + session.getHash(), workspaceFolder.uri);
@@ -70,7 +70,9 @@ export class SessionSourceControl implements vscode.Disposable {
 	}
 
 	static async fromConfiguration(configuration: SessionConfiguration, workspaceFolder: vscode.WorkspaceFolder, context: vscode.ExtensionContext, overwrite: boolean): Promise<SessionSourceControl> {
-		let session = configuration.versionDate ? SessionContent.from(configuration) : await getSession(configuration);
+		let session = configuration.versionDate ?
+			SessionContent.from(configuration, configuration.versionDate) :
+			await getSession(configuration);
 		return new SessionSourceControl(context, workspaceFolder, session, overwrite);
 	}
 
@@ -162,7 +164,7 @@ export class SessionSourceControl implements vscode.Disposable {
 			const discardAnswer = "Discard";
 			let answer = await vscode.window.showWarningMessage(`Discard ${this.getLocalModifiedResources().length} changes?`, { modal: true }, discardAnswer, "Cancel");
 			if (answer !== discardAnswer) {
-				return null;
+				return;
 			}
 		}
 		this.session.files.forEach((fileContent, fileName) => this.resetFile(fileName, fileContent));
@@ -218,17 +220,17 @@ export class SessionSourceControl implements vscode.Disposable {
 					await this.setSession(newSession, true);
 				}
 			} catch (ex) {
-				vscode.window.showErrorMessage(ex.message || ex);
+				vscode.window.showErrorMessage(ex.message ?? ex);
 			}
 		}
 	}
 
 	private getLocalModifiedResources(): vscode.SourceControlResourceState[] {
-		return this.changedResources.resourceStates.filter(resource => !resource.decorations.faded);
+		return this.changedResources.resourceStates.filter(resource => !resource.decorations?.faded);
 	}
 
 	private getLocalUntrackedResources(): vscode.SourceControlResourceState[] {
-		return this.changedResources.resourceStates.filter(resource => resource.decorations.faded);
+		return this.changedResources.resourceStates.filter(resource => resource.decorations?.faded);
 	}
 
 	toOpenFileNotificationLink(resourceUri: vscode.Uri): string {
@@ -277,7 +279,7 @@ export class SessionSourceControl implements vscode.Disposable {
 	async saveWorkspaceSettings(): Promise<void> {
 		if (this.session.plugins.has(SessionSourceControl.SOLVER_PLUGIN)) {
 			let solver = this.session.plugins.get(SessionSourceControl.SOLVER_PLUGIN);
-			if (solver.url !== "/plugins/solver.js") { return; }
+			if (solver?.url !== "/plugins/solver.js") { return; }
 
 			let solverUrl = solver.settings["url"];
 
@@ -318,7 +320,7 @@ export class SessionSourceControl implements vscode.Disposable {
 			await this.updateChangedGroup();
 		}
 		catch (ex) {
-			vscode.window.showErrorMessage(ex.message || ex);
+			vscode.window.showErrorMessage(ex.message ?? ex);
 		}
 	}
 
@@ -332,7 +334,7 @@ export class SessionSourceControl implements vscode.Disposable {
 		let otherFolderFiles: string[] = await this.getLocalFileNames();
 
 		for (const uri of uris) {
-			let state: ChangedResourceState = null;
+			let state: ChangedResourceState | undefined;
 
 			if (await afs.exists(uri.fsPath)) {
 				let document = await vscode.workspace.openTextDocument(uri);
@@ -398,7 +400,7 @@ export class SessionSourceControl implements vscode.Disposable {
 	/** Determines whether the resource is different, regardless of line endings. */
 	isDirty(doc: vscode.TextDocument): boolean {
 		let originalText = this.session.files.get(path.basename(doc.uri.fsPath));
-		return originalText.replace('\r', '') !== doc.getText().replace('\r', '');
+		return originalText?.replace('\r', '') !== doc.getText().replace('\r', '');
 	}
 
 	setRefreshing(isRefreshing: boolean): void {
@@ -408,7 +410,7 @@ export class SessionSourceControl implements vscode.Disposable {
 
 	toSourceControlResourceState(docUri: vscode.Uri, state: ChangedResourceState): vscode.SourceControlResourceState {
 
-		let repositoryUri = this.sessionRepository.provideOriginalResource(docUri, null);
+		let repositoryUri = this.sessionRepository.provideOriginalResource(docUri, new vscode.CancellationTokenSource().token);
 
 		const fileName = path.basename(docUri.fsPath);
 
@@ -423,6 +425,7 @@ export class SessionSourceControl implements vscode.Disposable {
 					arguments: [repositoryUri, docUri, `Session#${this.session.hash}:${fileName} ↔ Local changes`],
 					tooltip: "Diff your changes"
 				};
+				tooltip = '';
 				break;
 			case ChangedResourceState.New:
 				command = {
@@ -475,10 +478,8 @@ export class SessionSourceControl implements vscode.Disposable {
 
 			return newSessionWriteHash;
 		} catch (ex) {
-			vscode.window.showErrorMessage("Failed creating duplicate session in Planning.Domains. " + ex.message);
+			throw new Error("Failed creating duplicate session in Planning.Domains. " + (ex.message ?? ex));
 		}
-
-		return null;
 	}
 
 	dispose() {

@@ -94,10 +94,10 @@ export abstract class PlannerService extends Planner {
         for (var index = 0; index < planSteps.length; index++) {
             var planStep = planSteps[index];
             let fullActionName = (<string>planStep["name"]).replace('(', '').replace(')', '');
-            let time = planStep["time"] || (index + 1) * planParser.options.epsilon;
+            let time = planStep["time"] ?? (index + 1) * planParser.options.epsilon;
             let duration = planStep["duration"];
             let isDurative = duration !== undefined && duration !== null;
-            duration = duration || planParser.options.epsilon;
+            duration = duration ?? planParser.options.epsilon;
             let planStepObj = new PlanStep(time, fullActionName, isDurative, duration, index);
             planParser.appendStep(planStepObj);
         }

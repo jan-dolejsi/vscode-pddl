@@ -34,7 +34,7 @@ export class ModelHierarchyProvider implements HoverProvider {
         window.visibleTextEditors.forEach(editor => this.scheduleDecoration(editor));
     }
 
-    scheduleDecoration(editor: TextEditor): void {
+    scheduleDecoration(editor: TextEditor | undefined): void {
         if (editor && editor.visibleRanges.length && isPddl(editor.document)) {
 
             this.triggerDecorationRefresh(editor);
@@ -205,7 +205,7 @@ export class ModelHierarchyProvider implements HoverProvider {
     }
 
 
-    private getReferences(references: Location[], domainInfo: DomainInfo, symbolInfo: SymbolInfo, document: TextDocument) {
+    private getReferences(references: Location[], domainInfo: DomainInfo, symbolInfo: SymbolInfo, document: TextDocument): VariableReferenceInfo[] {
         return references
             .filter(r => r.uri.toString() === domainInfo.fileUri) // limit this to the domain file only
             .map(r => new ModelHierarchy(domainInfo!).getReferenceInfo((<VariableInfo>symbolInfo).variable, document.offsetAt(r.range.start) + 1));
@@ -235,6 +235,6 @@ export class ModelHierarchyProvider implements HoverProvider {
     }
 
     private createAccessKindDocumentation(referenceInfos: VariableReferenceInfo[], documentation: MarkdownString): void {
-        referenceInfos.forEach(ri => documentation.appendMarkdown(`\n- \`${ri.structure.getNameOrEmpty()}\` ${ri.getTimeQualifier()} ${ri.part}`).appendCodeblock(ri.relevantCode, PDDL));
+        referenceInfos.forEach(ri => documentation.appendMarkdown(`\n- \`${ri.structure.getNameOrEmpty()}\` ${ri.getTimeQualifier()} ${ri.part}`).appendCodeblock(ri.relevantCode ?? '', PDDL));
     }
 }

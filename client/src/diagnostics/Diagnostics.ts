@@ -340,5 +340,5 @@ function toDiagnostics(problems: ParsingProblem[]): Diagnostic[] {
 }
 
 function toDiagnostic(problem: ParsingProblem): Diagnostic {
-    return createDiagnostic(problem.lineIndex || 0, problem.columnIndex, problem.problem, DiagnosticSeverity.Error);
+    return createDiagnostic(problem.lineIndex ?? 0, problem.columnIndex, problem.problem, DiagnosticSeverity.Error);
 }

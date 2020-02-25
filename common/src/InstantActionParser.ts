@@ -32,10 +32,9 @@ export class InstantActionParser {
         let parameters = parametersNode ? parseParameters(parametersNode.getNestedNonCommentText()) : [];
         let conditionNode = actionNode.getKeywordOpenBracket('precondition');
         let effectNode = actionNode.getKeywordOpenBracket('effect');
-        this.action = new InstantAction(actionName, parameters, conditionNode, effectNode);
         let location = PddlRange.from(positionResolver
             .resolveToPosition(actionNode.getStart()), positionResolver.resolveToPosition(actionNode.getEnd()));
-        this.action.setLocation(location);
+        this.action = new InstantAction(actionName, parameters, location, conditionNode, effectNode);
         this.action.setDocumentation(DerivedVariablesParser.getDocumentationAbove(actionNode));
     }
 

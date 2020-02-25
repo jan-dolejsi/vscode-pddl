@@ -34,7 +34,7 @@ export class StateToPlan {
 
         let planSteps = planStepBuilders.map(step => step.toPalStep(state.earliestTime));
 
-        let helpfulActions = state.helpfulActions || [];
+        let helpfulActions = state.helpfulActions ?? [];
 
         return new Plan(planSteps, this.domain, this.problem, state.earliestTime, helpfulActions);
     }

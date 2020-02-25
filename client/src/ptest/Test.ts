@@ -49,7 +49,7 @@ export class Test {
         let domain = json[DOMAIN];
         let problem = json[PROBLEM];
         let options = json[OPTIONS];
-        let expectedPlans = json[EXPECTED_PLANS] || [];
+        let expectedPlans = json[EXPECTED_PLANS] ?? [];
 
         let preProcessSettings = json[PRE_PROCESSOR];
         let preProcessor: PreProcessor | undefined;
@@ -102,7 +102,7 @@ export class Test {
     }
 
     getDomain(): string {
-        return this.domain || this.manifest.defaultDomain || throwForUndefined('domain');
+        return this.domain ?? this.manifest.defaultDomain ?? throwForUndefined('domain');
     }
 
     getDomainUri(): Uri {
@@ -110,7 +110,7 @@ export class Test {
     }
 
     getProblem(): string {
-        return this.problem || this.manifest.defaultProblem || throwForUndefined("problem");
+        return this.problem ?? this.manifest.defaultProblem ?? throwForUndefined("problem");
     }
 
     getProblemUri(): Uri {
@@ -122,7 +122,7 @@ export class Test {
     }
 
     getLabel(): string {
-        return this.label || this.problem || this.getProblem() + ` (${this.index + 1})`;
+        return this.label ?? this.problem ?? this.getProblem() + ` (${this.index + 1})`;
     }
 
     getDescription(): string {
@@ -130,7 +130,7 @@ export class Test {
     }
 
     getOptions(): string | undefined {
-        return this.options || this.manifest.defaultOptions;
+        return this.options ?? this.manifest.defaultOptions;
     }
 
     getPreProcessor(): PreProcessor | undefined {

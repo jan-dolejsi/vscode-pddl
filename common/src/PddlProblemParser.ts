@@ -163,7 +163,7 @@ export class PddlProblemParser {
             return undefined;
         }
         else if (node.getToken().tokenText === '(not') {
-            let nested = node.getFirstChild(PddlTokenType.OpenBracket, /.*/) || node.getFirstChild(PddlTokenType.OpenBracketOperator, /.*/);
+            let nested = node.getFirstChild(PddlTokenType.OpenBracket, /.*/) ?? node.getFirstChild(PddlTokenType.OpenBracketOperator, /.*/);
             if (!nested) {
                 return undefined;
             }

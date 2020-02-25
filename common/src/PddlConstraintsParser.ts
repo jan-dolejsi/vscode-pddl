@@ -38,10 +38,10 @@ export class PddlConstraintsParser {
             switch (token) {
                 case 'name':
                 case 'named-condition':
-                    return this.parseNamedCondition(node, children.slice(1)) || new Constraint(node);
+                    return this.parseNamedCondition(node, children.slice(1)) ?? new Constraint(node);
                 case strictlyAfterToken:
                 case 'after':
-                    return this.parseAfter(node, children.slice(1), token === strictlyAfterToken) || new Constraint(node);
+                    return this.parseAfter(node, children.slice(1), token === strictlyAfterToken) ?? new Constraint(node);
                 default:
                     return new Constraint(node);
             }

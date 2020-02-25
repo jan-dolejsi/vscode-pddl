@@ -278,21 +278,21 @@ export class PddlSyntaxNode extends TextRange {
 
     getPrecedingSiblings(type: PddlTokenType, centralNode?: PddlSyntaxNode): PddlSyntaxNode[] {
         let siblings = this.getSiblings(type, /.*/);
-        let centralNodeStart = (centralNode || this).getStart();
+        let centralNodeStart = (centralNode ?? this).getStart();
         let precedingSiblings = siblings.filter(sibling => sibling.getStart() < centralNodeStart);
         return precedingSiblings;
     }
 
     getFollowingSiblings(type: PddlTokenType, centralNode?: PddlSyntaxNode): PddlSyntaxNode[] {
         let siblings = this.getSiblings(type, /.*/);
-        let centralNodeStart = (centralNode || this).getStart();
+        let centralNodeStart = (centralNode ?? this).getStart();
         let followingSiblings = siblings.filter(sibling => sibling.getStart() > centralNodeStart);
         return followingSiblings;
     }
 
     private getSiblings(type: PddlTokenType, pattern: RegExp): PddlSyntaxNode[] {
         if (this.isRoot()) { return []; }
-        return this.getParent()?.getChildrenOfType(type, pattern) || [];
+        return this.getParent()?.getChildrenOfType(type, pattern) ?? [];
     }
 
     isDocument(): boolean {
@@ -342,10 +342,10 @@ export class PddlBracketNode extends PddlSyntaxNode {
     }
 
     getText(): string {
-        return super.getText() + (this.closeToken?.tokenText || '');
+        return super.getText() + (this.closeToken?.tokenText ?? '');
     }
 
     getNonCommentText(): string {
-        return super.getNonCommentText() + (this.closeToken?.tokenText || '');
+        return super.getNonCommentText() + (this.closeToken?.tokenText ?? '');
     }
 }

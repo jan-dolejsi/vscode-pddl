@@ -11,13 +11,15 @@ export class StudentNameParser {
         return input.split(';')
             .map(name => name.trim())
             .filter(name => name.length) // skip empty names e.g. after a trailing semicolon
-            .map(name => this.parseName(name));
+            .map(name => this.parseName(name))
+            .filter(student => !!student)
+            .map(student => student!);
     }
 
-    validateClassroomNames(input: string): string {
+    validateClassroomNames(input: string): string | null {
         let invalidNames = input.split(';')
             .map(name => name.trim())
-            .filter(name => name.length) // skip empty names e.g. after a trailing semicolon
+            .filter(name => name.length > 0) // skip empty names e.g. after a trailing semicolon
             .filter(name => !this.parseName(name));
 
         if (invalidNames.length) {
@@ -37,13 +39,13 @@ export class StudentNameParser {
         this.NAME_PATTERN.lastIndex = 0;
         this.NAME_AND_EMAIL_PATTERN.lastIndex = 0;
 
-        var match: RegExpMatchArray;
+        var match: RegExpMatchArray | null;
 
         if (match = name.match(this.EMAIL_PATTERN)) {
             return new StudentName(match[0], match[0]); // it is valid
         }
         else if (match = name.match(this.NAME_PATTERN)) {
-            return new StudentName(match[0], null); // it is valid
+            return new StudentName(match[0]); // it is valid, but email address was not included
         }
         else if (match = name.match(this.NAME_AND_EMAIL_PATTERN)) {
             let emailPart = match[3].trim();
@@ -58,7 +60,7 @@ export class StudentNameParser {
 }
 
 export class StudentName {
-    constructor(public readonly name: string, public readonly email: string) { }
+    constructor(public readonly name: string, public readonly email?: string) { }
 
     getEffectiveName(): string {
         return this.name;

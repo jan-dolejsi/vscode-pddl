@@ -5,7 +5,7 @@
 'use strict';
 
 import * as vscode from 'vscode';
-import { WorkspaceFolder, DebugConfiguration, ProviderResult, CancellationToken, window, Uri } from 'vscode';
+import { WorkspaceFolder, DebugConfiguration, CancellationToken, window, Uri } from 'vscode';
 import { PlanDebugSession } from './PlanDebugSession';
 import * as Net from 'net';
 import { HAPPENINGS } from '../../../common/src/parser';
@@ -31,8 +31,7 @@ export class Debugging {
 
 	constructor(context: vscode.ExtensionContext, private pddlWorkspace: CodePddlWorkspace, public plannerConfiguration: PddlConfiguration) {
 
-		context.subscriptions.push(instrumentOperationAsVsCodeCommand('pddl.selectAndActivateHappenings', async(config) => {
-			config;
+		context.subscriptions.push(instrumentOperationAsVsCodeCommand('pddl.selectAndActivateHappenings', async(_config) => {
 			return await selectHappenings();
 		}));
 
@@ -53,7 +52,7 @@ export class Debugging {
 				this.saveDecorations(editor.document, decorations);
 			}
 			catch (ex) {
-				vscode.window.showErrorMessage(ex.message || ex);
+				vscode.window.showErrorMessage(ex.message ?? ex);
 			}
 		}));
 
@@ -63,7 +62,7 @@ export class Debugging {
 				new HappeningsToPlanResumeCasesConvertor(context, this.plannerConfiguration).generate();
 			}
 			catch (ex) {
-				vscode.window.showErrorMessage(ex.message || ex);
+				vscode.window.showErrorMessage(ex.message ?? ex);
 			}
 		}));
 
@@ -86,20 +85,17 @@ export class Debugging {
 	async getActiveContext(): Promise<DebuggingSessionFiles> {
 
 		if (!window.activeTextEditor) {
-			window.showErrorMessage('There is no file active in the editor.');
-			return null;
+			throw new Error('There is no file active in the editor.');
 		}
 
 		if (!isHappenings(window.activeTextEditor.document)) {
-			window.showErrorMessage('Active document is not debuggable.');
-			return null;
+			throw new Error('Active document cannot be debugged.');
 		}
 
 		let activeFileInfo = await this.pddlWorkspace.upsertAndParseFile(window.activeTextEditor.document);
 
 		if (!(activeFileInfo instanceof HappeningsInfo)) {
-			window.showErrorMessage('Active document is not debuggable.');
-			return null;
+			throw new Error('Active document cannot be debugged.');
 		}
 
 		let happeningsInfo = <HappeningsInfo>activeFileInfo;
@@ -117,7 +113,7 @@ export class Debugging {
 
 		let context = await this.getActiveContext();
 
-		let folder: WorkspaceFolder = undefined; // so far there is no configuration to resolve
+		let folder: WorkspaceFolder | undefined; // so far there is no configuration to resolve
 		let debugConfiguration: vscode.DebugConfiguration = {
 			"name": "PDDL Plan Happenings F5",
 			"type": "pddl-happenings",
@@ -139,8 +135,8 @@ class PddlPlanDebugConfigurationProvider implements vscode.DebugConfigurationPro
 	 * Massage a debug configuration just before a debug session is being launched,
 	 * e.g. add all missing attributes to the debug configuration.
 	 */
-	resolveDebugConfiguration(folder: WorkspaceFolder | undefined, config: DebugConfiguration, token?: CancellationToken): ProviderResult<DebugConfiguration> {
-		folder; token;
+	async resolveDebugConfiguration(_folder: WorkspaceFolder | undefined, config: DebugConfiguration, token?: CancellationToken): Promise<DebugConfiguration | undefined> {
+		if (token?.isCancellationRequested) { return undefined; }
 		// if launch.json is missing or empty
 		if (!config.type && !config.request && !config.name) {
 			const editor = vscode.window.activeTextEditor;
@@ -156,9 +152,8 @@ class PddlPlanDebugConfigurationProvider implements vscode.DebugConfigurationPro
 		}
 
 		if (!config.program) {
-			return vscode.window.showInformationMessage("Cannot find a program to debug").then(_ => {
+			await vscode.window.showInformationMessage("Cannot find a program to debug");
 				return undefined;	// abort launch
-			});
 		}
 
 		if (EMBED_DEBUG_ADAPTER) {

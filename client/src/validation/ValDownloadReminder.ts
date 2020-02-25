@@ -56,7 +56,7 @@ export class ValDownloadReminder {
         try {
             await this.val.downloadConfigureAndCleanUp();
         } catch (ex) {
-            window.showErrorMessage(ex.message || ex);
+            window.showErrorMessage(ex.message ?? ex);
         }
     }
 }
