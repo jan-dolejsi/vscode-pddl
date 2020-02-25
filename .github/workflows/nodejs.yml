@@ -1,0 +1,26 @@
+name: Node.js CI
+
+on: [push]
+
+jobs:
+  build:
+
+    runs-on: [ubuntu-latest, windows-latest, macos-latest]
+
+    strategy:
+      matrix:
+        node-version: [10.16]
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Use Node.js ${{ matrix.node-version }}
+      uses: actions/setup-node@v1
+      with:
+        node-version: ${{ matrix.node-version }}
+    - run: npm install
+    - run: npm test
+      working-directory: common
+    - run: npm run compile --if-present
+      working-directory: client
+      env:
+        CI: true
