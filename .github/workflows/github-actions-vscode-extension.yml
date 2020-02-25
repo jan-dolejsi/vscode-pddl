@@ -1,4 +1,4 @@
-name: VS Code PDDL Extension CI/CD
+name: Build
 
 on: 
   push: 
