@@ -5,8 +5,8 @@ on: [push]
 jobs:
   build:
 
-    runs-on: [ubuntu-latest, windows-latest, macos-latest]
-
+    runs-on: ubuntu-latest
+    
     strategy:
       matrix:
         node-version: [10.16]
