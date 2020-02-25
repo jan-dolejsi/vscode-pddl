@@ -1,6 +1,6 @@
 # Contributing to `vscode-pddl` extension
 
-Are you looking for the [End-user documentation](client/README.md).
+Are you looking for the [End-user documentation](client/README.md)?
 
 ## Building extension
 
@@ -19,6 +19,10 @@ npm install -g vsce
 The extension must be packaged on computers that have the `npm` version <= 5.5.1 installed globally. This is because of an issue with optional dependencies that `vsce` is wrongly enforcing via the `npm list --production --parsable --depth=99999` command.
 
 Extension packaging and publishing is automated by the `client/publish.cmd` script - obviously only defined for Windows.
+
+## Testing the extension
+
+Run `npm test` when all VS Code windows are closed.
 
 ## Making a release
 

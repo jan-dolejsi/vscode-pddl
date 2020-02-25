@@ -34,10 +34,12 @@ jobs:
     - run: npm run compile
       working-directory: client
 
-    - name: Test Extension
+    - name: Run extension integration tests in head-less VS Code
       if: success()
-      run: npm test
-      working-directory: client
+      uses: GabrielBB/xvfb-action@v1.0
+      with:
+        run: npm test
+        working-directory: client
 
     - name: Package extension
       if: success()
