@@ -1,5 +1,10 @@
 # Contributing to `vscode-pddl` extension
 
+[![Downloads](https://vsmarketplacebadge.apphb.com/downloads/jan-dolejsi.pddl.svg?subject=Downloads)](https://marketplace.visualstudio.com/items?itemName=jan-dolejsi.pddl)
+[![Installs](https://vsmarketplacebadge.apphb.com/installs/jan-dolejsi.pddl.svg?subject=Installations)](https://marketplace.visualstudio.com/items?itemName=jan-dolejsi.pddl)
+[![Ratings](https://vsmarketplacebadge.apphb.com/rating-star/jan-dolejsi.pddl.svg?subject=Reviews)](https://marketplace.visualstudio.com/items?itemName=jan-dolejsi.pddl&ssr=false#review-details)
+[![VS Code PDDL Extension CI/CD](https://github.com/jan-dolejsi/vscode-pddl/workflows/VS%20Code%20PDDL%20Extension%20CI/CD/badge.svg?branch=master)](https://github.com/jan-dolejsi/vscode-pddl/actions?query=workflow%3A%22VS+Code+PDDL+Extension+CI%2FCD%22)
+
 Are you looking for the [End-user documentation](client/README.md)?
 
 ## Building extension
