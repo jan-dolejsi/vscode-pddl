@@ -17,14 +17,18 @@ jobs:
       uses: actions/setup-node@v1
       with:
         node-version: ${{ matrix.node-version }}
-    - run: npm install
-    - run: npm test
+
+    - name: NPM Install
+      run: npm install
+    - name: Run common module tests
+      run: npm test
       working-directory: common
+
     - run: npm run compile
       working-directory: client
 
     - name: Tree
-    - run: tree {{github.workspace}}
+      run: tree {{github.workspace}}
 
     - name: Test Extension
       if: success()
@@ -40,9 +44,7 @@ jobs:
 
     - name: Publish extension to marketplace
       if: success() && github.ref == 'refs/heads/master'
-      run: | 
-        npm install -g vsce
-        vsce publish -p $VSCE_TOKEN
+      run: vsce publish -p $VSCE_TOKEN
       working-directory: client
       env: 
         VSCE_TOKEN: ${{ secrets.VSCE_TOKEN }}
