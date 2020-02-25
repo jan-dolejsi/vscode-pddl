@@ -1,15 +1,22 @@
 name: VSCode Extension CI
 
-on: [push, pull_request]
+on: 
+  push: 
+    branches:
+      - master
+  pull_request: 
+    branches: 
+      - '*'
 
 jobs:
   build:
-
-    runs-on: windows-latest
     
     strategy:
       matrix:
         node-version: [10.16]
+        os: [windows-latest] # macos-latest, ubuntu-latest
+
+    runs-on: ${{ matrix.os }}
 
     steps:
     - uses: actions/checkout@v2
@@ -32,7 +39,7 @@ jobs:
 
     - name: Test Extension
       if: success()
-      run: .vscode-test\vscode-1.38.1\Code.exe --folder-uri=file://./src/test/tmpFolder/ --extensionDevelopmentPath=./ --extensionTestsPath={{github.workspace}}/client/out/client/src/test/suite/index
+      run: npm test
       working-directory: client
 
     - name: Package extension

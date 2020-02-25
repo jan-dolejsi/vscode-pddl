@@ -1,6 +1,7 @@
 import * as path from 'path';
 
 import { runTests } from 'vscode-test';
+import { URI } from 'vscode-uri';
 
 async function main() {
 	try {
@@ -12,8 +13,29 @@ async function main() {
 		// Passed to --extensionTestsPath
 		const extensionTestsPath = path.resolve(__dirname, './suite/index');
 
-		// Download VS Code, unzip it and run the integration test
-		await runTests({ extensionDevelopmentPath, extensionTestsPath });
+		// The path to the workspace, where the files will be created
+		const testWorkspace = "--folder-uri=" + URI.file(path.resolve(__dirname, '../../../../src/test/tmpFolder'));
+
+		// Download VS Code 1.40, unzip it and run the integration test
+		await runTests({
+			version: '1.40.1',
+			extensionDevelopmentPath, extensionTestsPath,
+			launchArgs: [testWorkspace]
+		});
+
+		// Download VS Code 1.41, unzip it and run the integration test
+		await runTests({
+			version: '1.41.1',
+			extensionDevelopmentPath, extensionTestsPath,
+			launchArgs: [testWorkspace]
+		});
+
+		// Download the latest VS Code, unzip it and run the integration test
+		await runTests({
+			extensionDevelopmentPath, extensionTestsPath,
+			launchArgs: [testWorkspace]
+		});
+		
 	} catch (err) {
 		console.error('Failed to run tests');
 		process.exit(1);
