@@ -28,7 +28,7 @@ jobs:
       working-directory: client
 
     - name: Tree
-      run: tree {{github.workspace}}
+      run: tree ${{github.workspace}}
 
     - name: Test Extension
       if: success()
