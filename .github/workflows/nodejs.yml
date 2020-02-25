@@ -20,14 +20,30 @@ jobs:
     - run: npm install
     - run: npm test
       working-directory: common
-    - run: npm run compile --if-present
+    - run: npm run compile
       working-directory: client
+
+    - name: Tree
+    - run: tree {{github.workspace}}
+
+    - name: Test Extension
+      if: success()
+      run: .vscode-test\vscode-1.38.1\Code.exe --folder-uri=file://./src/test/tmpFolder/ --extensionDevelopmentPath=./ --extensionTestsPath={{github.workspace}}/client/out/client/src/test/suite/index
+      working-directory: client
+
     - name: Package extension
-      if: success() && github.ref == 'refs/heads/master'
+      if: success()
       run: | 
         npm install -g vsce
         vsce package
       working-directory: client
+
+    - name: Publish extension to marketplace
+      if: success() && github.ref == 'refs/heads/master'
+      run: | 
+        npm install -g vsce
+        vsce publish -p $VSCE_TOKEN
+      working-directory: client
+      env: 
+        VSCE_TOKEN: ${{ secrets.VSCE_TOKEN }}
       # See https://github.com/keesschollaart81/vscode-home-assistant/blob/master/.github/workflows/github-actions-vscode-extension.yml
-      env:
-        CI: true
