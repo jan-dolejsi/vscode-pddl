@@ -1,4 +1,4 @@
-name: VSCode Extension CI
+name: VS Code PDDL Extension CI/CD
 
 on: 
   push: 
@@ -6,7 +6,7 @@ on:
       - master
   pull_request: 
     branches: 
-      - '**'
+      - master
 
 jobs:
   build:
