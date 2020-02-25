@@ -15,25 +15,26 @@ async function main() {
 
 		// The path to the workspace, where the files will be created
 		const testWorkspace = "--folder-uri=" + URI.file(path.resolve(__dirname, '../../../../src/test/tmpFolder'));
+		const launchArgs = [testWorkspace, "--disable-extensions"];
 
 		// Download VS Code 1.40, unzip it and run the integration test
 		await runTests({
 			version: '1.40.1',
 			extensionDevelopmentPath, extensionTestsPath,
-			launchArgs: [testWorkspace]
+			launchArgs: launchArgs
 		});
 
 		// Download VS Code 1.41, unzip it and run the integration test
 		await runTests({
 			version: '1.41.1',
 			extensionDevelopmentPath, extensionTestsPath,
-			launchArgs: [testWorkspace]
+			launchArgs: launchArgs
 		});
 
 		// Download the latest VS Code, unzip it and run the integration test
 		await runTests({
 			extensionDevelopmentPath, extensionTestsPath,
-			launchArgs: [testWorkspace]
+			launchArgs: launchArgs
 		});
 		
 	} catch (err) {
