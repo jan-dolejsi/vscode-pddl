@@ -35,19 +35,19 @@ jobs:
     - run: npm run compile
       working-directory: client
 
-    - name: Run extension integration tests in head-less VS Code
-      if: success()
-      uses: GabrielBB/xvfb-action@v1.0
-      with:
-        run: npm test
-        working-directory: client
+    # - name: Run extension integration tests in head-less VS Code
+    #   if: success()
+    #   uses: GabrielBB/xvfb-action@v1.0
+    #   with:
+    #     run: npm test
+    #     working-directory: client
 
-    - name: Package extension
-      if: success()
-      run: | 
-        npm install -g vsce
-        vsce package
-      working-directory: client
+    # - name: Package extension
+    #   if: success()
+    #   run: | 
+    #     npm install -g vsce
+    #     vsce package
+    #   working-directory: client
 
   # publish:
   #   runs-on: ubuntu-latest
