@@ -4,8 +4,8 @@
 
 - Planning Domain Session generation email sending is repaired. VS Code changed behavior of the `env.openExternal(Uri)` API and prevented it from opening `mailto:` URLs.
 - Updated to Typescript 3.7.3
-- Bulk replaced Typescript || with ?? operator where appropriate (i.e. when returning default numeric or more generally non-boolean values).
-- Simplified code by using the `.?` Elvis operator.
+  - Bulk replaced Typescript `||` with `??` operator where appropriate (i.e. when returning default numeric or more generally non-boolean values).
+  - Simplified code by optional chaining using the `.?` Elvis operator.
 - More Typescript strict semantic checking clean-up
 
 ## [2.15.3] Bug fixes
