@@ -1,5 +1,15 @@
 # PDDL support - What's new?
 
+## [2.15.5] Improved plan metric parsing
+
+- Plan metric parsing [Issue #50](https://github.com/jan-dolejsi/vscode-pddl/issues/50)
+  - plan metric in scientific notation
+  - negative plan metric
+  - tests
+- Dependency clean-up
+- Removal of npm dependency
+- Simplified version upgrades
+
 ## [2.15.4] Upgrades and CI
 
 - Planning Domain Session generation email sending is repaired. VS Code changed behavior of the `env.openExternal(Uri)` API and prevented it from opening `mailto:` URLs.
@@ -885,7 +895,8 @@ Note for open source contributors: all notable changes to the "pddl" extension w
 
 Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
 
-[Unreleased]: https://github.com/jan-dolejsi/vscode-pddl/compare/v2.15.4...HEAD
+[Unreleased]: https://github.com/jan-dolejsi/vscode-pddl/compare/v2.15.5...HEAD
+[2.15.5]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.15.4...v2.15.5
 [2.15.4]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.15.3...v2.15.4
 [2.15.3]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.15.2...v2.15.3
 [2.15.2]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.15.1...v2.15.2

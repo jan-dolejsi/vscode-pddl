@@ -21,9 +21,8 @@ Install the VS Code extension packaging tool:
 npm install -g vsce
 ```
 
-The extension must be packaged on computers that have the `npm` version <= 5.5.1 installed globally. This is because of an issue with optional dependencies that `vsce` is wrongly enforcing via the `npm list --production --parsable --depth=99999` command.
-
-Extension packaging and publishing is automated by the `client/publish.cmd` script - obviously only defined for Windows.
+On Windows, you can use the `client\publish.cmd` script to review the content of the package before building it, installing it, testing it and possibly publishing it.
+The extension is published to the marketplace automatically by the GitHub CI/CD workflow, when the master branch is updated and the version number was bumped.
 
 ## Testing the extension
 
@@ -33,10 +32,10 @@ Run `npm test` when all VS Code windows are closed.
 
 Modify following files:
 
-- Update the version in `client/package.json`
-- Update the version in `client/publish.cmd`
+- Update the version in `client/package.json` (adhere to the major.minor.patch semantic versioning practice)
 - Add section about new features and fixes on top of the `client\CHANGELOG.md` and refer to Git tag at the bottom of the file
-- Add end-user documentation about new features to `client\README.md`
+- Add relevant end-user documentation about new features to `client\README.md`
+- Submit pull request
 
 ## Credits
 
