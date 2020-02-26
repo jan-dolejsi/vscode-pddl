@@ -41,6 +41,85 @@ describe('PddlPlanParser', () => {
             assert.strictEqual(plan.steps[0].getDuration(), 20, 'action duration');
         });
 
+        it('parses plan metrics', () => {
+            // GIVEN
+            let metricNumber = 123.321;
+            let metricText = "123.321";
+            let duration = 20;
+            let startTime = 1;
+            let actionName = "aciton1";
+            let planText = `Plan found with cost: ${metricText}\n${startTime}: (${actionName}) [${duration}]`;
+
+            // WHEN
+            let parser = new PddlPlanParser(dummyDomain, dummyProblem, { epsilon: EPSILON });
+            parser.appendBuffer(planText);
+            parser.onPlanFinished();
+            let plans = parser.getPlans();
+
+            // THEN
+            assert.strictEqual(plans.length, 1, 'there should be one empty plan');
+            let plan = plans[0];
+            assert.strictEqual(plan.makespan, duration + startTime, 'plan makespan');
+            assert.strictEqual(plan.cost, metricNumber, 'plan cost');
+            assert.strictEqual(plan.steps.length, 1, 'plan should have one action');
+            assert.strictEqual(plan.steps[0].getStartTime(), startTime, 'start time');
+            assert.strictEqual(plan.steps[0].getActionName(), actionName, 'action name');
+            assert.strictEqual(plan.steps[0].getFullActionName(), actionName, 'full action name');
+            assert.strictEqual(plan.steps[0].isDurative, true, 'action isDurative');
+            assert.strictEqual(plan.steps[0].getDuration(), duration, 'action duration');
+        });
+
+
+        it('parses plan with negative metrics', () => {
+            // GIVEN
+            let metricNumber = -123.321;
+            let metricText = "-123.321";
+            let duration = 20;
+            let startTime = 1;
+            let actionName = "aciton1";
+            let planText = `Plan found with cost: ${metricText}\n${startTime}: (${actionName}) [${duration}]`;
+
+            // WHEN
+            let parser = new PddlPlanParser(dummyDomain, dummyProblem, { epsilon: EPSILON });
+            parser.appendBuffer(planText);
+            parser.onPlanFinished();
+            let plans = parser.getPlans();
+
+            // THEN
+            assert.strictEqual(plans.length, 1, 'there should be one empty plan');
+            let plan = plans[0];
+            assert.strictEqual(plan.cost, metricNumber, 'plan cost');
+            assert.strictEqual(plan.steps.length, 1, 'plan should have one action');
+        });
+
+        it('parses plan metrics in scientific notation', () => {
+            // GIVEN
+            let metricNumber = -1.23451e-50;
+            let metricText = "-1.23451e-50";
+            let duration = 20;
+            let startTime = 1;
+            let actionName = "aciton1";
+            let planText = `Plan found with cost: ${metricText}\n${startTime}: (${actionName}) [${duration}]`;
+
+            // WHEN
+            let parser = new PddlPlanParser(dummyDomain, dummyProblem, { epsilon: EPSILON });
+            parser.appendBuffer(planText);
+            parser.onPlanFinished();
+            let plans = parser.getPlans();
+
+            // THEN
+            assert.strictEqual(plans.length, 1, 'there should be one empty plan');
+            let plan = plans[0];
+            assert.strictEqual(plan.makespan, duration + startTime, 'plan makespan');
+            assert.strictEqual(plan.cost, metricNumber, 'plan cost');
+            assert.strictEqual(plan.steps.length, 1, 'plan should have one action');
+            assert.strictEqual(plan.steps[0].getStartTime(), startTime, 'start time');
+            assert.strictEqual(plan.steps[0].getActionName(), actionName, 'action name');
+            assert.strictEqual(plan.steps[0].getFullActionName(), actionName, 'full action name');
+            assert.strictEqual(plan.steps[0].isDurative, true, 'action isDurative');
+            assert.strictEqual(plan.steps[0].getDuration(), duration, 'action duration');
+        });
+
         it('parses empty document', () => {
             // GIVEN
             let planText = '';
