@@ -19,39 +19,54 @@ jobs:
     runs-on: ${{ matrix.os }}
 
     steps:
-    - uses: actions/checkout@v2
-    - name: Use Node.js ${{ matrix.node-version }}
-      uses: actions/setup-node@v1
-      with:
-        node-version: ${{ matrix.node-version }}
+      - uses: actions/checkout@v2
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v1
+        with:
+          node-version: ${{ matrix.node-version }}
 
-    - name: NPM Install
-      run: npm install
-    - name: Run common module tests
-      run: npm test
-      working-directory: common
-
-    - run: npm run compile
-      working-directory: client
-
-    - name: Run extension integration tests in head-less VS Code
-      if: success()
-      uses: GabrielBB/xvfb-action@v1.0
-      with:
+      - name: NPM Install
+        run: npm install
+      - name: Run common module tests
         run: npm test
+        working-directory: common
+
+      - run: npm run compile
         working-directory: client
 
-    - name: Package extension
-      if: success()
-      run: | 
-        npm install -g vsce
-        vsce package
-      working-directory: client
+      - name: Run extension integration tests in head-less VS Code
+        if: success()
+        uses: GabrielBB/xvfb-action@v1.0
+        with:
+          run: npm test
+          working-directory: client
 
-    - name: Publish extension to marketplace
-      if: success() && github.ref == 'refs/heads/master'
-      run: vsce publish -p $VSCE_TOKEN
-      working-directory: client
-      env: 
-        VSCE_TOKEN: ${{ secrets.VSCE_TOKEN }}
-      # See https://github.com/keesschollaart81/vscode-home-assistant/blob/master/.github/workflows/github-actions-vscode-extension.yml
+      - name: Package extension
+        if: success()
+        run: | 
+          npm install -g vsce
+          vsce package
+        working-directory: client
+
+  publish:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v1
+        with:
+          node-version: 10.16
+
+      - name: NPM Install
+        run: npm install
+
+      - name: Publish extension to marketplace
+        if: success() && github.ref == 'refs/heads/master'
+        run: | 
+          npm install -g vsce
+          vsce publish -p $VSCE_TOKEN
+        working-directory: client
+        env: 
+          VSCE_TOKEN: ${{ secrets.VSCE_TOKEN }}
+        continue-on-error: true
