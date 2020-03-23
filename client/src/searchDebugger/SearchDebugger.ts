@@ -136,7 +136,7 @@ export class SearchDebugger implements PlannerOptionsProvider {
         var app: express.Application = express();
         app.use(bodyParser.json());
         app.get('/about', function (_req: express.Request, res: express.Response, _next: express.NextFunction) {
-            res.status(200).send('Hello, world!');
+            res.status(200).send('Visual search debugger.');
         });
         app.post('/state/initial', function (req: express.Request, res: express.Response, _next: express.NextFunction) {
             try {

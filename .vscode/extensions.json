@@ -10,7 +10,6 @@
 		"davidanson.vscode-markdownlint",
 		"vscode-icons-team.vscode-icons",
 		"animu5.vscode-file-header-comment",
-		"ms-vscode.vscode-typescript-next"
 	],
 	// List of extensions recommended by VS Code that should not be recommended for users of this workspace.
 	"unwantedRecommendations": [
