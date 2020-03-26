@@ -140,6 +140,7 @@ class PlanParserAndNormalizer {
     }
 
     parseLine(line: string, lineIdx: number): PlanStep | undefined {
+        // todo: replace by PddlPlanParser.parseOnePlan()
         PddlPlanParser.planStepPattern.lastIndex = 0;
         let group = PddlPlanParser.planStepPattern.exec(line);
 
