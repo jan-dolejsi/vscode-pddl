@@ -17,9 +17,9 @@ import { HappeningType } from 'pddl-workspace';
 import { Plan, HelpfulAction } from 'pddl-workspace';
 import { PlanFunctionEvaluator } from 'ai-planning-val';
 import { PlanReportSettings } from './PlanReportSettings';
-import { VAL_STEP_PATH, CONF_PDDL, VALUE_SEQ_PATH, PLAN_REPORT_LINE_PLOT_GROUP_BY_LIFTED, DEFAULT_EPSILON } from '../configuration';
+import { VAL_STEP_PATH, CONF_PDDL, VALUE_SEQ_PATH, PLAN_REPORT_LINE_PLOT_GROUP_BY_LIFTED, DEFAULT_EPSILON, VAL_VERBOSE } from '../configuration';
 import { utils } from 'pddl-workspace';
-import { ValStepError, ValStep } from '../debugger/ValStep';
+import { ValStepError, ValStep } from 'ai-planning-val';
 import { ensureAbsoluteGlobalStoragePath } from '../utils';
 import { PddlWorkspace } from 'pddl-workspace';
 const DIGITS = 4;
@@ -182,13 +182,14 @@ ${objectsHtml}
 
         let valStepPath = ensureAbsoluteGlobalStoragePath(workspace.getConfiguration(CONF_PDDL).get<string>(VAL_STEP_PATH), this.context);
         let valueSeqPath = ensureAbsoluteGlobalStoragePath(workspace.getConfiguration(CONF_PDDL).get<string>(VALUE_SEQ_PATH), this.context);
+        const valVerbose = workspace.getConfiguration(CONF_PDDL).get<boolean>(VAL_VERBOSE);
 
         let lineCharts = `    <div class="lineChart" plan="${planIndex}" style="display: ${styleDisplay};margin-top: 20px;">\n`;
         let lineChartScripts = '';
 
         if (!this.options.disableLinePlots && plan.domain && plan.problem) {
             let groupByLifted = workspace.getConfiguration(CONF_PDDL).get<boolean>(PLAN_REPORT_LINE_PLOT_GROUP_BY_LIFTED, true);
-            let evaluator = new PlanFunctionEvaluator(plan, { valStepPath: valStepPath, valueSeqPath: valueSeqPath, shouldGroupByLifted: groupByLifted });
+            let evaluator = new PlanFunctionEvaluator(plan, { valStepPath, valueSeqPath, shouldGroupByLifted: groupByLifted, verbose: valVerbose });
 
             if (evaluator.isAvailable()) {
 
@@ -239,7 +240,7 @@ ${lineCharts}
                     });
                     if (!targetPathUris) { return; }
                     let targetPath = targetPathUris[0];
-                    let outputPath = await ValStep.storeError(err, targetPath, valStepPath);
+                    let outputPath = await ValStep.storeError(err, targetPath.fsPath, valStepPath);
                     let success = await env.openExternal(Uri.file(outputPath));
                     if (!success) {
                         window.showErrorMessage(`Files for valstep bug report: ${outputPath}.`);

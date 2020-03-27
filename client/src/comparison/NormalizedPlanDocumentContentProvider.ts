@@ -88,8 +88,9 @@ export class NormalizedPlanDocumentContentProvider implements TextDocumentConten
 
             let context = getDomainAndProblemForPlan(planInfo, this.pddlWorkspace);
             const valStepPath = await this.configuration.getValStepPath();
+            const verbose = this.configuration.getValStepVerbose();
             let planValues = await new PlanEvaluator()
-                .evaluate(context.domain, context.problem, planInfo, { valStepPath: valStepPath});
+                .evaluate(context.domain, context.problem, planInfo, { valStepPath: valStepPath, verbose});
 
             let planValuesAsText = planValues
                 .sort((a, b) => a.getVariableName().localeCompare(b.getVariableName()))

@@ -27,6 +27,7 @@ const PLANNER_EPSILON_TIMESTEP = PDDL_PLANNER + '.epsilonTimeStep';
 export const CONF_PDDL = 'pddl';
 export const VALIDATION_PATH = 'validatorPath';
 export const VAL_STEP_PATH = 'valStepPath';
+export const VAL_VERBOSE = 'valVerbose';
 export const VALUE_SEQ_PATH = 'valueSeqPath';
 export const PLAN_REPORT_LINE_PLOT_GROUP_BY_LIFTED = 'planReport.linePlot.groupByLifted';
 export const PLAN_REPORT_EXPORT_WIDTH = 'planReport.exportWidth';
@@ -305,6 +306,10 @@ export class PddlConfiguration {
         }
 
         return configValue;
+    }
+
+    getValStepVerbose(): boolean {
+        return vscode.workspace.getConfiguration(CONF_PDDL).get<boolean>(VAL_VERBOSE);
     }
 
     async suggestUpdatingPath(configName: string, configFriendlyName: string): Promise<string | undefined> {

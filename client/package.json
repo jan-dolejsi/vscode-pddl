@@ -733,6 +733,11 @@
           "type": "string",
           "description": "Path of the 'valstep' executable."
         },
+        "pddl.valVerbose": {
+          "type": "string",
+          "description": "Run Val tools with verbose output (to the console visible in Help > Toggle Developer Tools)",
+          "default": false
+        },
         "pddl.planReport.linePlot.groupByLifted": {
           "type": "boolean",
           "description": "Group line plots of functions for different objects on the same chart - one per lifted function.",

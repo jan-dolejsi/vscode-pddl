@@ -98,6 +98,7 @@ export class HappeningsValidator {
         }
 
         let valStepPath = await this.plannerConfiguration.getValStepPath();
+        //const valVerbose = this.plannerConfiguration.getValStepVerbose();
 
         if (!valStepPath) {
             onSuccess(HappeningsValidationOutcome.unknown(happeningsInfo, "ValStep not configured.").getDiagnostics());

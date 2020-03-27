@@ -10,14 +10,14 @@ import { PddlConfiguration } from '../configuration';
 import { dirname } from 'path';
 import { DebuggingSessionFiles } from './DebuggingSessionFiles';
 import { Happening, VariableValue } from 'pddl-workspace';
-import { ValStep, ValStepError, ValStepExitCode } from './ValStep';
+import { ValStep, ValStepError, ValStepExitCode } from 'ai-planning-val';
 
 /**
  * Executes sequence of plan happenings and decorates the happenings file with action effects.
  */
 export class HappeningsExecutor {
 
-    valStep: ValStep;
+    private valStep: ValStep;
     decorations: vscode.TextEditorDecorationType[] = [];
 
     /**
@@ -42,23 +42,24 @@ export class HappeningsExecutor {
         }
 
         let valStepPath = await this.pddlConfiguration.getValStepPath();
+        let valStepVerbose = this.pddlConfiguration.getValStepVerbose();
         if (!valStepPath) { return []; }
         let cwd = dirname(Uri.parse(this.context.happenings.fileUri).fsPath);
 
         try {
             this.valStep.on(ValStep.NEW_HAPPENING_EFFECTS, (happenings, values) => this.showValues(happenings, values));
 
-            await this.valStep.executeIncrementally(valStepPath, cwd, this.context.happenings.getHappenings());
+            await this.valStep.executeIncrementally(this.context.happenings.getHappenings(), { valStepPath, cwd, verbose: valStepVerbose });
 
             this.decorations.push(this.seeNextLineDecoration);
-        } catch(err) {
+        } catch (err) {
             if (err instanceof ValStepError) {
                 window.showErrorMessage(err.message);
             }
             else if (err instanceof ValStepExitCode) {
                 window.showInformationMessage(err.message);
             }
-            else{
+            else {
                 window.showErrorMessage(err);
             }
         }

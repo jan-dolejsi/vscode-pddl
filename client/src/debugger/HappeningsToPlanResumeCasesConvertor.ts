@@ -21,7 +21,7 @@ import { PTEST_REVEAL, PTEST_REFRESH } from '../ptest/PTestCommands';
  */
 export class HappeningsToPlanResumeCasesConvertor {
 
-    happeningsConvertor: HappeningsToValStep;
+    private happeningsConvertor: HappeningsToValStep;
     problemFilePath: string;
 
     /**
