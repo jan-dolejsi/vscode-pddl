@@ -10,7 +10,7 @@ import { PlanStep } from 'pddl-workspace';
 import { PddlWorkspace } from 'pddl-workspace';
 import { PddlConfiguration } from '../configuration';
 import { getDomainAndProblemForPlan } from '../workspace/workspaceUtils';
-import { PlanEvaluator } from './PlanEvaluator';
+import { PlanEvaluator } from 'ai-planning-val';
 import { AbstractPlanExporter } from '../planning/PlanExporter';
 import { PlanningDomains } from '../catalog/PlanningDomains';
 import { HTTPLAN } from '../catalog/Catalog';
@@ -87,7 +87,9 @@ export class NormalizedPlanDocumentContentProvider implements TextDocumentConten
             let planInfo = parser.PddlPlanParser.parseText(origText, this.configuration.getEpsilonTimeStep(), uri.toString());
 
             let context = getDomainAndProblemForPlan(planInfo, this.pddlWorkspace);
-            let planValues = await new PlanEvaluator(this.configuration).evaluate(context.domain, context.problem, planInfo);
+            const valStepPath = await this.configuration.getValStepPath();
+            let planValues = await new PlanEvaluator()
+                .evaluate(context.domain, context.problem, planInfo, { valStepPath: valStepPath});
 
             let planValuesAsText = planValues
                 .sort((a, b) => a.getVariableName().localeCompare(b.getVariableName()))
