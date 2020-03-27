@@ -20,7 +20,7 @@ import { dirname } from 'path';
 import { PlanStep } from 'pddl-workspace';
 import { DomainAndProblem, isHappenings, getDomainAndProblemForHappenings } from '../workspace/workspaceUtils';
 import { createRangeFromLine, createDiagnostic } from './PlanValidator';
-import { HappeningsToValStep } from './HappeningsToValStep';
+import { HappeningsToValStep } from 'ai-planning-val';
 import { CodePddlWorkspace } from '../workspace/CodePddlWorkspace';
 
 export const PDDL_HAPPENINGS_VALIDATE = 'pddl.happenings.validate';

@@ -13,7 +13,7 @@ import { parser } from 'pddl-workspace';
 import { ProblemInfo, TimedVariableValue, VariableValue } from 'pddl-workspace';
 import { DomainInfo } from 'pddl-workspace';
 import { Happening } from 'pddl-workspace';
-import { HappeningsToValStep } from '../diagnostics/HappeningsToValStep';
+import { HappeningsToValStep } from 'ai-planning-val';
 import { Uri } from 'vscode';
 import { SimpleDocumentPositionResolver } from 'pddl-workspace';
 

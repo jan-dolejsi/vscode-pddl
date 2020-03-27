@@ -9,7 +9,7 @@ import { PddlConfiguration } from '../configuration';
 import { utils } from 'pddl-workspace';
 import { dirname, relative, basename, join } from 'path';
 import * as process from 'child_process';
-import { HappeningsToValStep } from '../diagnostics/HappeningsToValStep';
+import { HappeningsToValStep } from 'ai-planning-val';
 import { DebuggingSessionFiles } from './DebuggingSessionFiles';
 import { TestsManifest } from '../ptest/TestsManifest';
 import { Test } from '../ptest/Test';
