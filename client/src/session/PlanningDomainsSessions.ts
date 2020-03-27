@@ -7,7 +7,7 @@
 import { ExtensionContext, window, Uri, commands, workspace, Disposable, WorkspaceFolder, QuickPickItem, ViewColumn, SourceControl, env } from 'vscode';
 import { instrumentOperationAsVsCodeCommand } from "vscode-extension-telemetry-wrapper";
 import { firstIndex, showError } from '../utils';
-import * as afs from '../../../common/src/asyncfs';
+import { utils } from 'pddl-workspace';
 import * as path from 'path';
 import * as opn from 'open';
 import { SessionDocumentContentProvider } from './SessionDocumentContentProvider';
@@ -229,9 +229,9 @@ export class PlanningDomainsSessions {
     scanWorkspaceFoldersForConfigurationFiles(context: ExtensionContext): void {
         if (!workspace.workspaceFolders) { return; }
 
-        workspace.workspaceFolders
+        [...workspace.workspaceFolders]
             .sort((f1, f2) => f1.name.localeCompare(f2.name))
-            .forEach(async folder => {
+            .forEach(async (folder) => {
                 try {
                     await this.initializeFromConfigurationFile(folder, context);
                 }
@@ -274,9 +274,9 @@ export class PlanningDomainsSessions {
                 workspaceFolderIndex = selectedFolder.index;
                 workspaceFolderUri = selectedFolder.uri;
             } else {
-                if (!(await afs.exists(folderUri.fsPath))) {
-                    await afs.mkdirIfDoesNotExist(folderUri.fsPath, 0o777);
-                } else if (!(await afs.stat(folderUri.fsPath)).isDirectory()) {
+                if (!(await utils.afs.exists(folderUri.fsPath))) {
+                    await utils.afs.mkdirIfDoesNotExist(folderUri.fsPath, 0o777);
+                } else if (!(await utils.afs.stat(folderUri.fsPath)).isDirectory()) {
                     window.showErrorMessage("Selected path is not a directory.");
                     return undefined;
                 }
@@ -292,7 +292,7 @@ export class PlanningDomainsSessions {
                 folderPicks.push(newWorkspaceFolderPick);
 
                 for (const wf of workspace.workspaceFolders) {
-                    let content = await afs.readdir(wf.uri.fsPath);
+                    let content = await utils.afs.readdir(wf.uri.fsPath);
                     folderPicks.push(new ExistingWorkspaceFolderPick(wf, content));
                 }
             }
@@ -323,7 +323,7 @@ export class PlanningDomainsSessions {
 
             workspaceFolderUri = folderUris[0];
             // was such workspace folder already open?
-            workspaceFolderIndex = workspace.workspaceFolders && firstIndex(workspace.workspaceFolders, (folder1: any) => folder1.uri.toString() === workspaceFolderUri!.toString());
+            workspaceFolderIndex = workspace.workspaceFolders && firstIndex([...workspace.workspaceFolders], (folder1: any) => folder1.uri.toString() === workspaceFolderUri!.toString());
         }
 
         if (!workspaceFolderUri) {
@@ -356,7 +356,7 @@ export class PlanningDomainsSessions {
         if (!workspaceFolderUri) { return undefined; }
 
         // check if the workspace is empty, or clear it
-        let existingWorkspaceFiles: string[] = await afs.readdir(workspaceFolderUri.fsPath);
+        let existingWorkspaceFiles: string[] = await utils.afs.readdir(workspaceFolderUri.fsPath);
         if (existingWorkspaceFiles.length > 0) {
             let answer = await window.showQuickPick(["Yes", "No"],
                 { placeHolder: `Remove ${existingWorkspaceFiles.length} file(s) from the folder ${workspaceFolderUri.fsPath} before cloning the remote repository?` });
@@ -365,7 +365,7 @@ export class PlanningDomainsSessions {
             if (answer === "Yes") {
                 existingWorkspaceFiles
                     .forEach(async filename =>
-                        await afs.unlink(path.join(workspaceFolderUri.fsPath, filename)));
+                        await utils.afs.unlink(path.join(workspaceFolderUri.fsPath, filename)));
             }
         }
 
@@ -459,9 +459,9 @@ Open session in Visual Studio Code: ${this.createVSCodeUri(session, readWrite)}`
         let sessionSummaryCsv = studentSessions
             .map(session => `${session.identity.getEffectiveName()}, ${session.identity.email}, ${session.sessionConfiguration.writeHash}, ${this.createBrowserUri(session.sessionConfiguration, true)}`)
             .join('\n');
-        let summaryDoc = await workspace.openTextDocument({ language: 'csv', content: sessionSummaryCsv});
+        let summaryDoc = await workspace.openTextDocument({ language: 'csv', content: sessionSummaryCsv });
         window.showTextDocument(summaryDoc);
-        await summaryDoc.save();        
+        await summaryDoc.save();
 
         commands.executeCommand('vscode.openFolder', Uri.file(workspacePath));
     }
@@ -491,7 +491,7 @@ class RepositoryPick implements QuickPickItem {
 abstract class WorkspaceFolderPick implements QuickPickItem {
     constructor(private _label: string, public folderOpeningMode: FolderOpeningMode) { }
 
-    get label(): string { 
+    get label(): string {
         return this._label;
     }
 }

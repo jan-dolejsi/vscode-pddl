@@ -5,11 +5,11 @@
 'use strict';
 
 import { State } from "./State";
-import { ProblemInfo } from '../../../common/src/ProblemInfo';
-import { DomainInfo } from '../../../common/src/DomainInfo';
-import { Plan } from '../../../common/src/Plan';
-import { PlanStep, PlanStepCommitment } from "../../../common/src/PlanStep";
-import { HappeningType } from "../../../common/src/HappeningsInfo";
+import { ProblemInfo } from 'pddl-workspace';
+import { DomainInfo } from 'pddl-workspace';
+import { Plan } from 'pddl-workspace';
+import { PlanStep, PlanStepCommitment } from 'pddl-workspace';
+import { HappeningType } from 'pddl-workspace';
 import { SearchHappening } from "./SearchHappening";
 import { equalsCaseInsensitive } from "../utils";
 import { DEFAULT_EPSILON } from "../configuration";

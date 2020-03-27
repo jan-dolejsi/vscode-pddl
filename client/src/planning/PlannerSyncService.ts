@@ -5,10 +5,10 @@
 'use strict';
 
 import { PlannerResponseHandler } from './PlannerResponseHandler';
-import { Plan } from '../../../common/src/Plan';
-import { ProblemInfo } from '../../../common/src/ProblemInfo';
-import { DomainInfo } from '../../../common/src/DomainInfo';
-import { PddlPlanParser } from '../../../common/src/PddlPlanParser';
+import { Plan } from 'pddl-workspace';
+import { ProblemInfo } from 'pddl-workspace';
+import { DomainInfo } from 'pddl-workspace';
+import { parser } from 'pddl-workspace';
 import { Authentication } from '../../../common/src/Authentication';
 import { PlannerService } from './PlannerService';
 
@@ -41,7 +41,7 @@ export class PlannerSyncService extends PlannerService {
         return Promise.resolve(body);
     }
 
-    processServerResponseBody(responseBody: any, planParser: PddlPlanParser, parent: PlannerResponseHandler,
+    processServerResponseBody(responseBody: any, planParser: parser.PddlPlannerOutputParser, parent: PlannerResponseHandler,
         resolve: (plans: Plan[]) => void, reject: (error: Error) => void): void {
         let status = responseBody["status"];
 

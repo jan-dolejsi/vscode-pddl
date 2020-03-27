@@ -10,8 +10,8 @@ import {
     TextDocument, Disposable, ViewColumn,
 } from 'vscode';
 
-import { PddlWorkspace } from '../../../common/src/PddlWorkspace';
-import { PddlLanguage } from '../../../common/src/FileInfo';
+import { PddlWorkspace } from 'pddl-workspace';
+import { PddlLanguage } from 'pddl-workspace';
 import { toLanguage, isPlan } from '../workspace/workspaceUtils';
 
 import { NormalizedPlanDocumentContentProvider } from './NormalizedPlanDocumentContentProvider';

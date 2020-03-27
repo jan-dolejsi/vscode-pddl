@@ -9,17 +9,17 @@ import {
     ExtensionContext, TextDocument, CodeLens, CancellationToken, CodeLensProvider
 } from 'vscode';
 
-import { DomainInfo } from '../../../common/src/DomainInfo';
-import { ProblemInfo } from '../../../common/src/ProblemInfo';
+import { DomainInfo } from 'pddl-workspace';
+import { ProblemInfo } from 'pddl-workspace';
 
 import * as path from 'path';
 import { CodePddlWorkspace } from '../workspace/CodePddlWorkspace';
-import { PddlTokenType } from '../../../common/src/PddlTokenizer';
+import { parser } from 'pddl-workspace';
 import { nodeToRange } from '../utils';
 import { DocumentInsetCodeLens, DocumentCodeLens } from './view';
 import { ProblemView, ProblemRendererOptions, ProblemRenderer } from './ProblemView';
 import { GraphViewData, NetworkEdge, NetworkNode } from './GraphViewData';
-import { NamedConditionConstraint, AfterConstraint, StrictlyAfterConstraint } from '../../../common/src/constraints';
+import { NamedConditionConstraint, AfterConstraint, StrictlyAfterConstraint } from 'pddl-workspace';
 import { ProblemViewPanel } from './ProblemViewPanel';
 
 const CONTENT = path.join('views', 'modelView');
@@ -58,7 +58,7 @@ export class ProblemConstraintsView extends ProblemView<ProblemConstraintsRender
         if (!problem) { return []; }
 
         let defineNode = problem.syntaxTree.getDefineNodeOrThrow();
-        let constraintsNode = defineNode.getFirstChild(PddlTokenType.OpenBracketOperator, /\s*:constraints/i);
+        let constraintsNode = defineNode.getFirstChild(parser.PddlTokenType.OpenBracketOperator, /\s*:constraints/i);
         if (constraintsNode) {
             return [
                 new DocumentCodeLens(document, nodeToRange(document, constraintsNode))

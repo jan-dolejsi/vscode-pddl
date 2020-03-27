@@ -5,18 +5,16 @@
 'use strict';
 
 import { CompletionItem, TextDocument, Position, CompletionContext, CompletionItemKind } from 'vscode';
-import { PDDL } from '../../../common/src/parser';
-import { PddlSyntaxTreeBuilder } from '../../../common/src/PddlSyntaxTreeBuilder';
-import { PddlTokenType } from '../../../common/src/PddlTokenizer';
+import { PDDL, parser } from 'pddl-workspace';
 import { nodeToRange } from '../utils';
 
 export class UnknownPddlCompletionItemProvider {
 
     provide(document: TextDocument, position: Position, _context: CompletionContext): CompletionItem[] | PromiseLike<CompletionItem[]> {
-        let tree = new PddlSyntaxTreeBuilder(document.getText()).getTree();
+        let tree = new parser.PddlSyntaxTreeBuilder(document.getText()).getTree();
         let currentNode = tree.getNodeAt(document.offsetAt(position));
         if (currentNode.isDocument() ||
-            currentNode.isType(PddlTokenType.Whitespace) &&
+            currentNode.isType(parser.PddlTokenType.Whitespace) &&
             currentNode.getParent() && currentNode.getParent()!.isDocument()) {
 
             let domainSnippet = new CompletionItem("domain", CompletionItemKind.Module);
@@ -30,7 +28,7 @@ export class UnknownPddlCompletionItemProvider {
             ];
         } else if (_context.triggerCharacter === '(') {
             if (currentNode.getParent() &&
-                currentNode.getParent()!.isType(PddlTokenType.Document)) {
+                currentNode.getParent()!.isType(parser.PddlTokenType.Document)) {
                 let domainSnippet = new CompletionItem("(define domain...", CompletionItemKind.Module);
                 domainSnippet.command = { command: 'editor.action.insertSnippet', arguments: [{ 'langId': PDDL, 'name': 'domain' }], title: 'Insert domain snippet' };
                 domainSnippet.range = nodeToRange(document, currentNode.expand());

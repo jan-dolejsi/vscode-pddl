@@ -9,12 +9,11 @@ import {
     DocumentSymbolProvider, DefinitionProvider, ReferenceProvider, Position, ReferenceContext, Location, HoverProvider, Hover, SymbolKind, DocumentSymbol, Range
 } from 'vscode';
 import { SymbolUtils } from './SymbolUtils';
-import { DomainInfo } from '../../../common/src/DomainInfo';
-import { ProblemInfo } from '../../../common/src/ProblemInfo';
+import { DomainInfo } from 'pddl-workspace';
+import { ProblemInfo } from 'pddl-workspace';
 import { CodePddlWorkspace } from '../workspace/CodePddlWorkspace';
 import { nodeToRange, showError } from '../utils';
-import { PddlTokenType } from '../../../common/src/PddlTokenizer';
-import { PddlSyntaxNode } from '../../../common/src/PddlSyntaxNode';
+import { parser } from 'pddl-workspace';
 
 export class SymbolInfoProvider implements DocumentSymbolProvider, DefinitionProvider, ReferenceProvider, HoverProvider {
     private symbolUtils: SymbolUtils;
@@ -111,7 +110,7 @@ export class SymbolInfoProvider implements DocumentSymbolProvider, DefinitionPro
             let firstLine = firstRow(fullRange);
             let defineSymbol = new DocumentSymbol('problem', problemInfo.name, SymbolKind.Namespace, fullRange, firstLine);
 
-            let childrenNodes = defineNode.getChildrenOfType(PddlTokenType.OpenBracketOperator, /\(\s*:/);
+            let childrenNodes = defineNode.getChildrenOfType(parser.PddlTokenType.OpenBracketOperator, /\(\s*:/);
             let childrenSymbols = childrenNodes
                 .map(node => this.createProblemSymbol(document, node));
             return [defineSymbol].concat(childrenSymbols);
@@ -120,7 +119,7 @@ export class SymbolInfoProvider implements DocumentSymbolProvider, DefinitionPro
         return [];
     }
 
-    private createProblemSymbol(document: TextDocument, node: PddlSyntaxNode) {
+    private createProblemSymbol(document: TextDocument, node: parser.PddlSyntaxNode) {
         let fullRange = nodeToRange(document, node);
         let selectableRange = new Range(document.positionAt(node.getToken().getStart() + 1), document.positionAt(node.getToken().getEnd()));
         return new DocumentSymbol(node.getToken().tokenText.substr(1), '', SymbolKind.Package, fullRange, selectableRange);

@@ -8,12 +8,11 @@ import {
     Position, Range, Hover, Location, Uri, TextDocument, MarkdownString
 } from 'vscode';
 
-import { Action } from '../../../common/src/DomainInfo';
-import { Variable } from '../../../common/src/FileInfo';
-import { PddlRange } from '../../../common/src/DocumentPositionResolver';
+import { Action } from 'pddl-workspace';
+import { Variable } from 'pddl-workspace';
+import { PddlRange } from 'pddl-workspace';
 import { CodePddlWorkspace } from '../workspace/CodePddlWorkspace';
-import { PddlSyntaxNode } from '../../../common/src/PddlSyntaxNode';
-import { PddlTokenType } from '../../../common/src/PddlTokenizer';
+import { parser } from 'pddl-workspace';
 import { nodeToRange, toRange } from '../utils';
 
 export class SymbolUtils {
@@ -241,7 +240,7 @@ export class SymbolUtils {
             let parameterInfo = <ParameterInfo>symbol;
 
             parameterInfo.scopeNode.getChildrenRecursively(
-                node => node.isType(PddlTokenType.Parameter) && node.getToken().tokenText === '?' + symbol.name,
+                node => node.isType(parser.PddlTokenType.Parameter) && node.getToken().tokenText === '?' + symbol.name,
                 node => locations.push(new Location(document.uri, nodeToRange(document, node)))
             );
 
@@ -311,7 +310,7 @@ export class ActionInfo extends SymbolInfo {
 
 export class ParameterInfo extends SymbolInfo {
     constructor(hover: Hover, location: Location,
-        public readonly scopeNode: PddlSyntaxNode, public readonly name: string) {
+        public readonly scopeNode: parser.PddlSyntaxNode, public readonly name: string) {
         super(hover, location);
     }
 }

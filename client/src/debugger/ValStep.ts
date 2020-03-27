@@ -6,18 +6,16 @@
 
 import * as process from 'child_process';
 import { EventEmitter } from 'events';
-
-import { Util } from '../../../common/src/util';
-import * as afs from '../../../common/src/asyncfs';
 import * as path from 'path';
-import { Parser } from '../../../common/src/parser';
-import { ProblemInfo, TimedVariableValue, VariableValue } from '../../../common/src/ProblemInfo';
-import { DomainInfo } from '../../../common/src/DomainInfo';
-import { Happening } from '../../../common/src/HappeningsInfo';
+
+import { utils } from 'pddl-workspace';
+import { parser } from 'pddl-workspace';
+import { ProblemInfo, TimedVariableValue, VariableValue } from 'pddl-workspace';
+import { DomainInfo } from 'pddl-workspace';
+import { Happening } from 'pddl-workspace';
 import { HappeningsToValStep } from '../diagnostics/HappeningsToValStep';
 import { Uri } from 'vscode';
-import { PddlSyntaxTreeBuilder } from '../../../common/src/PddlSyntaxTreeBuilder';
-import { SimpleDocumentPositionResolver } from '../../../common/src/DocumentPositionResolver';
+import { SimpleDocumentPositionResolver } from 'pddl-workspace';
 
 /**
  * Wraps the Valstep executable.
@@ -56,7 +54,7 @@ export class ValStep extends EventEmitter {
         }
 
         let args = await this.createValStepArgs();
-        let valStepsPath = await Util.toPddlFile('valSteps', this.valStepInput);
+        let valStepsPath = await utils.Util.toPddlFile('valSteps', this.valStepInput);
         args = ['-i', valStepsPath, ...args];
 
         const that = this;
@@ -93,7 +91,7 @@ export class ValStep extends EventEmitter {
     }
 
     private convertHappeningsToValStepInput(happenings: Happening[]): string {
-        let groupedHappenings = Util.groupBy(happenings, h => h.getTime());
+        let groupedHappenings = utils.Util.groupBy(happenings, h => h.getTime());
 
         var valStepInput = '';
 
@@ -147,7 +145,7 @@ export class ValStep extends EventEmitter {
                 }
             });
 
-            let groupedHappenings = Util.groupBy(happenings, h => h.getTime());
+            let groupedHappenings = utils.Util.groupBy(happenings, h => h.getTime());
 
             for (const time of groupedHappenings.keys()) {
                 const happeningGroup = groupedHappenings.get(time);
@@ -184,8 +182,8 @@ export class ValStep extends EventEmitter {
      * @returns variable values array, or null if the tool failed
      */
     private async extractInitialState(problemText: string): Promise<TimedVariableValue[]> {
-        let syntaxTree = new PddlSyntaxTreeBuilder(problemText).getTree();
-        let problemInfo = await new Parser().tryProblem("eventual-problem://not-important", 0, problemText, syntaxTree, new SimpleDocumentPositionResolver(problemText));
+        let syntaxTree = new parser.PddlSyntaxTreeBuilder(problemText).getTree();
+        let problemInfo = await new parser.Parser().tryProblem("eventual-problem://not-important", 0, problemText, syntaxTree, new SimpleDocumentPositionResolver(problemText));
 
         if (!problemInfo) { return null; }
 
@@ -211,7 +209,7 @@ export class ValStep extends EventEmitter {
         child.on("error", err => this.throwValStepError(err));
         child.on("exit", (code, signal) => this.throwValStepExitCode(code, signal));
 
-        let groupedHappenings = Util.groupBy(happenings, h => h.getTime());
+        let groupedHappenings = utils.Util.groupBy(happenings, h => h.getTime());
 
         for (const time of groupedHappenings.keys()) {
             const happeningGroup = groupedHappenings.get(time);
@@ -225,8 +223,8 @@ export class ValStep extends EventEmitter {
 
     private async createValStepArgs(): Promise<string[]> {
         // copy editor content to temp files to avoid using out-of-date content on disk
-        let domainFilePath = await Util.toPddlFile('domain', this.domainInfo.getText());
-        let problemFilePath = await Util.toPddlFile('problem', this.problemInfo.getText()); // todo: this is where we are sending un-pre-processed problem text when rendering plan
+        let domainFilePath = await utils.Util.toPddlFile('domain', this.domainInfo.getText());
+        let problemFilePath = await utils.Util.toPddlFile('problem', this.problemInfo.getText()); // todo: this is where we are sending un-pre-processed problem text when rendering plan
 
         let args = [domainFilePath, problemFilePath];
         return args;
@@ -369,21 +367,21 @@ export class ValStep extends EventEmitter {
         let targetDir = targetDirectory.fsPath;
         let caseDir = 'valstep-' + new Date().toISOString().split(':').join('-');
         let casePath = path.join(targetDir, caseDir);
-        afs.mkdirIfDoesNotExist(casePath, 0o644);
+        utils.afs.mkdirIfDoesNotExist(casePath, 0o644);
 
         const domainFile = "domain.pddl";
         const problemFile = "problem.pddl";
         const inputFile = "happenings.valsteps";
-        await afs.writeFile(path.join(casePath, domainFile), err.domain.getText(), { encoding: "utf-8" });
-        await afs.writeFile(path.join(casePath, problemFile), err.problem.getText(), { encoding: "utf-8" });
-        await afs.writeFile(path.join(casePath, inputFile), err.valStepInput, { encoding: "utf-8" });
+        await utils.afs.writeFile(path.join(casePath, domainFile), err.domain.getText(), { encoding: "utf-8" });
+        await utils.afs.writeFile(path.join(casePath, problemFile), err.problem.getText(), { encoding: "utf-8" });
+        await utils.afs.writeFile(path.join(casePath, inputFile), err.valStepInput, { encoding: "utf-8" });
 
         let command = `:: The purpose of this batch file is to be able to reproduce the valstep error
-type ${inputFile} | ${Util.q(valStepPath)} ${domainFile} ${problemFile}
+type ${inputFile} | ${utils.Util.q(valStepPath)} ${domainFile} ${problemFile}
 :: or for latest version of ValStep:
-${Util.q(valStepPath)} -i ${inputFile} ${domainFile} ${problemFile}`;
+${utils.Util.q(valStepPath)} -i ${inputFile} ${domainFile} ${problemFile}`;
 
-        await afs.writeFile(path.join(casePath, "run.cmd"), command, { encoding: "utf-8" });
+        await utils.afs.writeFile(path.join(casePath, "run.cmd"), command, { encoding: "utf-8" });
         return casePath;
     }
 }

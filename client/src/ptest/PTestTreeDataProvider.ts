@@ -9,10 +9,10 @@ import {
 } from 'vscode';
 import { basename, join } from 'path';
 import * as fs from 'fs';
-import * as afs from '../../../common/src/asyncfs';
+import { utils } from 'pddl-workspace';
 import { TestsManifest } from './TestsManifest';
 import { TestOutcome, Test } from './Test';
-import { PddlExtensionContext } from '../../../common/src/PddlExtensionContext';
+import { PddlExtensionContext } from 'pddl-workspace';
 
 export interface PTestNode {
     resource: Uri;
@@ -149,7 +149,7 @@ export class PTestTreeDataProvider implements TreeDataProvider<PTestNode> {
             }
             else {
                 let children: string[] = [];
-                children = await afs.readdir(parentPath);
+                children = await utils.afs.readdir(parentPath);
                 return Promise.all(children
                     .map(child => join(parentPath, child))
                     .filter(childPath => PTestTreeDataProvider.isOrHasTests(childPath))

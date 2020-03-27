@@ -9,7 +9,7 @@ import {
 } from 'vscode';
 import * as path from 'path';
 import { getWebViewHtml } from '../utils';
-import { PddlExtensionContext } from '../PddlExtensionContext';
+import { PddlExtensionContext } from 'pddl-workspace';
 import { PTestReport } from './PTestReport';
 import { TestsManifest } from './TestsManifest';
 import { Test } from './Test';

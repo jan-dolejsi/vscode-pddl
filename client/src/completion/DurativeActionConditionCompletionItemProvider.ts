@@ -5,10 +5,10 @@
 'use strict';
 
 import { CompletionItem, CompletionContext, MarkdownString, Range, CompletionTriggerKind, CompletionItemKind } from 'vscode';
-import { PDDL } from '../../../common/src/parser';
-import { DomainInfo } from '../../../common/src/DomainInfo';
-import { ModelHierarchy } from '../../../common/src/ModelHierarchy';
-import { PddlSyntaxNode } from '../../../common/src/PddlSyntaxNode';
+import { PDDL } from 'pddl-workspace';
+import { DomainInfo } from 'pddl-workspace';
+import { ModelHierarchy } from 'pddl-workspace';
+import { parser } from 'pddl-workspace';
 import { AbstractCompletionItemProvider, Suggestion } from './AbstractCompletionItemProvider';
 import { requires } from './DomainCompletionItemProvider';
 
@@ -38,7 +38,7 @@ export class DurativeActionConditionCompletionItemProvider extends AbstractCompl
             CompletionItemKind.Property);
     }
 
-    static inside(currentNode: PddlSyntaxNode): boolean {
+    static inside(currentNode: parser.PddlSyntaxNode): boolean {
         return ModelHierarchy.isInsideCondition(currentNode)
             && ModelHierarchy.isInsideDurativeActionUnqualifiedCondition(currentNode);
     }

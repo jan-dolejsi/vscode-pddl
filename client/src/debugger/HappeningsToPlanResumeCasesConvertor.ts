@@ -6,14 +6,14 @@
 
 import { Uri, commands, window } from 'vscode';
 import { PddlConfiguration } from '../configuration';
-import { Util } from '../../../common/src/util';
+import { utils } from 'pddl-workspace';
 import { dirname, relative, basename, join } from 'path';
 import * as process from 'child_process';
 import { HappeningsToValStep } from '../diagnostics/HappeningsToValStep';
 import { DebuggingSessionFiles } from './DebuggingSessionFiles';
 import { TestsManifest } from '../ptest/TestsManifest';
 import { Test } from '../ptest/Test';
-import { Happening, HappeningType } from '../../../common/src/HappeningsInfo';
+import { Happening, HappeningType } from 'pddl-workspace';
 import { PTEST_REVEAL, PTEST_REFRESH } from '../ptest/PTestCommands';
 
 /**
@@ -49,8 +49,8 @@ export class HappeningsToPlanResumeCasesConvertor {
         if (!valStepPath) { return false; }
 
         // copy editor content to temp files to avoid using out-of-date content on disk
-        let domainFilePath = await Util.toPddlFile('domain', this.context.domain.getText());
-        let problemFilePath = await Util.toPddlFile('problem', this.context.problem.getText());
+        let domainFilePath = await utils.Util.toPddlFile('domain', this.context.domain.getText());
+        let problemFilePath = await utils.Util.toPddlFile('problem', this.context.problem.getText());
 
         let args = [domainFilePath, problemFilePath];
         let outputFolderUris = await window.showOpenDialog({ defaultUri: Uri.file(dirname(Uri.parse(this.context.problem.fileUri).fsPath)), canSelectFiles: false, canSelectFolders: true, canSelectMany: false, openLabel: 'Select folder for problem files' });
@@ -59,7 +59,7 @@ export class HappeningsToPlanResumeCasesConvertor {
         let cwd = outputFolderUri.fsPath;
         let cmd = valStepPath + ' ' + args.join(' ');
 
-        let groupedHappenings = Util.groupBy(this.context.happenings.getHappenings(), h => h.getTime());
+        let groupedHappenings = utils.Util.groupBy(this.context.happenings.getHappenings(), h => h.getTime());
 
         let valStepInput = '';
 

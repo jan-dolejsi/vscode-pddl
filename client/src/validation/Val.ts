@@ -8,7 +8,7 @@ import { ExtensionContext, window, ProgressLocation, workspace, ConfigurationTar
 import { instrumentOperationAsVsCodeCommand } from "vscode-extension-telemetry-wrapper";
 import * as path from 'path';
 import { getFile } from '../httpUtils';
-import * as afs from '../../../common/src/asyncfs';
+import { utils } from 'pddl-workspace';
 import * as fs from 'fs';
 import * as os from 'os';
 import * as AdmZip from 'adm-zip';
@@ -92,11 +92,11 @@ export class Val {
             return;
         }
 
-        await afs.mkdirIfDoesNotExist(this.binaryStorage, 0o755);
-        await afs.mkdirIfDoesNotExist(this.getValPath(), 0o755);
+        await utils.afs.mkdirIfDoesNotExist(this.binaryStorage, 0o755);
+        await utils.afs.mkdirIfDoesNotExist(this.getValPath(), 0o755);
 
         let zipPath = path.join(this.getValPath(), "drop.zip");
-        await afs.mkdirIfDoesNotExist(path.dirname(zipPath), 0o755);
+        await utils.afs.mkdirIfDoesNotExist(path.dirname(zipPath), 0o755);
 
         let url = `https://dev.azure.com/schlumberger/4e6bcb11-cd68-40fe-98a2-e3777bfec0a6/_apis/build/builds/${buildId}/artifacts?artifactName=${artifactName}&api-version=5.2-preview.5&%24format=zip`;
 
@@ -129,7 +129,7 @@ export class Val {
         await this.deleteAll(dropEntries.map(file => path.join(this.getValPath(), file)));
 
         // delete the drop zip
-        await afs.unlink(zipPath);
+        await utils.afs.unlink(zipPath);
 
         let wasValInstalled = await this.isInstalled();
         let previousVersion = wasValInstalled ? await this.readVersion() : undefined;
@@ -174,7 +174,7 @@ export class Val {
         // 1. delete downloaded files
         let deletionPromises = files
             .filter(file => fs.existsSync(file))
-            .map(async file => await afs.unlink(file));
+            .map(async file => await utils.afs.unlink(file));
         await Promise.all(deletionPromises);
 
         // 2. delete empty directories
@@ -184,19 +184,19 @@ export class Val {
             .sort((a, b) => b.length - a.length);
 
         for (const directory of emptyDirectories) {
-            if (await afs.isEmpty(directory)) {
-                await afs.rmdir(directory);
+            if (await utils.afs.isEmpty(directory)) {
+                await utils.afs.rmdir(directory);
             }
         }
     }
 
     async isInstalled(): Promise<boolean> {
-        return await afs.exists(this.valVersionPath);
+        return await utils.afs.exists(this.valVersionPath);
     }
 
     private async readVersion(): Promise<ValVersion> {
         try {
-            let versionAsString = await afs.readFile(this.valVersionPath, { encoding: 'utf8' });
+            let versionAsString = await utils.afs.readFile(this.valVersionPath, { encoding: 'utf8' });
             var versionAsJson = JSON.parse(versionAsString);
             return versionAsJson;
         }
@@ -208,7 +208,7 @@ export class Val {
     private async writeVersion(valVersion: ValVersion): Promise<void> {
         var json = JSON.stringify(valVersion, null, 2);
         try {
-            await afs.writeFile(this.valVersionPath, json, 'utf8');
+            await utils.afs.writeFile(this.valVersionPath, json, 'utf8');
         }
         catch (err) {
             throw new Error(`Error saving VAL version ${err.name}: ${err.message}`);
@@ -299,7 +299,7 @@ export class Val {
             // or did it match the oldToolPath? 
             || normConfiguredGlobalValue === normOldToolPath
             // or does the path not exist anyway?
-            || oldToolPath && !await afs.exists(this.asAbsoluteStoragePath(oldToolPath))) {
+            || oldToolPath && !await utils.afs.exists(this.asAbsoluteStoragePath(oldToolPath))) {
             // Overwrite it!
             await workspace.getConfiguration().update(configKey, newToolPath, ConfigurationTarget.Global);
         }

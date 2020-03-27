@@ -6,19 +6,17 @@
 
 import { TextDocument, CodeActionProvider, CodeActionKind, Range, Selection, CodeActionContext, CancellationToken, CodeAction, Diagnostic } from 'vscode';
 import { MissingRequirements } from './MissingRequirements';
-import { Util } from '../../../common/src/util';
-import { PddlSyntaxTreeBuilder } from '../../../common/src/PddlSyntaxTreeBuilder';
-import { PddlTokenType } from '../../../common/src/PddlTokenizer';
-import { PddlSyntaxTree } from '../../../common/src/PddlSyntaxTree';
-import { FileInfo } from '../../../common/src/FileInfo';
-import { PDDL } from '../../../common/src/parser';
-import { ProblemInfo } from '../../../common/src/ProblemInfo';
+import { utils } from 'pddl-workspace';
+import { parser } from 'pddl-workspace';
+import { FileInfo } from 'pddl-workspace';
+import { PDDL } from 'pddl-workspace';
+import { ProblemInfo } from 'pddl-workspace';
 import { CodePddlWorkspace } from '../workspace/CodePddlWorkspace';
 import { PTEST_VIEW_PROBLEM } from '../ptest/PTestCommands';
 import { Test } from '../ptest/Test';
 import { TestsManifest } from '../ptest/TestsManifest';
 import { basename } from 'path';
-import { PreProcessor } from '../../../common/src/PreProcessors';
+import { PreProcessor } from 'pddl-workspace';
 import { UndeclaredVariable, VariableType } from './UndeclaredVariable';
 
 /**
@@ -40,7 +38,7 @@ export class SuggestionProvider implements CodeActionProvider {
 
         let fileInfo = await this.workspace.upsertFile(document);
         if (fileInfo === undefined) { throw new Error(`Not a PDDL file: ` + document.uri.toString()); }
-        let syntaxTree = new PddlSyntaxTreeBuilder(fileInfo.getText()).getTree();
+        let syntaxTree = new parser.PddlSyntaxTreeBuilder(fileInfo.getText()).getTree();
 
         let insertSnippetCodeActions = context.diagnostics
             .filter(diagnostic => diagnostic.code === SuggestionProvider.CONTENT_NOT_RECOGNIZED)
@@ -64,7 +62,7 @@ export class SuggestionProvider implements CodeActionProvider {
 
         let problemSnippets = this.createProblemActions(fileInfo, document, range, context);
 
-        return Util.flatMap(insertSnippetCodeActions).concat(missingRequirement).concat(undeclaredVariable).concat(problemSnippets);
+        return utils.Util.flatMap(insertSnippetCodeActions).concat(missingRequirement).concat(undeclaredVariable).concat(problemSnippets);
     }
 
     private createProblemActions(fileInfo: FileInfo, document: TextDocument, range: Range | Selection, _context: CodeActionContext): CodeAction[] {
@@ -94,14 +92,14 @@ export class SuggestionProvider implements CodeActionProvider {
         return test;
     }
 
-    private createSnippetSuggestions(document: TextDocument, diagnostic: Diagnostic, range: Range | Selection, fileInfo: FileInfo, syntaxTree: PddlSyntaxTree): CodeAction[] {
+    private createSnippetSuggestions(document: TextDocument, diagnostic: Diagnostic, range: Range | Selection, fileInfo: FileInfo, syntaxTree: parser.PddlSyntaxTree): CodeAction[] {
         let isWhitespaceOnly = syntaxTree.getRootNode().getChildren()
-            .every(node => node.isType(PddlTokenType.Comment) || node.isType(PddlTokenType.Whitespace));
+            .every(node => node.isType(parser.PddlTokenType.Comment) || node.isType(parser.PddlTokenType.Whitespace));
 
         let selectedNode = syntaxTree.getNodeAt(document.offsetAt(range.start));
         let isInsideWhitespace = selectedNode &&
-            (selectedNode.isType(PddlTokenType.Whitespace)
-                || selectedNode.isType(PddlTokenType.Document));
+            (selectedNode.isType(parser.PddlTokenType.Whitespace)
+                || selectedNode.isType(parser.PddlTokenType.Document));
 
         let codeActions: CodeAction[] = [];
 

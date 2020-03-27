@@ -9,9 +9,7 @@ import {
 } from 'vscode';
 
 import { AbstractPlanExporter } from './PlanExporter';
-import { PlanHappeningsBuilder, Happening, HappeningType } from '../../../common/src/HappeningsInfo';
-import { PlanStep } from '../../../common/src/PlanStep';
-import { Parser } from '../../../common/src/parser';
+import { PlanHappeningsBuilder, Happening, HappeningType, PlanStep, parser } from 'pddl-workspace';
 import { isUndefined } from 'util';
 
 /** Exports .happenings file to a .plan file by pairing happenings, if possible. */
@@ -52,7 +50,7 @@ export class HappeningsPlanExporter extends AbstractPlanExporter {
 
         planSteps = planSteps.sort(this.comparePlanSteps);
 
-        var meta = Parser.parsePlanMeta(happeningsText);
+        var meta = parser.PddlPlanParser.parsePlanMeta(happeningsText);
 
         return AbstractPlanExporter.getPlanMeta(meta.domainName, meta.problemName)
             + "\n"

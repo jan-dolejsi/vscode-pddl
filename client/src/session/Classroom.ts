@@ -5,7 +5,7 @@
 'use strict';
 
 import * as path from 'path';
-import * as afs from '../../../common/src/asyncfs';
+import { utils } from 'pddl-workspace';
 import { StudentName } from "./StudentNameParser";
 import { SessionSourceControl } from "./SessionSourceControl";
 import { saveConfiguration, SessionConfiguration } from './SessionConfiguration';
@@ -35,7 +35,7 @@ export class Classroom {
         let workspaceAsString = JSON.stringify(workspaceObj, null, 4);
 
         let workspaceFilePath = await this.createNewWorkspaceFile();
-        await afs.writeFile(workspaceFilePath, workspaceAsString);
+        await utils.afs.writeFile(workspaceFilePath, workspaceAsString);
 
         return workspaceFilePath;
     }
@@ -48,7 +48,7 @@ export class Classroom {
         var counter = 1;
         do {
             filePath = path.join(this.parentPath, `classroom${counter++}.code-workspace`);
-            fileAlreadyExists = await afs.exists(filePath);
+            fileAlreadyExists = await utils.afs.exists(filePath);
         } while (fileAlreadyExists);
 
         return filePath;
@@ -65,7 +65,7 @@ export class Classroom {
 
     async createFolderWithConfig(studentSession: StudentSession): Promise<void> {
         let folderPath = Classroom.getSessionPath(this.templateSourceControl, studentSession.identity);
-        await afs.mkdirIfDoesNotExist(folderPath, 0o644);
+        await utils.afs.mkdirIfDoesNotExist(folderPath, 0o644);
 
         await saveConfiguration(Uri.file(folderPath), studentSession.sessionConfiguration);
     }

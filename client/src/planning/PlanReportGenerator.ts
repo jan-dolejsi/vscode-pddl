@@ -10,19 +10,18 @@ import {
 
 import * as path from 'path';
 
-import { DomainInfo } from '../../../common/src/DomainInfo';
+import { DomainInfo } from 'pddl-workspace';
 import { SwimLane } from '../../../common/src/SwimLane';
-import { PlanStep, PlanStepCommitment } from '../../../common/src/PlanStep';
-import { HappeningType } from '../../../common/src/HappeningsInfo';
-import { Plan, HelpfulAction } from '../../../common/src/Plan';
-import { Util } from '../../../common/src/util';
+import { PlanStep, PlanStepCommitment } from 'pddl-workspace';
+import { HappeningType } from 'pddl-workspace';
+import { Plan, HelpfulAction } from 'pddl-workspace';
 import { PlanFunctionEvaluator } from './PlanFunctionEvaluator';
 import { PlanReportSettings } from './PlanReportSettings';
 import { VAL_STEP_PATH, CONF_PDDL, VALUE_SEQ_PATH, PLAN_REPORT_LINE_PLOT_GROUP_BY_LIFTED, DEFAULT_EPSILON } from '../configuration';
-import * as afs from '../../../common/src/asyncfs';
+import { utils } from 'pddl-workspace';
 import { ValStepError, ValStep } from '../debugger/ValStep';
 import { ensureAbsoluteGlobalStoragePath } from '../utils';
-import { PddlWorkspace } from '../../../common/src/PddlWorkspace';
+import { PddlWorkspace } from 'pddl-workspace';
 const DIGITS = 4;
 
 export class PlanReportGenerator {
@@ -37,7 +36,7 @@ export class PlanReportGenerator {
     async export(plans: Plan[], planId: number): Promise<boolean> {
         let html = await this.generateHtml(plans, planId);
 
-        let htmlFile = await Util.toFile("plan-report", ".html", html);
+        let htmlFile = await utils.Util.toFile("plan-report", ".html", html);
         const opn = require('open');
         const uri = Uri.parse("file://" + htmlFile);
         opn(uri.toString());
@@ -415,7 +414,7 @@ ${stepsInvolvingThisObject}
 
     async includeStyle(uri: Uri): Promise<string> {
         if (this.options.selfContained) {
-            let styleText = await afs.readFile(uri.fsPath, { encoding: 'utf-8' });
+            let styleText = await utils.afs.readFile(uri.fsPath, { encoding: 'utf-8' });
             return `<style>\n${styleText}\n</style>`;
         } else {
             return `<link rel = "stylesheet" type = "text/css" href = "${uri.toString()}" />`;
@@ -424,7 +423,7 @@ ${stepsInvolvingThisObject}
 
     async includeScript(uri: Uri): Promise<string> {
         if (this.options.selfContained) {
-            let scriptText = await afs.readFile(uri.fsPath, { encoding: 'utf-8' });
+            let scriptText = await utils.afs.readFile(uri.fsPath, { encoding: 'utf-8' });
             return `<script>\n${scriptText}\n</script>`;
         } else {
             return `<script src="${uri.toString()}"></script>`;

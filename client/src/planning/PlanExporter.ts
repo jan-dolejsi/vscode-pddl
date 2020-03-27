@@ -8,7 +8,7 @@ import {
     Uri, SaveDialogOptions, window
 } from 'vscode';
 
-import { Plan } from "../../../common/src/Plan";
+import { Plan } from 'pddl-workspace';
 import { parse, format } from 'path';
 import { exportToAndShow } from './ExportUtil';
 

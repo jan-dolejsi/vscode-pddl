@@ -6,14 +6,14 @@
 import { HoverProvider, TextDocument, Position, CancellationToken, Hover, MarkdownString, ExtensionContext, window, TextEditor, Range, TextEditorDecorationType, Location } from 'vscode';
 import { SymbolUtils, VariableInfo, SymbolInfo } from './SymbolUtils';
 import { CodePddlWorkspace } from '../workspace/CodePddlWorkspace';
-import { ModelHierarchy, VariableReferenceInfo, VariableReferenceKind, VariableEffectReferenceInfo } from '../../../common/src/ModelHierarchy';
-import { PDDL } from '../../../common/src/parser';
-import { DomainInfo } from '../../../common/src/DomainInfo';
-import { Variable } from '../../../common/src/FileInfo';
+import { ModelHierarchy, VariableReferenceInfo, VariableReferenceKind, VariableEffectReferenceInfo } from 'pddl-workspace';
+import { PDDL } from 'pddl-workspace';
+import { DomainInfo } from 'pddl-workspace';
+import { Variable } from 'pddl-workspace';
 import { toPosition } from '../utils';
 import { isPddl } from '../workspace/workspaceUtils';
-import { IncreaseEffect, AssignEffect, DecreaseEffect, MakeTrueEffect, MakeFalseEffect, ScaleDownEffect, ScaleUpEffect } from '../../../common/src/ActionEffectParser';
-import { PddlWorkspace } from '../../../common/src/PddlWorkspace';
+import { parser } from 'pddl-workspace';
+import { PddlWorkspace } from 'pddl-workspace';
 
 export class ModelHierarchyProvider implements HoverProvider {
     private symbolUtils: SymbolUtils;
@@ -100,13 +100,13 @@ export class ModelHierarchyProvider implements HoverProvider {
                     .filter(ri => (ri instanceof VariableEffectReferenceInfo))
                     .map(ri => <VariableEffectReferenceInfo>ri);
 
-                let increaseCount = writeEffectReferences.filter(ri => ri.effect instanceof IncreaseEffect).length;
-                let decreaseCount = writeEffectReferences.filter(ri => ri.effect instanceof DecreaseEffect).length;
-                let scaleUpCount = writeEffectReferences.filter(ri => ri.effect instanceof ScaleUpEffect).length;
-                let scaleDownCount = writeEffectReferences.filter(ri => ri.effect instanceof ScaleDownEffect).length;
-                let assignCount = writeEffectReferences.filter(ri => ri.effect instanceof AssignEffect).length;
-                let makeTrueCount = writeEffectReferences.filter(ri => ri.effect instanceof MakeTrueEffect).length;
-                let makeFalseCount = writeEffectReferences.filter(ri => ri.effect instanceof MakeFalseEffect).length;
+                let increaseCount = writeEffectReferences.filter(ri => ri.effect instanceof parser.IncreaseEffect).length;
+                let decreaseCount = writeEffectReferences.filter(ri => ri.effect instanceof parser.DecreaseEffect).length;
+                let scaleUpCount = writeEffectReferences.filter(ri => ri.effect instanceof parser.ScaleUpEffect).length;
+                let scaleDownCount = writeEffectReferences.filter(ri => ri.effect instanceof parser.ScaleDownEffect).length;
+                let assignCount = writeEffectReferences.filter(ri => ri.effect instanceof parser.AssignEffect).length;
+                let makeTrueCount = writeEffectReferences.filter(ri => ri.effect instanceof parser.MakeTrueEffect).length;
+                let makeFalseCount = writeEffectReferences.filter(ri => ri.effect instanceof parser.MakeFalseEffect).length;
 
                 var decorationText: string[] = [];
                 var hoverText: string[] = [];

@@ -9,9 +9,9 @@ import {
 } from 'vscode';
 
 import { Validator } from './validator';
-import { ProblemInfo } from '../../../common/src/ProblemInfo';
-import { DomainInfo } from '../../../common/src/DomainInfo';
-import { FileStatus } from '../../../common/src/FileInfo';
+import { ProblemInfo } from 'pddl-workspace';
+import { DomainInfo } from 'pddl-workspace';
+import { FileStatus } from 'pddl-workspace';
 import { Authentication } from '../../../common/src/Authentication';
 
 import request = require('request');

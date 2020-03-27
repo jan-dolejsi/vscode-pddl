@@ -7,15 +7,15 @@
 import { Uri, TextDocument, ExtensionContext, workspace, window, TextEditorRevealType } from 'vscode';
 import { instrumentOperationAsVsCodeCommand } from "vscode-extension-telemetry-wrapper";
 import { toLanguage, isAnyPddl } from './workspaceUtils';
-import { FileInfo } from '../../../common/src/FileInfo';
-import { PddlWorkspace } from '../../../common/src/PddlWorkspace';
-import { DocumentPositionResolver } from '../../../common/src/DocumentPositionResolver';
+import { FileInfo } from 'pddl-workspace';
+import { PddlWorkspace } from 'pddl-workspace';
+import { DocumentPositionResolver } from 'pddl-workspace';
 import { CodeDocumentPositionResolver } from './CodeDocumentPositionResolver';
-import * as afs from '../../../common/src/asyncfs';
-import { DomainInfo } from '../../../common/src/DomainInfo';
+import { utils } from 'pddl-workspace';
+import { DomainInfo } from 'pddl-workspace';
 import { toRange } from '../utils';
 import { PddlConfiguration } from '../configuration';
-import { ProblemInfo } from '../../../common/src/ProblemInfo';
+import { ProblemInfo } from 'pddl-workspace';
 
 
 export class CodePddlWorkspace {
@@ -68,7 +68,7 @@ export class CodePddlWorkspace {
     }
 
     async removeFile(textDoc: TextDocument): Promise<boolean> {
-        let fileExists = await afs.exists(textDoc.fileName);
+        let fileExists = await utils.afs.exists(textDoc.fileName);
         return this.pddlWorkspace.removeFile(textDoc.uri.toString(), { removeAllReferences: !fileExists });
     }
 

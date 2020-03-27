@@ -5,9 +5,9 @@
 'use strict';
 
 import { CompletionItem, CompletionContext, SnippetString, MarkdownString, CompletionItemKind } from 'vscode';
-import { ProblemInfo } from '../../../common/src/ProblemInfo';
-import { DomainInfo, TypeObjectMap } from '../../../common/src/DomainInfo';
-import { Variable } from '../../../common/src/FileInfo';
+import { ProblemInfo } from 'pddl-workspace';
+import { DomainInfo, TypeObjectMap } from 'pddl-workspace';
+import { Variable } from 'pddl-workspace';
 import { ContextDelegate } from './ContextDelegate';
 import { Delegate } from './Delegate';
 

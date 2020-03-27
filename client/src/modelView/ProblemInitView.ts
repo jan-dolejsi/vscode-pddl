@@ -9,16 +9,16 @@ import {
     ExtensionContext, TextDocument, CodeLens, CancellationToken, CodeLensProvider
 } from 'vscode';
 
-import { DomainInfo } from '../../../common/src/DomainInfo';
-import { ProblemInfo, TimedVariableValue } from '../../../common/src/ProblemInfo';
-import { Variable, ObjectInstance, Parameter, Term } from '../../../common/src/FileInfo';
+import { DomainInfo } from 'pddl-workspace';
+import { ProblemInfo, TimedVariableValue } from 'pddl-workspace';
+import { Variable, ObjectInstance, Parameter, Term } from 'pddl-workspace';
 
 import * as path from 'path';
 import { CodePddlWorkspace } from '../workspace/CodePddlWorkspace';
-import { PddlTokenType } from '../../../common/src/PddlTokenizer';
+import { parser } from 'pddl-workspace';
 import { nodeToRange, asSerializable } from '../utils';
-import { getObjectsInheritingFrom, getTypesInheritingFromPlusSelf } from '../../../common/src/typeInheritance';
-import { Util } from '../../../common/src/util';
+import { getObjectsInheritingFrom, getTypesInheritingFromPlusSelf } from 'pddl-workspace';
+import { utils } from 'pddl-workspace';
 import { DocumentCodeLens, DocumentInsetCodeLens } from './view';
 import { ProblemView, ProblemRenderer, ProblemRendererOptions } from './ProblemView';
 import { GraphViewData, NetworkEdge, NetworkNode } from './GraphViewData';
@@ -60,7 +60,7 @@ export class ProblemInitView extends ProblemView<ProblemInitViewOptions, Problem
         if (!problem) { return []; }
 
         let defineNode = problem.syntaxTree.getDefineNodeOrThrow();
-        let initNode = defineNode.getFirstChild(PddlTokenType.OpenBracketOperator, /\s*:init/i);
+        let initNode = defineNode.getFirstChild(parser.PddlTokenType.OpenBracketOperator, /\s*:init/i);
         if (initNode) {
             return [
                 new DocumentCodeLens(document, nodeToRange(document, initNode))
@@ -182,13 +182,13 @@ class ProblemInitRendererDelegate {
             .filter(v => this.is2DGraphable(v));
         let symmetric2dVariables = symmetric2dFunctions.concat(symmetric2dPredicates);
 
-        let relatableTypes: string[] = Util.distinct(
-            Util.flatMap(symmetric2dVariables
+        let relatableTypes: string[] = utils.Util.distinct(
+            utils.Util.flatMap(symmetric2dVariables
                 .map(v => [v.parameters[0].type, v.parameters[1].type])
             )
         );
 
-        let relatableAndInheritedTypes = Util.distinct(Util.flatMap(relatableTypes.map(type => getTypesInheritingFromPlusSelf(type, this.domain.getTypeInheritance()))));
+        let relatableAndInheritedTypes = utils.Util.distinct(utils.Util.flatMap(relatableTypes.map(type => getTypesInheritingFromPlusSelf(type, this.domain.getTypeInheritance()))));
         relatableAndInheritedTypes.forEach(type => this.getObjects(type).forEach(obj => this.addNode(obj)));
 
         let symmetric2dInits = this.problem.getInits()
@@ -275,7 +275,7 @@ class ProblemInitRendererDelegate {
         let binaryRelationships = this.domain.getPredicates().concat(this.domain.getFunctions())
             .filter(v => v.parameters.length === 2);
 
-        let relationshipPerTypes = Util.groupBy(binaryRelationships, r => r.parameters.map(p => p.type).join(','));
+        let relationshipPerTypes = utils.Util.groupBy(binaryRelationships, r => r.parameters.map(p => p.type).join(','));
 
         relationshipPerTypes
             .forEach((relationships, typeNames) =>

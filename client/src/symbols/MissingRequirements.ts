@@ -5,17 +5,16 @@
 'use strict';
 
 import { TextDocument, WorkspaceEdit } from 'vscode';
-import { PddlSyntaxTreeBuilder } from '../../../common/src/PddlSyntaxTreeBuilder';
-import { PddlSyntaxTree } from '../../../common/src/PddlSyntaxTree';
-import { FileInfo } from '../../../common/src/FileInfo';
+import { parser } from 'pddl-workspace';
+import { FileInfo } from 'pddl-workspace';
 import { UndeclaredVariable } from './UndeclaredVariable';
 
 export class MissingRequirements {
     static readonly undeclaredRequirementDiagnosticPattern = /^undeclared requirement\s*:([\w-]+)/i;
-    syntaxTree: PddlSyntaxTree;
+    syntaxTree: parser.PddlSyntaxTree;
 
     constructor(fileInfo: FileInfo) {
-        this.syntaxTree = new PddlSyntaxTreeBuilder(fileInfo.getText()).getTree();
+        this.syntaxTree = new parser.PddlSyntaxTreeBuilder(fileInfo.getText()).getTree();
     }
 
     getRequirementName(diagnosticMessage: string): string | undefined {

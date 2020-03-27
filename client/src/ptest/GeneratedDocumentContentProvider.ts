@@ -9,10 +9,10 @@ import {
 } from 'vscode';
 import { Test } from './Test';
 import { join, dirname, basename } from 'path';
-import { PddlWorkspace } from '../../../common/src/PddlWorkspace';
-import { FileInfo, PddlLanguage } from '../../../common/src/FileInfo';
+import { PddlWorkspace } from 'pddl-workspace';
+import { FileInfo, PddlLanguage } from 'pddl-workspace';
 import { CodePddlWorkspace } from '../workspace/CodePddlWorkspace';
-import { SimpleDocumentPositionResolver } from '../../../common/src/DocumentPositionResolver';
+import { SimpleDocumentPositionResolver } from 'pddl-workspace';
 
 /**
  * Content provider for the problem file generated from a template.

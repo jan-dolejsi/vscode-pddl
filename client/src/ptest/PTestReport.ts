@@ -11,9 +11,9 @@ import { instrumentOperationAsVsCodeCommand } from "vscode-extension-telemetry-w
 import { TestsManifest } from './TestsManifest';
 import { TestOutcome, Test } from './Test';
 import { PTestReportView } from './PTestReportView';
-import { PddlExtensionContext } from '../PddlExtensionContext';
+import { PddlExtensionContext } from 'pddl-workspace';
 import { PTEST_REPORT_VIEW } from './PTestCommands';
-import { StringifyingMap } from '../../../common/src/util';
+import { utils } from 'pddl-workspace';
 
 /** Gathers the output of running PDDL Test cases and summarizes them into a WebView table. */
 export class PTestReport implements Disposable {
@@ -144,13 +144,13 @@ export class TestResult {
     }
 }
 
-class ManifestMap extends StringifyingMap<TestsManifest, TestResultMap> {
+class ManifestMap extends utils.StringifyingMap<TestsManifest, TestResultMap> {
     protected stringifyKey(key: TestsManifest): string {
         return key.uri.toString();
     }
 }
 
-class TestResultMap extends StringifyingMap<Test, TestResult> {
+class TestResultMap extends utils.StringifyingMap<Test, TestResult> {
     protected stringifyKey(key: Test): string {
         return key.getUri().toString();
     }

@@ -5,10 +5,10 @@
 'use strict';
 
 import { CompletionItem, CompletionContext, MarkdownString, CompletionItemKind, Range, CompletionTriggerKind } from 'vscode';
-import { PDDL } from '../../../common/src/parser';
-import { DomainInfo } from '../../../common/src/DomainInfo';
-import { ModelHierarchy } from '../../../common/src/ModelHierarchy';
-import { PddlSyntaxNode } from '../../../common/src/PddlSyntaxNode';
+import { PDDL } from 'pddl-workspace';
+import { DomainInfo } from 'pddl-workspace';
+import { ModelHierarchy } from 'pddl-workspace';
+import { parser } from 'pddl-workspace';
 import { AbstractCompletionItemProvider, Suggestion } from './AbstractCompletionItemProvider';
 import { Delegate } from './Delegate';
 import { toSelection, requires } from './DomainCompletionItemProvider';
@@ -47,7 +47,7 @@ export class ContinuousEffectCompletionItemProvider extends AbstractCompletionIt
                 .appendCodeblock('(forall (?p - product) (increase (stock ?p) (* #t 2.0))))', PDDL), CompletionItemKind.TypeParameter);
     }
 
-    static inside(currentNode: PddlSyntaxNode) {
+    static inside(currentNode: parser.PddlSyntaxNode) {
         return ModelHierarchy.isInsideEffect(currentNode)
             && (ModelHierarchy.isInsideProcess(currentNode)
                 || ModelHierarchy.isInsideDurativeActionUnqualifiedEffect(currentNode));

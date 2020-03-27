@@ -5,7 +5,7 @@ import { before } from 'mocha';
 // as well as import your extension to test it
 import * as vscode from 'vscode';
 import { SymbolRenameProvider } from '../../symbols/SymbolRenameProvider';
-import { PddlWorkspace } from '../../../../common/src/PddlWorkspace';
+import { PddlWorkspace } from 'pddl-workspace';
 import { CodePddlWorkspace } from '../../workspace/CodePddlWorkspace';
 import { testDisabled } from './testUtils';
 

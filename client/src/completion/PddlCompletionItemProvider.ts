@@ -5,9 +5,9 @@
 'use strict';
 
 import { CompletionItemProvider, CompletionItem, TextDocument, Position, CancellationToken, CompletionContext } from 'vscode';
-import { UnknownFileInfo } from '../../../common/src/parser';
-import { ProblemInfo } from '../../../common/src/ProblemInfo';
-import { DomainInfo } from '../../../common/src/DomainInfo';
+import { UnknownFileInfo } from 'pddl-workspace';
+import { ProblemInfo } from 'pddl-workspace';
+import { DomainInfo } from 'pddl-workspace';
 import { CodePddlWorkspace } from '../workspace/CodePddlWorkspace';
 import { DomainCompletionItemProvider } from './DomainCompletionItemProvider';
 import { ProblemCompletionItemProvider } from './ProblemCompletionItemProvider';

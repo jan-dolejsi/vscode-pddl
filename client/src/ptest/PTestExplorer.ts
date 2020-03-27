@@ -10,17 +10,16 @@ import {
 import { instrumentOperationAsVsCodeCommand } from "vscode-extension-telemetry-wrapper";
 import { dirname } from 'path';
 import { readFileSync, promises } from 'fs';
-import * as afs from '../../../common/src/asyncfs';
+import { utils, parser } from 'pddl-workspace';
 import { Test, TestOutcome } from './Test';
 import { PTestTreeDataProvider, PTestNode, PTestNodeKind } from './PTestTreeDataProvider';
 import { GeneratedDocumentContentProvider } from './GeneratedDocumentContentProvider';
 import { Planning } from '../planning/planning';
 import { PlanningOutcome, PlanningResult } from '../planning/PlanningResult';
-import { Plan } from '../../../common/src/Plan';
-import { PddlPlanParser } from '../../../common/src/PddlPlanParser';
+import { Plan } from 'pddl-workspace';
 import { TestsManifest } from './TestsManifest';
-import { PlanStep } from '../../../common/src/PlanStep';
-import { PddlExtensionContext } from '../../../common/src/PddlExtensionContext';
+import { PlanStep } from 'pddl-workspace';
+import { PddlExtensionContext } from 'pddl-workspace';
 import { PTestReport } from './PTestReport';
 import { showError } from '../utils';
 import { CodePddlWorkspace } from '../workspace/CodePddlWorkspace';
@@ -371,7 +370,7 @@ export class PTestExplorer {
     loadPlan(expectedPlanPath: string): Plan {
         let expectedPlanText = readFileSync(expectedPlanPath, { encoding: "utf-8" });
         let epsilon = workspace.getConfiguration().get<number>("pddlPlanner.epsilonTimeStep", DEFAULT_EPSILON);
-        return PddlPlanParser.parseOnePlan(expectedPlanText, expectedPlanPath, epsilon);
+        return parser.PddlPlannerOutputParser.parseOnePlan(expectedPlanText, expectedPlanPath, epsilon);
     }
 
     async assertValid(test: Test): Promise<boolean> {
@@ -384,7 +383,7 @@ export class PTestExplorer {
     }
 
     async assertFileExists(path: string, resourceName: string, fileName: string): Promise<boolean> {
-        let exists = await afs.exists(path);
+        let exists = await utils.afs.exists(path);
         if (!exists) { window.showErrorMessage(`${resourceName} file not found: ${fileName}`); }
         return exists;
     }

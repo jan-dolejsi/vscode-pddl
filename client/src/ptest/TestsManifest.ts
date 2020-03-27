@@ -7,8 +7,8 @@
 import { readFileSync } from 'fs';
 import { Test } from './Test';
 import { Uri, window } from 'vscode';
-import { PddlExtensionContext } from '../../../common/src/PddlExtensionContext';
-import * as afs from '../../../common/src/asyncfs';
+import { PddlExtensionContext } from 'pddl-workspace';
+import { utils } from 'pddl-workspace';
 
 /**
  * Tests manifest
@@ -57,7 +57,7 @@ export class TestsManifest {
 
         var json = JSON.stringify(obj, null, 2);
         try {
-            await afs.writeFile(this.uri.fsPath, json, 'utf8');
+            await utils.afs.writeFile(this.uri.fsPath, json, 'utf8');
         }
         catch(err) {
             window.showErrorMessage(`Error saving test case manifest ${err.name}: ${err.message}`);

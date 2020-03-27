@@ -14,8 +14,8 @@ import { State } from './State';
 import { PlanReportGenerator } from '../planning/PlanReportGenerator';
 import { StateToPlan } from './StateToPlan';
 import { StateResolver } from './StateResolver';
-import { ProblemInfo } from '../../../common/src/ProblemInfo';
-import { DomainInfo } from '../../../common/src/DomainInfo';
+import { ProblemInfo } from 'pddl-workspace';
+import { DomainInfo } from 'pddl-workspace';
 
 export class SearchDebuggerView {
     private webViewPanel: WebviewPanel | undefined;

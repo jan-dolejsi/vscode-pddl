@@ -6,12 +6,12 @@
 
 import * as process from 'child_process';
 
-import { Variable } from '../../../common/src/FileInfo';
-import { Grounder } from '../../../common/src/Grounder';
-import { PlanInfo } from '../../../common/src/parser';
-import { Plan } from "../../../common/src/Plan";
-import { Util } from '../../../common/src/util';
-import { PlanTimeSeriesParser } from '../../../common/src/PlanTimeSeriesParser';
+import { Variable } from 'pddl-workspace';
+import { Grounder } from 'pddl-workspace';
+import { PlanInfo } from 'pddl-workspace';
+import { Plan } from 'pddl-workspace';
+import { utils } from 'pddl-workspace';
+import { PlanTimeSeriesParser } from 'ai-planning-val';
 import { ValStep } from '../debugger/ValStep';
 
 export class PlanFunctionEvaluator {
@@ -31,9 +31,9 @@ export class PlanFunctionEvaluator {
     }
 
     async evaluate(): Promise<Map<Variable, GroundedFunctionValues>> {
-        let domainFile = await Util.toPddlFile("domain", this.plan.domain.getText());
-        let problemFile = await Util.toPddlFile("problem", this.plan.problem.getText());
-        let planFile = await Util.toPddlFile("plan", this.plan.getText());
+        let domainFile = await utils.Util.toPddlFile("domain", this.plan.domain.getText());
+        let problemFile = await utils.Util.toPddlFile("problem", this.plan.problem.getText());
+        let planFile = await utils.Util.toPddlFile("plan", this.plan.getText());
 
         let chartData = new Map<Variable, GroundedFunctionValues>();
 
@@ -129,7 +129,7 @@ export class PlanFunctionEvaluator {
         
         if (!this.valueSeqPath) { throw new Error('Check first Evaluator#isAvailable()'); }
         
-        const valueSeqCommand = `${Util.q(this.valueSeqPath)} -T ${domainFile} ${problemFile} ${planFile} ${functions}`;
+        const valueSeqCommand = `${utils.Util.q(this.valueSeqPath)} -T ${domainFile} ${problemFile} ${planFile} ${functions}`;
         console.log(valueSeqCommand);
         let child = process.execSync(valueSeqCommand);
 

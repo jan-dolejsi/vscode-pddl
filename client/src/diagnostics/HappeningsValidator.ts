@@ -11,13 +11,13 @@ import { instrumentOperationAsVsCodeCommand } from "vscode-extension-telemetry-w
 
 import * as process from 'child_process';
 
-import { ProblemInfo } from '../../../common/src/ProblemInfo';
-import { DomainInfo } from '../../../common/src/DomainInfo';
-import { HappeningsInfo, Happening } from "../../../common/src/HappeningsInfo";
+import { ProblemInfo } from 'pddl-workspace';
+import { DomainInfo } from 'pddl-workspace';
+import { HappeningsInfo, Happening } from 'pddl-workspace';
 import { PddlConfiguration } from '../configuration';
-import { Util } from '../../../common/src/util';
+import { utils } from 'pddl-workspace';
 import { dirname } from 'path';
-import { PlanStep } from '../../../common/src/PlanStep';
+import { PlanStep } from 'pddl-workspace';
 import { DomainAndProblem, isHappenings, getDomainAndProblemForHappenings } from '../workspace/workspaceUtils';
 import { createRangeFromLine, createDiagnostic } from './PlanValidator';
 import { HappeningsToValStep } from './HappeningsToValStep';
@@ -104,8 +104,8 @@ export class HappeningsValidator {
         }
 
         // copy editor content to temp files to avoid using out-of-date content on disk
-        let domainFilePath = await Util.toPddlFile('domain', context.domain.getText());
-        let problemFilePath = await Util.toPddlFile('problem', context.problem.getText());
+        let domainFilePath = await utils.Util.toPddlFile('domain', context.domain.getText());
+        let problemFilePath = await utils.Util.toPddlFile('problem', context.problem.getText());
         let happeningsConverter = new HappeningsToValStep();
         happeningsConverter.convertAllHappenings(happeningsInfo);
         let valSteps = happeningsConverter.getExportedText(true);

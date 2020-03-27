@@ -5,10 +5,8 @@
 'use strict';
 
 import { CompletionItem, CompletionContext, MarkdownString, CompletionItemKind, Range, CompletionTriggerKind } from 'vscode';
-import { PDDL } from '../../../common/src/parser';
-import { DomainInfo } from '../../../common/src/DomainInfo';
-import { PddlSyntaxNode } from '../../../common/src/PddlSyntaxNode';
-import { ModelHierarchy } from '../../../common/src/ModelHierarchy';
+import { PDDL } from 'pddl-workspace';
+import { DomainInfo, parser, ModelHierarchy } from 'pddl-workspace';
 import { AbstractCompletionItemProvider, Suggestion } from './AbstractCompletionItemProvider';
 import { Delegate } from './Delegate';
 import { requires, toSelection } from './DomainCompletionItemProvider';
@@ -54,7 +52,7 @@ export class DiscreteEffectCompletionItemProvider extends AbstractCompletionItem
                 .appendMarkdown(requires([':conditional-effects'])), CompletionItemKind.Method);
     }
 
-    static inside(currentNode: PddlSyntaxNode) {
+    static inside(currentNode: parser.PddlSyntaxNode) {
         return ModelHierarchy.isInsideEffect(currentNode)
             && (ModelHierarchy.isInsideActionOrEvent(currentNode)
                 || ModelHierarchy.isInsideDurativeActionDiscreteEffect(currentNode));

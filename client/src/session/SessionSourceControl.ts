@@ -7,7 +7,7 @@ import * as vscode from 'vscode';
 import { SessionRepository, getSession, SessionContent, uploadSession, duplicateSession, checkSession } from './SessionRepository';
 import * as path from 'path';
 import { toFuzzyRelativeTime } from '../utils';
-import * as afs from '../../../common/src/asyncfs';
+import { utils } from 'pddl-workspace';
 import * as fs from 'fs';
 import { SessionConfiguration, saveConfiguration, SessionMode, toSessionConfiguration, CONFIGURATION_FILE } from './SessionConfiguration';
 import { PDDL_PLANNER, EXECUTABLE_OR_SERVICE } from '../configuration';
@@ -173,7 +173,7 @@ export class SessionSourceControl implements vscode.Disposable {
 	/** Resets the given local file content to the checked-out version. */
 	private async resetFile(fileName: string, fileContent: string): Promise<void> {
 		let filePath = this.sessionRepository.createLocalResourcePath(fileName);
-		await afs.writeFile(filePath, fileContent);
+		await utils.afs.writeFile(filePath, fileContent);
 	}
 
 	private async getFileContent(fileName: string): Promise<string> {
@@ -336,7 +336,7 @@ export class SessionSourceControl implements vscode.Disposable {
 		for (const uri of uris) {
 			let state: ChangedResourceState | undefined;
 
-			if (await afs.exists(uri.fsPath)) {
+			if (await utils.afs.exists(uri.fsPath)) {
 				let document = await vscode.workspace.openTextDocument(uri);
 				if (this.isDirty(document)) {
 					state = ChangedResourceState.Dirty;
@@ -355,7 +355,7 @@ export class SessionSourceControl implements vscode.Disposable {
 
 		for (const otherFile of otherFolderFiles) {
 			let resourcePath = path.join(this.getWorkspaceFolder().uri.fsPath, otherFile);
-			let fileStats = await afs.stat(resourcePath);
+			let fileStats = await utils.afs.stat(resourcePath);
 			if (fileStats.isDirectory()) { continue; }
 
 			// add this file as a new file to the session changed resources
@@ -383,7 +383,7 @@ export class SessionSourceControl implements vscode.Disposable {
 	async getLocalFileNames(): Promise<string[]> {
 		// when VS Code upgrades to node.js 10.10, use { withFileTypes: true }
 		let fileNames: string[] //fs.Dirent[]
-			= await afs.readdir(this.getWorkspaceFolder().uri.fsPath);
+			= await utils.afs.readdir(this.getWorkspaceFolder().uri.fsPath);
 
 		return fileNames
 			// use following two lines, when VS Code upgrades to node.js 10.10.*

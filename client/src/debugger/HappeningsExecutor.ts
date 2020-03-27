@@ -9,8 +9,7 @@ import { window, Uri } from 'vscode';
 import { PddlConfiguration } from '../configuration';
 import { dirname } from 'path';
 import { DebuggingSessionFiles } from './DebuggingSessionFiles';
-import { Happening } from '../HappeningsInfo';
-import { VariableValue } from '../../../common/src/ProblemInfo';
+import { Happening, VariableValue } from 'pddl-workspace';
 import { ValStep, ValStepError, ValStepExitCode } from './ValStep';
 
 /**

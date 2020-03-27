@@ -4,7 +4,7 @@
  * ------------------------------------------------------------------------------------------ */
 'use strict';
 
-import { Plan } from "../../../common/src/Plan";
+import { Plan } from 'pddl-workspace';
 import { PlanningRequestContext } from "./PlannerOptionsProvider";
 
 export interface PlannerResponseHandler {

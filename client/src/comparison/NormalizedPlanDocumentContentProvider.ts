@@ -5,17 +5,15 @@
 'use strict';
 
 import { CancellationToken, Event, EventEmitter, TextDocumentContentProvider, Uri, window, workspace } from 'vscode';
-import { Parser, UNSPECIFIED_DOMAIN } from '../../../common/src/parser';
-import { PddlPlanParser } from '../../../common/src/PddlPlanParser';
-import { PlanStep } from '../../../common/src/PlanStep';
-import { PddlWorkspace } from '../../../common/src/PddlWorkspace';
+import { parser } from 'pddl-workspace';
+import { PlanStep } from 'pddl-workspace';
+import { PddlWorkspace } from 'pddl-workspace';
 import { PddlConfiguration } from '../configuration';
 import { getDomainAndProblemForPlan } from '../workspace/workspaceUtils';
 import { PlanEvaluator } from './PlanEvaluator';
 import { AbstractPlanExporter } from '../planning/PlanExporter';
 import { PlanningDomains } from '../catalog/PlanningDomains';
 import { HTTPLAN } from '../catalog/Catalog';
-import { SimpleDocumentPositionResolver } from '../../../common/src/DocumentPositionResolver';
 
 
 /**
@@ -84,9 +82,9 @@ export class NormalizedPlanDocumentContentProvider implements TextDocumentConten
     }
 
     async evaluate(uri: Uri, origText: string): Promise<string> {
-        let planMetaData = Parser.parsePlanMeta(origText);
-        if (planMetaData.domainName !== UNSPECIFIED_DOMAIN && planMetaData.problemName !== UNSPECIFIED_DOMAIN) {
-            let planInfo = this.pddlWorkspace.parser.parsePlan(uri.toString(), -1, origText, this.configuration.getEpsilonTimeStep(), new SimpleDocumentPositionResolver(origText));
+        let planMetaData = parser.PddlPlanParser.parsePlanMeta(origText);
+        if (planMetaData.domainName !== parser.UNSPECIFIED_DOMAIN && planMetaData.problemName !== parser.UNSPECIFIED_DOMAIN) {
+            let planInfo = parser.PddlPlanParser.parseText(origText, this.configuration.getEpsilonTimeStep(), uri.toString());
 
             let context = getDomainAndProblemForPlan(planInfo, this.pddlWorkspace);
             let planValues = await new PlanEvaluator(this.configuration).evaluate(context.domain, context.problem, planInfo);
@@ -125,7 +123,7 @@ class PlanParserAndNormalizer {
             }
         };
 
-        let planMeta = Parser.parsePlanMeta(origText);
+        let planMeta = parser.PddlPlanParser.parsePlanMeta(origText);
         let normalizedText = AbstractPlanExporter.getPlanMeta(planMeta.domainName, planMeta.problemName)
             + "\n; Normalized plan:\n"
             + origText.split('\n')
@@ -141,8 +139,8 @@ class PlanParserAndNormalizer {
 
     parseLine(line: string, lineIdx: number): PlanStep | undefined {
         // todo: replace by PddlPlanParser.parseOnePlan()
-        PddlPlanParser.planStepPattern.lastIndex = 0;
-        let group = PddlPlanParser.planStepPattern.exec(line);
+        parser.PddlPlannerOutputParser.planStepPattern.lastIndex = 0;
+        let group = parser.PddlPlannerOutputParser.planStepPattern.exec(line);
 
         if (!group) {
             return undefined;

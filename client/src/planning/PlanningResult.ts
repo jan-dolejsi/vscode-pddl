@@ -4,7 +4,7 @@
  * ------------------------------------------------------------------------------------------ */
 'use strict';
 
-import { Plan } from '../../../common/src/Plan';
+import { Plan } from 'pddl-workspace';
 
 export enum PlanningOutcome { SUCCESS, FAILURE, KILLED }
 

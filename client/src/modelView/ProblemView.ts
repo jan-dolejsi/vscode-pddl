@@ -11,10 +11,10 @@ import {
 import { instrumentOperationAsVsCodeCommand } from "vscode-extension-telemetry-wrapper";
 
 import { isPddl, getDomainFileForProblem } from '../workspace/workspaceUtils';
-import { DomainInfo } from '../../../common/src/DomainInfo';
-import { ProblemInfo } from '../../../common/src/ProblemInfo';
-import { PddlWorkspace } from '../../../common/src/PddlWorkspace';
-import { FileInfo } from '../../../common/src/FileInfo';
+import { DomainInfo } from 'pddl-workspace';
+import { ProblemInfo } from 'pddl-workspace';
+import { PddlWorkspace } from 'pddl-workspace';
+import { FileInfo } from 'pddl-workspace';
 
 import { CodePddlWorkspace } from '../workspace/CodePddlWorkspace';
 import { getWebViewHtml, createPddlExtensionContext, UriMap, showError } from '../utils';

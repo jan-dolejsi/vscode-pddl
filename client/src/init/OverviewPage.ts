@@ -12,7 +12,7 @@ import { PddlConfiguration } from '../configuration';
 
 import * as path from 'path';
 import { getWebViewHtml, createPddlExtensionContext } from '../utils';
-import * as afs from '../../../common/src/asyncfs';
+import { utils } from 'pddl-workspace';
 import { Val } from '../validation/Val';
 import { VAL_DOWNLOAD_COMMAND, ValDownloadOptions } from '../validation/valCommand';
 import { PTEST_VIEW } from '../ptest/PTestCommands';
@@ -218,15 +218,15 @@ export class OverviewPage {
 
         if (!folder) { return undefined; }
 
-        let sampleFiles = await afs.readdir(this.context.asAbsolutePath(path.join(this.CONTENT_FOLDER, subDirectory)));
+        let sampleFiles = await utils.afs.readdir(this.context.asAbsolutePath(path.join(this.CONTENT_FOLDER, subDirectory)));
 
         let sampleDocumentPromises = sampleFiles
             .map(async (sampleFile) => {
                 let sampleResourcePath = this.context.asAbsolutePath(path.join(this.CONTENT_FOLDER, subDirectory, sampleFile));//'overview/helloWorld/domain.pddl'
-                let sampleText = await afs.readFile(sampleResourcePath, { encoding: "utf-8" });
+                let sampleText = await utils.afs.readFile(sampleResourcePath, { encoding: "utf-8" });
                 let sampleTargetPath = path.join(folder!.fsPath, sampleFile);//"helloWorldDomain.pddl"
-                if (await afs.exists(sampleTargetPath)) { throw new Error(`File '${sampleFile}' already exists.`); }
-                await afs.writeFile(sampleTargetPath, sampleText, { encoding: "utf-8" });
+                if (await utils.afs.exists(sampleTargetPath)) { throw new Error(`File '${sampleFile}' already exists.`); }
+                await utils.afs.writeFile(sampleTargetPath, sampleText, { encoding: "utf-8" });
                 let sampleDocument = await workspace.openTextDocument(sampleTargetPath);
                 return sampleDocument;
             });

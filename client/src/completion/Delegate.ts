@@ -5,8 +5,8 @@
 'use strict';
 
 import { CompletionItem, CompletionItemKind, MarkdownString, SnippetString } from 'vscode';
-import { DomainInfo, TypeObjectMap } from '../../../common/src/DomainInfo';
-import { Variable } from '../../../common/src/FileInfo';
+import { DomainInfo, TypeObjectMap } from 'pddl-workspace';
+import { Variable } from 'pddl-workspace';
 
 export abstract class Delegate {
 

@@ -12,7 +12,7 @@ import { PddlConfiguration } from '../configuration';
 
 import {diff} from 'semver';
 import { OverviewPage, SHOULD_SHOW_OVERVIEW_PAGE } from './OverviewPage';
-import * as afs from '../../../common/src/asyncfs';
+import { utils } from 'pddl-workspace';
 import { Val } from '../validation/Val';
 import { ValDownloadReminder } from '../validation/ValDownloadReminder';
 import { ExtensionInfo } from '../ExtensionInfo';
@@ -89,7 +89,7 @@ export class StartUp {
             }
             else {
                 let changeLog = this.context.asAbsolutePath('CHANGELOG.html');
-                let html = await afs.readFile(changeLog, { encoding: "utf-8" });
+                let html = await utils.afs.readFile(changeLog, { encoding: "utf-8" });
 
                 let webViewPanel = window.createWebviewPanel(
                     "pddl.WhatsNew",

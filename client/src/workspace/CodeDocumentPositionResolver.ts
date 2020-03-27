@@ -5,7 +5,7 @@
 'use strict';
 
 import { TextDocument } from 'vscode';
-import { DocumentPositionResolver, PddlPosition } from '../../../common/src/DocumentPositionResolver';
+import { DocumentPositionResolver, PddlPosition } from 'pddl-workspace';
 
 export class CodeDocumentPositionResolver extends DocumentPositionResolver {
     constructor(private readonly document: TextDocument) {

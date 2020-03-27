@@ -11,19 +11,18 @@ import {
 import { instrumentOperationAsVsCodeCommand } from "vscode-extension-telemetry-wrapper";
 import * as path from 'path';
 
-import { PddlWorkspace } from '../../../common/src/PddlWorkspace';
-import { PddlSyntaxTreeBuilder } from '../../../common/src/PddlSyntaxTreeBuilder';
-import { ProblemInfo } from '../../../common/src/ProblemInfo';
-import { DomainInfo } from '../../../common/src/DomainInfo';
-import { PddlLanguage } from '../../../common/src/FileInfo';
+import { PddlWorkspace } from 'pddl-workspace';
+import { parser } from 'pddl-workspace';
+import { ProblemInfo } from 'pddl-workspace';
+import { DomainInfo } from 'pddl-workspace';
+import { PddlLanguage } from 'pddl-workspace';
 import { PddlConfiguration, CONF_PDDL, PLAN_REPORT_EXPORT_WIDTH, PDDL_CONFIGURE_COMMAND } from '../configuration';
-import { Plan } from '../../../common/src/Plan';
+import { Plan } from 'pddl-workspace';
 import { PlannerResponseHandler } from './PlannerResponseHandler';
 import { PlannerExecutable } from './PlannerExecutable';
 import { PlannerSyncService } from './PlannerSyncService';
 import { PlannerAsyncService } from './PlannerAsyncService';
 import { Planner } from './planner';
-import { PddlPlanParser } from '../../../common/src/PddlPlanParser';
 import { Authentication } from '../../../common/src/Authentication';
 import { dirname } from 'path';
 import { PlanningResult } from './PlanningResult';
@@ -32,7 +31,7 @@ import { PlanExporter } from './PlanExporter';
 import { PlanHappeningsExporter } from './PlanHappeningsExporter';
 import { HappeningsPlanExporter } from './HappeningsPlanExporter';
 import { isHappenings, isPlan, selectFile, isPddl } from '../workspace/workspaceUtils';
-import * as afs from '../../../common/src/asyncfs';
+import { utils } from 'pddl-workspace';
 
 import { PlanView, PDDL_GENERATE_PLAN_REPORT, PDDL_EXPORT_PLAN } from './PlanView';
 import { PlannerOptionsProvider, PlanningRequestContext } from './PlannerOptionsProvider';
@@ -115,7 +114,7 @@ export class Planning implements PlannerResponseHandler {
         context.subscriptions.push(instrumentOperationAsVsCodeCommand("pddl.syntaxTree", () => {
             if (window.activeTextEditor && isPddl(window.activeTextEditor.document)) {
                 let index = window.activeTextEditor.document.offsetAt(window.activeTextEditor.selection.active);
-                const pddlSyntaxTreeBuilder = new PddlSyntaxTreeBuilder(window.activeTextEditor.document.getText());
+                const pddlSyntaxTreeBuilder = new parser.PddlSyntaxTreeBuilder(window.activeTextEditor.document.getText());
                 this.output.appendLine('');
                 this.output.appendLine("PDDL Syntax Tree:");
                 this.output.appendLine(pddlSyntaxTreeBuilder.getTreeAsString());
@@ -277,7 +276,7 @@ export class Planning implements PlannerResponseHandler {
      */
     async planExplicit(domainFileInfo: DomainInfo, problemFileInfo: ProblemInfo, workingDirectory: string, options?: string): Promise<void> {
 
-        let planParser = new PddlPlanParser(domainFileInfo, problemFileInfo, { epsilon: this.plannerConfiguration.getEpsilonTimeStep() }, plans => this.visualizePlans(plans));
+        let planParser = new parser.PddlPlannerOutputParser(domainFileInfo, problemFileInfo, { epsilon: this.plannerConfiguration.getEpsilonTimeStep() }, plans => this.visualizePlans(plans));
 
         workingDirectory = await this.adjustWorkingFolder(workingDirectory);
 
@@ -348,7 +347,7 @@ export class Planning implements PlannerResponseHandler {
         if (!workingDirectory) { return ""; }
 
         // the working directory may be virtual, replace it
-        if (!await afs.exists(workingDirectory)) {
+        if (!await utils.afs.exists(workingDirectory)) {
             if (workspace.workspaceFolders?.length) {
                 return workspace.workspaceFolders[0].uri.fsPath;
             }

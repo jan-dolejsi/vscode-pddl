@@ -7,11 +7,11 @@
 import * as request from 'request';
 import { Planner } from './planner';
 import { PlannerResponseHandler } from './PlannerResponseHandler';
-import { Plan } from '../../../common/src/Plan';
-import { ProblemInfo } from '../../../common/src/ProblemInfo';
-import { DomainInfo } from '../../../common/src/DomainInfo';
-import { PddlPlanParser } from '../../../common/src/PddlPlanParser';
-import { PlanStep } from '../../../common/src/PlanStep';
+import { Plan } from 'pddl-workspace';
+import { ProblemInfo } from 'pddl-workspace';
+import { DomainInfo } from 'pddl-workspace';
+import { parser } from 'pddl-workspace';
+import { PlanStep } from 'pddl-workspace';
 import { Authentication } from '../../../common/src/Authentication';
 import { window } from 'vscode';
 
@@ -25,10 +25,10 @@ export abstract class PlannerService extends Planner {
 
     abstract createUrl(): string;
 
-    abstract processServerResponseBody(responseBody: any, planParser: PddlPlanParser, parent: PlannerResponseHandler,
+    abstract processServerResponseBody(responseBody: any, planParser: parser.PddlPlanParser, parent: PlannerResponseHandler,
         resolve: (plans: Plan[]) => void, reject: (error: Error) => void): void;
 
-    async plan(domainFileInfo: DomainInfo, problemFileInfo: ProblemInfo, planParser: PddlPlanParser, parent: PlannerResponseHandler): Promise<Plan[]> {
+    async plan(domainFileInfo: DomainInfo, problemFileInfo: ProblemInfo, planParser: parser.PddlPlanParser, parent: PlannerResponseHandler): Promise<Plan[]> {
         parent.handleOutput(`Planning service: ${this.plannerPath}\nDomain: ${domainFileInfo.name}, Problem: ${problemFileInfo.name}\n`);
 
         let requestHeader: any = {};
@@ -90,7 +90,7 @@ export abstract class PlannerService extends Planner {
     /** Gets timeout in seconds. */
     abstract getTimeout(): number;
 
-    parsePlanSteps(planSteps: any, planParser: PddlPlanParser): void {
+    parsePlanSteps(planSteps: any, planParser: parser.PddlPlannerOutputParser): void {
         for (var index = 0; index < planSteps.length; index++) {
             var planStep = planSteps[index];
             let fullActionName = (<string>planStep["name"]).replace('(', '').replace(')', '');

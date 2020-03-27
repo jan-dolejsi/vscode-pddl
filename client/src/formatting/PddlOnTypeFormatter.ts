@@ -6,13 +6,7 @@
 
 import { TextDocument, CancellationToken, FormattingOptions, TextEdit, OnTypeFormattingEditProvider, Position, Range, WorkspaceEdit, workspace, commands } from 'vscode';
 import { CodePddlWorkspace } from '../workspace/CodePddlWorkspace';
-import { PddlLanguage } from '../../../common/src/FileInfo';
-import { DomainInfo } from '../../../common/src/DomainInfo';
-import { PddlSyntaxTree } from '../../../common/src/PddlSyntaxTree';
-import { ProblemInfo } from '../../../common/src/ProblemInfo';
-import { PddlSyntaxTreeBuilder } from '../../../common/src/PddlSyntaxTreeBuilder';
-import { PddlTokenType } from '../../../common/src/PddlTokenizer';
-import { PddlSyntaxNode } from '../../../common/src/PddlSyntaxNode';
+import { PddlLanguage, DomainInfo, ProblemInfo, parser } from 'pddl-workspace';
 
 export class PddlOnTypeFormatter implements OnTypeFormattingEditProvider {
 
@@ -28,7 +22,7 @@ export class PddlOnTypeFormatter implements OnTypeFormattingEditProvider {
             return undefined;
         }
 
-        let tree: PddlSyntaxTree;
+        let tree: parser.PddlSyntaxTree;
         if (fileInfo && (fileInfo instanceof DomainInfo)) {
             tree = (<DomainInfo>fileInfo).syntaxTree;
         }
@@ -36,7 +30,7 @@ export class PddlOnTypeFormatter implements OnTypeFormattingEditProvider {
             tree = (<ProblemInfo>fileInfo).syntaxTree;
         }
         else {
-            tree = new PddlSyntaxTreeBuilder(document.getText()).getTree();
+            tree = new parser.PddlSyntaxTreeBuilder(document.getText()).getTree();
         }
 
         let currentNode = tree.getNodeAt(offset);
@@ -49,7 +43,7 @@ export class PddlOnTypeFormatter implements OnTypeFormattingEditProvider {
         let rangeBefore = new Range(position.with({character: 0}), position);
         let rangeAfter = new Range(position, position.with({ character: Number.MAX_VALUE }));
 
-        if (ch === '\n' && currentNode.isType(PddlTokenType.Whitespace)) {
+        if (ch === '\n' && currentNode.isType(parser.PddlTokenType.Whitespace)) {
             let insertBeforeText = this.createIndent(parentIndent, +1, options);
             let insertAfterText = '\n' + this.createIndent(parentIndent, 0, options);
 
@@ -96,7 +90,7 @@ export class PddlOnTypeFormatter implements OnTypeFormattingEditProvider {
         }
     }
 
-    getParentStartCharacterIndent(currentNode: PddlSyntaxNode, document: TextDocument): string | null {
+    getParentStartCharacterIndent(currentNode: parser.PddlSyntaxNode, document: TextDocument): string | null {
         let parent = currentNode.getParent()?.expand();
         if (parent === undefined) { throw new Error(`Unexpected PDDL structure in ${currentNode.getText()}`);}
         if (parent.isDocument()) { return null; }

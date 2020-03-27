@@ -5,7 +5,7 @@
 'use strict';
 
 import { CompletionItemProvider, CompletionItem, TextDocument, Position, CancellationToken, CompletionContext, Range } from 'vscode';
-import { ProblemInfo } from '../../../common/src/ProblemInfo';
+import { ProblemInfo } from 'pddl-workspace';
 import { ProblemInitDelegate } from './ProblemInitDelegate';
 import { OperatorDelegate } from './OperatorDelegate';
 import { VariableDelegate } from './VariableDelegate';

@@ -7,10 +7,7 @@
 // import * as request from 'request';
 import { Uri, workspace } from 'vscode';
 import { PlannerResponseHandler } from './PlannerResponseHandler';
-import { Plan } from '../../../common/src/Plan';
-import { ProblemInfo } from '../../../common/src/ProblemInfo';
-import { DomainInfo } from '../../../common/src/DomainInfo';
-import { PddlPlanParser } from '../../../common/src/PddlPlanParser';
+import { Plan, ProblemInfo, DomainInfo, parser } from 'pddl-workspace';
 import { Authentication } from '../../../common/src/Authentication';
 import { PlannerService } from './PlannerService';
 import { PlannerConfigurationSelector } from './PlannerConfigurationSelector';
@@ -75,7 +72,7 @@ export class PlannerAsyncService extends PlannerService {
         }
     }
 
-    processServerResponseBody(responseBody: any, planParser: PddlPlanParser, parent: PlannerResponseHandler, resolve: (plans: Plan[]) => void, reject: (error: Error) => void): void {
+    processServerResponseBody(responseBody: any, planParser: parser.PddlPlannerOutputParser, parent: PlannerResponseHandler, resolve: (plans: Plan[]) => void, reject: (error: Error) => void): void {
         let _timedOut = false;
         let response_status: string = responseBody['status']['status'];
         if (["STOPPED", "SEARCHING_BETTER_PLAN"].includes(response_status)) {
@@ -117,7 +114,7 @@ export class PlannerAsyncService extends PlannerService {
         console.log(_timedOut);
     }
 
-    parsePlan(plan: any, planParser: PddlPlanParser): void {
+    parsePlan(plan: any, planParser: parser.PddlPlannerOutputParser): void {
         let makespan: number = plan['makespan'];
         let metric: number = plan['metricValue'];
         let search_performance_info = plan['searchPerformanceInfo'];

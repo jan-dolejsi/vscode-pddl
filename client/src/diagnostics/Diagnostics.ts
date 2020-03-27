@@ -9,11 +9,11 @@ import {
 } from 'vscode';
 
 import { Authentication } from '../../../common/src/Authentication';
-import { PddlWorkspace } from '../../../common/src/PddlWorkspace';
-import { PlanInfo } from '../../../common/src/parser';
-import { ProblemInfo } from '../../../common/src/ProblemInfo';
-import { DomainInfo } from '../../../common/src/DomainInfo';
-import { FileInfo, FileStatus, stripComments, ParsingProblem } from '../../../common/src/FileInfo';
+import { PddlWorkspace } from 'pddl-workspace';
+import { PlanInfo } from 'pddl-workspace';
+import { ProblemInfo } from 'pddl-workspace';
+import { DomainInfo } from 'pddl-workspace';
+import { FileInfo, FileStatus, stripComments, ParsingProblem } from 'pddl-workspace';
 
 import { Validator } from './validator';
 import { ValidatorService } from './ValidatorService';
@@ -22,7 +22,7 @@ import { PDDLParserSettings } from '../../../common/src/Settings';
 import { PddlConfiguration, PDDL_PARSER, VALIDATION_PATH, CONF_PDDL } from '../configuration';
 import { PlanValidator, createDiagnostic } from './PlanValidator';
 import { HappeningsValidator } from './HappeningsValidator';
-import { HappeningsInfo } from '../HappeningsInfo';
+import { HappeningsInfo } from 'pddl-workspace';
 import { NoDomainAssociated, getDomainFileForProblem } from '../workspace/workspaceUtils';
 import { isHttp } from '../utils';
 import { CodePddlWorkspace } from '../workspace/CodePddlWorkspace';

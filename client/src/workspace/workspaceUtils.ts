@@ -5,12 +5,12 @@
 'use strict';
 
 import { TextDocument, window, workspace, QuickPickItem, Uri, GlobPattern, WorkspaceFolder } from 'vscode';
-import { PDDL, PLAN, toLanguageFromId, HAPPENINGS, PlanInfo, UNSPECIFIED_PROBLEM, UNSPECIFIED_DOMAIN } from '../../../common/src/parser';
-import { ProblemInfo } from '../../../common/src/ProblemInfo';
-import { DomainInfo } from '../../../common/src/DomainInfo';
-import { PddlLanguage, FileInfo } from '../../../common/src/FileInfo';
-import { HappeningsInfo } from "../../../common/src/HappeningsInfo";
-import { PddlWorkspace } from '../../../common/src/PddlWorkspace';
+import { PDDL, PLAN, toLanguageFromId, HAPPENINGS, PlanInfo, parser } from 'pddl-workspace';
+import { ProblemInfo } from 'pddl-workspace';
+import { DomainInfo } from 'pddl-workspace';
+import { PddlLanguage, FileInfo } from 'pddl-workspace';
+import { HappeningsInfo } from 'pddl-workspace';
+import { PddlWorkspace } from 'pddl-workspace';
 import { basename, dirname } from 'path';
 import { CodePddlWorkspace } from './CodePddlWorkspace';
 
@@ -72,7 +72,7 @@ export class NoProblemAssociated extends Error {
     static readonly DIAGNOSTIC_CODE = "NoAssociatedProblem";
 
     static getMessage(plan: PlanInfo): string {
-        if (plan.problemName !== UNSPECIFIED_PROBLEM) {
+        if (plan.problemName !== parser.UNSPECIFIED_PROBLEM) {
             return `No problem file with name '(problem ${plan.problemName})' and located in the same folder as the plan is open in the editor. Click 💡 to select it...`;
         }
         else {
@@ -89,7 +89,7 @@ export class NoDomainAssociated extends Error {
     static readonly DIAGNOSTIC_CODE = "NoAssociatedDomain";
 
     static getMessage(problem: ProblemInfo): string {
-        if (problem.domainName !== UNSPECIFIED_DOMAIN) {
+        if (problem.domainName !== parser.UNSPECIFIED_DOMAIN) {
             return `No domain file with name '(define ${problem.domainName})' and located in the same folder is open in the editor. Click 💡 to select it...`;
         }
         else {

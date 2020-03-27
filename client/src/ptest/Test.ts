@@ -7,8 +7,8 @@
 import { Uri } from 'vscode';
 import { join, dirname } from 'path';
 import { TestsManifest } from './TestsManifest';
-import { PreProcessor, CommandPreProcessor, NunjucksPreProcessor, PythonPreProcessor, Jinja2PreProcessor } from "../../../common/src/PreProcessors";
-import { PddlExtensionContext } from '../../../common/src/PddlExtensionContext';
+import { PreProcessor, CommandPreProcessor, NunjucksPreProcessor, PythonPreProcessor, Jinja2PreProcessor } from 'pddl-workspace';
+import { PddlExtensionContext } from 'pddl-workspace';
 import { throwForUndefined } from '../utils';
 
 export enum TestOutcome { UNKNOWN, SUCCESS, FAILED, SKIPPED, IN_PROGRESS }
@@ -59,7 +59,7 @@ export class Test {
 
             switch(kind){
                 case "command":
-                    preProcessor = CommandPreProcessor.fromJson(preProcessSettings);
+                    preProcessor = CommandPreProcessor.fromJson(preProcessSettings as never);
                     break;
                 case "python":
                     preProcessor = new PythonPreProcessor(context.pythonPath(), preProcessSettings[PRE_PROCESSOR_SCRIPT], preProcessSettings[PRE_PROCESSOR_ARGS]);

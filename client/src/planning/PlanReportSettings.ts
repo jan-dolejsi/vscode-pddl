@@ -5,7 +5,7 @@
  * ------------------------------------------------------------------------------------------ */
 'use strict';
 
-import { PlanStep } from "../../../common/src/PlanStep";
+import { PlanStep } from 'pddl-workspace';
 const fs = require('fs');
 const { URL } = require('url');
 

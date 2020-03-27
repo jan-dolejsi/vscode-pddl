@@ -4,7 +4,7 @@
  * ------------------------------------------------------------------------------------------ */
 'use strict';
 
-import { SwimLane } from '../src/SwimLane'
+import { SwimLane } from '../src/SwimLane';
 import * as assert from 'assert';
 
 describe('SwimLaneTests', () => {

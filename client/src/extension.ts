@@ -7,8 +7,8 @@
 import { workspace, window, ExtensionContext, languages } from 'vscode';
 
 import { Planning } from './planning/planning';
-import { PddlWorkspace } from '../../common/src/PddlWorkspace';
-import { PDDL, PLAN, HAPPENINGS } from '../../common/src/parser';
+import { PddlWorkspace } from 'pddl-workspace';
+import { PDDL, PLAN, HAPPENINGS } from 'pddl-workspace';
 import { PddlConfiguration, PDDL_CONFIGURE_COMMAND } from './configuration';
 import { Authentication } from '../../common/src/Authentication';
 import { AutoCompletion } from './completion/AutoCompletion';

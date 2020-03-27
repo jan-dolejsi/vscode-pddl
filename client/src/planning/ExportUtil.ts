@@ -5,10 +5,10 @@
 'use strict';
 
 import { Uri, window, workspace, Range, ViewColumn } from 'vscode';
-import * as afs from '../../../common/src/asyncfs';
+import { utils } from 'pddl-workspace';
 
 export async function exportToAndShow(text: string, uri: Uri): Promise<boolean> {
-    let fileExists = await afs.exists(uri.fsPath);
+    let fileExists = await utils.afs.exists(uri.fsPath);
     if (!fileExists) {
         uri = uri.with({ scheme: 'untitled' });
     }

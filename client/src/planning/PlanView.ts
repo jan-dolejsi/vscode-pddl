@@ -12,8 +12,8 @@ import { instrumentOperationAsVsCodeCommand } from "vscode-extension-telemetry-w
 
 import { isPlan, getDomainAndProblemForPlan } from '../workspace/workspaceUtils';
 import { PlanReportGenerator } from './PlanReportGenerator';
-import { PlanInfo, PLAN } from '../../../common/src/parser';
-import { Plan } from '../../../common/src/Plan';
+import { PlanInfo, PLAN } from 'pddl-workspace';
+import { Plan } from 'pddl-workspace';
 
 import * as path from 'path';
 import { CodePddlWorkspace } from '../workspace/CodePddlWorkspace';

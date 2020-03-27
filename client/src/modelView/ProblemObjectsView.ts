@@ -9,12 +9,12 @@ import {
     ExtensionContext, TextDocument, CodeLens, CancellationToken, CodeLensProvider
 } from 'vscode';
 
-import { DomainInfo, TypeObjectMap } from '../../../common/src/DomainInfo';
-import { ProblemInfo } from '../../../common/src/ProblemInfo';
+import { DomainInfo, TypeObjectMap } from 'pddl-workspace';
+import { ProblemInfo } from 'pddl-workspace';
 
 import * as path from 'path';
 import { CodePddlWorkspace } from '../workspace/CodePddlWorkspace';
-import { PddlTokenType } from '../../../common/src/PddlTokenizer';
+import { parser } from 'pddl-workspace';
 import { nodeToRange } from '../utils';
 import { DocumentInsetCodeLens, DocumentCodeLens } from './view';
 import { ProblemView, ProblemRendererOptions, ProblemRenderer } from './ProblemView';
@@ -57,7 +57,7 @@ export class ProblemObjectsView extends ProblemView<ProblemObjectsRendererOption
         if (!problem) { return []; }
 
         let defineNode = problem.syntaxTree.getDefineNodeOrThrow();
-        let objectsNode = defineNode.getFirstChild(PddlTokenType.OpenBracketOperator, /\s*:objects/i);
+        let objectsNode = defineNode.getFirstChild(parser.PddlTokenType.OpenBracketOperator, /\s*:objects/i);
         if (objectsNode) {
             return [
                 new DocumentCodeLens(document, nodeToRange(document, objectsNode))

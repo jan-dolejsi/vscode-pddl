@@ -6,7 +6,7 @@
 
 import { Uri, ViewColumn } from 'vscode';
 
-import { DomainInfo } from '../../../common/src/DomainInfo';
+import { DomainInfo } from 'pddl-workspace';
 import { WebviewAdapter } from './view';
 import { BaseViewPanel } from './BaseViewPanel';
 

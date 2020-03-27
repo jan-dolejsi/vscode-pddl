@@ -7,8 +7,8 @@
 import { State } from "./State";
 import { StateResolver } from "./StateResolver";
 import { SearchHappening } from "./SearchHappening";
-import { HappeningType } from "../../../common/src/HappeningsInfo";
-import { HelpfulAction } from "../../../common/src/Plan";
+import { HappeningType } from 'pddl-workspace';
+import { HelpfulAction } from 'pddl-workspace';
 
 export class MessageParser {
 

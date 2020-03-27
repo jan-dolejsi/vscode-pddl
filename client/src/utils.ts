@@ -6,11 +6,9 @@
 
 import * as path from 'path';
 import { ExtensionContext, Uri, workspace, window, Range, TextDocument, Webview, Position } from 'vscode';
-import * as afs from '../../common/src/asyncfs';
-import { PddlExtensionContext } from '../../common/src/PddlExtensionContext';
-import { PddlRange, PddlPosition } from '../../common/src/DocumentPositionResolver';
-import { PddlSyntaxNode } from '../../common/src/PddlSyntaxNode';
-import { StringifyingMap } from '../../common/src/util';
+import { utils } from 'pddl-workspace';
+import { PddlExtensionContext } from 'pddl-workspace';
+import { PddlRange, PddlPosition, parser } from 'pddl-workspace';
 
 export function createPddlExtensionContext(context: ExtensionContext): PddlExtensionContext {
     return {
@@ -24,7 +22,7 @@ export function createPddlExtensionContext(context: ExtensionContext): PddlExten
 
 export async function getWebViewHtml(extensionContext: PddlExtensionContext, options: WebViewHtmlOptions, webview?: Webview) {
     let overviewHtmlPath = extensionContext.asAbsolutePath(path.join(options.relativePath, options.htmlFileName));
-    let html = await afs.readFile(overviewHtmlPath, { encoding: "utf-8", flag: 'r' });
+    let html = await utils.afs.readFile(overviewHtmlPath, { encoding: "utf-8", flag: 'r' });
 
     html = html.replace(/<(script|img|link) ([^>]*)(src|href)="([^"]+)"/g, (sourceElement: string, elementName: string, middleBits: string, attribName: string, attribValue: string) => {
         if (attribValue.startsWith('http')) {
@@ -189,7 +187,7 @@ export function toRange(pddlRange: PddlRange): Range {
 	return new Range(pddlRange.startLine, pddlRange.startCharacter, pddlRange.endLine, pddlRange.endCharacter);
 }
 
-export function nodeToRange(document: TextDocument, node: PddlSyntaxNode): Range {
+export function nodeToRange(document: TextDocument, node: parser.PddlSyntaxNode): Range {
     return new Range(document.positionAt(node.getStart()), document.positionAt(node.getEnd()));
 }
 
@@ -197,7 +195,7 @@ export function toPosition(position: PddlPosition): Position {
     return new Position(position.line, position.character);
 }
 
-export class UriMap<T> extends StringifyingMap<Uri, T> {
+export class UriMap<T> extends utils.StringifyingMap<Uri, T> {
     protected stringifyKey(key: Uri): string {
         return key.toString();
     }

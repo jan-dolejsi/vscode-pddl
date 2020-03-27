@@ -9,11 +9,11 @@ import {
     ExtensionContext, TextDocument, CodeLens, CancellationToken, CodeLensProvider
 } from 'vscode';
 
-import { DomainInfo } from '../../../common/src/DomainInfo';
+import { DomainInfo } from 'pddl-workspace';
 
 import * as path from 'path';
 import { CodePddlWorkspace } from '../workspace/CodePddlWorkspace';
-import { PddlTokenType } from '../../../common/src/PddlTokenizer';
+import { parser } from 'pddl-workspace';
 import { nodeToRange } from '../utils';
 import { DocumentInsetCodeLens, DocumentCodeLens } from './view';
 import { DomainView, DomainRendererOptions, DomainRenderer } from './DomainView';
@@ -56,7 +56,7 @@ export class DomainTypesView extends DomainView<DomainTypesRendererOptions, Grap
         if (!domain) { return []; }
 
         let defineNode = domain.syntaxTree.getDefineNodeOrThrow();
-        let typesNode = defineNode.getFirstChild(PddlTokenType.OpenBracketOperator, /\s*:types/i);
+        let typesNode = defineNode.getFirstChild(parser.PddlTokenType.OpenBracketOperator, /\s*:types/i);
         if (typesNode) {
             return [
                 new DocumentCodeLens(document, nodeToRange(document, typesNode))

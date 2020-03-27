@@ -5,8 +5,8 @@
 'use strict';
 
 import { CompletionItem, CompletionItemKind } from 'vscode';
-import { PddlWorkspace } from '../../../common/src/PddlWorkspace';
-import { FileInfo } from '../../../common/src/FileInfo';
+import { PddlWorkspace } from 'pddl-workspace';
+import { FileInfo } from 'pddl-workspace';
 import { Delegate } from './Delegate';
 
 export class TypeDelegate extends Delegate {

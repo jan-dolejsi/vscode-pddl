@@ -4,15 +4,11 @@
 * ------------------------------------------------------------------------------------------ */
 'use strict';
 
-import { FileInfo, Variable } from "../../../common/src/FileInfo";
-// import { PddlRange, DocumentPositionResolver } from "./DocumentPositionResolver";
-// import { PddlBracketNode, PddlSyntaxNode } from "../../../common/src/PddlSyntaxNode";
-// import { PddlTokenType } from "../../../common/src/PddlTokenizer";
+import { FileInfo, Variable, DomainInfo } from 'pddl-workspace';
 import { CodePddlWorkspace } from "../workspace/CodePddlWorkspace";
-import { PddlWorkspace } from "../../../common/src/PddlWorkspace";
+import { PddlWorkspace } from 'pddl-workspace';
 import { languages, DiagnosticCollection, Diagnostic, DiagnosticSeverity, DiagnosticTag, Uri } from "vscode";
-import { PDDL } from "../../../common/src/parser";
-import { DomainInfo } from "../DomainInfo";
+import { PDDL } from 'pddl-workspace';
 import { toRange } from "../utils";
 
 export const UNUSED = 'unused';

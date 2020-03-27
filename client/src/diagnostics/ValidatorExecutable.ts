@@ -12,21 +12,21 @@ import * as process from 'child_process';
 
 import { Validator } from './validator';
 import { ProblemPattern } from './ProblemPattern';
-import { ProblemInfo } from '../../../common/src/ProblemInfo';
-import { DomainInfo } from '../../../common/src/DomainInfo';
+import { ProblemInfo } from 'pddl-workspace';
+import { DomainInfo } from 'pddl-workspace';
 import { PddlFactory } from '../../../common/src/PddlFactory';
-import { Util } from '../../../common/src/util';
+import { utils } from 'pddl-workspace';
 
 export class ValidatorExecutable extends Validator {
     constructor(path: string, public syntax: string, public customPattern: string) { super(path); }
 
     validate(domainInfo: DomainInfo, problemFiles: ProblemInfo[], onSuccess: (diagnostics: Map<string, Diagnostic[]>) => void, onError: (error: string) => void): void {
-        let domainFilePath = Util.toPddlFileSync("domain", domainInfo.getText());
+        let domainFilePath = utils.Util.toPddlFileSync("domain", domainInfo.getText());
 
         let diagnostics = this.createEmptyDiagnostics(domainInfo, problemFiles);
 
         if (!problemFiles.length) {
-            let problemFilePath = Util.toPddlFileSync("problem", PddlFactory.createEmptyProblem('dummy', domainInfo.name));
+            let problemFilePath = utils.Util.toPddlFileSync("problem", PddlFactory.createEmptyProblem('dummy', domainInfo.name));
             let pathToUriMap: [string, string][] = [[domainFilePath, domainInfo.fileUri]];
 
             this.validateOneProblem(domainFilePath, problemFilePath, output => {
@@ -36,7 +36,7 @@ export class ValidatorExecutable extends Validator {
         }
         else {
             problemFiles.forEach(problemFile => {
-                let problemFilePath = Util.toPddlFileSync("problem", problemFile.getText());
+                let problemFilePath = utils.Util.toPddlFileSync("problem", problemFile.getText());
                 let pathToUriMap: [string, string][] = [[domainFilePath, domainInfo.fileUri], [problemFilePath, problemFile.fileUri]];
 
                 // todo: the issues in the domain file should only be output once, not as many times as there are problem files
@@ -93,14 +93,14 @@ export class ValidatorExecutable extends Validator {
             .slice(1)
             .map(fragment => {
                 switch (fragment) {
-                    case '$(parser)': return Util.q(this.path);
-                    case '$(domain)': return Util.q(domainFilePath);
-                    case '$(problem)': return Util.q(problemFilePath);
+                    case '$(parser)': return utils.Util.q(this.path);
+                    case '$(domain)': return utils.Util.q(domainFilePath);
+                    case '$(problem)': return utils.Util.q(problemFilePath);
                     default: return fragment;
                 }
             });
 
-        this.runProcess(Util.q(this.path), args, onOutput, onError);
+        this.runProcess(utils.Util.q(this.path), args, onOutput, onError);
     }
 
     private runProcess(parserPath: string, args: string[], onOutput: (output: string) => void, onError: (error: string) => void): void {

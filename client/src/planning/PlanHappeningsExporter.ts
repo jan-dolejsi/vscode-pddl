@@ -9,7 +9,7 @@ import {
 } from 'vscode';
 
 import { PlanExporter } from './PlanExporter';
-import { PddlPlanParser } from '../../../common/src/PddlPlanParser';
+import { parser } from 'pddl-workspace';
 import { exportToAndShow } from './ExportUtil';
 
 /**
@@ -89,8 +89,8 @@ export class PlanHappeningsExporter {
     }
 
     parseStepAndEnqueueEnd(line: string): Happening | null {
-        PddlPlanParser.planStepPattern.lastIndex = 0;
-        let group = PddlPlanParser.planStepPattern.exec(line);
+        parser.PddlPlannerOutputParser.planStepPattern.lastIndex = 0;
+        let group = parser.PddlPlannerOutputParser.planStepPattern.exec(line);
 
         if (!group) {
             this.happeningsText += `; Warning: line did not parse: ${line}`;

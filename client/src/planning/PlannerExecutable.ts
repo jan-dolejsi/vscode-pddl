@@ -13,11 +13,10 @@ const tree_kill = require('tree-kill');
 
 import { Planner } from './planner';
 import { PlannerResponseHandler } from './PlannerResponseHandler';
-import { ProblemInfo } from '../../../common/src/ProblemInfo';
-import { DomainInfo } from '../../../common/src/DomainInfo';
-import { Util } from '../../../common/src/util';
-import { PddlPlanParser } from '../../../common/src/PddlPlanParser';
-import { Plan } from "../../../common/src/Plan";
+import { ProblemInfo } from 'pddl-workspace';
+import { DomainInfo } from 'pddl-workspace';
+import { utils, parser } from 'pddl-workspace';
+import { Plan } from 'pddl-workspace';
 
 export class PlannerExecutable extends Planner {
 
@@ -28,15 +27,15 @@ export class PlannerExecutable extends Planner {
         super(plannerPath);
     }
 
-    async plan(domainFileInfo: DomainInfo, problemFileInfo: ProblemInfo, planParser: PddlPlanParser, parent: PlannerResponseHandler): Promise<Plan[]> {
+    async plan(domainFileInfo: DomainInfo, problemFileInfo: ProblemInfo, planParser: parser.PddlPlannerOutputParser, parent: PlannerResponseHandler): Promise<Plan[]> {
 
-        let domainFilePath = await Util.toPddlFile("domain", domainFileInfo.getText());
-        let problemFilePath = await Util.toPddlFile("problem", problemFileInfo.getText());
+        let domainFilePath = await utils.Util.toPddlFile("domain", domainFileInfo.getText());
+        let problemFilePath = await utils.Util.toPddlFile("problem", problemFileInfo.getText());
 
-        let command = this.plannerSyntax.replace('$(planner)', Util.q(this.plannerPath))
+        let command = this.plannerSyntax.replace('$(planner)', utils.Util.q(this.plannerPath))
             .replace('$(options)', this.plannerOptions)
-            .replace('$(domain)', Util.q(domainFilePath))
-            .replace('$(problem)', Util.q(problemFilePath));
+            .replace('$(domain)', utils.Util.q(domainFilePath))
+            .replace('$(problem)', utils.Util.q(problemFilePath));
 
         command += ' ' + parent.providePlannerOptions({ domain: domainFileInfo, problem: problemFileInfo }).join(' ');
 

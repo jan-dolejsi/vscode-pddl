@@ -5,23 +5,18 @@
 'use strict';
 
 import { TextDocument, WorkspaceEdit, workspace, EndOfLine, Diagnostic } from 'vscode';
-import { PddlSyntaxTreeBuilder } from '../../../common/src/PddlSyntaxTreeBuilder';
-import { PddlSyntaxTree } from '../../../common/src/PddlSyntaxTree';
-import { FileInfo, Variable, Parameter } from '../../../common/src/FileInfo';
-import { PddlTokenType } from '../../../common/src/PddlTokenizer';
-import { parseParameters } from '../../../common/src/VariablesParser';
-import { PddlSyntaxNode } from '../../../common/src/PddlSyntaxNode';
-import { PddlStructure } from '../../../common/src/PddlStructure';
+import { parser } from 'pddl-workspace';
+import { FileInfo, Variable, Parameter } from 'pddl-workspace';
 
 export class UndeclaredVariable {
     static readonly undeclaredVariableDiagnosticPattern = /^Undeclared symbol\s*:\s*([\w-]+)\s*/i;
-    syntaxTree: PddlSyntaxTree;
+    syntaxTree: parser.PddlSyntaxTree;
 
     constructor(fileInfo: FileInfo) {
-        this.syntaxTree = new PddlSyntaxTreeBuilder(fileInfo.getText()).getTree();
+        this.syntaxTree = new parser.PddlSyntaxTreeBuilder(fileInfo.getText()).getTree();
     }
 
-    getVariable(diagnostic: Diagnostic, document: TextDocument): [Variable, PddlSyntaxNode] | undefined {
+    getVariable(diagnostic: Diagnostic, document: TextDocument): [Variable, parser.PddlSyntaxNode] | undefined {
 
         let match = UndeclaredVariable.undeclaredVariableDiagnosticPattern.exec(diagnostic.message);
         if (!match) { return undefined; }
@@ -38,7 +33,7 @@ export class UndeclaredVariable {
             return undefined;
         }
         let parameterNames = variableUsage.getNestedChildren()
-            .filter(node => node.isType(PddlTokenType.Parameter))
+            .filter(node => node.isType(parser.PddlTokenType.Parameter))
             .map(node => node.getText().replace('?', ''));
 
         let parameters = parameterNames.map(param => this.findParameterDefinition(variableUsage, param));
@@ -53,19 +48,19 @@ export class UndeclaredVariable {
         return [new Variable(variableName, validParameters), variableUsage];
     }
 
-    findParameterDefinition(variableUsage: PddlSyntaxNode, parameterName: string): Parameter | undefined {
+    findParameterDefinition(variableUsage: parser.PddlSyntaxNode, parameterName: string): Parameter | undefined {
         let scope = variableUsage.findParametrisableScope(parameterName);
         let parameterDefinitionNode = scope && scope.getParameterDefinition();
         return parameterDefinitionNode &&
-            parseParameters(parameterDefinitionNode.getText())
+        parser.parseParameters(parameterDefinitionNode.getText())
                 .find(p => p.name.toLowerCase() === parameterName.toLowerCase());
     }
 
-    createEdit(document: TextDocument, variable: Variable, node: PddlSyntaxNode): [WorkspaceEdit, VariableType] {
+    createEdit(document: TextDocument, variable: Variable, node: parser.PddlSyntaxNode): [WorkspaceEdit, VariableType] {
         var type = VariableType.Undecided;
         while (type === VariableType.Undecided && !node.isDocument()) {
             node = node.getParent()!;
-            if (node.isType(PddlTokenType.OpenBracketOperator)) {
+            if (node.isType(parser.PddlTokenType.OpenBracketOperator)) {
                 switch (node.getToken().tokenText) {
                     case "(+":
                     case "(-":
@@ -100,10 +95,10 @@ export class UndeclaredVariable {
         let newSectionName: string;
         switch (type) {
             case VariableType.Function:
-                newSectionName = PddlStructure.FUNCTIONS;
+                newSectionName = parser.PddlStructure.FUNCTIONS;
                 break;
             case VariableType.Predicate:
-                newSectionName = PddlStructure.PREDICATES;
+                newSectionName = parser.PddlStructure.PREDICATES;
                 break;
             default:
                 throw new Error(`Could not determine whether ${variable.getFullName()} is a predicate or a function.`);
@@ -121,7 +116,7 @@ export class UndeclaredVariable {
         if (sectionNode) {
             edit.insert(document.uri, document.positionAt(sectionNode.getEnd() - 1), indent1 + `(${variable.getFullName()})` + eol);
         } else {
-            let previousSectionNode = PddlStructure.findPrecedingSection(newSectionName, defineNode, PddlStructure.PDDL_DOMAIN_SECTIONS);
+            let previousSectionNode = parser.PddlStructure.findPrecedingSection(newSectionName, defineNode, parser.PddlStructure.PDDL_DOMAIN_SECTIONS);
             edit.insert(document.uri, document.positionAt(previousSectionNode.getEnd()), eol + indent1 + `(${newSectionName}${eol + indent2}(${variable.getFullName()})${eol + indent1})`);
         }
 

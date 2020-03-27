@@ -5,10 +5,7 @@
 'use strict';
 
 import { CompletionItem, CompletionContext, CompletionItemKind, SnippetString, Range, CompletionTriggerKind, MarkdownString, TextDocument } from 'vscode';
-import { DomainInfo } from '../../../common/src/DomainInfo';
-import { PddlSyntaxNode } from '../../../common/src/PddlSyntaxNode';
-import { ProblemInfo } from '../../../common/src/ProblemInfo';
-import { PddlTokenType } from '../../../common/src/PddlTokenizer';
+import { DomainInfo, ProblemInfo, parser } from 'pddl-workspace';
 import { nodeToRange } from '../utils';
 
 export class AbstractCompletionItemProvider {
@@ -24,7 +21,7 @@ export class AbstractCompletionItemProvider {
         this.suggestionDetails.set(details.label, details);
     }
 
-    protected insideDefine(domainInfo: DomainInfo | ProblemInfo, currentNode: PddlSyntaxNode, context: CompletionContext): boolean {
+    protected insideDefine(domainInfo: DomainInfo | ProblemInfo, currentNode: parser.PddlSyntaxNode, context: CompletionContext): boolean {
         let defineNode = domainInfo.syntaxTree.getDefineNode();
         if (context.triggerKind === CompletionTriggerKind.Invoke) {
             return currentNode.getParent() === defineNode;
@@ -36,9 +33,9 @@ export class AbstractCompletionItemProvider {
         }
     }
 
-    protected insideRequirements(domainInfo: DomainInfo | ProblemInfo, currentNode: PddlSyntaxNode, _context: CompletionContext): boolean {
+    protected insideRequirements(domainInfo: DomainInfo | ProblemInfo, currentNode: parser.PddlSyntaxNode, _context: CompletionContext): boolean {
         let defineNode = domainInfo.syntaxTree.getDefineNode();
-        let requirementsNode = defineNode.getFirstChild(PddlTokenType.OpenBracketOperator, /:\s*requirements/i);
+        let requirementsNode = defineNode.getFirstChild(parser.PddlTokenType.OpenBracketOperator, /:\s*requirements/i);
         if (!requirementsNode) { return false; }
 
         return currentNode.getParent() === requirementsNode;
@@ -69,7 +66,7 @@ export class AbstractCompletionItemProvider {
         this.addSuggestionDocumentation(':requirements', 'Requirements', 'Required planning engine features.');
     }
 
-    protected createRequirementsCompletionItems(document: TextDocument, currentNode: PddlSyntaxNode, context: CompletionContext): CompletionItem[] | PromiseLike<CompletionItem[]> {
+    protected createRequirementsCompletionItems(document: TextDocument, currentNode: parser.PddlSyntaxNode, context: CompletionContext): CompletionItem[] | PromiseLike<CompletionItem[]> {
         let range = context.triggerCharacter && ['(', ':'].includes(context.triggerCharacter)
             ? nodeToRange(document, currentNode) : null;
         

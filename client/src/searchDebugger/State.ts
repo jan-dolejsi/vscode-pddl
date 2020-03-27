@@ -5,7 +5,7 @@
 'use strict';
 
 import { SearchHappening } from "./SearchHappening";
-import { HelpfulAction } from "../../../common/src/Plan";
+import { HelpfulAction } from 'pddl-workspace';
 
 export class State {
     public h: number | undefined;

@@ -4,8 +4,8 @@
  * ------------------------------------------------------------------------------------------ */
 'use strict';
 
-import { HappeningsInfo, Happening, HappeningType } from "../../../common/src/HappeningsInfo";
-import { Util } from "../../../common/src/util";
+import { HappeningsInfo, Happening, HappeningType } from 'pddl-workspace';
+import { utils } from 'pddl-workspace';
 
 export const PDDL_HAPPENINGS_VALIDATE = 'pddl.happenings.validate';
 
@@ -21,7 +21,7 @@ export class HappeningsToValStep {
 
     convert(happenings: Happening[]): string {
         const newSteps = happenings.map(h => this.happeningToValStep(h));
-        const newStepsFlatten = Util.flatMap(newSteps);
+        const newStepsFlatten = utils.Util.flatMap(newSteps);
         newStepsFlatten.push('x');
         this.valStepText = this.valStepText.concat(newStepsFlatten);
         return newStepsFlatten.join('\n') + '\n';

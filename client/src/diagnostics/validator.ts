@@ -8,8 +8,8 @@ import {
     Diagnostic, DiagnosticSeverity, Range, Position
 } from 'vscode';
 
-import { ProblemInfo } from '../../../common/src/ProblemInfo';
-import { DomainInfo } from '../../../common/src/DomainInfo';
+import { ProblemInfo } from 'pddl-workspace';
+import { DomainInfo } from 'pddl-workspace';
 
 export abstract class Validator {
 

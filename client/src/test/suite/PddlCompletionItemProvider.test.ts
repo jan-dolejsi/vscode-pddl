@@ -5,12 +5,10 @@ import { before } from 'mocha';
 // as well as import your extension to test it
 import * as vscode from 'vscode';
 import { ProblemCompletionItemProvider } from '../../completion/ProblemCompletionItemProvider';
-import { ProblemInfo } from '../../../../common/src/ProblemInfo';
-import { PddlSyntaxTreeBuilder } from '../../../../common/src/PddlSyntaxTreeBuilder';
+import { parser, ProblemInfo } from 'pddl-workspace';
 import { CodeDocumentPositionResolver } from '../../workspace/CodeDocumentPositionResolver';
 import { UnknownPddlCompletionItemProvider } from '../../completion/UnknownPddlCompletionItemProvider';
 import { DomainCompletionItemProvider } from '../../completion/DomainCompletionItemProvider';
-import { PddlDomainParser } from '../../../../common/src/PddlDomainParser';
 
 suite('PDDL Completion Item Provider', () => {
     before(async () => {
@@ -485,7 +483,7 @@ async function testProblemProvider(inputTextHead: string, ch: string, inputTextT
     let position = doc.positionAt((inputTextHead + ch).length);
     editor.selection = new vscode.Selection(position, position);
 
-    let tree = new PddlSyntaxTreeBuilder(initialText).getTree();
+    let tree = new parser.PddlSyntaxTreeBuilder(initialText).getTree();
 
     let problemInfo = new ProblemInfo('file://testProblem.pddl', 1, 'p', 'd', tree, new CodeDocumentPositionResolver(doc));
 
@@ -503,11 +501,11 @@ async function testDomainProvider(inputTextHead: string, ch: string, inputTextTa
     let position = doc.positionAt((inputTextHead + ch).length);
     editor.selection = new vscode.Selection(position, position);
 
-    let tree = new PddlSyntaxTreeBuilder(initialText).getTree();
+    let tree = new parser.PddlSyntaxTreeBuilder(initialText).getTree();
 
     let domainNode = tree.getDefineNodeOrThrow().getFirstOpenBracketOrThrow('domain');
     let positionResolver = new CodeDocumentPositionResolver(doc);
-    let domainInfo = new PddlDomainParser('file://testProblem.pddl', 1, initialText, domainNode, tree, positionResolver).getDomain();
+    let domainInfo = new parser.PddlDomainParser('file://testProblem.pddl', 1, initialText, domainNode, tree, positionResolver).getDomain();
     if (!domainInfo) { throw new Error(`Unable to parse test domain.`); }
 
     return await new DomainCompletionItemProvider().provide(doc, domainInfo, position, context);

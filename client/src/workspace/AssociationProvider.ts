@@ -6,13 +6,13 @@
 
 import { CodeActionKind, ExtensionContext, languages, Uri, workspace, TextDocument } from 'vscode';
 import { instrumentOperationAsVsCodeCommand } from "vscode-extension-telemetry-wrapper";
-import { PLAN, PDDL, HAPPENINGS } from '../../../common/src/parser';
-import { ProblemInfo } from '../../../common/src/ProblemInfo';
-import { DomainInfo } from '../../../common/src/DomainInfo';
+import { PLAN, PDDL, HAPPENINGS } from 'pddl-workspace';
+import { ProblemInfo } from 'pddl-workspace';
+import { DomainInfo } from 'pddl-workspace';
 import { AssociationCodeActionProvider } from './AssociationCodeActionProvider';
 import { showError } from '../utils';
 import { selectFile } from './workspaceUtils';
-import { PddlLanguage, FileInfo } from '../../../common/src/FileInfo';
+import { PddlLanguage, FileInfo } from 'pddl-workspace';
 import { CodePddlWorkspace } from './CodePddlWorkspace';
 
 export const COMMAND_ASSOCIATE_PROBLEM = 'pddl.workspace.associateProblem';

@@ -10,14 +10,14 @@ import {
 
 import * as process from 'child_process';
 
-import { PlanInfo } from '../../../common/src/parser';
-import { ProblemInfo } from '../../../common/src/ProblemInfo';
-import { DomainInfo } from '../../../common/src/DomainInfo';
-import { ParsingProblem } from '../../../common/src/FileInfo';
+import { PlanInfo } from 'pddl-workspace';
+import { ProblemInfo } from 'pddl-workspace';
+import { DomainInfo } from 'pddl-workspace';
+import { ParsingProblem } from 'pddl-workspace';
 import { PddlConfiguration } from '../configuration';
-import { Util } from '../../../common/src/util';
+import { utils } from 'pddl-workspace';
 import { dirname } from 'path';
-import { PlanStep } from '../../../common/src/PlanStep';
+import { PlanStep } from 'pddl-workspace';
 import { DomainAndProblem, getDomainAndProblemForPlan, isPlan, NoProblemAssociated, NoDomainAssociated } from '../workspace/workspaceUtils';
 import { showError } from '../utils';
 import { VAL_DOWNLOAD_COMMAND } from '../validation/valCommand';
@@ -116,9 +116,9 @@ export class PlanValidator {
         }
 
         // copy editor content to temp files to avoid using out-of-date content on disk
-        let domainFilePath = await Util.toPddlFile('domain', context.domain.getText());
-        let problemFilePath = await Util.toPddlFile('problem', context.problem.getText());
-        let planFilePath = await Util.toPddlFile('plan', planInfo.getText());
+        let domainFilePath = await utils.Util.toPddlFile('domain', context.domain.getText());
+        let problemFilePath = await utils.Util.toPddlFile('problem', context.problem.getText());
+        let planFilePath = await utils.Util.toPddlFile('plan', planInfo.getText());
 
         let args = ['-t', epsilon.toString(), '-v', domainFilePath, problemFilePath, planFilePath];
         let workingDir = this.createWorkingFolder(Uri.parse(planInfo.fileUri));

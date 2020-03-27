@@ -7,8 +7,8 @@
 import request = require('request');
 import { sleep } from '../utils';
 import { SearchHappening, MockSearchHappening, MockHelpfulAction } from './SearchHappening';
-import { HappeningType } from "../../../common/src/HappeningsInfo";
-import { HelpfulAction } from "../../../common/src/Plan";
+import { HappeningType } from 'pddl-workspace';
+import { HelpfulAction } from 'pddl-workspace';
 import { DEFAULT_EPSILON } from '../configuration';
 
 export class MockSearch {
