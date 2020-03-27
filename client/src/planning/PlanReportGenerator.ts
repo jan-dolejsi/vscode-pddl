@@ -15,7 +15,7 @@ import { SwimLane } from '../../../common/src/SwimLane';
 import { PlanStep, PlanStepCommitment } from 'pddl-workspace';
 import { HappeningType } from 'pddl-workspace';
 import { Plan, HelpfulAction } from 'pddl-workspace';
-import { PlanFunctionEvaluator } from './PlanFunctionEvaluator';
+import { PlanFunctionEvaluator } from 'ai-planning-val';
 import { PlanReportSettings } from './PlanReportSettings';
 import { VAL_STEP_PATH, CONF_PDDL, VALUE_SEQ_PATH, PLAN_REPORT_LINE_PLOT_GROUP_BY_LIFTED, DEFAULT_EPSILON } from '../configuration';
 import { utils } from 'pddl-workspace';
@@ -124,15 +124,15 @@ States evaluated: ${plan.statesEvaluated}`;
         let stateViz = '';
         if (planVisualizerPath && plan.domain) {
             let absPath = path.join(PddlWorkspace.getFolderPath(plan.domain.fileUri), planVisualizerPath);
-            try{
+            try {
                 delete require.cache[require.resolve(absPath)];
                 const visualize = require(absPath);
                 stateViz = visualize(plan, 300, 100);
                 // todo: document.getElementById("stateviz").innerHTML = stateViz;
                 stateViz = `<div class="stateView" plan="${planIndex}" style="margin: 5px; width: 300px; height: 100px; display: ${styleDisplay};">${stateViz}</div>`;
             }
-            catch(ex) {
-                console.log(ex);
+            catch (ex) {
+                console.warn(ex);
             }
         }
 
@@ -188,7 +188,7 @@ ${objectsHtml}
 
         if (!this.options.disableLinePlots && plan.domain && plan.problem) {
             let groupByLifted = workspace.getConfiguration(CONF_PDDL).get<boolean>(PLAN_REPORT_LINE_PLOT_GROUP_BY_LIFTED, true);
-            let evaluator = new PlanFunctionEvaluator(valueSeqPath, valStepPath, plan, groupByLifted);
+            let evaluator = new PlanFunctionEvaluator(plan, { valStepPath: valStepPath, valueSeqPath: valueSeqPath, shouldGroupByLifted: groupByLifted });
 
             if (evaluator.isAvailable()) {
 
@@ -401,7 +401,7 @@ ${stepsInvolvingThisObject}
     }
 
     toActionTooltipPlain(step: PlanStep): string {
-        let durationRow = step.isDurative && step.getDuration() !== undefined?
+        let durationRow = step.isDurative && step.getDuration() !== undefined ?
             `Duration: ${step.getDuration()!.toFixed(DIGITS)}, End: ${step.getEndTime().toFixed(DIGITS)}` :
             '';
 
