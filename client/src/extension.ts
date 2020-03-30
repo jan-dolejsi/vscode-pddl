@@ -28,7 +28,7 @@ import { initialize, instrumentOperation, instrumentOperationAsVsCodeCommand } f
 import { SearchDebugger } from './searchDebugger/SearchDebugger';
 import { PlanningDomainsSessions } from './session/PlanningDomainsSessions';
 import { PddlFormatProvider } from './formatting/PddlFormatProvider';
-import { Val } from './validation/Val';
+import { ValDownloader } from './validation/ValDownloader';
 import { createPddlExtensionContext, showError } from './utils';
 import { AssociationProvider } from './workspace/AssociationProvider';
 import { SuggestionProvider } from './symbols/SuggestionProvider';
@@ -52,7 +52,7 @@ const PDDL_UPDATE_TOKENS_PLANNER_SERVICE = 'pddl.updateTokensPlannerService';
 const PDDL_CONFIGURE_VALIDATOR = 'pddl.configureValidate';
 var formattingProvider: PddlFormatProvider;
 
-export async function activate(context: ExtensionContext) {
+export async function activate(context: ExtensionContext): Promise<PddlWorkspace | undefined> {
 
 	let extensionInfo = new ExtensionInfo();
 
@@ -62,22 +62,25 @@ export async function activate(context: ExtensionContext) {
 
 	try {
 		// activate the extension, but send instrumentation data
-		await instrumentOperation("activation", activateWithTelemetry)(context);
+		return await instrumentOperation("activation", activateWithTelemetry)(context);
 	}
 	catch (ex) {
 		// sadly, the next line never gets triggered, even if the activateWithTelemetry fails
 		console.error("Error during PDDL extension activation: " + (ex.message ?? ex));
 		window.showErrorMessage("There was an error starting the PDDL extension: " + ex.message);
+		return undefined;
 	}
 }
 
-function activateWithTelemetry(_operationId: string, context: ExtensionContext) {
-	let pddlConfiguration = new PddlConfiguration(context);
+var pddlConfiguration: PddlConfiguration;
 
-	let val = new Val(context);
+function activateWithTelemetry(_operationId: string, context: ExtensionContext): PddlWorkspace {
+	pddlConfiguration = new PddlConfiguration(context);
+
+	let valDownloader = new ValDownloader(context).registerCommands();
 
 	// run start-up actions
-	new StartUp(context, pddlConfiguration, val).atStartUp();
+	new StartUp(context, pddlConfiguration, valDownloader).atStartUp();
 
 	let pddlContext = createPddlExtensionContext(context);
 
@@ -252,6 +255,8 @@ function activateWithTelemetry(_operationId: string, context: ExtensionContext) 
 		renameProvider, suggestionProvider, documentSymbolProvider, definitionProvider, referencesProvider, hoverProvider,
 		planHoverProvider, planDefinitionProvider, happeningsHoverProvider, happeningsDefinitionProvider,
 		problemInitView, problemObjectsView, problemConstraintsView, configureCommand);
+	
+	return pddlWorkspace;
 }
 
 export function deactivate() {

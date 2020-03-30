@@ -26,19 +26,26 @@ export class CodePddlWorkspace {
      * @param context Code extension context. When not supplied, the instance is for testing only.
      * @param pddlConfiguration pddl extension configuration. When not supplied , the instance is for testing only.
      */
-    private constructor(public readonly pddlWorkspace: PddlWorkspace, context?: ExtensionContext, pddlConfiguration?: PddlConfiguration) {
-        let revealActionCommand = instrumentOperationAsVsCodeCommand('pddl.revealAction', (domainFileUri: Uri, actionName: String) => {
-            revealAction(<DomainInfo>pddlWorkspace.getFileInfo(domainFileUri.toString()), actionName);
-        });
-
+    private constructor(public readonly pddlWorkspace: PddlWorkspace, private context?: ExtensionContext, pddlConfiguration?: PddlConfiguration) {
         if (context) { // unit tests do not clean-up
             subscribeToWorkspace(this, context, pddlConfiguration);
-            context.subscriptions.push(revealActionCommand);
         }
     }
 
+    registerCommands(): CodePddlWorkspace {
+        let revealActionCommand = instrumentOperationAsVsCodeCommand('pddl.revealAction', (domainFileUri: Uri, actionName: String) => {
+            revealAction(<DomainInfo>this.pddlWorkspace.getFileInfo(domainFileUri.toString()), actionName);
+        });
+
+        if (this.context) {
+            this.context.subscriptions.push(revealActionCommand);
+        }
+
+        return this;
+    }
+
     static getInstance(pddlWorkspace: PddlWorkspace, context: ExtensionContext, pddlConfiguration: PddlConfiguration) {
-        return new CodePddlWorkspace(pddlWorkspace, context, pddlConfiguration);
+        return new CodePddlWorkspace(pddlWorkspace, context, pddlConfiguration).registerCommands();
     }
 
     static getInstanceForTestingOnly(pddlWorkspace: PddlWorkspace): CodePddlWorkspace {

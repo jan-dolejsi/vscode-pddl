@@ -5,14 +5,14 @@
 'use strict';
 
 import { ExtensionContext, window, MessageItem } from 'vscode';
-import { Val } from './Val';
+import { ValDownloader } from './ValDownloader';
 
 const NEVER_DOWNLOAD_VAL = 'neverDownloadVal';
 
 export class ValDownloadReminder {
     private downloadValLater = false;
 
-    constructor(private context: ExtensionContext, private val: Val) {
+    constructor(private context: ExtensionContext, private val: ValDownloader) {
     }
 
     async suggestValDownloadConfigurationIfAbsent(): Promise<void> {

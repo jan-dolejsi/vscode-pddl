@@ -8,20 +8,12 @@ import { ExtensionContext, window, ProgressLocation, workspace, ConfigurationTar
 import { instrumentOperationAsVsCodeCommand } from "vscode-extension-telemetry-wrapper";
 import * as path from 'path';
 import { utils } from 'pddl-workspace';
-import { ValDownloader, ValVersion, readValManifest, writeValManifest } from 'ai-planning-val';
-import { PARSER_EXECUTABLE_OR_SERVICE, CONF_PDDL, VALIDATION_PATH, VALUE_SEQ_PATH, VAL_STEP_PATH } from '../configuration';
+import { ValDownloader as ValDownloaderBase, ValVersion, readValManifest, writeValManifest } from 'ai-planning-val';
+import { PARSER_EXECUTABLE_OR_SERVICE, CONF_PDDL, VALIDATION_PATH, VALUE_SEQ_PATH, VAL_STEP_PATH, VALIDATOR_VERSION } from '../configuration';
 import { VAL_DOWNLOAD_COMMAND, ValDownloadOptions } from './valCommand';
+import { ensureAbsoluteGlobalStoragePath } from '../utils';
 
-class VsCodeValDownloader extends ValDownloader {
-
-    protected async downloadDelegate(url: string, zipPath: string, message: string): Promise<void> {
-        return await window.withProgress({ location: ProgressLocation.Window, title: message }, (_progress, _token) => {
-            return super.downloadDelegate(url, zipPath, message);
-        });
-    }
-}
-
-export class Val {
+export class ValDownloader extends ValDownloaderBase {
     /** Directory where VAL binaries are to be downloaded locally. */
     static readonly VAL_DIR = "val";
     /** File that contains version info of last downloaded VAL binaries. */
@@ -30,9 +22,14 @@ export class Val {
     private readonly binaryStorage: string;
 
     constructor(private context: ExtensionContext) {
+        super();
         this.binaryStorage = this.context.globalStoragePath;
 
-        context.subscriptions.push(instrumentOperationAsVsCodeCommand(VAL_DOWNLOAD_COMMAND, async (options: ValDownloadOptions) => {
+        this.valVersionPath = path.join(this.getValPath(), "VAL.version");
+    }
+
+    registerCommands(): ValDownloader {
+        this.context.subscriptions.push(instrumentOperationAsVsCodeCommand(VAL_DOWNLOAD_COMMAND, async (options: ValDownloadOptions) => {
             try {
                 const userAgreesToDownload = options?.bypassConsent ?? await this.promptForConsent();
                 if (!userAgreesToDownload) { return; }
@@ -42,12 +39,18 @@ export class Val {
             }
         }));
 
-        this.valVersionPath = path.join(this.getValPath(), "VAL.version");
+        return this;
+    }
+
+    protected async downloadDelegate(url: string, zipPath: string, message: string): Promise<void> {
+        return await window.withProgress({ location: ProgressLocation.Window, title: message }, (_progress, _token) => {
+            return super.downloadDelegate(url, zipPath, message);
+        });
     }
 
     /** Directory where VAL binaries are to be downloaded locally. */
     getValPath(): string {
-        return path.join(this.binaryStorage, Val.VAL_DIR);
+        return path.join(this.binaryStorage, ValDownloader.VAL_DIR);
     }
 
     private asAbsoluteStoragePath(relativePath: string): string {
@@ -61,37 +64,38 @@ export class Val {
         return answer === download;
     }
 
-    async downloadConfigureAndCleanUp(): Promise<void> {
+    async downloadConfigureAndCleanUp(): Promise<ValVersion> {
         const wasValInstalled = await this.isInstalled();
         const previousVersion = wasValInstalled ? await this.readVersion() : undefined;
         let newVersion: ValVersion | undefined;
-        try {
 
-            await this.downloadAndConfigure();
-            newVersion = await this.readVersion();
+        try {
+            newVersion = await this.downloadAndConfigure();
         }
         finally {
             // clean previous version
             if (wasValInstalled && previousVersion && newVersion) {
                 if (previousVersion.buildId !== newVersion.buildId) {
                     console.log(`The ${previousVersion.version} and the ${newVersion.version} differ, cleaning-up the old version.`);
-                    const filesAbsPaths = previousVersion.files.map(f => this.asAbsoluteStoragePath(f));
+                    const filesAbsPaths = previousVersion.files.map(f => this.asAbsoluteStoragePath(path.join(ValDownloader.VAL_DIR, f)));
                     await ValDownloader.deleteAll(filesAbsPaths);
                 }
             }
         }
+
+        return newVersion;
     }
 
-    private getLatestStableValBuildId(): number {
-        return workspace.getConfiguration().get<number>("pddl.validatorVersion")!;
+    protected getLatestStableValBuildId(): number {
+        return workspace.getConfiguration(CONF_PDDL).get<number>(VALIDATOR_VERSION)!;
     }
 
-    private async downloadAndConfigure(): Promise<void> {
+    private async downloadAndConfigure(): Promise<ValVersion> {
 
         const buildId = this.getLatestStableValBuildId();
         utils.afs.mkdirIfDoesNotExist(this.binaryStorage, 0o755);
 
-        const newValVersion = await new VsCodeValDownloader().download(buildId, this.getValPath());
+        const newValVersion = await this.download(buildId, this.getValPath());
 
         const wasValInstalled = await this.isInstalled();
         const previousVersion = wasValInstalled ? await this.readVersion() : undefined;
@@ -99,6 +103,7 @@ export class Val {
         await this.writeVersion(newValVersion);
 
         await this.updateConfigurationPaths(newValVersion, previousVersion);
+        return newValVersion;
     }
 
     async isInstalled(): Promise<boolean> {
@@ -132,10 +137,13 @@ export class Val {
                 console.log(`Tool ${toolName} not found in the downloaded archive.`);
             }
 
+            const oldToolAbsPath = this.asAbsoluteStoragePath(path.join(ValDownloader.VAL_DIR, oldToolPath));
+            const newToolAbsPath = this.asAbsoluteStoragePath(path.join(ValDownloader.VAL_DIR, newToolPath));
+
             const configKey = fileToConfig.get(toolName);
 
             if (configKey && newToolPath) {
-                return await this.updateConfigurationPath(toolName, configKey, newToolPath, oldToolPath);
+                await this.updateConfigurationPath(toolName, configKey, newToolAbsPath, oldToolAbsPath);
             }
         }
     }
@@ -153,7 +161,10 @@ export class Val {
             console.log("configuration not declared: " + configKey);
             return;
         }
-        const normConfiguredGlobalValue = this.normalizePathIfValid(configurationInspect.globalValue);
+        const normConfiguredGlobalValue =
+            this.normalizePathIfValid(
+                // for backward compatibility
+                ensureAbsoluteGlobalStoragePath(configurationInspect.globalValue, this.context));
 
         const normPrevDownloadToolPath = this.normalizePathIfValid(prevDownloadToolPath);
 
@@ -166,11 +177,11 @@ export class Val {
             // || prevDownloadToolPath && !await utils.afs.exists(this.asAbsoluteStoragePath(prevDownloadToolPath))
             || await this.shouldOverwrite(toolName, normConfiguredGlobalValue, newToolPath)) {
             // Overwrite it!
-            return await workspace.getConfiguration().update(configKey, this.asAbsoluteStoragePath(newToolPath), ConfigurationTarget.Global);
+            return await workspace.getConfiguration().update(configKey, newToolPath, ConfigurationTarget.Global);
         }
     }
 
-    private async shouldOverwrite(toolName: string, yourConfiguredPath: string, newToolPath: string): Promise<boolean> {
+    protected async shouldOverwrite(toolName: string, yourConfiguredPath: string, newToolPath: string): Promise<boolean> {
         const overwrite = "Overwrite";
         const message = `VAL tool '${toolName}' was already configured:\n\nYour configuration: ${yourConfiguredPath}\n\nJust downloaded: ${newToolPath}\n\nWish to use the downloaded tool instead?`;
         const answer = await window.showInformationMessage(message, {modal: true}, overwrite, "Keep");

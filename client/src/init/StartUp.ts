@@ -13,7 +13,7 @@ import { PddlConfiguration } from '../configuration';
 import {diff} from 'semver';
 import { OverviewPage, SHOULD_SHOW_OVERVIEW_PAGE } from './OverviewPage';
 import { utils } from 'pddl-workspace';
-import { Val } from '../validation/Val';
+import { ValDownloader } from '../validation/ValDownloader';
 import { ValDownloadReminder } from '../validation/ValDownloadReminder';
 import { ExtensionInfo } from '../ExtensionInfo';
 
@@ -25,7 +25,7 @@ export class StartUp {
 
     overviewPage: OverviewPage;
 
-    constructor(private context: ExtensionContext, private pddlConfiguration: PddlConfiguration, private val: Val) {
+    constructor(private context: ExtensionContext, private pddlConfiguration: PddlConfiguration, private val: ValDownloader) {
         this.overviewPage = new OverviewPage(context, this.pddlConfiguration, this.val);
     }
 

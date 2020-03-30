@@ -25,6 +25,7 @@ const PLANNER_SERVICE_AUTHENTICATION_ACCESS_TOKEN = PDDL_PLANNER + '.serviceAuth
 const PLANNER_SERVICE_AUTHENTICATION_S_TOKEN = PDDL_PLANNER + '.serviceAuthenticationSToken';
 const PLANNER_EPSILON_TIMESTEP = PDDL_PLANNER + '.epsilonTimeStep';
 export const CONF_PDDL = 'pddl';
+export const VALIDATOR_VERSION = 'validatorVersion';
 export const VALIDATION_PATH = 'validatorPath';
 export const VAL_STEP_PATH = 'valStepPath';
 export const VAL_VERBOSE = 'valVerbose';
@@ -57,11 +58,11 @@ export class PddlConfiguration {
     async suggestNewParserConfiguration(showNever: boolean) {
         if (this.setupParserLater || this.context.globalState.get(this.NEVER_SETUP_PARSER)) { return; }
 
-        let setupParserNow: vscode.MessageItem = { title: "Setup now..." };
+        let setupParserNow: vscode.MessageItem = { title: "Setup manually..." };
         let downloadVal: vscode.MessageItem = { title: "Download VAL now..." };
         let setupParserNever: vscode.MessageItem = { title: "Never" };
         let setupParserLater: vscode.MessageItem = { title: "Later", isCloseAffordance: true };
-        let options: vscode.MessageItem[] = [setupParserNow, downloadVal, setupParserLater];
+        let options: vscode.MessageItem[] = [downloadVal, setupParserNow, setupParserLater];
         if (showNever) { options.splice(options.length, 0, setupParserNever); }
         let choice = await vscode.window.showInformationMessage(
             'Setup a [PDDL parser](https://github.com/jan-dolejsi/vscode-pddl/wiki/Configuring-the-PDDL-parser "Read more about PDDL parsers") or download [VAL Tools](https://github.com/KCL-Planning/VAL) in order to enable detailed syntactic analysis.',

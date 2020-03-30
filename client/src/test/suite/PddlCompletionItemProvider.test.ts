@@ -505,7 +505,7 @@ async function testDomainProvider(inputTextHead: string, ch: string, inputTextTa
 
     let domainNode = tree.getDefineNodeOrThrow().getFirstOpenBracketOrThrow('domain');
     let positionResolver = new CodeDocumentPositionResolver(doc);
-    let domainInfo = new parser.PddlDomainParser('file://testProblem.pddl', 1, initialText, domainNode, tree, positionResolver).getDomain();
+    let domainInfo = new parser.PddlDomainParser().parse('file://testProblem.pddl', 1, initialText, domainNode, tree, positionResolver);
     if (!domainInfo) { throw new Error(`Unable to parse test domain.`); }
 
     return await new DomainCompletionItemProvider().provide(doc, domainInfo, position, context);

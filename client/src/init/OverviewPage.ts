@@ -13,7 +13,7 @@ import { PddlConfiguration } from '../configuration';
 import * as path from 'path';
 import { getWebViewHtml, createPddlExtensionContext } from '../utils';
 import { utils } from 'pddl-workspace';
-import { Val } from '../validation/Val';
+import { ValDownloader } from '../validation/ValDownloader';
 import { VAL_DOWNLOAD_COMMAND, ValDownloadOptions } from '../validation/valCommand';
 import { PTEST_VIEW } from '../ptest/PTestCommands';
 import { instrumentOperationAsVsCodeCommand } from "vscode-extension-telemetry-wrapper";
@@ -28,7 +28,7 @@ export class OverviewPage {
 
     private readonly ICONS_EXTENSION_NAME = "vscode-icons-team.vscode-icons";
 
-    constructor(private context: ExtensionContext, private pddlConfiguration: PddlConfiguration, private val: Val) {
+    constructor(private context: ExtensionContext, private pddlConfiguration: PddlConfiguration, private val: ValDownloader) {
         instrumentOperationAsVsCodeCommand("pddl.showOverview", () => this.showWelcomePage(true));
         workspace.onDidChangeConfiguration(_ => this.updatePageConfiguration(), undefined, this.context.subscriptions);
         extensions.onDidChange(() => this.updateIconsAlerts(), this.context.subscriptions);

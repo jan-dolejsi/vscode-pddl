@@ -48,7 +48,7 @@ export interface WebViewHtmlOptions {
     externalScripts?: Uri[];
     /** Locations of any external styles, e.g. https://www.gstatic.com/charts/ */
     externalStyles?: Uri[];
-    /** Locations of any external images, e.g. https://somewhere, or data: */   
+    /** Locations of any external images, e.g. https://somewhere, or data: */
     externalImages?: Uri[];
 }
 
@@ -157,6 +157,8 @@ export function assertDefined<T>(value: T | undefined, message: string): T {
 
 /**
  * Absolute path, unless it relied on a %path% location (i.e. there was no dirname). 
+ * 
+ * This is here merely for background compatibility with previous val configuration storage
  * @param configuredPath a configured path to an executable
  */
 export function ensureAbsoluteGlobalStoragePath(configuredPath: string | undefined, context: ExtensionContext): string | undefined {
@@ -171,7 +173,13 @@ export function ensureAbsoluteGlobalStoragePath(configuredPath: string | undefin
         return configuredPath;
     }
     else {
-        return path.join(context.globalStoragePath, configuredPath);
+        // this is here merely for background compatibility with previous val configuration storage
+        if (configuredPath.startsWith(path.join('val', 'Val-'))) {
+            return path.join(context.globalStoragePath, configuredPath);
+        }
+        else {
+            return configuredPath;
+        }
     }
 }
 
@@ -184,7 +192,7 @@ export function equalsCaseInsensitive(text1: string, text2: string): boolean {
 }
 
 export function toRange(pddlRange: PddlRange): Range {
-	return new Range(pddlRange.startLine, pddlRange.startCharacter, pddlRange.endLine, pddlRange.endCharacter);
+    return new Range(pddlRange.startLine, pddlRange.startCharacter, pddlRange.endLine, pddlRange.endCharacter);
 }
 
 export function nodeToRange(document: TextDocument, node: parser.PddlSyntaxNode): Range {
