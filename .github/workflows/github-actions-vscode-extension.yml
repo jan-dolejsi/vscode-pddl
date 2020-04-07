@@ -51,6 +51,7 @@ jobs:
   publish:
     needs: build
     runs-on: ubuntu-latest
+    if: success() && github.ref == 'refs/heads/master'
     steps:
       - uses: actions/checkout@v2
       - name: Use Node.js ${{ matrix.node-version }}
@@ -62,7 +63,6 @@ jobs:
         run: npm install
 
       - name: Publish extension to marketplace
-        if: success() && github.ref == 'refs/heads/master'
         run: | 
           npm install -g vsce
           vsce publish -p $VSCE_TOKEN
