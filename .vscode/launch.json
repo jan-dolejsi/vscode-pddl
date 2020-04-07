@@ -18,14 +18,15 @@
 			"preLaunchTask": "compile"
 		},
 		{
-			"name": "Run Extension Tests",
+			"name": "Integration Tests",
 			"type": "extensionHost",
 			"request": "launch",
 			"runtimeExecutable": "${execPath}",
 			"args": [
 				"--folder-uri=${workspaceFolder}/client/src/test/tmpFolder/",
 				"--extensionDevelopmentPath=${workspaceFolder}/client",
-				"--extensionTestsPath=${workspaceFolder}/client/out/client/src/test/suite/index"
+				"--extensionTestsPath=${workspaceFolder}/client/out/client/src/test/suite/index",
+				"--disable-extensions"
 			],
 			"outFiles": ["${workspaceFolder}/client/out/client/src/test/**/*.js"],
 			"preLaunchTask": "compile"
