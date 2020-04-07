@@ -4,11 +4,13 @@
  * ------------------------------------------------------------------------------------------ */
 'use strict';
 
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
 import { readFileSync } from 'fs';
 import { Test } from './Test';
 import { Uri, window } from 'vscode';
-import { PddlExtensionContext } from '../../../common/src/PddlExtensionContext';
-import * as afs from '../../../common/src/asyncfs';
+import { PddlExtensionContext } from 'pddl-workspace';
+import { utils } from 'pddl-workspace';
 
 /**
  * Tests manifest
@@ -23,14 +25,14 @@ export class TestsManifest {
         this.path = uri.fsPath;
     }
 
-    static fromJSON(path: string, json: any, context: PddlExtensionContext) {
-        let defaultDomain: string | undefined = json["defaultDomain"];
-        let defaultProblem: string | undefined = json["defaultProblem"];
-        let defaultOptions: string | undefined = json["defaultOptions"];
-        let uri = Uri.file(path);
+    static fromJSON(path: string, json: any, context: PddlExtensionContext): TestsManifest {
+        const defaultDomain: string | undefined = json["defaultDomain"];
+        const defaultProblem: string | undefined = json["defaultProblem"];
+        const defaultOptions: string | undefined = json["defaultOptions"];
+        const uri = Uri.file(path);
 
-        let manifest = new TestsManifest(defaultDomain, defaultProblem, defaultOptions, uri);
-        let tests: Test[] = json["cases"] ? json["cases"].map((t: any) => Test.fromJSON(t, context)) : [];
+        const manifest = new TestsManifest(defaultDomain, defaultProblem, defaultOptions, uri);
+        const tests: Test[] = json["cases"] ? json["cases"].map((t: any) => Test.fromJSON(t, context)) : [];
         tests.forEach(case1 => manifest.addCase(case1));
 
         return manifest;
@@ -41,23 +43,23 @@ export class TestsManifest {
     }
 
     static load(path: string, context: PddlExtensionContext): TestsManifest {
-        let settings = readFileSync(path);
-        let json = JSON.parse(settings.toLocaleString());
+        const settings = readFileSync(path);
+        const json = JSON.parse(settings.toLocaleString());
         return TestsManifest.fromJSON(path, json, context);
     }
 
     async store(): Promise<void> {
-        let obj: any = {};
+        const obj: any = {};
         if (this.defaultDomain !== undefined) { obj["defaultDomain"] = this.defaultDomain; }
         if (this.defaultProblem !== undefined) { obj["defaultProblem"] = this.defaultProblem; }
         if (this.defaultOptions !== undefined) { obj["defaultOptions"] = this.defaultOptions; }
-        let cases: Test[] = [];
+        const cases: Test[] = [];
         this.testCases.forEach(test => cases.push(test.toJSON()));
         if (cases.length > 0) { obj["cases"] = cases; }
 
-        var json = JSON.stringify(obj, null, 2);
+        const json = JSON.stringify(obj, null, 2);
         try {
-            await afs.writeFile(this.uri.fsPath, json, 'utf8');
+            await utils.afs.writeFile(this.uri.fsPath, json, 'utf8');
         }
         catch(err) {
             window.showErrorMessage(`Error saving test case manifest ${err.name}: ${err.message}`);

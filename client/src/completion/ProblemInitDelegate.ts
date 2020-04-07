@@ -5,9 +5,9 @@
 'use strict';
 
 import { CompletionItem, CompletionContext, SnippetString, MarkdownString, CompletionItemKind } from 'vscode';
-import { ProblemInfo } from '../../../common/src/ProblemInfo';
-import { DomainInfo, TypeObjectMap } from '../../../common/src/DomainInfo';
-import { Variable } from '../../../common/src/FileInfo';
+import { ProblemInfo } from 'pddl-workspace';
+import { DomainInfo, TypeObjectMap } from 'pddl-workspace';
+import { Variable } from 'pddl-workspace';
 import { ContextDelegate } from './ContextDelegate';
 import { Delegate } from './Delegate';
 
@@ -32,11 +32,11 @@ export class ProblemInitDelegate extends ContextDelegate {
     }
 
     createSymmetricInit(problemFileInfo: ProblemInfo, domainFile: DomainInfo): void {
-        let allTypeObjects = domainFile.getConstants().merge(problemFileInfo.getObjectsTypeMap());
+        const allTypeObjects = domainFile.getConstants().merge(problemFileInfo.getObjectsTypeMap());
 
-        let symmetricPredicates = this.getSymmetricPredicates(domainFile);
+        const symmetricPredicates = this.getSymmetricPredicates(domainFile);
 
-        let symmetricFunctions = this.getSymmetricFunctions(domainFile);
+        const symmetricFunctions = this.getSymmetricFunctions(domainFile);
 
         if (symmetricPredicates.length && symmetricFunctions.length) {
             this.createSymmetricPredicateAndFunctionInitItem(symmetricPredicates, symmetricFunctions, domainFile, allTypeObjects);
@@ -57,14 +57,14 @@ export class ProblemInitDelegate extends ContextDelegate {
 
     createSymmetricPredicateAndFunctionInitItem(symmetricPredicates: Variable[], symmetricFunctions: Variable[],
         domainFile: DomainInfo, allTypeObjects: TypeObjectMap): void {
-        let typesInvolved = this.getTypesInvolved(symmetricPredicates.concat(symmetricFunctions), domainFile);
-        let objectsDefined = this.getObjects(allTypeObjects, typesInvolved);
-        let objectNames = objectsDefined
+        const typesInvolved = this.getTypesInvolved(symmetricPredicates.concat(symmetricFunctions), domainFile);
+        const objectsDefined = this.getObjects(allTypeObjects, typesInvolved);
+        const objectNames = objectsDefined
             .join(',');
 
         if (!objectsDefined.length) { return; }
 
-        let item = new CompletionItem('Initialize a symmetric predicate and function', CompletionItemKind.Snippet);
+        const item = new CompletionItem('Initialize a symmetric predicate and function', CompletionItemKind.Snippet);
         item.insertText = new SnippetString(
             "(${1|" + Delegate.toNamesCsv(symmetricPredicates) + "|} ${2|" + objectNames + "|} ${3|" + objectNames + "|}) (${1} ${3} ${2})\n" +
             "(= (${4|" + Delegate.toNamesCsv(symmetricFunctions) + "|} ${2|" + objectNames + "|} ${3|" + objectNames + "|}) ${5:1}) (= (${4} ${3} ${2}) ${5})");
@@ -78,16 +78,16 @@ export class ProblemInitDelegate extends ContextDelegate {
     createSymmetricPredicateInitItem(symmetricPredicates: Variable[],
         domainFile: DomainInfo, allTypeObjects: TypeObjectMap): void {
 
-        let typesInvolved = this.getTypesInvolved(symmetricPredicates, domainFile);
-        let objectsDefined = this.getObjects(allTypeObjects, typesInvolved);
-        let objectNames = objectsDefined
+        const typesInvolved = this.getTypesInvolved(symmetricPredicates, domainFile);
+        const objectsDefined = this.getObjects(allTypeObjects, typesInvolved);
+        const objectNames = objectsDefined
             .join(',');
 
         if (!objectsDefined.length) { return; }
 
-        let symmetricPredicateNames = Delegate.toNamesCsv(symmetricPredicates);
+        const symmetricPredicateNames = Delegate.toNamesCsv(symmetricPredicates);
 
-        let item = new CompletionItem('Initialize a symmetric predicate', CompletionItemKind.Snippet);
+        const item = new CompletionItem('Initialize a symmetric predicate', CompletionItemKind.Snippet);
         item.insertText = new SnippetString("(${1|" + symmetricPredicateNames + "|} ${2|" + objectNames + "|} ${3|" + objectNames + "|}) (${1} ${3} ${2})");
         item.documentation = new MarkdownString()
             .appendText("Inserts a predicate initialization for predicates with two parameters of the same type.")
@@ -98,16 +98,16 @@ export class ProblemInitDelegate extends ContextDelegate {
 
     createSymmetricFunctionInitItem(symmetricFunctions: Variable[],
         domainFile: DomainInfo, allTypeObjects: TypeObjectMap): void {
-        let typesInvolved = this.getTypesInvolved(symmetricFunctions, domainFile);
-        let objectsDefined = this.getObjects(allTypeObjects, typesInvolved);
-        let objectNames = objectsDefined
+        const typesInvolved = this.getTypesInvolved(symmetricFunctions, domainFile);
+        const objectsDefined = this.getObjects(allTypeObjects, typesInvolved);
+        const objectNames = objectsDefined
             .join(',');
 
         if (!objectsDefined.length) { return; }
 
-        let symmetricFunctionNames = Delegate.toNamesCsv(symmetricFunctions);
+        const symmetricFunctionNames = Delegate.toNamesCsv(symmetricFunctions);
 
-        let item = new CompletionItem('Initialize a symmetric function', CompletionItemKind.Snippet);
+        const item = new CompletionItem('Initialize a symmetric function', CompletionItemKind.Snippet);
         item.insertText = new SnippetString("(= (${1|" + symmetricFunctionNames + "|} ${2|" + objectNames + "|} ${3|" + objectNames + "|}) ${4:1}) (= (${1} ${3} ${2}) ${4})");
         item.documentation = new MarkdownString()
             .appendText("Inserts a function initialization for functions with two parameters of the same type.")
@@ -119,8 +119,8 @@ export class ProblemInitDelegate extends ContextDelegate {
     createSequencePredicateInitItem(symmetricPredicate: Variable, allTypeObjects: TypeObjectMap): void {
 
         // note for the sequence case we do not consider type inheritance
-        let typeInvolved = symmetricPredicate.parameters[0].type;
-        let objects = this.getObjects(allTypeObjects, [typeInvolved]);
+        const typeInvolved = symmetricPredicate.parameters[0].type;
+        const objects = this.getObjects(allTypeObjects, [typeInvolved]);
 
         if (objects.length < 2) { return; }
 
@@ -130,7 +130,7 @@ export class ProblemInitDelegate extends ContextDelegate {
             textToInsert += `(${symmetricPredicate.name} ${objects[i]} ${objects[i + 1]})\n`;
         }
 
-        let item = new CompletionItem('Initialize a sequence for ' + symmetricPredicate.declaredNameWithoutTypes, CompletionItemKind.Snippet);
+        const item = new CompletionItem('Initialize a sequence for ' + symmetricPredicate.declaredNameWithoutTypes, CompletionItemKind.Snippet);
         item.insertText = textToInsert;
         item.documentation = new MarkdownString()
             .appendText("Inserts a predicate initialization for predicates with two parameters of the same type with a sequence of object combinations.")
@@ -141,13 +141,13 @@ export class ProblemInitDelegate extends ContextDelegate {
 
     createTimedInitialLiteral(_problemFileInfo: ProblemInfo, domainFile: DomainInfo): void {
 
-        let predicates = domainFile.getPredicates();
+        const predicates = domainFile.getPredicates();
 
         if (!predicates.length) { return; }
 
-        let namesCsv = Delegate.toTypeLessNamesCsv(predicates);
+        const namesCsv = Delegate.toTypeLessNamesCsv(predicates);
 
-        let item = new CompletionItem('at <time> (predicate1)', CompletionItemKind.Snippet);
+        const item = new CompletionItem('at <time> (predicate1)', CompletionItemKind.Snippet);
         item.filterText = 'at ';
         item.insertText = new SnippetString(this.enclose(
             "at ${1:1.0} (${2|" + namesCsv + "|})"));
@@ -161,13 +161,13 @@ export class ProblemInitDelegate extends ContextDelegate {
 
     createTimedInitialNegativeLiteral(_problemFileInfo: ProblemInfo, domainFile: DomainInfo): void {
 
-        let predicates = domainFile.getPredicates();
+        const predicates = domainFile.getPredicates();
 
         if (!predicates.length) { return; }
 
-        let namesCsv = Delegate.toTypeLessNamesCsv(predicates);
+        const namesCsv = Delegate.toTypeLessNamesCsv(predicates);
 
-        let item = new CompletionItem('at <time> (not (predicate1))', CompletionItemKind.Snippet);
+        const item = new CompletionItem('at <time> (not (predicate1))', CompletionItemKind.Snippet);
         item.filterText = 'at ';
         item.insertText = new SnippetString(this.enclose(
             "at ${1:1.0} (not (${2|" + namesCsv + "|}))"));
@@ -181,11 +181,11 @@ export class ProblemInitDelegate extends ContextDelegate {
 
     createTimedInitialFluent(_problemFileInfo: ProblemInfo, domainFile: DomainInfo): void {
 
-        let functions = domainFile.getFunctions();
+        const functions = domainFile.getFunctions();
 
         if (!functions.length) { return; }
 
-        let item = new CompletionItem('at <time> (= (function1) <value>)', CompletionItemKind.Snippet);
+        const item = new CompletionItem('at <time> (= (function1) <value>)', CompletionItemKind.Snippet);
         item.filterText = 'at ';
         item.insertText = new SnippetString(this.enclose(
             "at ${1:1.0} (= (${2|" + Delegate.toTypeLessNamesCsv(functions) + "|}) ${3:42})"));

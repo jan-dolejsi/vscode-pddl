@@ -3,7 +3,7 @@
  * Licensed under the MIT License. See License.txt in the project root for license information.
  * ------------------------------------------------------------------------------------------ */
 
-import { ExtensionContext, TreeDataProvider, EventEmitter, TreeItem, Event, window, TreeItemCollapsibleState, Uri, TextDocumentContentProvider, CancellationToken, workspace, commands, ViewColumn, TreeView } from 'vscode';
+import { ExtensionContext, TreeDataProvider, EventEmitter, TreeItem, Event, window, TreeItemCollapsibleState, Uri, TextDocumentContentProvider, CancellationToken, workspace, commands, ViewColumn, TreeView, Command } from 'vscode';
 
 import { CatalogEntry, CatalogEntryKind, Collection, Domain, Problem } from './CatalogEntry';
 import { PlanningDomains } from './PlanningDomains';
@@ -17,6 +17,7 @@ export const HTTPLAN = 'httplan';
 
 export class Catalog {
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     treeView: TreeView<any>;
 
     constructor(context: ExtensionContext) {
@@ -27,21 +28,21 @@ export class Catalog {
         context.subscriptions.push(workspace.registerTextDocumentContentProvider(HTTPLAN, new CatalogPlanProvider()));
 
         context.subscriptions.push(instrumentOperationAsVsCodeCommand(COMMAND_SHOW_DOMAIN_PROBLEM,
-            (domain_url: string, problem_url: string, plan_url: string) =>
-                this.showProblem(domain_url, problem_url, plan_url)));
+            (domainUrl: string, problemUrl: string, planUrl: string) =>
+                this.showProblem(domainUrl, problemUrl, planUrl)));
     }
 
-    showProblem(domain_url: string, problem_url: string, plan_url: string): void {
+    showProblem(domainUrl: string, problemUrl: string, planUrl: string): void {
         try {
             commands.executeCommand('vscode.setEditorLayout', { orientation: 0, groups: [{ size: 0.4 }, { size: 0.3 }, { size: 0.3 }] });
 
-            workspace.openTextDocument(Uri.parse(domain_url)).then(document => {
+            workspace.openTextDocument(Uri.parse(domainUrl)).then(document => {
                 window.showTextDocument(document, ViewColumn.One);
             });
-            workspace.openTextDocument(Uri.parse(problem_url)).then(document => {
+            workspace.openTextDocument(Uri.parse(problemUrl)).then(document => {
                 window.showTextDocument(document, ViewColumn.Two);
             });
-            workspace.openTextDocument(Uri.parse(plan_url)).then(document => {
+            workspace.openTextDocument(Uri.parse(planUrl)).then(document => {
                 window.showTextDocument(document, { viewColumn: ViewColumn.Three, preview: true });
             });
         }
@@ -59,7 +60,7 @@ class CatalogDomainProblemProvider implements TextDocumentContentProvider {
         if (token.isCancellationRequested) { return "Operation canceled."; }
 
         uri = uri.with({ scheme: "http" });
-        return new Promise<string>((resolve, _reject) => {
+        return new Promise<string>((resolve) => {
             request.get(uri.toString(), (error, _httpResponse, httpBody) => {
                 if (error) {
                     resolve(error);
@@ -79,7 +80,7 @@ class CatalogPlanProvider implements TextDocumentContentProvider {
         if (token.isCancellationRequested) { return "Operation canceled."; }
 
         uri = decodePlanUri(uri);
-        return new Promise<string>((resolve, _reject) => {
+        return new Promise<string>((resolve) => {
             request.get(uri.toString(), { json: true }, (error, _httpResponse, httpBody) => {
                 if (error) {
                     resolve(error);
@@ -94,7 +95,9 @@ class CatalogPlanProvider implements TextDocumentContentProvider {
 
 class CatalogDataProvider implements TreeDataProvider<CatalogEntry> {
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     private _onDidChangeTreeData: EventEmitter<any> = new EventEmitter<any>();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     readonly onDidChangeTreeData: Event<any> = this._onDidChangeTreeData.event;
     private planningDomains = new PlanningDomains();
 
@@ -103,7 +106,7 @@ class CatalogDataProvider implements TreeDataProvider<CatalogEntry> {
     }
 
     public getTreeItem(element: CatalogEntry): TreeItem {
-        let isCollapsible = element.kind !== CatalogEntryKind.Problem;
+        const isCollapsible = element.kind !== CatalogEntryKind.Problem;
         return {
             label: element.label,
             collapsibleState: isCollapsible ? TreeItemCollapsibleState.Collapsed : void 0,
@@ -113,26 +116,28 @@ class CatalogDataProvider implements TreeDataProvider<CatalogEntry> {
         };
     }
 
-    getIcon(kind: CatalogEntryKind): any {
+    getIcon(kind: CatalogEntryKind): string | undefined {
         if (!kind) {
-            return null;
+            return undefined;
         } else if (kind === CatalogEntryKind.Domain) {
             return this.context.asAbsolutePath(join('views', 'overview', 'file_type_pddl.svg'));
         } else if (kind === CatalogEntryKind.Problem) {
             return this.context.asAbsolutePath(join('views', 'overview', 'file_type_pddl_plan.svg'));
+        } else {
+            return undefined;
         }
     }
 
-    private createCommand(element: CatalogEntry) {
+    private createCommand(element: CatalogEntry): Command | undefined {
         if (element.kind === CatalogEntryKind.Problem) {
-            let problem = <Problem>element;
-            let domain_url = Uri.parse(problem.domain_url).with({ scheme: HTTPDDL });
-            let problem_url = Uri.parse(problem.problem_url).with({ scheme: HTTPDDL });
-            let plan_url = encodePlanUri(problem);
+            const problem = element as Problem;
+            const domainUrl = Uri.parse(problem.domain_url).with({ scheme: HTTPDDL });
+            const problemUrl = Uri.parse(problem.problem_url).with({ scheme: HTTPDDL });
+            const planUrl = encodePlanUri(problem);
 
             return {
                 command: COMMAND_SHOW_DOMAIN_PROBLEM,
-                arguments: [domain_url, problem_url, plan_url],
+                arguments: [domainUrl, problemUrl, planUrl],
                 title: 'PDDL: Show PDDL domain, problem and plan'
             };
         } else {
@@ -145,11 +150,11 @@ class CatalogDataProvider implements TreeDataProvider<CatalogEntry> {
             return this.planningDomains.getCollections();
         }
         else if (element.kind === CatalogEntryKind.Collection) {
-            let collection = <Collection>element;
+            const collection = element as Collection;
             return this.planningDomains.getDomains(collection);
         }
         else if (element.kind === CatalogEntryKind.Domain) {
-            let domain = <Domain>element;
+            const domain = element as Domain;
             return this.planningDomains.getProblems(domain);
         }
         else {
@@ -166,7 +171,7 @@ function encodePlanUri(problem: Problem): Uri {
 }
 
 function decodePlanUri(encodedUri: Uri): Uri {
-    let lastSlash = encodedUri.path.lastIndexOf('/');
+    const lastSlash = encodedUri.path.lastIndexOf('/');
     return encodedUri.with({ path: encodedUri.path.substring(0, lastSlash), scheme: "http" });
 }
 

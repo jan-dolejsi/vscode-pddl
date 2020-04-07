@@ -14,8 +14,8 @@ import { State } from './State';
 import { PlanReportGenerator } from '../planning/PlanReportGenerator';
 import { StateToPlan } from './StateToPlan';
 import { StateResolver } from './StateResolver';
-import { ProblemInfo } from '../../../common/src/ProblemInfo';
-import { DomainInfo } from '../../../common/src/DomainInfo';
+import { ProblemInfo } from 'pddl-workspace';
+import { DomainInfo } from 'pddl-workspace';
 
 export class SearchDebuggerView {
     private webViewPanel: WebviewPanel | undefined;
@@ -51,7 +51,7 @@ export class SearchDebuggerView {
         this.subscriptions.push(search.onPlanFound(planStates => this.displayPlan(planStates)));
     }
 
-    setDomainAndProblem(domain: DomainInfo, problem: ProblemInfo) {
+    setDomainAndProblem(domain: DomainInfo, problem: ProblemInfo): void {
         this.domain = domain;
         this.problem = problem;
     }
@@ -66,7 +66,7 @@ export class SearchDebuggerView {
     }
 
     async createDebugView(showOnTop: boolean): Promise<void> {
-        let iconUri = this.context.asAbsolutePath('images/icon.png');
+        const iconUri = this.context.asAbsolutePath('images/icon.png');
 
         this.webViewPanel = window.createWebviewPanel(
             "pddl.SearchDebugger",
@@ -84,7 +84,7 @@ export class SearchDebuggerView {
             }
         );
 
-        let html = await this.getHtml(this.webViewPanel.webview);
+        const html = await this.getHtml(this.webViewPanel.webview);
         this.webViewPanel.webview.html = html;
         this.webViewPanel.iconPath = Uri.file(iconUri);
 
@@ -95,7 +95,7 @@ export class SearchDebuggerView {
         this.context.subscriptions.push(this.webViewPanel); // todo: this may not be necessary
     }
 
-    changedViewState(webViewPanel: WebviewPanel): any {
+    changedViewState(webViewPanel: WebviewPanel): void {
         if (webViewPanel.visible) {
             this.showDebuggerState();
             if (this.stateChangedWhileViewHidden) {
@@ -108,6 +108,7 @@ export class SearchDebuggerView {
         }
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     async handleMessage(message: any): Promise<void> {
         console.log(`Message received from the webview: ${message.command}`);
 
@@ -160,7 +161,7 @@ export class SearchDebuggerView {
         this.showDebuggerState();
     }
 
-    private showDebuggerState() {
+    private showDebuggerState(): void {
         this.postMessage({
             command: "debuggerState", state: {
                 running: this.debuggerState ? 'on' : 'off',
@@ -170,18 +171,18 @@ export class SearchDebuggerView {
     }
 
     addState(newState: State): void {
-        new Promise(_ => this.postMessage({ command: 'stateAdded', state: newState }))
+        new Promise(() => this.postMessage({ command: 'stateAdded', state: newState }))
             .catch(reason => console.log(reason));
     }
 
     update(state: State): void {
-        new Promise(_ => this.postMessage({ command: 'stateUpdated', state: state }))
+        new Promise(() => this.postMessage({ command: 'stateUpdated', state: state }))
             .catch(reason => console.log(reason));
     }
 
     showAllStates(): void {
-        let allStates = this.search?.getStates() ?? [];
-        new Promise(_ => this.postMessage({ command: 'showAllStates', state: allStates }))
+        const allStates = this.search?.getStates() ?? [];
+        new Promise(() => this.postMessage({ command: 'showAllStates', state: allStates }))
             .catch(reason => console.log(reason));
     }
 
@@ -194,11 +195,12 @@ export class SearchDebuggerView {
     }
 
     displayPlan(planStates: State[]): void {
-        new Promise(_ => this.postMessage({ command: 'showPlan', state: planStates }))
+        new Promise(() => this.postMessage({ command: 'showPlan', state: planStates }))
             .catch(reason => console.log(reason));
     }
 
-    private postMessage(message: { command: string; state: any; }) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    private postMessage(message: { command: string; state: any }): void {
         if (this.webViewPanel !== undefined) {
             this.webViewPanel.webview.postMessage(message);
 
@@ -211,16 +213,16 @@ export class SearchDebuggerView {
     async showStatePlan(stateId: number): Promise<void> {
         if (this.search === undefined) { return void 0; }
         if (stateId === null) { return void 0; }
-        let state = this.search.getState(stateId);
+        const state = this.search.getState(stateId);
         if (!state) { return; }
-        let statePlan = new StateToPlan(this.domain, this.problem).convert(state);
-        let planHtml = await new PlanReportGenerator(this.context,
+        const statePlan = new StateToPlan(this.domain, this.problem).convert(state);
+        const planHtml = await new PlanReportGenerator(this.context,
             { displayWidth: 200, selfContained: false, disableLinePlots: true, disableSwimLaneView: false, disableHamburgerMenu: true })
             .generateHtml([statePlan]);
         this.postMessage({ command: 'showStatePlan', state: planHtml });
     }
 
-    clear() {
+    clear(): void {
         this.postMessage({ command: 'clear', state: 'n/a' });
         this.stateLogLineCache.clear();
         this.domain = undefined;
@@ -232,7 +234,7 @@ export class SearchDebuggerView {
             this.postMessage({ command: 'stateLog', state: null });
         }
         else {
-            let selectedUri = await window.showOpenDialog({ canSelectMany: false, defaultUri: this.stateLogFile, canSelectFolders: false });
+            const selectedUri = await window.showOpenDialog({ canSelectMany: false, defaultUri: this.stateLogFile, canSelectFolders: false });
             if (!selectedUri) { return; }
             this.stateLogFile = selectedUri[0];
             this.stateLogEditor = await window.showTextDocument(await workspace.openTextDocument(this.stateLogFile), { preserveFocus: true, viewColumn: ViewColumn.Beside });
@@ -242,7 +244,7 @@ export class SearchDebuggerView {
 
     async scrollStateLog(stateId: number): Promise<void> {
         if (!this.stateLogFile || !this.stateLogEditor || !this.search) { return; }
-        let state = this.search.getState(stateId);
+        const state = this.search.getState(stateId);
         if (!state) { return; }
 
         if (this.stateLogEditor.document.isClosed) {
@@ -250,16 +252,18 @@ export class SearchDebuggerView {
         }
 
         if (this.stateLogLineCache.has(state.origId)) {
-            let cachedLineId = this.stateLogLineCache.get(state.origId)!;
-            this.stateLogEditor.revealRange(new Range(cachedLineId, 0, cachedLineId + 1, 0), TextEditorRevealType.AtTop);
+            const cachedLineId = this.stateLogLineCache.get(state.origId);
+            if (cachedLineId) {
+                this.stateLogEditor.revealRange(new Range(cachedLineId, 0, cachedLineId + 1, 0), TextEditorRevealType.AtTop);
+            }
             return;
         }
 
-        let pattern = workspace.getConfiguration("pddlSearchDebugger").get<string>("stateLogPattern", "");
+        const pattern = workspace.getConfiguration("pddlSearchDebugger").get<string>("stateLogPattern", "");
 
         for (let lineIdx = 0; lineIdx < this.stateLogEditor.document.lineCount; lineIdx++) {
             const logLine = this.stateLogEditor.document.lineAt(lineIdx);
-            let patternMatch = logLine.text.match(new RegExp(pattern));
+            const patternMatch = logLine.text.match(new RegExp(pattern));
             if (patternMatch && patternMatch[1] === state.origId) {
                 this.stateLogEditor.revealRange(logLine.range, TextEditorRevealType.AtTop);
                 this.stateLogLineCache.set(state.origId, lineIdx);

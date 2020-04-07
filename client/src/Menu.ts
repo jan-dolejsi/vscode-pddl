@@ -11,7 +11,7 @@ export class Menu {
     }
 
     async show(token?: CancellationToken): Promise<MenuItem | undefined> {
-        let selectedItem = await window.showQuickPick(this.items, this.options, token);
+        const selectedItem = await window.showQuickPick(this.items, this.options, token);
 
         if (selectedItem !== undefined) {
             await commands.executeCommand(selectedItem.command, ...(selectedItem.args ?? []));
@@ -23,5 +23,6 @@ export class Menu {
 
 export interface MenuItem extends QuickPickItem {
     command: string;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     args?: any[];
 }

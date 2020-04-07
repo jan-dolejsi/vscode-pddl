@@ -4,8 +4,8 @@
  * ------------------------------------------------------------------------------------------ */
 'use strict';
 
-import { HappeningType } from "../../../common/src/HappeningsInfo";
-import { HelpfulAction } from "../../../common/src/Plan";
+import { HappeningType } from 'pddl-workspace';
+import { HelpfulAction } from 'pddl-workspace';
 
 export interface SearchHappening {
     earliestTime: number;
@@ -21,7 +21,7 @@ export class MockSearchHappening implements SearchHappening{
         public readonly isRelaxed: boolean) { }
 
     toString(): string {
-        let relaxed = this.isRelaxed ? '*' : '';
+        const relaxed = this.isRelaxed ? '*' : '';
         return `${this.earliestTime}: ${this.actionName}[${this.shotCounter}] ${this.kind}${relaxed}`;
     }
 }

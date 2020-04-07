@@ -4,8 +4,8 @@
  * ------------------------------------------------------------------------------------------ */
 'use strict';
 
-import { ProblemInfo } from '../../../common/src/ProblemInfo';
-import { DomainInfo } from '../../../common/src/DomainInfo';
+import { ProblemInfo } from 'pddl-workspace';
+import { DomainInfo } from 'pddl-workspace';
 
 /**
  * Provides configuration options for the planner invocation.

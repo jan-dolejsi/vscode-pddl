@@ -5,10 +5,8 @@
 'use strict';
 
 import { CompletionItem, CompletionContext, MarkdownString, CompletionItemKind, Range, CompletionTriggerKind } from 'vscode';
-import { PDDL } from '../../../common/src/parser';
-import { DomainInfo } from '../../../common/src/DomainInfo';
-import { PddlSyntaxNode } from '../../../common/src/PddlSyntaxNode';
-import { ModelHierarchy } from '../../../common/src/ModelHierarchy';
+import { PDDL } from 'pddl-workspace';
+import { DomainInfo, parser, ModelHierarchy } from 'pddl-workspace';
 import { AbstractCompletionItemProvider, Suggestion } from './AbstractCompletionItemProvider';
 import { Delegate } from './Delegate';
 import { requires, toSelection } from './DomainCompletionItemProvider';
@@ -17,8 +15,8 @@ export class DiscreteEffectCompletionItemProvider extends AbstractCompletionItem
 
     constructor() {
         super();
-        let discreteEffectHint = 'Use this either in instantaneous `:action`\'s `:effect`, or in `:durative-action`\'s `(at start ...)` or `(at end ...)` effect.';
-        let requiresFluents = requires([':fluents']);
+        const discreteEffectHint = 'Use this either in instantaneous `:action`\'s `:effect`, or in `:durative-action`\'s `(at start ...)` or `(at end ...)` effect.';
+        const requiresFluents = requires([':fluents']);
 
         this.addSuggestionDocumentation('not', 'Assigns `false` to a predicate',
             new MarkdownString('Makes predicate false:')
@@ -54,7 +52,7 @@ export class DiscreteEffectCompletionItemProvider extends AbstractCompletionItem
                 .appendMarkdown(requires([':conditional-effects'])), CompletionItemKind.Method);
     }
 
-    static inside(currentNode: PddlSyntaxNode) {
+    static inside(currentNode: parser.PddlSyntaxNode): boolean {
         return ModelHierarchy.isInsideEffect(currentNode)
             && (ModelHierarchy.isInsideActionOrEvent(currentNode)
                 || ModelHierarchy.isInsideDurativeActionDiscreteEffect(currentNode));
@@ -63,11 +61,11 @@ export class DiscreteEffectCompletionItemProvider extends AbstractCompletionItem
     provide(domainInfo: DomainInfo, context: CompletionContext, range: Range | null): (CompletionItem | null)[] {
         if (context.triggerKind !== CompletionTriggerKind.Invoke && context.triggerCharacter !== '(') { return []; }
 
-        let functions = domainInfo.getFunctions();
-        let functionNamesCsv = Delegate.toTypeLessNamesCsv(functions);
+        const functions = domainInfo.getFunctions();
+        const functionNamesCsv = Delegate.toTypeLessNamesCsv(functions);
 
-        let predicates = domainInfo.getPredicates();
-        let predicateNamesCsv = Delegate.toTypeLessNamesCsv(predicates);
+        const predicates = domainInfo.getPredicates();
+        const predicateNamesCsv = Delegate.toTypeLessNamesCsv(predicates);
 
         return [
             this.createSnippetCompletionItem(Suggestion.from("not", context.triggerCharacter, '('),

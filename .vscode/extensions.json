@@ -4,7 +4,7 @@
 
 	// List of extensions which should be recommended for users of this workspace.
 	"recommendations": [
-		"ms-vscode.vscode-typescript-tslint-plugin",
+		"dbaeumer.vscode-eslint",
 		"cssho.vscode-svgviewer",
 		"maty.vscode-mocha-sidebar",
 		"davidanson.vscode-markdownlint",

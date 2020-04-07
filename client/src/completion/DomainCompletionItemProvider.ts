@@ -5,19 +5,16 @@
 'use strict';
 
 import { CompletionItem, TextDocument, Position, CompletionContext, CompletionItemKind, Range, MarkdownString } from 'vscode';
-import { PDDL } from '../../../common/src/parser';
-import { DomainInfo } from '../../../common/src/DomainInfo';
-import { PddlTokenType } from '../../../common/src/PddlTokenizer';
-import { PddlSyntaxNode } from '../../../common/src/PddlSyntaxNode';
-import { PddlStructure } from '../../../common/src/PddlStructure';
+import { PDDL } from 'pddl-workspace';
+import { DomainInfo, parser } from 'pddl-workspace';
 import { nodeToRange } from '../utils';
 import { AbstractCompletionItemProvider, Suggestion } from './AbstractCompletionItemProvider';
 import { DiscreteEffectCompletionItemProvider } from './DiscreteEffectCompletionItemProvider';
 import { ContinuousEffectCompletionItemProvider } from './ContinuousEffectCompletionItemProvider';
 import { DurativeActionEffectCompletionItemProvider } from './DurativeActionEffectCompletionItemProvider';
 import { DurativeActionConditionCompletionItemProvider } from './DurativeActionConditionCompletionItemProvider';
-import { Util } from '../../../common/src/util';
-import { ModelHierarchy } from '../../../common/src/ModelHierarchy';
+import { utils } from 'pddl-workspace';
+import { ModelHierarchy } from 'pddl-workspace';
 
 export class DomainCompletionItemProvider extends AbstractCompletionItemProvider {
 
@@ -68,7 +65,7 @@ export class DomainCompletionItemProvider extends AbstractCompletionItemProvider
 
         let currentNode = domainInfo.syntaxTree.getNodeAt(document.offsetAt(position));
 
-        if (currentNode.isType(PddlTokenType.Comment)) { return []; }
+        if (currentNode.isType(parser.PddlTokenType.Comment)) { return []; }
 
         if (this.insideDefine(domainInfo, currentNode, context)) {
             // inside the 'define' bracket
@@ -77,11 +74,11 @@ export class DomainCompletionItemProvider extends AbstractCompletionItemProvider
                 currentNode = currentNode.expand();
             }
 
-            let supportedSectionsHere = PddlStructure.getSupportedSectionsHere(currentNode, currentNode, PddlTokenType.OpenBracketOperator, PddlStructure.PDDL_DOMAIN_SECTIONS, PddlStructure.PDDL_DOMAIN_STRUCTURES);
-            let range = context.triggerCharacter && ['(', ':'].includes(context.triggerCharacter)
+            const supportedSectionsHere = parser.PddlStructure.getSupportedSectionsHere(currentNode, currentNode, parser.PddlTokenType.OpenBracketOperator, parser.PddlStructure.PDDL_DOMAIN_SECTIONS, parser.PddlStructure.PDDL_DOMAIN_STRUCTURES);
+            const range = context.triggerCharacter && ['(', ':'].includes(context.triggerCharacter)
                 ? nodeToRange(document, currentNode) : null;
 
-            let suggestions = supportedSectionsHere
+            const suggestions = supportedSectionsHere
                 .map(s => Suggestion.from(s, context.triggerCharacter, '('))
                 .filter(s => !!s).map(s => s!);
 
@@ -93,12 +90,12 @@ export class DomainCompletionItemProvider extends AbstractCompletionItemProvider
             return this.createRequirementsCompletionItems(document, currentNode, context);
         }
         else if (this.insideAction(currentNode)) {
-            let nearestPrecedingKeyword = PddlStructure.getPrecedingKeywordOrSelf(currentNode);
-            let supportedSectionsHere = PddlStructure.getSupportedSectionsHere(nearestPrecedingKeyword, currentNode, PddlTokenType.Keyword, PddlStructure.PDDL_ACTION_SECTIONS, []);
-            let range = context.triggerCharacter && ['(', ':'].includes(context.triggerCharacter)
+            const nearestPrecedingKeyword = parser.PddlStructure.getPrecedingKeywordOrSelf(currentNode);
+            const supportedSectionsHere = parser.PddlStructure.getSupportedSectionsHere(nearestPrecedingKeyword, currentNode, parser.PddlTokenType.Keyword, parser.PddlStructure.PDDL_ACTION_SECTIONS, []);
+            const range = context.triggerCharacter && ['(', ':'].includes(context.triggerCharacter)
                 ? nodeToRange(document, currentNode) : null;
 
-            let suggestions = supportedSectionsHere
+            const suggestions = supportedSectionsHere
                 .map(s => Suggestion.from(s, context.triggerCharacter, ''))
                 .filter(s => !!s).map(s => s!);
 
@@ -107,12 +104,12 @@ export class DomainCompletionItemProvider extends AbstractCompletionItemProvider
                 .filter(item => !!item).map(item => item!); // filter out nulls
         }
         else if (this.insideDurativeAction(currentNode)) {
-            let nearestPrecedingKeyword = PddlStructure.getPrecedingKeywordOrSelf(currentNode);
-            let supportedSectionsHere = PddlStructure.getSupportedSectionsHere(nearestPrecedingKeyword, currentNode, PddlTokenType.Keyword, PddlStructure.PDDL_DURATIVE_ACTION_SECTIONS, []);
-            let range = context.triggerCharacter && ['(', ':'].includes(context.triggerCharacter)
+            const nearestPrecedingKeyword = parser.PddlStructure.getPrecedingKeywordOrSelf(currentNode);
+            const supportedSectionsHere = parser.PddlStructure.getSupportedSectionsHere(nearestPrecedingKeyword, currentNode, parser.PddlTokenType.Keyword, parser.PddlStructure.PDDL_DURATIVE_ACTION_SECTIONS, []);
+            const range = context.triggerCharacter && ['(', ':'].includes(context.triggerCharacter)
                 ? nodeToRange(document, currentNode) : null;
 
-            let suggestions = supportedSectionsHere
+            const suggestions = supportedSectionsHere
                 .map(s => Suggestion.from(s, context.triggerCharacter, ''))
                 .filter(s => !!s).map(s => s!);
 
@@ -121,8 +118,8 @@ export class DomainCompletionItemProvider extends AbstractCompletionItemProvider
                 .filter(item => !!item).map(item => item!); // filter out nulls
         }
         else if (ModelHierarchy.isInsideEffect(currentNode)) {
-            let completions: (CompletionItem | null)[] = [];
-            let range = context.triggerCharacter === '(' ? nodeToRange(document, currentNode) : null;
+            const completions: (CompletionItem | null)[] = [];
+            const range = context.triggerCharacter === '(' ? nodeToRange(document, currentNode) : null;
 
             if (DurativeActionEffectCompletionItemProvider.inside(currentNode)) {
                 completions.push(... new DurativeActionEffectCompletionItemProvider().provide(domainInfo, context, range));
@@ -137,21 +134,21 @@ export class DomainCompletionItemProvider extends AbstractCompletionItemProvider
             return completions
                 .filter(c => !!c).map(c => c!);
         } else if (DurativeActionConditionCompletionItemProvider.inside(currentNode)) {
-            let range = context.triggerCharacter === '(' ? nodeToRange(document, currentNode) : null;
+            const range = context.triggerCharacter === '(' ? nodeToRange(document, currentNode) : null;
             return new DurativeActionConditionCompletionItemProvider()
                 .provide(domainInfo, context, range)
                 .filter(c => !!c).map(c => c!);
         }
 
         if (context.triggerCharacter === '?') {
-            let scopes = currentNode.findAllParametrisableScopes();
-            let range = nodeToRange(document, currentNode);
-            let parameterNamesFromAllScopes = scopes
+            const scopes = currentNode.findAllParametrisableScopes();
+            const range = nodeToRange(document, currentNode);
+            const parameterNamesFromAllScopes = scopes
                 .map(s => s.getParameterDefinition())
                 .filter(paramNode => !!paramNode).map(paramNode => paramNode!)
                 .map(paramNode => this.getParameterNames(paramNode));
             
-            return Util.flatMap(parameterNamesFromAllScopes)
+            return utils.Util.flatMap(parameterNamesFromAllScopes)
                 .map((paramName, index) => this.createSnippetCompletionItem(Suggestion.from(paramName, context.triggerCharacter, ''), paramName, range, context, index))
                 .filter(c => !!c).map(c => c!);
         }
@@ -159,43 +156,43 @@ export class DomainCompletionItemProvider extends AbstractCompletionItemProvider
         return [];
     }
 
-    private getParameterNames(parametersNode: PddlSyntaxNode): string[] {
-        return parametersNode.getChildrenOfType(PddlTokenType.Parameter, /.*/)
+    private getParameterNames(parametersNode: parser.PddlSyntaxNode): string[] {
+        return parametersNode.getChildrenOfType(parser.PddlTokenType.Parameter, /.*/)
             .map(n => n.getText());
     }
 
-    private insideAction(currentNode: PddlSyntaxNode): boolean {
+    private insideAction(currentNode: parser.PddlSyntaxNode): boolean {
         const pattern = /^\(\s*:action$/i;
         return this.insideScope(currentNode, pattern);
     }
 
-    private insideDurativeAction(currentNode: PddlSyntaxNode): boolean {
+    private insideDurativeAction(currentNode: parser.PddlSyntaxNode): boolean {
         const pattern = /^\(\s*:durative-action$/i;
         return this.insideScope(currentNode, pattern);
     }
 
-    private insideScope(currentNode: PddlSyntaxNode, pattern: RegExp) {
-        let parentScope = currentNode.expand();
-        return parentScope.isType(PddlTokenType.OpenBracketOperator) && parentScope.getToken().tokenText.match(pattern) !== null;
+    private insideScope(currentNode: parser.PddlSyntaxNode, pattern: RegExp): boolean {
+        const parentScope = currentNode.expand();
+        return parentScope.isType(parser.PddlTokenType.OpenBracketOperator) && parentScope.getToken().tokenText.match(pattern) !== null;
     }
 
     private readonly DURATION_SNIPPET = ":duration ${2|(= ?duration 1),(> ?duration 0),(<= ?duration 10),(and (>= ?duration 1)(<= ?duration 2))|}";
 
-    createDefineCompletionItem(_currentNode: PddlSyntaxNode, suggestion: Suggestion, range: Range | null, context: CompletionContext, index: number): CompletionItem | null {
+    createDefineCompletionItem(_currentNode: parser.PddlSyntaxNode, suggestion: Suggestion, range: Range | null, context: CompletionContext, index: number): CompletionItem | null {
         if (!suggestion) { return null; }
         switch (suggestion.sectionName) {
-            case PddlStructure.DOMAIN:
+            case parser.PddlStructure.DOMAIN:
                 return this.createSnippetCompletionItem(suggestion, "(domain ${1:domain_name})", range, context, index);
-            case PddlStructure.REQUIREMENTS:
+            case parser.PddlStructure.REQUIREMENTS:
                 return this.createSnippetCompletionItem(suggestion, "(:requirements :strips $0)", range, context, index);
-            case PddlStructure.TYPES:
-            case PddlStructure.CONSTANTS:
-            case PddlStructure.PREDICATES:
-            case PddlStructure.FUNCTIONS:
-            case PddlStructure.CONSTRAINTS:
+            case parser.PddlStructure.TYPES:
+            case parser.PddlStructure.CONSTANTS:
+            case parser.PddlStructure.PREDICATES:
+            case parser.PddlStructure.FUNCTIONS:
+            case parser.PddlStructure.CONSTRAINTS:
                 return this.createSnippetCompletionItem(suggestion, "(" + suggestion.sectionName + " \n\t$0\n)", range, context, index);
 
-            case PddlStructure.ACTION:
+            case parser.PddlStructure.ACTION:
                 return this.createSnippetCompletionItem(suggestion, ["(:action ${1:action_name}",
                     "    :parameters ($0)",
                     "    :precondition (and )",
@@ -203,7 +200,7 @@ export class DomainCompletionItemProvider extends AbstractCompletionItemProvider
                     ")",
                     ""
                 ].join('\n'), range, context, index);
-            case PddlStructure.DURATIVE_ACTION:
+            case parser.PddlStructure.DURATIVE_ACTION:
                 return this.createSnippetCompletionItem(suggestion, [
                     "(:durative-action ${1:action_name}",
                     "    :parameters ($0)",
@@ -225,7 +222,7 @@ export class DomainCompletionItemProvider extends AbstractCompletionItemProvider
                     ")",
                     ""
                 ].join('\n'), range, context, index);
-            case PddlStructure.PROCESS:
+            case parser.PddlStructure.PROCESS:
                 return this.createSnippetCompletionItem(suggestion, ["(:process ${1:process_name}",
                     "    :parameters ($0)",
                     "    :precondition (and",
@@ -237,7 +234,7 @@ export class DomainCompletionItemProvider extends AbstractCompletionItemProvider
                     ")",
                     ""
                 ].join('\n'), range, context, index);
-            case PddlStructure.EVENT:
+            case parser.PddlStructure.EVENT:
                 return this.createSnippetCompletionItem(suggestion, ["(:event ${1:event_name}",
                     "    :parameters ($0)",
                     "    :precondition (and",
@@ -254,12 +251,12 @@ export class DomainCompletionItemProvider extends AbstractCompletionItemProvider
         }
     }
 
-    createActionCompletionItem(_currentNode: PddlSyntaxNode, suggestion: Suggestion, range: Range | null, context: CompletionContext, index: number): CompletionItem | null {
+    createActionCompletionItem(_currentNode: parser.PddlSyntaxNode, suggestion: Suggestion, range: Range | null, context: CompletionContext, index: number): CompletionItem | null {
         switch (suggestion.sectionName) {
-            case PddlStructure.PARAMETERS:
+            case parser.PddlStructure.PARAMETERS:
                 return this.createParametersCompletionItem(suggestion, range, context, index);
-            case PddlStructure.PRECONDITION:
-            case PddlStructure.EFFECT:
+            case parser.PddlStructure.PRECONDITION:
+            case parser.PddlStructure.EFFECT:
                 return this.createSnippetCompletionItem(suggestion, suggestion.sectionName + " (and \n\t$0\n)", range, context, index);
             default:
                 return null;
@@ -270,14 +267,14 @@ export class DomainCompletionItemProvider extends AbstractCompletionItemProvider
         return this.createSnippetCompletionItem(suggestion, ":parameters ($0)", range, context, index);
     }
 
-    createDurativeActionCompletionItem(_currentNode: PddlSyntaxNode, suggestion: Suggestion, range: Range | null, context: CompletionContext, index: number): CompletionItem | null {
+    createDurativeActionCompletionItem(_currentNode: parser.PddlSyntaxNode, suggestion: Suggestion, range: Range | null, context: CompletionContext, index: number): CompletionItem | null {
         switch (suggestion.sectionName) {
-            case PddlStructure.PARAMETERS:
+            case parser.PddlStructure.PARAMETERS:
                 return this.createParametersCompletionItem(suggestion, range, context, index);
-            case PddlStructure.DURATION:
+            case parser.PddlStructure.DURATION:
                 return this.createSnippetCompletionItem(suggestion, this.DURATION_SNIPPET, range, context, index);
-            case PddlStructure.CONDITION:
-            case PddlStructure.EFFECT:
+            case parser.PddlStructure.CONDITION:
+            case parser.PddlStructure.EFFECT:
                 return this.createSnippetCompletionItem(suggestion, suggestion.sectionName + " (and \n\t$0\n)", range, context, index);
             default:
                 return null;
@@ -290,7 +287,7 @@ export function requires(requirements: string[]): string {
     return `\n\nThis language feature requires ${requirementsCsv}.`;
 }
 
-export function toSelection(tabstop: number, optionsCsv: string, orDefault: string) {
+export function toSelection(tabstop: number, optionsCsv: string, orDefault: string): string {
     if (optionsCsv.length) {
         return "${" + tabstop + "|" + optionsCsv + "|}";
     }

@@ -5,10 +5,10 @@
 'use strict';
 
 import { CompletionItem, CompletionContext, MarkdownString, CompletionItemKind, Range, CompletionTriggerKind } from 'vscode';
-import { PDDL } from '../../../common/src/parser';
-import { DomainInfo } from '../../../common/src/DomainInfo';
-import { ModelHierarchy } from '../../../common/src/ModelHierarchy';
-import { PddlSyntaxNode } from '../../../common/src/PddlSyntaxNode';
+import { PDDL } from 'pddl-workspace';
+import { DomainInfo } from 'pddl-workspace';
+import { ModelHierarchy } from 'pddl-workspace';
+import { parser } from 'pddl-workspace';
 import { AbstractCompletionItemProvider, Suggestion } from './AbstractCompletionItemProvider';
 import { Delegate } from './Delegate';
 import { toSelection, requires } from './DomainCompletionItemProvider';
@@ -17,8 +17,8 @@ export class ContinuousEffectCompletionItemProvider extends AbstractCompletionIt
 
     constructor() {
         super();
-        let continuousEffectHint = 'Use this in `:durative-action`\'s `:effect` block. Do not use it inside `(at start ...)` or `(at end ...)` effect. Example usage:';
-        let continuousEffectExample = `(:durative-action
+        const continuousEffectHint = 'Use this in `:durative-action`\'s `:effect` block. Do not use it inside `(at start ...)` or `(at end ...)` effect. Example usage:';
+        const continuousEffectExample = `(:durative-action
 ...
 :effect (and 
     (at start ...)
@@ -26,7 +26,7 @@ export class ContinuousEffectCompletionItemProvider extends AbstractCompletionIt
     (decrease (function2) (* #t 3.0))
     (at end ...)
 )`;
-        let requiresContinuousEffects = requires([':continuous-effects']);
+        const requiresContinuousEffects = requires([':continuous-effects']);
 
         this.addSuggestionDocumentation('increase', 'Continuous numeric increase effect',
             new MarkdownString('For example to increment a function value by *twice* the amount of time that elapsed since action started, use:')
@@ -47,7 +47,7 @@ export class ContinuousEffectCompletionItemProvider extends AbstractCompletionIt
                 .appendCodeblock('(forall (?p - product) (increase (stock ?p) (* #t 2.0))))', PDDL), CompletionItemKind.TypeParameter);
     }
 
-    static inside(currentNode: PddlSyntaxNode) {
+    static inside(currentNode: parser.PddlSyntaxNode): boolean {
         return ModelHierarchy.isInsideEffect(currentNode)
             && (ModelHierarchy.isInsideProcess(currentNode)
                 || ModelHierarchy.isInsideDurativeActionUnqualifiedEffect(currentNode));
@@ -56,8 +56,8 @@ export class ContinuousEffectCompletionItemProvider extends AbstractCompletionIt
     provide(domainInfo: DomainInfo, context: CompletionContext, range: Range | null): (CompletionItem | null)[] {
         if (context.triggerKind !== CompletionTriggerKind.Invoke && context.triggerCharacter !== '(') { return []; }
 
-        let functions = domainInfo.getFunctions();
-        let functionNamesCsv = Delegate.toTypeLessNamesCsv(functions);
+        const functions = domainInfo.getFunctions();
+        const functionNamesCsv = Delegate.toTypeLessNamesCsv(functions);
 
         return [
             this.createSnippetCompletionItem(Suggestion.from("increase", context.triggerCharacter, '('),

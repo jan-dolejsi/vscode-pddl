@@ -5,8 +5,8 @@
 'use strict';
 
 import { CompletionItem, CompletionItemKind } from 'vscode';
-import { PddlWorkspace } from '../../../common/src/PddlWorkspace';
-import { FileInfo } from '../../../common/src/FileInfo';
+import { PddlWorkspace } from 'pddl-workspace';
+import { FileInfo } from 'pddl-workspace';
 import { Delegate } from './Delegate';
 
 export class TypeDelegate extends Delegate {
@@ -20,12 +20,12 @@ export class TypeDelegate extends Delegate {
     }
 
     getTypes(fileInfo: FileInfo): string[] {
-        let domainInfo = this.workspace.asDomain(fileInfo);
+        const domainInfo = this.workspace.asDomain(fileInfo);
         return domainInfo ? domainInfo.getTypes() : [];
     }
 
     createType(typeName: string): CompletionItem {
-        let completionItem = this.createCompletionItem(typeName, 'Type', '', CompletionItemKind.Class);
+        const completionItem = this.createCompletionItem(typeName, 'Type', '', CompletionItemKind.Class);
         completionItem.insertText = ' ' + typeName; // prefix with a space for formatting
         completionItem.filterText = '- ' + typeName;
         return completionItem;

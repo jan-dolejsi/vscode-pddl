@@ -11,10 +11,10 @@ describe('Template', () => {
     describe('#method', () => {
         it('should ...', () => {
             // GIVEN
-            let expected = true;
+            const expected = true;
 
             // WHEN
-            let actual = true;
+            const actual = true;
 
             // THEN
             assert.strictEqual(actual, expected, "actual should equal expected");

@@ -10,9 +10,9 @@ import {
 } from 'vscode';
 
 import { isPddl } from '../workspace/workspaceUtils';
-import { DomainInfo } from '../../../common/src/DomainInfo';
-import { PddlWorkspace } from '../../../common/src/PddlWorkspace';
-import { FileInfo } from '../../../common/src/FileInfo';
+import { DomainInfo } from 'pddl-workspace';
+import { PddlWorkspace } from 'pddl-workspace';
+import { FileInfo } from 'pddl-workspace';
 
 import { CodePddlWorkspace } from '../workspace/CodePddlWorkspace';
 import { getWebViewHtml, createPddlExtensionContext, UriMap, showError } from '../utils';
@@ -39,7 +39,7 @@ export abstract class DomainView<TRendererOptions, TRenderData> extends Disposab
         super(() => this.dispose());
 
         context.subscriptions.push(instrumentOperationAsVsCodeCommand(options.viewCommand, async domainUri => {
-            let domainDocument = await getDomainDocument(domainUri);
+            const domainDocument = await getDomainDocument(domainUri);
             if (domainDocument) {
                 return this.revealOrCreatePreview(domainDocument, ViewColumn.Beside).catch(showError);
             }
@@ -55,7 +55,7 @@ export abstract class DomainView<TRendererOptions, TRenderData> extends Disposab
 
         codePddlWorkspace.pddlWorkspace.on(PddlWorkspace.UPDATED, (fileInfo: FileInfo) => {
             if (fileInfo.isDomain()) {
-                this.refreshDomain(<DomainInfo>fileInfo);
+                this.refreshDomain(fileInfo as DomainInfo);
             }
         });
     }
@@ -68,13 +68,13 @@ export abstract class DomainView<TRendererOptions, TRenderData> extends Disposab
         let panelsToRefresh: DomainViewPanel[] = [];
 
         // update the panel
-        let panel = this.webviewPanels.get(domainUri);
+        const panel = this.webviewPanels.get(domainUri);
         if (panel) {
             panelsToRefresh.push(panel);
         }
 
         // update all the insets
-        let insets = this.webviewInsets.get(domainUri);
+        const insets = this.webviewInsets.get(domainUri);
         if (insets) {
             panelsToRefresh = panelsToRefresh.concat([...insets.values()]);
         }
@@ -89,13 +89,13 @@ export abstract class DomainView<TRendererOptions, TRenderData> extends Disposab
         }
     }
 
-    private refreshPanel(panel: DomainViewPanel) {
+    private refreshPanel(panel: DomainViewPanel): void {
         if (panel.getNeedsRebuild() && panel.getPanel().isVisible()) {
             this.refreshPanelContent(panel);
         }
     }
 
-    async setup(previewPanel: DomainViewPanel, domainInfo: DomainInfo) {
+    async setup(previewPanel: DomainViewPanel, domainInfo: DomainInfo): Promise<void> {
         if (!previewPanel.getPanel().html) {
             previewPanel.getPanel().html = "Please wait...";
         }
@@ -120,7 +120,7 @@ export abstract class DomainView<TRendererOptions, TRenderData> extends Disposab
     }
 
     async revealOrCreatePreview(doc: TextDocument, displayColumn: ViewColumn): Promise<void> {
-        let domainInfo = await this.parseDomain(doc);
+        const domainInfo = await this.parseDomain(doc);
         if (!domainInfo) { return; }
 
         let previewPanel = this.webviewPanels.get(doc.uri);
@@ -138,18 +138,18 @@ export abstract class DomainView<TRendererOptions, TRenderData> extends Disposab
     protected abstract createPreviewPanelTitle(uri: Uri): string;
 
     async createPreviewPanelForDocument(domainInfo: DomainInfo, displayColumn: ViewColumn): Promise<DomainViewPanel> {
-        let domainUri = Uri.parse(domainInfo.fileUri);
-        let previewTitle = this.createPreviewPanelTitle(domainUri);
-        let webViewPanel = window.createWebviewPanel(this.options.webviewType, previewTitle, displayColumn, this.options.webviewOptions);
+        const domainUri = Uri.parse(domainInfo.fileUri);
+        const previewTitle = this.createPreviewPanelTitle(domainUri);
+        const webViewPanel = window.createWebviewPanel(this.options.webviewType, previewTitle, displayColumn, this.options.webviewOptions);
 
         webViewPanel.iconPath = Uri.file(this.context.asAbsolutePath("images/icon.png"));
 
-        let panel = new DomainViewPanel(domainUri, new WebviewPanelAdapter(webViewPanel));
+        const panel = new DomainViewPanel(domainUri, new WebviewPanelAdapter(webViewPanel));
 
         // when the user closes the tab, remove the panel
         webViewPanel.onDidDispose(() => this.webviewPanels.delete(domainUri), undefined, this.context.subscriptions);
         // when the pane becomes visible again, refresh it
-        webViewPanel.onDidChangeViewState(_ => this.refreshPanel(panel));
+        webViewPanel.onDidChangeViewState(() => this.refreshPanel(panel));
 
         webViewPanel.webview.onDidReceiveMessage(e => this.handleMessageCore(panel, e), undefined, this.context.subscriptions);
 
@@ -159,8 +159,9 @@ export abstract class DomainView<TRendererOptions, TRenderData> extends Disposab
     }
 
     private async generateHtml(viewPanel: DomainViewPanel): Promise<string> {
-        if (viewPanel.getError()) {
-            return viewPanel.getError()!.message;
+        const error = viewPanel.getError();
+        if (error) {
+            return error.message;
         }
         else {
             return getWebViewHtml(createPddlExtensionContext(this.context), {
@@ -177,15 +178,17 @@ export abstract class DomainView<TRendererOptions, TRenderData> extends Disposab
     }
 
     async parseDomain(domainDocument: TextDocument): Promise<DomainInfo | undefined> {
-        let fileInfo = await this.codePddlWorkspace.upsertAndParseFile(domainDocument);
+        const fileInfo = await this.codePddlWorkspace.upsertAndParseFile(domainDocument);
 
         if (!fileInfo?.isDomain()) {
             return undefined;
         }
 
-        return <DomainInfo>fileInfo;
+        return fileInfo as DomainInfo;
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     protected handleMessage(_panel: DomainViewPanel, _message: any): boolean {
         return false;
     }
@@ -195,6 +198,7 @@ export abstract class DomainView<TRendererOptions, TRenderData> extends Disposab
         return await this.refreshPanelContent(panel);
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     private async handleMessageCore(panel: DomainViewPanel, message: any): Promise<void> {
         console.log(`Message received from the webview: ${message.command}`);
 
@@ -222,7 +226,7 @@ async function getDomainDocument(dotDocumentUri: Uri | undefined): Promise<TextD
         return await workspace.openTextDocument(dotDocumentUri);
     } else {
         if (window.activeTextEditor !== undefined && isPddl(window.activeTextEditor.document)) {
-            return window.activeTextEditor!.document;
+            return window.activeTextEditor.document;
         }
         else {
             return undefined;

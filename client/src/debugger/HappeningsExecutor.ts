@@ -9,16 +9,15 @@ import { window, Uri } from 'vscode';
 import { PddlConfiguration } from '../configuration';
 import { dirname } from 'path';
 import { DebuggingSessionFiles } from './DebuggingSessionFiles';
-import { Happening } from '../HappeningsInfo';
-import { VariableValue } from '../../../common/src/ProblemInfo';
-import { ValStep, ValStepError, ValStepExitCode } from './ValStep';
+import { Happening, VariableValue } from 'pddl-workspace';
+import { ValStep, ValStepError, ValStepExitCode } from 'ai-planning-val';
 
 /**
  * Executes sequence of plan happenings and decorates the happenings file with action effects.
  */
 export class HappeningsExecutor {
 
-    valStep: ValStep;
+    private valStep: ValStep;
     decorations: vscode.TextEditorDecorationType[] = [];
 
     /**
@@ -42,24 +41,25 @@ export class HappeningsExecutor {
             return [];
         }
 
-        let valStepPath = await this.pddlConfiguration.getValStepPath();
+        const valStepPath = await this.pddlConfiguration.getValStepPath();
+        const valStepVerbose = this.pddlConfiguration.getValStepVerbose();
         if (!valStepPath) { return []; }
-        let cwd = dirname(Uri.parse(this.context.happenings.fileUri).fsPath);
+        const cwd = dirname(Uri.parse(this.context.happenings.fileUri).fsPath);
 
         try {
             this.valStep.on(ValStep.NEW_HAPPENING_EFFECTS, (happenings, values) => this.showValues(happenings, values));
 
-            await this.valStep.executeIncrementally(valStepPath, cwd, this.context.happenings.getHappenings());
+            await this.valStep.executeIncrementally(this.context.happenings.getHappenings(), { valStepPath, cwd, verbose: valStepVerbose });
 
             this.decorations.push(this.seeNextLineDecoration);
-        } catch(err) {
+        } catch (err) {
             if (err instanceof ValStepError) {
                 window.showErrorMessage(err.message);
             }
             else if (err instanceof ValStepExitCode) {
                 window.showInformationMessage(err.message);
             }
-            else{
+            else {
                 window.showErrorMessage(err);
             }
         }
@@ -68,7 +68,7 @@ export class HappeningsExecutor {
     }
 
     showValues(happenings: Happening[], values: VariableValue[]): void {
-        let decoration = this.createDecorationText(values);
+        const decoration = this.createDecorationText(values);
         this.decorate(decoration, happenings);
     }
 
@@ -80,17 +80,17 @@ export class HappeningsExecutor {
         const decorations: string[] = [];
 
         if (positiveEffects.length > 0) {
-            let decoration = 'Sets: ' + positiveEffects.map(v => `(${v.getVariableName()})`).join(', ');
+            const decoration = 'Sets: ' + positiveEffects.map(v => `(${v.getVariableName()})`).join(', ');
             decorations.push(decoration);
         }
 
         if (negativeEffects.length > 0) {
-            let decoration = 'Unsets: ' + negativeEffects.map(v => `(${v.getVariableName()})`).join(', ');
+            const decoration = 'Unsets: ' + negativeEffects.map(v => `(${v.getVariableName()})`).join(', ');
             decorations.push(decoration);
         }
 
         if (numericEffects.length > 0) {
-            let decoration = 'Assigns: ' + numericEffects.map(v => `(${v.getVariableName()}):=${v.getValue()}`).join(', ');
+            const decoration = 'Assigns: ' + numericEffects.map(v => `(${v.getVariableName()}):=${v.getValue()}`).join(', ');
             decorations.push(decoration);
         }
 
@@ -107,28 +107,28 @@ export class HappeningsExecutor {
     seeNextLineRanges: vscode.Range[] = [];
 
     decorate(decorationText: string, happenings: Happening[]): void {
-        let decorationType = window.createTextEditorDecorationType({
+        const decorationType = window.createTextEditorDecorationType({
             after: {
                 contentText: decorationText,
                 textDecoration: "; opacity: 0.5; font-size: 10px; margin-left: 5px"
             }
         });
 
-        let lastHappening = happenings[happenings.length - 1];
+        const lastHappening = happenings[happenings.length - 1];
 
-        let range = this.createRange(lastHappening);
+        const range = this.createRange(lastHappening);
         this.editor.setDecorations(decorationType, [range]);
         this.decorations.push(decorationType);
 
         for (let index = 0; index < happenings.length - 1; index++) {
-            let range = this.createRange(happenings[index]);
+            const range = this.createRange(happenings[index]);
             this.seeNextLineRanges.push(range);
             this.editor.setDecorations(this.seeNextLineDecoration, this.seeNextLineRanges);
         }
     }
 
     createRange(happening: Happening): vscode.Range {
-        let line = happening.lineIndex ?? 0;
+        const line = happening.lineIndex ?? 0;
         return new vscode.Range(line, 0, line, 100);
     }
 }

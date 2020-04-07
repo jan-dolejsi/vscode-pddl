@@ -13,7 +13,7 @@ export class PlannerConfigurationSelector {
     }
 
     async getConfiguration(): Promise<Uri | null> {
-        let selectedItem = await window.showQuickPick<PlannerConfigurationItem>([useDefaultsItem, selectedConfigurationItem], { placeHolder: 'Select planner configuration from a .json file...' });
+        const selectedItem = await window.showQuickPick<PlannerConfigurationItem>([useDefaultsItem, selectedConfigurationItem], { placeHolder: 'Select planner configuration from a .json file...' });
         if (!selectedItem) { return null; }
 
         switch (selectedItem) {
@@ -23,7 +23,7 @@ export class PlannerConfigurationSelector {
                 return await this.selectConfigurationFile();
             default:
                 if (selectedConfigurationItem instanceof PlannerConfigurationUriItem) {
-                    return (<PlannerConfigurationUriItem>selectedConfigurationItem).uri;
+                    return (selectedConfigurationItem as PlannerConfigurationUriItem).uri;
                 }
                 else {
                     throw new Error("Unexpected selected item type: " + typeof (selectedConfigurationItem));
@@ -32,7 +32,7 @@ export class PlannerConfigurationSelector {
     }
 
     async selectConfigurationFile(): Promise<Uri | null> {
-        let selectedUris = await window.showOpenDialog({
+        const selectedUris = await window.showOpenDialog({
             canSelectMany: false, filters: {
                 'Planner Configuration JSON': ['plannerConfiguration.json'],
                 'JSON': ['json']

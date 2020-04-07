@@ -1,5 +1,70 @@
 # PDDL support - What's new?
 
+## [2.15.6] Improved VAL binary download and configuration merging
+
+### Fixes
+
+- VAL binary download now supports merging any pre-existing configuration (e.g. custom Parser, Validate) with the newly downloaded binaries. You can decide whether you want to keep your previous configuration, or overwrite it with the downloaded binaries.
+- Setting `pddl.valVerbose` now toggles additional logging (to the console visible in Help > Toggle Developer Tools).
+
+### Extensibility for custom PDDL flavors
+
+The Extension underwent major clean-up and its guts were replaced by [pddl-workspace](https://github.com/jan-dolejsi/pddl-workspace)
+and [ai-planning-val.js](https://github.com/jan-dolejsi/ai-planning-val.js).
+As a result, the PDDL Extension for VS Code is now extensible for creators for non-standard PDDL, parser and planner implementations.
+
+This is how you can create VS Code extension that hooks up to the PDDL Workspace, injects custom functionality and listens to file change events.
+
+```typescript
+import { ExtensionContext, extensions, Extension } from 'vscode';
+import { PddlWorkspace, PddlWorkspaceExtension, FileInfo, parser } from 'pddl-workspace';
+
+class MyCustomPddlInfo extends FileInfo {
+
+    // todo: put your own properties and methods here
+
+    getLanguage(): PddlLanguage {
+        return PddlLanguage.PDDL;
+    }
+}
+
+class MyCustomPddlParser extends parser.PddlFileParser<MyCustomPddlInfo> {
+    async tryParse(fileUri: string, fileVersion: number, fileText: string, syntaxTree: parser.PddlSyntaxTree, positionResolver: DocumentPositionResolver): Promise<MyCustomPddlInfo | undefined> {
+
+        if (/* is my custom PDDL? */) {
+            return new MyCustomPddlInfo(fileUri, fileVersion, '', syntaxTree, positionResolver);
+        }
+        else {
+            return undefined;
+        }
+    }
+}
+
+class MyCustomPddlWorkspaceExtension extends PddlWorkspaceExtension {
+
+    getPddlParsers(): parser.PddlFileParser<FileInfo>[] | undefined {
+        return [new MyCustomPddlParser()];
+    }
+}
+
+export function activate() {
+
+    const pddlExtension = extensions.getExtension<PddlWorkspace>('jan-dolejsi.pddl');
+    if (pddlExtension) {
+        if (pddlExtension.isActive) {
+            const pddlWorkspace = pddlExtension.exports;
+
+            pddlWorkspace.addExtension(new MyCustomPddlWorkspaceExtension());
+
+            // get notified about file updates
+            pddlWorkspace.on(PddlWorkspace.UPDATED, (fileInfo: FileInfo) => {
+                console.log(`File updated: ${fileInfo.name}`);
+            });
+        }
+    }
+}
+```
+
 ## [2.15.5] Improved plan metric parsing
 
 - Plan metric parsing [Issue #50](https://github.com/jan-dolejsi/vscode-pddl/issues/50)
@@ -895,7 +960,8 @@ Note for open source contributors: all notable changes to the "pddl" extension w
 
 Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
 
-[Unreleased]: https://github.com/jan-dolejsi/vscode-pddl/compare/v2.15.5...HEAD
+[Unreleased]: https://github.com/jan-dolejsi/vscode-pddl/compare/v2.15.6...HEAD
+[2.15.6]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.15.5...v2.15.6
 [2.15.5]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.15.4...v2.15.5
 [2.15.4]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.15.3...v2.15.4
 [2.15.3]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.15.2...v2.15.3

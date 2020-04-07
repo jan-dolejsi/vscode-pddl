@@ -9,7 +9,7 @@ import {
 } from 'vscode';
 import * as path from 'path';
 import { getWebViewHtml } from '../utils';
-import { PddlExtensionContext } from '../PddlExtensionContext';
+import { PddlExtensionContext } from 'pddl-workspace';
 import { PTestReport } from './PTestReport';
 import { TestsManifest } from './TestsManifest';
 import { Test } from './Test';
@@ -33,7 +33,7 @@ export class PTestReportView {
     }
 
     async createPage(): Promise<void> {
-        let iconUri = this.context.asAbsolutePath('images/icon.png');
+        const iconUri = this.context.asAbsolutePath('images/icon.png');
 
         this.webViewPanel = window.createWebviewPanel(
             "pddl.test.report",
@@ -55,7 +55,7 @@ export class PTestReportView {
 
         this.webViewPanel.onDidDispose(() => this.webViewPanel = undefined, undefined, this.context.subscriptions);
         this.webViewPanel.webview.onDidReceiveMessage(message => this.handleMessage(message), undefined, this.context.subscriptions);
-        this.webViewPanel.onDidChangeViewState(_ => this.updatePage());
+        this.webViewPanel.onDidChangeViewState(() => this.updatePage());
 
         this.context.subscriptions.push(this.webViewPanel);
 
@@ -65,7 +65,7 @@ export class PTestReportView {
 
     async updatePage(): Promise<void> {
         if (this.webViewPanel) {
-            let html = await this.getHtml(this.webViewPanel.webview);
+            const html = await this.getHtml(this.webViewPanel.webview);
             this.webViewPanel.webview.html = html;
         }
     }
@@ -75,7 +75,7 @@ export class PTestReportView {
             relativePath: this.CONTENT_FOLDER, htmlFileName: 'page.html'
         }, webview);
 
-        let tableRowsHtml = this.report.getManifests().map(manifest => this.renderManifestRow(manifest));
+        const tableRowsHtml = this.report.getManifests().map(manifest => this.renderManifestRow(manifest));
 
         html = html.replace("TABLE", tableRowsHtml.join('\n'));
 
@@ -83,29 +83,30 @@ export class PTestReportView {
     }
 
     renderManifestRow(manifest: TestsManifest): string {
-        let manifestLocation = workspace.asRelativePath(manifest.path, true);
+        const manifestLocation = workspace.asRelativePath(manifest.path, true);
 
-        let manifestLink = `<a  href="#" onclick="openManifest('${manifest.uri.toString()}')" title="Open test manifest.">&#128065;</a>`;
-        let manifestHeader = `<tr><td colspan="4" class="manifestRow">${manifestLocation} ${manifestLink}</td></tr>`;
+        const manifestLink = `<a  href="#" onclick="openManifest('${manifest.uri.toString()}')" title="Open test manifest.">&#128065;</a>`;
+        const manifestHeader = `<tr><td colspan="4" class="manifestRow">${manifestLocation} ${manifestLink}</td></tr>`;
 
-        let testRows = this.report.getTestCases(manifest).map(test => this.renderTestRow(test));
+        const testRows = this.report.getTestCases(manifest).map(test => this.renderTestRow(test));
 
         return [manifestHeader].concat(testRows).join('\n');
     }
 
     renderTestRow(test: Test): string {
-        let testResult = this.report.getTestResultOrThrow(test);
-        let elapsedTime = testResult.elapsedTime ? `${(testResult.elapsedTime / 1000).toFixed(2)}` : '';
-        let viewTestLink = `<a  href="#" onclick="openTest('${test.getUri().toString()}')" title="Open test case.">&#128065;</a>`;
+        const testResult = this.report.getTestResultOrThrow(test);
+        const elapsedTime = testResult.elapsedTime ? `${(testResult.elapsedTime / 1000).toFixed(2)}` : '';
+        const viewTestLink = `<a  href="#" onclick="openTest('${test.getUri().toString()}')" title="Open test case.">&#128065;</a>`;
         return `<tr><td>${test.getLabel()} ${viewTestLink}</td><td>${testResult.outcomeChar}</td><td>${elapsedTime}</td><td>${testResult.error ?? ""}</td></tr>`;
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     async handleMessage(message: any): Promise<void> {
         console.log(`Message received from the webview: ${message.command}`);
 
         switch (message.command) {
             case 'openManifest':
-                let manifestDoc = await workspace.openTextDocument(Uri.parse(message.value));
+                const manifestDoc = await workspace.openTextDocument(Uri.parse(message.value));
                 await window.showTextDocument(manifestDoc, { viewColumn: ViewColumn.Beside });
                 break;
             case 'openTest':

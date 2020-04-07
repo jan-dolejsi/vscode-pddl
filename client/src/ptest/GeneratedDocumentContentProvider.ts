@@ -9,10 +9,10 @@ import {
 } from 'vscode';
 import { Test } from './Test';
 import { join, dirname, basename } from 'path';
-import { PddlWorkspace } from '../../../common/src/PddlWorkspace';
-import { FileInfo, PddlLanguage } from '../../../common/src/FileInfo';
+import { PddlWorkspace } from 'pddl-workspace';
+import { FileInfo, PddlLanguage } from 'pddl-workspace';
 import { CodePddlWorkspace } from '../workspace/CodePddlWorkspace';
-import { SimpleDocumentPositionResolver } from '../../../common/src/DocumentPositionResolver';
+import { SimpleDocumentPositionResolver } from 'pddl-workspace';
 
 /**
  * Content provider for the problem file generated from a template.
@@ -35,7 +35,7 @@ export class GeneratedDocumentContentProvider implements TextDocumentContentProv
         workspace.onDidChangeTextDocument(e => {
             // check if the changing document represents input data for a pre-processor
             this.uriMap.forEach((testCase: Test, uri: string) => {
-                let inputChanged = testCase.getPreProcessor()?.getInputFiles()
+                const inputChanged = testCase.getPreProcessor()?.getInputFiles()
                     .some(inputFileName => e.document.fileName.endsWith(inputFileName));
 
                 if (inputChanged) {
@@ -50,12 +50,12 @@ export class GeneratedDocumentContentProvider implements TextDocumentContentProv
     }
 
     mapUri(test: Test): Uri {
-        let problemTemplatePath = test.getProblemUri().fsPath;
-        let testIdx = test.getUri().fragment;
+        const problemTemplatePath = test.getProblemUri().fsPath;
+        const testIdx = test.getUri().fragment;
 
         let problemPath: string;
 
-        let problemTemplateWithoutExtension = problemTemplatePath.replace('.pddl', '');
+        const problemTemplateWithoutExtension = problemTemplatePath.replace('.pddl', '');
 
         if (test.getLabel()) {
             problemPath = join(problemTemplateWithoutExtension + ` (${this.sanitizePath(test.getLabel())}).pddl`);
@@ -64,7 +64,7 @@ export class GeneratedDocumentContentProvider implements TextDocumentContentProv
             problemPath = problemTemplateWithoutExtension + ` (${testIdx}).pddl`;
         }
 
-        let uri = Uri.file(problemPath).with({ scheme: 'tpddl' });
+        const uri = Uri.file(problemPath).with({ scheme: 'tpddl' });
 
         this.uriMap.set(uri.toString(), test);
 
@@ -76,15 +76,15 @@ export class GeneratedDocumentContentProvider implements TextDocumentContentProv
     }
 
     async provideTextDocumentContent(uri: Uri, token: CancellationToken): Promise<string> {
-        let test = this.uriMap.get(uri.toString());
+        const test = this.uriMap.get(uri.toString());
         if (!test) { return `Document ${uri.toString()} not found in the content provider's map.`; }
         if (token.isCancellationRequested) { return ""; }
 
-        let problemDocument = await workspace.openTextDocument(test.getProblemUri());
-        let documentText = problemDocument.getText();
+        const problemDocument = await workspace.openTextDocument(test.getProblemUri());
+        const documentText = problemDocument.getText();
 
         try {
-            let preProcessedProblemText =  await test.getPreProcessor()?.transform(documentText, dirname(test.getManifest().path), this.outputWindow) ?? "No pre-processor configured.";
+            const preProcessedProblemText =  await test.getPreProcessor()?.transform(documentText, dirname(test.getManifest().path), this.outputWindow) ?? "No pre-processor configured.";
             // force parsing of the generated problem
             this.pddlWorkspace.pddlWorkspace.upsertFile(uri.toString(), PddlLanguage.PDDL, 0, preProcessedProblemText, new SimpleDocumentPositionResolver(preProcessedProblemText), true);
             return preProcessedProblemText;

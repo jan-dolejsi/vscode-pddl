@@ -8,8 +8,8 @@ import * as vscode from 'vscode';
 import { WorkspaceFolder, DebugConfiguration, CancellationToken, window, Uri } from 'vscode';
 import { PlanDebugSession } from './PlanDebugSession';
 import * as Net from 'net';
-import { HAPPENINGS } from '../../../common/src/parser';
-import { HappeningsInfo } from "../../../common/src/HappeningsInfo";
+import { HAPPENINGS } from 'pddl-workspace';
+import { HappeningsInfo } from 'pddl-workspace';
 import { isHappenings, getDomainAndProblemForHappenings, selectHappenings } from '../workspace/workspaceUtils';
 import { PddlConfiguration } from '../configuration';
 import { HappeningsExecutor } from './HappeningsExecutor';
@@ -31,6 +31,7 @@ export class Debugging {
 
 	constructor(context: vscode.ExtensionContext, private pddlWorkspace: CodePddlWorkspace, public plannerConfiguration: PddlConfiguration) {
 
+		// eslint-disable-next-line @typescript-eslint/no-unused-vars
 		context.subscriptions.push(instrumentOperationAsVsCodeCommand('pddl.selectAndActivateHappenings', async(_config) => {
 			return await selectHappenings();
 		}));
@@ -47,8 +48,8 @@ export class Debugging {
 		context.subscriptions.push(vscode.commands.registerTextEditorCommand("pddl.happenings.execute", async (editor) => {
 			try {
 				this.clearDecorations(editor.document);
-				let context = await this.getActiveContext();
-				let decorations = await new HappeningsExecutor(editor, context, this.plannerConfiguration).execute();
+				const context = await this.getActiveContext();
+				const decorations = await new HappeningsExecutor(editor, context, this.plannerConfiguration).execute();
 				this.saveDecorations(editor.document, decorations);
 			}
 			catch (ex) {
@@ -58,7 +59,7 @@ export class Debugging {
 
 		context.subscriptions.push(vscode.commands.registerTextEditorCommand("pddl.happenings.generatePlanResumeCases", async () => {
 			try {
-				let context = await this.getActiveContext();
+				const context = await this.getActiveContext();
 				new HappeningsToPlanResumeCasesConvertor(context, this.plannerConfiguration).generate();
 			}
 			catch (ex) {
@@ -72,7 +73,7 @@ export class Debugging {
 	}
 
 	clearDecorations(document: vscode.TextDocument): void {
-		let decorations = this.decorations.get(document);
+		const decorations = this.decorations.get(document);
 		if (decorations) { decorations.forEach(d => d.dispose()); }
 		this.decorations.set(document, []);
 	}
@@ -92,15 +93,15 @@ export class Debugging {
 			throw new Error('Active document cannot be debugged.');
 		}
 
-		let activeFileInfo = await this.pddlWorkspace.upsertAndParseFile(window.activeTextEditor.document);
+		const activeFileInfo = await this.pddlWorkspace.upsertAndParseFile(window.activeTextEditor.document);
 
 		if (!(activeFileInfo instanceof HappeningsInfo)) {
 			throw new Error('Active document cannot be debugged.');
 		}
 
-		let happeningsInfo = <HappeningsInfo>activeFileInfo;
+		const happeningsInfo = <HappeningsInfo>activeFileInfo;
 
-		let context = getDomainAndProblemForHappenings(happeningsInfo, this.pddlWorkspace.pddlWorkspace);
+		const context = getDomainAndProblemForHappenings(happeningsInfo, this.pddlWorkspace.pddlWorkspace);
 
 		return {
 			domain: context.domain,
@@ -109,12 +110,12 @@ export class Debugging {
 		};
 	}
 
-	async startDebugging() {
+	async startDebugging(): Promise<void> {
 
-		let context = await this.getActiveContext();
+		const context = await this.getActiveContext();
 
 		let folder: WorkspaceFolder | undefined; // so far there is no configuration to resolve
-		let debugConfiguration: vscode.DebugConfiguration = {
+		const debugConfiguration: vscode.DebugConfiguration = {
 			"name": "PDDL Plan Happenings F5",
 			"type": "pddl-happenings",
 			"request": "launch",
@@ -164,18 +165,18 @@ class PddlPlanDebugConfigurationProvider implements vscode.DebugConfigurationPro
 				this._server = Net.createServer(socket => {
 					const session = new PlanDebugSession();
 					session.setRunAsServer(true);
-					session.start(<NodeJS.ReadableStream>socket, socket);
+					session.start(socket as NodeJS.ReadableStream, socket);
 				}).listen(0);
 			}
 
 			// make VS Code connect to debug server instead of launching debug adapter
-			config.debugServer = (<Net.AddressInfo>this._server.address()).port;
+			config.debugServer = (this._server.address() as Net.AddressInfo).port;
 		}
 
 		return config;
 	}
 
-	dispose() {
+	dispose(): void {
 		if (this._server) {
 			this._server.close();
 		}

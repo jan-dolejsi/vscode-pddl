@@ -4,21 +4,20 @@
  * ------------------------------------------------------------------------------------------ */
 'use strict';
 
-import { ProblemInfo } from '../../../common/src/ProblemInfo';
-import { DomainInfo } from '../../../common/src/DomainInfo';
+import { ProblemInfo } from 'pddl-workspace';
+import { DomainInfo } from 'pddl-workspace';
 import { PlannerResponseHandler } from './PlannerResponseHandler';
-import { Plan } from '../../../common/src/Plan';
-import { PddlPlanParser } from '../../../common/src/PddlPlanParser';
+import { Plan, parser } from 'pddl-workspace';
 
 export abstract class Planner {
 
-    planningProcessKilled: boolean = false;
+    planningProcessKilled = false;
 
     constructor(protected readonly plannerPath: string) {
 
     }
 
-    abstract plan(domainFileInfo: DomainInfo, problemFileInfo: ProblemInfo, planParser: PddlPlanParser, parent: PlannerResponseHandler): Promise<Plan[]>;
+    abstract plan(domainFileInfo: DomainInfo, problemFileInfo: ProblemInfo, planParser: parser.PddlPlannerOutputParser, parent: PlannerResponseHandler): Promise<Plan[]>;
 
     stop(): void {
         this.planningProcessKilled = true;

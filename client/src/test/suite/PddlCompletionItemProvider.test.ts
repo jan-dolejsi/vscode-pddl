@@ -5,12 +5,10 @@ import { before } from 'mocha';
 // as well as import your extension to test it
 import * as vscode from 'vscode';
 import { ProblemCompletionItemProvider } from '../../completion/ProblemCompletionItemProvider';
-import { ProblemInfo } from '../../../../common/src/ProblemInfo';
-import { PddlSyntaxTreeBuilder } from '../../../../common/src/PddlSyntaxTreeBuilder';
+import { parser, ProblemInfo } from 'pddl-workspace';
 import { CodeDocumentPositionResolver } from '../../workspace/CodeDocumentPositionResolver';
 import { UnknownPddlCompletionItemProvider } from '../../completion/UnknownPddlCompletionItemProvider';
 import { DomainCompletionItemProvider } from '../../completion/DomainCompletionItemProvider';
-import { PddlDomainParser } from '../../../../common/src/PddlDomainParser';
 
 suite('PDDL Completion Item Provider', () => {
     before(async () => {
@@ -19,12 +17,12 @@ suite('PDDL Completion Item Provider', () => {
 
     test('should offer to declare domain or problem', async () => {
         // GIVEN
-        let inputTextHead = ' ';
-        let ch = '(';
-        let inputTextTail = ')';
+        const inputTextHead = ' ';
+        const ch = '(';
+        const inputTextTail = ')';
 
         // WHEN
-        let items = await testProvider(inputTextHead, ch, inputTextTail, { triggerKind: vscode.CompletionTriggerKind.Invoke, triggerCharacter: ch });
+        const items = await testProvider(inputTextHead, ch, inputTextTail, { triggerKind: vscode.CompletionTriggerKind.Invoke, triggerCharacter: ch });
 
         // THEN
         assert.strictEqual(items.length, 2, 'there should be N completion items');
@@ -33,12 +31,12 @@ suite('PDDL Completion Item Provider', () => {
 
     test('should offer to declare pre-parsing meta data instruction', async () => {
         // GIVEN
-        let inputTextHead = '';
-        let ch = ';';
-        let inputTextTail = '\n(define (problem p) (:domain d) )';
+        const inputTextHead = '';
+        const ch = ';';
+        const inputTextTail = '\n(define (problem p) (:domain d) )';
 
         // WHEN
-        let items = await testProblemProvider(inputTextHead, ch, inputTextTail, { triggerKind: vscode.CompletionTriggerKind.Invoke, triggerCharacter: ch });
+        const items = await testProblemProvider(inputTextHead, ch, inputTextTail, { triggerKind: vscode.CompletionTriggerKind.Invoke, triggerCharacter: ch });
 
         // THEN
         assert.strictEqual(items.length, 3, 'there should be N completion items');
@@ -49,12 +47,12 @@ suite('PDDL Completion Item Provider', () => {
 
     test('should suggest domain sections upon invoke', async () => {
         // GIVEN
-        let inputTextHead = '(define (domain d) \n';
-        let ch = '';
-        let inputTextTail = '\n)';
+        const inputTextHead = '(define (domain d) \n';
+        const ch = '';
+        const inputTextTail = '\n)';
 
         // WHEN
-        let items = await testDomainProvider(inputTextHead, ch, inputTextTail, { triggerKind: vscode.CompletionTriggerKind.Invoke, triggerCharacter: ch });
+        const items = await testDomainProvider(inputTextHead, ch, inputTextTail, { triggerKind: vscode.CompletionTriggerKind.Invoke, triggerCharacter: ch });
 
         // THEN
         assert.deepStrictEqual(items.map(i => i.filterText ?? i.label), [
@@ -75,12 +73,12 @@ suite('PDDL Completion Item Provider', () => {
 
     test('should suggest domain sections upon ( trigger', async () => {
         // GIVEN
-        let inputTextHead = '(define (domain d) \n';
-        let ch = '(';
-        let inputTextTail = ')\n)';
+        const inputTextHead = '(define (domain d) \n';
+        const ch = '(';
+        const inputTextTail = ')\n)';
 
         // WHEN
-        let items = await testDomainProvider(inputTextHead, ch, inputTextTail, { triggerKind: vscode.CompletionTriggerKind.TriggerCharacter, triggerCharacter: ch });
+        const items = await testDomainProvider(inputTextHead, ch, inputTextTail, { triggerKind: vscode.CompletionTriggerKind.TriggerCharacter, triggerCharacter: ch });
 
         // THEN
         assert.deepStrictEqual(items.map(i => i.filterText ?? i.label), [
@@ -101,12 +99,12 @@ suite('PDDL Completion Item Provider', () => {
 
     test('should suggest domain sections upon : trigger', async () => {
         // GIVEN
-        let inputTextHead = '(define (domain d) \n(';
-        let ch = ':';
-        let inputTextTail = ')\n)';
+        const inputTextHead = '(define (domain d) \n(';
+        const ch = ':';
+        const inputTextTail = ')\n)';
 
         // WHEN
-        let items = await testDomainProvider(inputTextHead, ch, inputTextTail, { triggerKind: vscode.CompletionTriggerKind.TriggerCharacter, triggerCharacter: ch });
+        const items = await testDomainProvider(inputTextHead, ch, inputTextTail, { triggerKind: vscode.CompletionTriggerKind.TriggerCharacter, triggerCharacter: ch });
 
         // THEN
         assert.deepStrictEqual(items.map(i => i.filterText ?? i.label), [
@@ -128,12 +126,12 @@ suite('PDDL Completion Item Provider', () => {
 
     test('should suggest requirements upon invoke', async () => {
         // GIVEN
-        let inputTextHead = '(define (domain d) (:requirements ';
-        let ch = '';
-        let inputTextTail = ')\n)';
+        const inputTextHead = '(define (domain d) (:requirements ';
+        const ch = '';
+        const inputTextTail = ')\n)';
 
         // WHEN
-        let items = await testDomainProvider(inputTextHead, ch, inputTextTail, { triggerKind: vscode.CompletionTriggerKind.Invoke, triggerCharacter: ch });
+        const items = await testDomainProvider(inputTextHead, ch, inputTextTail, { triggerKind: vscode.CompletionTriggerKind.Invoke, triggerCharacter: ch });
 
         // THEN
         items.some(item => (item.filterText ?? item.label) === ':strips');
@@ -142,12 +140,12 @@ suite('PDDL Completion Item Provider', () => {
 
     test('should suggest requirements upon : trigger', async () => {
         // GIVEN
-        let inputTextHead = '(define (domain d) (:requirements ';
-        let ch = ':';
-        let inputTextTail = ')\n)';
+        const inputTextHead = '(define (domain d) (:requirements ';
+        const ch = ':';
+        const inputTextTail = ')\n)';
 
         // WHEN
-        let items = await testDomainProvider(inputTextHead, ch, inputTextTail, { triggerKind: vscode.CompletionTriggerKind.TriggerCharacter, triggerCharacter: ch });
+        const items = await testDomainProvider(inputTextHead, ch, inputTextTail, { triggerKind: vscode.CompletionTriggerKind.TriggerCharacter, triggerCharacter: ch });
 
         // THEN
         items.some(item => (item.filterText ?? item.label) === ':strips');
@@ -158,12 +156,12 @@ suite('PDDL Completion Item Provider', () => {
 
     test('should suggest (:action sections upon invoke', async () => {
         // GIVEN
-        let inputTextHead = '(define (domain d) (:action\n';
-        let ch = '';
-        let inputTextTail = '\n))';
+        const inputTextHead = '(define (domain d) (:action\n';
+        const ch = '';
+        const inputTextTail = '\n))';
 
         // WHEN
-        let items = await testDomainProvider(inputTextHead, ch, inputTextTail, { triggerKind: vscode.CompletionTriggerKind.Invoke, triggerCharacter: ch });
+        const items = await testDomainProvider(inputTextHead, ch, inputTextTail, { triggerKind: vscode.CompletionTriggerKind.Invoke, triggerCharacter: ch });
 
         // THEN
         assert.deepStrictEqual(items.map(i => i.filterText ?? i.label), [
@@ -176,12 +174,12 @@ suite('PDDL Completion Item Provider', () => {
 
     test('should suggest (:action sections upon : trigger', async () => {
         // GIVEN
-        let inputTextHead = '(define (domain d) (:action\n';
-        let ch = ':';
-        let inputTextTail = '\n))';
+        const inputTextHead = '(define (domain d) (:action\n';
+        const ch = ':';
+        const inputTextTail = '\n))';
 
         // WHEN
-        let items = await testDomainProvider(inputTextHead, ch, inputTextTail, { triggerKind: vscode.CompletionTriggerKind.Invoke, triggerCharacter: ch });
+        const items = await testDomainProvider(inputTextHead, ch, inputTextTail, { triggerKind: vscode.CompletionTriggerKind.Invoke, triggerCharacter: ch });
 
         // THEN
         assert.deepStrictEqual(items.map(i => i.filterText ?? i.label), [
@@ -194,12 +192,12 @@ suite('PDDL Completion Item Provider', () => {
 
     test('should suggest only :effect for partially completed (:action upon : trigger', async () => {
         // GIVEN
-        let inputTextHead = '(define (domain d) (:action :parameters() :precondition()\n';
-        let ch = ':';
-        let inputTextTail = '\n))';
+        const inputTextHead = '(define (domain d) (:action :parameters() :precondition()\n';
+        const ch = ':';
+        const inputTextTail = '\n))';
 
         // WHEN
-        let items = await testDomainProvider(inputTextHead, ch, inputTextTail, { triggerKind: vscode.CompletionTriggerKind.Invoke, triggerCharacter: ch });
+        const items = await testDomainProvider(inputTextHead, ch, inputTextTail, { triggerKind: vscode.CompletionTriggerKind.Invoke, triggerCharacter: ch });
 
         // THEN
         assert.deepStrictEqual(items.map(i => i.filterText ?? i.label), [
@@ -212,12 +210,12 @@ suite('PDDL Completion Item Provider', () => {
 
     test('should suggest (:durative-action sections upon invoke', async () => {
         // GIVEN
-        let inputTextHead = '(define (domain d) (:durative-action\n';
-        let ch = '';
-        let inputTextTail = '\n))';
+        const inputTextHead = '(define (domain d) (:durative-action\n';
+        const ch = '';
+        const inputTextTail = '\n))';
 
         // WHEN
-        let items = await testDomainProvider(inputTextHead, ch, inputTextTail, { triggerKind: vscode.CompletionTriggerKind.Invoke, triggerCharacter: ch });
+        const items = await testDomainProvider(inputTextHead, ch, inputTextTail, { triggerKind: vscode.CompletionTriggerKind.Invoke, triggerCharacter: ch });
 
         // THEN
         assert.deepStrictEqual(items.map(i => i.filterText ?? i.label), [
@@ -231,12 +229,12 @@ suite('PDDL Completion Item Provider', () => {
 
     test('should suggest (:durative-action sections upon : trigger', async () => {
         // GIVEN
-        let inputTextHead = '(define (domain d) (:durative-action\n';
-        let ch = ':';
-        let inputTextTail = '\n))';
+        const inputTextHead = '(define (domain d) (:durative-action\n';
+        const ch = ':';
+        const inputTextTail = '\n))';
 
         // WHEN
-        let items = await testDomainProvider(inputTextHead, ch, inputTextTail, { triggerKind: vscode.CompletionTriggerKind.Invoke, triggerCharacter: ch });
+        const items = await testDomainProvider(inputTextHead, ch, inputTextTail, { triggerKind: vscode.CompletionTriggerKind.Invoke, triggerCharacter: ch });
 
         // THEN
         assert.deepStrictEqual(items.map(i => i.filterText ?? i.label), [
@@ -252,12 +250,12 @@ suite('PDDL Completion Item Provider', () => {
 
     test('should suggest (:action effects upon invoke', async () => {
         // GIVEN
-        let inputTextHead = '(define (domain d) (:predicates (p1)(p2)) (:action :effect (and\n';
-        let ch = '';
-        let inputTextTail = '\n)))';
+        const inputTextHead = '(define (domain d) (:predicates (p1)(p2)) (:action :effect (and\n';
+        const ch = '';
+        const inputTextTail = '\n)))';
 
         // WHEN
-        let items = await testDomainProvider(inputTextHead, ch, inputTextTail, { triggerKind: vscode.CompletionTriggerKind.Invoke, triggerCharacter: ch });
+        const items = await testDomainProvider(inputTextHead, ch, inputTextTail, { triggerKind: vscode.CompletionTriggerKind.Invoke, triggerCharacter: ch });
 
         // THEN
         assertSnippetIncludes(items, "(not", 'p1,p2');
@@ -275,12 +273,12 @@ suite('PDDL Completion Item Provider', () => {
     
     test('should suggest (:action effects upon ( trigger', async () => {
         // GIVEN
-        let inputTextHead = '(define (domain d) (:predicates (p1)(p2)) (:action :effect (and\n';
-        let ch = '(';
-        let inputTextTail = ')\n)))';
+        const inputTextHead = '(define (domain d) (:predicates (p1)(p2)) (:action :effect (and\n';
+        const ch = '(';
+        const inputTextTail = ')\n)))';
 
         // WHEN
-        let items = await testDomainProvider(inputTextHead, ch, inputTextTail, { triggerKind: vscode.CompletionTriggerKind.TriggerCharacter, triggerCharacter: ch });
+        const items = await testDomainProvider(inputTextHead, ch, inputTextTail, { triggerKind: vscode.CompletionTriggerKind.TriggerCharacter, triggerCharacter: ch });
 
         // THEN
         assertSnippetIncludes(items, "(not", 'p1,p2');
@@ -293,18 +291,18 @@ suite('PDDL Completion Item Provider', () => {
             '(forall',
             '(when',
         ]);
-        let expectedRange = new vscode.Range(1, 0, 1, 2);
+        const expectedRange = new vscode.Range(1, 0, 1, 2);
         items.forEach(item => assert.deepStrictEqual(item.range, expectedRange, `Range of '${item.label}' should be ...`));
     });
 
     test('should suggest (:durative-action continuous effects and time-qualifiers upon invoke', async () => {
         // GIVEN
-        let inputTextHead = '(define (domain d) (:functions (f1)) (:durative-action :effect (and\n';
-        let ch = '';
-        let inputTextTail = '\n)))';
+        const inputTextHead = '(define (domain d) (:functions (f1)) (:durative-action :effect (and\n';
+        const ch = '';
+        const inputTextTail = '\n)))';
 
         // WHEN
-        let items = await testDomainProvider(inputTextHead, ch, inputTextTail, { triggerKind: vscode.CompletionTriggerKind.Invoke, triggerCharacter: ch });
+        const items = await testDomainProvider(inputTextHead, ch, inputTextTail, { triggerKind: vscode.CompletionTriggerKind.Invoke, triggerCharacter: ch });
 
         // THEN
         assertSnippetIncludes(items, "(increase", 'f1');
@@ -321,12 +319,12 @@ suite('PDDL Completion Item Provider', () => {
     
     test('should suggest (:process effects upon ( trigger', async () => {
         // GIVEN
-        let inputTextHead = '(define (domain d) (:functions (f1)) (:process :effect (and\n';
-        let ch = '(';
-        let inputTextTail = ')\n)))';
+        const inputTextHead = '(define (domain d) (:functions (f1)) (:process :effect (and\n';
+        const ch = '(';
+        const inputTextTail = ')\n)))';
 
         // WHEN
-        let items = await testDomainProvider(inputTextHead, ch, inputTextTail, { triggerKind: vscode.CompletionTriggerKind.TriggerCharacter, triggerCharacter: ch });
+        const items = await testDomainProvider(inputTextHead, ch, inputTextTail, { triggerKind: vscode.CompletionTriggerKind.TriggerCharacter, triggerCharacter: ch });
 
         // THEN
         assertSnippetIncludes(items, "(increase", 'f1');
@@ -336,7 +334,7 @@ suite('PDDL Completion Item Provider', () => {
             '(decrease',
             '(forall',
         ]);
-        let expectedRange = new vscode.Range(1, 0, 1, 2);
+        const expectedRange = new vscode.Range(1, 0, 1, 2);
         items.forEach(item => assert.deepStrictEqual(item.range, expectedRange, `Range of '${item.label}' should be ...`));
     });
 
@@ -344,12 +342,12 @@ suite('PDDL Completion Item Provider', () => {
 
     test('should suggest (:durative-action condition time-qualifiers upon invoke', async () => {
         // GIVEN
-        let inputTextHead = '(define (domain d) (:durative-action :condition (and\n';
-        let ch = '';
-        let inputTextTail = '\n)))';
+        const inputTextHead = '(define (domain d) (:durative-action :condition (and\n';
+        const ch = '';
+        const inputTextTail = '\n)))';
 
         // WHEN
-        let items = await testDomainProvider(inputTextHead, ch, inputTextTail, { triggerKind: vscode.CompletionTriggerKind.Invoke, triggerCharacter: ch });
+        const items = await testDomainProvider(inputTextHead, ch, inputTextTail, { triggerKind: vscode.CompletionTriggerKind.Invoke, triggerCharacter: ch });
 
         // THEN
         assert.deepStrictEqual(items.map(i => i.filterText ?? i.label), [
@@ -364,12 +362,12 @@ suite('PDDL Completion Item Provider', () => {
 
     test('should suggest action and forall parameters upon ? trigger', async () => {
         // GIVEN
-        let inputTextHead = '(define (domain d) (:action :parameters (?pa-1 ?pa_2 - type1) :condition (forall (?pfa - type2) \n';
-        let ch = '?';
-        let inputTextTail = '\n)))';
+        const inputTextHead = '(define (domain d) (:action :parameters (?pa-1 ?pa_2 - type1) :condition (forall (?pfa - type2) \n';
+        const ch = '?';
+        const inputTextTail = '\n)))';
 
         // WHEN
-        let items = await testDomainProvider(inputTextHead, ch, inputTextTail, { triggerKind: vscode.CompletionTriggerKind.TriggerCharacter, triggerCharacter: ch });
+        const items = await testDomainProvider(inputTextHead, ch, inputTextTail, { triggerKind: vscode.CompletionTriggerKind.TriggerCharacter, triggerCharacter: ch });
 
         // THEN
         assert.deepStrictEqual(items.map(i => i.filterText ?? i.label), [
@@ -377,7 +375,7 @@ suite('PDDL Completion Item Provider', () => {
             '?pa-1',
             '?pa_2',
         ]);
-        let expectedRange = new vscode.Range(1, 0, 1, 1);
+        const expectedRange = new vscode.Range(1, 0, 1, 1);
         items.forEach(item => assert.deepStrictEqual(item.range, expectedRange, `Range of '${item.label}' should be ...`));
     });
 
@@ -385,12 +383,12 @@ suite('PDDL Completion Item Provider', () => {
     
     test('should suggest problem sections upon invoke', async () => {
         // GIVEN
-        let inputTextHead = '(define \n';
-        let ch = '';
-        let inputTextTail = '\n)';
+        const inputTextHead = '(define \n';
+        const ch = '';
+        const inputTextTail = '\n)';
     
         // WHEN
-        let items = await testProblemProvider(inputTextHead, ch, inputTextTail, { triggerKind: vscode.CompletionTriggerKind.Invoke, triggerCharacter: ch });
+        const items = await testProblemProvider(inputTextHead, ch, inputTextTail, { triggerKind: vscode.CompletionTriggerKind.Invoke, triggerCharacter: ch });
     
         // THEN
         assert.deepStrictEqual(items.map(i => i.filterText ?? i.label), [
@@ -408,12 +406,12 @@ suite('PDDL Completion Item Provider', () => {
     
     test('should suggest problem sections upon ( trigger', async () => {
         // GIVEN
-        let inputTextHead = '(define \n';
-        let ch = '(';
-        let inputTextTail = ')\n)';
+        const inputTextHead = '(define \n';
+        const ch = '(';
+        const inputTextTail = ')\n)';
     
         // WHEN
-        let items = await testProblemProvider(inputTextHead, ch, inputTextTail, { triggerKind: vscode.CompletionTriggerKind.TriggerCharacter, triggerCharacter: ch });
+        const items = await testProblemProvider(inputTextHead, ch, inputTextTail, { triggerKind: vscode.CompletionTriggerKind.TriggerCharacter, triggerCharacter: ch });
     
         // THEN
         assert.deepStrictEqual(items.map(i => i.filterText ?? i.label), [
@@ -431,12 +429,12 @@ suite('PDDL Completion Item Provider', () => {
     
     test('should suggest problem sections upon : trigger', async () => {
         // GIVEN
-        let inputTextHead = '(define \n(';
-        let ch = ':';
-        let inputTextTail = ')\n)';
+        const inputTextHead = '(define \n(';
+        const ch = ':';
+        const inputTextTail = ')\n)';
     
         // WHEN
-        let items = await testProblemProvider(inputTextHead, ch, inputTextTail, { triggerKind: vscode.CompletionTriggerKind.TriggerCharacter, triggerCharacter: ch });
+        const items = await testProblemProvider(inputTextHead, ch, inputTextTail, { triggerKind: vscode.CompletionTriggerKind.TriggerCharacter, triggerCharacter: ch });
     
         // THEN
         assert.deepStrictEqual(items.map(i => i.filterText ?? i.label), [
@@ -453,61 +451,61 @@ suite('PDDL Completion Item Provider', () => {
 });
 
 
-function assertSnippetIncludes(items: vscode.CompletionItem[], filterText: string, needle: string) {
+function assertSnippetIncludes(items: vscode.CompletionItem[], filterText: string, needle: string): void {
     const item = items.find(item => item.filterText === filterText);
     assert.ok(item, `Item '${filterText}' should be included`);
-    const snippet = (<vscode.SnippetString>item!.insertText);
+    const snippet = (item!.insertText as vscode.SnippetString);
     assert.ok(snippet.value.includes(needle), `snippet '${snippet.value}' should include ${needle}`);
 }
 
 async function testProvider(inputTextHead: string, ch: string, inputTextTail: string, context: vscode.CompletionContext): Promise<vscode.CompletionItem[]> {
-    let initialText = inputTextHead + ch + inputTextTail;
+    const initialText = inputTextHead + ch + inputTextTail;
 
     // we do not want the extension to actually load (it takes too much time), so use a fake language
-    let doc = await vscode.workspace.openTextDocument({ language: 'pddl-do-not-load-extension', content: initialText });
-    let editor = await vscode.window.showTextDocument(doc);
+    const doc = await vscode.workspace.openTextDocument({ language: 'pddl-do-not-load-extension', content: initialText });
+    const editor = await vscode.window.showTextDocument(doc);
 
     // move the cursor into the text
-    let position = doc.positionAt((inputTextHead + ch).length);
+    const position = doc.positionAt((inputTextHead + ch).length);
     editor.selection = new vscode.Selection(position, position);
 
     return await new UnknownPddlCompletionItemProvider().provide(doc, position, context);
 }
 
 async function testProblemProvider(inputTextHead: string, ch: string, inputTextTail: string, context: vscode.CompletionContext): Promise<vscode.CompletionItem[]> {
-    let initialText = inputTextHead + ch + inputTextTail;
+    const initialText = inputTextHead + ch + inputTextTail;
 
     // we do not want the extension to actually load (it takes too much time), so use a fake language
-    let doc = await vscode.workspace.openTextDocument({ language: 'pddl-do-not-load-extension', content: initialText });
-    let editor = await vscode.window.showTextDocument(doc);
+    const doc = await vscode.workspace.openTextDocument({ language: 'pddl-do-not-load-extension', content: initialText });
+    const editor = await vscode.window.showTextDocument(doc);
 
     // move the cursor into the text
-    let position = doc.positionAt((inputTextHead + ch).length);
+    const position = doc.positionAt((inputTextHead + ch).length);
     editor.selection = new vscode.Selection(position, position);
 
-    let tree = new PddlSyntaxTreeBuilder(initialText).getTree();
+    const tree = new parser.PddlSyntaxTreeBuilder(initialText).getTree();
 
-    let problemInfo = new ProblemInfo('file://testProblem.pddl', 1, 'p', 'd', tree, new CodeDocumentPositionResolver(doc));
+    const problemInfo = new ProblemInfo('file://testProblem.pddl', 1, 'p', 'd', tree, new CodeDocumentPositionResolver(doc));
 
     return await new ProblemCompletionItemProvider().provide(doc, problemInfo, position, context);
 }
 
 async function testDomainProvider(inputTextHead: string, ch: string, inputTextTail: string, context: vscode.CompletionContext): Promise<vscode.CompletionItem[]> {
-    let initialText = inputTextHead + ch + inputTextTail;
+    const initialText = inputTextHead + ch + inputTextTail;
 
     // we do not want the extension to actually load (it takes too much time), so use a fake language
-    let doc = await vscode.workspace.openTextDocument({ language: 'pddl-do-not-load-extension', content: initialText });
-    let editor = await vscode.window.showTextDocument(doc);
+    const doc = await vscode.workspace.openTextDocument({ language: 'pddl-do-not-load-extension', content: initialText });
+    const editor = await vscode.window.showTextDocument(doc);
 
     // move the cursor into the text
-    let position = doc.positionAt((inputTextHead + ch).length);
+    const position = doc.positionAt((inputTextHead + ch).length);
     editor.selection = new vscode.Selection(position, position);
 
-    let tree = new PddlSyntaxTreeBuilder(initialText).getTree();
+    const tree = new parser.PddlSyntaxTreeBuilder(initialText).getTree();
 
-    let domainNode = tree.getDefineNodeOrThrow().getFirstOpenBracketOrThrow('domain');
-    let positionResolver = new CodeDocumentPositionResolver(doc);
-    let domainInfo = new PddlDomainParser('file://testProblem.pddl', 1, initialText, domainNode, tree, positionResolver).getDomain();
+    const domainNode = tree.getDefineNodeOrThrow().getFirstOpenBracketOrThrow('domain');
+    const positionResolver = new CodeDocumentPositionResolver(doc);
+    const domainInfo = new parser.PddlDomainParser().parse('file://testProblem.pddl', 1, initialText, domainNode, tree, positionResolver);
     if (!domainInfo) { throw new Error(`Unable to parse test domain.`); }
 
     return await new DomainCompletionItemProvider().provide(doc, domainInfo, position, context);
