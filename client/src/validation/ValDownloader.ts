@@ -107,15 +107,24 @@ export class ValDownloader extends ValDownloaderBase {
     }
 
     async isInstalled(): Promise<boolean> {
-        return await utils.afs.exists(this.valVersionPath);
+        console.log('>>> BEFORE >>> ValDownloader.ts >>> await utils.afs.exists(this.valVersionPath)');
+        const exists = await utils.afs.exists(this.valVersionPath);
+        console.log('>>> AFTER >>> ValDownloader.ts >>> await utils.afs.exists(this.valVersionPath)');
+        return exists;
     }
 
     private async readVersion(): Promise<ValVersion> {
-        return readValManifest(this.valVersionPath);
+        console.log('>>> BEFORE >>> ValDownloader.ts >>> readValManifest(this.valVersionPath)');
+        const version = readValManifest(this.valVersionPath);
+        console.log('>>> AFTER >>> ValDownloader.ts >>> readValManifest(this.valVersionPath)');
+        return version;
     }
 
     private async writeVersion(valVersion: ValVersion): Promise<void> {
-        return writeValManifest(this.valVersionPath, valVersion);
+        console.log('>>> BEFORE >>> ValDownloader.ts >>> writeValManifest(this.valVersionPath, valVersion)');
+        const promise = writeValManifest(this.valVersionPath, valVersion);
+        console.log('>>> AFTER >>> ValDownloader.ts >>> writeValManifest(this.valVersionPath, valVersion)');
+        return promise;
     }
 
     /**

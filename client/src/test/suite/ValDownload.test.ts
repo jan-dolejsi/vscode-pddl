@@ -111,8 +111,10 @@ suite('VAL Download and Configuration', () => {
             // "validatePath": "Val-20190805.2-win64/bin/Validate.exe",
             // "valueSeqPath": "Val-20190805.2-win64/bin/ValueSeq.exe",
             // "valStepPath": "Val-20190805.2-win64/bin/ValStep.exe"
-          };
+        };
+        console.log('>>> BEFORE writeFile(valManifestPath, JSON.stringify(previousValManifest, null, 2))');
         await utils.afs.writeFile(valManifestPath, JSON.stringify(previousValManifest, null, 2));
+        console.log('>>> AFTER writeFile(valManifestPath, JSON.stringify(previousValManifest, null, 2))');
 
         const myValStepPath = 'MyValStep.exe';
         await pddlConf.update(VAL_STEP_PATH, myValStepPath, vscode.ConfigurationTarget.Global);
@@ -141,7 +143,7 @@ suite('VAL Download and Configuration', () => {
         expect(actualValStepPath).to.not.be.undefined;
         assert.startsWith(actualValueSeqPath!, path.join(valFolderPath, 'Val-20190911.1-win64'), "value seq path");
         expect(askedToOverwrite).to.deep.equal(['ValStep']);
-    }).timeout(2000*1000);
+    }).timeout(5000);
 
     after(async () => {
         // restore setting
