@@ -93,7 +93,7 @@ suite('VAL Download and Configuration', () => {
 
         // GIVEN
         const valFolderPath = path.join(extensionContext.globalStoragePath, 'val');
-        await mkdirIfDoesNotExist(valFolderPath, { mode: 0o644, recursive: true });
+        await mkdirIfDoesNotExist(valFolderPath, { mode: 0o777, recursive: true });
         const valManifestPath = path.join(valFolderPath, 'VAL.version');
         const previousValManifest = {
             "buildId": 24,

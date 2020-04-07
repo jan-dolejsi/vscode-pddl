@@ -45,8 +45,8 @@ class MockMemento implements Memento{
 }
 
 export async function createTestExtensionContext(): Promise<ExtensionContext> {
-    const storagePath = await utils.atmp.dir(0o644, 'extensionTestStoragePath');
-    const globalStoragePath = await utils.atmp.dir(0o644, 'extensionGlobalTestStoragePath');
+    const storagePath = await utils.atmp.dir(0o777, 'extensionTestStoragePath');
+    const globalStoragePath = await utils.atmp.dir(0o777, 'extensionGlobalTestStoragePath');
     const logPath = (await utils.atmp.file(0o644, 'extensionTests', 'log')).path;
 
     return {
