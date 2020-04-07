@@ -5,6 +5,7 @@ import { before, after } from 'mocha';
 
 import * as vscode from 'vscode';
 import * as path from 'path';
+import * as fs from 'fs';
 import { ValDownloader } from '../../validation/ValDownloader';
 import { PddlConfiguration, CONF_PDDL, VAL_STEP_PATH, VALIDATION_PATH, VALUE_SEQ_PATH, PDDL_PARSER, PARSER_EXECUTABLE_OR_SERVICE, EXECUTABLE_OR_SERVICE } from '../../configuration';
 import { createTestExtensionContext } from './testUtils';
@@ -35,6 +36,19 @@ class TestableValDownloader extends ValDownloader {
     protected async shouldOverwrite(toolName: string, yourConfiguredPath: string, newToolPath: string): Promise<boolean> {
         return this.shouldOverwriteDelegate(toolName, yourConfiguredPath, newToolPath);
     }
+}
+
+async function mkdirIfDoesNotExist(path: fs.PathLike, options: fs.MakeDirectoryOptions | undefined | null | number | string): Promise<void> {
+    return new Promise<void>((resolve, reject) => {
+        fs.mkdir(path, options, err => {
+            if (err && err.code !== 'EEXIST') {
+                reject(err);
+            }
+            else {
+                resolve();
+            }
+        });
+    });
 }
 
 suite('VAL Download and Configuration', () => {
@@ -79,7 +93,7 @@ suite('VAL Download and Configuration', () => {
 
         // GIVEN
         const valFolderPath = path.join(extensionContext.globalStoragePath, 'val');
-        utils.afs.mkdirIfDoesNotExist(valFolderPath, 0o644);
+        await mkdirIfDoesNotExist(valFolderPath, { mode: 0o644, recursive: true });
         const valManifestPath = path.join(valFolderPath, 'VAL.version');
         const previousValManifest = {
             "buildId": 24,
