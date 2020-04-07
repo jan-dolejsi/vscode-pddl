@@ -15,6 +15,7 @@ export interface WebviewAdapter {
     dispose(): void;
     reveal(displayColumn: ViewColumn): void;
     html: string;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     postMessage(message: any): Thenable<boolean>;
     readonly isInset: boolean;
     readonly webview: Webview;
@@ -40,6 +41,7 @@ export class WebviewPanelAdapter implements WebviewAdapter {
     public set html(value: string) {
         this.panel.webview.html = value;
     }
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     postMessage(message: any): Thenable<boolean> {
         return this.panel.webview.postMessage(message);
     }

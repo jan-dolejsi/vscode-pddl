@@ -4,6 +4,8 @@
  * ------------------------------------------------------------------------------------------ */
 'use strict';
 
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
 import * as request from 'request';
 import * as fs from 'fs';
 
@@ -26,7 +28,7 @@ export function getJson(url: string): Promise<any> {
 }
 
 export function getFile(url: string, localFilePath: string): Promise<void> {
-    var localFile = fs.createWriteStream(localFilePath);
+    const localFile = fs.createWriteStream(localFilePath);
 
     return new Promise<void>((resolve, reject) => {
         request.get(url)

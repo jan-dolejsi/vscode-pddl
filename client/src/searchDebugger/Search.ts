@@ -18,7 +18,7 @@ export class Search implements StateResolver {
     private states = new Map<number, State>();
     private bestStateHeuristic = Number.MAX_VALUE;
 
-    clear() {
+    clear(): void {
         this.states.clear();
         this.bestStateHeuristic = Number.MAX_VALUE;
     }
@@ -39,13 +39,13 @@ export class Search implements StateResolver {
         return this._onPlanFound.event;
     }
 
-    addInitialState(state: State) {
+    addInitialState(state: State): void {
         console.log('Added initial: ' + state);
         this.states.set(state.id, state);
         this._onStateAdded.fire(state);
     }
 
-    addState(state: State) {
+    addState(state: State): void {
         if (this.states.has(state.id)) {
             // todo: this may need modifications to align with state ordering and memoisation
             console.log('Ignoring: ' + state);
@@ -62,15 +62,15 @@ export class Search implements StateResolver {
         this.states.set(state.id, state);
         this._onStateUpdated.fire(state);
 
-        if (state.isEvaluated && !state.isDeadEnd && state.h! < this.bestStateHeuristic) {
-            this.bestStateHeuristic = state.h!;
+        if (state.isEvaluated && !state.isDeadEnd && state.h && (state.h < this.bestStateHeuristic)) {
+            this.bestStateHeuristic = state.h;
             this._onBetterState.fire(state);
         }
     }
 
     showPlan(goalState: State): void {
-        let plan: State[] = [];
-        var state: State | undefined = goalState;
+        const plan: State[] = [];
+        let state: State | undefined = goalState;
         while(state !== undefined) {
             state.isPlan = true;
             plan.push(state);
@@ -79,9 +79,9 @@ export class Search implements StateResolver {
         this._onPlanFound.fire(plan);
     }
 
-    setPlan(state: State) {
+    setPlan(state: State): void {
         console.log('Plan found: ' + state);
-        let goalState = state.evaluate(0, state.earliestTime, [], []);
+        const goalState = state.evaluate(0, state.earliestTime, [], []);
 
         this.update(goalState);
         this.showPlan(goalState);

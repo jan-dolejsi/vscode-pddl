@@ -5,20 +5,21 @@
  * ------------------------------------------------------------------------------------------ */
 'use strict';
 
-import { PlanStep } from "../../../common/src/PlanStep";
-const fs = require('fs');
-const { URL } = require('url');
+import { PlanStep } from 'pddl-workspace';
+import fs = require('fs');
+import { URL } from 'url';
 
 export class PlanReportSettings {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     settings: any = null;
     excludeActions: string[] | undefined;
     ignoreActionParameters: ActionParameterPattern[] | undefined;
 
     constructor(domainFileUri: string) {
-        let settingsFileUri = domainFileUri.replace(/\.pddl$/, '.planviz.json');
-        let url = new URL(settingsFileUri);
+        const settingsFileUri = domainFileUri.replace(/\.pddl$/, '.planviz.json');
+        const url = new URL(settingsFileUri);
         if (fs.existsSync(url)) {
-            let settings = fs.readFileSync(url);
+            const settings = fs.readFileSync(url, { encoding: 'utf8' });
             try {
                 this.settings = JSON.parse(settings);
             } catch (err) {
@@ -33,7 +34,7 @@ export class PlanReportSettings {
         if (this.excludeActions === undefined) {
             this.excludeActions = this.settings["excludeActions"];
         }
-        
+
         if (!this.excludeActions) { return true; }
         return !this.excludeActions.some(pattern => this.matches(pattern, planStep.getActionName()));
     }
@@ -44,7 +45,7 @@ export class PlanReportSettings {
         if (this.ignoreActionParameters === undefined) { this.ignoreActionParameters = this.settings["ignoreActionParameters"]; }
         if (!this.ignoreActionParameters) { return false; }
 
-        let applicableSetting = this.ignoreActionParameters.find(entry => this.matches(entry.action, actionName));
+        const applicableSetting = this.ignoreActionParameters.find(entry => this.matches(entry.action, actionName));
 
         if (!applicableSetting) { return false; }
 

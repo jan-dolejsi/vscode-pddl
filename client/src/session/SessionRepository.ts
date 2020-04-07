@@ -46,12 +46,13 @@ export class SessionRepository implements QuickDiffProvider {
 		this.sessionHash = session.getHash();
 	}
 
+	// eslint-disable-next-line @typescript-eslint/no-unused-vars
 	provideOriginalResource(uri: Uri, _: CancellationToken): Uri | undefined {
 		// converts the local file uri to planning.domains.session:sessionId/file.ext
-		let workspaceFolder = workspace.getWorkspaceFolder(uri);
+		const workspaceFolder = workspace.getWorkspaceFolder(uri);
 		if (workspaceFolder) {
-		let fileName = workspace.asRelativePath(uri, false);
-		return SessionRepository.createDocumentUri(workspaceFolder.uri, fileName);
+			const fileName = workspace.asRelativePath(uri, false);
+			return SessionRepository.createDocumentUri(workspaceFolder.uri, fileName);
 		}
 		else {
 			return undefined;
@@ -68,7 +69,7 @@ export class SessionRepository implements QuickDiffProvider {
 	 * @param fileName session file name
 	 * @returns path of the locally cloned session file
 	 */
-	createLocalResourcePath(fileName: string) {
+	createLocalResourcePath(fileName: string): string {
 		return path.join(this.workspaceFolder.uri.fsPath, fileName);
 	}
 
@@ -90,14 +91,14 @@ const SESSION_DETAILS_PATTERN = /window\.session_details\s*=\s*{\s*(?:readwrite_
  * @throws error when session does not exist, or session type is not recognized
  */
 export async function checkSession(sessionId: string): Promise<[SessionMode, number]> {
-	let url = `${SESSION_URL}check/${sessionId}`;
+	const url = `${SESSION_URL}check/${sessionId}`;
 
-	let response = await getJson(url);
+	const response = await getJson(url);
 
 	checkResponseForError(response);
 
-	var sessionMode: SessionMode;
-	switch ((<string>response["type"]).toLowerCase()) {
+	let sessionMode: SessionMode;
+	switch ((response["type"] as string).toLowerCase()) {
 		case "read":
 			sessionMode = SessionMode.READ_ONLY;
 			break;
@@ -109,24 +110,25 @@ export async function checkSession(sessionId: string): Promise<[SessionMode, num
 	}
 
 	// last_change contains last session change time (round it down to seconds)
-	let sessionVersionDate: number = Math.floor(Date.parse(response["last_change"]) / 1000) * 1000;
+	const sessionVersionDate: number = Math.floor(Date.parse(response["last_change"]) / 1000) * 1000;
 
 	return [sessionMode, sessionVersionDate];
 }
 
 export async function getSession(sessionConfiguration: SessionConfiguration): Promise<SessionContent> {
-	let rawSession = await getRawSession(sessionConfiguration);
-	let savedTabsJson = JSON.parse(rawSession.domainFilesAsString);
+	const rawSession = await getRawSession(sessionConfiguration);
+	const savedTabsJson = JSON.parse(rawSession.domainFilesAsString);
 
-	let fileNames = Object.keys(savedTabsJson);
-	let sessionFiles = new Map<string, string>();
+	const fileNames = Object.keys(savedTabsJson);
+	const sessionFiles = new Map<string, string>();
 	fileNames.forEach(fileName => sessionFiles.set(fileName, savedTabsJson[fileName]));
 
 	return new SessionContent(rawSession.readOnlyHash, rawSession.readWriteHash, rawSession.sessionDate, sessionFiles, rawSession.plugins);
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function createSessionContent(pluginDefinitions: any): string {
-	let sessionDefinitionAsString = JSON.stringify(pluginDefinitions, null, 4);
+	const sessionDefinitionAsString = JSON.stringify(pluginDefinitions, null, 4);
 	return `// Put this file online somewhere and import it as a plugin
 
 	define(function () {
@@ -142,12 +144,12 @@ ${sessionDefinitionAsString}
 export async function uploadSession(session: SessionContent): Promise<SessionContent> {
 	if (!session.writeHash) { throw new Error("Check if the session is writable first."); }
 
-	let rawLatestSession = await getRawSession(session);
+	const rawLatestSession = await getRawSession(session);
 
 	// re-place the saved tabs in the plugins
-	let newPluginList = [...rawLatestSession.plugins.keys()]
+	const newPluginList = [...rawLatestSession.plugins.keys()]
 		.map(oldPluginName => {
-			let oldPlugin = rawLatestSession.plugins.get(oldPluginName)!;
+			const oldPlugin = rawLatestSession.plugins.get(oldPluginName)!;
 			let newPlugin: RawSessionPlugin;
 			if (oldPlugin.name === SAVE_TABS_PLUGIN_NAME) {
 				newPlugin = {
@@ -163,24 +165,24 @@ export async function uploadSession(session: SessionContent): Promise<SessionCon
 		});
 
 	// re-construct the session plugin definition
-	var newPlugins = Object.create(null);
+	const newPlugins = Object.create(null);
 	newPluginList.forEach(plugin => {
-		let newPlugin = Object.create(null);
+		const newPlugin = Object.create(null);
 		newPlugin["url"] = plugin.url;
 		newPlugin["settings"] = plugin.settings;
 		newPlugins[plugin.name] = newPlugin;
 	});
 
-	let newContent = createSessionContent(newPlugins);
+	const newContent = createSessionContent(newPlugins);
 
-	var postBody = Object.create(null);
+	const postBody = Object.create(null);
 	postBody["content"] = newContent;
 	postBody["read_hash"] = session.hash;
 	postBody["readwrite_hash"] = session.writeHash;
 
-	let url = `${SESSION_URL}${session.writeHash}`;
+	const url = `${SESSION_URL}${session.writeHash}`;
 
-	let postResult = await postJson(url, postBody);
+	const postResult = await postJson(url, postBody);
 
 	if (postResult["error"]) {
 		throw new Error(postResult["message"]);
@@ -191,18 +193,18 @@ export async function uploadSession(session: SessionContent): Promise<SessionCon
 }
 
 export async function duplicateSession(session: SessionContent): Promise<string> {
-	let rawLatestOrigSession = await getRawSession(session);
+	const rawLatestOrigSession = await getRawSession(session);
 
 	// replace the session files
-	let newFilesAsString = JSON.stringify(strMapToObj(session.files), null, 4);
-	let newContent = rawLatestOrigSession.sessionContent
+	const newFilesAsString = JSON.stringify(strMapToObj(session.files), null, 4);
+	const newContent = rawLatestOrigSession.sessionContent
 		.replace(rawLatestOrigSession.sessionDetails, '') // strip the window.session.details= assignment
 		.replace(rawLatestOrigSession.domainFilesAsString, newFilesAsString);
 
-	var postBody = Object.create(null);
+	const postBody = Object.create(null);
 	postBody["content"] = newContent;
 
-	let postResult = await postJson(SESSION_URL, postBody);
+	const postResult = await postJson(SESSION_URL, postBody);
 
 	if (postResult["error"]) {
 		throw new Error(postResult["message"]);
@@ -220,23 +222,23 @@ const SOLVER_PLUGIN_NAME = "solver";
  * @param sessionConfiguration session identity
  */
 async function getRawSession(sessionConfiguration: SessionConfiguration): Promise<RawSession> {
-	let url = sessionConfiguration.writeHash ?
+	const url = sessionConfiguration.writeHash ?
 		`${SESSION_URL}edit/${sessionConfiguration.writeHash}` :
 		`${SESSION_URL}${sessionConfiguration.hash}`;
 
-	let sessionContent = await getText(url);
+	const sessionContent = await getText(url);
 
 	if (sessionContent.match(/not found/i)) {
 		throw new Error(`Session ${sessionConfiguration.writeHash ?? sessionConfiguration.hash} not found.`);
 	}
 
-	var sessionDetails: string;
-	var sessionDate: number;
-	var readWriteHash: string;
-	var readOnlyHash: string;
+	let sessionDetails: string;
+	let sessionDate: number;
+	let readWriteHash: string;
+	let readOnlyHash: string;
 
 	SESSION_DETAILS_PATTERN.lastIndex = 0;
-	let matchDetails = SESSION_DETAILS_PATTERN.exec(sessionContent);
+	const matchDetails = SESSION_DETAILS_PATTERN.exec(sessionContent);
 	if (matchDetails) {
 		sessionDetails = matchDetails[0];
 		readWriteHash = matchDetails[1];
@@ -249,11 +251,11 @@ async function getRawSession(sessionConfiguration: SessionConfiguration): Promis
 	}
 
 	// extract plugins
-	let plugins = new Map<string, RawSessionPlugin>();
+	const plugins = new Map<string, RawSessionPlugin>();
 	SESSION_PLUGINS_PATTERN.lastIndex = 0;
 	let pluginsMatch = SESSION_PLUGINS_PATTERN.exec(sessionContent);
 	if (pluginsMatch = SESSION_PLUGINS_PATTERN.exec(sessionContent)) {
-		let rawPlugins = JSON.parse(pluginsMatch[1]);
+		const rawPlugins = JSON.parse(pluginsMatch[1]);
 
 		[SAVE_TABS_PLUGIN_NAME, SOLVER_PLUGIN_NAME].forEach(pluginName => {
 			if (rawPlugins.hasOwnProperty(pluginName)) {
@@ -270,7 +272,7 @@ async function getRawSession(sessionConfiguration: SessionConfiguration): Promis
 		throw new Error("Saved session contains no saved tabs.");
 	}
 
-	var domainFilesString = plugins.get(SAVE_TABS_PLUGIN_NAME)!.settingsAsString;
+	const domainFilesString = plugins.get(SAVE_TABS_PLUGIN_NAME)!.settingsAsString;
 
 	return {
 		sessionDetails: sessionDetails,
@@ -294,6 +296,7 @@ interface RawSession {
 	readonly plugins: Map<string, RawSessionPlugin>;
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function toRawSessionPlugin(name: string, json: any): RawSessionPlugin {
 	return {
 		name: name,
@@ -307,5 +310,6 @@ interface RawSessionPlugin {
 	readonly name: string;
 	readonly url: string;
 	readonly settingsAsString: string | undefined;
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	readonly settings: any;
 }

@@ -3,19 +3,26 @@ import * as path from 'path';
 import { runTests } from 'vscode-test';
 import { URI } from 'vscode-uri';
 
-async function main() {
+async function main(): Promise<void> {
 	try {
+		const vsCodeTestArgs = new Map<string, string>();
 		// The folder containing the Extension Manifest package.json
 		// Passed to `--extensionDevelopmentPath`
-		const extensionDevelopmentPath = path.resolve(__dirname, '../../');
+		const extensionDevelopmentPath = path.resolve(__dirname, '../../../../');
+		vsCodeTestArgs.set('--extensionDevelopmentPath', extensionDevelopmentPath);
 
 		// The path to the extension test script
 		// Passed to --extensionTestsPath
 		const extensionTestsPath = path.resolve(__dirname, './suite/index');
+		vsCodeTestArgs.set('--extensionTestsPath', extensionTestsPath);
 
 		// The path to the workspace, where the files will be created
-		const testWorkspace = "--folder-uri=" + URI.file(path.resolve(__dirname, '../../../../src/test/tmpFolder'));
+		const testWorkspace = "--folder-uri=" + URI.file(path.resolve(extensionDevelopmentPath, 'src/test/tmpFolder'));
 		const launchArgs = [testWorkspace, "--disable-extensions"];
+		vsCodeTestArgs.set('launchArgs', launchArgs.join(' '));
+
+		console.log(`vscode-test arguments: `);
+		console.dir(vsCodeTestArgs);
 
 		// Download VS Code 1.40, unzip it and run the integration test
 		await runTests({

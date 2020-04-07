@@ -18,10 +18,10 @@ export class Authentication {
     private refreshToken?: string;
 
     constructor(private authUrl: string, private authRequestEncoded: string, private clientId: string, private callbackPort: number, private timeoutInMs: number,
-        private tokensvcUrl: string, private tokensvcApiKey: string, private tokensvcAccessPath: string, 
+        private tokensvcUrl: string, private tokensvcApiKey: string, private tokensvcAccessPath: string,
         private tokensvcValidatePath: string, private tokensvcCodePath: string, private tokensvcRefreshPath: string, private tokensvcSvctkPath: string,
         refreshToken: string, accessToken: string, sToken: string) {
-        
+
         this.refreshToken = refreshToken;
         this.accessToken = accessToken;
         this.sToken = sToken;
@@ -32,7 +32,7 @@ export class Authentication {
         return this.sToken;
     }
 
-    display() {
+    display(): void {
         console.log('URL: ' + this.authUrl);
         console.log('Request encoded: ' + this.authRequestEncoded);
         console.log('ClientId: ' + this.clientId);
@@ -50,20 +50,22 @@ export class Authentication {
         console.log('S Token: ' + this.sToken);
     }
 
-    login(onSuccess: (refreshToken: string, accessToken: string, sToken: string) => void, onError: (message: string) => void) {
-        var nonce = uuidv4();
-        var app = express();
+    login(onSuccess: (refreshToken: string, accessToken: string, sToken: string) => void, onError: (message: string) => void): void {
+        const nonce = uuidv4();
+        const app = express();
         app.use(bodyParser.json());
         app.use(bodyParser.urlencoded({ extended: true }));
-        var server: http.Server;
-        var thisAuthentication = this;
-        app.post('/auth/sauth/callback', function (req:any, res:any, next:any) {
-            server.close();
-            if(req.body.nonce === nonce) {
+        let server: http.Server | undefined = undefined;
+        const thisAuthentication = this;
+        app.post('/auth/sauth/callback', function (req, res, next) {
+            server?.close();
+            if (req.body.nonce === nonce) {
                 thisAuthentication.refreshToken = req.body.refreshtoken;
                 thisAuthentication.accessToken = req.body.accesstoken;
                 thisAuthentication.sToken = req.body.stoken;
-                onSuccess(thisAuthentication.refreshToken!, thisAuthentication.accessToken!, thisAuthentication.sToken!);
+                if (thisAuthentication.refreshToken && thisAuthentication.accessToken && thisAuthentication.sToken) {
+                    onSuccess(thisAuthentication.refreshToken, thisAuthentication.accessToken, thisAuthentication.sToken);
+                }
                 res.sendStatus(200);
                 next();
             }
@@ -75,19 +77,19 @@ export class Authentication {
         });
         server = http.createServer(app);
         server.on('error', function (e) {
-                onError(e.message);
-            });
+            onError(e.message);
+        });
         server.listen(this.callbackPort);
-        setTimeout( () => { server.close(); }, this.timeoutInMs );
+        setTimeout(() => { server?.close(); }, this.timeoutInMs);
 
-        let authUrl = this.authUrl + '?authRequest=' + this.authRequestEncoded + '&nonce=' + nonce + '&refreshtoken&accesstoken&stoken';
+        const authUrl = this.authUrl + '?authRequest=' + this.authRequestEncoded + '&nonce=' + nonce + '&refreshtoken&accesstoken&stoken';
         opn(authUrl);
     }
 
-    refreshTokens(onSuccess: (refreshToken: string, accessToken: string, sToken: string) => void, onError: (message: string) => void) {
-        if(this.sToken === undefined || this.sToken === "") {
-            if(this.accessToken === undefined || this.accessToken === "") {
-                if(this.refreshToken === undefined || this.refreshToken === "") {
+    refreshTokens(onSuccess: (refreshToken: string, accessToken: string, sToken: string) => void, onError: (message: string) => void): void {
+        if (this.sToken === undefined || this.sToken === "") {
+            if (this.accessToken === undefined || this.accessToken === "") {
+                if (this.refreshToken === undefined || this.refreshToken === "") {
                     this.refreshToken = undefined;
                     this.accessToken = undefined;
                     this.sToken = undefined;
@@ -109,49 +111,54 @@ export class Authentication {
         }
     }
 
-    refreshAccessAndSToken(onSuccess: (refreshToken: string, accessToken: string, sToken: string) => void, onError: (message: string) => void) {
-        let authentication = this;
-        request.post({ url: this.tokensvcUrl + this.tokensvcRefreshPath + '?key=' + this.tokensvcApiKey + '&accesstoken=\'\'', json: {clientid: this.clientId, refreshtoken: this.refreshToken}}, 
-        function(error, response, body) {
-            if(!error && response.statusCode === 200 && !!body) {
-                authentication.accessToken = body.accesstoken;                
-                authentication.refreshSToken(onSuccess, onError);
-            }
-            else {
-                authentication.accessToken = undefined;
-                authentication.sToken = undefined;
-                onError("Refresh Access Token failed.");
-            }
+    refreshAccessAndSToken(onSuccess: (refreshToken: string, accessToken: string, sToken: string) => void, onError: (message: string) => void): void {
+        const authentication = this;
+        request.post({ url: this.tokensvcUrl + this.tokensvcRefreshPath + '?key=' + this.tokensvcApiKey + '&accesstoken=\'\'', json: { clientid: this.clientId, refreshtoken: this.refreshToken } },
+            function (error, response, body) {
+                if (!error && response.statusCode === 200 && !!body) {
+                    authentication.accessToken = body.accesstoken;
+                    authentication.refreshSToken(onSuccess, onError);
+                }
+                else {
+                    authentication.accessToken = undefined;
+                    authentication.sToken = undefined;
+                    onError("Refresh Access Token failed.");
+                }
             });
     }
 
-    refreshSToken(onSuccess: (refreshToken: string, accessToken: string, sToken: string) => void, onError: (message: string) => void) {
-        let authentication = this;
-        request.post({ url: this.tokensvcUrl + this.tokensvcAccessPath + '?key=' + this.tokensvcApiKey + '&stoken=\'\'', json: {clientid: this.clientId, accesstoken: this.accessToken}}, 
-        function(error, response, body) {
-            if(!error && response.statusCode === 200 && !!body) {
-                authentication.sToken = body.stoken;
-                onSuccess(authentication.refreshToken!, authentication.accessToken!, authentication.sToken!);
-            }
-            else {
-                authentication.accessToken = undefined;
-                authentication.sToken = undefined;
-                onError("Refresh S Token failed.");
-            }
+    refreshSToken(onSuccess: (refreshToken: string, accessToken: string, sToken: string) => void, onError: (message: string) => void): void {
+        const authentication = this;
+        const url = this.tokensvcUrl + this.tokensvcAccessPath + '?key=' + this.tokensvcApiKey + '&stoken=\'\'';
+        request.post({ url: url, json: { clientid: this.clientId, accesstoken: this.accessToken } },
+            (error, response, body) => {
+                if (!error && response.statusCode === 200 && !!body) {
+                    authentication.sToken = body.stoken;
+                    if (authentication.refreshToken && authentication.accessToken && authentication.sToken) {
+                        onSuccess(authentication.refreshToken, authentication.accessToken, authentication.sToken);
+                    }
+                }
+                else {
+                    authentication.accessToken = undefined;
+                    authentication.sToken = undefined;
+                    onError("Refresh S Token failed.");
+                }
             });
     }
 
-    validateSToken(onSuccess: (refreshToken: string, accessToken: string, sToken: string) => void, onError: (message: string) => void) {
-        let authentication = this;
-        request.post({ url: this.tokensvcUrl + this.tokensvcValidatePath + '?key=' + this.tokensvcApiKey, json: {clientid: this.clientId, audiences: this.clientId, stoken: this.sToken}}, 
-        function(error, response, body) {
-            if(!error && response.statusCode === 200 && !!body) {
-                authentication.sToken = authentication.sToken;
-                onSuccess(authentication.refreshToken!, authentication.accessToken!, authentication.sToken!);
-            }
-            else {
-                authentication.refreshSToken(onSuccess, onError);
-            }
+    validateSToken(onSuccess: (refreshToken: string, accessToken: string, sToken: string) => void, onError: (message: string) => void): void {
+        const authentication = this;
+        request.post({ url: this.tokensvcUrl + this.tokensvcValidatePath + '?key=' + this.tokensvcApiKey, json: { clientid: this.clientId, audiences: this.clientId, stoken: this.sToken } },
+            function (error, response, body) {
+                if (!error && response.statusCode === 200 && !!body) {
+                    authentication.sToken = authentication.sToken;
+                    if (authentication.refreshToken && authentication.accessToken && authentication.sToken) {
+                        onSuccess(authentication.refreshToken, authentication.accessToken, authentication.sToken);
+                    }
+                }
+                else {
+                    authentication.refreshSToken(onSuccess, onError);
+                }
             });
     }
 }

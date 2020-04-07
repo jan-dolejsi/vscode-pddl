@@ -9,10 +9,7 @@ import {
 } from 'vscode';
 
 import { AbstractPlanExporter } from './PlanExporter';
-import { PlanHappeningsBuilder, Happening, HappeningType } from '../../../common/src/HappeningsInfo';
-import { PlanStep } from '../../../common/src/PlanStep';
-import { Parser } from '../../../common/src/parser';
-import { isUndefined } from 'util';
+import { Happening, HappeningType, PlanStep, parser } from 'pddl-workspace';
 
 /** Exports .happenings file to a .plan file by pairing happenings, if possible. */
 export class HappeningsPlanExporter extends AbstractPlanExporter {
@@ -31,11 +28,11 @@ export class HappeningsPlanExporter extends AbstractPlanExporter {
     makespan = 0;
 
     getPlanText(): string {
-        var happeningsText = this.happeningsDocument.getText();
-        var happeningsParser = new PlanHappeningsBuilder(this.epsilon);
+        const happeningsText = this.happeningsDocument.getText();
+        const happeningsParser = new parser.PlanHappeningsBuilder(this.epsilon);
         happeningsParser.tryParseFile(happeningsText);
-        var happenings = happeningsParser.getHappenings();
-        var planSteps: PlanStep[] = [];
+        const happenings = happeningsParser.getHappenings();
+        let planSteps: PlanStep[] = [];
 
         happenings.forEach((happening, happeningIndex) => {
             switch (happening.getType()) {
@@ -43,8 +40,8 @@ export class HappeningsPlanExporter extends AbstractPlanExporter {
                     planSteps.push(new PlanStep(happening.getTime(), happening.getFullActionName(), false, undefined, -1));
                     break;
                 case HappeningType.START:
-                    var end = this.findEnd(happenings, happening, happeningIndex+1);
-                    var duration = isUndefined(end) ? 0 : end.getTime() - happening.getTime();
+                    const end = this.findEnd(happenings, happening, happeningIndex+1);
+                    const duration = end === undefined ? 0 : end.getTime() - happening.getTime();
                     planSteps.push(new PlanStep(happening.getTime(), happening.getFullActionName(), true, duration, -1));
                     break;
             }
@@ -52,14 +49,14 @@ export class HappeningsPlanExporter extends AbstractPlanExporter {
 
         planSteps = planSteps.sort(this.comparePlanSteps);
 
-        var meta = Parser.parsePlanMeta(happeningsText);
+        const meta = parser.PddlPlanParser.parsePlanMeta(happeningsText);
 
         return AbstractPlanExporter.getPlanMeta(meta.domainName, meta.problemName)
             + "\n"
             + planSteps.map(step => step.toPddl()).join("\n");
     }
 
-    findEnd(happenings: Happening[], start: Happening, fromIndex: number): Happening {
+    findEnd(happenings: Happening[], start: Happening, fromIndex: number): Happening | undefined {
         return happenings.slice(fromIndex).find(h => h.belongsTo(start));
     }
 

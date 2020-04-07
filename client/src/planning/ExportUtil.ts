@@ -5,17 +5,17 @@
 'use strict';
 
 import { Uri, window, workspace, Range, ViewColumn } from 'vscode';
-import * as afs from '../../../common/src/asyncfs';
+import { utils } from 'pddl-workspace';
 
 export async function exportToAndShow(text: string, uri: Uri): Promise<boolean> {
-    let fileExists = await afs.exists(uri.fsPath);
+    const fileExists = await utils.afs.exists(uri.fsPath);
     if (!fileExists) {
         uri = uri.with({ scheme: 'untitled' });
     }
 
-    let newDocument = await workspace.openTextDocument(uri);
-    let editor = await window.showTextDocument(newDocument, { viewColumn: ViewColumn.Active, preserveFocus: true });
-    let fullRange = newDocument.validateRange(new Range(0, 0, newDocument.lineCount, 0));
+    const newDocument = await workspace.openTextDocument(uri);
+    const editor = await window.showTextDocument(newDocument, { viewColumn: ViewColumn.Active, preserveFocus: true });
+    const fullRange = newDocument.validateRange(new Range(0, 0, newDocument.lineCount, 0));
     if (await editor.edit(edit => edit.replace(fullRange, text))) {
         return newDocument.save();
     }

@@ -11,16 +11,16 @@ import { instrumentOperationAsVsCodeCommand } from "vscode-extension-telemetry-w
 
 import * as process from 'child_process';
 
-import { ProblemInfo } from '../../../common/src/ProblemInfo';
-import { DomainInfo } from '../../../common/src/DomainInfo';
-import { HappeningsInfo, Happening } from "../../../common/src/HappeningsInfo";
+import { ProblemInfo } from 'pddl-workspace';
+import { DomainInfo } from 'pddl-workspace';
+import { HappeningsInfo, Happening } from 'pddl-workspace';
 import { PddlConfiguration } from '../configuration';
-import { Util } from '../../../common/src/util';
+import { utils } from 'pddl-workspace';
 import { dirname } from 'path';
-import { PlanStep } from '../../../common/src/PlanStep';
+import { PlanStep } from 'pddl-workspace';
 import { DomainAndProblem, isHappenings, getDomainAndProblemForHappenings } from '../workspace/workspaceUtils';
 import { createRangeFromLine, createDiagnostic } from './PlanValidator';
-import { HappeningsToValStep } from './HappeningsToValStep';
+import { HappeningsToValStep } from 'ai-planning-val';
 import { CodePddlWorkspace } from '../workspace/CodePddlWorkspace';
 
 export const PDDL_HAPPENINGS_VALIDATE = 'pddl.happenings.validate';
@@ -36,9 +36,9 @@ export class HappeningsValidator {
             async () => {
                 if (window.activeTextEditor && isHappenings(window.activeTextEditor.document)) {
                     try {
-                        let outcome = await this.validateTextDocument(window.activeTextEditor.document);
+                        const outcome = await this.validateTextDocument(window.activeTextEditor.document);
                         if (outcome.getError()) {
-                            window.showErrorMessage(outcome.getError());
+                            window.showErrorMessage(outcome.getError()!);
                         }
                     } catch (ex) {
                         window.showErrorMessage("Happenings validation failed: " + ex);
@@ -53,69 +53,71 @@ export class HappeningsValidator {
 
     async validateTextDocument(planDocument: TextDocument): Promise<HappeningsValidationOutcome> {
 
-        let planFileInfo = <HappeningsInfo> await this.codePddlWorkspace.upsertAndParseFile(planDocument);
+        const planFileInfo = await this.codePddlWorkspace.upsertAndParseFile(planDocument) as HappeningsInfo;
 
         if (!planFileInfo) {
             return HappeningsValidationOutcome.failed(null, new Error("Cannot open or parse plan file."));
         }
 
-        return this.validateAndReportDiagnostics(planFileInfo, true, _ => { }, _ => { });
+        // eslint-disable-next-line @typescript-eslint/no-empty-function
+        return this.validateAndReportDiagnostics(planFileInfo, true, () => { }, () => { });
     }
 
     async validateAndReportDiagnostics(happeningsInfo: HappeningsInfo, showOutput: boolean, onSuccess: (diagnostics: Map<string, Diagnostic[]>) => void, onError: (error: string) => void): Promise<HappeningsValidationOutcome> {
         if (happeningsInfo.getParsingProblems().length > 0) {
-            let diagnostics = happeningsInfo.getParsingProblems()
+            const diagnostics = happeningsInfo.getParsingProblems()
                 .map(problem => new Diagnostic(createRangeFromLine(problem.lineIndex, problem.columnIndex), problem.problem));
-            let outcome = HappeningsValidationOutcome.failedWithDiagnostics(happeningsInfo, diagnostics);
+            const outcome = HappeningsValidationOutcome.failedWithDiagnostics(happeningsInfo, diagnostics);
             onSuccess(outcome.getDiagnostics());
             return outcome;
         }
 
-        let context: DomainAndProblem = null;
+        let context: DomainAndProblem | null = null;
 
         try {
             context = getDomainAndProblemForHappenings(happeningsInfo, this.codePddlWorkspace.pddlWorkspace);
         } catch (err) {
-            let outcome = HappeningsValidationOutcome.info(happeningsInfo, err);
+            const outcome = HappeningsValidationOutcome.info(happeningsInfo, err);
             onSuccess(outcome.getDiagnostics());
             return outcome;
         }
 
         // are the actions in the plan declared in the domain?
-        let actionNameDiagnostics = this.validateActionNames(context.domain, context.problem, happeningsInfo);
+        const actionNameDiagnostics = this.validateActionNames(context.domain, context.problem, happeningsInfo);
         if (actionNameDiagnostics.length) {
-            let errorOutcome = HappeningsValidationOutcome.failedWithDiagnostics(happeningsInfo, actionNameDiagnostics);
+            const errorOutcome = HappeningsValidationOutcome.failedWithDiagnostics(happeningsInfo, actionNameDiagnostics);
             onSuccess(errorOutcome.getDiagnostics());
             return errorOutcome;
         }
 
         // are the actions start times monotonically increasing?
-        let actionTimeDiagnostics = this.validateActionTimes(happeningsInfo);
+        const actionTimeDiagnostics = this.validateActionTimes(happeningsInfo);
         if (actionTimeDiagnostics.length) {
-            let errorOutcome = HappeningsValidationOutcome.failedWithDiagnostics(happeningsInfo, actionTimeDiagnostics);
+            const errorOutcome = HappeningsValidationOutcome.failedWithDiagnostics(happeningsInfo, actionTimeDiagnostics);
             onSuccess(errorOutcome.getDiagnostics());
             return errorOutcome;
         }
 
-        let valStepPath = await this.plannerConfiguration.getValStepPath();
+        const valStepPath = await this.plannerConfiguration.getValStepPath();
+        //const valVerbose = this.plannerConfiguration.getValStepVerbose();
 
         if (!valStepPath) {
             onSuccess(HappeningsValidationOutcome.unknown(happeningsInfo, "ValStep not configured.").getDiagnostics());
         }
 
         // copy editor content to temp files to avoid using out-of-date content on disk
-        let domainFilePath = await Util.toPddlFile('domain', context.domain.getText());
-        let problemFilePath = await Util.toPddlFile('problem', context.problem.getText());
-        let happeningsConverter = new HappeningsToValStep();
+        const domainFilePath = await utils.Util.toPddlFile('domain', context.domain.getText());
+        const problemFilePath = await utils.Util.toPddlFile('problem', context.problem.getText());
+        const happeningsConverter = new HappeningsToValStep();
         happeningsConverter.convertAllHappenings(happeningsInfo);
-        let valSteps = happeningsConverter.getExportedText(true);
+        const valSteps = happeningsConverter.getExportedText(true);
 
-        let args = [domainFilePath, problemFilePath];
-        let child = process.spawnSync(valStepPath, args, { cwd: dirname(Uri.parse(happeningsInfo.fileUri).fsPath), input: valSteps });
+        const args = [domainFilePath, problemFilePath];
+        const child = process.spawnSync(valStepPath!, args, { cwd: dirname(Uri.parse(happeningsInfo.fileUri).fsPath), input: valSteps });
 
         if (showOutput) { this.output.appendLine(valStepPath + ' ' + args.join(' ')); }
 
-        let output = child.stdout.toString();
+        const output = child.stdout.toString();
 
         if (showOutput) { this.output.appendLine(output); }
 
@@ -124,7 +126,7 @@ export class HappeningsValidator {
             this.output.appendLine(child.stderr.toString());
         }
 
-        let outcome = this.analyzeOutput(happeningsInfo, child.error, output);
+        const outcome = this.analyzeOutput(happeningsInfo, child.error, output);
 
         if (child.error) {
             if (showOutput) { this.output.appendLine(`Error: name=${child.error.name}, message=${child.error.message}`); }
@@ -142,7 +144,8 @@ export class HappeningsValidator {
         return outcome;
     }
 
-    analyzeOutput(happeningsInfo: HappeningsInfo, error: Error, _output: string): HappeningsValidationOutcome {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    analyzeOutput(happeningsInfo: HappeningsInfo, error: Error | undefined, _output: string): HappeningsValidationOutcome {
         if (error) {
             return HappeningsValidationOutcome.failed(happeningsInfo, error);
         }
@@ -176,7 +179,7 @@ export class HappeningsValidator {
     }
 
     private isDomainAction(domain: DomainInfo, problem: ProblemInfo, happening: Happening): boolean {
-        let allActionNames = domain.getActions().map(a => a.name.toLowerCase()).concat(
+        const allActionNames = domain.getActions().map(a => a.name?.toLowerCase() ?? 'undefined').concat(
             problem.getSupplyDemands().map(sd => sd.getName().toLowerCase()));
 
         return allActionNames.includes(happening.getAction().toLowerCase());
@@ -188,24 +191,25 @@ export class HappeningsValidator {
 }
 
 class HappeningsValidationOutcome {
-    constructor(public happeningsInfo: HappeningsInfo, private diagnostics: Diagnostic[], public error: string = null) {
+    constructor(public readonly happeningsInfo: HappeningsInfo, private diagnostics: Diagnostic[], private error?: string) {
 
     }
 
-    getError(): string {
+    getError(): string | undefined {
         return this.error;
     }
 
     getDiagnostics(): Map<string, Diagnostic[]> {
-        let diagnostics = new Map<string, Diagnostic[]>();
+        const diagnostics = new Map<string, Diagnostic[]>();
         diagnostics.set(this.happeningsInfo.fileUri, this.diagnostics);
         return diagnostics;
     }
 
     static goalNotAttained(happeningsInfo: HappeningsInfo): HappeningsValidationOutcome {
-        let errorLine = happeningsInfo.getHappenings().length > 0 ? happeningsInfo.getHappenings().slice(-1).pop().lineIndex + 1 : 0;
-        let error = "Plan does not reach the goal.";
-        let diagnostics = [createDiagnostic(errorLine, 0, error, DiagnosticSeverity.Warning)];
+        const errorLine = happeningsInfo.getHappenings().length > 0 ?
+            happeningsInfo.getHappenings().slice(-1).pop()?.lineIndex ?? 0 + 1 : 0;
+        const error = "Plan does not reach the goal.";
+        const diagnostics = [createDiagnostic(errorLine, 0, error, DiagnosticSeverity.Warning)];
         return new HappeningsValidationOutcome(happeningsInfo, diagnostics, error);
     }
 
@@ -213,8 +217,8 @@ class HappeningsValidationOutcome {
      * Creates validation outcomes for invalid plan i.e. plans that do not parse or do not correspond to the domain/problem file.
      */
     static invalidPlanDescription(happeningsInfo: HappeningsInfo): HappeningsValidationOutcome {
-        let error = "Invalid plan description.";
-        let diagnostics = [createDiagnostic(0, 0, error, DiagnosticSeverity.Error)];
+        const error = "Invalid plan description.";
+        const diagnostics = [createDiagnostic(0, 0, error, DiagnosticSeverity.Error)];
         return new HappeningsValidationOutcome(happeningsInfo, diagnostics, error);
     }
 
@@ -226,14 +230,14 @@ class HappeningsValidationOutcome {
     }
 
     static failed(happeningsInfo: HappeningsInfo, error: Error): HappeningsValidationOutcome {
-        let message = "Validate tool failed. " + error.message;
-        let diagnostics = [createDiagnostic(0, 0, message, DiagnosticSeverity.Error)];
+        const message = "Validate tool failed. " + error.message;
+        const diagnostics = [createDiagnostic(0, 0, message, DiagnosticSeverity.Error)];
         return new HappeningsValidationOutcome(happeningsInfo, diagnostics, message);
     }
 
     static info(happeningsInfo: HappeningsInfo, error: Error): HappeningsValidationOutcome {
-        let message = error.message;
-        let diagnostics = [createDiagnostic(0, 0, message, DiagnosticSeverity.Information)];
+        const message = error.message;
+        const diagnostics = [createDiagnostic(0, 0, message, DiagnosticSeverity.Information)];
         return new HappeningsValidationOutcome(happeningsInfo, diagnostics, message);
     }
 
@@ -243,18 +247,18 @@ class HappeningsValidationOutcome {
 
     static failedAtTime(happeningsInfo: HappeningsInfo, timeStamp: number, repairHints: string[]): HappeningsValidationOutcome {
         let errorLine = 0;
-        let stepAtTimeStamp =
+        const stepAtTimeStamp =
             happeningsInfo.getHappenings()
                 .find(happening => PlanStep.equalsWithin(happening.getTime(), timeStamp, 1e-4));
 
-        if (stepAtTimeStamp) { errorLine = stepAtTimeStamp.lineIndex; }
+        if (stepAtTimeStamp && stepAtTimeStamp.lineIndex !== undefined) { errorLine = stepAtTimeStamp.lineIndex; }
 
-        let diagnostics = repairHints.map(hint => new Diagnostic(createRangeFromLine(errorLine), hint, DiagnosticSeverity.Warning));
+        const diagnostics = repairHints.map(hint => new Diagnostic(createRangeFromLine(errorLine), hint, DiagnosticSeverity.Warning));
         return new HappeningsValidationOutcome(happeningsInfo, diagnostics);
     }
 
     static unknown(happeningsInfo: HappeningsInfo, message = "Unknown error."): HappeningsValidationOutcome {
-        let diagnostics = [new Diagnostic(createRangeFromLine(0), message, DiagnosticSeverity.Warning)];
+        const diagnostics = [new Diagnostic(createRangeFromLine(0), message, DiagnosticSeverity.Warning)];
         return new HappeningsValidationOutcome(happeningsInfo, diagnostics, message);
     }
 }

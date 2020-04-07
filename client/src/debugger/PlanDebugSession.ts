@@ -13,6 +13,7 @@ import {
 import { DebugProtocol } from 'vscode-debugprotocol';
 import { basename } from 'path';
 import { PlanDebugRuntime, HappeningBreakpoint } from './PlanDebugRuntime';
+// eslint-disable-next-line @typescript-eslint/no-var-requires
 const { Subject } = require('await-notify');
 
 
@@ -88,6 +89,7 @@ export class PlanDebugSession extends LoggingDebugSession {
 	 * The 'initialize' request is the first request called by the frontend
 	 * to interrogate the features the debug adapter provides.
 	 */
+	// eslint-disable-next-line @typescript-eslint/no-unused-vars
 	protected initializeRequest(response: DebugProtocol.InitializeResponse, _: DebugProtocol.InitializeRequestArguments): void {
 		// build and return the capabilities of this debug adapter:
 		response.body = response.body || {};
@@ -120,7 +122,7 @@ export class PlanDebugSession extends LoggingDebugSession {
 		this._configurationDone.notify();
 	}
 
-	protected async launchRequest(response: DebugProtocol.LaunchResponse, args: LaunchRequestArguments) {
+	protected async launchRequest(response: DebugProtocol.LaunchResponse, args: LaunchRequestArguments): Promise<void> {
 
 		// make sure to 'Stop' the buffered logging if 'trace' is not set
 		logger.setup(args.trace ? Logger.LogLevel.Verbose : Logger.LogLevel.Stop, false);
@@ -136,7 +138,7 @@ export class PlanDebugSession extends LoggingDebugSession {
 
 	protected setBreakPointsRequest(response: DebugProtocol.SetBreakpointsResponse, args: DebugProtocol.SetBreakpointsArguments): void {
 
-		const path = <string>args.source.path;
+		const path = args.source.path as string;
 		const clientLines = args.lines || [];
 
 		// clear all breakpoints for this file
@@ -144,8 +146,8 @@ export class PlanDebugSession extends LoggingDebugSession {
 
 		// set and verify breakpoint locations
 		const actualBreakpoints = clientLines.map(l => {
-			let { verified, line, id } = this._runtime.setBreakPoint(path, this.convertClientLineToDebugger(l));
-			const bp = <DebugProtocol.Breakpoint> new Breakpoint(verified, this.convertDebuggerLineToClient(line));
+			const { verified, line, id } = this._runtime.setBreakPoint(path, this.convertClientLineToDebugger(l));
+			const bp = new Breakpoint(verified, this.convertDebuggerLineToClient(line)) as DebugProtocol.Breakpoint;
 			bp.id= id;
 			return bp;
 		});
@@ -232,7 +234,7 @@ export class PlanDebugSession extends LoggingDebugSession {
 		this.sendResponse(response);
 	}
 
-	protected reverseContinueRequest(response: DebugProtocol.ReverseContinueResponse, _: DebugProtocol.ReverseContinueArguments) : void {
+	protected reverseContinueRequest(response: DebugProtocol.ReverseContinueResponse, _: DebugProtocol.ReverseContinueArguments): void {
 		this._runtime.continue(true);
 		this.sendResponse(response);
  	}

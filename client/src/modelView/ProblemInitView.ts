@@ -9,16 +9,16 @@ import {
     ExtensionContext, TextDocument, CodeLens, CancellationToken, CodeLensProvider
 } from 'vscode';
 
-import { DomainInfo } from '../../../common/src/DomainInfo';
-import { ProblemInfo, TimedVariableValue } from '../../../common/src/ProblemInfo';
-import { Variable, ObjectInstance, Parameter, Term } from '../../../common/src/FileInfo';
+import { DomainInfo } from 'pddl-workspace';
+import { ProblemInfo, TimedVariableValue } from 'pddl-workspace';
+import { Variable, ObjectInstance, Parameter, Term } from 'pddl-workspace';
 
 import * as path from 'path';
 import { CodePddlWorkspace } from '../workspace/CodePddlWorkspace';
-import { PddlTokenType } from '../../../common/src/PddlTokenizer';
+import { parser } from 'pddl-workspace';
 import { nodeToRange, asSerializable } from '../utils';
-import { getObjectsInheritingFrom, getTypesInheritingFromPlusSelf } from '../../../common/src/typeInheritance';
-import { Util } from '../../../common/src/util';
+import { getObjectsInheritingFrom, getTypesInheritingFromPlusSelf } from 'pddl-workspace';
+import { utils } from 'pddl-workspace';
 import { DocumentCodeLens, DocumentInsetCodeLens } from './view';
 import { ProblemView, ProblemRenderer, ProblemRendererOptions } from './ProblemView';
 import { GraphViewData, NetworkEdge, NetworkNode } from './GraphViewData';
@@ -55,12 +55,12 @@ export class ProblemInitView extends ProblemView<ProblemInitViewOptions, Problem
 
     async provideCodeLenses(document: TextDocument, token: CancellationToken): Promise<CodeLens[] | null> {
         if (token.isCancellationRequested) { return null; }
-        let problem = await this.parseProblem(document);
+        const problem = await this.parseProblem(document);
         if (token.isCancellationRequested) { return null; }
         if (!problem) { return []; }
 
-        let defineNode = problem.syntaxTree.getDefineNodeOrThrow();
-        let initNode = defineNode.getFirstChild(PddlTokenType.OpenBracketOperator, /\s*:init/i);
+        const defineNode = problem.syntaxTree.getDefineNodeOrThrow();
+        const initNode = defineNode.getFirstChild(parser.PddlTokenType.OpenBracketOperator, /\s*:init/i);
         if (initNode) {
             return [
                 new DocumentCodeLens(document, nodeToRange(document, initNode))
@@ -76,7 +76,7 @@ export class ProblemInitView extends ProblemView<ProblemInitViewOptions, Problem
             return null;
         }
         if (token.isCancellationRequested) { return null; }
-        let domainAndProblem = await this.getProblemAndDomain(codeLens.getDocument());
+        const domainAndProblem = await this.getProblemAndDomain(codeLens.getDocument());
         if (!domainAndProblem) { return null; }
 
         if (token.isCancellationRequested) { return null; }
@@ -91,14 +91,14 @@ export class ProblemInitView extends ProblemView<ProblemInitViewOptions, Problem
         }
     }
 
-    protected createPreviewPanelTitle(uri: Uri) {
+    protected createPreviewPanelTitle(uri: Uri): string {
         return `:init of '${path.basename(uri.fsPath)}'`;
     }
 }
 
 class ProblemInitRenderer implements ProblemRenderer<ProblemInitViewOptions, ProblemInitViewData> {
     render(context: ExtensionContext, problem: ProblemInfo, domain: DomainInfo, options: ProblemInitViewOptions): ProblemInitViewData {
-        let renderer = new ProblemInitRendererDelegate(context, domain, problem, options);
+        const renderer = new ProblemInitRendererDelegate(context, domain, problem, options);
 
         return {
             symmetricRelationshipGraph: {
@@ -121,6 +121,7 @@ interface ProblemInitViewData {
 
 interface TypeProperties {
     propertyNames: string[];
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     objects: Map<string, Map<string, any>>;
 }
 
@@ -157,14 +158,18 @@ class ProblemInitRendererDelegate {
         }
     }
 
-    private constructScalarValues() {
-        let scalarVariables = this.domain.getPredicates().concat(this.domain.getFunctions())
+    private constructScalarValues(): void {
+        const scalarVariables = this.domain.getPredicates().concat(this.domain.getFunctions())
             .filter(v => v.parameters.length === 0);
 
-        let scalarInits = scalarVariables
-            .map(v => <VariableInitialValueTuple>{ variable: v, value: this.getInitValue(v) });
+        const scalarInits: VariableInitialValueTuple[] = scalarVariables
+            .map(v => this.toVariableInitialValueTuple(v));
 
         scalarInits.forEach(init => this.addScalar(init));
+    }
+
+    private toVariableInitialValueTuple(v: Variable): VariableInitialValueTuple {
+        return { variable: v, value: this.getInitValue(v) };
     }
 
     private addScalar(initValue: VariableInitialValueTuple): void {
@@ -176,22 +181,22 @@ class ProblemInitRendererDelegate {
     }
 
     private construct2dGraphData(): void {
-        let symmetric2dPredicates = this.domain.getPredicates()
+        const symmetric2dPredicates = this.domain.getPredicates()
             .filter(v => this.is2DGraphable(v));
-        let symmetric2dFunctions = this.domain.getFunctions()
+        const symmetric2dFunctions = this.domain.getFunctions()
             .filter(v => this.is2DGraphable(v));
-        let symmetric2dVariables = symmetric2dFunctions.concat(symmetric2dPredicates);
+        const symmetric2dVariables = symmetric2dFunctions.concat(symmetric2dPredicates);
 
-        let relatableTypes: string[] = Util.distinct(
-            Util.flatMap(symmetric2dVariables
+        const relatableTypes: string[] = utils.Util.distinct(
+            utils.Util.flatMap(symmetric2dVariables
                 .map(v => [v.parameters[0].type, v.parameters[1].type])
             )
         );
 
-        let relatableAndInheritedTypes = Util.distinct(Util.flatMap(relatableTypes.map(type => getTypesInheritingFromPlusSelf(type, this.domain.getTypeInheritance()))));
+        const relatableAndInheritedTypes = utils.Util.distinct(utils.Util.flatMap(relatableTypes.map(type => getTypesInheritingFromPlusSelf(type, this.domain.getTypeInheritance()))));
         relatableAndInheritedTypes.forEach(type => this.getObjects(type).forEach(obj => this.addNode(obj)));
 
-        let symmetric2dInits = this.problem.getInits()
+        const symmetric2dInits = this.problem.getInits()
             .filter(init => init.isSupported)
             .filter(init => symmetric2dVariables.some(v => v.matchesShortNameCaseInsensitive(init.getLiftedVariableName())));
 
@@ -208,12 +213,12 @@ class ProblemInitRendererDelegate {
     }
 
     private constructTypeProperties(type: string): void {
-        let typeObjects = this.domain.getConstants().merge(this.problem.getObjectsTypeMap()).getTypeCaseInsensitive(type);
+        const typeObjects = this.domain.getConstants().merge(this.problem.getObjectsTypeMap()).getTypeCaseInsensitive(type);
         if (!typeObjects) { return; }
-        let objects = typeObjects.getObjects();
+        const objects = typeObjects.getObjects();
 
         if (objects.length > 0) {
-            let typeDetails = this.constructObjectsProperties(type, objects);
+            const typeDetails = this.constructObjectsProperties(type, objects);
             if (typeDetails.propertyNames.length) {
                 this.typeProperties.set(type, typeDetails);
             }
@@ -221,14 +226,16 @@ class ProblemInitRendererDelegate {
     }
 
     private constructObjectsProperties(type: string, objects: string[]): TypeProperties {
-        let liftedVariables = this.domain.getPredicates().concat(this.domain.getFunctions())
+        const liftedVariables = this.domain.getPredicates().concat(this.domain.getFunctions())
             .filter(variable => this.isTypeProperty(type, variable));
 
-        let objectsValues = new Map<string, Map<string, any>>();
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const objectsValues = new Map<string, Map<string, any>>();
         objects.forEach(objectName => {
-            let objectValues = new Map<string, any>();
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const objectValues = new Map<string, any>();
             liftedVariables.forEach(v => {
-                let value = this.getInitValue(v.bind([new ObjectInstance(objectName, type)]));
+                const value = this.getInitValue(v.bind([new ObjectInstance(objectName, type)]));
                 if (value) {
                     objectValues.set(v.name, value.getValue());
                 }
@@ -242,11 +249,11 @@ class ProblemInitRendererDelegate {
     }
 
     private getInitValue(groundedVariable: Variable): TimedVariableValue | undefined {
-        let firstInit = this.problem.getInits()
+        const firstInit = this.problem.getInits()
             .filter(init => init.isSupported)
             .filter(viv => viv.getVariableName().toLowerCase() === groundedVariable.getFullName().toLowerCase())
             .sort(viv => viv.getTime())
-            .find(_ => true);
+            .find(() => true);
 
         // todo: do not ignore viv.getTime()
 
@@ -254,7 +261,7 @@ class ProblemInitRendererDelegate {
     }
 
     private isTypeProperty(type: string, variable: Variable): boolean {
-        let applicableTypes = getTypesInheritingFromPlusSelf(type, this.domain.getTypeInheritance());
+        const applicableTypes = getTypesInheritingFromPlusSelf(type, this.domain.getTypeInheritance());
         return variable.parameters.length === 1
             && applicableTypes.includes(variable.parameters[0].type);
     }
@@ -272,10 +279,10 @@ class ProblemInitRendererDelegate {
     }
 
     private constructObjectRelationships(): void {
-        let binaryRelationships = this.domain.getPredicates().concat(this.domain.getFunctions())
+        const binaryRelationships = this.domain.getPredicates().concat(this.domain.getFunctions())
             .filter(v => v.parameters.length === 2);
 
-        let relationshipPerTypes = Util.groupBy(binaryRelationships, r => r.parameters.map(p => p.type).join(','));
+        const relationshipPerTypes = utils.Util.groupBy(binaryRelationships, r => r.parameters.map(p => p.type).join(','));
 
         relationshipPerTypes
             .forEach((relationships, typeNames) =>
@@ -283,10 +290,10 @@ class ProblemInitRendererDelegate {
     }
 
     private constructTypesRelationships(types: string[], relationships: Variable[]): void {
-        let typeObjectsMap = new Map<string, string[]>();
+        const typeObjectsMap = new Map<string, string[]>();
         types.forEach(t => typeObjectsMap.set(t, this.getObjects(t)));
 
-        let relationshipsMap = new Map<string, RelationshipValue[]>();
+        const relationshipsMap = new Map<string, RelationshipValue[]>();
         relationships.forEach(r => relationshipsMap.set(r.name, this.createTypeRelationships(r)));
 
         this.typeRelationships.push({
@@ -296,21 +303,21 @@ class ProblemInitRendererDelegate {
     }
 
     private createTypeRelationships(relationship: Variable): RelationshipValue[] {
-        let applicableInits = this.problem.getInits()
+        const applicableInits = this.problem.getInits()
             .filter(init => relationship.matchesShortNameCaseInsensitive(init.getLiftedVariableName()));
 
         return applicableInits.map(init => this.createRelationshipValue(init));
     }
 
     private createRelationshipValue(init: TimedVariableValue): RelationshipValue {
-        let parameters = new Map<string, string>();
-        let liftedVariable = this.domain.getPredicates().concat(this.domain.getFunctions())
+        const parameters = new Map<string, string>();
+        const liftedVariable = this.domain.getPredicates().concat(this.domain.getFunctions())
             .find(v => v.name.toLowerCase() === init.getLiftedVariableName().toLowerCase());
 
         if (liftedVariable) {
             liftedVariable.parameters
                 .forEach((term: Term, index) =>
-                    parameters.set((<Parameter>term).name, init.getVariableName().split(' ')[index + 1]));
+                    parameters.set((term as Parameter).name, init.getVariableName().split(' ')[index + 1]));
         }
         else {
             init.getVariableName().split(' ').slice(1)
@@ -334,7 +341,7 @@ class ProblemInitRendererDelegate {
     }
 
     private addRelationship(initialValue: TimedVariableValue): void {
-        let edge = this.toEdge(initialValue);
+        const edge = this.toEdge(initialValue);
         if (edge) {
             this.relationships.push(edge);
         }
@@ -345,14 +352,14 @@ class ProblemInitRendererDelegate {
     }
 
     private toNode(entry: [string, number]): NetworkNode {
-        let [entryLabel, entryId] = entry;
+        const [entryLabel, entryId] = entry;
         return { id: entryId, label: entryLabel };
     }
 
     private toEdge(initialValue: TimedVariableValue): NetworkEdge | null {
-        let variableNameParts = initialValue.getVariableName().split(' ');
-        let fromName = variableNameParts[1];
-        let toName = variableNameParts[2];
+        const variableNameParts = initialValue.getVariableName().split(' ');
+        const fromName = variableNameParts[1];
+        const toName = variableNameParts[2];
         let label = variableNameParts[0];
 
         if (variableNameParts.length > 3) {
@@ -391,7 +398,7 @@ class ProblemInitRendererDelegate {
             && variable.parameters[0].type === variable.parameters[1].type;
     }
 
-    private static is2D(variable: Variable) {
+    private static is2D(variable: Variable): boolean {
         return variable.parameters.length >= 2;
     }
 }

@@ -7,8 +7,8 @@
 import { Uri } from 'vscode';
 import { join, dirname } from 'path';
 import { TestsManifest } from './TestsManifest';
-import { PreProcessor, CommandPreProcessor, NunjucksPreProcessor, PythonPreProcessor, Jinja2PreProcessor } from "../../../common/src/PreProcessors";
-import { PddlExtensionContext } from '../../../common/src/PddlExtensionContext';
+import { PreProcessor, CommandPreProcessor, NunjucksPreProcessor, PythonPreProcessor, Jinja2PreProcessor } from 'pddl-workspace';
+import { PddlExtensionContext } from 'pddl-workspace';
 import { throwForUndefined } from '../utils';
 
 export enum TestOutcome { UNKNOWN, SUCCESS, FAILED, SKIPPED, IN_PROGRESS }
@@ -43,23 +43,24 @@ export class Test {
 
         }
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     static fromJSON(json: any,  context: PddlExtensionContext): Test {
-        let label = json[LABEL];
-        let description = json[DESCRIPTION];
-        let domain = json[DOMAIN];
-        let problem = json[PROBLEM];
-        let options = json[OPTIONS];
-        let expectedPlans = json[EXPECTED_PLANS] ?? [];
+        const label = json[LABEL];
+        const description = json[DESCRIPTION];
+        const domain = json[DOMAIN];
+        const problem = json[PROBLEM];
+        const options = json[OPTIONS];
+        const expectedPlans = json[EXPECTED_PLANS] ?? [];
 
-        let preProcessSettings = json[PRE_PROCESSOR];
+        const preProcessSettings = json[PRE_PROCESSOR];
         let preProcessor: PreProcessor | undefined;
 
         if(preProcessSettings) {
-            let kind = preProcessSettings[PRE_PROCESSOR_KIND];
+            const kind = preProcessSettings[PRE_PROCESSOR_KIND];
 
             switch(kind){
                 case "command":
-                    preProcessor = CommandPreProcessor.fromJson(preProcessSettings);
+                    preProcessor = CommandPreProcessor.fromJson(preProcessSettings as never);
                     break;
                 case "python":
                     preProcessor = new PythonPreProcessor(context.pythonPath(), preProcessSettings[PRE_PROCESSOR_SCRIPT], preProcessSettings[PRE_PROCESSOR_ARGS]);
@@ -76,8 +77,10 @@ export class Test {
         return new Test(label, description, domain, problem, options, preProcessor, expectedPlans);
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     toJSON(): any {
-        let json: any = {};
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const json: any = {};
 
         if (this.label) { json[LABEL] = this.label; }
         if (this.description) { json[DESCRIPTION] = this.description; }
@@ -137,7 +140,7 @@ export class Test {
         return this.preProcessor;
     }
 
-    hasExpectedPlans() : boolean {
+    hasExpectedPlans(): boolean {
         return this.expectedPlans.length > 0;
     }
 
@@ -150,9 +153,9 @@ export class Test {
     }
 
     static fromUri(uri: Uri, context: PddlExtensionContext): Test | null {
-        let testIndex = parseInt(uri.fragment);
+        const testIndex = parseInt(uri.fragment);
         if (Number.isFinite(testIndex)) {
-            let manifest = TestsManifest.load(uri.fsPath, context);
+            const manifest = TestsManifest.load(uri.fsPath, context);
             return manifest.testCases[testIndex];
         }
         else {

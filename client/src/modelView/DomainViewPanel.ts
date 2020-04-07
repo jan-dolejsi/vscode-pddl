@@ -6,7 +6,7 @@
 
 import { Uri, ViewColumn } from 'vscode';
 
-import { DomainInfo } from '../../../common/src/DomainInfo';
+import { DomainInfo } from 'pddl-workspace';
 import { WebviewAdapter } from './view';
 import { BaseViewPanel } from './BaseViewPanel';
 
@@ -45,11 +45,11 @@ export class DomainViewPanel extends BaseViewPanel {
         this.panel.reveal(displayColumn ?? ViewColumn.Beside);
     }
 
-    close() {
+    close(): void {
         this.panel.dispose();
     }
 
-    setNeedsRebuild(needsRebuild: boolean) {
+    setNeedsRebuild(needsRebuild: boolean): void {
         this.needsRebuild = needsRebuild;
     }
 

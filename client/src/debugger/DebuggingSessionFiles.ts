@@ -4,9 +4,9 @@
  * ------------------------------------------------------------------------------------------ */
 'use strict';
 
-import { ProblemInfo } from '../../../common/src/ProblemInfo';
-import { DomainInfo } from '../../../common/src/DomainInfo';
-import { HappeningsInfo } from "../../../common/src/HappeningsInfo";
+import { ProblemInfo } from 'pddl-workspace';
+import { DomainInfo } from 'pddl-workspace';
+import { HappeningsInfo } from 'pddl-workspace';
 
 /**
  * Files involved in the debugging session.

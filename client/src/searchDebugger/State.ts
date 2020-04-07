@@ -5,7 +5,7 @@
 'use strict';
 
 import { SearchHappening } from "./SearchHappening";
-import { HelpfulAction } from "../../../common/src/Plan";
+import { HelpfulAction } from 'pddl-workspace';
 
 export class State {
     public h: number | undefined;
@@ -13,7 +13,7 @@ export class State {
     public relaxedPlan: SearchHappening[] | undefined;
     public helpfulActions: HelpfulAction[] | undefined;
     public isDeadEnd: boolean | undefined;
-    public isPlan: boolean = false;
+    public isPlan = false;
     private _isEvaluated = false;
 
     constructor(public readonly id: number, public readonly origId: string, public readonly g: number,

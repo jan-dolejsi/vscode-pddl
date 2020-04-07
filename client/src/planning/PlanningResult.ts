@@ -4,7 +4,7 @@
  * ------------------------------------------------------------------------------------------ */
 'use strict';
 
-import { Plan } from '../../../common/src/Plan';
+import { Plan } from 'pddl-workspace';
 
 export enum PlanningOutcome { SUCCESS, FAILURE, KILLED }
 
@@ -27,14 +27,14 @@ export class PlanningResult {
      * Creates the result instance for the case of planner failure.
      * @param error error
      */
-    static failure(error: string){
+    static failure(error: string): PlanningResult {
         return new PlanningResult(PlanningOutcome.FAILURE, [], Number.NaN, error);
     }
 
     /**
      * Creates the result instance for the case of planner killed by the user.
      */
-    static killed(){
+    static killed(): PlanningResult {
         return new PlanningResult(PlanningOutcome.KILLED, [], Number.NaN, undefined);
     }
 }

@@ -9,12 +9,12 @@ import {
     ExtensionContext, TextDocument, CodeLens, CancellationToken, CodeLensProvider
 } from 'vscode';
 
-import { DomainInfo, TypeObjectMap } from '../../../common/src/DomainInfo';
-import { ProblemInfo } from '../../../common/src/ProblemInfo';
+import { DomainInfo, TypeObjectMap } from 'pddl-workspace';
+import { ProblemInfo } from 'pddl-workspace';
 
 import * as path from 'path';
 import { CodePddlWorkspace } from '../workspace/CodePddlWorkspace';
-import { PddlTokenType } from '../../../common/src/PddlTokenizer';
+import { parser } from 'pddl-workspace';
 import { nodeToRange } from '../utils';
 import { DocumentInsetCodeLens, DocumentCodeLens } from './view';
 import { ProblemView, ProblemRendererOptions, ProblemRenderer } from './ProblemView';
@@ -52,12 +52,12 @@ export class ProblemObjectsView extends ProblemView<ProblemObjectsRendererOption
 
     async provideCodeLenses(document: TextDocument, token: CancellationToken): Promise<CodeLens[] | null> {
         if (token.isCancellationRequested) { return null; }
-        let problem = await this.parseProblem(document);
+        const problem = await this.parseProblem(document);
         if (token.isCancellationRequested) { return null; }
         if (!problem) { return []; }
 
-        let defineNode = problem.syntaxTree.getDefineNodeOrThrow();
-        let objectsNode = defineNode.getFirstChild(PddlTokenType.OpenBracketOperator, /\s*:objects/i);
+        const defineNode = problem.syntaxTree.getDefineNodeOrThrow();
+        const objectsNode = defineNode.getFirstChild(parser.PddlTokenType.OpenBracketOperator, /\s*:objects/i);
         if (objectsNode) {
             return [
                 new DocumentCodeLens(document, nodeToRange(document, objectsNode))
@@ -73,7 +73,7 @@ export class ProblemObjectsView extends ProblemView<ProblemObjectsRendererOption
             return null;
         }
         if (token.isCancellationRequested) { return null; }
-        let domainAndProblem = await this.getProblemAndDomain(codeLens.getDocument());
+        const domainAndProblem = await this.getProblemAndDomain(codeLens.getDocument());
         if (!domainAndProblem) { return null; }
         if (token.isCancellationRequested) { return null; }
 
@@ -87,7 +87,7 @@ export class ProblemObjectsView extends ProblemView<ProblemObjectsRendererOption
         }
     }
 
-    protected createPreviewPanelTitle(uri: Uri) {
+    protected createPreviewPanelTitle(uri: Uri): string {
         return `:objects of '${path.basename(uri.fsPath)}'`;
     }
 
@@ -109,7 +109,7 @@ export class ProblemObjectsView extends ProblemView<ProblemObjectsRendererOption
 
 class ProblemObjectsRenderer implements ProblemRenderer<ProblemObjectsRendererOptions, GraphViewData> {
     render(context: ExtensionContext, problem: ProblemInfo, domain: DomainInfo, options: ProblemObjectsRendererOptions): GraphViewData {
-        let renderer = new ProblemObjectsRendererDelegate(context, domain, problem, options);
+        const renderer = new ProblemObjectsRendererDelegate(context, domain, problem, options);
 
         return {
             nodes: renderer.getNodes(),
@@ -126,6 +126,7 @@ class ProblemObjectsRendererDelegate {
     private lastIndex: number;
     private typeNames = new Set<string>();
 
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     constructor(_context: ExtensionContext, private domain: DomainInfo, private problem: ProblemInfo, _options: ProblemObjectsRendererOptions) {
         this.objectsAndConstantsPerType = this.domain.getConstants().merge(this.problem.getObjectsTypeMap());
 
@@ -140,9 +141,9 @@ class ProblemObjectsRendererDelegate {
     }
 
     private addObjects(typeName: string): void {
-        let objectsOfType = this.objectsAndConstantsPerType.getTypeCaseInsensitive(typeName);
+        const objectsOfType = this.objectsAndConstantsPerType.getTypeCaseInsensitive(typeName);
         if (objectsOfType) {
-            let objects = objectsOfType.getObjects();
+            const objects = objectsOfType.getObjects();
             objects.forEach((objectName, index) => {
                 this.nodes.set(objectName, index + this.lastIndex);
                 this.addEdge([objectName, typeName], '');
@@ -164,15 +165,15 @@ class ProblemObjectsRendererDelegate {
     }
 
     private toNode(entry: [string, number]): NetworkNode {
-        let [entryLabel, entryId] = entry;
-        let isType = this.typeNames.has(entryLabel);
-        let shape = isType ? "ellipse" : "box";
-        let group = isType ? "type" : "object";
+        const [entryLabel, entryId] = entry;
+        const isType = this.typeNames.has(entryLabel);
+        const shape = isType ? "ellipse" : "box";
+        const group = isType ? "type" : "object";
         return { id: entryId, label: entryLabel, shape: shape, group: group };
     }
 
     private toEdge(edge: [string, string], label: string): NetworkEdge | null {
-        let [from, to] = edge;
+        const [from, to] = edge;
         const fromId = this.nodes.get(from);
         const toId = this.nodes.get(to);
         if (fromId !== undefined && toId !== undefined) {
@@ -189,5 +190,6 @@ class ProblemObjectsRendererDelegate {
     }
 }
 
+// eslint-disable-next-line @typescript-eslint/no-empty-interface
 interface ProblemObjectsRendererOptions extends ProblemRendererOptions {
 }

@@ -22,16 +22,15 @@ export class ProblemPattern {
      * @param fileNames names of files parsed
      */
     constructor(patternWithMatchGroupOrder: string, fileNames: string[]){
-        let fileNamesJoint = fileNames.join('|')
+        const fileNamesJoint = fileNames.join('|')
             // escape all backslashes    
             .split('\\').join("\\\\")
             // escape all dots
             .split('.').join("\\.");
 
-        let pattern, flags, order: string;
-        [pattern, flags, order] = patternWithMatchGroupOrder.split('/').slice(1);
+        const [patternOrig, flags, order] = patternWithMatchGroupOrder.split('/').slice(1);
         
-        pattern = pattern.replace('$(filePaths)', fileNamesJoint);
+        const pattern = patternOrig.replace('$(filePaths)', fileNamesJoint);
 
         this.regEx = new RegExp(pattern, flags);
 
@@ -51,7 +50,7 @@ export class ProblemPattern {
     }
 
     getCharacter(match: RegExpExecArray): number | undefined {
-        let index = this.mapIndex(3);
+        const index = this.mapIndex(3);
         return index ? parseInt(match[index]) -1 : undefined;
     }
 
@@ -60,14 +59,14 @@ export class ProblemPattern {
     }
 
     getRange(match: RegExpExecArray): Range{
-        let line = this.getLine(match);
-        let character = this.getCharacter(match);
+        const line = this.getLine(match);
+        const character = this.getCharacter(match);
         return character !== undefined ? 
             Validator.createRange(line, character) :
             Validator.createLineRange(line);
     }
 
-    private mapIndex(i: number) {
+    private mapIndex(i: number): number {
         return this.indexMap[i];
     }
 }

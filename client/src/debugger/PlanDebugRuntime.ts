@@ -113,9 +113,9 @@ export class PlanDebugRuntime extends EventEmitter {
 	/*
 	 * Set breakpoint in file with given line.
 	 */
-	public setBreakPoint(path: string, line: number) : HappeningBreakpoint {
+	public setBreakPoint(path: string, line: number): HappeningBreakpoint {
 
-		const bp = <HappeningBreakpoint> { verified: false, line, id: this._breakpointId++ };
+		const bp: HappeningBreakpoint = { verified: false, line, id: this._breakpointId++ };
 		let bps = this._breakPoints.get(path);
 		if (!bps) {
 			bps = new Array<HappeningBreakpoint>();
@@ -131,8 +131,8 @@ export class PlanDebugRuntime extends EventEmitter {
 	/*
 	 * Clear breakpoint in file with given line.
 	 */
-	public clearBreakPoint(path: string, line: number) : HappeningBreakpoint | undefined {
-		let bps = this._breakPoints.get(path);
+	public clearBreakPoint(path: string, line: number): HappeningBreakpoint | undefined {
+		const bps = this._breakPoints.get(path);
 		if (bps) {
 			const index = bps.findIndex(bp => bp.line === line);
 			if (index >= 0) {
@@ -153,7 +153,7 @@ export class PlanDebugRuntime extends EventEmitter {
 
 	// private methods
 
-	private loadSource(file: string) {
+	private loadSource(file: string): void {
 		if (!this._sourceFile || relative(file, this._sourceFile)) {
 			this._sourceFile = file;
 			this._sourceLines = readFileSync(this._sourceFile).toString().split('\n');
@@ -191,12 +191,12 @@ export class PlanDebugRuntime extends EventEmitter {
 		}
 	}
 
-	private verifyBreakpoints(path: string) : void {
+	private verifyBreakpoints(path: string): void {
 		if (!this._sourceLines) {
 			throw new Error("Debugger is not initialized.");
 		}
 
-		let bps = this._breakPoints.get(path);
+		const bps = this._breakPoints.get(path);
 		if (bps) {
 			this.loadSource(path);
 			bps.forEach(bp => {
@@ -275,7 +275,7 @@ export class PlanDebugRuntime extends EventEmitter {
 		return false;
 	}
 
-	private sendEvent(event: string, ... args: any[]) {
+	private sendEvent(event: string, ... args: any[]): void {
 		setImmediate(_ => {
 			this.emit(event, ...args);
 		});

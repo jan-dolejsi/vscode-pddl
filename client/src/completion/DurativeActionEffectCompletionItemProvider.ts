@@ -5,10 +5,10 @@
 'use strict';
 
 import { CompletionItem, CompletionContext, MarkdownString, Range, CompletionTriggerKind, CompletionItemKind } from 'vscode';
-import { PDDL } from '../../../common/src/parser';
-import { DomainInfo } from '../../../common/src/DomainInfo';
-import { PddlSyntaxNode } from '../../../common/src/PddlSyntaxNode';
-import { ModelHierarchy } from '../../../common/src/ModelHierarchy';
+import { PDDL } from 'pddl-workspace';
+import { DomainInfo } from 'pddl-workspace';
+import { parser } from 'pddl-workspace';
+import { ModelHierarchy } from 'pddl-workspace';
 import { AbstractCompletionItemProvider, Suggestion } from './AbstractCompletionItemProvider';
 import { requires } from './DomainCompletionItemProvider';
 
@@ -17,7 +17,7 @@ export class DurativeActionEffectCompletionItemProvider extends AbstractCompleti
     constructor() {
         super();
 
-        let requiresDurativeActions = requires([':durative-actions']);
+        const requiresDurativeActions = requires([':durative-actions']);
 
         this.addSuggestionDocumentation('at start', 'At start effect',
             new MarkdownString('Effect that takes place at the *start* point of a durative action. Only use this inside a `:durative-action`.')
@@ -32,7 +32,7 @@ export class DurativeActionEffectCompletionItemProvider extends AbstractCompleti
             CompletionItemKind.Property);
     }
 
-    static inside(currentNode: PddlSyntaxNode) {
+    static inside(currentNode: parser.PddlSyntaxNode): boolean {
         return ModelHierarchy.isInsideEffect(currentNode)
             && ModelHierarchy.isInsideDurativeActionUnqualifiedEffect(currentNode);
     }

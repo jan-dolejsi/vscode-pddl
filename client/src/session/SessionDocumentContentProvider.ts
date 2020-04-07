@@ -30,7 +30,7 @@ export class SessionDocumentContentProvider implements TextDocumentContentProvid
 
 		// let's assume all documents actually changed and notify the quick-diff
 		newSession.files.forEach((_, fileName) => {
-			let uri = SessionRepository.createDocumentUri(folder.uri, fileName);
+			const uri = SessionRepository.createDocumentUri(folder.uri, fileName);
 			this._onDidChange.fire(uri);
 		});
 	}
@@ -38,14 +38,14 @@ export class SessionDocumentContentProvider implements TextDocumentContentProvid
 	provideTextDocumentContent(uri: Uri, token: CancellationToken): ProviderResult<string> {
 		if (token.isCancellationRequested) { return "Canceled"; }
 
-		let folderUri = Uri.file(uri.path);
+		const folderUri = Uri.file(uri.path);
 
 		// if the file is in a sub-folder, it is not member of the session
 		if (uri.query.includes('/')) { return undefined; }
 
-		let fileName = basename(uri.query);
+		const fileName = basename(uri.query);
 
-		let session = this.sessions.get(folderUri.toString());
+		const session = this.sessions.get(folderUri.toString());
 		if (!session) { return "Resource not found: " + uri.toString(); }
 
 		return session.files.get(fileName);

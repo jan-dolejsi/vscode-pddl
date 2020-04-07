@@ -46,7 +46,9 @@ export class SwimLane {
     }
 
     laneEnd(idx: number): number {
-        if(idx >= this.subLaneEnds.length) throw new Error('Lane does not exist');
+        if (idx >= this.subLaneEnds.length) {
+            throw new Error('Lane does not exist');
+        }
         return this.subLaneEnds[idx];
     }
 }

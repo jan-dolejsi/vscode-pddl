@@ -6,13 +6,13 @@
 
 import { CodeActionKind, ExtensionContext, languages, Uri, workspace, TextDocument } from 'vscode';
 import { instrumentOperationAsVsCodeCommand } from "vscode-extension-telemetry-wrapper";
-import { PLAN, PDDL, HAPPENINGS } from '../../../common/src/parser';
-import { ProblemInfo } from '../../../common/src/ProblemInfo';
-import { DomainInfo } from '../../../common/src/DomainInfo';
+import { PLAN, PDDL, HAPPENINGS } from 'pddl-workspace';
+import { ProblemInfo } from 'pddl-workspace';
+import { DomainInfo } from 'pddl-workspace';
 import { AssociationCodeActionProvider } from './AssociationCodeActionProvider';
 import { showError } from '../utils';
 import { selectFile } from './workspaceUtils';
-import { PddlLanguage, FileInfo } from '../../../common/src/FileInfo';
+import { PddlLanguage, FileInfo } from 'pddl-workspace';
 import { CodePddlWorkspace } from './CodePddlWorkspace';
 
 export const COMMAND_ASSOCIATE_PROBLEM = 'pddl.workspace.associateProblem';
@@ -30,8 +30,8 @@ export class AssociationProvider {
 
         context.subscriptions.push(
             instrumentOperationAsVsCodeCommand(COMMAND_ASSOCIATE_DOMAIN, async (problemUri: Uri) => {
-                let problemDocument = await workspace.openTextDocument(problemUri);
-                const problemFileInfo = <ProblemInfo>codePddlWorkspace.getFileInfo(problemDocument);
+                const problemDocument = await workspace.openTextDocument(problemUri);
+                const problemFileInfo = codePddlWorkspace.getFileInfo(problemDocument) as ProblemInfo;
                 this.associateDomain(problemUri, codePddlWorkspace.pddlWorkspace.getDomainFilesFor(problemFileInfo)).catch(showError);
             })
         );
@@ -50,7 +50,7 @@ export class AssociationProvider {
     static readonly PDDL_PATTERN = '**/*.pddl';
 
     private async associateProblem(planUri: Uri): Promise<void> {
-        let problemUri = await selectFile({
+        const problemUri = await selectFile({
             language: PddlLanguage.PDDL,
             promptMessage: 'Select the matching problem file...',
             findPattern: AssociationProvider.PDDL_PATTERN,
@@ -59,22 +59,22 @@ export class AssociationProvider {
             workspaceFolder: workspace.getWorkspaceFolder(planUri)
         });
         if (problemUri) {
-            let problemDocument = await workspace.openTextDocument(problemUri);
+            const problemDocument = await workspace.openTextDocument(problemUri);
             //window.showTextDocument(problemDocument);
             await this.associatePlanToProblem(planUri, problemDocument);
         }
     }
 
     private async associatePlanToProblem(planUri: Uri, problemDocument: TextDocument): Promise<void> {
-        let parsedFileInfo = await this.codePddlWorkspace.upsertAndParseFile(problemDocument);
+        const parsedFileInfo = await this.codePddlWorkspace.upsertAndParseFile(problemDocument);
         if (!(parsedFileInfo instanceof ProblemInfo)) {
             throw new Error("Selected file is not a problem file.");
         }
-        let problemInfo = <ProblemInfo>parsedFileInfo;
+        const problemInfo = parsedFileInfo as ProblemInfo;
         this.codePddlWorkspace.pddlWorkspace.associatePlanToProblem(planUri.toString(), problemInfo);
         console.log(`Associated ${problemDocument.uri} to ${planUri}.`);
         // re-validate the plan file
-        let planInfo = this.codePddlWorkspace.getFileInfoByUri(planUri);
+        const planInfo = this.codePddlWorkspace.getFileInfoByUri(planUri);
         if (planInfo !== undefined) {
             this.codePddlWorkspace.pddlWorkspace.invalidateDiagnostics(planInfo);
         } else {
@@ -83,7 +83,7 @@ export class AssociationProvider {
     }
 
     private async associateDomain(problemUri: Uri, suggestedFiles?: FileInfo[]): Promise<TextDocument | undefined> {
-        let domainUri = await selectFile({
+        const domainUri = await selectFile({
             language: PddlLanguage.PDDL,
             promptMessage: 'Select the matching domain file...',
             findPattern: AssociationProvider.PDDL_PATTERN,
@@ -92,7 +92,7 @@ export class AssociationProvider {
             workspaceFolder: workspace.getWorkspaceFolder(problemUri)
         }, suggestedFiles);
         if (domainUri) {
-            let domainDocument = await workspace.openTextDocument(domainUri);
+            const domainDocument = await workspace.openTextDocument(domainUri);
             await this.associateDomainToProblem(problemUri, domainDocument);
             return domainDocument;
         }
@@ -101,12 +101,12 @@ export class AssociationProvider {
         }
     }
     private async associateDomainToProblem(problemUri: Uri, domainDocument: TextDocument): Promise<void> {
-        let parsedFileInfo = await this.codePddlWorkspace.upsertAndParseFile(domainDocument);
+        const parsedFileInfo = await this.codePddlWorkspace.upsertAndParseFile(domainDocument);
         if (!(parsedFileInfo instanceof DomainInfo)) {
             throw new Error("Selected file is not a domain file.");
         }
-        let domainInfo = <DomainInfo>parsedFileInfo;
-        let problemInfo = this.codePddlWorkspace.getFileInfoByUri<ProblemInfo>(problemUri);
+        const domainInfo = parsedFileInfo as DomainInfo;
+        const problemInfo = this.codePddlWorkspace.getFileInfoByUri<ProblemInfo>(problemUri);
         if (problemInfo === undefined) { 
             throw new Error(`Problem file ${problemUri} not found in the workspace model.`);
         }
