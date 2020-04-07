@@ -17,7 +17,7 @@ export class DurativeActionConditionCompletionItemProvider extends AbstractCompl
     constructor() {
         super();
 
-        let requiresDurativeActions = requires([':durative-actions']);
+        const requiresDurativeActions = requires([':durative-actions']);
 
         this.addSuggestionDocumentation('at start', 'At start condition',
             new MarkdownString('Condition that applies at the *start* point of a durative action. Only use this inside a `:durative-action`.')

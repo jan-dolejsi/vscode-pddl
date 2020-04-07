@@ -6,7 +6,7 @@
 
 import {
     window, workspace, commands, OutputChannel, Uri,
-    MessageItem, ExtensionContext, ProgressLocation, EventEmitter, Event, CancellationToken, Progress, QuickPickItem
+    MessageItem, ExtensionContext, ProgressLocation, EventEmitter, Event, CancellationToken, Progress, QuickPickItem, TextDocument
 } from 'vscode';
 import { instrumentOperationAsVsCodeCommand } from "vscode-extension-telemetry-wrapper";
 import * as path from 'path';
@@ -78,7 +78,7 @@ export class Planning implements PlannerResponseHandler {
 
         context.subscriptions.push(instrumentOperationAsVsCodeCommand(PDDL_GENERATE_PLAN_REPORT, async (plans: Plan[] | undefined, selectedPlan: number) => {
             if (plans) {
-                let width = workspace.getConfiguration(CONF_PDDL).get<number>(PLAN_REPORT_EXPORT_WIDTH, 200);
+                const width = workspace.getConfiguration(CONF_PDDL).get<number>(PLAN_REPORT_EXPORT_WIDTH, 200);
                 await new PlanReportGenerator(context, { displayWidth: width, selfContained: true }).export(plans, selectedPlan);
             } else {
                 window.showErrorMessage("There is no plan to export.");
@@ -95,7 +95,7 @@ export class Planning implements PlannerResponseHandler {
 
         context.subscriptions.push(instrumentOperationAsVsCodeCommand(PDDL_CONVERT_PLAN_TO_HAPPENINGS, async () => {
             if (window.activeTextEditor && isPlan(window.activeTextEditor.document)) {
-                let epsilon = plannerConfiguration.getEpsilonTimeStep();
+                const epsilon = plannerConfiguration.getEpsilonTimeStep();
                 new PlanHappeningsExporter(window.activeTextEditor.document, epsilon).export();
             } else {
                 window.showErrorMessage("Active document is not a plan.");
@@ -104,7 +104,7 @@ export class Planning implements PlannerResponseHandler {
 
         context.subscriptions.push(instrumentOperationAsVsCodeCommand(PDDL_CONVERT_HAPPENINGS_TO_PLAN, async () => {
             if (window.activeTextEditor && isHappenings(window.activeTextEditor.document)) {
-                let epsilon = plannerConfiguration.getEpsilonTimeStep();
+                const epsilon = plannerConfiguration.getEpsilonTimeStep();
                 new HappeningsPlanExporter(window.activeTextEditor.document, epsilon).export();
             } else {
                 window.showErrorMessage("Active document is not a happening.");
@@ -113,13 +113,13 @@ export class Planning implements PlannerResponseHandler {
 
         context.subscriptions.push(instrumentOperationAsVsCodeCommand("pddl.syntaxTree", () => {
             if (window.activeTextEditor && isPddl(window.activeTextEditor.document)) {
-                let index = window.activeTextEditor.document.offsetAt(window.activeTextEditor.selection.active);
+                const index = window.activeTextEditor.document.offsetAt(window.activeTextEditor.selection.active);
                 const pddlSyntaxTreeBuilder = new parser.PddlSyntaxTreeBuilder(window.activeTextEditor.document.getText());
                 this.output.appendLine('');
                 this.output.appendLine("PDDL Syntax Tree:");
                 this.output.appendLine(pddlSyntaxTreeBuilder.getTreeAsString());
 
-                let breadcrumbs = pddlSyntaxTreeBuilder.getBreadcrumbs(index);
+                const breadcrumbs = pddlSyntaxTreeBuilder.getBreadcrumbs(index);
                 this.output.appendLine('');
                 this.output.appendLine("PDDL Parser Breadcrumbs:");
                 breadcrumbs.forEach(b => this.output.appendLine(b.toString()));
@@ -131,7 +131,7 @@ export class Planning implements PlannerResponseHandler {
         context.subscriptions.push(instrumentOperationAsVsCodeCommand("pddl.configureTarget", () => commands.executeCommand(PDDL_CONFIGURE_COMMAND, "pddlPlanner.executionTarget")));
     }
 
-    addOptionsProvider(optionsProvider: PlannerOptionsProvider) {
+    addOptionsProvider(optionsProvider: PlannerOptionsProvider): void {
         this.optionProviders.push(optionsProvider);
     }
 
@@ -147,11 +147,11 @@ export class Planning implements PlannerResponseHandler {
      * @param options planner options
      */
     async planByUri(domainUri: Uri, problemUri: Uri, workingFolder: string, options?: string): Promise<void> {
-        let domainDocument = await workspace.openTextDocument(domainUri);
-        let problemDocument = await workspace.openTextDocument(problemUri);
+        const domainDocument = await workspace.openTextDocument(domainUri);
+        const problemDocument = await workspace.openTextDocument(problemUri);
 
-        let domainInfo = <DomainInfo>await this.codePddlWorkspace.upsertAndParseFile(domainDocument);
-        let problemInfo = <ProblemInfo>await this.codePddlWorkspace.upsertAndParseFile(problemDocument);
+        const domainInfo = await this.codePddlWorkspace.upsertAndParseFile(domainDocument) as DomainInfo;
+        const problemInfo = await this.codePddlWorkspace.upsertAndParseFile(problemDocument) as ProblemInfo;
 
         this.planExplicit(domainInfo, problemInfo, workingFolder, options);
     }
@@ -182,15 +182,15 @@ export class Planning implements PlannerResponseHandler {
         let domainFileInfo: DomainInfo;
 
         if (activeFileInfo.isProblem()) {
-            problemFileInfo = <ProblemInfo>activeFileInfo;
+            problemFileInfo = activeFileInfo as ProblemInfo;
 
             // find domain file(s)
-            let domainFiles = this.codePddlWorkspace.getDomainFilesFor(problemFileInfo);
+            const domainFiles = this.codePddlWorkspace.getDomainFilesFor(problemFileInfo);
 
             if (domainFiles.length === 1) {
                 domainFileInfo = domainFiles[0];
             } else if (domainFiles.length !== 1) {
-                let workspaceFolder = workspace.getWorkspaceFolder(window.activeTextEditor.document.uri);
+                const workspaceFolder = workspace.getWorkspaceFolder(window.activeTextEditor.document.uri);
                 const domainFileUri = await selectFile({
                     language: PddlLanguage.PDDL,
                     promptMessage: 'Select the matching domain file...',
@@ -211,9 +211,9 @@ export class Planning implements PlannerResponseHandler {
             }
         }
         else if (activeFileInfo.isDomain()) {
-            domainFileInfo = <DomainInfo>activeFileInfo;
+            domainFileInfo = activeFileInfo as DomainInfo;
 
-            let problemFiles = this.codePddlWorkspace.pddlWorkspace.getProblemFiles(domainFileInfo);
+            const problemFiles = this.codePddlWorkspace.pddlWorkspace.getProblemFiles(domainFileInfo);
 
             if (problemFiles.length === 1) {
                 problemFileInfo = problemFiles[0];
@@ -235,7 +235,7 @@ export class Planning implements PlannerResponseHandler {
             return;
         }
 
-        let workingDirectory = this.establishWorkingDirectory(activeDocument, problemFileInfo, domainFileInfo);
+        const workingDirectory = this.establishWorkingDirectory(activeDocument, problemFileInfo, domainFileInfo);
         await this.planExplicit(domainFileInfo, problemFileInfo, workingDirectory);
     }
 
@@ -243,7 +243,7 @@ export class Planning implements PlannerResponseHandler {
     public onPlansFound: Event<PlanningResult> = this._onPlansFound.event;
     private progressUpdater: ElapsedTimeProgressUpdater | undefined;
 
-    private establishWorkingDirectory(activeDocument: import("vscode").TextDocument, problemFileInfo: ProblemInfo, domainFileInfo: DomainInfo) {
+    private establishWorkingDirectory(activeDocument: TextDocument, problemFileInfo: ProblemInfo, domainFileInfo: DomainInfo): string {
         let workingDirectory = "";
         if (activeDocument.uri.scheme === "file") {
             workingDirectory = dirname(activeDocument.fileName);
@@ -258,12 +258,12 @@ export class Planning implements PlannerResponseHandler {
     }
 
     private async parseDomain(domainFileUri: Uri): Promise<DomainInfo> {
-        let fileInfo = await this.codePddlWorkspace.upsertAndParseFile(await workspace.openTextDocument(domainFileUri));
+        const fileInfo = await this.codePddlWorkspace.upsertAndParseFile(await workspace.openTextDocument(domainFileUri));
         if (fileInfo && !fileInfo.isDomain()) {
             throw new Error("Selected file is not a domain file.");
         }
         else {
-            return <DomainInfo>fileInfo;
+            return fileInfo as DomainInfo;
         }
     }
 
@@ -276,12 +276,13 @@ export class Planning implements PlannerResponseHandler {
      */
     async planExplicit(domainFileInfo: DomainInfo, problemFileInfo: ProblemInfo, workingDirectory: string, options?: string): Promise<void> {
 
-        let planParser = new parser.PddlPlannerOutputParser(domainFileInfo, problemFileInfo, { epsilon: this.plannerConfiguration.getEpsilonTimeStep() }, plans => this.visualizePlans(plans));
+        const planParser = new parser.PddlPlannerOutputParser(domainFileInfo, problemFileInfo, { epsilon: this.plannerConfiguration.getEpsilonTimeStep() }, plans => this.visualizePlans(plans));
 
         workingDirectory = await this.adjustWorkingFolder(workingDirectory);
 
         this.planner = await this.createPlanner(workingDirectory, options);
         if (!this.planner) { return; }
+        const planner: Planner = this.planner;
 
         this.planningProcessKilled = false;
 
@@ -304,7 +305,7 @@ export class Planning implements PlannerResponseHandler {
             });
 
             this.progressUpdater = new ElapsedTimeProgressUpdater(progress, token);
-            return this.planner!.plan(domainFileInfo, problemFileInfo, planParser, this);
+            return planner.plan(domainFileInfo, problemFileInfo, planParser, this);
         })
             .then(plans => this.onPlannerFinished(plans), reason => this.onPlannerFailed(reason));
     }
@@ -315,9 +316,9 @@ export class Planning implements PlannerResponseHandler {
 
     onPlannerFinished(plans: Plan[]): void {
         if (!this.progressUpdater) { return; }
-        let elapsedTime = this.progressUpdater.getElapsedTimeInMilliSecs();
+        const elapsedTime = this.progressUpdater.getElapsedTimeInMilliSecs();
         this.progressUpdater.setFinished();
-        let result = this.planningProcessKilled ? PlanningResult.killed() : PlanningResult.success(plans, elapsedTime);
+        const result = this.planningProcessKilled ? PlanningResult.killed() : PlanningResult.success(plans, elapsedTime);
         this._onPlansFound.fire(result);
         this.planner = null;
 
@@ -325,6 +326,7 @@ export class Planning implements PlannerResponseHandler {
         this.visualizePlans(plans);
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     onPlannerFailed(reason: any): void {
         if (!this.progressUpdater) { return; }
         this.progressUpdater.setFinished();
@@ -372,16 +374,16 @@ export class Planning implements PlannerResponseHandler {
      * @returns `Planner` instance of the configured planning engine
      */
     async createPlanner(workingDirectory: string, options?: string): Promise<Planner | null> {
-        let plannerPath = await this.plannerConfiguration.getPlannerPath(Uri.file(workingDirectory));
+        const plannerPath = await this.plannerConfiguration.getPlannerPath(Uri.file(workingDirectory));
         if (!plannerPath) { return null; }
 
         if (!await this.verifyConsentForSendingPddl(plannerPath)) { return null; }
 
         if (isHttp(plannerPath)) {
-            let useAuthentication = this.plannerConfiguration.isPddlPlannerServiceAuthenticationEnabled();
+            const useAuthentication = this.plannerConfiguration.isPddlPlannerServiceAuthenticationEnabled();
             let authentication = undefined;
             if (useAuthentication) {
-                let configuration = this.plannerConfiguration.getPddlPlannerServiceAuthenticationConfiguration();
+                const configuration = this.plannerConfiguration.getPddlPlannerServiceAuthenticationConfiguration();
                 authentication = new Authentication(configuration.url, configuration.requestEncoded, configuration.clientId, configuration.callbackPort, configuration.timeoutInMs,
                     configuration.tokensvcUrl, configuration.tokensvcApiKey, configuration.tokensvcAccessPath, configuration.tokensvcValidatePath,
                     configuration.tokensvcCodePath, configuration.tokensvcRefreshPath, configuration.tokensvcSvctkPath,
@@ -395,7 +397,7 @@ export class Planning implements PlannerResponseHandler {
                 return new PlannerSyncService(plannerPath, options, authentication);
             }
             else if (plannerPath.endsWith("/request")) {
-                let configuration = options ? this.toAbsoluteUri(options, workingDirectory) : await new PlannerConfigurationSelector(Uri.file(workingDirectory)).getConfiguration();
+                const configuration = options ? this.toAbsoluteUri(options, workingDirectory) : await new PlannerConfigurationSelector(Uri.file(workingDirectory)).getConfiguration();
                 if (!configuration) { return null; } // canceled by user
                 return new PlannerAsyncService(plannerPath, configuration, authentication);
             }
@@ -407,7 +409,7 @@ export class Planning implements PlannerResponseHandler {
             options = await this.getPlannerLineOptions(options);
             if (options === undefined) { return null; }
 
-            let plannerSyntax = this.plannerConfiguration.getPlannerSyntax();
+            const plannerSyntax = this.plannerConfiguration.getPlannerSyntax();
             if (plannerSyntax === undefined) { return null; }
 
             return new PlannerExecutable(plannerPath, options, plannerSyntax, workingDirectory);
@@ -415,7 +417,7 @@ export class Planning implements PlannerResponseHandler {
     }
 
     private toAbsoluteUri(configPath: string, workingDirectory: string): Uri {
-        let absoluteConfigPath = path.isAbsolute(configPath) ?
+        const absoluteConfigPath = path.isAbsolute(configPath) ?
             configPath :
             path.join(workingDirectory, configPath);
         return Uri.file(absoluteConfigPath);
@@ -434,12 +436,13 @@ export class Planning implements PlannerResponseHandler {
 
     async verifyConsentForSendingPddl(plannerPath: string): Promise<boolean> {
         if (isHttp(plannerPath)) {
-            let consents: any = this.context.globalState.get(this.PLANNING_SERVICE_CONSENTS, {});
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const consents = this.context.globalState.get<any>(this.PLANNING_SERVICE_CONSENTS, {});
             if (consents[plannerPath]) {
                 return true;
             }
             else {
-                let answer = await window.showWarningMessage(
+                const answer = await window.showWarningMessage(
                     "Confirm you want to send this PDDL to " + plannerPath,
                     {
                         modal: true
@@ -447,7 +450,7 @@ export class Planning implements PlannerResponseHandler {
                     "Yes, send my PDDL to this service.",
                     "No, I do not want to send this PDDL to this service."
                 );
-                let consentGiven = answer !== undefined && answer.toLowerCase().startsWith("yes");
+                const consentGiven = answer !== undefined && answer.toLowerCase().startsWith("yes");
                 consents[plannerPath] = consentGiven;
                 this.context.globalState.update(this.PLANNING_SERVICE_CONSENTS, consents);
                 return consentGiven;
@@ -458,7 +461,7 @@ export class Planning implements PlannerResponseHandler {
         }
     }
 
-    stopPlanner() {
+    stopPlanner(): void {
         try {
             if (this.planner) {
                 this.planner.stop();
@@ -476,6 +479,7 @@ export class Planning implements PlannerResponseHandler {
         this.output.append(outputText);
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     handlePlan(_plan: Plan): void {
         // todo: this shall be implemented, when the planning service can return multiple plans
         throw new Error("Method not implemented.");
@@ -513,7 +517,7 @@ class ElapsedTimeProgressUpdater {
     reportProgress(): void {
         if (this.token.isCancellationRequested || this.finished) { return; }
         setTimeout(() => {
-            var elapsedTime = new Date(this.getElapsedTimeInMilliSecs());
+            const elapsedTime = new Date(this.getElapsedTimeInMilliSecs());
             this.progress.report({ message: "Elapsed time: " + elapsedTime.toISOString().substr(11, 8) });
             this.reportProgress();
         }, 1000);

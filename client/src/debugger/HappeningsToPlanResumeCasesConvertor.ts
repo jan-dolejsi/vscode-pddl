@@ -45,43 +45,46 @@ export class HappeningsToPlanResumeCasesConvertor {
             return false;
         }
 
-        let valStepPath = await this.pddlConfiguration.getValStepPath();
+        const valStepPath = await this.pddlConfiguration.getValStepPath();
         if (!valStepPath) { return false; }
 
         // copy editor content to temp files to avoid using out-of-date content on disk
-        let domainFilePath = await utils.Util.toPddlFile('domain', this.context.domain.getText());
-        let problemFilePath = await utils.Util.toPddlFile('problem', this.context.problem.getText());
+        const domainFilePath = await utils.Util.toPddlFile('domain', this.context.domain.getText());
+        const problemFilePath = await utils.Util.toPddlFile('problem', this.context.problem.getText());
 
-        let args = [domainFilePath, problemFilePath];
-        let outputFolderUris = await window.showOpenDialog({ defaultUri: Uri.file(dirname(Uri.parse(this.context.problem.fileUri).fsPath)), canSelectFiles: false, canSelectFolders: true, canSelectMany: false, openLabel: 'Select folder for problem files' });
+        const args = [domainFilePath, problemFilePath];
+        const outputFolderUris = await window.showOpenDialog({ defaultUri: Uri.file(dirname(Uri.parse(this.context.problem.fileUri).fsPath)), canSelectFiles: false, canSelectFolders: true, canSelectMany: false, openLabel: 'Select folder for problem files' });
         if (!outputFolderUris || !outputFolderUris.length) { return false; }
-        let outputFolderUri = outputFolderUris[0];
-        let cwd = outputFolderUri.fsPath;
-        let cmd = valStepPath + ' ' + args.join(' ');
+        const outputFolderUri = outputFolderUris[0];
+        const cwd = outputFolderUri.fsPath;
+        const cmd = valStepPath + ' ' + args.join(' ');
 
-        let groupedHappenings = utils.Util.groupBy(this.context.happenings.getHappenings(), h => h.getTime());
+        const groupedHappenings = utils.Util.groupBy(this.context.happenings.getHappenings(), h => h.getTime());
 
         let valStepInput = '';
 
-        let defaultDomain = relative(cwd, Uri.parse(this.context.domain.fileUri).fsPath);
-        let defaultProblem = null;
-        let options = "";
-        let manifestUri = Uri.file(join(cwd, basename(Uri.parse(this.context.problem.fileUri).fsPath) + '_re-planning.ptest.json'));
-        let manifest = new TestsManifest(defaultDomain, defaultProblem, options, manifestUri);
+        const defaultDomain = relative(cwd, Uri.parse(this.context.domain.fileUri).fsPath);
+        const defaultProblem: string | undefined = undefined;
+        const options = "";
+        const manifestUri = Uri.file(join(cwd, basename(Uri.parse(this.context.problem.fileUri).fsPath) + '_re-planning.ptest.json'));
+        const manifest = new TestsManifest(defaultDomain, defaultProblem, options, manifestUri);
 
         // add the original problem as a test case
         manifest.addCase(new Test(null, "Original problem file", null, relative(cwd, Uri.parse(this.context.problem.fileUri).fsPath), "", null, []));
 
-        let problemFileWithoutExt = basename(Uri.parse(this.context.problem.fileUri).fsPath, ".pddl");
+        const problemFileWithoutExt = basename(Uri.parse(this.context.problem.fileUri).fsPath, ".pddl");
 
         for (const time of groupedHappenings.keys()) {
             const happeningGroup = groupedHappenings.get(time);
-            let valSteps = this.happeningsConvertor.convert(happeningGroup);
+            if (!happeningGroup) {
+                continue;
+            }
+            const valSteps = this.happeningsConvertor.convert(happeningGroup);
             valStepInput += valSteps;
-            let lastHappening = happeningGroup[happeningGroup.length - 1];
-            let problemFileName = `${problemFileWithoutExt}_${time}_${this.getHappeningFullName(lastHappening)}.pddl`.split(' ').join('_');
-            let testCaseLabel = `${time}: after (${lastHappening.getFullActionName()}) ${this.getHappeningSnapName(lastHappening)}`;
-            let testCaseDescription = `Test case for planning from: \nTime point: ${time} and after the application of \nAction: ${lastHappening.getFullActionName()} ${this.getHappeningSnapName(lastHappening)}`;
+            const lastHappening = happeningGroup[happeningGroup.length - 1];
+            const problemFileName = `${problemFileWithoutExt}_${time}_${this.getHappeningFullName(lastHappening)}.pddl`.split(' ').join('_');
+            const testCaseLabel = `${time}: after (${lastHappening.getFullActionName()}) ${this.getHappeningSnapName(lastHappening)}`;
+            const testCaseDescription = `Test case for planning from: \nTime point: ${time} and after the application of \nAction: ${lastHappening.getFullActionName()} ${this.getHappeningSnapName(lastHappening)}`;
             manifest.addCase(new Test(testCaseLabel, testCaseDescription, null, problemFileName, "", null, []));
             valStepInput += `w ${problemFileName}\n`;
         }
@@ -89,7 +92,7 @@ export class HappeningsToPlanResumeCasesConvertor {
         valStepInput += 'q\n';
 
         try {
-            let output = process.execSync(cmd, { cwd: cwd, input: valStepInput });
+            const output = process.execSync(cmd, { cwd: cwd, input: valStepInput });
             console.log(output.toLocaleString()); // for inspection while debugging
 
             await commands.executeCommand('workbench.view.extension.test');
@@ -122,7 +125,7 @@ export class HappeningsToPlanResumeCasesConvertor {
 
     getHappeningFullName(happening: Happening): string {
         let output = happening.getFullActionName().split(' ').join('_');
-        let snap = this.getHappeningSnapName(happening);
+        const snap = this.getHappeningSnapName(happening);
 
         if (snap.length) { output = `${output}_${snap}`; }
 

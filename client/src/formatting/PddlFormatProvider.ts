@@ -8,9 +8,6 @@ import {TextDocument, CancellationToken, DocumentFormattingEditProvider, Formatt
 
 export class PddlFormatProvider implements DocumentFormattingEditProvider {
 
-    constructor() {
-    }
-
     provideDocumentFormattingEdits(document: TextDocument, options: FormattingOptions, token: CancellationToken): ProviderResult<TextEdit[]> {
         if (token.isCancellationRequested) {
             return null;
@@ -29,17 +26,16 @@ export class PddlFormatProvider implements DocumentFormattingEditProvider {
         let stateString = "beg";
 
         // logical state array to determine location with respect to syntax - [com, fir, ope, req, inh, nes]
-        var logicalState: boolean[];
-        logicalState = [false, false, null, false, false, false];
+        const logicalState: boolean[] = [false, false, null, false, false, false];
 
-        let selection = document.getText();
-        let textArray = selection.split('');
+        const selection = document.getText();
+        const textArray = selection.split('');
         let formattedText = "";
 
-        let tabRegEx = new RegExp('[\t]');
-        let newLineRegEx = new RegExp('[\r\n]');
-		let alphaRegEx = new RegExp('[a-zA-Z]');
-		let numRegEx = new RegExp('[0-9]');
+        const tabRegEx = new RegExp('[\t]');
+        const newLineRegEx = new RegExp('[\r\n]');
+		const alphaRegEx = new RegExp('[a-zA-Z]');
+		const numRegEx = new RegExp('[0-9]');
 
         for (let i = 0; i < textArray.length; i++) {
 
@@ -224,8 +220,8 @@ export class PddlFormatProvider implements DocumentFormattingEditProvider {
             }
         }
 
-        let invalidRange = new Range(0, 0, document.lineCount /*intentionally missing the '-1' */, 0);
-        let fullRange = document.validateRange(invalidRange);
+        const invalidRange = new Range(0, 0, document.lineCount /*intentionally missing the '-1' */, 0);
+        const fullRange = document.validateRange(invalidRange);
         
 		return [TextEdit.replace(fullRange, formattedText)];
 		
@@ -238,7 +234,7 @@ export class PddlFormatProvider implements DocumentFormattingEditProvider {
 		}
 
 		// function to handle comment whitespace
-		function handleCommentWhiteSpace(i:number): number {
+		function handleCommentWhiteSpace(i: number): number {
 			// newline exiting comment
 			if (newLineRegEx.test(textArray[i])) {
 				logicalState[0] = false;

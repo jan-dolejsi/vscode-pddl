@@ -49,14 +49,14 @@ export class StartUp {
     async suggestAutoSave(): Promise<void> {
         if (this.context.globalState.get(this.NEVER_AUTO_SAVE, false)) { return; }
 
-        let option = "files.autoSave";
+        const option = "files.autoSave";
         if (workspace.getConfiguration().get(option) === "off") {
-            let changeConfigurationOption: MessageItem = { title: "Configure auto-save"};
-            let notNow: MessageItem = { title: "Not now" };
-            let never: MessageItem = { title: "Do not ask again" };
-            let options = [changeConfigurationOption, notNow, never];
+            const changeConfigurationOption: MessageItem = { title: "Configure auto-save"};
+            const notNow: MessageItem = { title: "Not now" };
+            const never: MessageItem = { title: "Do not ask again" };
+            const options = [changeConfigurationOption, notNow, never];
 
-            let choice = await window.showInformationMessage("Switching on `File > Auto Save` saves you from constant file saving when working with command-line tools.", ...options);
+            const choice = await window.showInformationMessage("Switching on `File > Auto Save` saves you from constant file saving when working with command-line tools.", ...options);
 
             switch(choice){
                 case changeConfigurationOption:
@@ -73,25 +73,25 @@ export class StartUp {
     }
 
     async showWhatsNew(): Promise<boolean> {
-        let currentVersion = new ExtensionInfo(ExtensionInfo.EXTENSION_ID).getVersion();
-        var lastValue = this.context.globalState.get(this.WHATS_NEW_SHOWN_FOR_VERSION, "0.0.0");
+        const currentVersion = new ExtensionInfo(ExtensionInfo.EXTENSION_ID).getVersion();
+        const lastValue = this.context.globalState.get(this.WHATS_NEW_SHOWN_FOR_VERSION, "0.0.0");
 
-        let lastInstalledDiff = diff(currentVersion, lastValue);
+        const lastInstalledDiff = diff(currentVersion, lastValue);
         if (lastInstalledDiff === null) { return false; } // something odd
         if (['major', 'minor'].includes(lastInstalledDiff)) {
 
             if (true) {
-                let changeLogMd = this.context.asAbsolutePath('CHANGELOG.md');
+                const changeLogMd = this.context.asAbsolutePath('CHANGELOG.md');
                 commands.executeCommand('markdown.showPreview', Uri.file(changeLogMd), null, {
                     sideBySide: false,
                     locked: true
                 });
             }
             else {
-                let changeLog = this.context.asAbsolutePath('CHANGELOG.html');
-                let html = await utils.afs.readFile(changeLog, { encoding: "utf-8" });
+                const changeLog = this.context.asAbsolutePath('CHANGELOG.html');
+                const html = await utils.afs.readFile(changeLog, { encoding: "utf-8" });
 
-                let webViewPanel = window.createWebviewPanel(
+                const webViewPanel = window.createWebviewPanel(
                     "pddl.WhatsNew",
                     "PDDL: What's new?",
                     ViewColumn.Active,
@@ -115,19 +115,19 @@ export class StartUp {
 
     async askForReview(): Promise<void> {
         // what was the user response last time?
-        var accepted = this.context.globalState.get(this.ACCEPTED_TO_WRITE_A_REVIEW, LATER);
+        const accepted = this.context.globalState.get(this.ACCEPTED_TO_WRITE_A_REVIEW, LATER);
 
         if (accepted === LATER) {
-            let optionAccepted: MessageItem = { title: "OK, let's give feedback" };
-            let optionLater: MessageItem = { title: "Remind me later" };
-            let optionNever: MessageItem = { title: "Never" };
-            let options: MessageItem[] = [optionAccepted, optionLater, optionNever];
+            const optionAccepted: MessageItem = { title: "OK, let's give feedback" };
+            const optionLater: MessageItem = { title: "Remind me later" };
+            const optionNever: MessageItem = { title: "Never" };
+            const options: MessageItem[] = [optionAccepted, optionLater, optionNever];
 
-            let choice = await window.showInformationMessage('Are you finding the PDDL Extension useful? Do you want to boost our motivation? Please give us (5) stars or even write a review...', ...options);
+            const choice = await window.showInformationMessage('Are you finding the PDDL Extension useful? Do you want to boost our motivation? Please give us (5) stars or even write a review...', ...options);
 
             switch (choice) {
                 case optionAccepted:
-                    let reviewPage = 'https://marketplace.visualstudio.com/items?itemName=jan-dolejsi.pddl#review-details';
+                    const reviewPage = 'https://marketplace.visualstudio.com/items?itemName=jan-dolejsi.pddl#review-details';
                     commands.executeCommand('vscode.open', Uri.parse(reviewPage));
                     this.context.globalState.update(this.ACCEPTED_TO_WRITE_A_REVIEW, ACCEPTED);
                     break;
@@ -144,7 +144,7 @@ export class StartUp {
     }
 
     showOverviewPage(): void {
-        var shouldShow = this.context.globalState.get<boolean>(SHOULD_SHOW_OVERVIEW_PAGE, true);
+        const shouldShow = this.context.globalState.get<boolean>(SHOULD_SHOW_OVERVIEW_PAGE, true);
         if (shouldShow) {
             this.overviewPage.showWelcomePage(false);
         }

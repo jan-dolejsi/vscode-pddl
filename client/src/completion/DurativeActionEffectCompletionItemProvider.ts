@@ -17,7 +17,7 @@ export class DurativeActionEffectCompletionItemProvider extends AbstractCompleti
     constructor() {
         super();
 
-        let requiresDurativeActions = requires([':durative-actions']);
+        const requiresDurativeActions = requires([':durative-actions']);
 
         this.addSuggestionDocumentation('at start', 'At start effect',
             new MarkdownString('Effect that takes place at the *start* point of a durative action. Only use this inside a `:durative-action`.')
@@ -32,7 +32,7 @@ export class DurativeActionEffectCompletionItemProvider extends AbstractCompleti
             CompletionItemKind.Property);
     }
 
-    static inside(currentNode: parser.PddlSyntaxNode) {
+    static inside(currentNode: parser.PddlSyntaxNode): boolean {
         return ModelHierarchy.isInsideEffect(currentNode)
             && ModelHierarchy.isInsideDurativeActionUnqualifiedEffect(currentNode);
     }

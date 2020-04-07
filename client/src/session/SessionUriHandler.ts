@@ -35,15 +35,15 @@ class SingleArgumentUriHandler implements UriMatchHandler {
 
     matches(uri: Uri): boolean {
         this.pattern.lastIndex = 0;
-        let matchGroups = this.pattern.exec(uri.path);
+        const matchGroups = this.pattern.exec(uri.path);
         return matchGroups !== null;
     }
 
     handle(uri: Uri): void {
         this.pattern.lastIndex = 0;
-        let matchGroups = this.pattern.exec(uri.path);
+        const matchGroups = this.pattern.exec(uri.path);
         if (matchGroups) {
-            let argumentValue = matchGroups[1];
+            const argumentValue = matchGroups[1];
             commands.executeCommand(this.command, argumentValue);
         }
     }

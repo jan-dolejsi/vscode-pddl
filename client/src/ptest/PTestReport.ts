@@ -14,6 +14,7 @@ import { PTestReportView } from './PTestReportView';
 import { PddlExtensionContext } from 'pddl-workspace';
 import { PTEST_REPORT_VIEW } from './PTestCommands';
 import { utils } from 'pddl-workspace';
+import { assertDefined } from '../utils';
 
 /** Gathers the output of running PDDL Test cases and summarizes them into a WebView table. */
 export class PTestReport implements Disposable {
@@ -24,12 +25,12 @@ export class PTestReport implements Disposable {
         instrumentOperationAsVsCodeCommand(PTEST_REPORT_VIEW, () => this.show());
     }
 
-    dispose() {
+    dispose(): void {
         if (this.outputWindow) { this.outputWindow.dispose(); }
     }
 
     startingManifest(manifest: TestsManifest): void {
-        let manifestLocation = workspace.asRelativePath(manifest.path, true);
+        const manifestLocation = workspace.asRelativePath(manifest.path, true);
         this.output(`Executing tests from ${manifestLocation}.`);
         this.addManifestIfAbsent(manifest);
     }
@@ -42,13 +43,13 @@ export class PTestReport implements Disposable {
 
     upsertTestResult(test: Test, result: TestResult): void {
         this.manifests.putIfAbsent(test.getManifest(), () => new TestResultMap());
-        let testMap = this.manifests.get(test.getManifest())!;
-        testMap.set(test, result);
+        const testMap = this.manifests.get(test.getManifest());
+        testMap && testMap.set(test, result);
         if (this.view) { this.view.updatePage(); }
     }
 
     finishedManifest(manifest: TestsManifest): void {
-        let manifestLocation = workspace.asRelativePath(manifest.path, true);
+        const manifestLocation = workspace.asRelativePath(manifest.path, true);
         this.outputWindow.appendLine(`Finished executing tests from ${manifestLocation}.`);
     }
 
@@ -57,29 +58,19 @@ export class PTestReport implements Disposable {
     }
 
     getManifestTestResultsOrThrow(manifest: TestsManifest): TestResultMap {
-        if (this.manifests.has(manifest)) {
-            return this.manifests.get(manifest)!;
-        }
-        else {
-            throw new Error(`Manifest not found: ` + manifest.uri.toString());
-        }
+        return assertDefined(this.manifests.get(manifest), `Manifest not found: ` + manifest.uri.toString());
     }
 
     getTestCases(manifest: TestsManifest): Test[] {
-        return this.getManifestTestResultsOrThrow(manifest)!.keyList();
+        return this.getManifestTestResultsOrThrow(manifest).keyList();
     }
 
     getTestResultOrThrow(test: Test): TestResult {
         const results = this.getManifestTestResultsOrThrow(test.getManifest());
-        if (results.has(test)) {
-            return results.get(test)!;
-        }
-        else {
-            throw new Error(`Test not found in the result set: ` + test.getUri().toString());
-        }
+        return assertDefined(results.get(test), `Test not found in the result set: ` + test.getUri().toString());
     }
 
-    outputTestResult(test: Test, outcome: TestOutcome, elapsedTime: number, error?: string) {
+    outputTestResult(test: Test, outcome: TestOutcome, elapsedTime: number, error?: string): void {
         let outcomeChar = String.fromCharCode(0x2591);
 
         switch (outcome) {
@@ -115,18 +106,18 @@ export class PTestReport implements Disposable {
         this.upsertTestResult(test, new TestResult(outcome, outcomeChar, elapsedTime, error));
     }
 
-    clearAndShow() {
+    clearAndShow(): void {
         this.outputWindow.clear();
         this.manifests.clear();
         if (this.view) { this.view.updatePage(); }
         this.show();
     }
 
-    output(message: string) {
+    output(message: string): void {
         this.outputWindow.appendLine(message);
     }
 
-    show() {
+    show(): void {
         this.outputWindow.show(true);
         if (!this.view) {
             this.view = new PTestReportView(this.context, this);

@@ -51,7 +51,7 @@ export class ModelHierarchyProvider implements HoverProvider {
     }
 
     private refreshDirtyEditors(): void {
-        let currentlyDirtyEditors = new Set<TextEditor>(this.dirtyEditors);
+        const currentlyDirtyEditors = new Set<TextEditor>(this.dirtyEditors);
         this.dirtyEditors.clear();
 
         currentlyDirtyEditors
@@ -60,18 +60,18 @@ export class ModelHierarchyProvider implements HoverProvider {
 
     private updateDecoration(editor: TextEditor): void {
         if (editor.visibleRanges.length === 0) { return; }
-        let fileInfo = this.pddlWorkspace.pddlWorkspace.getFileInfo(editor.document.uri.toString());
+        const fileInfo = this.pddlWorkspace.pddlWorkspace.getFileInfo(editor.document.uri.toString());
 
         if (fileInfo instanceof DomainInfo) {
-            let domainInfo = <DomainInfo>fileInfo;
+            const domainInfo = fileInfo as DomainInfo;
 
-            let allVariables = domainInfo.getFunctions().concat(domainInfo.getPredicates());
+            const allVariables = domainInfo.getFunctions().concat(domainInfo.getPredicates());
             //todo: add derived variables
 
             this.decorations.get(editor)?.forEach(d => d.dispose());
             this.decorations.delete(editor);
 
-            let decorations = allVariables.map(v => this.decorateVariable(v, editor, domainInfo))
+            const decorations = allVariables.map(v => this.decorateVariable(v, editor, domainInfo))
                 .filter(dec => !!dec)
                 .map(dec => dec!);
 
@@ -80,17 +80,17 @@ export class ModelHierarchyProvider implements HoverProvider {
     }
 
     decorateVariable(variable: Variable, editor: TextEditor, domainInfo: DomainInfo): TextEditorDecorationType | undefined {
-        let symbolInfo = this.symbolUtils.getSymbolInfo(editor.document, toPosition(variable.getLocation().start).translate({ characterDelta: 1 }));
+        const symbolInfo = this.symbolUtils.getSymbolInfo(editor.document, toPosition(variable.getLocation().start).translate({ characterDelta: 1 }));
 
         if (symbolInfo instanceof VariableInfo) {
-            let references = this.symbolUtils.findSymbolReferences(editor.document, symbolInfo, false);
-            let pddlFileInfo = this.pddlWorkspace.getFileInfo(editor.document);
+            const references = this.symbolUtils.findSymbolReferences(editor.document, symbolInfo, false);
+            const pddlFileInfo = this.pddlWorkspace.getFileInfo(editor.document);
             if (!pddlFileInfo) { return undefined; }
 
             if (references !== undefined && domainInfo !== undefined) {
-                let referenceInfos = this.getReferences(references, domainInfo, symbolInfo, editor.document);
+                const referenceInfos = this.getReferences(references, domainInfo, symbolInfo, editor.document);
 
-                let readCount = referenceInfos
+                const readCount = referenceInfos
                     .filter(ri => [VariableReferenceKind.READ, VariableReferenceKind.READ_OR_WRITE].includes(ri.kind))
                     .length;
 
@@ -98,18 +98,18 @@ export class ModelHierarchyProvider implements HoverProvider {
                     .filter(ri => [VariableReferenceKind.WRITE, VariableReferenceKind.READ_OR_WRITE].includes(ri.kind));
                 const writeEffectReferences = writeReferences
                     .filter(ri => (ri instanceof VariableEffectReferenceInfo))
-                    .map(ri => <VariableEffectReferenceInfo>ri);
+                    .map(ri => ri as VariableEffectReferenceInfo);
 
-                let increaseCount = writeEffectReferences.filter(ri => ri.effect instanceof parser.IncreaseEffect).length;
-                let decreaseCount = writeEffectReferences.filter(ri => ri.effect instanceof parser.DecreaseEffect).length;
-                let scaleUpCount = writeEffectReferences.filter(ri => ri.effect instanceof parser.ScaleUpEffect).length;
-                let scaleDownCount = writeEffectReferences.filter(ri => ri.effect instanceof parser.ScaleDownEffect).length;
-                let assignCount = writeEffectReferences.filter(ri => ri.effect instanceof parser.AssignEffect).length;
-                let makeTrueCount = writeEffectReferences.filter(ri => ri.effect instanceof parser.MakeTrueEffect).length;
-                let makeFalseCount = writeEffectReferences.filter(ri => ri.effect instanceof parser.MakeFalseEffect).length;
+                const increaseCount = writeEffectReferences.filter(ri => ri.effect instanceof parser.IncreaseEffect).length;
+                const decreaseCount = writeEffectReferences.filter(ri => ri.effect instanceof parser.DecreaseEffect).length;
+                const scaleUpCount = writeEffectReferences.filter(ri => ri.effect instanceof parser.ScaleUpEffect).length;
+                const scaleDownCount = writeEffectReferences.filter(ri => ri.effect instanceof parser.ScaleDownEffect).length;
+                const assignCount = writeEffectReferences.filter(ri => ri.effect instanceof parser.AssignEffect).length;
+                const makeTrueCount = writeEffectReferences.filter(ri => ri.effect instanceof parser.MakeTrueEffect).length;
+                const makeFalseCount = writeEffectReferences.filter(ri => ri.effect instanceof parser.MakeFalseEffect).length;
 
-                var decorationText: string[] = [];
-                var hoverText: string[] = [];
+                const decorationText: string[] = [];
+                const hoverText: string[] = [];
 
                 if (readCount) {
                     decorationText.push(`${readCount}👁`);
@@ -166,7 +166,7 @@ export class ModelHierarchyProvider implements HoverProvider {
     }
 
     decorate(editor: TextEditor, decorationText: string, hoverText: string, range: Range): TextEditorDecorationType {
-        let decorationType = window.createTextEditorDecorationType({
+        const decorationType = window.createTextEditorDecorationType({
             after: {
                 contentText: decorationText,
                 textDecoration: "; color: gray; margin-left: 10px" //font-size: 10px; ; opacity: 0.5
@@ -180,18 +180,18 @@ export class ModelHierarchyProvider implements HoverProvider {
         if (token.isCancellationRequested) { return undefined; }
         await this.symbolUtils.assertFileParsed(document);
 
-        let symbolInfo = this.symbolUtils.getSymbolInfo(document, position);
+        const symbolInfo = this.symbolUtils.getSymbolInfo(document, position);
 
         if (symbolInfo instanceof VariableInfo) {
-            let references = this.symbolUtils.findSymbolReferences(document, symbolInfo, false);
-            let pddlFileInfo = this.pddlWorkspace.getFileInfo(document);
+            const references = this.symbolUtils.findSymbolReferences(document, symbolInfo, false);
+            const pddlFileInfo = this.pddlWorkspace.getFileInfo(document);
             if (!pddlFileInfo) { return undefined; }
-            let domainInfo = this.pddlWorkspace.pddlWorkspace.asDomain(pddlFileInfo);
+            const domainInfo = this.pddlWorkspace.pddlWorkspace.asDomain(pddlFileInfo);
 
             if (references !== undefined && domainInfo !== undefined) {
-                let referenceInfos = this.getReferences(references, domainInfo, symbolInfo, document);
+                const referenceInfos = this.getReferences(references, domainInfo, symbolInfo, document);
 
-                let documentation = this.createReferenceDocumentation(referenceInfos);
+                const documentation = this.createReferenceDocumentation(referenceInfos);
 
                 return new Hover(documentation, symbolInfo.hover.range);
             }
@@ -208,11 +208,11 @@ export class ModelHierarchyProvider implements HoverProvider {
     private getReferences(references: Location[], domainInfo: DomainInfo, symbolInfo: SymbolInfo, document: TextDocument): VariableReferenceInfo[] {
         return references
             .filter(r => r.uri.toString() === domainInfo.fileUri) // limit this to the domain file only
-            .map(r => new ModelHierarchy(domainInfo!).getReferenceInfo((<VariableInfo>symbolInfo).variable, document.offsetAt(r.range.start) + 1));
+            .map(r => new ModelHierarchy(domainInfo).getReferenceInfo((symbolInfo as VariableInfo).variable, document.offsetAt(r.range.start) + 1));
     }
 
-    private createReferenceDocumentation(referenceInfos: VariableReferenceInfo[]) {
-        let documentation = new MarkdownString(`**References**\n`);
+    private createReferenceDocumentation(referenceInfos: VariableReferenceInfo[]): MarkdownString {
+        const documentation = new MarkdownString(`**References**\n`);
 
         this.addAccessKindDocumentation(documentation, referenceInfos, 'Read', VariableReferenceKind.READ);
         this.addAccessKindDocumentation(documentation, referenceInfos, 'Write', VariableReferenceKind.WRITE);
@@ -226,7 +226,7 @@ export class ModelHierarchyProvider implements HoverProvider {
         return documentation;
     }
 
-    private addAccessKindDocumentation(documentation: MarkdownString, referenceInfos: VariableReferenceInfo[], label: string, kind: VariableReferenceKind) {
+    private addAccessKindDocumentation(documentation: MarkdownString, referenceInfos: VariableReferenceInfo[], label: string, kind: VariableReferenceKind): void {
         const accessReferences = referenceInfos.filter(ri => ri.kind === kind);
         if (accessReferences.length > 0) {
             documentation.appendText('\n' + label + ' access:\n');

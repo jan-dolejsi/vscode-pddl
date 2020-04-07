@@ -19,16 +19,16 @@ export class MessageParser {
 
     }
 
-    clear() {
+    clear(): void {
         this.stateIdToOrder.clear();
         this.lastStateOrder = -1;
     }
 
     parseStateId(origId: string): number {
-        var assignedStateId: number;
+        let assignedStateId: number;
         if (this.stateIdPattern) {
             this.stateIdPattern.lastIndex = 0;
-            var match: RegExpMatchArray | null;
+            let match: RegExpMatchArray | null;
             if (match = origId.match(this.stateIdPattern)) {
                 assignedStateId = parseInt(match[1]);
             }
@@ -44,23 +44,26 @@ export class MessageParser {
         return assignedStateId;
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     parseInitialState(state: any): State {
-        let assignedStateId = this.parseStateId(state.id);
+        const assignedStateId = this.parseStateId(state.id);
         this.stateIdToOrder.set(state.id, assignedStateId);
 
         return new State(assignedStateId, state.id, state.g, state.earliestTime, []);
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     parseState(state: any): State {
         let assignedStateId = this.stateIdToOrder.get(state.id);
         if (assignedStateId === undefined) {
             assignedStateId = this.parseStateId(state.id);
         }
-        let parentId = this.stateIdToOrder.get(state.parentId);
+        const parentId = this.stateIdToOrder.get(state.parentId);
 
-        let planHead = state.planHead.map((h: any) => this.parseSearchHappening(h, false));
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const planHead = state.planHead.map((h: any) => this.parseSearchHappening(h, false));
 
-        let actionName = state.appliedAction ? this.createActionName(this.parseSearchHappening(state.appliedAction, false)) : undefined;
+        const actionName = state.appliedAction ? this.createActionName(this.parseSearchHappening(state.appliedAction, false)) : undefined;
 
         return new State(assignedStateId, state.id, state.g, state.earliestTime, planHead,
             parentId, actionName);
@@ -83,12 +86,13 @@ export class MessageParser {
         return actionName;
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     parseEvaluatedState(state: any): State {
-        var assignedStateId = this.stateIdToOrder.get(state.id);
+        const assignedStateId = this.stateIdToOrder.get(state.id);
         if (assignedStateId === undefined) {
             throw new Error(`State with id ${state.id} is unknown`);
         }
-        let stateFound = this.search.getState(assignedStateId);
+        const stateFound = this.search.getState(assignedStateId);
         if (!stateFound) {
             throw new Error(`State with id ${state.id} not found.`);
         }
@@ -98,13 +102,16 @@ export class MessageParser {
         }
         else {
 
-            let relaxedPlan = state.relaxedPlan.map((h: any) => this.parseSearchHappening(h, true));
-            let helpfulActions = state.helpfulActions.map((a: any) => this.parseHelpfulAction(a));
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const relaxedPlan = state.relaxedPlan.map((h: any) => this.parseSearchHappening(h, true));
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const helpfulActions = state.helpfulActions.map((a: any) => this.parseHelpfulAction(a));
 
             return stateFound.evaluate(state.h, state.totalMakespan, helpfulActions, relaxedPlan);
         }
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     parseSearchHappening(happening: any, isRelaxed: boolean): SearchHappening {
         return {
             actionName: happening.actionName,
@@ -115,6 +122,7 @@ export class MessageParser {
         };
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     parseHelpfulAction(action: any): HelpfulAction {
         return {
             actionName: action.actionName,

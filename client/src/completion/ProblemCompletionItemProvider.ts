@@ -29,23 +29,23 @@ export class ProblemCompletionItemProvider extends AbstractCompletionItemProvide
         if (currentNode.isType(parser.PddlTokenType.Document) ||
             (currentNode.isType(parser.PddlTokenType.Whitespace) || currentNode.isType(parser.PddlTokenType.Comment))
             && currentNode.getParent() && currentNode.getParent()!.isType(parser.PddlTokenType.Document)) {
-            let items: CompletionItem[] = [];
+            const items: CompletionItem[] = [];
             {
-                let item = new CompletionItem(";;!pre-parsing:command", CompletionItemKind.Snippet);
+                const item = new CompletionItem(";;!pre-parsing:command", CompletionItemKind.Snippet);
                 item.insertText = new SnippetString(";;!pre-parsing:{type: \"command\", command: \"${1:program}\", args: [${2:\"data.json\", \"1234\"}]}\n$0");
                 item.detail = "Pre-parsing problem file transformation via a shell command.";
                 items.push(item);
             }
 
             {
-                let item = new CompletionItem(";;!pre-parsing:python", CompletionItemKind.Snippet);
+                const item = new CompletionItem(";;!pre-parsing:python", CompletionItemKind.Snippet);
                 item.insertText = new SnippetString(";;!pre-parsing:{type: \"python\", command: \"${1:your_script.py}\", args: [${2:\"data.json\", \"1234\"}]}\n$0");
                 item.detail = "Pre-parsing problem file transformation via a python script.";
                 items.push(item);
             }
 
             {
-                let item = new CompletionItem(";;!pre-parsing:", CompletionItemKind.Snippet);
+                const item = new CompletionItem(";;!pre-parsing:", CompletionItemKind.Snippet);
                 item.insertText = new SnippetString(";;!pre-parsing:{type: \"${1|nunjucks,jinja2|}\", data: \"${2:case1.json}\"}\n$0");
                 item.detail = "Pre-parsing problem file transformation via Nunjucks or Jinja2.";
                 items.push(item);
@@ -61,11 +61,11 @@ export class ProblemCompletionItemProvider extends AbstractCompletionItemProvide
                 currentNode = currentNode.expand();
             }
 
-            let supportedSectionsHere = parser.PddlStructure.getSupportedSectionsHere(currentNode, currentNode, parser.PddlTokenType.OpenBracketOperator, parser.PddlStructure.PDDL_PROBLEM_SECTIONS, []);
-            let range = context.triggerCharacter && ['(', ':'].includes(context.triggerCharacter)
+            const supportedSectionsHere = parser.PddlStructure.getSupportedSectionsHere(currentNode, currentNode, parser.PddlTokenType.OpenBracketOperator, parser.PddlStructure.PDDL_PROBLEM_SECTIONS, []);
+            const range = context.triggerCharacter && ['(', ':'].includes(context.triggerCharacter)
                 ? nodeToRange(document, currentNode) : null;
 
-            let suggestions = supportedSectionsHere
+            const suggestions = supportedSectionsHere
                 .map(s => Suggestion.from(s, context.triggerCharacter, '('))
                 .filter(s => !!s).map(s => s!);
 

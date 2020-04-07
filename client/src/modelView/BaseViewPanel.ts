@@ -14,8 +14,10 @@ export class BaseViewPanel {
     constructor(public readonly uri: Uri, protected readonly panel: WebviewAdapter) {
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     public async postMessage(command: string, payload: any): Promise<boolean> {
-        let message: any = { command: command };
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const message: any = { command: command };
         Object.keys(payload).forEach(key => message[key] = payload[key]);
 
         return this.panel.postMessage(message);

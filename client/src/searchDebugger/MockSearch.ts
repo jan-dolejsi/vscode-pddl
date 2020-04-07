@@ -4,6 +4,8 @@
  * ------------------------------------------------------------------------------------------ */
 'use strict';
 
+/* eslint-disable @typescript-eslint/camelcase */
+
 import request = require('request');
 import { sleep } from '../utils';
 import { SearchHappening, MockSearchHappening, MockHelpfulAction } from './SearchHappening';
@@ -18,7 +20,7 @@ export class MockSearch {
     }
 
     async run(): Promise<void> {
-        let helloWorld = await new Promise<string>((resolve, reject) => {
+        const helloWorld = await new Promise<string>((resolve, reject) => {
             request.get(this.url + '/about', (error, httpResponse, httpBody) => {
                 if (error) {
                     reject(error);
@@ -70,9 +72,10 @@ export class MockSearch {
         }
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     private async post(path: string, content: any): Promise<void> {
         return await new Promise<void>((resolve, reject) => {
-            request.post(this.url + path, { json: content }, (error, httpResponse, _httpBody) => {
+            request.post(this.url + path, { json: content }, (error, httpResponse) => {
                 if (error) {
                     reject(error);
                     return;
@@ -168,6 +171,7 @@ abstract class MockEvent {
 
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     abstract toWireMessage(): any;
 }
 
@@ -176,6 +180,7 @@ class MockStateContextEvent extends MockEvent {
         super(operation);
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     toWireMessage(): any {
         return {
             id: this.stateContext.state.id,
@@ -193,6 +198,7 @@ class MockStateSearchContextEvent extends MockEvent {
         super(operation);
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     toWireMessage(): any {
         return {
             id: this.stateSearchContext.stateContext.state.id,
@@ -204,6 +210,7 @@ class MockStateSearchContextEvent extends MockEvent {
     }
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function toWireSearchHappening(happening: SearchHappening): any {
     return {
         earliestTime: happening.earliestTime,
@@ -213,6 +220,7 @@ function toWireSearchHappening(happening: SearchHappening): any {
     };
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function toWireHelpfulAction(action: HelpfulAction): any {
     return {
         actionName: action.actionName,
@@ -263,18 +271,18 @@ class MockStateContext {
     }
 
     apply(actionName: string, shotCounter: number, kind: HappeningType, timeIncrement: number): MockStateContext {
-        let id = ++MockState.lastStateId;
-        let earliestTime = this.earliestTime + timeIncrement;
-        let appliedAction = new MockSearchHappening(earliestTime, actionName, shotCounter, kind, false);
-        let newPlanHead = this.planHead.concat([appliedAction]);
+        const id = ++MockState.lastStateId;
+        const earliestTime = this.earliestTime + timeIncrement;
+        const appliedAction = new MockSearchHappening(earliestTime, actionName, shotCounter, kind, false);
+        const newPlanHead = this.planHead.concat([appliedAction]);
         return new MockStateContext(new MockState(id.toString()), this.g + 1, earliestTime, appliedAction, newPlanHead, this.state.id);
     }
 
     evaluate(h: number, helpfulActions: HelpfulAction[], relaxedPlanFactory: (stateContext: MockStateContext) => RelaxedPlanBuilder): MockStateSearchContext {
-        let relaxedStateBuilder: RelaxedPlanBuilder = relaxedPlanFactory(this);
-        let relaxedPlan = relaxedStateBuilder.build();
-        let totalMakespan = relaxedPlan.length ? Math.max(...relaxedPlan.map(step => step.earliestTime)) : this.earliestTime;
-        var newState = new MockStateSearchContext(this, totalMakespan, h, helpfulActions, relaxedPlan);
+        const relaxedStateBuilder: RelaxedPlanBuilder = relaxedPlanFactory(this);
+        const relaxedPlan = relaxedStateBuilder.build();
+        const totalMakespan = relaxedPlan.length ? Math.max(...relaxedPlan.map(step => step.earliestTime)) : this.earliestTime;
+        const newState = new MockStateSearchContext(this, totalMakespan, h, helpfulActions, relaxedPlan);
 
         return newState;
     }
@@ -294,7 +302,7 @@ class MockState {
     }
 
     static createInitial(): MockState {
-        var id = ++this.lastStateId;
+        const id = ++this.lastStateId;
         return new MockState(id.toString());
     }
 
@@ -313,13 +321,13 @@ class RelaxedPlanBuilder {
     }
 
     start(actionName: string): RelaxedPlanBuilder {
-        let time = this.time += EPSILON;
+        const time = this.time += EPSILON;
         this.happenings.push(new MockSearchHappening(time, actionName, 0, HappeningType.START, true));
         return this;
     }
 
     end(timeOffset: number, actionName: string): RelaxedPlanBuilder {
-        let time = this.time += timeOffset;
+        const time = this.time += timeOffset;
         this.happenings.push(new MockSearchHappening(time, actionName, 0, HappeningType.END, true));
         return this;
     }

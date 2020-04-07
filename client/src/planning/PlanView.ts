@@ -34,7 +34,7 @@ export class PlanView extends Disposable {
         super(() => this.dispose());
 
         context.subscriptions.push(instrumentOperationAsVsCodeCommand("pddl.plan.preview", async planUri => {
-            let dotDocument = await getPlanDocument(planUri);
+            const dotDocument = await getPlanDocument(planUri);
             if (dotDocument) {
                 return this.revealOrCreatePreview(dotDocument, ViewColumn.Beside);
             }
@@ -64,7 +64,7 @@ export class PlanView extends Disposable {
     }
 
     setPlannerOutput(plans: Plan[], reveal: boolean): void {
-        let plannerOutputPanel = this.getPlannerOutputPanel();
+        const plannerOutputPanel = this.getPlannerOutputPanel();
         plannerOutputPanel.setPlans(plans);
         this.resetTimeout();
         if (plans.length > 0 && reveal) { plannerOutputPanel.reveal(); }
@@ -81,11 +81,11 @@ export class PlanView extends Disposable {
     }
 
     async setNeedsRebuild(planDocument: TextDocument): Promise<void> {
-        let panel = this.webviewPanels.get(planDocument.uri);
+        const panel = this.webviewPanels.get(planDocument.uri);
 
         if (panel) {
             try {
-                let plan = await this.parsePlanFile(planDocument);
+                const plan = await this.parsePlanFile(planDocument);
                 panel.setPlans([plan]);
             }
             catch (ex) {
@@ -115,7 +115,7 @@ export class PlanView extends Disposable {
         });
     }
 
-    async updateContent(previewPanel: PlanPreviewPanel) {
+    async updateContent(previewPanel: PlanPreviewPanel): Promise<void> {
         if (!previewPanel.getPanel().webview.html) {
             previewPanel.getPanel().webview.html = "Please wait...";
         }
@@ -139,13 +139,13 @@ export class PlanView extends Disposable {
     }
 
     createPreviewPanelForDocument(doc: TextDocument, displayColumn: ViewColumn): PlanPreviewPanel {
-        let previewTitle = `Preview '${path.basename(doc.uri.fsPath)}'`;
+        const previewTitle = `Preview '${path.basename(doc.uri.fsPath)}'`;
 
         return this.createPreviewPanel(previewTitle, doc.uri, displayColumn);
     }
 
     createPreviewPanel(previewTitle: string, uri: Uri, displayColumn: ViewColumn): PlanPreviewPanel {
-        let webViewPanel = window.createWebviewPanel('planPreview', previewTitle, displayColumn, {
+        const webViewPanel = window.createWebviewPanel('planPreview', previewTitle, displayColumn, {
             enableFindWidget: true,
             enableCommandUris: true,
             enableScripts: true,
@@ -154,12 +154,12 @@ export class PlanView extends Disposable {
 
         webViewPanel.iconPath = Uri.file(this.context.asAbsolutePath(path.join("views", "overview", "file_type_pddl_plan.svg")));
 
-        let previewPanel = new PlanPreviewPanel(uri, webViewPanel);
+        const previewPanel = new PlanPreviewPanel(uri, webViewPanel);
 
         // when the user closes the tab, remove the panel
         previewPanel.getPanel().onDidDispose(() => this.webviewPanels.delete(uri), undefined, this.context.subscriptions);
         // when the pane becomes visible again, refresh it
-        previewPanel.getPanel().onDidChangeViewState(_ => this.rebuild());
+        previewPanel.getPanel().onDidChangeViewState(() => this.rebuild());
 
         previewPanel.getPanel().webview.onDidReceiveMessage(e => this.handleMessage(previewPanel, e), undefined, this.context.subscriptions);
 
@@ -171,7 +171,7 @@ export class PlanView extends Disposable {
             return previewPanel.getError()!.message;
         }
         else {
-            let width = workspace.getConfiguration(CONF_PDDL).get<number>(PLAN_REPORT_WIDTH, 300);
+            const width = workspace.getConfiguration(CONF_PDDL).get<number>(PLAN_REPORT_WIDTH, 300);
             return new PlanReportGenerator(this.context, { displayWidth: width, selfContained: false })
                 .generateHtml(previewPanel.getPlans());
         }
@@ -179,9 +179,9 @@ export class PlanView extends Disposable {
 
     async parsePlanFile(planDocument: TextDocument): Promise<Plan> {
         try {
-            let planFileInfo = <PlanInfo>await this.codePddlWorkspace.upsertAndParseFile(planDocument);
+            const planFileInfo = await this.codePddlWorkspace.upsertAndParseFile(planDocument) as PlanInfo;
 
-            let domainAndProblem = getDomainAndProblemForPlan(planFileInfo, this.codePddlWorkspace.pddlWorkspace);
+            const domainAndProblem = getDomainAndProblemForPlan(planFileInfo, this.codePddlWorkspace.pddlWorkspace);
 
             return new Plan(planFileInfo.getSteps(), domainAndProblem.domain, domainAndProblem.problem);
         }
@@ -190,12 +190,13 @@ export class PlanView extends Disposable {
         }
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     handleMessage(previewPanel: PlanPreviewPanel, message: any): void {
         console.log(`Message received from the webview: ${message.command}`);
 
         switch (message.command) {
             case 'selectPlan':
-                let planIndex: number = message.planIndex;
+                const planIndex: number = message.planIndex;
                 previewPanel.setSelectedPlanIndex(planIndex);
                 break;
             case 'showMenu':
@@ -255,7 +256,7 @@ async function getPlanDocument(dotDocumentUri: Uri | undefined): Promise<TextDoc
 class PlanPreviewPanel {
 
     private needsRebuild = false;
-    private width: number = 200;
+    private width = 200;
     selectedPlanIndex = 0;
     plans: Plan[] = [];
     error: Error | undefined;
@@ -306,7 +307,7 @@ class PlanPreviewPanel {
         this.panel.reveal(displayColumn);
     }
 
-    setNeedsRebuild(needsRebuild: boolean) {
+    setNeedsRebuild(needsRebuild: boolean): void {
         this.needsRebuild = needsRebuild;
     }
 

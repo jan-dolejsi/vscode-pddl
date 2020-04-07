@@ -29,7 +29,7 @@ export class AutoCompletion implements CompletionItemProvider {
     async provideCompletionItems(document: TextDocument, position: Position, token: CancellationToken, context: CompletionContext): Promise<CompletionItem[]> {
         if (token.isCancellationRequested) { return []; }
 
-        let completionCollector = await new CompletionCollector(this.codePddlWorkspace, document, position, context,
+        const completionCollector = await new CompletionCollector(this.codePddlWorkspace, document, position, context,
             this.operatorDelegate, this.variableDelegate, this.typeDelegate).initialize();
         return completionCollector.getCompletions();
     }
@@ -59,7 +59,7 @@ class CompletionCollector {
         if (!activeFileInfo) { return this; }
 
         if (activeFileInfo.isProblem()) {
-            let problemFileInfo = <ProblemInfo>activeFileInfo;
+            const problemFileInfo = activeFileInfo as ProblemInfo;
 
             this.createProblemCompletionItems(problemFileInfo);
         }
@@ -79,9 +79,9 @@ class CompletionCollector {
     }
 
     createProblemCompletionItems(problemFileInfo: ProblemInfo): void {
-        let folder = this.codePddlWorkspace.pddlWorkspace.getFolderOf(problemFileInfo);
+        const folder = this.codePddlWorkspace.pddlWorkspace.getFolderOf(problemFileInfo);
         // find domain files in the same folder that match the problem's domain name
-        let domainFiles = folder?.getDomainFilesFor(problemFileInfo) ?? [];
+        const domainFiles = folder?.getDomainFilesFor(problemFileInfo) ?? [];
 
         if (this.isInInit()) {
             new ProblemInitDelegate(this.completions, this.context).createProblemInitCompletionItems(problemFileInfo, domainFiles);
@@ -92,13 +92,13 @@ class CompletionCollector {
         this.completions.push(...items);
     }
 
-    isTriggeredByBracket() {
+    isTriggeredByBracket(): boolean {
         return this.leadingText.length > 0 && this.leadingText.endsWith('(');
     }
 
     isInInit(): boolean {
-        let startPosition = new Position(0, 0);
-        let endPosition = new Position(this.document.lineCount, 10000);
+        const startPosition = new Position(0, 0);
+        const endPosition = new Position(this.document.lineCount, 10000);
 
         return this.document.getText(new Range(startPosition, this.position)).includes('(:init')
             && this.document.getText(new Range(this.position, endPosition)).includes('(:goal');

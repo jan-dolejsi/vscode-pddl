@@ -1,4 +1,5 @@
 import { expect, use, assert } from 'chai';
+// eslint-disable-next-line @typescript-eslint/no-var-requires
 use(require('chai-string'));
 import { before, after } from 'mocha';
 
@@ -9,6 +10,7 @@ import { PddlConfiguration, CONF_PDDL, VAL_STEP_PATH, VALIDATION_PATH, VALUE_SEQ
 import { createTestExtensionContext } from './testUtils';
 import { utils } from 'pddl-workspace';
 import { afs } from 'pddl-workspace/dist/utils';
+import { assertDefined } from '../../utils';
 
 class TestableValDownloader extends ValDownloader {
     constructor(context: vscode.ExtensionContext,
@@ -17,8 +19,10 @@ class TestableValDownloader extends ValDownloader {
         super(context);
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     protected async downloadDelegate(_url: string, zipPath: string, _message: string): Promise<void> {
-        const extensionPath = vscode.extensions.getExtension("jan-dolejsi.pddl").extensionPath;
+        const thisExtension = assertDefined(vscode.extensions.getExtension("jan-dolejsi.pddl"), `Extension 'jan-dolejsi.pddl' not found`);
+        const extensionPath = thisExtension.extensionPath;
         const sourcePath = path.join(extensionPath, "src", "test", "val-drop-mock.zip");
         console.log(`Copying mock VAL drop from ${sourcePath} to ${zipPath}.`);
         return await afs.copyFile(sourcePath, zipPath);
@@ -39,7 +43,12 @@ suite('VAL Download and Configuration', () => {
     let origValueSeqPath: string | undefined;
     let origParserPath: string | undefined;
 
-    before(() => {
+    before(async () => {
+        const thisExtension = assertDefined(vscode.extensions.getExtension("jan-dolejsi.pddl"), `Extension 'jan-dolejsi.pddl' not found`);
+        if (thisExtension.isActive) {
+            await thisExtension.activate();
+        }
+
         const pddlConf = vscode.workspace.getConfiguration(CONF_PDDL);
         // remember the setting
         origValStepPath = pddlConf.inspect<string>(VAL_STEP_PATH)?.globalValue;
@@ -112,7 +121,7 @@ suite('VAL Download and Configuration', () => {
         await vscode.workspace.getConfiguration(PDDL_PARSER)
             .update(EXECUTABLE_OR_SERVICE, path.join('val', 'Val-20190805.2-win64', 'bin', 'Parser.exe'), vscode.ConfigurationTarget.Global);
 
-        var askedToOverwrite: string[] = [];
+        const askedToOverwrite: string[] = [];
 
         const shouldOverwrite = function (toolName: string, yourConfiguredPath: string, newToolPath: string): boolean {
             console.log(`toolName: ${toolName}, yourConfiguredPath: ${yourConfiguredPath}, newToolPath: ${newToolPath}`);
@@ -129,7 +138,8 @@ suite('VAL Download and Configuration', () => {
         const actualValStepPath = await conf.getValStepPath();
         expect(actualValStepPath).to.equal(myValStepPath);
         const actualValueSeqPath = conf.getValueSeqPath();
-        assert.startsWith(actualValueSeqPath, path.join(valFolderPath, 'Val-20190911.1-win64'), "value seq path");
+        expect(actualValStepPath).to.not.be.undefined;
+        assert.startsWith(actualValueSeqPath!, path.join(valFolderPath, 'Val-20190911.1-win64'), "value seq path");
         expect(askedToOverwrite).to.deep.equal(['ValStep']);
     }).timeout(2000*1000);
 

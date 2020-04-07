@@ -13,7 +13,7 @@ export class CodeDocumentPositionResolver extends DocumentPositionResolver {
     }
     
     resolveToPosition(offset: number): PddlPosition {
-        let documentPosition = this.document.positionAt(offset);
+        const documentPosition = this.document.positionAt(offset);
         return new PddlPosition(documentPosition.line, documentPosition.character);
     }
 

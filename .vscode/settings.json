@@ -19,5 +19,9 @@
 			]
 		}
 	},
-	"mocha.files.glob": "common/out/test/*.js"
+	"mocha.files.glob": "common/out/test/*.js",
+	"eslint.validate": [
+		"typescript"
+	],
+	"eslint.enable": true
 }

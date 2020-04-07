@@ -17,7 +17,7 @@ export class StudentNameParser {
     }
 
     validateClassroomNames(input: string): string | null {
-        let invalidNames = input.split(';')
+        const invalidNames = input.split(';')
             .map(name => name.trim())
             .filter(name => name.length > 0) // skip empty names e.g. after a trailing semicolon
             .filter(name => !this.parseName(name));
@@ -39,7 +39,7 @@ export class StudentNameParser {
         this.NAME_PATTERN.lastIndex = 0;
         this.NAME_AND_EMAIL_PATTERN.lastIndex = 0;
 
-        var match: RegExpMatchArray | null;
+        let match: RegExpMatchArray | null;
 
         if (match = name.match(this.EMAIL_PATTERN)) {
             return new StudentName(match[0], match[0]); // it is valid
@@ -48,7 +48,7 @@ export class StudentNameParser {
             return new StudentName(match[0]); // it is valid, but email address was not included
         }
         else if (match = name.match(this.NAME_AND_EMAIL_PATTERN)) {
-            let emailPart = match[3].trim();
+            const emailPart = match[3].trim();
             this.EMAIL_PATTERN.lastIndex = 0;
             if (emailPart.match(this.EMAIL_PATTERN) === null) { return null; }
 

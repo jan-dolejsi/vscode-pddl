@@ -40,16 +40,16 @@ export class PlanComparer implements Disposable {
                     return;
                 }
 
-                let leftFileUri = selectedFiles.find(otherFileUri => otherFileUri.toString() !== rightPlanUri.toString())!;
-                let leftTextDocument = await workspace.openTextDocument(leftFileUri);
+                const leftFileUri = selectedFiles.find(otherFileUri => otherFileUri.toString() !== rightPlanUri.toString())!;
+                const leftTextDocument = await workspace.openTextDocument(leftFileUri);
 
                 if (toLanguage(leftTextDocument) !== PddlLanguage.PLAN) {
                     window.showErrorMessage("Select 2 .plan files.");
                     return;
                 }
 
-                let rightPlan = await workspace.openTextDocument(rightPlanUri);
-                let leftPlan = leftTextDocument;
+                const rightPlan = await workspace.openTextDocument(rightPlanUri);
+                const leftPlan = leftTextDocument;
 
                 this.compare(leftPlan, rightPlan);
             })
@@ -57,12 +57,12 @@ export class PlanComparer implements Disposable {
 
         this.disposables.push(instrumentOperationAsVsCodeCommand("pddl.plan.normalize", async (uri: Uri) => {
             if (!uri && window.activeTextEditor) { uri = window.activeTextEditor.document.uri; }
-            let planDoc = await workspace.openTextDocument(uri);
+            const planDoc = await workspace.openTextDocument(uri);
             if (!isPlan(planDoc)) {
                 window.showErrorMessage("Active document is not a plan.");
             }
             else {
-                let normalizedUri = this.subscribeToNormalizedUri(uri);
+                const normalizedUri = this.subscribeToNormalizedUri(uri);
                 window.showTextDocument(normalizedUri, {viewColumn: ViewColumn.Beside});
             }
         }));
@@ -73,10 +73,10 @@ export class PlanComparer implements Disposable {
     }
 
     compare(leftPlan: TextDocument, rightPlan: TextDocument): any {
-        let title = `${workspace.asRelativePath(leftPlan.uri)} ↔ ${workspace.asRelativePath(rightPlan.uri)}`;
+        const title = `${workspace.asRelativePath(leftPlan.uri)} ↔ ${workspace.asRelativePath(rightPlan.uri)}`;
 
-        let leftPlanNormalized = this.subscribeToNormalizedUri(leftPlan.uri);
-        let rightPlanNormalized = this.subscribeToNormalizedUri(rightPlan.uri);
+        const leftPlanNormalized = this.subscribeToNormalizedUri(leftPlan.uri);
+        const rightPlanNormalized = this.subscribeToNormalizedUri(rightPlan.uri);
 
         commands.executeCommand('vscode.diff',
             leftPlanNormalized,
@@ -86,7 +86,7 @@ export class PlanComparer implements Disposable {
     }
 
     subscribeToNormalizedUri(uri: Uri): Uri {
-        let normalizedPlanUri = uri.with({scheme: this.normalizedPlanScheme});
+        const normalizedPlanUri = uri.with({scheme: this.normalizedPlanScheme});
         this.disposables.push(workspace.onDidChangeTextDocument(e => {
             if (e.document.uri.toString() === uri.toString()) { this.provider.planChanged(normalizedPlanUri); }
         }));

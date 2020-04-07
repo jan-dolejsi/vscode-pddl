@@ -11,7 +11,7 @@ import { Plan, parser } from 'pddl-workspace';
 
 export abstract class Planner {
 
-    planningProcessKilled: boolean = false;
+    planningProcessKilled = false;
 
     constructor(protected readonly plannerPath: string) {
 

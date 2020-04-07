@@ -33,8 +33,8 @@ export class CodePddlWorkspace {
     }
 
     registerCommands(): CodePddlWorkspace {
-        let revealActionCommand = instrumentOperationAsVsCodeCommand('pddl.revealAction', (domainFileUri: Uri, actionName: String) => {
-            revealAction(<DomainInfo>this.pddlWorkspace.getFileInfo(domainFileUri.toString()), actionName);
+        const revealActionCommand = instrumentOperationAsVsCodeCommand('pddl.revealAction', (domainFileUri: Uri, actionName: string) => {
+            revealAction(this.pddlWorkspace.getFileInfo(domainFileUri.toString()) as DomainInfo, actionName);
         });
 
         if (this.context) {
@@ -44,7 +44,7 @@ export class CodePddlWorkspace {
         return this;
     }
 
-    static getInstance(pddlWorkspace: PddlWorkspace, context: ExtensionContext, pddlConfiguration: PddlConfiguration) {
+    static getInstance(pddlWorkspace: PddlWorkspace, context: ExtensionContext, pddlConfiguration: PddlConfiguration): CodePddlWorkspace {
         return new CodePddlWorkspace(pddlWorkspace, context, pddlConfiguration).registerCommands();
     }
 
@@ -52,7 +52,7 @@ export class CodePddlWorkspace {
         return new CodePddlWorkspace(pddlWorkspace);
     }
 
-    async upsertFile(document: TextDocument, force: boolean = false): Promise<FileInfo | undefined> {
+    async upsertFile(document: TextDocument, force = false): Promise<FileInfo | undefined> {
         const language = toLanguage(document);
         if (language === undefined) { return undefined; }
         return await this.pddlWorkspace.upsertFile(document.uri.toString(),
@@ -75,12 +75,12 @@ export class CodePddlWorkspace {
     }
 
     async removeFile(textDoc: TextDocument): Promise<boolean> {
-        let fileExists = await utils.afs.exists(textDoc.fileName);
+        const fileExists = await utils.afs.exists(textDoc.fileName);
         return this.pddlWorkspace.removeFile(textDoc.uri.toString(), { removeAllReferences: !fileExists });
     }
 
     getDomainFilesFor(problemFileInfo: ProblemInfo): DomainInfo[] {
-        let domainFiles = this.pddlWorkspace.getDomainFilesFor(problemFileInfo);
+        const domainFiles = this.pddlWorkspace.getDomainFilesFor(problemFileInfo);
 
         return domainFiles
             .filter(domainInfo => this.isRealFile(domainInfo));
@@ -130,9 +130,9 @@ function subscribeToWorkspace(pddlWorkspace: CodePddlWorkspace, context: Extensi
             pddlWorkspace.pddlWorkspace.getAllFilesIf<ProblemInfo>(f => f.isProblem())
 
                 .filter(problemInfo => !!problemInfo.getPreParsingPreProcessor())
-                .filter(problemInfo => problemInfo.getPreParsingPreProcessor()!.getInputFiles().some(inputFile => docEvent.document.fileName.endsWith(inputFile)))
+                .filter(problemInfo => problemInfo.getPreParsingPreProcessor()?.getInputFiles().some(inputFile => docEvent.document.fileName.endsWith(inputFile)))
                 .forEach(async (problemInfo) => {
-                    let problemFile = await workspace.openTextDocument(Uri.parse(problemInfo.fileUri));
+                    const problemFile = await workspace.openTextDocument(Uri.parse(problemInfo.fileUri));
                     pddlWorkspace.upsertFile(problemFile, true);
                 });
         }
@@ -144,17 +144,17 @@ function subscribeToWorkspace(pddlWorkspace: CodePddlWorkspace, context: Extensi
     }));
 
     if (pddlConfiguration) {
-        workspace.onDidChangeConfiguration(_ => {
+        workspace.onDidChangeConfiguration(() => {
             pddlWorkspace.setEpsilon(pddlConfiguration.getEpsilonTimeStep());
         });
     }
 }
 
-async function revealAction(domainInfo: DomainInfo, actionName: String) {
-    let document = await workspace.openTextDocument(Uri.parse(domainInfo.fileUri));
-    let actionFound = domainInfo.getActions().find(a => a?.name?.toLowerCase() === actionName.toLowerCase());
-    let actionRange = actionFound && toRange(actionFound.getLocation());
-    let openEditor = window.visibleTextEditors.find(e => e.document.uri.toString() === document.uri.toString());
+async function revealAction(domainInfo: DomainInfo, actionName: string): Promise<void> {
+    const document = await workspace.openTextDocument(Uri.parse(domainInfo.fileUri));
+    const actionFound = domainInfo.getActions().find(a => a?.name?.toLowerCase() === actionName.toLowerCase());
+    const actionRange = actionFound && toRange(actionFound.getLocation());
+    const openEditor = window.visibleTextEditors.find(e => e.document.uri.toString() === document.uri.toString());
     if (openEditor && actionRange) {
         openEditor.revealRange(actionRange, TextEditorRevealType.AtTop);
     } else {

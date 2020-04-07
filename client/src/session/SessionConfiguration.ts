@@ -21,7 +21,7 @@ export interface SessionConfiguration {
 export enum SessionMode { READ_ONLY, READ_WRITE }
 
 export function toSessionConfiguration(id: string, mode: SessionMode): SessionConfiguration {
-	var sessionConfiguration: SessionConfiguration;
+	let sessionConfiguration: SessionConfiguration;
 
 	switch (mode) {
 		case SessionMode.READ_ONLY:
@@ -46,8 +46,8 @@ export async function isSessionFolder(folder: WorkspaceFolder): Promise<boolean>
 
 export async function readSessionConfiguration(folder: WorkspaceFolder): Promise<SessionConfiguration> {
 	const configurationPath = toConfigurationFilePath(folder);
-	let data = await utils.afs.readFile(configurationPath, { flag: 'r' });
-	return <SessionConfiguration>JSON.parse(data.toString("utf-8"), (key, value) => {
+	const data = await utils.afs.readFile(configurationPath, { flag: 'r' });
+	return JSON.parse(data.toString("utf-8"), (key, value) => {
 		if (key === "files") {
 			return objToStrMap(value);
 		}
@@ -57,11 +57,11 @@ export async function readSessionConfiguration(folder: WorkspaceFolder): Promise
 		else {
 			return value;
 		}
-	});
+	}) as SessionConfiguration;
 }
 
 export async function saveConfiguration(workspaceFolderUri: Uri, sessionConfiguration: SessionConfiguration): Promise<void> {
-	let sessionConfigurationString = JSON.stringify(sessionConfiguration, (name, val) => {
+	const sessionConfigurationString = JSON.stringify(sessionConfiguration, (name, val) => {
 		if (name === "files") {
 			return strMapToObj(val);
 		}

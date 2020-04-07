@@ -4,12 +4,14 @@
  * ------------------------------------------------------------------------------------------ */
 'use strict';
 
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
 import {
     workspace, window
 } from 'vscode';
 
 import * as process from 'child_process';
-const tree_kill = require('tree-kill');
+import treeKill = require('tree-kill');
 
 import { Planner } from './planner';
 import { PlannerResponseHandler } from './PlannerResponseHandler';
@@ -29,8 +31,8 @@ export class PlannerExecutable extends Planner {
 
     async plan(domainFileInfo: DomainInfo, problemFileInfo: ProblemInfo, planParser: parser.PddlPlannerOutputParser, parent: PlannerResponseHandler): Promise<Plan[]> {
 
-        let domainFilePath = await utils.Util.toPddlFile("domain", domainFileInfo.getText());
-        let problemFilePath = await utils.Util.toPddlFile("problem", problemFileInfo.getText());
+        const domainFilePath = await utils.Util.toPddlFile("domain", domainFileInfo.getText());
+        const problemFilePath = await utils.Util.toPddlFile("problem", problemFileInfo.getText());
 
         let command = this.plannerSyntax.replace('$(planner)', utils.Util.q(this.plannerPath))
             .replace('$(options)', this.plannerOptions)
@@ -41,15 +43,15 @@ export class PlannerExecutable extends Planner {
 
         parent.handleOutput(command + '\n');
 
-        let thisPlanner = this;
+        const thisPlanner = this;
         super.planningProcessKilled = false;
 
         if (workspace.getConfiguration("pddlPlanner").get("executionTarget") === "Terminal") {
-            return new Promise<Plan[]>((resolve, _reject) => {
-                let terminal = window.createTerminal({ name: "Planner output", cwd: thisPlanner.workingDirectory });
+            return new Promise<Plan[]>((resolve) => {
+                const terminal = window.createTerminal({ name: "Planner output", cwd: thisPlanner.workingDirectory });
                 terminal.sendText(command, true);
                 terminal.show(true);
-                let plans: Plan[] = [];
+                const plans: Plan[] = [];
                 resolve(plans);
             });
         }
@@ -57,14 +59,14 @@ export class PlannerExecutable extends Planner {
         return new Promise<Plan[]>(function (resolve, reject) {
             thisPlanner.child = process.exec(command,
                 { cwd: thisPlanner.workingDirectory },
-                (error, _stdout, _stderr) => {
+                (error) => {
                     planParser.onPlanFinished();
 
                     if (error && !thisPlanner.child?.killed && !thisPlanner.planningProcessKilled) {
                         reject(error);
                     }
 
-                    let plans = planParser.getPlans();
+                    const plans = planParser.getPlans();
                     resolve(plans); // todo: should we resolve() even if we reject()ed above?
                     thisPlanner.child = undefined;
                 });
@@ -93,7 +95,7 @@ export class PlannerExecutable extends Planner {
             // try to kill just the shell
             // this.child.kill();//'SIGINT');
             // this.child.stdin.pause();
-            tree_kill(this.child.pid);
+            treeKill(this.child.pid);
         }
     }
 }

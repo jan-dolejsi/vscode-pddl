@@ -18,7 +18,7 @@ export abstract class Validator {
     abstract validate(domainInfo: DomainInfo, problemFiles: ProblemInfo[], onSuccess: (diagnostics: Map<string, Diagnostic[]>) => void, onError: (error: string) => void): void;
 
     createEmptyDiagnostics(domainInfo: DomainInfo, problemFiles: ProblemInfo[]): Map<string, Diagnostic[]>{
-        let diagnostics: Map<string, Diagnostic[]> = new Map<string, Diagnostic[]>();
+        const diagnostics: Map<string, Diagnostic[]> = new Map<string, Diagnostic[]>();
         diagnostics.set(domainInfo.fileUri, []);
         problemFiles.forEach(p => diagnostics.set(p.fileUri, []));
         return diagnostics;
@@ -38,7 +38,7 @@ export abstract class Validator {
     }
 
     static createRange(line: number, character: number): Range {
-        var position = new Position(line, character);
+        const position = new Position(line, character);
         return new Range(position, position);
     }
 

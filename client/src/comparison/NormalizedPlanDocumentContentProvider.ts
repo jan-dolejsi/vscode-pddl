@@ -32,7 +32,7 @@ export class NormalizedPlanDocumentContentProvider implements TextDocumentConten
         return this._onDidChange.event;
     }
 
-    dispose() {
+    dispose(): void {
         this._onDidChange.dispose();
         if (this.timeout) { clearTimeout(this.timeout); }
     }
@@ -54,9 +54,9 @@ export class NormalizedPlanDocumentContentProvider implements TextDocumentConten
     provideTextDocumentContent(uri: Uri, token: CancellationToken): string | Thenable<string> {
         if (token.isCancellationRequested) { return "Canceled"; }
 
-        let newScheme = (uri.authority === PlanningDomains.AUTHORITY) ? HTTPLAN : 'file';
+        const newScheme = (uri.authority === PlanningDomains.AUTHORITY) ? HTTPLAN : 'file';
 
-        let fileUri = uri.with({ scheme: newScheme });
+        const fileUri = uri.with({ scheme: newScheme });
 
         return workspace.openTextDocument(fileUri)
             .then(document => document.getText())
@@ -68,7 +68,7 @@ export class NormalizedPlanDocumentContentProvider implements TextDocumentConten
 
         if (this.includeFinalValues) {
             try {
-                let planValuesAsText = await this.evaluate(uri, origText);
+                const planValuesAsText = await this.evaluate(uri, origText);
                 if (planValuesAsText) {
                     normalizedPlan = `${normalizedPlan}\n\n;; Modified state values:\n\n${planValuesAsText}`;
                 }
@@ -82,17 +82,17 @@ export class NormalizedPlanDocumentContentProvider implements TextDocumentConten
     }
 
     async evaluate(uri: Uri, origText: string): Promise<string> {
-        let planMetaData = parser.PddlPlanParser.parsePlanMeta(origText);
+        const planMetaData = parser.PddlPlanParser.parsePlanMeta(origText);
         if (planMetaData.domainName !== parser.UNSPECIFIED_DOMAIN && planMetaData.problemName !== parser.UNSPECIFIED_DOMAIN) {
-            let planInfo = parser.PddlPlanParser.parseText(origText, this.configuration.getEpsilonTimeStep(), uri.toString());
+            const planInfo = parser.PddlPlanParser.parseText(origText, this.configuration.getEpsilonTimeStep(), uri.toString());
 
-            let context = getDomainAndProblemForPlan(planInfo, this.pddlWorkspace);
+            const context = getDomainAndProblemForPlan(planInfo, this.pddlWorkspace);
             const valStepPath = await this.configuration.getValStepPath();
             const verbose = this.configuration.getValStepVerbose();
-            let planValues = await new PlanEvaluator()
+            const planValues = await new PlanEvaluator()
                 .evaluate(context.domain, context.problem, planInfo, { valStepPath: valStepPath, verbose});
 
-            let planValuesAsText = planValues
+            const planValuesAsText = planValues
                 .sort((a, b) => a.getVariableName().localeCompare(b.getVariableName()))
                 .map(value => `; ${value.getVariableName()}: ${value.getValue()}`)
                 .join("\n");
@@ -117,7 +117,7 @@ class PlanParserAndNormalizer {
     }
 
     normalize(origText: string): string {
-        var compare = function (step1: PlanStep, step2: PlanStep): number {
+        const compare = function (step1: PlanStep, step2: PlanStep): number {
             if (step1.getStartTime() !== step2.getStartTime()) {
                 return step1.getStartTime() - step2.getStartTime();
             }
@@ -126,8 +126,8 @@ class PlanParserAndNormalizer {
             }
         };
 
-        let planMeta = parser.PddlPlanParser.parsePlanMeta(origText);
-        let normalizedText = AbstractPlanExporter.getPlanMeta(planMeta.domainName, planMeta.problemName)
+        const planMeta = parser.PddlPlanParser.parsePlanMeta(origText);
+        const normalizedText = AbstractPlanExporter.getPlanMeta(planMeta.domainName, planMeta.problemName)
             + "\n; Normalized plan:\n"
             + origText.split('\n')
                 .map((origLine, idx) => this.parseLine(origLine, idx))
@@ -143,13 +143,13 @@ class PlanParserAndNormalizer {
     parseLine(line: string, lineIdx: number): PlanStep | undefined {
         // todo: replace by PddlPlanParser.parseOnePlan()
         parser.PddlPlannerOutputParser.planStepPattern.lastIndex = 0;
-        let group = parser.PddlPlannerOutputParser.planStepPattern.exec(line);
+        const group = parser.PddlPlannerOutputParser.planStepPattern.exec(line);
 
         if (!group) {
             return undefined;
         } else {
             // this line is a plan step
-            let time = group[2] ? parseFloat(group[2]) : this.makespan;
+            const time = group[2] ? parseFloat(group[2]) : this.makespan;
 
             if (!this.firstLineParsed) {
                 if (time === 0) {
@@ -158,9 +158,9 @@ class PlanParserAndNormalizer {
                 this.firstLineParsed = true;
             }
 
-            let action = group[3];
-            let isDurative = group[5] ? true : false;
-            let duration = isDurative ? parseFloat(group[5]) : this.epsilon;
+            const action = group[3];
+            const isDurative = group[5] ? true : false;
+            const duration = isDurative ? parseFloat(group[5]) : this.epsilon;
 
             return new PlanStep(time - this.timeOffset, action, isDurative, duration, lineIdx);
         }

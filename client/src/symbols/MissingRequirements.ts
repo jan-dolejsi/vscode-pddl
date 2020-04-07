@@ -18,7 +18,7 @@ export class MissingRequirements {
     }
 
     getRequirementName(diagnosticMessage: string): string | undefined {
-        let match = MissingRequirements.undeclaredRequirementDiagnosticPattern.exec(diagnosticMessage);
+        const match = MissingRequirements.undeclaredRequirementDiagnosticPattern.exec(diagnosticMessage);
         if (!match) { return undefined; }
         let requirementName = ':' + match[1];
 
@@ -31,17 +31,17 @@ export class MissingRequirements {
     }
 
     createEdit(document: TextDocument, requirementName: string): WorkspaceEdit {
-        let defineNode = this.syntaxTree.getDefineNode();
-        let requirementsNode = defineNode.getFirstOpenBracket(':requirements');
+        const defineNode = this.syntaxTree.getDefineNode();
+        const requirementsNode = defineNode.getFirstOpenBracket(':requirements');
 
-        let edit = new WorkspaceEdit();
+        const edit = new WorkspaceEdit();
 
         if (requirementsNode) {
             edit.insert(document.uri, document.positionAt(requirementsNode.getEnd()-1), ' '  + requirementName);
         } else {
-            let domainNode = defineNode.getFirstOpenBracketOrThrow('domain');
-            let indent = UndeclaredVariable.createIndent(document, 1);
-            let eol = UndeclaredVariable.createEolString(document);
+            const domainNode = defineNode.getFirstOpenBracketOrThrow('domain');
+            const indent = UndeclaredVariable.createIndent(document, 1);
+            const eol = UndeclaredVariable.createEolString(document);
             edit.insert(document.uri, document.positionAt(domainNode.getEnd()), eol + indent + `(:requirements ${requirementName})`);
         }
 

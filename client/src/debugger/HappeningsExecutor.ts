@@ -41,10 +41,10 @@ export class HappeningsExecutor {
             return [];
         }
 
-        let valStepPath = await this.pddlConfiguration.getValStepPath();
-        let valStepVerbose = this.pddlConfiguration.getValStepVerbose();
+        const valStepPath = await this.pddlConfiguration.getValStepPath();
+        const valStepVerbose = this.pddlConfiguration.getValStepVerbose();
         if (!valStepPath) { return []; }
-        let cwd = dirname(Uri.parse(this.context.happenings.fileUri).fsPath);
+        const cwd = dirname(Uri.parse(this.context.happenings.fileUri).fsPath);
 
         try {
             this.valStep.on(ValStep.NEW_HAPPENING_EFFECTS, (happenings, values) => this.showValues(happenings, values));
@@ -68,7 +68,7 @@ export class HappeningsExecutor {
     }
 
     showValues(happenings: Happening[], values: VariableValue[]): void {
-        let decoration = this.createDecorationText(values);
+        const decoration = this.createDecorationText(values);
         this.decorate(decoration, happenings);
     }
 
@@ -80,17 +80,17 @@ export class HappeningsExecutor {
         const decorations: string[] = [];
 
         if (positiveEffects.length > 0) {
-            let decoration = 'Sets: ' + positiveEffects.map(v => `(${v.getVariableName()})`).join(', ');
+            const decoration = 'Sets: ' + positiveEffects.map(v => `(${v.getVariableName()})`).join(', ');
             decorations.push(decoration);
         }
 
         if (negativeEffects.length > 0) {
-            let decoration = 'Unsets: ' + negativeEffects.map(v => `(${v.getVariableName()})`).join(', ');
+            const decoration = 'Unsets: ' + negativeEffects.map(v => `(${v.getVariableName()})`).join(', ');
             decorations.push(decoration);
         }
 
         if (numericEffects.length > 0) {
-            let decoration = 'Assigns: ' + numericEffects.map(v => `(${v.getVariableName()}):=${v.getValue()}`).join(', ');
+            const decoration = 'Assigns: ' + numericEffects.map(v => `(${v.getVariableName()}):=${v.getValue()}`).join(', ');
             decorations.push(decoration);
         }
 
@@ -107,28 +107,28 @@ export class HappeningsExecutor {
     seeNextLineRanges: vscode.Range[] = [];
 
     decorate(decorationText: string, happenings: Happening[]): void {
-        let decorationType = window.createTextEditorDecorationType({
+        const decorationType = window.createTextEditorDecorationType({
             after: {
                 contentText: decorationText,
                 textDecoration: "; opacity: 0.5; font-size: 10px; margin-left: 5px"
             }
         });
 
-        let lastHappening = happenings[happenings.length - 1];
+        const lastHappening = happenings[happenings.length - 1];
 
-        let range = this.createRange(lastHappening);
+        const range = this.createRange(lastHappening);
         this.editor.setDecorations(decorationType, [range]);
         this.decorations.push(decorationType);
 
         for (let index = 0; index < happenings.length - 1; index++) {
-            let range = this.createRange(happenings[index]);
+            const range = this.createRange(happenings[index]);
             this.seeNextLineRanges.push(range);
             this.editor.setDecorations(this.seeNextLineDecoration, this.seeNextLineRanges);
         }
     }
 
     createRange(happening: Happening): vscode.Range {
-        let line = happening.lineIndex ?? 0;
+        const line = happening.lineIndex ?? 0;
         return new vscode.Range(line, 0, line, 100);
     }
 }

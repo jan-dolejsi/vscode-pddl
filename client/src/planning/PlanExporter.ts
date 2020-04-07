@@ -15,11 +15,11 @@ import { exportToAndShow } from './ExportUtil';
 
 export abstract class AbstractPlanExporter {
 
-    public async export() {
+    public async export(): Promise<void> {
 
-        let defaultPlanPath = this.getDefaultPlanPath();
+        const defaultPlanPath = this.getDefaultPlanPath();
 
-        let options: SaveDialogOptions = {
+        const options: SaveDialogOptions = {
             saveLabel: "Save plan as...",
             filters: {
                 "Plan": ["plan"]
@@ -29,7 +29,7 @@ export abstract class AbstractPlanExporter {
         };
 
         try {
-            let uri = await window.showSaveDialog(options);
+            const uri = await window.showSaveDialog(options);
             if (uri === undefined) { return; } // canceled by user
 
             await exportToAndShow(this.getPlanText(), uri);
@@ -49,8 +49,8 @@ export abstract class AbstractPlanExporter {
     }
 
     static replaceExtension(path: string, extension: string): string {
-        let pathObj = parse(path);
-        let origExt = pathObj.ext;
+        const pathObj = parse(path);
+        const origExt = pathObj.ext;
         pathObj.ext = extension;
         pathObj.base = pathObj.base.replace(new RegExp(origExt+'$'), pathObj.ext);
         return format(pathObj);
@@ -64,6 +64,9 @@ export class PlanExporter extends AbstractPlanExporter {
     }
 
     getDefaultPlanPath(): string {
+        if (!this.plan.problem) {
+            throw new Error(`Problem not specified.`);
+        }
         let baseUri = Uri.parse(this.plan.problem.fileUri);
         if (this.plan.problem.fileUri.startsWith('http')) {
             baseUri = Uri.file(baseUri.path);
@@ -73,7 +76,7 @@ export class PlanExporter extends AbstractPlanExporter {
     }
 
     getPlanText(): string {
-        let planText = AbstractPlanExporter.getPlanMeta(this.plan.domain.name, this.plan.problem.name) +
+        let planText = AbstractPlanExporter.getPlanMeta(this.plan.domain?.name ?? 'undefined', this.plan.problem?.name ?? 'undefined') +
 `
 ${this.plan.getText()}
 

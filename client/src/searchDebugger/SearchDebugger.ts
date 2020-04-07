@@ -48,7 +48,7 @@ export class SearchDebugger implements PlannerOptionsProvider {
                 this.view.setDomainAndProblem(context.domain, context.problem);
             }
 
-            let commandLine = workspace.getConfiguration(this.CONFIG_PDDL_SEARCH_DEBUGGER).get<string>(this.CONFIG_PLANNER_OPTION);
+            const commandLine = workspace.getConfiguration(this.CONFIG_PDDL_SEARCH_DEBUGGER).get<string>(this.CONFIG_PLANNER_OPTION);
             if (!commandLine) { throw new Error(`Missing planner command-line option configuration: ${this.CONFIG_PDDL_SEARCH_DEBUGGER}.${this.CONFIG_PLANNER_OPTION}`); }
             return commandLine.replace('$(port)', this.port.toString());
         }
@@ -87,20 +87,21 @@ export class SearchDebugger implements PlannerOptionsProvider {
     private startServer(): void {
         if (!this.search || !this.messageParser) {
             this.search = new Search();
-            var stateIdPattern = this.getStateIdPattern();
+            const stateIdPattern = this.getStateIdPattern();
             this.messageParser = new MessageParser(this.search, stateIdPattern);
             this.view.observe(this.search);
         }
 
-        var app: express.Application = this.createApplication(this.search, this.messageParser);
+        const app: express.Application = this.createApplication(this.search, this.messageParser);
 
-        let defaultPort = workspace.getConfiguration(this.CONFIG_PDDL_SEARCH_DEBUGGER).get<number>(this.CONF_DEFAULT_PORT, 0);
+        const defaultPort = workspace.getConfiguration(this.CONFIG_PDDL_SEARCH_DEBUGGER).get<number>(this.CONF_DEFAULT_PORT, 0);
 
         this.port = defaultPort > 0 ? defaultPort : 8000 + Math.floor(Math.random() * 1000);
         this.server = http.createServer(app);
         this.server.on('error', e => {
             window.showErrorMessage(e.message);
-            if ((<any>e)['code'] === "EADDRINUSE") {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            if ((e as any)['code'] === "EADDRINUSE") {
                 this.pddlConfiguration.askConfiguration(this.CONFIG_PDDL_SEARCH_DEBUGGER + "." + this.CONF_DEFAULT_PORT);
             }
         });
@@ -118,9 +119,9 @@ export class SearchDebugger implements PlannerOptionsProvider {
     }
 
     private getStateIdPattern(): RegExp {
-        let stateIdPatternAsString = workspace.getConfiguration(this.CONFIG_PDDL_SEARCH_DEBUGGER).get<string>(this.CONF_STATE_ID_PATTERN);
+        const stateIdPatternAsString = workspace.getConfiguration(this.CONFIG_PDDL_SEARCH_DEBUGGER).get<string>(this.CONF_STATE_ID_PATTERN);
         if (!stateIdPatternAsString) { throw new Error(`Missing configuration: ${this.CONFIG_PDDL_SEARCH_DEBUGGER}.${this.CONF_STATE_ID_PATTERN}`); }
-        var stateIdPattern: RegExp;
+        let stateIdPattern: RegExp;
         try {
             stateIdPattern = new RegExp(stateIdPatternAsString);
         }
@@ -133,12 +134,12 @@ export class SearchDebugger implements PlannerOptionsProvider {
     }
 
     private createApplication(search: Search, messageParser: MessageParser): express.Application {
-        var app: express.Application = express();
+        const app: express.Application = express();
         app.use(bodyParser.json());
-        app.get('/about', function (_req: express.Request, res: express.Response, _next: express.NextFunction) {
+        app.get('/about', function (_req: express.Request, res: express.Response) {
             res.status(200).send('Visual search debugger.');
         });
-        app.post('/state/initial', function (req: express.Request, res: express.Response, _next: express.NextFunction) {
+        app.post('/state/initial', function (req: express.Request, res: express.Response) {
             try {
                 search.addInitialState(messageParser.parseInitialState(req.body));
                 res.status(201).end();
@@ -148,17 +149,17 @@ export class SearchDebugger implements PlannerOptionsProvider {
                 res.status(500).end();
             }
         });
-        app.post('/state', function (req: express.Request, res: express.Response, _next: express.NextFunction) {
+        app.post('/state', function (req: express.Request, res: express.Response) {
             search.addState(messageParser.parseState(req.body));
             res.status(201).end();
         });
         // todo: the next one should be a 'patch' verb for '/state' path
-        app.post('/state/heuristic', function (req: express.Request, res: express.Response, _next: express.NextFunction) {
+        app.post('/state/heuristic', function (req: express.Request, res: express.Response) {
             search.update(messageParser.parseEvaluatedState(req.body));
             res.status(200).end();
         });
 
-        app.post('/plan', function (req: express.Request, res: express.Response, _next: express.NextFunction) {
+        app.post('/plan', function (req: express.Request, res: express.Response) {
             search.setPlan(messageParser.parseState(req.body));
             res.status(200).end();
         });
@@ -206,7 +207,7 @@ export class SearchDebugger implements PlannerOptionsProvider {
         }
     }
 
-    showStatusBarItem() {
+    showStatusBarItem(): void {
         if (!this.statusBarItem) {
             // create it and show it the first time the search debugger is used
             this.statusBarItem = window.createStatusBarItem(StatusBarAlignment.Right);
@@ -217,8 +218,8 @@ export class SearchDebugger implements PlannerOptionsProvider {
             this.statusBarItem.show();
         }
 
-        let statusIcon = this.isRunning() ? '$(radio-tower)' : '$(x)';
-        let status = this.isRunning() ? `ON (on port ${this.port}). Click here to stop it.` : 'OFF. Click here to start it.';
+        const statusIcon = this.isRunning() ? '$(radio-tower)' : '$(x)';
+        const status = this.isRunning() ? `ON (on port ${this.port}). Click here to stop it.` : 'OFF. Click here to start it.';
         this.statusBarItem.text = `$(bug)${statusIcon}`;
         this.statusBarItem.tooltip = `PDDL Search debugger is ${status}.`;
     }

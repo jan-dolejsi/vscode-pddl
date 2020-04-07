@@ -51,12 +51,12 @@ export class DomainTypesView extends DomainView<DomainTypesRendererOptions, Grap
 
     async provideCodeLenses(document: TextDocument, token: CancellationToken): Promise<CodeLens[] | undefined> {
         if (token.isCancellationRequested) { return undefined; }
-        let domain = await this.parseDomain(document);
+        const domain = await this.parseDomain(document);
         if (token.isCancellationRequested) { return undefined; }
         if (!domain) { return []; }
 
-        let defineNode = domain.syntaxTree.getDefineNodeOrThrow();
-        let typesNode = defineNode.getFirstChild(parser.PddlTokenType.OpenBracketOperator, /\s*:types/i);
+        const defineNode = domain.syntaxTree.getDefineNodeOrThrow();
+        const typesNode = defineNode.getFirstChild(parser.PddlTokenType.OpenBracketOperator, /\s*:types/i);
         if (typesNode) {
             return [
                 new DocumentCodeLens(document, nodeToRange(document, typesNode))
@@ -72,7 +72,7 @@ export class DomainTypesView extends DomainView<DomainTypesRendererOptions, Grap
             return undefined;
         }
         if (token.isCancellationRequested) { return undefined; }
-        let domain = await this.parseDomain(codeLens.getDocument());
+        const domain = await this.parseDomain(codeLens.getDocument());
         if (!domain) { return undefined; }
         if (token.isCancellationRequested) { return undefined; }
 
@@ -86,7 +86,7 @@ export class DomainTypesView extends DomainView<DomainTypesRendererOptions, Grap
         }
     }
 
-    protected createPreviewPanelTitle(uri: Uri) {
+    protected createPreviewPanelTitle(uri: Uri): string {
         return `:types in '${path.basename(uri.fsPath)}'`;
     }
 
@@ -98,7 +98,7 @@ export class DomainTypesView extends DomainView<DomainTypesRendererOptions, Grap
 
 class DomainTypesRenderer implements DomainRenderer<DomainTypesRendererOptions, GraphViewData> {
     render(context: ExtensionContext, domain: DomainInfo, options: DomainTypesRendererOptions): GraphViewData {
-        let renderer = new DomainTypesRendererDelegate(context, domain, options);
+        const renderer = new DomainTypesRendererDelegate(context, domain, options);
 
         return {
             nodes: renderer.getNodes(),
@@ -112,6 +112,7 @@ class DomainTypesRendererDelegate {
     private nodes: Map<string, number> = new Map();
     private relationships: NetworkEdge[] = [];
 
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     constructor(_context: ExtensionContext, domain: DomainInfo, _options: DomainTypesRendererOptions) {
         domain.getTypesInclObject().forEach((t, index) => this.nodes.set(t, index));
         domain.getTypeInheritance().getEdges().forEach(edge => this.addEdge(edge));
@@ -126,17 +127,17 @@ class DomainTypesRendererDelegate {
     }
 
     toNode(entry: [string, number]): NetworkNode {
-        let [entryLabel, entryId] = entry;
+        const [entryLabel, entryId] = entry;
         return { id: entryId, label: entryLabel };
     }
 
     toEdge(edge: [string, string]): NetworkEdge {
-        let [from, to] = edge;
+        const [from, to] = edge;
         return { from: this.getNodeId(from), to: this.getNodeId(to) , label: 'extends' };
     }
 
     private getNodeId(from: string): number {
-        let nodeId = this.nodes.get(from);
+        const nodeId = this.nodes.get(from);
         if (nodeId === undefined) {
             return -1;
         } else {
@@ -149,5 +150,6 @@ class DomainTypesRendererDelegate {
     }
 }
 
+// eslint-disable-next-line @typescript-eslint/no-empty-interface
 interface DomainTypesRendererOptions extends DomainRendererOptions {
 }

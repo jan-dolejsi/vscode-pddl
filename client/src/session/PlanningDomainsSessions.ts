@@ -47,14 +47,14 @@ export class PlanningDomainsSessions {
         this.subscribe(workspace.registerTextDocumentContentProvider(SESSION_SCHEME, this.sessionDocumentContentProvider));
 
         this.subscribe(instrumentOperationAsVsCodeCommand("pddl.planning.domains.session.refresh", async (sourceControlPane: SourceControl) => {
-            let sourceControl = await this.pickSourceControl(sourceControlPane);
+            const sourceControl = await this.pickSourceControl(sourceControlPane);
             if (sourceControl) { sourceControl.refresh(); }
         }));
         this.subscribe(instrumentOperationAsVsCodeCommand(SESSION_COMMAND_REFRESH_ALL, async () => {
             this.sessionSourceControlRegister.forEach(async sourceControl => await sourceControl.refresh());
         }));
         this.subscribe(instrumentOperationAsVsCodeCommand("pddl.planning.domains.session.discard", async (sourceControlPane: SourceControl) => {
-            let sourceControl = await this.pickSourceControl(sourceControlPane);
+            const sourceControl = await this.pickSourceControl(sourceControlPane);
             if (sourceControl) { sourceControl.resetFilesToCheckedOutVersion(); }
         }));
         this.subscribe(instrumentOperationAsVsCodeCommand(SESSION_COMMAND_CHECKOUT,
@@ -63,24 +63,24 @@ export class PlanningDomainsSessions {
                 if (sourceControl) { sourceControl.tryCheckout(newVersion); }
             }));
         this.subscribe(instrumentOperationAsVsCodeCommand("pddl.planning.domains.session.commit", async (sourceControlPane: SourceControl) => {
-            let sourceControl = await this.pickSourceControl(sourceControlPane);
+            const sourceControl = await this.pickSourceControl(sourceControlPane);
             if (sourceControl) { sourceControl.commitAll(); }
         }));
         this.subscribe(instrumentOperationAsVsCodeCommand("pddl.planning.domains.session.open", async (sourceControlPane: SourceControl) => {
-            let sourceControl = await this.pickSourceControl(sourceControlPane);
+            const sourceControl = await this.pickSourceControl(sourceControlPane);
             if (sourceControl) { this.openInBrowser(sourceControl.getSession()).catch(showError); }
         }));
         this.subscribe(instrumentOperationAsVsCodeCommand("pddl.planning.domains.session.duplicate", async (sourceControlPane: SourceControl) => {
-            let sourceControl = await this.pickSourceControl(sourceControlPane);
+            const sourceControl = await this.pickSourceControl(sourceControlPane);
             if (sourceControl) { this.duplicateAsWritable(sourceControl).catch(showError); }
         }));
         this.subscribe(instrumentOperationAsVsCodeCommand("pddl.planning.domains.session.share", async (sourceControlPane: SourceControl) => {
-            let sourceControl = await this.pickSourceControl(sourceControlPane);
+            const sourceControl = await this.pickSourceControl(sourceControlPane);
             if (sourceControl) { this.shareByEmail(sourceControl.getSession(), 'someone@somewhere.else', false).catch(showError); }
         }));
 
         this.subscribe(instrumentOperationAsVsCodeCommand("pddl.planning.domains.session.generateClassroom", async (sourceControlPane: SourceControl) => {
-            let sourceControl = await this.pickSourceControl(sourceControlPane);
+            const sourceControl = await this.pickSourceControl(sourceControlPane);
             if (sourceControl) { this.generateClassroom(sourceControl); }
         }));
 
@@ -108,7 +108,7 @@ export class PlanningDomainsSessions {
 
     async pickSourceControl(sourceControlPane?: SourceControl): Promise<SessionSourceControl | undefined> {
         if (sourceControlPane) {
-            let rootUri = sourceControlPane.rootUri;
+            const rootUri = sourceControlPane.rootUri;
             return rootUri ? this.sessionSourceControlRegister.get(rootUri) : undefined;
         }
 
@@ -122,12 +122,12 @@ export class PlanningDomainsSessions {
         }
         else {
 
-            let picks = [...this.sessionSourceControlRegister.values()].map(fsc => new RepositoryPick(fsc));
+            const picks = [...this.sessionSourceControlRegister.values()].map(fsc => new RepositoryPick(fsc));
 
             if (window.activeTextEditor) {
-                let activeWorkspaceFolder = workspace.getWorkspaceFolder(window.activeTextEditor.document.uri);
-                let activeSourceControl = activeWorkspaceFolder && this.sessionSourceControlRegister.get(activeWorkspaceFolder.uri);
-                let activeIndex = firstIndex(picks, pick => pick.sessionSourceControl === activeSourceControl);
+                const activeWorkspaceFolder = workspace.getWorkspaceFolder(window.activeTextEditor.document.uri);
+                const activeSourceControl = activeWorkspaceFolder && this.sessionSourceControlRegister.get(activeWorkspaceFolder.uri);
+                const activeIndex = firstIndex(picks, pick => pick.sessionSourceControl === activeSourceControl);
 
                 // if there is an active editor, move its folder to be the first in the pick list
                 if (activeIndex > -1) {
@@ -161,12 +161,12 @@ export class PlanningDomainsSessions {
             sessionId = (await window.showInputBox({ prompt: 'Paste Planning.Domains session hash', placeHolder: 'hash e.g. XOacXgN1V7' })) ?? '';
         }
 
-        let mode: SessionMode = (await checkSession(sessionId))[0];
+        const mode: SessionMode = (await checkSession(sessionId))[0];
 
         // show the file explorer with the new files
         commands.executeCommand("workbench.view.explorer");
 
-        let workspaceFolder = await this.selectWorkspaceFolder(workspaceUri, sessionId, mode);
+        const workspaceFolder = await this.selectWorkspaceFolder(workspaceUri, sessionId, mode);
 
         if (!workspaceFolder) { return; } // canceled by user
 
@@ -174,7 +174,7 @@ export class PlanningDomainsSessions {
         this.unregisterSessionSourceControl(workspaceFolder.uri);
 
         // register source control
-        let sessionSourceControl = await SessionSourceControl.fromSessionId(sessionId, mode, context, workspaceFolder, true);
+        const sessionSourceControl = await SessionSourceControl.fromSessionId(sessionId, mode, context, workspaceFolder, true);
 
         this.registerSessionSourceControl(sessionSourceControl, context);
     }
@@ -236,18 +236,18 @@ export class PlanningDomainsSessions {
                     await this.initializeFromConfigurationFile(folder, context);
                 }
                 catch (err) {
-                    let output = window.createOutputChannel("Planner output");
+                    const output = window.createOutputChannel("Planner output");
                     output.appendLine(err);
                     output.show();
                 }
             });
     }
 
-    private async initializeFromConfigurationFile(folder: WorkspaceFolder, context: ExtensionContext) {
-        let sessionFolder = await isSessionFolder(folder);
+    private async initializeFromConfigurationFile(folder: WorkspaceFolder, context: ExtensionContext): Promise<void> {
+        const sessionFolder = await isSessionFolder(folder);
         if (sessionFolder) {
-            let sessionConfiguration = await readSessionConfiguration(folder);
-            let sessionSourceControl = await SessionSourceControl.fromConfiguration(sessionConfiguration, folder, context, sessionConfiguration.versionDate === undefined);
+            const sessionConfiguration = await readSessionConfiguration(folder);
+            const sessionSourceControl = await SessionSourceControl.fromConfiguration(sessionConfiguration, folder, context, sessionConfiguration.versionDate === undefined);
             this.registerSessionSourceControl(sessionSourceControl, context);
         }
     }
@@ -259,16 +259,16 @@ export class PlanningDomainsSessions {
      * @param mode read/write mode
      */
     async selectWorkspaceFolder(folderUri: Uri | undefined, sessionId: string, mode: SessionMode): Promise<WorkspaceFolder | undefined> {
-        var selectedFolder: WorkspaceFolder | undefined;
-        var workspaceFolderUri: Uri | undefined;
-        var workspaceFolderIndex: number | undefined;
-        var folderOpeningMode: FolderOpeningMode | undefined;
+        let selectedFolder: WorkspaceFolder | undefined;
+        let workspaceFolderUri: Uri | undefined;
+        let workspaceFolderIndex: number | undefined;
+        let folderOpeningMode: FolderOpeningMode | undefined;
 
         const sessionConfiguration = toSessionConfiguration(sessionId, mode);
 
         if (folderUri) {
             // is this a currently open workspace folder?
-            let currentlyOpenWorkspaceFolder = workspace.getWorkspaceFolder(folderUri);
+            const currentlyOpenWorkspaceFolder = workspace.getWorkspaceFolder(folderUri);
             if (currentlyOpenWorkspaceFolder && currentlyOpenWorkspaceFolder.uri.fsPath === folderUri.fsPath) {
                 selectedFolder = currentlyOpenWorkspaceFolder;
                 workspaceFolderIndex = selectedFolder.index;
@@ -286,18 +286,18 @@ export class PlanningDomainsSessions {
 
         if (!workspaceFolderUri) {
 
-            var folderPicks: WorkspaceFolderPick[] = [newFolderPick];
+            const folderPicks: WorkspaceFolderPick[] = [newFolderPick];
 
             if (workspace.workspaceFolders && workspace.workspaceFolders.length > 0) {
                 folderPicks.push(newWorkspaceFolderPick);
 
                 for (const wf of workspace.workspaceFolders) {
-                    let content = await utils.afs.readdir(wf.uri.fsPath);
+                    const content = await utils.afs.readdir(wf.uri.fsPath);
                     folderPicks.push(new ExistingWorkspaceFolderPick(wf, content));
                 }
             }
 
-            let selectedFolderPick =
+            const selectedFolderPick =
                 folderPicks.length === 1 ?
                     folderPicks[0] :
                     await window.showQuickPick(folderPicks, {
@@ -316,14 +316,15 @@ export class PlanningDomainsSessions {
         }
 
         if (!workspaceFolderUri && !selectedFolder) {
-            let folderUris = await window.showOpenDialog({ canSelectFolders: true, canSelectFiles: false, canSelectMany: false, openLabel: 'Select folder' });
+            const folderUris = await window.showOpenDialog({ canSelectFolders: true, canSelectFiles: false, canSelectMany: false, openLabel: 'Select folder' });
             if (!folderUris) {
                 return undefined;
             }
 
             workspaceFolderUri = folderUris[0];
             // was such workspace folder already open?
-            workspaceFolderIndex = workspace.workspaceFolders && firstIndex([...workspace.workspaceFolders], (folder1: any) => folder1.uri.toString() === workspaceFolderUri!.toString());
+            workspaceFolderIndex = workspace.workspaceFolders
+                && workspace.workspaceFolders.findIndex(wf => wf.uri.toString() === workspaceFolderUri?.toString());
         }
 
         if (!workspaceFolderUri) {
@@ -336,7 +337,7 @@ export class PlanningDomainsSessions {
         await saveConfiguration(workspaceFolderUri, sessionConfiguration);
 
         if (folderOpeningMode === FolderOpeningMode.AddToWorkspace || folderOpeningMode === undefined) {
-            let workSpacesToReplace = typeof workspaceFolderIndex === 'number' && workspaceFolderIndex > -1 ? 1 : 0;
+            const workSpacesToReplace = typeof workspaceFolderIndex === 'number' && workspaceFolderIndex > -1 ? 1 : 0;
             if (workspaceFolderIndex === undefined || workspaceFolderIndex < 0) { workspaceFolderIndex = 0; }
 
             // replace or insert the workspace
@@ -356,9 +357,9 @@ export class PlanningDomainsSessions {
         if (!workspaceFolderUri) { return undefined; }
 
         // check if the workspace is empty, or clear it
-        let existingWorkspaceFiles: string[] = await utils.afs.readdir(workspaceFolderUri.fsPath);
+        const existingWorkspaceFiles: string[] = await utils.afs.readdir(workspaceFolderUri.fsPath);
         if (existingWorkspaceFiles.length > 0) {
-            let answer = await window.showQuickPick(["Yes", "No"],
+            const answer = await window.showQuickPick(["Yes", "No"],
                 { placeHolder: `Remove ${existingWorkspaceFiles.length} file(s) from the folder ${workspaceFolderUri.fsPath} before cloning the remote repository?` });
             if (!answer) { return false; }
 
@@ -373,32 +374,32 @@ export class PlanningDomainsSessions {
     }
 
     async openDocumentInColumn(fileName: string, column: ViewColumn): Promise<void> {
-        let uri = Uri.file(fileName);
+        const uri = Uri.file(fileName);
 
         // assuming the file was saved, let's open it in a view column
-        let doc = await workspace.openTextDocument(uri);
+        const doc = await workspace.openTextDocument(uri);
 
         await window.showTextDocument(doc, { viewColumn: column });
     }
 
     async openInBrowser(session: SessionContent): Promise<boolean> {
-        var sessionUri = this.createBrowserUri(session, true);
+        const sessionUri = this.createBrowserUri(session, true);
 
         return env.openExternal(Uri.parse(sessionUri));
     }
 
     async shareByEmail(session: SessionConfiguration, email: string, readWrite: boolean): Promise<ChildProcess> {
-        let subject = `Planning.Domains session ${readWrite ? session.writeHash : session.hash}`;
-        let body = `Open session in your browser: ${this.createBrowserUri(session, readWrite)}
+        const subject = `Planning.Domains session ${readWrite ? session.writeHash : session.hash}`;
+        const body = `Open session in your browser: ${this.createBrowserUri(session, readWrite)}
 Open session in Visual Studio Code: ${this.createVSCodeUri(session, readWrite)}`;
 
-        let mailTo = `mailto:${email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body).replace('%23', '#')}`;
+        const mailTo = `mailto:${email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body).replace('%23', '#')}`;
 
         return opn(mailTo);
     }
 
     private createBrowserUri(session: SessionConfiguration, readWrite: boolean): string {
-        var sessionUri = "http://editor.planning.domains/";
+        let sessionUri = "http://editor.planning.domains/";
         if (session.writeHash && readWrite) {
             sessionUri += "#edit_session=" + session.writeHash;
         }
@@ -409,7 +410,7 @@ Open session in Visual Studio Code: ${this.createVSCodeUri(session, readWrite)}`
     }
 
     private createVSCodeUri(session: SessionConfiguration, readWrite: boolean): string {
-        var sessionUri = "vscode://jan-dolejsi.pddl/planning.domains/session/";
+        let sessionUri = "vscode://jan-dolejsi.pddl/planning.domains/session/";
         if (session.writeHash && readWrite) {
             sessionUri += "edit/" + session.writeHash;
         }
@@ -420,7 +421,7 @@ Open session in Visual Studio Code: ${this.createVSCodeUri(session, readWrite)}`
     }
 
     async duplicateAsWritable(sourceControl: SessionSourceControl): Promise<void> {
-        let folderUris = await window.showOpenDialog({ canSelectFolders: true, canSelectFiles: false, canSelectMany: false, openLabel: 'Select folder for duplicated session files' });
+        const folderUris = await window.showOpenDialog({ canSelectFolders: true, canSelectFiles: false, canSelectMany: false, openLabel: 'Select folder for duplicated session files' });
         if (!folderUris) {
             return undefined;
         }
@@ -429,9 +430,9 @@ Open session in Visual Studio Code: ${this.createVSCodeUri(session, readWrite)}`
     }
 
     async generateClassroom(templateSourceControl: SessionSourceControl): Promise<void> {
-        let studentNameParser = new StudentNameParser();
+        const studentNameParser = new StudentNameParser();
 
-        let studentNameInput = await window.showInputBox({
+        const studentNameInput = await window.showInputBox({
             ignoreFocusOut: true, prompt: 'List the student names/emails',
             placeHolder: 'Example: John Doe; student1@domain.com; Alice von Wunderland <alice@wunderland-blah-blah.com>',
             validateInput: input => studentNameParser.validateClassroomNames(input)
@@ -439,27 +440,27 @@ Open session in Visual Studio Code: ${this.createVSCodeUri(session, readWrite)}`
 
         if (!studentNameInput) { return; }
 
-        let students = studentNameParser.parse(studentNameInput);
+        const students = studentNameParser.parse(studentNameInput);
 
-        let studentSessionsPromises = students
+        const studentSessionsPromises = students
             .map(async student => await this.duplicateClassroomSession(templateSourceControl, student));
 
-        let studentSessions = await Promise.all(studentSessionsPromises);
+        const studentSessions = await Promise.all(studentSessionsPromises);
 
-        let workspacePath = await new Classroom(templateSourceControl, studentSessions).createWorkspace();
+        const workspacePath = await new Classroom(templateSourceControl, studentSessions).createWorkspace();
 
         // email students their session address
-        let emailPromises = studentSessions
+        const emailPromises = studentSessions
             .filter(studentSession => !!studentSession.identity.email)
             .map(session => this.shareByEmail(session.sessionConfiguration, session.identity.email!, true));
 
         await Promise.all(emailPromises);
 
         // display summary of sessions
-        let sessionSummaryCsv = studentSessions
+        const sessionSummaryCsv = studentSessions
             .map(session => `${session.identity.getEffectiveName()}, ${session.identity.email}, ${session.sessionConfiguration.writeHash}, ${this.createBrowserUri(session.sessionConfiguration, true)}`)
             .join('\n');
-        let summaryDoc = await workspace.openTextDocument({ language: 'csv', content: sessionSummaryCsv });
+        const summaryDoc = await workspace.openTextDocument({ language: 'csv', content: sessionSummaryCsv });
         window.showTextDocument(summaryDoc);
         await summaryDoc.save();
 
@@ -468,8 +469,8 @@ Open session in Visual Studio Code: ${this.createVSCodeUri(session, readWrite)}`
 
     /** duplicate the session */
     async duplicateClassroomSession(templateSourceControl: SessionSourceControl, student: StudentName): Promise<StudentSession> {
-        let sessionPath = Classroom.getSessionPath(templateSourceControl, student);
-        let studentSessionHash = await templateSourceControl.duplicateAsWritable(Uri.file(sessionPath), false);
+        const sessionPath = Classroom.getSessionPath(templateSourceControl, student);
+        const studentSessionHash = await templateSourceControl.duplicateAsWritable(Uri.file(sessionPath), false);
         return new StudentSession(student, toSessionConfiguration(studentSessionHash, SessionMode.READ_WRITE));
     }
 }

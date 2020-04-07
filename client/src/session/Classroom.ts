@@ -23,29 +23,33 @@ export class Classroom {
         await Promise.all(this.studentSessions
             .map(async studentSession => await this.createFolderWithConfig(studentSession)));
 
-        let templateFolderName = path.basename(this.templateSourceControl.getWorkspaceFolder().uri.fsPath);
+        const templateFolderName = path.basename(this.templateSourceControl.getWorkspaceFolder().uri.fsPath);
 
-        var folders: WorkspaceFolderSpec[] = this.studentSessions.map(s => <WorkspaceFolderSpec>{ name: s.identity.getEffectiveName(), path: s.identity.getEffectivePath() });
+        let folders: WorkspaceFolderSpec[] = this.studentSessions.map(s => this.toWorkspaceFolderSpec(s));
         folders = [{ name: 'Template', path: templateFolderName }, ...folders];
 
-        var workspaceObj = Object.create(null);
+        const workspaceObj = Object.create(null);
         workspaceObj["folders"] = folders;
         workspaceObj["settings"] = {};
 
-        let workspaceAsString = JSON.stringify(workspaceObj, null, 4);
+        const workspaceAsString = JSON.stringify(workspaceObj, null, 4);
 
-        let workspaceFilePath = await this.createNewWorkspaceFile();
+        const workspaceFilePath = await this.createNewWorkspaceFile();
         await utils.afs.writeFile(workspaceFilePath, workspaceAsString);
 
         return workspaceFilePath;
+    }
+
+    toWorkspaceFolderSpec(s: StudentSession): WorkspaceFolderSpec {
+        return { name: s.identity.getEffectiveName(), path: s.identity.getEffectivePath() };
     }
 
     /**
      * Creates a new workspace file to ensure no previous classroom workspace configuration is overwritten.
      */
     private async createNewWorkspaceFile(): Promise<string> {
-        var filePath; var fileAlreadyExists;
-        var counter = 1;
+        let filePath; let fileAlreadyExists;
+        let counter = 1;
         do {
             filePath = path.join(this.parentPath, `classroom${counter++}.code-workspace`);
             fileAlreadyExists = await utils.afs.exists(filePath);
@@ -64,7 +68,7 @@ export class Classroom {
     }
 
     async createFolderWithConfig(studentSession: StudentSession): Promise<void> {
-        let folderPath = Classroom.getSessionPath(this.templateSourceControl, studentSession.identity);
+        const folderPath = Classroom.getSessionPath(this.templateSourceControl, studentSession.identity);
         await utils.afs.mkdirIfDoesNotExist(folderPath, 0o644);
 
         await saveConfiguration(Uri.file(folderPath), studentSession.sessionConfiguration);

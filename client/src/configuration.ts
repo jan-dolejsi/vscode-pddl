@@ -48,23 +48,23 @@ export class PddlConfiguration {
     }
 
     getParserPath(): string | undefined {
-        let configuredPath = vscode.workspace.getConfiguration().get<string>(PARSER_EXECUTABLE_OR_SERVICE);
+        const configuredPath = vscode.workspace.getConfiguration().get<string>(PARSER_EXECUTABLE_OR_SERVICE);
         return ensureAbsoluteGlobalStoragePath(configuredPath, this.context);
     }
 
     NEVER_SETUP_PARSER = 'neverSetupParser';
     setupParserLater = false;
 
-    async suggestNewParserConfiguration(showNever: boolean) {
+    async suggestNewParserConfiguration(showNever: boolean): Promise<void> {
         if (this.setupParserLater || this.context.globalState.get(this.NEVER_SETUP_PARSER)) { return; }
 
-        let setupParserNow: vscode.MessageItem = { title: "Setup manually..." };
-        let downloadVal: vscode.MessageItem = { title: "Download VAL now..." };
-        let setupParserNever: vscode.MessageItem = { title: "Never" };
-        let setupParserLater: vscode.MessageItem = { title: "Later", isCloseAffordance: true };
-        let options: vscode.MessageItem[] = [downloadVal, setupParserNow, setupParserLater];
+        const setupParserNow: vscode.MessageItem = { title: "Setup manually..." };
+        const downloadVal: vscode.MessageItem = { title: "Download VAL now..." };
+        const setupParserNever: vscode.MessageItem = { title: "Never" };
+        const setupParserLater: vscode.MessageItem = { title: "Later", isCloseAffordance: true };
+        const options: vscode.MessageItem[] = [downloadVal, setupParserNow, setupParserLater];
         if (showNever) { options.splice(options.length, 0, setupParserNever); }
-        let choice = await vscode.window.showInformationMessage(
+        const choice = await vscode.window.showInformationMessage(
             'Setup a [PDDL parser](https://github.com/jan-dolejsi/vscode-pddl/wiki/Configuring-the-PDDL-parser "Read more about PDDL parsers") or download [VAL Tools](https://github.com/KCL-Planning/VAL) in order to enable detailed syntactic analysis.',
             ...options);
 
@@ -92,7 +92,7 @@ export class PddlConfiguration {
     }
 
     async askNewParserPath(): Promise<string | undefined> {
-        let existingValue = vscode.workspace.getConfiguration().get<string>(PARSER_EXECUTABLE_OR_SERVICE);
+        const existingValue = vscode.workspace.getConfiguration().get<string>(PARSER_EXECUTABLE_OR_SERVICE);
 
         let newParserPath = await vscode.window.showInputBox({
             prompt: "Enter PDDL parser/validator path local command or web service URL",
@@ -106,11 +106,11 @@ export class PddlConfiguration {
 
             // todo: validate that this parser actually works by sending a dummy request to it
 
-            let newParserScope = await this.askConfigurationScope();
+            const newParserScope = await this.askConfigurationScope();
 
             if (!newParserScope) { return undefined; }
 
-            let configurationToUpdate = this.getConfigurationForScope(newParserScope);
+            const configurationToUpdate = this.getConfigurationForScope(newParserScope);
             if (!configurationToUpdate) { return undefined; }
 
             if (!isHttp(newParserPath)) {
@@ -125,9 +125,9 @@ export class PddlConfiguration {
     }
 
     async askParserOptions(scope: ScopeQuickPickItem): Promise<string | undefined> {
-        let existingValue = vscode.workspace.getConfiguration().get<string>(PARSER_EXECUTABLE_OPTIONS);
+        const existingValue = vscode.workspace.getConfiguration().get<string>(PARSER_EXECUTABLE_OPTIONS);
 
-        let newParserOptions = await vscode.window.showInputBox({
+        const newParserOptions = await vscode.window.showInputBox({
             prompt: "In case you use command line switches and options, override the default syntax. For more info, see (the wiki)[https://github.com/jan-dolejsi/vscode-pddl/wiki/Configuring-the-PDDL-parser].",
             placeHolder: `$(parser) $(domain) $(problem)`,
             value: existingValue,
@@ -137,7 +137,7 @@ export class PddlConfiguration {
         if (newParserOptions) {
             // todo: validate that this parser actually works by sending a dummy request to it
 
-            let configurationToUpdate = this.getConfigurationForScope(scope);
+            const configurationToUpdate = this.getConfigurationForScope(scope);
             if (!configurationToUpdate) { return undefined; }
 
             // Update the value in the target
@@ -147,12 +147,13 @@ export class PddlConfiguration {
         return newParserOptions;
     }
 
-    isPddlParserServiceAuthenticationEnabled() {
-        return vscode.workspace.getConfiguration().get<boolean>(PDDL_PARSER + '.serviceAuthenticationEnabled');
+    isPddlParserServiceAuthenticationEnabled(): boolean {
+        return vscode.workspace.getConfiguration().get<boolean>(PDDL_PARSER + '.serviceAuthenticationEnabled', false);
     }
 
-    getPddlParserServiceAuthenticationConfiguration() {
-        let configuration = vscode.workspace.getConfiguration();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    getPddlParserServiceAuthenticationConfiguration(): any {
+        const configuration = vscode.workspace.getConfiguration();
         return {
             url: configuration.get<string>(PDDL_PARSER + '.serviceAuthenticationUrl'),
             requestEncoded: configuration.get<string>(PDDL_PARSER + '.serviceAuthenticationRequestEncoded'),
@@ -172,7 +173,7 @@ export class PddlConfiguration {
         };
     }
 
-    async savePddlParserAuthenticationTokens(configuration: vscode.WorkspaceConfiguration, refreshtoken: string, accesstoken: string, stoken: string, target: vscode.ConfigurationTarget) {
+    async savePddlParserAuthenticationTokens(configuration: vscode.WorkspaceConfiguration, refreshtoken: string, accesstoken: string, stoken: string, target: vscode.ConfigurationTarget): Promise<void> {
         configuration.update(PARSER_SERVICE_AUTHENTICATION_REFRESH_TOKEN, refreshtoken, target);
         configuration.update(PARSER_SERVICE_AUTHENTICATION_ACCESS_TOKEN, accesstoken, target);
         configuration.update(PARSER_SERVICE_AUTHENTICATION_S_TOKEN, stoken, target);
@@ -183,7 +184,7 @@ export class PddlConfiguration {
     }
 
     getPddlPlannerServiceAuthenticationConfiguration(): PlannerServiceAuthenticationConfiguration {
-        let configuration = vscode.workspace.getConfiguration();
+        const configuration = vscode.workspace.getConfiguration();
         return {
             url: configuration.get<string>(PDDL_PLANNER + '.serviceAuthenticationUrl', ''),
             requestEncoded: configuration.get<string>(PDDL_PLANNER + '.serviceAuthenticationRequestEncoded', ''),
@@ -203,7 +204,7 @@ export class PddlConfiguration {
         };
     }
 
-    async savePddlPlannerAuthenticationTokens(configuration: vscode.WorkspaceConfiguration, refreshtoken: string, accesstoken: string, stoken: string, target: vscode.ConfigurationTarget) {
+    async savePddlPlannerAuthenticationTokens(configuration: vscode.WorkspaceConfiguration, refreshtoken: string, accesstoken: string, stoken: string, target: vscode.ConfigurationTarget): Promise<void> {
         configuration.update(PLANNER_SERVICE_AUTHENTICATION_REFRESH_TOKEN, refreshtoken, target);
         configuration.update(PLANNER_SERVICE_AUTHENTICATION_ACCESS_TOKEN, accesstoken, target);
         configuration.update(PLANNER_SERVICE_AUTHENTICATION_S_TOKEN, stoken, target);
@@ -220,7 +221,7 @@ export class PddlConfiguration {
     }
 
     async askNewPlannerPath(): Promise<string | undefined> {
-        let existingValue = vscode.workspace.getConfiguration(PDDL_PLANNER, null).get<string>(EXECUTABLE_OR_SERVICE);
+        const existingValue = vscode.workspace.getConfiguration(PDDL_PLANNER, null).get<string>(EXECUTABLE_OR_SERVICE);
 
         let newPlannerPath = await vscode.window.showInputBox({
             prompt: "Enter PDDL planner path local command or web service URL",
@@ -235,10 +236,10 @@ export class PddlConfiguration {
 
             // todo: validate that this planner actually works by sending a dummy request to it
 
-            let newPlannerScope = await this.askConfigurationScope();
+            const newPlannerScope = await this.askConfigurationScope();
 
             if (!newPlannerScope) { return undefined; }
-            let configurationToUpdate = this.getConfigurationForScope(newPlannerScope);
+            const configurationToUpdate = this.getConfigurationForScope(newPlannerScope);
             if (!configurationToUpdate) { return undefined; }
 
             if (!isHttp(newPlannerPath)) {
@@ -253,9 +254,9 @@ export class PddlConfiguration {
     }
 
     async askPlannerSyntax(scope: ScopeQuickPickItem): Promise<string | undefined> {
-        let existingValue = vscode.workspace.getConfiguration().get<string>(PLANNER_EXECUTABLE_OPTIONS);
+        const existingValue = vscode.workspace.getConfiguration().get<string>(PLANNER_EXECUTABLE_OPTIONS);
 
-        let newPlannerOptions = await vscode.window.showInputBox({
+        const newPlannerOptions = await vscode.window.showInputBox({
             prompt: "In case you use command line switches and options, override the default syntax. For more info, see (the wiki)[https://github.com/jan-dolejsi/vscode-pddl/wiki/Configuring-the-PDDL-planner].",
             placeHolder: `$(planner) $(options) $(domain) $(problem)`,
             value: existingValue,
@@ -265,7 +266,7 @@ export class PddlConfiguration {
         if (newPlannerOptions) {
             // todo: validate that this planner actually works by sending a dummy request to it
 
-            let configurationToUpdate = this.getConfigurationForScope(scope);
+            const configurationToUpdate = this.getConfigurationForScope(scope);
             if (!configurationToUpdate) { return undefined; }
 
             // Update the value in the target
@@ -280,27 +281,27 @@ export class PddlConfiguration {
     }
 
     getValueSeqPath(): string | undefined {
-        let configuredPath = vscode.workspace.getConfiguration().get<string>(PLANNER_VALUE_SEQ_PATH);
+        const configuredPath = vscode.workspace.getConfiguration().get<string>(PLANNER_VALUE_SEQ_PATH);
         return ensureAbsoluteGlobalStoragePath(configuredPath, this.context);
     }
 
     getValidatorPath(): string | undefined {
-        let configuredPath = vscode.workspace.getConfiguration(CONF_PDDL).get<string>(VALIDATION_PATH);
+        const configuredPath = vscode.workspace.getConfiguration(CONF_PDDL).get<string>(VALIDATION_PATH);
         return ensureAbsoluteGlobalStoragePath(configuredPath, this.context);
     }
 
     async askNewValidatorPath(): Promise<string | undefined> {
-        let configuredPath = await this.askAndUpdatePath(VALIDATION_PATH, "Validate tool");
+        const configuredPath = await this.askAndUpdatePath(VALIDATION_PATH, "Validate tool");
         return ensureAbsoluteGlobalStoragePath(configuredPath, this.context);
     }
 
     async getValStepPath(): Promise<string | undefined> {
-        let configuredPath = await this.getOrAskPath(VAL_STEP_PATH, "ValStep executable");
+        const configuredPath = await this.getOrAskPath(VAL_STEP_PATH, "ValStep executable");
         return ensureAbsoluteGlobalStoragePath(configuredPath, this.context);
     }
 
     async getOrAskPath(configName: string, configFriendlyName: string): Promise<string | undefined> {
-        let configurationSection = vscode.workspace.getConfiguration(CONF_PDDL);
+        const configurationSection = vscode.workspace.getConfiguration(CONF_PDDL);
         let configValue = configurationSection.get<string>(configName);
         if (!configValue) {
             configValue = await this.askAndUpdatePath(configName, configFriendlyName);
@@ -310,14 +311,14 @@ export class PddlConfiguration {
     }
 
     getValStepVerbose(): boolean {
-        return vscode.workspace.getConfiguration(CONF_PDDL).get<boolean>(VAL_VERBOSE);
+        return vscode.workspace.getConfiguration(CONF_PDDL).get<boolean>(VAL_VERBOSE, false);
     }
 
     async suggestUpdatingPath(configName: string, configFriendlyName: string): Promise<string | undefined> {
-        let configureOption: vscode.MessageItem = { title: `Select ${configFriendlyName}...` };
-        let notNowOption: vscode.MessageItem = { title: "Not now", isCloseAffordance: true };
+        const configureOption: vscode.MessageItem = { title: `Select ${configFriendlyName}...` };
+        const notNowOption: vscode.MessageItem = { title: "Not now", isCloseAffordance: true };
 
-        let choice = await vscode.window.showErrorMessage(
+        const choice = await vscode.window.showErrorMessage(
             `${configFriendlyName} is not configured.`,
             ...[configureOption, notNowOption]);
 
@@ -331,7 +332,7 @@ export class PddlConfiguration {
     }
 
     async askAndUpdatePath(configName: string, configFriendlyName: string): Promise<string | undefined> {
-        let selectedUris = await vscode.window.showOpenDialog({
+        const selectedUris = await vscode.window.showOpenDialog({
             canSelectFiles: true,
             canSelectFolders: false, canSelectMany: false,
             openLabel: `Select ${configFriendlyName}`
@@ -341,9 +342,9 @@ export class PddlConfiguration {
 
         if (selectedUris) {
             configValue = selectedUris[0].fsPath;
-            let scopeToUpdate = await this.askConfigurationScope();
+            const scopeToUpdate = await this.askConfigurationScope();
             if (!scopeToUpdate) { return undefined; }
-            let configurationSection = vscode.workspace.getConfiguration(CONF_PDDL);
+            const configurationSection = vscode.workspace.getConfiguration(CONF_PDDL);
             configurationSection.update(configName, configValue, scopeToUpdate.target);
         }
 
@@ -351,7 +352,7 @@ export class PddlConfiguration {
     }
 
     async askConfigurationScope(): Promise<ScopeQuickPickItem | undefined> {
-        let availableScopes: ScopeQuickPickItem[] = [
+        const availableScopes: ScopeQuickPickItem[] = [
             { label: 'This machine (default)', description: 'Selected tool will be used for all domain/problem files on this computer.', target: vscode.ConfigurationTarget.Global }
         ];
 
@@ -363,14 +364,14 @@ export class PddlConfiguration {
         // todo: need to support folders?
         //{ label: 'Just one workspace folder', description: 'Selected tool will be used just for one workspace folder...', target: vscode.ConfigurationTarget.WorkspaceFolder }
 
-        let selectedScope = availableScopes.length === 1 ? availableScopes[0] : await vscode.window.showQuickPick(availableScopes,
+        const selectedScope = availableScopes.length === 1 ? availableScopes[0] : await vscode.window.showQuickPick(availableScopes,
             { placeHolder: 'Select the target scope for which this setting should be applied' });
 
         return selectedScope;
     }
 
     async moveConfiguration<T>(configuration: vscode.WorkspaceConfiguration, legacyConfigName: string, configName: string): Promise<void> {
-        let legacyConfig = configuration.inspect<T>(legacyConfigName);
+        const legacyConfig = configuration.inspect<T>(legacyConfigName);
         if (!legacyConfig) { return; }
 
         let target: vscode.ConfigurationTarget | undefined;
@@ -407,16 +408,17 @@ export class PddlConfiguration {
     }
 
     getParserSettings(): PDDLParserSettings {
-        let configurationAny: any = vscode.workspace.getConfiguration(PDDL_PARSER);
-        let configuration = <PDDLParserSettings>configurationAny;
+        const configurationAny = vscode.workspace.getConfiguration(PDDL_PARSER);
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const configuration = (configurationAny as any) as PDDLParserSettings;
 
         return configuration;
     }
 
     async askConfiguration(configName: string): Promise<void> {
-        let thisExtension = vscode.extensions.getExtension(ExtensionInfo.EXTENSION_ID);
+        const thisExtension = vscode.extensions.getExtension(ExtensionInfo.EXTENSION_ID);
         if (thisExtension === undefined) { return; } // something odd!
-        let configurationElement = thisExtension.packageJSON["contributes"]["configuration"]["properties"][configName];
+        const configurationElement = thisExtension.packageJSON["contributes"]["configuration"]["properties"][configName];
 
         if (!configurationElement) {
             throw new Error("Configuration not found: " + configName);
@@ -430,12 +432,13 @@ export class PddlConfiguration {
         }
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     private async askEnumConfiguration(configName: string, configurationElement: any): Promise<void> {
-        let items: vscode.QuickPickItem[] = [];
+        const items: vscode.QuickPickItem[] = [];
         const enumNames = configurationElement["enum"];
         const enumDescriptions = configurationElement["enumDescriptions"];
 
-        let currentValue = vscode.workspace.getConfiguration().get<string>(configName, <string>configurationElement["default"]);
+        const currentValue = vscode.workspace.getConfiguration().get<string>(configName, configurationElement["default"] as string);
 
         for (let index = 0; index < enumNames.length; index++) {
             const itemLabel = enumNames[index];
@@ -449,7 +452,7 @@ export class PddlConfiguration {
             });
         }
 
-        let itemSelected = await vscode.window.showQuickPick(items, {
+        const itemSelected = await vscode.window.showQuickPick(items, {
             placeHolder: configurationElement["description"] + ` (current value: ${currentValue})`
         });
 
@@ -458,8 +461,9 @@ export class PddlConfiguration {
         await vscode.workspace.getConfiguration().update(configName, itemSelected.label);
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     private async askNumberConfiguration(configName: string, configurationElement: any): Promise<void> {
-        let currentValue = vscode.workspace.getConfiguration().get<number>(configName, <number>configurationElement["default"]);
+        const currentValue = vscode.workspace.getConfiguration().get<number>(configName, configurationElement["default"] as number);
 
         let hint: string | undefined;
         let parser: (enteredValue: string) => number;
@@ -468,22 +472,22 @@ export class PddlConfiguration {
         switch (valueType) {
             case "integer":
                 hint = "Value must be a decimal integer.";
-                parser = enteredValueAsString => Number.parseInt(enteredValueAsString);
+                parser = function (enteredValueAsString: string): number { return Number.parseInt(enteredValueAsString); };
                 break;
             default:
                 hint = "Value must be a number.";
-                parser = enteredValueAsString => Number.parseFloat(enteredValueAsString);
+                parser = function (enteredValueAsString: string): number { return Number.parseFloat(enteredValueAsString); };
                 break;
         }
 
-        let minimum = configurationElement["minimum"];
-        let maximum = configurationElement["maximum"];
+        const minimum = configurationElement["minimum"];
+        const maximum = configurationElement["maximum"];
 
-        let enteredValueAsString = await vscode.window.showInputBox({
+        const enteredValueAsString = await vscode.window.showInputBox({
             prompt: configurationElement["description"],
             value: currentValue.toString(),
             validateInput: (enteredValueAsString: string) => {
-                let enteredValue = parser.apply(this, [enteredValueAsString]); 
+                const enteredValue = parser.apply(this, [enteredValueAsString]); 
 
                 if (Number.isNaN(enteredValue)) { return hint; }
 

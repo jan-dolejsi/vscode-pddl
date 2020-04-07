@@ -23,7 +23,7 @@ export abstract class Delegate {
     }
 
     createCompletionItem(label: string, detail: string, documentation: string | MarkdownString, kind: CompletionItemKind, snippet?: SnippetString): CompletionItem {
-        let item = new CompletionItem(label, kind);
+        const item = new CompletionItem(label, kind);
         item.detail = detail;
         item.documentation = documentation;
         if (snippet) { item.insertText = snippet; }
@@ -50,12 +50,12 @@ export abstract class Delegate {
     }
 
     getTypesInvolved(variables: Variable[], domainFile: DomainInfo): string[] {
-        var typesDirectlyInvolved = variables.map(p => p.parameters)
+        const typesDirectlyInvolved = variables.map(p => p.parameters)
             .reduce((x, y) => x.concat(y), []) // flat map
             .map(p => p.type)
             .filter((v, i, a) => a.indexOf(v) === i); // distinct
 
-        var typesInheriting = typesDirectlyInvolved
+        const typesInheriting = typesDirectlyInvolved
             .map(type1 => domainFile.getTypesInheritingFrom(type1))
             .reduce((x, y) => x.concat(y), []);
 

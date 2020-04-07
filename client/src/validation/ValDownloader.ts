@@ -43,7 +43,7 @@ export class ValDownloader extends ValDownloaderBase {
     }
 
     protected async downloadDelegate(url: string, zipPath: string, message: string): Promise<void> {
-        return await window.withProgress({ location: ProgressLocation.Window, title: message }, (_progress, _token) => {
+        return await window.withProgress({ location: ProgressLocation.Window, title: message }, () => {
             return super.downloadDelegate(url, zipPath, message);
         });
     }
@@ -87,7 +87,7 @@ export class ValDownloader extends ValDownloaderBase {
     }
 
     protected getLatestStableValBuildId(): number {
-        return workspace.getConfiguration(CONF_PDDL).get<number>(VALIDATOR_VERSION)!;
+        return workspace.getConfiguration(CONF_PDDL).get<number>(VALIDATOR_VERSION) ?? -1;
     }
 
     private async downloadAndConfigure(): Promise<ValVersion> {
@@ -135,9 +135,10 @@ export class ValDownloader extends ValDownloaderBase {
             const newToolPath = findValToolPath(newValVersion, toolName);
             if (!newToolPath) {
                 console.log(`Tool ${toolName} not found in the downloaded archive.`);
+                return;
             }
 
-            const oldToolAbsPath = this.asAbsoluteStoragePath(path.join(ValDownloader.VAL_DIR, oldToolPath));
+            const oldToolAbsPath = oldToolPath && this.asAbsoluteStoragePath(path.join(ValDownloader.VAL_DIR, oldToolPath));
             const newToolAbsPath = this.asAbsoluteStoragePath(path.join(ValDownloader.VAL_DIR, newToolPath));
 
             const configKey = fileToConfig.get(toolName);

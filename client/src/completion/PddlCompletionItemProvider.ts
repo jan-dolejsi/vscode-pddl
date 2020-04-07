@@ -26,13 +26,13 @@ export class PddlCompletionItemProvider implements CompletionItemProvider {
 
     async provideCompletionItems(document: TextDocument, position: Position, token: CancellationToken, context: CompletionContext): Promise<CompletionItem[] | undefined> {
         if (token.isCancellationRequested) { return undefined; }
-        let fileInfo = await this.codePddlWorkspace?.upsertAndParseFile(document);
+        const fileInfo = await this.codePddlWorkspace?.upsertAndParseFile(document);
 
         if (fileInfo instanceof DomainInfo) {
-            return await this.getOrCreateDomainCompletionItemProvider().provide(document, <DomainInfo>fileInfo, position, context);
+            return await this.getOrCreateDomainCompletionItemProvider().provide(document, fileInfo as DomainInfo, position, context);
         }
         else if (fileInfo instanceof ProblemInfo) {
-            return await this.getOrCreateProblemCompletionItemProvider().provide(document, <ProblemInfo>fileInfo, position, context);
+            return await this.getOrCreateProblemCompletionItemProvider().provide(document, fileInfo as ProblemInfo, position, context);
         }
         else if (fileInfo instanceof UnknownFileInfo || fileInfo === null) {
             return await this.getOrCreateUnknownFileItemProvider().provide(document, position, context);
@@ -41,15 +41,15 @@ export class PddlCompletionItemProvider implements CompletionItemProvider {
         return [];
     }
 
-    private getOrCreateDomainCompletionItemProvider() {
+    private getOrCreateDomainCompletionItemProvider(): DomainCompletionItemProvider {
         return this.domainProvider ?? (this.domainProvider = new DomainCompletionItemProvider());
     }
 
-    private getOrCreateProblemCompletionItemProvider() {
+    private getOrCreateProblemCompletionItemProvider(): ProblemCompletionItemProvider {
         return this.problemProvider ?? (this.problemProvider = new ProblemCompletionItemProvider());
     }
 
-    private getOrCreateUnknownFileItemProvider() {
+    private getOrCreateUnknownFileItemProvider(): UnknownPddlCompletionItemProvider {
         return this.unknownProvider ?? (this.unknownProvider = new UnknownPddlCompletionItemProvider());
     }
 }

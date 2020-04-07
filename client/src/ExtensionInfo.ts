@@ -12,10 +12,10 @@ export class ExtensionInfo {
     public static readonly EXTENSION_ID = "jan-dolejsi.pddl";
 
     constructor(extensionId = ExtensionInfo.EXTENSION_ID) {
-        let extension = extensions.getExtension(extensionId);
+        const extension = extensions.getExtension(extensionId);
         if (extension === undefined) { throw new Error('Extension not found: ' + ExtensionInfo.EXTENSION_ID); }
         this.extensionId = extension.id;
-        this.extensionVersion = <string>extension.packageJSON["version"];
+        this.extensionVersion = extension.packageJSON["version"] as string;
     }
 
     getId(): string {

@@ -13,6 +13,7 @@ import { utils } from 'pddl-workspace';
 import { TestsManifest } from './TestsManifest';
 import { TestOutcome, Test } from './Test';
 import { PddlExtensionContext } from 'pddl-workspace';
+import { assertDefined } from '../utils';
 
 export interface PTestNode {
     resource: Uri;
@@ -35,28 +36,24 @@ export class PTestTreeDataProvider implements TreeDataProvider<PTestNode> {
 
     }
 
-    refresh() {
+    refresh(): void {
         this.testResults.clear();
         this.treeNodeCache.clear();
         this._onDidChange.fire();
     }
 
     getTestOutcome(testUri: Uri): TestOutcome {
-        if (this.testResults.has(testUri.toString())) {
-            return this.testResults.get(testUri.toString());
-        } else {
-            return TestOutcome.UNKNOWN;
-        }
+        return this.testResults.get(testUri.toString()) ?? TestOutcome.UNKNOWN;
     }
 
-    setTestOutcome(test: Test, testOutcome: TestOutcome) {
+    setTestOutcome(test: Test, testOutcome: TestOutcome): void {
         this.testResults.set(test.getUri().toString(), testOutcome);
-        let node = this.findNodeByResource(test.getUri());
+        const node = this.findNodeByResource(test.getUri());
         this._onDidChange.fire(node);
     }
 
     findNodeByResource(resource: Uri): PTestNode {
-        return this.treeNodeCache.get(resource.toString());
+        return assertDefined(this.treeNodeCache.get(resource.toString()), `No node for ${resource.toString()}`);
     }
 
     cache(node: PTestNode): PTestNode {
@@ -76,7 +73,7 @@ export class PTestTreeDataProvider implements TreeDataProvider<PTestNode> {
             icon = 'file_type_test' + '.svg';
             contextValue = 'manifest';
         } else {
-            let testOutcome = this.getTestOutcome(element.resource);
+            const testOutcome = this.getTestOutcome(element.resource);
             switch (testOutcome) {
                 case TestOutcome.UNKNOWN:
                     icon = 'exclamation';
@@ -100,7 +97,7 @@ export class PTestTreeDataProvider implements TreeDataProvider<PTestNode> {
             contextValue = 'test';
         }
 
-        let isCollapsible = element.kind === PTestNodeKind.Directory || element.kind === PTestNodeKind.Manifest;
+        const isCollapsible = element.kind === PTestNodeKind.Directory || element.kind === PTestNodeKind.Manifest;
 
         return {
             id: element.resource.toString(),
@@ -113,8 +110,8 @@ export class PTestTreeDataProvider implements TreeDataProvider<PTestNode> {
         };
     }
 
-    getIcon(fileName: string): any {
-        if (!fileName) { return null; }
+    getIcon(fileName: string): { light: string | Uri; dark: string | Uri } | undefined {
+        if (!fileName) { return undefined; }
         return {
             light: this.context.asAbsolutePath(join('images', 'light', fileName)),
             dark: this.context.asAbsolutePath(join('images', 'dark', fileName))
@@ -124,7 +121,7 @@ export class PTestTreeDataProvider implements TreeDataProvider<PTestNode> {
     async getChildren(element?: PTestNode): Promise<PTestNode[]> {
         if (!element) {
             if (workspace.workspaceFolders) {
-                let rootNodes: PTestNode[] = workspace.workspaceFolders
+                const rootNodes: PTestNode[] = workspace.workspaceFolders
                     .map(wf => this.cache({ resource: wf.uri, kind: PTestNodeKind.Directory }));
 
                 return rootNodes;
@@ -133,10 +130,10 @@ export class PTestTreeDataProvider implements TreeDataProvider<PTestNode> {
             }
         }
         else {
-            let parentPath = element.resource.fsPath;
+            const parentPath = element.resource.fsPath;
 
             if (PTestTreeDataProvider.isTestManifest(parentPath)) {
-                let manifest = this.tryLoadManifest(parentPath);
+                const manifest = this.tryLoadManifest(parentPath);
                 if (!manifest) { return []; }
 
                 return manifest.testCases
@@ -160,10 +157,10 @@ export class PTestTreeDataProvider implements TreeDataProvider<PTestNode> {
 
     toCachedNode(childPath: string): PTestNode {
 
-        let kind = this.filePathToNodeKind(childPath);
+        const kind = this.filePathToNodeKind(childPath);
         if (kind === PTestNodeKind.Manifest) {
             let label = childPath;
-            let baseName = basename(childPath);
+            const baseName = basename(childPath);
 
             if (baseName.length === PTestTreeDataProvider.PTEST_SUFFIX.length) {
                 label = 'Test cases';
@@ -183,13 +180,13 @@ export class PTestTreeDataProvider implements TreeDataProvider<PTestNode> {
         });
     }
 
-    tryLoadManifest(manifestPath: string): TestsManifest {
+    tryLoadManifest(manifestPath: string): TestsManifest | undefined {
         try {
             return TestsManifest.load(manifestPath, this.context);
         } catch (error) {
             window.showErrorMessage(`Unable to load test manifest from: ${manifestPath} 
 ${error}`);
-            return null;
+            return undefined;
         }
     }
 
@@ -205,6 +202,7 @@ ${error}`);
         }
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     getParent?(_element: PTestNode): PTestNode | Thenable<PTestNode> {
         throw new Error("Method not implemented.");
     }
@@ -224,11 +222,11 @@ ${error}`);
     }
 
     static getAllChildrenFiles(dir: string): string[] {
-        let fileNames: string[] = fs.readdirSync(dir);
+        const fileNames: string[] = fs.readdirSync(dir);
         return fileNames
             .filter(file => file !== ".git")
             .reduce((files: string[], file: string) => {
-                let filePath = join(dir, file);
+                const filePath = join(dir, file);
                 return fs.statSync(filePath).isDirectory() ?
                     files.concat(PTestTreeDataProvider.getAllChildrenFiles(filePath)) :
                     files.concat(filePath);

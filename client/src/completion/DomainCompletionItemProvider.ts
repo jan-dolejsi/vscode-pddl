@@ -74,11 +74,11 @@ export class DomainCompletionItemProvider extends AbstractCompletionItemProvider
                 currentNode = currentNode.expand();
             }
 
-            let supportedSectionsHere = parser.PddlStructure.getSupportedSectionsHere(currentNode, currentNode, parser.PddlTokenType.OpenBracketOperator, parser.PddlStructure.PDDL_DOMAIN_SECTIONS, parser.PddlStructure.PDDL_DOMAIN_STRUCTURES);
-            let range = context.triggerCharacter && ['(', ':'].includes(context.triggerCharacter)
+            const supportedSectionsHere = parser.PddlStructure.getSupportedSectionsHere(currentNode, currentNode, parser.PddlTokenType.OpenBracketOperator, parser.PddlStructure.PDDL_DOMAIN_SECTIONS, parser.PddlStructure.PDDL_DOMAIN_STRUCTURES);
+            const range = context.triggerCharacter && ['(', ':'].includes(context.triggerCharacter)
                 ? nodeToRange(document, currentNode) : null;
 
-            let suggestions = supportedSectionsHere
+            const suggestions = supportedSectionsHere
                 .map(s => Suggestion.from(s, context.triggerCharacter, '('))
                 .filter(s => !!s).map(s => s!);
 
@@ -90,12 +90,12 @@ export class DomainCompletionItemProvider extends AbstractCompletionItemProvider
             return this.createRequirementsCompletionItems(document, currentNode, context);
         }
         else if (this.insideAction(currentNode)) {
-            let nearestPrecedingKeyword = parser.PddlStructure.getPrecedingKeywordOrSelf(currentNode);
-            let supportedSectionsHere = parser.PddlStructure.getSupportedSectionsHere(nearestPrecedingKeyword, currentNode, parser.PddlTokenType.Keyword, parser.PddlStructure.PDDL_ACTION_SECTIONS, []);
-            let range = context.triggerCharacter && ['(', ':'].includes(context.triggerCharacter)
+            const nearestPrecedingKeyword = parser.PddlStructure.getPrecedingKeywordOrSelf(currentNode);
+            const supportedSectionsHere = parser.PddlStructure.getSupportedSectionsHere(nearestPrecedingKeyword, currentNode, parser.PddlTokenType.Keyword, parser.PddlStructure.PDDL_ACTION_SECTIONS, []);
+            const range = context.triggerCharacter && ['(', ':'].includes(context.triggerCharacter)
                 ? nodeToRange(document, currentNode) : null;
 
-            let suggestions = supportedSectionsHere
+            const suggestions = supportedSectionsHere
                 .map(s => Suggestion.from(s, context.triggerCharacter, ''))
                 .filter(s => !!s).map(s => s!);
 
@@ -104,12 +104,12 @@ export class DomainCompletionItemProvider extends AbstractCompletionItemProvider
                 .filter(item => !!item).map(item => item!); // filter out nulls
         }
         else if (this.insideDurativeAction(currentNode)) {
-            let nearestPrecedingKeyword = parser.PddlStructure.getPrecedingKeywordOrSelf(currentNode);
-            let supportedSectionsHere = parser.PddlStructure.getSupportedSectionsHere(nearestPrecedingKeyword, currentNode, parser.PddlTokenType.Keyword, parser.PddlStructure.PDDL_DURATIVE_ACTION_SECTIONS, []);
-            let range = context.triggerCharacter && ['(', ':'].includes(context.triggerCharacter)
+            const nearestPrecedingKeyword = parser.PddlStructure.getPrecedingKeywordOrSelf(currentNode);
+            const supportedSectionsHere = parser.PddlStructure.getSupportedSectionsHere(nearestPrecedingKeyword, currentNode, parser.PddlTokenType.Keyword, parser.PddlStructure.PDDL_DURATIVE_ACTION_SECTIONS, []);
+            const range = context.triggerCharacter && ['(', ':'].includes(context.triggerCharacter)
                 ? nodeToRange(document, currentNode) : null;
 
-            let suggestions = supportedSectionsHere
+            const suggestions = supportedSectionsHere
                 .map(s => Suggestion.from(s, context.triggerCharacter, ''))
                 .filter(s => !!s).map(s => s!);
 
@@ -118,8 +118,8 @@ export class DomainCompletionItemProvider extends AbstractCompletionItemProvider
                 .filter(item => !!item).map(item => item!); // filter out nulls
         }
         else if (ModelHierarchy.isInsideEffect(currentNode)) {
-            let completions: (CompletionItem | null)[] = [];
-            let range = context.triggerCharacter === '(' ? nodeToRange(document, currentNode) : null;
+            const completions: (CompletionItem | null)[] = [];
+            const range = context.triggerCharacter === '(' ? nodeToRange(document, currentNode) : null;
 
             if (DurativeActionEffectCompletionItemProvider.inside(currentNode)) {
                 completions.push(... new DurativeActionEffectCompletionItemProvider().provide(domainInfo, context, range));
@@ -134,16 +134,16 @@ export class DomainCompletionItemProvider extends AbstractCompletionItemProvider
             return completions
                 .filter(c => !!c).map(c => c!);
         } else if (DurativeActionConditionCompletionItemProvider.inside(currentNode)) {
-            let range = context.triggerCharacter === '(' ? nodeToRange(document, currentNode) : null;
+            const range = context.triggerCharacter === '(' ? nodeToRange(document, currentNode) : null;
             return new DurativeActionConditionCompletionItemProvider()
                 .provide(domainInfo, context, range)
                 .filter(c => !!c).map(c => c!);
         }
 
         if (context.triggerCharacter === '?') {
-            let scopes = currentNode.findAllParametrisableScopes();
-            let range = nodeToRange(document, currentNode);
-            let parameterNamesFromAllScopes = scopes
+            const scopes = currentNode.findAllParametrisableScopes();
+            const range = nodeToRange(document, currentNode);
+            const parameterNamesFromAllScopes = scopes
                 .map(s => s.getParameterDefinition())
                 .filter(paramNode => !!paramNode).map(paramNode => paramNode!)
                 .map(paramNode => this.getParameterNames(paramNode));
@@ -171,8 +171,8 @@ export class DomainCompletionItemProvider extends AbstractCompletionItemProvider
         return this.insideScope(currentNode, pattern);
     }
 
-    private insideScope(currentNode: parser.PddlSyntaxNode, pattern: RegExp) {
-        let parentScope = currentNode.expand();
+    private insideScope(currentNode: parser.PddlSyntaxNode, pattern: RegExp): boolean {
+        const parentScope = currentNode.expand();
         return parentScope.isType(parser.PddlTokenType.OpenBracketOperator) && parentScope.getToken().tokenText.match(pattern) !== null;
     }
 
@@ -287,7 +287,7 @@ export function requires(requirements: string[]): string {
     return `\n\nThis language feature requires ${requirementsCsv}.`;
 }
 
-export function toSelection(tabstop: number, optionsCsv: string, orDefault: string) {
+export function toSelection(tabstop: number, optionsCsv: string, orDefault: string): string {
     if (optionsCsv.length) {
         return "${" + tabstop + "|" + optionsCsv + "|}";
     }

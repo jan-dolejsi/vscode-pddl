@@ -53,12 +53,12 @@ export class ProblemConstraintsView extends ProblemView<ProblemConstraintsRender
 
     async provideCodeLenses(document: TextDocument, token: CancellationToken): Promise<CodeLens[] | undefined> {
         if (token.isCancellationRequested) { return undefined; }
-        let problem = await this.parseProblem(document);
+        const problem = await this.parseProblem(document);
         if (token.isCancellationRequested) { return undefined; }
         if (!problem) { return []; }
 
-        let defineNode = problem.syntaxTree.getDefineNodeOrThrow();
-        let constraintsNode = defineNode.getFirstChild(parser.PddlTokenType.OpenBracketOperator, /\s*:constraints/i);
+        const defineNode = problem.syntaxTree.getDefineNodeOrThrow();
+        const constraintsNode = defineNode.getFirstChild(parser.PddlTokenType.OpenBracketOperator, /\s*:constraints/i);
         if (constraintsNode) {
             return [
                 new DocumentCodeLens(document, nodeToRange(document, constraintsNode))
@@ -74,7 +74,7 @@ export class ProblemConstraintsView extends ProblemView<ProblemConstraintsRender
             return undefined;
         }
         if (token.isCancellationRequested) { return undefined; }
-        let domainAndProblem = await this.getProblemAndDomain(codeLens.getDocument());
+        const domainAndProblem = await this.getProblemAndDomain(codeLens.getDocument());
         if (!domainAndProblem) { return undefined; }
         if (token.isCancellationRequested) { return undefined; }
 
@@ -88,7 +88,7 @@ export class ProblemConstraintsView extends ProblemView<ProblemConstraintsRender
         }
     }
 
-    protected createPreviewPanelTitle(uri: Uri) {
+    protected createPreviewPanelTitle(uri: Uri): string {
         return `:constraints of '${path.basename(uri.fsPath)}'`;
     }
 
@@ -109,7 +109,7 @@ export class ProblemConstraintsView extends ProblemView<ProblemConstraintsRender
 
 class ProblemConstraintsRenderer implements ProblemRenderer<ProblemConstraintsRendererOptions, GraphViewData> {
     render(context: ExtensionContext, problem: ProblemInfo, domain: DomainInfo, options: ProblemConstraintsRendererOptions): GraphViewData {
-        let renderer = new ProblemConstraintsRendererDelegate(context, domain, problem, options);
+        const renderer = new ProblemConstraintsRendererDelegate(context, domain, problem, options);
 
         return {
             nodes: renderer.getNodes(),
@@ -129,6 +129,7 @@ class ProblemConstraintsRendererDelegate {
     private afterConstraints: AfterConstraint[];
     private lastNodeIndex: number;
 
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     constructor(_context: ExtensionContext, private domain: DomainInfo, private problem: ProblemInfo, _options: ProblemConstraintsRendererOptions) {
         const allConstraints = this.domain.getConstraints().concat(this.problem.getConstraints());
 
@@ -146,9 +147,9 @@ class ProblemConstraintsRendererDelegate {
         this.lastNodeIndex = this.namedConditionConstraints.length;
 
         this.afterConstraints.forEach(ac => {
-            let predecessorId = this.upsertGoal(ac.predecessor);
-            let successorId = this.upsertGoal(ac.successor);
-            let label = ac instanceof StrictlyAfterConstraint ? 'strictly-after' : 'after';
+            const predecessorId = this.upsertGoal(ac.predecessor);
+            const successorId = this.upsertGoal(ac.successor);
+            const label = ac instanceof StrictlyAfterConstraint ? 'strictly-after' : 'after';
             this.addEdge(predecessorId, successorId, label);
         });
 
@@ -156,14 +157,14 @@ class ProblemConstraintsRendererDelegate {
     }
 
     private addNamedCondition(namedCondition: NamedConditionConstraint, index: number): number {
-        let key = namedCondition.name ?? namedCondition.condition?.getText() ?? "unnamed";
+        const key = namedCondition.name ?? namedCondition.condition?.getText() ?? "unnamed";
         this.nodes.set(key, new NamedConditionNode(index, namedCondition.name ?? "", namedCondition.condition?.getText() ?? "unspecified condition"));
         return index;
     }
 
     private upsertGoal(namedCondition: NamedConditionConstraint): number {
         if (namedCondition.name) {
-            let detail = this.nodes.get(namedCondition.name!);
+            const detail = this.nodes.get(namedCondition.name);
             if (detail) {
                 return detail.id;
             }
@@ -173,7 +174,7 @@ class ProblemConstraintsRendererDelegate {
             }
         }
         else if (namedCondition.condition) {
-            let conditionText = namedCondition.condition!.getText();
+            const conditionText = namedCondition.condition.getText();
             if (this.nodes.has(conditionText)) {
                 return this.nodes.get(conditionText)!.id;
             }
@@ -186,20 +187,24 @@ class ProblemConstraintsRendererDelegate {
         }
     }
 
-    addTetheredGoal() {
+    addTetheredGoal(): void {
         const pattern = /\((start|end)\s+of\s*(.+)\s*\)/i;
         [...this.nodes.keys()].forEach(nodeStartName => {
-            let matchStart = pattern.exec(nodeStartName);
+            const matchStart = pattern.exec(nodeStartName);
             if (matchStart) {
                 if (matchStart[1] === "start") {
-                    let actionName = matchStart[2];
+                    const actionName = matchStart[2];
 
                     [...this.nodes.keys()].find(nodeEndName => {
-                        let matchEnd = pattern.exec(nodeEndName);
+                        const matchEnd = pattern.exec(nodeEndName);
                         if (matchEnd &&
                             matchEnd[1] === "end" &&
                             matchEnd[2] === actionName) {
-                            this.addEdge(this.nodes.get(nodeStartName)!.id, this.nodes.get(nodeEndName)!.id, "durative-action");
+                            const startNode = this.nodes.get(nodeStartName);
+                            const endNode = this.nodes.get(nodeEndName);
+                            if (startNode && endNode) {
+                                this.addEdge(startNode.id, endNode.id, "durative-action");
+                            }
                         }
                     });
                     }
@@ -216,9 +221,9 @@ class ProblemConstraintsRendererDelegate {
     }
 
     private toNode(entry: NamedConditionNode): NetworkNode {
-        let shape = "box";
+        const shape = "box";
         // concatenate the name and definition if both are provided
-        let label = [entry.name, entry.definition]
+        const label = [entry.name, entry.definition]
             .filter(element => element && element.length > 0)
             .join(': ');
         return { id: entry.id, label: label, shape: shape };
@@ -229,5 +234,6 @@ class ProblemConstraintsRendererDelegate {
     }
 }
 
+// eslint-disable-next-line @typescript-eslint/no-empty-interface
 interface ProblemConstraintsRendererOptions extends ProblemRendererOptions {
 }

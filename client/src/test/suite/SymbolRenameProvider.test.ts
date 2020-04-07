@@ -18,33 +18,33 @@ suite('SymbolRenameProvider Test Suite', () => {
 	});
 
 	test('Should not rename PDDL keywords', async () => {
-		let initialText = `(define (domain domain_name)`;
-		let doc = await vscode.workspace.openTextDocument({ language: 'pddl', content: initialText });
+		const initialText = `(define (domain domain_name)`;
+		const doc = await vscode.workspace.openTextDocument({ language: 'pddl', content: initialText });
 
-		let renameProvider = new SymbolRenameProvider(CodePddlWorkspace.getInstanceForTestingOnly(new PddlWorkspace(.3)));
+		const renameProvider = new SymbolRenameProvider(CodePddlWorkspace.getInstanceForTestingOnly(new PddlWorkspace(.3)));
 
 		// tslint:disable-next-line: no-unused-expression
 		expect(async () => {
-			let positionZeroEdits =
+			const positionZeroEdits =
 				await renameProvider.provideRenameEdits(doc, new vscode.Position(0, 0), "asdf", tokenSource.token);
 			assert.strictEqual(positionZeroEdits, null, "position 0 should have no edits");
 		}).to.throw;
 
 		// tslint:disable-next-line: no-unused-expression
 		expect(async () => {
-			let positionThreeEdits =
+			const positionThreeEdits =
 				await renameProvider.provideRenameEdits(doc, new vscode.Position(0, 3), "asdf", tokenSource.token);
 			assert.strictEqual(positionThreeEdits, null, "position 3 should have no edits");
 		}).to.throw;
 	});
 
 	test('Should rename PDDL type', async () => {
-		let initialText = `(define (domain domain_name) (:types type1))`;
-		let doc = await vscode.workspace.openTextDocument({ language: 'pddl', content: initialText });
+		const initialText = `(define (domain domain_name) (:types type1))`;
+		const doc = await vscode.workspace.openTextDocument({ language: 'pddl', content: initialText });
 
-		let renameProvider = new SymbolRenameProvider(CodePddlWorkspace.getInstanceForTestingOnly(new PddlWorkspace(.3)));
+		const renameProvider = new SymbolRenameProvider(CodePddlWorkspace.getInstanceForTestingOnly(new PddlWorkspace(.3)));
 
-		let typeEdits = await renameProvider.provideRenameEdits(doc, new vscode.Position(0, 40), "asdf", tokenSource.token);
+		const typeEdits = await renameProvider.provideRenameEdits(doc, new vscode.Position(0, 40), "asdf", tokenSource.token);
 		assert.strictEqual(typeEdits?.size, 1, "there should be N edits");
 	});
 

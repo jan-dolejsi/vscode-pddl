@@ -32,8 +32,9 @@ export class PlannerSyncService extends PlannerService {
         return 60;
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     createRequestBody(domainFileInfo: DomainInfo, problemFileInfo: ProblemInfo): Promise<any> {
-        let body = {
+        const body = {
             "domain": domainFileInfo.getText(),
             "problem": problemFileInfo.getText()
         };
@@ -41,19 +42,20 @@ export class PlannerSyncService extends PlannerService {
         return Promise.resolve(body);
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     processServerResponseBody(responseBody: any, planParser: parser.PddlPlannerOutputParser, parent: PlannerResponseHandler,
         resolve: (plans: Plan[]) => void, reject: (error: Error) => void): void {
-        let status = responseBody["status"];
+        const status = responseBody["status"];
 
         if (status === "error") {
-            let result = responseBody["result"];
+            const result = responseBody["result"];
 
-            let resultOutput = result["output"];
+            const resultOutput = result["output"];
             if (resultOutput) {
                 parent.handleOutput(resultOutput);
             }
 
-            let resultError = result["error"];
+            const resultError = result["error"];
             if (resultError) {
                 parent.handleOutput(resultError);
                 resolve([]);
@@ -68,15 +70,15 @@ export class PlannerSyncService extends PlannerService {
             return;
         }
 
-        let result = responseBody["result"];
-        let resultOutput = result["output"];
+        const result = responseBody["result"];
+        const resultOutput = result["output"];
         if (resultOutput) {
             parent.handleOutput(resultOutput);
         }
 
         this.parsePlanSteps(result['plan'], planParser);
 
-        let plans = planParser.getPlans();
+        const plans = planParser.getPlans();
         if (plans.length > 0) { parent.handleOutput(plans[0].getText() + '\n'); }
         else { parent.handleOutput('No plan found.'); }
 

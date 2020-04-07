@@ -45,11 +45,11 @@ export class DomainViewPanel extends BaseViewPanel {
         this.panel.reveal(displayColumn ?? ViewColumn.Beside);
     }
 
-    close() {
+    close(): void {
         this.panel.dispose();
     }
 
-    setNeedsRebuild(needsRebuild: boolean) {
+    setNeedsRebuild(needsRebuild: boolean): void {
         this.needsRebuild = needsRebuild;
     }
 

@@ -36,48 +36,51 @@ export class SuggestionProvider implements CodeActionProvider {
     async provideCodeActions(document: TextDocument, range: Range | Selection, context: CodeActionContext, token: CancellationToken): Promise<CodeAction[]> {
         if (token.isCancellationRequested) { return []; }
 
-        let fileInfo = await this.workspace.upsertFile(document);
+        const fileInfo = await this.workspace.upsertFile(document);
         if (fileInfo === undefined) { throw new Error(`Not a PDDL file: ` + document.uri.toString()); }
-        let syntaxTree = new parser.PddlSyntaxTreeBuilder(fileInfo.getText()).getTree();
+        const syntaxTree = new parser.PddlSyntaxTreeBuilder(fileInfo.getText()).getTree();
 
-        let insertSnippetCodeActions = context.diagnostics
+        const insertSnippetCodeActions = context.diagnostics
             .filter(diagnostic => diagnostic.code === SuggestionProvider.CONTENT_NOT_RECOGNIZED)
-            .map(diagnostic => this.createSnippetSuggestions(document, diagnostic, range, fileInfo!, syntaxTree));
+            .map(diagnostic => this.createSnippetSuggestions(document, diagnostic, range, fileInfo, syntaxTree));
 
         if (token.isCancellationRequested) { return []; }
 
-        let missingRequirement = context.diagnostics
+        const missingRequirement = context.diagnostics
             .filter(diagnostic => diagnostic.message.match(MissingRequirements.undeclaredRequirementDiagnosticPattern))
-            .map(diagnostic => this.createMissingRequirementAction(document, diagnostic, fileInfo!))
-            .filter(action => !!action).map(action => action!);
+            .map(diagnostic => this.createMissingRequirementAction(document, diagnostic, fileInfo))
+            .filter(action => !!action)
+            .map(action => action!);
 
         if (token.isCancellationRequested) { return []; }
 
-        let undeclaredVariable = context.diagnostics
+        const undeclaredVariable = context.diagnostics
             .filter(diagnostic => diagnostic.message.match(UndeclaredVariable.undeclaredVariableDiagnosticPattern))
-            .map(diagnostic => this.createUndeclaredVariableAction(document, diagnostic, fileInfo!))
-            .filter(action => action !== undefined).map(action => action!);
+            .map(diagnostic => this.createUndeclaredVariableAction(document, diagnostic, fileInfo))
+            .filter(action => !!action)
+            .map(action => action!);
 
         if (token.isCancellationRequested) { return []; }
 
-        let problemSnippets = this.createProblemActions(fileInfo, document, range, context);
+        const problemSnippets = this.createProblemActions(fileInfo, document, range, context);
 
         return utils.Util.flatMap(insertSnippetCodeActions).concat(missingRequirement).concat(undeclaredVariable).concat(problemSnippets);
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     private createProblemActions(fileInfo: FileInfo, document: TextDocument, range: Range | Selection, _context: CodeActionContext): CodeAction[] {
         if (!fileInfo.isProblem()) { return []; }
 
         if (!(range instanceof Range)) { return []; }
 
-        let problemInfo = <ProblemInfo>fileInfo;
-        let preProcessor = problemInfo.getPreParsingPreProcessor();
+        const problemInfo = fileInfo as ProblemInfo;
+        const preProcessor = problemInfo.getPreParsingPreProcessor();
 
         if (range.isSingleLine && preProcessor) {
-            let focussedLine = document.lineAt(range.start.line);
+            const focussedLine = document.lineAt(range.start.line);
             if (focussedLine.text.trim().match(/^;;\s*!pre-parsing:/)) {
                 const title = "Preview generated problem file";
-                let codeAction = new CodeAction(title, CodeActionKind.Empty);
+                const codeAction = new CodeAction(title, CodeActionKind.Empty);
                 codeAction.command = { title: title, command: PTEST_VIEW_PROBLEM, arguments: [this.createTest(document, preProcessor)] };
                 return [codeAction];
             }
@@ -86,22 +89,22 @@ export class SuggestionProvider implements CodeActionProvider {
     }
 
     private createTest(document: TextDocument, preProcessor: PreProcessor): Test {
-        let test = new Test(preProcessor.getLabel(), "", "this should not be used",
+        const test = new Test(preProcessor.getLabel(), "", "this should not be used",
             basename(document.uri.fsPath), "", preProcessor, []);
         test.setManifest(new TestsManifest('unused', 'unused', 'unused', document.uri)); // only the uri is needed
         return test;
     }
 
     private createSnippetSuggestions(document: TextDocument, diagnostic: Diagnostic, range: Range | Selection, fileInfo: FileInfo, syntaxTree: parser.PddlSyntaxTree): CodeAction[] {
-        let isWhitespaceOnly = syntaxTree.getRootNode().getChildren()
+        const isWhitespaceOnly = syntaxTree.getRootNode().getChildren()
             .every(node => node.isType(parser.PddlTokenType.Comment) || node.isType(parser.PddlTokenType.Whitespace));
 
-        let selectedNode = syntaxTree.getNodeAt(document.offsetAt(range.start));
-        let isInsideWhitespace = selectedNode &&
+        const selectedNode = syntaxTree.getNodeAt(document.offsetAt(range.start));
+        const isInsideWhitespace = selectedNode &&
             (selectedNode.isType(parser.PddlTokenType.Whitespace)
                 || selectedNode.isType(parser.PddlTokenType.Document));
 
-        let codeActions: CodeAction[] = [];
+        const codeActions: CodeAction[] = [];
 
         if (fileInfo.isUnknownPddl() && isInsideWhitespace && isWhitespaceOnly) {
             {
@@ -126,12 +129,12 @@ export class SuggestionProvider implements CodeActionProvider {
 
     private createMissingRequirementAction(document: TextDocument, diagnostic: Diagnostic, fileInfo: FileInfo): CodeAction | undefined {
 
-        let missingRequirementsDelegate = new MissingRequirements(fileInfo);
+        const missingRequirementsDelegate = new MissingRequirements(fileInfo);
 
-        let requirementName = missingRequirementsDelegate.getRequirementName(diagnostic.message);
+        const requirementName = missingRequirementsDelegate.getRequirementName(diagnostic.message);
         if (!requirementName) { return undefined; }
 
-        let edit = missingRequirementsDelegate.createEdit(document, requirementName);
+        const edit = missingRequirementsDelegate.createEdit(document, requirementName);
 
         const title = 'Add missing requirement ' + requirementName;
         const action = new CodeAction(title, CodeActionKind.QuickFix);
@@ -143,13 +146,13 @@ export class SuggestionProvider implements CodeActionProvider {
 
     private createUndeclaredVariableAction(document: TextDocument, diagnostic: Diagnostic, fileInfo: FileInfo): CodeAction | undefined {
 
-        let undeclaredVariableDelegate = new UndeclaredVariable(fileInfo);
+        const undeclaredVariableDelegate = new UndeclaredVariable(fileInfo);
 
         const variableNode = undeclaredVariableDelegate.getVariable(diagnostic, document);
         if (!variableNode) { return undefined; }
-        let [variable, node] = variableNode;
+        const [variable, node] = variableNode;
 
-        let [edit, type] = undeclaredVariableDelegate.createEdit(document, variable, node);
+        const [edit, type] = undeclaredVariableDelegate.createEdit(document, variable, node);
 
         let sectionName: string;
         switch (type) {

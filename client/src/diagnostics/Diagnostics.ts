@@ -57,7 +57,7 @@ export class Diagnostics extends Disposable {
 
     scheduleValidation(): void {
         this.cancelScheduledValidation();
-        let timerDelayInSeconds = this.pddlParserSettings.delayInSecondsBeforeParsing || this.defaultTimerDelayInSeconds;
+        const timerDelayInSeconds = this.pddlParserSettings.delayInSecondsBeforeParsing || this.defaultTimerDelayInSeconds;
         this.timeout = setTimeout(() => this.validateAllDirty(), timerDelayInSeconds * 1000);
     }
 
@@ -67,54 +67,54 @@ export class Diagnostics extends Disposable {
 
     validateAllDirty(): void {
         // find all dirty unknown files
-        let dirtyUnknowns = this.codePddlWorkspace.pddlWorkspace.getAllFilesIf(fileInfo => fileInfo.isUnknownPddl() && fileInfo.getStatus() === FileStatus.Parsed);
+        const dirtyUnknowns = this.codePddlWorkspace.pddlWorkspace.getAllFilesIf(fileInfo => fileInfo.isUnknownPddl() && fileInfo.getStatus() === FileStatus.Parsed);
 
         // validate unknown files (those where the header does not parse)
         dirtyUnknowns.forEach(file => this.validateUnknownFile(file));
 
         // find all dirty domains
-        let dirtyDomains = this.codePddlWorkspace.pddlWorkspace.getAllFilesIf(fileInfo => fileInfo.isDomain() && fileInfo.getStatus() === FileStatus.Parsed);
+        const dirtyDomains = this.codePddlWorkspace.pddlWorkspace.getAllFilesIf(fileInfo => fileInfo.isDomain() && fileInfo.getStatus() === FileStatus.Parsed);
 
         if (dirtyDomains.length > 0) {
-            let firstDirtyDomain = <DomainInfo>dirtyDomains[0];
+            const firstDirtyDomain = dirtyDomains[0] as DomainInfo;
             // if there was more than one domain schedule further validation
-            let scheduleFurtherValidation = dirtyDomains.length > 1;
+            const scheduleFurtherValidation = dirtyDomains.length > 1;
 
             this.validatePddlDocument(firstDirtyDomain, scheduleFurtherValidation);
         }
 
         // find all dirty problems
-        let dirtyProblems = this.codePddlWorkspace.pddlWorkspace.getAllFilesIf(fileInfo => fileInfo.isProblem() && fileInfo.getStatus() === FileStatus.Parsed);
+        const dirtyProblems = this.codePddlWorkspace.pddlWorkspace.getAllFilesIf(fileInfo => fileInfo.isProblem() && fileInfo.getStatus() === FileStatus.Parsed);
 
         if (dirtyProblems.length > 0) {
-            let firstDirtyProblem = <ProblemInfo>dirtyProblems[0];
+            const firstDirtyProblem = dirtyProblems[0] as ProblemInfo;
 
             // if there was more than one domain schedule further validation
-            let scheduleFurtherValidation = dirtyProblems.length > 1;
+            const scheduleFurtherValidation = dirtyProblems.length > 1;
 
             this.validatePddlDocument(firstDirtyProblem, scheduleFurtherValidation);
         }
 
         // find all dirty plans
-        let dirtyPlans = this.codePddlWorkspace.pddlWorkspace.getAllFilesIf(fileInfo => fileInfo.isPlan() && fileInfo.getStatus() === FileStatus.Parsed);
+        const dirtyPlans = this.codePddlWorkspace.pddlWorkspace.getAllFilesIf(fileInfo => fileInfo.isPlan() && fileInfo.getStatus() === FileStatus.Parsed);
 
         if (dirtyPlans.length > 0) {
-            let firstDirtyPlan = <PlanInfo>dirtyPlans[0];
+            const firstDirtyPlan = dirtyPlans[0] as PlanInfo;
 
             // if there was more than one dirty file, schedule further validation
-            let scheduleFurtherValidation = dirtyPlans.length > 1;
+            const scheduleFurtherValidation = dirtyPlans.length > 1;
 
             this.validatePlan(firstDirtyPlan, scheduleFurtherValidation);
         }
 
         // find all dirty happenings
-        let dirtyHappenings = this.codePddlWorkspace.pddlWorkspace.getAllFilesIf(fileInfo => fileInfo.isHappenings() && fileInfo.getStatus() === FileStatus.Parsed);
+        const dirtyHappenings = this.codePddlWorkspace.pddlWorkspace.getAllFilesIf(fileInfo => fileInfo.isHappenings() && fileInfo.getStatus() === FileStatus.Parsed);
 
         if (dirtyHappenings.length > 0) {
-            let firstDirtyHappenings = <HappeningsInfo>dirtyHappenings[0];
+            const firstDirtyHappenings = dirtyHappenings[0] as HappeningsInfo;
 
             // if there was more than one dirty file, schedule further validation
-            let scheduleFurtherValidation = dirtyHappenings.length > 1;
+            const scheduleFurtherValidation = dirtyHappenings.length > 1;
 
             this.validateHappenings(firstDirtyHappenings, scheduleFurtherValidation);
         }
@@ -140,7 +140,7 @@ export class Diagnostics extends Disposable {
     }
 
     validatePddlDocumentByUri(fileUri: string, scheduleFurtherValidation: boolean): void {
-        let fileInfo = this.codePddlWorkspace.pddlWorkspace.getFileInfo(fileUri);
+        const fileInfo = this.codePddlWorkspace.pddlWorkspace.getFileInfo(fileUri);
         if (!fileInfo) { throw new Error(`File not found in the PDDL workspace: ${fileUri}`); }
         this.validatePddlDocument(fileInfo, scheduleFurtherValidation);
     }
@@ -198,23 +198,23 @@ export class Diagnostics extends Disposable {
 
         // detect parsing and pre-processing issues
         if (fileInfo.getParsingProblems().length > 0) {
-            let parsingProblems = new Map<string, Diagnostic[]>();
+            const parsingProblems = new Map<string, Diagnostic[]>();
             parsingProblems.set(fileInfo.fileUri, toDiagnostics(fileInfo.getParsingProblems()));
             this.sendDiagnostics(parsingProblems);
             return;
         }
 
         if (fileInfo.isDomain()) {
-            let domainInfo = <DomainInfo>fileInfo;
+            const domainInfo = fileInfo as DomainInfo;
 
-            let problemFiles = this.codePddlWorkspace.pddlWorkspace.getProblemFiles(domainInfo);
+            const problemFiles = this.codePddlWorkspace.pddlWorkspace.getProblemFiles(domainInfo);
 
             this.validateDomainAndProblems(domainInfo, problemFiles, scheduleFurtherValidation);
         }
         else if (fileInfo.isProblem()) {
-            let problemInfo = <ProblemInfo>fileInfo;
+            const problemInfo = fileInfo as ProblemInfo;
 
-            let domainFile = this.getDomainFileFor(problemInfo);
+            const domainFile = this.getDomainFileFor(problemInfo);
 
             if (domainFile) {
                 this.validateDomainAndProblems(domainFile, [problemInfo], scheduleFurtherValidation);
@@ -229,7 +229,7 @@ export class Diagnostics extends Disposable {
 
         if (!this.pddlConfiguration.getParserPath()) {
             // suggest the user to update the settings
-            var showNever = true;
+            const showNever = true;
             this.pddlConfiguration.suggestNewParserConfiguration(showNever);
             return;
         }
@@ -238,7 +238,7 @@ export class Diagnostics extends Disposable {
         domainInfo.setStatus(FileStatus.Validating);
         problemFiles.forEach(p => p.setStatus(FileStatus.Validating));
 
-        let validator = this.createValidator(this.pddlConfiguration.getParserPath()!);
+        const validator = this.createValidator(this.pddlConfiguration.getParserPath()!);
         if (!validator) { return; }
 
         validator.validate(domainInfo, problemFiles, (diagnostics) => {
@@ -248,7 +248,7 @@ export class Diagnostics extends Disposable {
         }, (err) => {
             window.showErrorMessage(err);
             console.warn(err);
-            var showNever = false;
+            const showNever = false;
             this.pddlConfiguration.suggestNewParserConfiguration(showNever);
         });
     }
@@ -263,7 +263,7 @@ export class Diagnostics extends Disposable {
             
             if (isHttp(newParserPath)) {
                 // is a service
-                let authentication = new Authentication(
+                const authentication = new Authentication(
                     this.pddlParserSettings.serviceAuthenticationUrl,
                     this.pddlParserSettings.serviceAuthenticationRequestEncoded,
                     this.pddlParserSettings.serviceAuthenticationClientId,
@@ -308,12 +308,12 @@ export class Diagnostics extends Disposable {
         }
     }
 
-    sendDiagnosticInfo(fileUri: string, message: string, code?: string | number) {
+    sendDiagnosticInfo(fileUri: string, message: string, code?: string | number): void {
         this.sendDiagnostic(fileUri, message, DiagnosticSeverity.Information, code);
     }
 
-    sendDiagnostic(fileUri: string, message: string, severity: DiagnosticSeverity, code?: string | number) {
-        let diagnostic = new Diagnostic(Validator.createLineRange(0), message, severity);
+    sendDiagnostic(fileUri: string, message: string, severity: DiagnosticSeverity, code?: string | number): void {
+        const diagnostic = new Diagnostic(Validator.createLineRange(0), message, severity);
         if (code !== undefined && code !== null) {
             diagnostic.code = code;
         }
@@ -327,7 +327,7 @@ export class Diagnostics extends Disposable {
     validateUnknownFile(fileInfo: FileInfo): void {
         fileInfo.setStatus(FileStatus.Validating);
 
-        let firstLine = stripComments(fileInfo.getText()).replace(/^\s+/g, '').split('\n')[0];
+        const firstLine = stripComments(fileInfo.getText()).replace(/^\s+/g, '').split('\n')[0];
 
         this.sendDiagnostic(fileInfo.fileUri, `Cannot recognize whether this is a domain or problem: ${firstLine}`, DiagnosticSeverity.Error, 'CONTENT_NOT_RECOGNIZED');
 

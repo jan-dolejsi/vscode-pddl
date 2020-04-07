@@ -3,7 +3,7 @@ import * as path from 'path';
 import { runTests } from 'vscode-test';
 import { URI } from 'vscode-uri';
 
-async function main() {
+async function main(): Promise<void> {
 	try {
 		// The folder containing the Extension Manifest package.json
 		// Passed to `--extensionDevelopmentPath`

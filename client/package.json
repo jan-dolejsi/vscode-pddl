@@ -862,6 +862,7 @@
   "scripts": {
     "compile": "tsc -p ./",
     "watch": "tsc -w -p ./",
+    "lint": "eslint src --ext ts",
     "vscode:prepublish": "npm run compile",
     "update-vscode": "node ./node_modules/vscode/bin/install",
     "package": "vsce package",
@@ -869,13 +870,13 @@
     "test": "node ./out/client/src/test/runTest.js"
   },
   "dependencies": {
-    "ai-planning-val": "^2.1.1",
+    "ai-planning-val": "^2.1.2",
     "await-notify": "^1.0.1",
     "body-parser": "^1.19.0",
     "events": "^3.1.0",
     "express": "^4.17.1",
     "open": "^7.0.2",
-    "pddl-workspace": "^2.1.0",
+    "pddl-workspace": "^2.2.0",
     "request": "^2.88.2",
     "semver": "^7.1.3",
     "tree-kill": "^1.2.2",
@@ -897,14 +898,16 @@
     "@types/semver": "^7.1.0",
     "@types/tmp": "^0.1.0",
     "@types/vscode": "^1.40.0",
+    "@typescript-eslint/eslint-plugin": "^2.18.0",
+    "@typescript-eslint/parser": "^2.18.0",
     "chai": "^4.2.0",
     "chai-string": "^1.5.0",
+    "eslint": "^6.8.0",
     "glob": "^7.1.6",
     "mocha": "^6.1.4",
     "tmp": "^0.1.0",
-    "tslint": "^6.0.0",
     "typescript": "^3.7.3",
-    "vsce": "^1.73.0",
+    "vsce": "^1.75.0",
     "vscode-test": "^1.0.0"
   }
 }

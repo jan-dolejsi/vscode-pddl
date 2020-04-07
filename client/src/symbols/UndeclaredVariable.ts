@@ -18,46 +18,48 @@ export class UndeclaredVariable {
 
     getVariable(diagnostic: Diagnostic, document: TextDocument): [Variable, parser.PddlSyntaxNode] | undefined {
 
-        let match = UndeclaredVariable.undeclaredVariableDiagnosticPattern.exec(diagnostic.message);
+        const match = UndeclaredVariable.undeclaredVariableDiagnosticPattern.exec(diagnostic.message);
         if (!match) { return undefined; }
-        let variableName = match[1];
+        const variableName = match[1];
 
-        let lineWithUndeclaredVariable = document.lineAt(diagnostic.range.start.line);
-        let variableNameMatch = lineWithUndeclaredVariable.text.match(new RegExp("\\(\\s*" + variableName + "[ |\\)]", "i"));
-        if (variableNameMatch === null) { return undefined; }
-        let undeclaredVariableOffset = document.offsetAt(lineWithUndeclaredVariable.range.start) + variableNameMatch.index! + variableNameMatch[0].toLowerCase().indexOf(variableName);
+        const lineWithUndeclaredVariable = document.lineAt(diagnostic.range.start.line);
+        const variableNameMatch = lineWithUndeclaredVariable.text.match(new RegExp("\\(\\s*" + variableName + "[ |\\)]", "i"));
+        if (variableNameMatch === null || variableNameMatch.index === undefined) { return undefined; }
+        const undeclaredVariableOffset = document.offsetAt(lineWithUndeclaredVariable.range.start) +
+            variableNameMatch.index +
+            variableNameMatch[0].toLowerCase().indexOf(variableName);
 
-        let variableUsage = this.syntaxTree.getNodeAt(undeclaredVariableOffset + 1).expand();
+        const variableUsage = this.syntaxTree.getNodeAt(undeclaredVariableOffset + 1).expand();
         if (variableUsage.isDocument()) {
             console.log("Undeclared predicate/function was not found: " + variableName);
             return undefined;
         }
-        let parameterNames = variableUsage.getNestedChildren()
+        const parameterNames = variableUsage.getNestedChildren()
             .filter(node => node.isType(parser.PddlTokenType.Parameter))
             .map(node => node.getText().replace('?', ''));
 
-        let parameters = parameterNames.map(param => this.findParameterDefinition(variableUsage, param));
+        const parameters = parameterNames.map(param => this.findParameterDefinition(variableUsage, param));
 
         if (parameters.some(p => !p)) {
             console.log("Undeclared predicate/function has some unexpected parameters: " + variableName);
             return undefined;
         }
 
-        let validParameters = parameters.map(p => p as Parameter);
+        const validParameters = parameters.map(p => p as Parameter);
 
         return [new Variable(variableName, validParameters), variableUsage];
     }
 
     findParameterDefinition(variableUsage: parser.PddlSyntaxNode, parameterName: string): Parameter | undefined {
-        let scope = variableUsage.findParametrisableScope(parameterName);
-        let parameterDefinitionNode = scope && scope.getParameterDefinition();
+        const scope = variableUsage.findParametrisableScope(parameterName);
+        const parameterDefinitionNode = scope && scope.getParameterDefinition();
         return parameterDefinitionNode &&
         parser.parseParameters(parameterDefinitionNode.getText())
                 .find(p => p.name.toLowerCase() === parameterName.toLowerCase());
     }
 
     createEdit(document: TextDocument, variable: Variable, node: parser.PddlSyntaxNode): [WorkspaceEdit, VariableType] {
-        var type = VariableType.Undecided;
+        let type = VariableType.Undecided;
         while (type === VariableType.Undecided && !node.isDocument()) {
             node = node.getParent()!;
             if (node.isType(parser.PddlTokenType.OpenBracketOperator)) {
@@ -104,35 +106,35 @@ export class UndeclaredVariable {
                 throw new Error(`Could not determine whether ${variable.getFullName()} is a predicate or a function.`);
         }
 
-        let defineNode = this.syntaxTree.getDefineNode();
-        let sectionNode = defineNode.getFirstOpenBracket(newSectionName);
+        const defineNode = this.syntaxTree.getDefineNode();
+        const sectionNode = defineNode.getFirstOpenBracket(newSectionName);
 
-        let edit = new WorkspaceEdit();
+        const edit = new WorkspaceEdit();
 
-        let indent1: string = UndeclaredVariable.createIndent(document, 1);
-        let indent2: string = UndeclaredVariable.createIndent(document, 2);
-        let eol = UndeclaredVariable.createEolString(document);
+        const indent1: string = UndeclaredVariable.createIndent(document, 1);
+        const indent2: string = UndeclaredVariable.createIndent(document, 2);
+        const eol = UndeclaredVariable.createEolString(document);
 
         if (sectionNode) {
             edit.insert(document.uri, document.positionAt(sectionNode.getEnd() - 1), indent1 + `(${variable.getFullName()})` + eol);
         } else {
-            let previousSectionNode = parser.PddlStructure.findPrecedingSection(newSectionName, defineNode, parser.PddlStructure.PDDL_DOMAIN_SECTIONS);
+            const previousSectionNode = parser.PddlStructure.findPrecedingSection(newSectionName, defineNode, parser.PddlStructure.PDDL_DOMAIN_SECTIONS);
             edit.insert(document.uri, document.positionAt(previousSectionNode.getEnd()), eol + indent1 + `(${newSectionName}${eol + indent2}(${variable.getFullName()})${eol + indent1})`);
         }
 
         return [edit, type];
     }
 
-    static createEolString(document: TextDocument) {
+    static createEolString(document: TextDocument): string {
         return document.eol === EndOfLine.CRLF ? '\r\n' : '\n';
     }
 
     static createIndent(document: TextDocument, indentLevel: number): string {
-        let config = workspace.getConfiguration('editor', document.uri);
+        const config = workspace.getConfiguration('editor', document.uri);
 
         let indent: string;
         if (config.get<boolean>('insertSpaces')) {
-            let tabSize = config.get<number>('tabSize', 4);
+            const tabSize = config.get<number>('tabSize', 4);
             indent = ' '.repeat(tabSize * indentLevel);
         }
         else {

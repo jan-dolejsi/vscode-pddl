@@ -28,27 +28,27 @@ export class DomainDiagnostics {
         });
     }
 
-    validateDomain(domainInfo: DomainInfo) {
-        let predicateDiagnostic = domainInfo.getPredicates()
+    validateDomain(domainInfo: DomainInfo): void {
+        const predicateDiagnostic = domainInfo.getPredicates()
             .map(p => this.toUnusedDiagnostic(domainInfo, p, 'predicate'))
             .filter(diagnostic => !!diagnostic)
             .map(diagnostics => diagnostics!);
 
-        let functionDiagnostic = domainInfo.getFunctions()
+        const functionDiagnostic = domainInfo.getFunctions()
             .map(p => this.toUnusedDiagnostic(domainInfo, p, 'function'))
             .filter(diagnostic => !!diagnostic)
             .map(diagnostics => diagnostics!);
 
-        let diagnostics = predicateDiagnostic.concat(functionDiagnostic);
+        const diagnostics = predicateDiagnostic.concat(functionDiagnostic);
 
         this.diagnosticCollection.set(Uri.parse(domainInfo.fileUri), diagnostics);
     }
 
     toUnusedDiagnostic(domainInfo: DomainInfo, variable: Variable, variableType: string): Diagnostic | undefined {
-        let references = domainInfo.getVariableReferences(variable);
+        const references = domainInfo.getVariableReferences(variable);
 
         if (references.length === 1) {
-            let diagnostic = new Diagnostic(toRange(references[0]), `Unused ${variableType} (${variable.declaredName})`, DiagnosticSeverity.Hint);
+            const diagnostic = new Diagnostic(toRange(references[0]), `Unused ${variableType} (${variable.declaredName})`, DiagnosticSeverity.Hint);
             diagnostic.tags = [DiagnosticTag.Unnecessary];
             diagnostic.code = UNUSED;
             return diagnostic;

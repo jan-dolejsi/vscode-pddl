@@ -9,6 +9,7 @@ import {
 } from 'vscode';
 
 import * as path from 'path';
+import opn = require('open');
 
 import { DomainInfo } from 'pddl-workspace';
 import { SwimLane } from '../../../common/src/SwimLane';
@@ -34,29 +35,28 @@ export class PlanReportGenerator {
     }
 
     async export(plans: Plan[], planId: number): Promise<boolean> {
-        let html = await this.generateHtml(plans, planId);
+        const html = await this.generateHtml(plans, planId);
 
-        let htmlFile = await utils.Util.toFile("plan-report", ".html", html);
-        const opn = require('open');
+        const htmlFile = await utils.Util.toFile("plan-report", ".html", html);
         const uri = Uri.parse("file://" + htmlFile);
         opn(uri.toString());
         return true; //env.openExternal(uri);
     }
 
-    async generateHtml(plans: Plan[], planId: number = -1): Promise<string> {
-        let selectedPlan = planId < 0 ? plans.length - 1 : planId;
+    async generateHtml(plans: Plan[], planId = -1): Promise<string> {
+        const selectedPlan = planId < 0 ? plans.length - 1 : planId;
 
-        let maxCost = Math.max(...plans.map(plan => plan.cost ?? 0));
+        const maxCost = Math.max(...plans.map(plan => plan.cost ?? 0));
 
-        let planSelectors = plans.map((plan, planIndex) => this.renderPlanSelector(plan, planIndex, selectedPlan, maxCost)).join(" ");
+        const planSelectors = plans.map((plan, planIndex) => this.renderPlanSelector(plan, planIndex, selectedPlan, maxCost)).join(" ");
 
-        let planSelectorsDisplayStyle = plans.length > 1 ? "flex" : "none";
+        const planSelectorsDisplayStyle = plans.length > 1 ? "flex" : "none";
 
-        let planHtmlArr: string[] = await Promise.all(plans.map(async (plan, planIndex) => await this.renderPlan(plan, planIndex, selectedPlan)));
-        let plansHtml = planHtmlArr.join("\n\n");
-        let plansChartsScript = this.createPlansChartsScript(plans);
-        let relativePath = path.join('views', 'planview');
-        let html = `<!DOCTYPE html>
+        const planHtmlArr: string[] = await Promise.all(plans.map(async (plan, planIndex) => await this.renderPlan(plan, planIndex, selectedPlan)));
+        const plansHtml = planHtmlArr.join("\n\n");
+        const plansChartsScript = this.createPlansChartsScript(plans);
+        const relativePath = path.join('views', 'planview');
+        const html = `<!DOCTYPE html>
         <head>
             <title>Plan report</title>
             <meta http-equiv="Content-Security-Policy"
@@ -91,9 +91,9 @@ export class PlanReportGenerator {
         let className = "planSelector";
         if (planIndex === selectedPlan) { className += " planSelector-selected"; }
 
-        let normalizedCost = (plan.cost ?? 0) / maxCost * 100;
-        let costRounded = plan.cost ? plan.cost.toFixed(DIGITS) : NaN;
-        let tooltip = `Plan #${planIndex}
+        const normalizedCost = (plan.cost ?? 0) / maxCost * 100;
+        const costRounded = plan.cost ? plan.cost.toFixed(DIGITS) : NaN;
+        const tooltip = `Plan #${planIndex}
 Metric value / cost: ${plan.cost}
 Makespan: ${plan.makespan}
 States evaluated: ${plan.statesEvaluated}`;
@@ -119,13 +119,14 @@ States evaluated: ${plan.statesEvaluated}`;
             this.settings.set(plan, settings);
         }
 
-        let styleDisplay = planIndex === selectedPlan ? "block" : "none";
+        const styleDisplay = planIndex === selectedPlan ? "block" : "none";
 
         let stateViz = '';
         if (planVisualizerPath && plan.domain) {
-            let absPath = path.join(PddlWorkspace.getFolderPath(plan.domain.fileUri), planVisualizerPath);
+            const absPath = path.join(PddlWorkspace.getFolderPath(plan.domain.fileUri), planVisualizerPath);
             try {
                 delete require.cache[require.resolve(absPath)];
+                // eslint-disable-next-line @typescript-eslint/no-var-requires
                 const visualize = require(absPath);
                 stateViz = visualize(plan, 300, 100);
                 // todo: document.getElementById("stateviz").innerHTML = stateViz;
@@ -136,76 +137,76 @@ States evaluated: ${plan.statesEvaluated}`;
             }
         }
 
-        let stepsToDisplay = plan.steps
+        const stepsToDisplay = plan.steps
             .filter(step => this.shouldDisplay(step, plan));
 
         // split this to two batches and insert helpful actions in between
-        let planHeadSteps = stepsToDisplay
+        const planHeadSteps = stepsToDisplay
             .filter(step => this.isPlanHeadStep(step, plan));
-        let relaxedPlanSteps = stepsToDisplay
+        const relaxedPlanSteps = stepsToDisplay
             .filter(step => !this.isPlanHeadStep(step, plan));
 
-        let oneIfHelpfulActionsPresent = (plan.hasHelpfulActions() ? 1 : 0);
-        let relaxedPlanStepIndexOffset = planHeadSteps.length + oneIfHelpfulActionsPresent;
+        const oneIfHelpfulActionsPresent = (plan.hasHelpfulActions() ? 1 : 0);
+        const relaxedPlanStepIndexOffset = planHeadSteps.length + oneIfHelpfulActionsPresent;
 
-        let ganttChartHtml = planHeadSteps
+        const ganttChartHtml = planHeadSteps
             .map((step, stepIndex) => this.renderGanttStep(step, stepIndex, plan, planIndex)).join("\n")
             + this.renderHelpfulActions(plan, planHeadSteps.length) + '\n'
             + relaxedPlanSteps
                 .map((step, stepIndex) => this.renderGanttStep(step, stepIndex + relaxedPlanStepIndexOffset, plan, planIndex)).join("\n");
 
-        let ganttChartHeight = (stepsToDisplay.length + oneIfHelpfulActionsPresent) * this.planStepHeight;
+        const ganttChartHeight = (stepsToDisplay.length + oneIfHelpfulActionsPresent) * this.planStepHeight;
 
-        let ganttChart = `    <div class="gantt" plan="${planIndex}" style="margin: 5px; height: ${ganttChartHeight}px; display: ${styleDisplay};">
+        const ganttChart = `    <div class="gantt" plan="${planIndex}" style="margin: 5px; height: ${ganttChartHeight}px; display: ${styleDisplay};">
     ${ganttChartHtml}
         </div>`;
 
         let objectsHtml = '';
         if (!this.options.disableSwimLaneView && plan.domain && plan.problem) {
-            let allTypeObjects = plan.domain.getConstants().merge(plan.problem.getObjectsTypeMap());
+            const allTypeObjects = plan.domain.getConstants().merge(plan.problem.getObjectsTypeMap());
 
             objectsHtml = plan.domain.getTypes()
                 .filter(type => type !== "object")
                 .map(type => {
-                    let typeObjects = allTypeObjects.getTypeCaseInsensitive(type);
+                    const typeObjects = allTypeObjects.getTypeCaseInsensitive(type);
                     return typeObjects
                         ? this.renderTypeSwimLanes(type, typeObjects.getObjects(), plan)
                         : '';
                 }).join("\n");
         }
 
-        let swimLanes = `    <div class="resourceUtilization" plan="${planIndex}" style="display: ${styleDisplay};">
+        const swimLanes = `    <div class="resourceUtilization" plan="${planIndex}" style="display: ${styleDisplay};">
         <table>
 ${objectsHtml}
         </table>
     </div>`;
 
-        let valStepPath = ensureAbsoluteGlobalStoragePath(workspace.getConfiguration(CONF_PDDL).get<string>(VAL_STEP_PATH), this.context);
-        let valueSeqPath = ensureAbsoluteGlobalStoragePath(workspace.getConfiguration(CONF_PDDL).get<string>(VALUE_SEQ_PATH), this.context);
+        const valStepPath = ensureAbsoluteGlobalStoragePath(workspace.getConfiguration(CONF_PDDL).get<string>(VAL_STEP_PATH), this.context);
+        const valueSeqPath = ensureAbsoluteGlobalStoragePath(workspace.getConfiguration(CONF_PDDL).get<string>(VALUE_SEQ_PATH), this.context);
         const valVerbose = workspace.getConfiguration(CONF_PDDL).get<boolean>(VAL_VERBOSE);
 
         let lineCharts = `    <div class="lineChart" plan="${planIndex}" style="display: ${styleDisplay};margin-top: 20px;">\n`;
         let lineChartScripts = '';
 
         if (!this.options.disableLinePlots && plan.domain && plan.problem) {
-            let groupByLifted = workspace.getConfiguration(CONF_PDDL).get<boolean>(PLAN_REPORT_LINE_PLOT_GROUP_BY_LIFTED, true);
-            let evaluator = new PlanFunctionEvaluator(plan, { valStepPath, valueSeqPath, shouldGroupByLifted: groupByLifted, verbose: valVerbose });
+            const groupByLifted = workspace.getConfiguration(CONF_PDDL).get<boolean>(PLAN_REPORT_LINE_PLOT_GROUP_BY_LIFTED, true);
+            const evaluator = new PlanFunctionEvaluator(plan, { valStepPath, valueSeqPath, shouldGroupByLifted: groupByLifted, verbose: valVerbose });
 
             if (evaluator.isAvailable()) {
 
                 try {
 
-                    let functionValues = await evaluator.evaluate();
+                    const functionValues = await evaluator.evaluate();
 
                     functionValues.forEach((values, liftedVariable) => {
-                        let chartDivId = `chart_${planIndex}_${liftedVariable.declaredName}`;
+                        const chartDivId = `chart_${planIndex}_${liftedVariable.declaredName}`;
                         lineCharts += `        <div id="${chartDivId}" style="width: ${this.options.displayWidth + 100}px; height: ${Math.round(this.options.displayWidth / 2)}px"></div>\n`;
                         let chartTitleWithUnit = values.legend.length > 1 ? liftedVariable.name : liftedVariable.getFullName();
                         if (liftedVariable.getUnit()) { chartTitleWithUnit += ` [${liftedVariable.getUnit()}]`; }
                         lineChartScripts += `        drawChart('${chartDivId}', '${chartTitleWithUnit}', '', ${JSON.stringify(values.legend)}, ${JSON.stringify(values.values)}, ${this.options.displayWidth});\n`;
                     });
                 } catch (err) {
-                    console.log(err);
+                    console.error(err);
                     const valStepPath = evaluator.getValStepPath();
                     if (valStepPath) {
                         this.handleValStepError(err, valStepPath);
@@ -227,21 +228,22 @@ ${lineCharts}
 `;
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     private async handleValStepError(err: any, valStepPath: string): Promise<void> {
         if (err instanceof ValStepError) {
             try {
                 const exportCase = "Export valstep case...";
-                let choice = await window.showErrorMessage("ValStep failed to evaluate the plan values.", exportCase, "Ignore");
+                const choice = await window.showErrorMessage("ValStep failed to evaluate the plan values.", exportCase, "Ignore");
                 if (choice === exportCase) {
-                    let targetPathUris = await window.showOpenDialog({
+                    const targetPathUris = await window.showOpenDialog({
                         canSelectFolders: true, canSelectFiles: false,
                         defaultUri: Uri.file(path.dirname(err.domain.fileUri)),
                         openLabel: 'Select target folder'
                     });
                     if (!targetPathUris) { return; }
-                    let targetPath = targetPathUris[0];
-                    let outputPath = await ValStep.storeError(err, targetPath.fsPath, valStepPath);
-                    let success = await env.openExternal(Uri.file(outputPath));
+                    const targetPath = targetPathUris[0];
+                    const outputPath = await ValStep.storeError(err, targetPath.fsPath, valStepPath);
+                    const success = await env.openExternal(Uri.file(outputPath));
                     if (!success) {
                         window.showErrorMessage(`Files for valstep bug report: ${outputPath}.`);
                     }
@@ -252,15 +254,15 @@ ${lineCharts}
             }
         }
         else {
-            window.showWarningMessage(err);
+            window.showWarningMessage(err?.message ?? err);
         }
     }
 
     renderHelpfulActions(plan: Plan, planHeadLength: number): string {
         if (plan.hasHelpfulActions()) {
-            let fromTop = planHeadLength * this.planStepHeight;
-            let fromLeft = this.toViewCoordinates(plan.now, plan);
-            let text = plan.helpfulActions!.map((helpfulAction, index) => this.renderHelpfulAction(index, helpfulAction)).join(', ');
+            const fromTop = planHeadLength * this.planStepHeight;
+            const fromLeft = this.toViewCoordinates(plan.now, plan);
+            const text = plan.helpfulActions?.map((helpfulAction, index) => this.renderHelpfulAction(index, helpfulAction)).join(', ');
             return `\n        <div class="planstep" style="top: ${fromTop}px; left: ${fromLeft}px; margin-top: 3px">▶ ${text}</div>`;
         }
         else {
@@ -269,8 +271,8 @@ ${lineCharts}
     }
 
     renderHelpfulAction(index: number, helpfulAction: HelpfulAction): string {
-        let suffix = PlanReportGenerator.getActionSuffix(helpfulAction);
-        let beautifiedName = `${helpfulAction.actionName}<sub>${suffix}</sub>`;
+        const suffix = PlanReportGenerator.getActionSuffix(helpfulAction);
+        const beautifiedName = `${helpfulAction.actionName}<sub>${suffix}</sub>`;
         return `${index + 1}. <a href="#" onclick="navigateToChildOfSelectedState('${helpfulAction.actionName}')">${beautifiedName}</a>`;
     }
 
@@ -290,8 +292,8 @@ ${lineCharts}
             step.commitment === PlanStepCommitment.EndsInRelaxedPlan;
     }
 
-    createPlansChartsScript(plans: Plan[]) {
-        let selectedPlan = plans.length - 1;
+    createPlansChartsScript(plans: Plan[]): string {
+        const selectedPlan = plans.length - 1;
         return `        <script>
                 google.charts.setOnLoadCallback(drawCharts);
                 function drawCharts() {
@@ -310,8 +312,8 @@ ${lineCharts}
     }
 
     renderObjectSwimLane(obj: string, plan: Plan): string {
-        let subLanes = new SwimLane(1);
-        let stepsInvolvingThisObject = plan.steps
+        const subLanes = new SwimLane(1);
+        const stepsInvolvingThisObject = plan.steps
             .filter(step => this.shouldDisplay(step, plan))
             .filter(step => this.shouldDisplayObject(step, obj, plan))
             .map(step => this.renderSwimLameStep(step, plan, obj, subLanes))
@@ -331,7 +333,7 @@ ${stepsInvolvingThisObject}
             return true;
         }
 
-        let liftedAction = plan.domain?.getActions()
+        const liftedAction = plan.domain?.getActions()
             .find(a => a.getNameOrEmpty().toLowerCase() === step.getActionName().toLowerCase());
 
         if (!liftedAction) {
@@ -341,11 +343,11 @@ ${stepsInvolvingThisObject}
 
         let fromArgument = 0;
         do {
-            let indexOfArgument = step.getObjects().indexOf(obj.toLowerCase(), fromArgument);
+            const indexOfArgument = step.getObjects().indexOf(obj.toLowerCase(), fromArgument);
             fromArgument = indexOfArgument + 1;
             if (indexOfArgument > -1 && indexOfArgument < liftedAction.parameters.length) {
-                let parameter = liftedAction.parameters[indexOfArgument];
-                let shouldIgnoreThisArgument = this.settings.get(plan)?.shouldIgnoreActionParameter(liftedAction.name!, parameter.name);
+                const parameter = liftedAction.parameters[indexOfArgument];
+                const shouldIgnoreThisArgument = this.settings.get(plan)?.shouldIgnoreActionParameter(liftedAction.name ?? 'unnamed', parameter.name);
                 if (!shouldIgnoreThisArgument) {
                     return true;
                 }
@@ -356,29 +358,29 @@ ${stepsInvolvingThisObject}
     }
 
     renderSwimLameStep(step: PlanStep, plan: Plan, thisObj: string, swimLanes: SwimLane): string {
-        let actionColor = this.getActionColor(step, plan.domain);
-        let leftOffset = this.computeLeftOffset(step, plan);
-        let width = this.computeWidth(step, plan) + this.computeRelaxedWidth(step, plan);
-        let objects = step.getObjects()
+        const actionColor = this.getActionColor(step, plan.domain);
+        const leftOffset = this.computeLeftOffset(step, plan);
+        const width = this.computeWidth(step, plan) + this.computeRelaxedWidth(step, plan);
+        const objects = step.getObjects()
             .map(obj => obj.toLowerCase() === thisObj.toLowerCase() ? '@' : obj)
             .join(' ');
 
-        let availableLane = swimLanes.placeNext(leftOffset, width);
-        let fromTop = availableLane * this.planStepHeight + 1;
+        const availableLane = swimLanes.placeNext(leftOffset, width);
+        const fromTop = availableLane * this.planStepHeight + 1;
 
         return `
                     <div class="resourceTaskTooltip" style="background-color: ${actionColor}; left: ${leftOffset}px; width: ${width}px; top: ${fromTop}px;">${step.getActionName()} ${objects}<span class="resourceTaskTooltipText">${this.toActionTooltip(step)}</span></div>`;
     }
 
     renderGanttStep(step: PlanStep, index: number, plan: Plan, planIndex: number): string {
-        let actionLink = this.toActionLink(step.getActionName(), plan);
+        const actionLink = this.toActionLink(step.getActionName(), plan);
 
-        let fromTop = index * this.planStepHeight;
-        let fromLeft = this.computeLeftOffset(step, plan);
-        let width = this.computeWidth(step, plan);
-        let widthRelaxed = this.computeRelaxedWidth(step, plan);
+        const fromTop = index * this.planStepHeight;
+        const fromLeft = this.computeLeftOffset(step, plan);
+        const width = this.computeWidth(step, plan);
+        const widthRelaxed = this.computeRelaxedWidth(step, plan);
 
-        let actionColor = plan.domain ? this.getActionColor(step, plan.domain) : 'gray';
+        const actionColor = plan.domain ? this.getActionColor(step, plan.domain) : 'gray';
 
         return `        <div class="planstep" id="plan${planIndex}step${index}" style="left: ${fromLeft}px; top: ${fromTop}px; "><div class="planstep-bar" title="${this.toActionTooltipPlain(step)}" style="width: ${width}px; background-color: ${actionColor}"></div><div class="planstep-bar-relaxed whitecarbon" style="width: ${widthRelaxed}px;"></div>${actionLink} ${step.getObjects().join(' ')}</div>`;
     }
@@ -388,25 +390,25 @@ ${stepsInvolvingThisObject}
             return actionName;
         }
         else {
-            let revealActionUri = encodeURI('command:pddl.revealAction?' + JSON.stringify([plan.domain.fileUri, actionName]));
+            const revealActionUri = encodeURI('command:pddl.revealAction?' + JSON.stringify([plan.domain.fileUri, actionName]));
             return `<a href="${revealActionUri}" title="Reveal '${actionName}' action in the domain file">${actionName}</a>`;
         }
     }
 
     toActionTooltip(step: PlanStep): string {
-        let durationRow = step.isDurative && step.getDuration() !== undefined ?
-            `<tr><td class="actionToolTip">Duration: </td><td class="actionToolTip">${step.getDuration()!.toFixed(DIGITS)}</td></tr>
+        const durationRow = step.isDurative && step.getDuration() !== undefined ?
+            `<tr><td class="actionToolTip">Duration: </td><td class="actionToolTip">${step.getDuration()?.toFixed(DIGITS)}</td></tr>
             <tr><td class="actionToolTip">End: </td><td class="actionToolTip">${step.getEndTime().toFixed(DIGITS)}</td></tr>` :
             '';
         return `<table><tr><th colspan="2" class="actionToolTip">${step.getActionName()} ${step.getObjects().join(' ')}</th></tr><tr><td class="actionToolTip" style="width:50px">Start:</td><td class="actionToolTip">${step.getStartTime().toFixed(DIGITS)}</td></tr>${durationRow}</table>`;
     }
 
     toActionTooltipPlain(step: PlanStep): string {
-        let durationRow = step.isDurative && step.getDuration() !== undefined ?
-            `Duration: ${step.getDuration()!.toFixed(DIGITS)}, End: ${step.getEndTime().toFixed(DIGITS)}` :
+        const durationRow = step.isDurative && step.getDuration() !== undefined ?
+            `Duration: ${step.getDuration()?.toFixed(DIGITS)}, End: ${step.getEndTime().toFixed(DIGITS)}` :
             '';
 
-        let startTime = step.getStartTime() !== undefined ?
+        const startTime = step.getStartTime() !== undefined ?
             `, Start: ${step.getStartTime().toFixed(DIGITS)}` :
             '';
 
@@ -415,7 +417,7 @@ ${stepsInvolvingThisObject}
 
     async includeStyle(uri: Uri): Promise<string> {
         if (this.options.selfContained) {
-            let styleText = await utils.afs.readFile(uri.fsPath, { encoding: 'utf-8' });
+            const styleText = await utils.afs.readFile(uri.fsPath, { encoding: 'utf-8' });
             return `<style>\n${styleText}\n</style>`;
         } else {
             return `<link rel = "stylesheet" type = "text/css" href = "${uri.toString()}" />`;
@@ -424,7 +426,7 @@ ${stepsInvolvingThisObject}
 
     async includeScript(uri: Uri): Promise<string> {
         if (this.options.selfContained) {
-            let scriptText = await utils.afs.readFile(uri.fsPath, { encoding: 'utf-8' });
+            const scriptText = await utils.afs.readFile(uri.fsPath, { encoding: 'utf-8' });
             return `<script>\n${scriptText}\n</script>`;
         } else {
             return `<script src="${uri.toString()}"></script>`;
@@ -462,14 +464,14 @@ ${stepsInvolvingThisObject}
 
     computeWidth(step: PlanStep, plan: Plan): number {
         // remove the part of the planStep duration that belongs to the relaxed plan
-        let planHeadDuration = this.computePlanHeadDuration(step, plan);
+        const planHeadDuration = this.computePlanHeadDuration(step, plan);
         return Math.max(1, this.toViewCoordinates(planHeadDuration, plan));
     }
 
     computeRelaxedWidth(step: PlanStep, plan: Plan): number {
-        let planHeadDuration = this.computePlanHeadDuration(step, plan);
+        const planHeadDuration = this.computePlanHeadDuration(step, plan);
         // remove the part of the planStep duration that belongs to the planhead part
-        let relaxedDuration = (step.getDuration() ?? DEFAULT_EPSILON) - planHeadDuration;
+        const relaxedDuration = (step.getDuration() ?? DEFAULT_EPSILON) - planHeadDuration;
         return this.toViewCoordinates(relaxedDuration, plan);
     }
 
@@ -479,7 +481,7 @@ ${stepsInvolvingThisObject}
     }
 
     getActionColor(step: PlanStep, domain?: DomainInfo): string {
-        let actionIndex = domain?.getActions()
+        const actionIndex = domain?.getActions()
             .findIndex(action => action.getNameOrEmpty().toLowerCase() === step.getActionName().toLowerCase());
         if (actionIndex === undefined || actionIndex < 0) {
             return 'gray';

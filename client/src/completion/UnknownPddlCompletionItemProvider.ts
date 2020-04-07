@@ -11,16 +11,16 @@ import { nodeToRange } from '../utils';
 export class UnknownPddlCompletionItemProvider {
 
     provide(document: TextDocument, position: Position, _context: CompletionContext): CompletionItem[] | PromiseLike<CompletionItem[]> {
-        let tree = new parser.PddlSyntaxTreeBuilder(document.getText()).getTree();
-        let currentNode = tree.getNodeAt(document.offsetAt(position));
+        const tree = new parser.PddlSyntaxTreeBuilder(document.getText()).getTree();
+        const currentNode = tree.getNodeAt(document.offsetAt(position));
         if (currentNode.isDocument() ||
             currentNode.isType(parser.PddlTokenType.Whitespace) &&
             currentNode.getParent() && currentNode.getParent()!.isDocument()) {
 
-            let domainSnippet = new CompletionItem("domain", CompletionItemKind.Module);
+            const domainSnippet = new CompletionItem("domain", CompletionItemKind.Module);
             domainSnippet.command = { command: 'editor.action.insertSnippet', arguments: [{ 'langId': PDDL, 'name': 'domain' }], title: 'Insert domain snippet' };
 
-            let problemSnippet = new CompletionItem("problem", CompletionItemKind.Module);
+            const problemSnippet = new CompletionItem("problem", CompletionItemKind.Module);
             problemSnippet.command = { command: 'editor.action.insertSnippet', arguments: [{ 'langId': PDDL, 'name': 'problem' }], title: 'Insert problem snippet' };
             return [
                 domainSnippet,
@@ -29,13 +29,13 @@ export class UnknownPddlCompletionItemProvider {
         } else if (_context.triggerCharacter === '(') {
             if (currentNode.getParent() &&
                 currentNode.getParent()!.isType(parser.PddlTokenType.Document)) {
-                let domainSnippet = new CompletionItem("(define domain...", CompletionItemKind.Module);
+                const domainSnippet = new CompletionItem("(define domain...", CompletionItemKind.Module);
                 domainSnippet.command = { command: 'editor.action.insertSnippet', arguments: [{ 'langId': PDDL, 'name': 'domain' }], title: 'Insert domain snippet' };
                 domainSnippet.range = nodeToRange(document, currentNode.expand());
                 domainSnippet.insertText = '';
                 domainSnippet.filterText = '(define domain';
 
-                let problemSnippet = new CompletionItem("(define problem...", CompletionItemKind.Module);
+                const problemSnippet = new CompletionItem("(define problem...", CompletionItemKind.Module);
                 problemSnippet.command = { command: 'editor.action.insertSnippet', arguments: [{ 'langId': PDDL, 'name': 'problem' }], title: 'Insert problem snippet' };
                 problemSnippet.range = nodeToRange(document, currentNode.expand());
                 problemSnippet.insertText = '';

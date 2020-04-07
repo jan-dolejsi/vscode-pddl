@@ -19,7 +19,7 @@ export class SymbolRenameProvider implements RenameProvider {
         if (token.isCancellationRequested) { return undefined; }
         await this.symbolUtils.assertFileParsed(document);
 
-        let symbolInfo = this.symbolUtils.getSymbolInfo(document, position);
+        const symbolInfo = this.symbolUtils.getSymbolInfo(document, position);
 
         if (!symbolInfo || !this.canRename(symbolInfo)) { throw new Error("This cannot be renamed."); }
 
@@ -28,18 +28,18 @@ export class SymbolRenameProvider implements RenameProvider {
             throw new Error(`This is not a valid PDDL name: ${newName}`);
         }
 
-        let references = this.symbolUtils.findSymbolReferences(document, symbolInfo, true);
+        const references = this.symbolUtils.findSymbolReferences(document, symbolInfo, true);
         if (!references) {
             return undefined;
         }
 
-        let origName = document.getText(this.getWordRangeAtPosition(document, position));
+        const origName = document.getText(this.getWordRangeAtPosition(document, position));
 
         const workspaceEdits = new WorkspaceEdit();
 
         references.forEach(reference => {
-            let oldName = this.findDocument(reference.uri).getText(reference.range);
-            let replacementName = oldName.replace(origName, newName);
+            const oldName = this.findDocument(reference.uri).getText(reference.range);
+            const replacementName = oldName.replace(origName, newName);
 
             workspaceEdits.replace(reference.uri, reference.range, replacementName);
         });
@@ -52,7 +52,7 @@ export class SymbolRenameProvider implements RenameProvider {
     }
 
     private findDocument(fileUri: Uri): TextDocument {
-        let documentFound = workspace.textDocuments.find(textDoc => textDoc.uri.toString() === fileUri.toString());
+        const documentFound = workspace.textDocuments.find(textDoc => textDoc.uri.toString() === fileUri.toString());
 
         if (!documentFound) { throw new Error("Document not found in the workspace: " + fileUri.toString()); }
 
@@ -69,7 +69,7 @@ export class SymbolRenameProvider implements RenameProvider {
         await this.symbolUtils.assertFileParsed(document);
         if (token.isCancellationRequested) { return undefined; }
 
-        let symbolInfo = this.symbolUtils.getSymbolInfo(document, position);
+        const symbolInfo = this.symbolUtils.getSymbolInfo(document, position);
 
         if (!symbolInfo || !this.canRename(symbolInfo)) { throw new Error("This cannot be renamed."); }
 

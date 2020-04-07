@@ -30,7 +30,7 @@ export class OverviewPage {
 
     constructor(private context: ExtensionContext, private pddlConfiguration: PddlConfiguration, private val: ValDownloader) {
         instrumentOperationAsVsCodeCommand("pddl.showOverview", () => this.showWelcomePage(true));
-        workspace.onDidChangeConfiguration(_ => this.updatePageConfiguration(), undefined, this.context.subscriptions);
+        workspace.onDidChangeConfiguration(() => this.updatePageConfiguration(), undefined, this.context.subscriptions);
         extensions.onDidChange(() => this.updateIconsAlerts(), this.context.subscriptions);
         this.updateIconsAlerts();
     }
@@ -47,15 +47,15 @@ export class OverviewPage {
     }
 
     beenAWhile(): boolean {
-        let lastTimeShown = this.context.globalState.get<string>(LAST_SHOWN_OVERVIEW_PAGE, new Date(2000, 0, 1).toString());
-        let minutesSinceLastShow = (Date.now() - Date.parse(lastTimeShown)) / 1000 / 60;
+        const lastTimeShown = this.context.globalState.get<string>(LAST_SHOWN_OVERVIEW_PAGE, new Date(2000, 0, 1).toString());
+        const minutesSinceLastShow = (Date.now() - Date.parse(lastTimeShown)) / 1000 / 60;
         return minutesSinceLastShow > 60;
     }
 
     async createWelcomePage(showOnTop: boolean): Promise<void> {
-        let iconUri = this.context.asAbsolutePath('images/icon.png');
+        const iconUri = this.context.asAbsolutePath('images/icon.png');
 
-        let webViewPanel = window.createWebviewPanel(
+        const webViewPanel = window.createWebviewPanel(
             "pddl.Welcome",
             "PDDL Overview",
             {
@@ -71,13 +71,13 @@ export class OverviewPage {
             }
         );
 
-        let html = await this.getHtml(webViewPanel.webview);
+        const html = await this.getHtml(webViewPanel.webview);
         webViewPanel.webview.html = html;
         webViewPanel.iconPath = Uri.file(iconUri);
 
         webViewPanel.onDidDispose(() => this.webViewPanel = undefined, undefined, this.context.subscriptions);
         webViewPanel.webview.onDidReceiveMessage(message => this.handleMessage(message), undefined, this.context.subscriptions);
-        webViewPanel.onDidChangeViewState(_ => this.updatePageConfiguration());
+        webViewPanel.onDidChangeViewState(() => this.updatePageConfiguration());
 
         this.webViewPanel = webViewPanel;
         this.context.subscriptions.push(this.webViewPanel);
@@ -86,6 +86,7 @@ export class OverviewPage {
         this.context.globalState.update(LAST_SHOWN_OVERVIEW_PAGE, new Date(Date.now()));
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     async handleMessage(message: any): Promise<void> {
         console.log(`Message received from the webview: ${message.command}`);
 
@@ -130,7 +131,7 @@ export class OverviewPage {
                 await workspace.getConfiguration().update("workbench.iconTheme", "vscode-icons", ConfigurationTarget.Global);
                 break;
             case 'downloadVal':
-                let options: ValDownloadOptions = { bypassConsent: message.informedDecision };
+                const options: ValDownloadOptions = { bypassConsent: message.informedDecision };
                 await commands.executeCommand(VAL_DOWNLOAD_COMMAND, options);
                 break;
             default:
@@ -142,18 +143,18 @@ export class OverviewPage {
     CONTENT_FOLDER = path.join(this.VIEWS, "overview");
 
     async helloWorld(): Promise<void> {
-        let sampleDocuments = await this.createSample('helloworld', 'Hello World!');
+        const sampleDocuments = await this.createSample('helloworld', 'Hello World!');
 
         if (!sampleDocuments) { return; } // canceled
 
-        let documentsToOpen = await this.openSampleFiles(sampleDocuments, ['domain.pddl', 'problem.pddl']);
+        const documentsToOpen = await this.openSampleFiles(sampleDocuments, ['domain.pddl', 'problem.pddl']);
 
-        let workingDirectory = path.dirname(documentsToOpen[0].fileName);
+        const workingDirectory = path.dirname(documentsToOpen[0].fileName);
         commands.executeCommand("pddl.planAndDisplayResult", documentsToOpen[0].uri, documentsToOpen[1].uri, workingDirectory, "");
     }
 
     async openNunjucksSample(): Promise<void> {
-        let sampleDocuments = await this.createSample('nunjucks', 'Nunjucks template sample');
+        const sampleDocuments = await this.createSample('nunjucks', 'Nunjucks template sample');
 
         if (!sampleDocuments) { return; } // canceled
 
@@ -161,9 +162,9 @@ export class OverviewPage {
         await this.openSampleFiles(sampleDocuments, ['domain.pddl', 'problem.pddl', 'problem0.json']);
 
         const ptestJsonName = '.ptest.json';
-        let ptestJson = sampleDocuments.find(doc => path.basename(doc.fileName) === ptestJsonName);
+        const ptestJson = sampleDocuments.find(doc => path.basename(doc.fileName) === ptestJsonName);
         if (!ptestJson) { throw new Error("Could not find " + ptestJsonName);}
-        let generatedProblemUri = ptestJson!.uri.with({ fragment: '0' });
+        const generatedProblemUri = ptestJson.uri.with({ fragment: '0' });
 
         await commands.executeCommand(PTEST_VIEW, generatedProblemUri);
 
@@ -172,7 +173,7 @@ export class OverviewPage {
     }
 
     async openSampleFiles(sampleDocuments: TextDocument[], fileNamesToOpen: string[]): Promise<TextDocument[]> {
-        let documentsToOpen = fileNamesToOpen
+        const documentsToOpen = fileNamesToOpen
             .map(fileName => sampleDocuments.find(doc => path.basename(doc.fileName) === fileName));
 
         // were all files found?
@@ -180,7 +181,8 @@ export class OverviewPage {
             throw new Error('One or more sample files were not found: ' + fileNamesToOpen);
         }
 
-        let validDocumentsToOpen = documentsToOpen.map(v => v!);
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        const validDocumentsToOpen = documentsToOpen.map(v => v!);
 
         for (let index = 0; index < validDocumentsToOpen.length; index++) {
             const doc = sampleDocuments[index];
@@ -205,33 +207,34 @@ export class OverviewPage {
         let folder: Uri | undefined;
 
         if (!workspace.workspaceFolders || workspace.workspaceFolders.length === 0) {
-            let folders = await window.showOpenDialog({ canSelectFiles: false, canSelectFolders: true, canSelectMany: false, openLabel: `Select folder for the '${sampleName}' sample...` });
+            const folders = await window.showOpenDialog({ canSelectFiles: false, canSelectFolders: true, canSelectMany: false, openLabel: `Select folder for the '${sampleName}' sample...` });
             if (folders) {
                 folder = folders[0];
             }
         } else if (workspace.workspaceFolders.length === 1) {
             folder = workspace.workspaceFolders[0].uri;
         } else {
-            let selectedFolder = await window.showWorkspaceFolderPick({ placeHolder: `Select workspace folder for the '${sampleName}' sample...` });
+            const selectedFolder = await window.showWorkspaceFolderPick({ placeHolder: `Select workspace folder for the '${sampleName}' sample...` });
             folder = selectedFolder?.uri;
         }
 
         if (!folder) { return undefined; }
 
-        let sampleFiles = await utils.afs.readdir(this.context.asAbsolutePath(path.join(this.CONTENT_FOLDER, subDirectory)));
+        const sampleFiles = await utils.afs.readdir(this.context.asAbsolutePath(path.join(this.CONTENT_FOLDER, subDirectory)));
 
-        let sampleDocumentPromises = sampleFiles
+        const sampleDocumentPromises = sampleFiles
             .map(async (sampleFile) => {
-                let sampleResourcePath = this.context.asAbsolutePath(path.join(this.CONTENT_FOLDER, subDirectory, sampleFile));//'overview/helloWorld/domain.pddl'
-                let sampleText = await utils.afs.readFile(sampleResourcePath, { encoding: "utf-8" });
-                let sampleTargetPath = path.join(folder!.fsPath, sampleFile);//"helloWorldDomain.pddl"
+                const sampleResourcePath = this.context.asAbsolutePath(path.join(this.CONTENT_FOLDER, subDirectory, sampleFile));//'overview/helloWorld/domain.pddl'
+                const sampleText = await utils.afs.readFile(sampleResourcePath, { encoding: "utf-8" });
+                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                const sampleTargetPath = path.join(folder!.fsPath, sampleFile);//"helloWorldDomain.pddl"
                 if (await utils.afs.exists(sampleTargetPath)) { throw new Error(`File '${sampleFile}' already exists.`); }
                 await utils.afs.writeFile(sampleTargetPath, sampleText, { encoding: "utf-8" });
-                let sampleDocument = await workspace.openTextDocument(sampleTargetPath);
+                const sampleDocument = await workspace.openTextDocument(sampleTargetPath);
                 return sampleDocument;
             });
 
-        let sampleDocuments = await Promise.all(sampleDocumentPromises);
+        const sampleDocuments = await Promise.all(sampleDocumentPromises);
         return sampleDocuments;
     }
 
@@ -248,7 +251,7 @@ export class OverviewPage {
 
     async updatePageConfiguration(): Promise<boolean> {
         if (!this.webViewPanel || !this.webViewPanel.active) { return false; }
-        let message: OverviewConfiguration = {
+        const message: OverviewConfiguration = {
             command: 'updateConfiguration',
             planner: await this.pddlConfiguration.getPlannerPath(),
             plannerOutputTarget: workspace.getConfiguration("pddlPlanner").get<string>("executionTarget", "Output window"),

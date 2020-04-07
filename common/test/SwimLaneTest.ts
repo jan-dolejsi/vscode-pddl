@@ -9,19 +9,15 @@ import * as assert from 'assert';
 
 describe('SwimLaneTests', () => {
 
-    beforeEach(function () { 
-
-    });
-
     describe('#placeNext', () => {
         it('first action should go to first lane', () => {
             // given
-            let lanes = new SwimLane();
-            let startTime = 0;
-            let duration = 1;
+            const lanes = new SwimLane();
+            const startTime = 0;
+            const duration = 1;
 
             // when
-            let availableLane = lanes.placeNext(startTime, duration);
+            const availableLane = lanes.placeNext(startTime, duration);
 
             // then
             assert.equal(availableLane, 0, 'the first lane should be selected');
@@ -31,12 +27,12 @@ describe('SwimLaneTests', () => {
 
         it('first action should go to first lane and finish with the right offset', () => {
             // given
-            let lanes = new SwimLane();
-            let startTime = 10;
-            let duration = 1;
+            const lanes = new SwimLane();
+            const startTime = 10;
+            const duration = 1;
 
             // when
-            let availableLane = lanes.placeNext(startTime, duration);
+            const availableLane = lanes.placeNext(startTime, duration);
 
             // then
             assert.equal(availableLane, 0, 'the first lane should be selected');
@@ -46,13 +42,13 @@ describe('SwimLaneTests', () => {
 
         it('second action should go to first lane after the first action', () => {
             // given
-            let lanes = new SwimLane();
+            const lanes = new SwimLane();
             lanes.placeNext(1, 1);
-            let startTime = 10;
-            let duration = 1;
+            const startTime = 10;
+            const duration = 1;
 
             // when
-            let availableLane = lanes.placeNext(startTime, duration);
+            const availableLane = lanes.placeNext(startTime, duration);
 
             // then
             assert.equal(availableLane, 0, 'the first lane should be selected');
@@ -62,13 +58,13 @@ describe('SwimLaneTests', () => {
 
         it('second action should go to the second lane in parallel to the first action', () => {
             // given
-            let lanes = new SwimLane();
+            const lanes = new SwimLane();
             lanes.placeNext(0, 20);
-            let startTime = 10;
-            let duration = 1;
+            const startTime = 10;
+            const duration = 1;
 
             // when
-            let availableLane = lanes.placeNext(startTime, duration);
+            const availableLane = lanes.placeNext(startTime, duration);
 
             // then
             assert.equal(availableLane, 1, 'the second lane should be selected');
@@ -79,14 +75,14 @@ describe('SwimLaneTests', () => {
 
         it('third action (parallel to the second) should go again to the first lane', () => {
             // given
-            let lanes = new SwimLane();
+            const lanes = new SwimLane();
             lanes.placeNext(0, 3);
             lanes.placeNext(2, 4);
-            let startTime = 3.1;
-            let duration = 2;
+            const startTime = 3.1;
+            const duration = 2;
 
             // when
-            let availableLane = lanes.placeNext(startTime, duration);
+            const availableLane = lanes.placeNext(startTime, duration);
 
             // then
             assert.equal(availableLane, 0, 'the first lane should be selected');
@@ -96,14 +92,14 @@ describe('SwimLaneTests', () => {
 
         it('third action should go again to the first lane', () => {
             // given
-            let lanes = new SwimLane();
+            const lanes = new SwimLane();
             lanes.placeNext(0, 3);
             lanes.placeNext(2, 4);
-            let startTime = 8;
-            let duration = 2;
+            const startTime = 8;
+            const duration = 2;
 
             // when
-            let availableLane = lanes.placeNext(startTime, duration);
+            const availableLane = lanes.placeNext(startTime, duration);
 
             // then
             assert.equal(availableLane, 0, 'the first lane should be selected');
@@ -117,14 +113,14 @@ describe('SwimLaneTests', () => {
 
         it('second action should go to the second lane because of the separation', () => {
             // given
-            let separation = 10;
-            let lanes = new SwimLane(separation);
+            const separation = 10;
+            const lanes = new SwimLane(separation);
             lanes.placeNext(0, 10);
-            let startTime = 15; // this would normally fit the first lane, but not because of the spacer
-            let duration = 1;
+            const startTime = 15; // this would normally fit the first lane, but not because of the spacer
+            const duration = 1;
 
             // when
-            let availableLane = lanes.placeNext(startTime, duration);
+            const availableLane = lanes.placeNext(startTime, duration);
 
             // then
             assert.equal(availableLane, 1, 'the second lane should be selected');

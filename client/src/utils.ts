@@ -16,24 +16,24 @@ export function createPddlExtensionContext(context: ExtensionContext): PddlExten
         extensionPath: context.extensionPath,
         storagePath: context.storagePath,
         subscriptions: context.subscriptions,
-        pythonPath: () => workspace.getConfiguration().get("python.pythonPath", "python")
+        pythonPath: function (): string { return workspace.getConfiguration().get("python.pythonPath", "python"); }
     };
 }
 
-export async function getWebViewHtml(extensionContext: PddlExtensionContext, options: WebViewHtmlOptions, webview?: Webview) {
-    let overviewHtmlPath = extensionContext.asAbsolutePath(path.join(options.relativePath, options.htmlFileName));
+export async function getWebViewHtml(extensionContext: PddlExtensionContext, options: WebViewHtmlOptions, webview?: Webview): Promise<string> {
+    const overviewHtmlPath = extensionContext.asAbsolutePath(path.join(options.relativePath, options.htmlFileName));
     let html = await utils.afs.readFile(overviewHtmlPath, { encoding: "utf-8", flag: 'r' });
 
     html = html.replace(/<(script|img|link) ([^>]*)(src|href)="([^"]+)"/g, (sourceElement: string, elementName: string, middleBits: string, attribName: string, attribValue: string) => {
         if (attribValue.startsWith('http')) {
             return sourceElement;
         }
-        let resource = asWebviewUri(Uri.file(extensionContext.asAbsolutePath(path.join(options.relativePath, attribValue))), webview);
+        const resource = asWebviewUri(Uri.file(extensionContext.asAbsolutePath(path.join(options.relativePath, attribValue))), webview);
         return `<${elementName} ${middleBits}${attribName}="${resource}"`;
     });
 
     if (webview) {
-        html = html.replace("<!--CSP-->", createContentSecurityPolicy(webview!, options));
+        html = html.replace("<!--CSP-->", createContentSecurityPolicy(webview, options));
     }
 
     return html;
@@ -62,9 +62,9 @@ function asWebviewUri(localUri: Uri, webview?: Webview): Uri {
 }
 
 function createContentSecurityPolicy(webview: Webview, options: WebViewHtmlOptions): string {
-    let externalStyles = options.externalStyles?.map(uri => uri.toString()).join(" ") ?? "";
-    let externalScripts = options.externalScripts?.map(uri => uri.toString()).join(" ") ?? "";
-    let externalImages = options.externalImages?.map(uri => uri.toString()).join(" ") ?? "";
+    const externalStyles = options.externalStyles?.map(uri => uri.toString()).join(" ") ?? "";
+    const externalScripts = options.externalScripts?.map(uri => uri.toString()).join(" ") ?? "";
+    const externalImages = options.externalImages?.map(uri => uri.toString()).join(" ") ?? "";
     return `<meta http-equiv="Content-Security-Policy"
 \t\tcontent="default-src 'none'; img-src ${webview.cspSource} ${externalImages} https:; script-src ${webview.cspSource} ${externalScripts} 'unsafe-inline'; style-src ${webview.cspSource} ${externalStyles} 'unsafe-inline';"
 \t/>`;
@@ -86,12 +86,12 @@ export function firstIndex<T>(array: T[], fn: (t: T) => boolean): number {
     return -1;
 }
 
-export function compareMaps(map1: Map<string, string>, map2: Map<string, string>) {
-    var testVal;
+export function compareMaps(map1: Map<string, string>, map2: Map<string, string>): boolean {
+    let testVal;
     if (map1.size !== map2.size) {
         return false;
     }
-    for (var [key, val] of map1) {
+    for (const [key, val] of map1) {
         testVal = map2.get(key);
         // in cases of an undefined value, make sure the key
         // actually exists on the object so there are no false positives
@@ -107,13 +107,13 @@ export function compareMaps(map1: Map<string, string>, map2: Map<string, string>
  * @param time date time
  */
 export function toFuzzyRelativeTime(time: number): string {
-    var delta = Math.round((+new Date - time) / 1000);
+    const delta = Math.round((+new Date - time) / 1000);
 
-    var minute = 60,
+    const minute = 60,
         hour = minute * 60,
         day = hour * 24;
 
-    var fuzzy;
+    let fuzzy;
 
     if (delta < 30) {
         fuzzy = 'just now';
@@ -137,8 +137,8 @@ export function toFuzzyRelativeTime(time: number): string {
     return fuzzy;
 }
 
-export function showError(reason: any): void {
-    console.log(reason);
+export function showError(reason: Error): void {
+    console.error(reason);
     window.showErrorMessage(reason.message);
 }
 
@@ -151,7 +151,7 @@ export function assertDefined<T>(value: T | undefined, message: string): T {
         throw new Error("Assertion error: " + message);
     }
     else {
-        return value!;
+        return value;
     }
 }
 
@@ -209,6 +209,7 @@ export class UriMap<T> extends utils.StringifyingMap<Uri, T> {
     }
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function asSerializable(obj: any): any {
     if (obj instanceof Map) {
         return strMapToObj(obj);
@@ -217,7 +218,7 @@ export function asSerializable(obj: any): any {
         return obj.map(o => asSerializable(o));
     }
     else if (obj instanceof Object) {
-        let serObj = Object.create(null);
+        const serObj = Object.create(null);
         Object.keys(obj).forEach(key => serObj[key] = asSerializable(obj[key]));
         return serObj;
     }
@@ -226,17 +227,18 @@ export function asSerializable(obj: any): any {
     }
 }
 
-export function strMapToObj(strMap: Map<string, any>): any {
-    let obj = Object.create(null);
-    for (let [k, v] of strMap) {
+export function strMapToObj(strMap: Map<string, unknown>): unknown {
+    const obj = Object.create(null);
+    for (const [k, v] of strMap) {
         obj[k] = asSerializable(v);
     }
     return obj;
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function objToStrMap(obj: any): Map<string, any> {
-    let strMap = new Map();
-    for (let k of Object.keys(obj)) {
+    const strMap = new Map();
+    for (const k of Object.keys(obj)) {
         strMap.set(k, obj[k]);
     }
     return strMap;

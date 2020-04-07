@@ -25,9 +25,9 @@ export class PlanHappeningsExporter {
     }
 
     public async export(): Promise<void> {
-        let defaultPlanHappeningsPath = PlanExporter.replaceExtension(this.planDocument.uri.fsPath, '.happenings');
+        const defaultPlanHappeningsPath = PlanExporter.replaceExtension(this.planDocument.uri.fsPath, '.happenings');
 
-        let options: SaveDialogOptions = {
+        const options: SaveDialogOptions = {
             saveLabel: "Save plan happenings as...",
             filters: {
                 "Plan Happenings": ["happenings"]
@@ -37,7 +37,7 @@ export class PlanHappeningsExporter {
         };
 
         try {
-            let uri = await window.showSaveDialog(options);
+            const uri = await window.showSaveDialog(options);
             if (uri === undefined) { return; } // canceled by user
 
             await exportToAndShow(this.happeningsText, uri);
@@ -68,7 +68,7 @@ export class PlanHappeningsExporter {
                     this.flushComments();
                 }
 
-                let happening = this.parseStepAndEnqueueEnd(line);
+                const happening = this.parseStepAndEnqueueEnd(line);
                 if (happening) {
                     this.flushHappeningsBefore(happening.time);
 
@@ -90,24 +90,24 @@ export class PlanHappeningsExporter {
 
     parseStepAndEnqueueEnd(line: string): Happening | null {
         parser.PddlPlannerOutputParser.planStepPattern.lastIndex = 0;
-        let group = parser.PddlPlannerOutputParser.planStepPattern.exec(line);
+        const group = parser.PddlPlannerOutputParser.planStepPattern.exec(line);
 
         if (!group) {
             this.happeningsText += `; Warning: line did not parse: ${line}`;
             return null;
         } else {
             // this line is a plan step
-            let time = group[2] ? parseFloat(group[2]) : this.makespan;
-            let action = group[3];
-            let isDurative = group[5] ? true : false;
-            let duration = isDurative ? parseFloat(group[5]) : this.epsilon;
+            const time = group[2] ? parseFloat(group[2]) : this.makespan;
+            const action = group[3];
+            const isDurative = group[5] ? true : false;
+            const duration = isDurative ? parseFloat(group[5]) : this.epsilon;
 
-            let count = this.getActionCount(action);
+            const count = this.getActionCount(action);
 
-            let thisHappening = new Happening(time, action, isDurative ? HappeningType.Start : HappeningType.Instantaneous, count);
+            const thisHappening = new Happening(time, action, isDurative ? HappeningType.Start : HappeningType.Instantaneous, count);
 
             if (isDurative) {
-                let endHappening = new Happening(time + duration, action, HappeningType.End, count);
+                const endHappening = new Happening(time + duration, action, HappeningType.End, count);
                 this.enqueue(endHappening);
             }
 
@@ -117,11 +117,12 @@ export class PlanHappeningsExporter {
 
     getActionCount(action: string): number {
         let prevCount = -1;
-        if (this.actionCounter.has(action)){
-            prevCount = this.actionCounter.get(action)!;
+        const actionCount = this.actionCounter.get(action);
+        if (actionCount !== undefined){
+            prevCount = actionCount;
         }
 
-        let newCount = prevCount +1;
+        const newCount = prevCount +1;
         this.actionCounter.set(action, newCount);
         return newCount;
     }

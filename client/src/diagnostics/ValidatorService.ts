@@ -22,15 +22,16 @@ export class ValidatorService extends Validator {
         super(path);
     }
     
-    validate(domainInfo: DomainInfo, problemFiles: ProblemInfo[], onSuccess: (diagnostics: Map<string, Diagnostic[]>) => void, onError: (error: string) => void) {
+    validate(domainInfo: DomainInfo, problemFiles: ProblemInfo[], onSuccess: (diagnostics: Map<string, Diagnostic[]>) => void, onError: (error: string) => void): void {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         let requestHeader: any = {};
         if(this.useAuthentication && this.authentication.getSToken()) {
             requestHeader = {
-                "Authorization": "Bearer " + this.authentication.getSToken()!
+                "Authorization": "Bearer " + this.authentication.getSToken()
             };
         }
 
-        let requestBody = {
+        const requestBody = {
             "domain": domainInfo.getText(),
             "problems": problemFiles.map(pf => pf.getText())
         };
@@ -45,12 +46,12 @@ export class ValidatorService extends Validator {
             if(this.useAuthentication) {
                 if (httpResponse) {
                     if (httpResponse.statusCode === 400) {
-                        let message = "Authentication failed. Please login or update tokens.";
+                        const message = "Authentication failed. Please login or update tokens.";
                         onError.apply(this, [message]);
                         return;
                     }
                     else if (httpResponse.statusCode === 401) {
-                        let message = "Invalid token. Please update tokens.";
+                        const message = "Invalid token. Please update tokens.";
                         onError.apply(this, [message]);
                         return;
                     }
@@ -58,30 +59,30 @@ export class ValidatorService extends Validator {
             }
 
             if (httpResponse && httpResponse.statusCode !== 200) {
-                let notificationMessage = `PDDL Language Parser returned code ${httpResponse.statusCode} ${httpResponse.statusMessage}`;
+                const notificationMessage = `PDDL Language Parser returned code ${httpResponse.statusCode} ${httpResponse.statusMessage}`;
                 //let notificationType = MessageType.Warning;
                 onError.apply(this, [notificationMessage]);
                 return;
             }
 
-            let messages = responseBody;
+            const messages = responseBody;
 
-            let diagnostics = this.createEmptyDiagnostics(domainInfo, problemFiles);
+            const diagnostics = this.createEmptyDiagnostics(domainInfo, problemFiles);
 
-            for (var i = 0; i < messages.length; i++) {
+            for (let i = 0; i < messages.length; i++) {
                 //&& diagnostics.length < this.maxNumberOfProblems; i++) {
 
                 domainInfo.setStatus(FileStatus.Validated);
                 problemFiles.forEach(p => p.setStatus(FileStatus.Validated));
 
-                let location: string = messages[i].location;
+                const location: string = messages[i].location;
 
                 let fileUri: string | undefined;
                 if (location === "DOMAIN") {
                     fileUri = domainInfo.fileUri;
                 }
                 else if (location.startsWith("PROBLEM")) {
-                    var problemIdx = parseInt(location.substr("PROBLEM".length + 1));
+                    const problemIdx = parseInt(location.substr("PROBLEM".length + 1));
                     fileUri = problemFiles[problemIdx].fileUri;
                 }
                 else {
@@ -89,9 +90,9 @@ export class ValidatorService extends Validator {
                     continue;
                 }
 
-                let severity = Validator.toSeverity(messages[i].severity);
+                const severity = Validator.toSeverity(messages[i].severity);
 
-                let range = this.toRange(messages[i].position);
+                const range = this.toRange(messages[i].position);
 
                 if (fileUri !== undefined) {
                     diagnostics.get(fileUri)?.push(new Diagnostic(range, messages[i].message, severity));
@@ -103,11 +104,12 @@ export class ValidatorService extends Validator {
         });
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     toRange(position: any): Range {
         if (position === null || position === undefined) { return Validator.createRange(0, 0); }
 
-        let line = parseInt(position.line) - 1;
-        let character = parseInt(position.character) - 1;
+        const line = parseInt(position.line) - 1;
+        const character = parseInt(position.character) - 1;
 
         return Validator.createRange(line, character);
     }

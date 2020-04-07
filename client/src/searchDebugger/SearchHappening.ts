@@ -21,7 +21,7 @@ export class MockSearchHappening implements SearchHappening{
         public readonly isRelaxed: boolean) { }
 
     toString(): string {
-        let relaxed = this.isRelaxed ? '*' : '';
+        const relaxed = this.isRelaxed ? '*' : '';
         return `${this.earliestTime}: ${this.actionName}[${this.shotCounter}] ${this.kind}${relaxed}`;
     }
 }

@@ -21,11 +21,11 @@ export class AssociationCodeActionProvider implements CodeActionProvider {
 		//console.log('providing code lens actions');
 		if (token.isCancellationRequested) { return []; }
 
-		let associateProblemCodeActions = context.diagnostics
+		const associateProblemCodeActions = context.diagnostics
 			.filter(diagnostic => diagnostic.code === NoProblemAssociated.DIAGNOSTIC_CODE)
 			.map(diagnostic => this.createAssociateProblemCommand(diagnostic, document));
 
-		let associateDomainCodeActions = context.diagnostics
+		const associateDomainCodeActions = context.diagnostics
 			.filter(diagnostic => diagnostic.code === NoDomainAssociated.DIAGNOSTIC_CODE)
 			.map(diagnostic => this.createAssociateDomainCommand(diagnostic, document));
 

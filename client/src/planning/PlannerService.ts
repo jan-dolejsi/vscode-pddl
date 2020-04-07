@@ -21,20 +21,23 @@ export abstract class PlannerService extends Planner {
         super(plannerPath);
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     abstract createRequestBody(domainFileInfo: DomainInfo, problemFileInfo: ProblemInfo): Promise<any>;
 
     abstract createUrl(): string;
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     abstract processServerResponseBody(responseBody: any, planParser: parser.PddlPlanParser, parent: PlannerResponseHandler,
         resolve: (plans: Plan[]) => void, reject: (error: Error) => void): void;
 
     async plan(domainFileInfo: DomainInfo, problemFileInfo: ProblemInfo, planParser: parser.PddlPlanParser, parent: PlannerResponseHandler): Promise<Plan[]> {
         parent.handleOutput(`Planning service: ${this.plannerPath}\nDomain: ${domainFileInfo.name}, Problem: ${problemFileInfo.name}\n`);
 
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         let requestHeader: any = {};
         if (this.authentication && this.authentication.getSToken() !== undefined) {
             requestHeader = {
-                "Authorization": "Bearer " + this.authentication.getSToken()!
+                "Authorization": "Bearer " + this.authentication.getSToken()
             };
         }
 
@@ -42,13 +45,13 @@ export abstract class PlannerService extends Planner {
             window.showWarningMessage("Search Debugger is not supported by planning services. Only planner executable may support it.");
         }
 
-        let requestBody = await this.createRequestBody(domainFileInfo, problemFileInfo);
+        const requestBody = await this.createRequestBody(domainFileInfo, problemFileInfo);
         if (!requestBody) { return []; }
-        let url: string = this.createUrl();
+        const url: string = this.createUrl();
 
-        let timeoutInSec = this.getTimeout();
+        const timeoutInSec = this.getTimeout();
 
-        let that = this;
+        const that = this;
         return new Promise<Plan[]>(function (resolve, reject) {
 
             request.post({ url: url, headers: requestHeader, body: requestBody, json: true, timeout: timeoutInSec*1000*1.1 }, (err, httpResponse, responseBody) => {
@@ -61,14 +64,14 @@ export abstract class PlannerService extends Planner {
                 if (that.authentication) {
                     if (httpResponse) {
                         if (httpResponse.statusCode === 400) {
-                            let message = "Authentication failed. Please login or update tokens.";
-                            let error = new Error(message);
+                            const message = "Authentication failed. Please login or update tokens.";
+                            const error = new Error(message);
                             reject(error);
                             return;
                         }
                         else if (httpResponse.statusCode === 401) {
-                            let message = "Invalid token. Please update tokens.";
-                            let error = new Error(message);
+                            const message = "Invalid token. Please update tokens.";
+                            const error = new Error(message);
                             reject(error);
                             return;
                         }
@@ -76,8 +79,8 @@ export abstract class PlannerService extends Planner {
                 }
 
                 if (httpResponse && httpResponse.statusCode > 202) {
-                    let notificationMessage = `PDDL Planning Service returned code ${httpResponse.statusCode} ${httpResponse.statusMessage}`;
-                    let error = new Error(notificationMessage);
+                    const notificationMessage = `PDDL Planning Service returned code ${httpResponse.statusCode} ${httpResponse.statusMessage}`;
+                    const error = new Error(notificationMessage);
                     reject(error);
                     return;
                 }
@@ -90,15 +93,16 @@ export abstract class PlannerService extends Planner {
     /** Gets timeout in seconds. */
     abstract getTimeout(): number;
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     parsePlanSteps(planSteps: any, planParser: parser.PddlPlannerOutputParser): void {
-        for (var index = 0; index < planSteps.length; index++) {
-            var planStep = planSteps[index];
-            let fullActionName = (<string>planStep["name"]).replace('(', '').replace(')', '');
-            let time = planStep["time"] ?? (index + 1) * planParser.options.epsilon;
+        for (let index = 0; index < planSteps.length; index++) {
+            const planStep = planSteps[index];
+            const fullActionName = (planStep["name"] as string).replace('(', '').replace(')', '');
+            const time = planStep["time"] ?? (index + 1) * planParser.options.epsilon;
             let duration = planStep["duration"];
-            let isDurative = duration !== undefined && duration !== null;
+            const isDurative = duration !== undefined && duration !== null;
             duration = duration ?? planParser.options.epsilon;
-            let planStepObj = new PlanStep(time, fullActionName, isDurative, duration, index);
+            const planStepObj = new PlanStep(time, fullActionName, isDurative, duration, index);
             planParser.appendStep(planStepObj);
         }
         planParser.onPlanFinished();

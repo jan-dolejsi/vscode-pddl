@@ -36,15 +36,15 @@ export function toLanguage(doc: TextDocument): PddlLanguage | undefined {
 
 export function getDomainFileForProblem(problemFile: ProblemInfo, pddlWorkspace: CodePddlWorkspace): DomainInfo {
     // find domain files in the same folder that match the problem's domain name
-    let domainFiles = pddlWorkspace.getDomainFilesFor(problemFile);
+    const domainFiles = pddlWorkspace.getDomainFilesFor(problemFile);
 
     if (domainFiles.length > 1) {
-        let candidates = domainFiles.map(d => PddlWorkspace.getFileName(d.fileUri)).join(', ');
-        let message = `There are multiple candidate domains with name ${problemFile.domainName}: ${candidates}. Click 💡 to select it...`;
+        const candidates = domainFiles.map(d => PddlWorkspace.getFileName(d.fileUri)).join(', ');
+        const message = `There are multiple candidate domains with name ${problemFile.domainName}: ${candidates}. Click 💡 to select it...`;
         throw new NoDomainAssociated(problemFile, message);
     }
     else if (domainFiles.length === 0) {
-        let message = `There are no domains open in the same folder with name (domain '${problemFile.domainName}') open in the editor. Click 💡 to select it...`;
+        const message = `There are no domains open in the same folder with name (domain '${problemFile.domainName}') open in the editor. Click 💡 to select it...`;
         throw new NoDomainAssociated(problemFile, message);
     }
     else {
@@ -53,11 +53,11 @@ export function getDomainFileForProblem(problemFile: ProblemInfo, pddlWorkspace:
 }
 
 export function getDomainAndProblemForPlan(planInfo: PlanInfo, pddlWorkspace: PddlWorkspace): DomainAndProblem {
-    let problemFileInfo = pddlWorkspace.getProblemFileForPlan(planInfo);
+    const problemFileInfo = pddlWorkspace.getProblemFileForPlan(planInfo);
 
     if (!problemFileInfo) { throw new NoProblemAssociated(planInfo); }
 
-    let domainFileInfo = pddlWorkspace.getDomainFileFor(problemFileInfo);
+    const domainFileInfo = pddlWorkspace.getDomainFileFor(problemFileInfo);
 
     if (!domainFileInfo) { throw new NoDomainAssociated(problemFileInfo); }
 
@@ -99,13 +99,13 @@ export class NoDomainAssociated extends Error {
 }
 
 export function getDomainAndProblemForHappenings(happeningsInfo: HappeningsInfo, pddlWorkspace: PddlWorkspace): DomainAndProblem {
-    let problemFileInfo = pddlWorkspace.getProblemFileForHappenings(happeningsInfo);
+    const problemFileInfo = pddlWorkspace.getProblemFileForHappenings(happeningsInfo);
 
     if (!problemFileInfo) {
         throw new Error(`No problem file with name '(problem ${happeningsInfo.problemName}') and located in the same folder as the plan is open in the editor.`);
     }
 
-    let domainFileInfo = pddlWorkspace.getDomainFileFor(problemFileInfo);
+    const domainFileInfo = pddlWorkspace.getDomainFileFor(problemFileInfo);
 
     if (!domainFileInfo) {
         throw new Error(`No domain file corresponding to problem '${problemFileInfo.name}' and located in the same folder is open in the editor.`);
@@ -125,10 +125,10 @@ export async function selectHappenings(): Promise<string | undefined> {
         return window.activeTextEditor.document.uri.fsPath;
     }
 
-    let workspaceFolder = window.activeTextEditor && window.activeTextEditor.document &&
+    const workspaceFolder = window.activeTextEditor && window.activeTextEditor.document &&
         workspace.getWorkspaceFolder(window.activeTextEditor.document.uri);
 
-    let happeningsUri = await selectFile({
+    const happeningsUri = await selectFile({
         language: PddlLanguage.HAPPENINGS,
         promptMessage: 'Select happenings file to debug...',
         findPattern: '**/*.happenings',
@@ -153,9 +153,9 @@ export async function selectHappenings(): Promise<string | undefined> {
  * @returns selected document, or null if the user canceled, or undefined, if the user wants to select another document from the disk
  */
 async function selectTextDocument(options: SelectFileOptions, textDocuments: TextDocument[]): Promise<TextDocument | null | undefined> {
-    let openDocumentPicks = textDocuments.map(d => new TextDocumentQuickPickItem(d));
-    let items: DocumentQuickPickItem[] = [...openDocumentPicks, anotherDocumentQuickPickItem];
-    let selectedOpenDocument = await window.showQuickPick(items, { canPickMany: false, placeHolder: options.promptMessage });
+    const openDocumentPicks = textDocuments.map(d => new TextDocumentQuickPickItem(d));
+    const items: DocumentQuickPickItem[] = [...openDocumentPicks, anotherDocumentQuickPickItem];
+    const selectedOpenDocument = await window.showQuickPick(items, { canPickMany: false, placeHolder: options.promptMessage });
     if (!selectedOpenDocument) {
         return null;
     } else if (selectedOpenDocument !== anotherDocumentQuickPickItem) {
@@ -173,9 +173,9 @@ async function selectTextDocument(options: SelectFileOptions, textDocuments: Tex
 export async function selectFile(options: SelectFileOptions, suggestedFiles?: FileInfo[]): Promise<Uri | undefined> {
     // 0. is one of the suggested text documents the right one?
     if (suggestedFiles && suggestedFiles.length) {
-        let openFileInfoPicks = suggestedFiles.map(d => new SuggestedFileInfoQuickPickItem(d));
-        let items: FileInfoQuickPickItem[] = [...openFileInfoPicks, anotherDocumentFileInfoQuickPickItem];
-        let selectedPick = await window.showQuickPick(items, { canPickMany: false, placeHolder: options.promptMessage });
+        const openFileInfoPicks = suggestedFiles.map(d => new SuggestedFileInfoQuickPickItem(d));
+        const items: FileInfoQuickPickItem[] = [...openFileInfoPicks, anotherDocumentFileInfoQuickPickItem];
+        const selectedPick = await window.showQuickPick(items, { canPickMany: false, placeHolder: options.promptMessage });
         if (!selectedPick) {
             return undefined;
         } else if (selectedPick !== anotherDocumentFileInfoQuickPickItem) {
@@ -185,8 +185,8 @@ export async function selectFile(options: SelectFileOptions, suggestedFiles?: Fi
 
     // 1. is there a suitable file open in the editor?
     {
-        let openDocs = workspace.textDocuments.filter(doc => toLanguage(doc) === options.language);
-        let selectedTextDocument = await selectTextDocument(options, openDocs);
+        const openDocs = workspace.textDocuments.filter(doc => toLanguage(doc) === options.language);
+        const selectedTextDocument = await selectTextDocument(options, openDocs);
         if (selectedTextDocument) {
             return selectedTextDocument.uri;
         } else if (selectedTextDocument === null) {
@@ -196,11 +196,11 @@ export async function selectFile(options: SelectFileOptions, suggestedFiles?: Fi
 
     // 2. else, select a file in the workspace
     {
-        let workspaceFileUris = await workspace.findFiles(options.findPattern, '.git/**', 100);
+        const workspaceFileUris = await workspace.findFiles(options.findPattern, '.git/**', 100);
 
-        let workspaceFilePicks = workspaceFileUris.map(uri => new WorkspaceUriQuickPickItem(uri));
-        let items = [...workspaceFilePicks, anotherLocalFileQuickPickItem];
-        let workspaceFileUriPicked = await window.showQuickPick(items, { canPickMany: false, placeHolder: options.promptMessage });
+        const workspaceFilePicks = workspaceFileUris.map(uri => new WorkspaceUriQuickPickItem(uri));
+        const items = [...workspaceFilePicks, anotherLocalFileQuickPickItem];
+        const workspaceFileUriPicked = await window.showQuickPick(items, { canPickMany: false, placeHolder: options.promptMessage });
         if (!workspaceFileUriPicked) {
             return undefined;
         } else if (workspaceFileUriPicked !== anotherLocalFileQuickPickItem) {
@@ -210,8 +210,8 @@ export async function selectFile(options: SelectFileOptions, suggestedFiles?: Fi
 
     // 3. else select a file from the local disk
     {
-        let defaultUri = options.workspaceFolder?.uri;
-        let selectedHappeningsUris = await window.showOpenDialog({
+        const defaultUri = options.workspaceFolder?.uri;
+        const selectedHappeningsUris = await window.showOpenDialog({
             defaultUri: defaultUri,
             canSelectFiles: true, canSelectFolders: false,
             canSelectMany: false,
@@ -262,7 +262,7 @@ class SuggestedFileInfoQuickPickItem implements FileInfoQuickPickItem {
     readonly label: string;
     readonly description: string;
     constructor(private fileInfo: FileInfo) {
-        let filePath = Uri.parse(fileInfo.fileUri).fsPath;
+        const filePath = Uri.parse(fileInfo.fileUri).fsPath;
         this.label = basename(filePath);
         this.description = dirname(filePath);
     }

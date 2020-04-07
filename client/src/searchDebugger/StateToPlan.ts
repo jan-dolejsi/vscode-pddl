@@ -20,10 +20,10 @@ export class StateToPlan {
 
     convert(state: State): Plan {
 
-        let totalPlan = state.getTotalPlan();
+        const totalPlan = state.getTotalPlan();
 
         // all happenings except for ENDs
-        let planStepBuilders = totalPlan
+        const planStepBuilders = totalPlan
             .filter(happening => happening.kind !== HappeningType.END)
             .map(happening => PlanStepBuilder.fromStart(happening));
 
@@ -32,15 +32,15 @@ export class StateToPlan {
             .filter(happening => happening.kind === HappeningType.END)
             .forEach(endHappening => StateToPlan.associate(endHappening, planStepBuilders));
 
-        let planSteps = planStepBuilders.map(step => step.toPalStep(state.earliestTime));
+        const planSteps = planStepBuilders.map(step => step.toPalStep(state.earliestTime));
 
-        let helpfulActions = state.helpfulActions ?? [];
+        const helpfulActions = state.helpfulActions ?? [];
 
         return new Plan(planSteps, this.domain, this.problem, state.earliestTime, helpfulActions);
     }
 
     static associate(endHappening: SearchHappening, planSteps: PlanStepBuilder[]): void {
-        let correspondingStart = planSteps.find(step => step.correspondsToEnd(endHappening) && !step.hasEnd());
+        const correspondingStart = planSteps.find(step => step.correspondsToEnd(endHappening) && !step.hasEnd());
 
         if (!correspondingStart) {
             throw new Error("Cannot find start corresponding to: " + endHappening.actionName);
@@ -92,9 +92,9 @@ class PlanStepBuilder {
     }
 
     toPalStep(stateTime: number): PlanStep {
-        let isDurative = this.start.kind === HappeningType.START;
+        const isDurative = this.start.kind === HappeningType.START;
 
-        var duration = DEFAULT_EPSILON;
+        let duration = DEFAULT_EPSILON;
         if (isDurative) {
             if (this.end) {
                 duration = this.end.earliestTime - this.start.earliestTime;
@@ -105,7 +105,7 @@ class PlanStepBuilder {
             }
         }
 
-        let commitment = this.getCommitment(isDurative);
+        const commitment = this.getCommitment(isDurative);
 
         return new PlanStep(this.start.earliestTime, this.start.actionName, isDurative, duration, -1, commitment);
     }
