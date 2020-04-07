@@ -5,7 +5,6 @@ import { before, after } from 'mocha';
 
 import * as vscode from 'vscode';
 import * as path from 'path';
-import * as fs from 'fs';
 import { ValDownloader } from '../../validation/ValDownloader';
 import { PddlConfiguration, CONF_PDDL, VAL_STEP_PATH, VALIDATION_PATH, VALUE_SEQ_PATH, PDDL_PARSER, PARSER_EXECUTABLE_OR_SERVICE, EXECUTABLE_OR_SERVICE } from '../../configuration';
 import { createTestExtensionContext } from './testUtils';
@@ -37,30 +36,7 @@ class TestableValDownloader extends ValDownloader {
         return this.shouldOverwriteDelegate(toolName, yourConfiguredPath, newToolPath);
     }
 }
-
-async function mkdirIfDoesNotExist(path: fs.PathLike, options: fs.MakeDirectoryOptions | undefined | null | number | string): Promise<void> {
-    return new Promise<void>((resolve, reject) => {
-        fs.mkdir(path, options, err => {
-            if (err && err.code !== 'EEXIST') {
-                reject(err);
-            }
-            else {
-                resolve();
-            }
-        });
-    });
-}
-
-async function getFiles(dir: string): Promise<string[]> {
-    const dirents = await afs.readdir(dir, { withFileTypes: true });
-    const childrenFilePromises = dirents.map((dirent) => {
-        const res = path.resolve(dir, dirent.name);
-        return dirent.isDirectory() ? getFiles(res) : Promise.resolve([res]);
-    });
-    const files = await Promise.all(childrenFilePromises);
-    return Array.prototype.concat(...files);
-}
-  
+ 
 suite('VAL Download and Configuration', () => {
     let origValStepPath: string | undefined;
     let origValConfiguration: string | undefined;
@@ -104,7 +80,7 @@ suite('VAL Download and Configuration', () => {
         try {
             // GIVEN
             const valFolderPath = path.join(extensionContext.globalStoragePath, 'val');
-            await mkdirIfDoesNotExist(valFolderPath, { mode: 0o777, recursive: true });
+            await utils.afs.mkdirIfDoesNotExist(valFolderPath, { mode: 0o777, recursive: true });
             const valManifestPath = path.join(valFolderPath, 'VAL.version');
             const previousValManifest = {
                 "buildId": 24,
@@ -137,9 +113,7 @@ suite('VAL Download and Configuration', () => {
                 // "valueSeqPath": "Val-20190805.2-win64/bin/ValueSeq.exe",
                 // "valStepPath": "Val-20190805.2-win64/bin/ValStep.exe"
             };
-            console.log('>>> BEFORE writeFile(valManifestPath, JSON.stringify(previousValManifest, null, 2))');
             await utils.afs.writeFile(valManifestPath, JSON.stringify(previousValManifest, null, 2));
-            console.log('>>> AFTER writeFile(valManifestPath, JSON.stringify(previousValManifest, null, 2))');
 
             const myValStepPath = 'MyValStep.exe';
             await pddlConf.update(VAL_STEP_PATH, myValStepPath, vscode.ConfigurationTarget.Global);
@@ -170,7 +144,7 @@ suite('VAL Download and Configuration', () => {
             expect(askedToOverwrite).to.deep.equal(['ValStep']);
         }
         finally {
-            const allStoredFiles = await getFiles(extensionContext.globalStoragePath);
+            const allStoredFiles = await utils.afs.getFiles(extensionContext.globalStoragePath);
             console.log(`All files in the mocked global storage: \n` + allStoredFiles.join('\n'));
         }
     }).timeout(5000);

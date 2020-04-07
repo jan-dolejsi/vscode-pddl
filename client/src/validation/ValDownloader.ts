@@ -93,7 +93,7 @@ export class ValDownloader extends ValDownloaderBase {
     private async downloadAndConfigure(): Promise<ValVersion> {
 
         const buildId = this.getLatestStableValBuildId();
-        utils.afs.mkdirIfDoesNotExist(this.binaryStorage, 0o755);
+        await utils.afs.mkdirIfDoesNotExist(this.binaryStorage, 0o755);
 
         const newValVersion = await this.download(buildId, this.getValPath());
 
@@ -107,24 +107,15 @@ export class ValDownloader extends ValDownloaderBase {
     }
 
     async isInstalled(): Promise<boolean> {
-        console.log('>>> BEFORE >>> ValDownloader.ts >>> await utils.afs.exists(this.valVersionPath)');
-        const exists = await utils.afs.exists(this.valVersionPath);
-        console.log('>>> AFTER >>> ValDownloader.ts >>> await utils.afs.exists(this.valVersionPath)');
-        return exists;
+        return await utils.afs.exists(this.valVersionPath);
     }
 
     private async readVersion(): Promise<ValVersion> {
-        console.log('>>> BEFORE >>> ValDownloader.ts >>> readValManifest(this.valVersionPath)');
-        const version = readValManifest(this.valVersionPath);
-        console.log('>>> AFTER >>> ValDownloader.ts >>> readValManifest(this.valVersionPath)');
-        return version;
+        return readValManifest(this.valVersionPath);
     }
 
     private async writeVersion(valVersion: ValVersion): Promise<void> {
-        console.log('>>> BEFORE >>> ValDownloader.ts >>> writeValManifest(this.valVersionPath, valVersion)');
-        const promise = writeValManifest(this.valVersionPath, valVersion);
-        console.log('>>> AFTER >>> ValDownloader.ts >>> writeValManifest(this.valVersionPath, valVersion)');
-        return promise;
+        return writeValManifest(this.valVersionPath, valVersion);
     }
 
     /**
