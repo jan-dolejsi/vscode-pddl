@@ -860,6 +860,7 @@
     ]
   },
   "scripts": {
+    "postinstall": "node downloadVisJs.js",
     "compile": "tsc -p ./",
     "watch": "tsc -w -p ./",
     "lint": "eslint src --ext ts",
@@ -886,6 +887,8 @@
     "vscode-uri": "^2.1.1"
   },
   "devDependencies": {
+    "minimist": ">=0.2.1",
+    "download-file": "^0.1.5",
     "@types/adm-zip": "^0.4.32",
     "@types/chai": "^4.2.11",
     "@types/chai-string": "^1.4.2",
