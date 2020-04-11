@@ -45,7 +45,7 @@ suite('VAL Download and Configuration', () => {
 
     before(async () => {
         const thisExtension = assertDefined(vscode.extensions.getExtension("jan-dolejsi.pddl"), `Extension 'jan-dolejsi.pddl' not found`);
-        if (thisExtension.isActive) {
+        if (!thisExtension.isActive) {
             await thisExtension.activate();
         }
 

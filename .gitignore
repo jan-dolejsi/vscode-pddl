@@ -8,3 +8,4 @@ client/tsc.log
 coverage/
 .nyc_output/
 client/CHANGELOG.html
+client/views/common/vis-network.min.*

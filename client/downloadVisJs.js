@@ -20,11 +20,12 @@ const downloads = [
 ];
 
 downloads.forEach(task => {
-    console.log("Installing " + task.options.directory + "/" + task.options.filename);
+    console.log("Downloading " + task.options.directory + "/" + task.options.filename);
 
     download(task.url, task.options, function (error) {
         if (error) {
             throw error;
         }
+        console.log("Success: " + task.options.directory + "/" + task.options.filename);
     });
 });
