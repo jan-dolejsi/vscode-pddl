@@ -3,6 +3,12 @@
 	// List of configurations. Add new configurations or edit existing ones.
 	"configurations": [
 		{
+			"type": "chrome",
+			"request": "launch",
+			"name": "Search debugger (html)",
+			"file": "${workspaceFolder}/client/views/searchview/search.html"
+		},
+		{
 			"name": "Launch Extension",
 			"type": "extensionHost",
 			"request": "launch",

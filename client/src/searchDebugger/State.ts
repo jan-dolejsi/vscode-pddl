@@ -13,6 +13,7 @@ export class State {
     public relaxedPlan: SearchHappening[] | undefined;
     public helpfulActions: HelpfulAction[] | undefined;
     public isDeadEnd: boolean | undefined;
+    public wasVisitedOrIsWorse: boolean | undefined;
     public isPlan = false;
     private _isEvaluated = false;
 
@@ -49,6 +50,11 @@ export class State {
         this.isDeadEnd = true;
         this._isEvaluated = true;
 
+        return this;
+    }
+
+    setVisitedOrIsWorse(): State {
+        this.wasVisitedOrIsWorse = true;
         return this;
     }
 

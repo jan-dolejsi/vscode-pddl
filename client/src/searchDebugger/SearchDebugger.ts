@@ -154,6 +154,11 @@ export class SearchDebugger implements PlannerOptionsProvider {
             res.status(201).end();
         });
         // todo: the next one should be a 'patch' verb for '/state' path
+        app.post('/state/visitedOrWorse', function (req: express.Request, res: express.Response) {
+            search.update(messageParser.parseState(req.body).setVisitedOrIsWorse());
+            res.status(201).end();
+        });
+        // todo: the next one should be a 'patch' verb for '/state' path
         app.post('/state/heuristic', function (req: express.Request, res: express.Response) {
             search.update(messageParser.parseEvaluatedState(req.body));
             res.status(200).end();

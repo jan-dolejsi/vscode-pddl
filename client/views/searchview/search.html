@@ -23,10 +23,13 @@
     </div>
 
     <div class="left">
-        <!-- <button onclick="addMock()">Add</button>
-        <button onclick="evaluateMock()">Evaluate</button>
-        <button onclick="deadEndMock()">Dead-end</button>
-        <button onclick="clearStates()">Clear</button> -->
+        <div id="mockMenu" style="visibility: collapse;">
+            <button onclick="addMock()">Add</button>
+            <button onclick="setVisitedOrWorseMock()">Kill</button>
+            <button onclick="evaluateMock()">Evaluate</button>
+            <button onclick="deadEndMock()">Dead-end</button>
+            <button onclick="clearStates()">Clear</button>
+        </div>
         <div id="chart_div"></div>
         <div id="network" style="overflow: scroll"></div>
         <div class="help">⌨: Press <b>← → ↑ ↓</b> to navigate the tree, <b>Shift</b> + <b>← →</b> to navigate graph, <b>0-9</b> to select state by "O: " value<br/>

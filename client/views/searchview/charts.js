@@ -1,7 +1,9 @@
 // two maps help translating state IDs to chart data set rows and vice versa
-var stateIdToRowId = new Map();
-var rowIdToStateId = new Map();
-var chartDefined = false;
+/** @type {Map<number, number>} */
+const stateIdToRowId = new Map();
+/** @type {Map<number, number>} */
+const rowIdToStateId = new Map();
+let chartDefined = false;
 
 try {
     google.charts.load('current', { packages: ['corechart', 'line'] });
@@ -17,7 +19,7 @@ catch(err) {
 // see documentation at
 // https://developers.google.com/chart/interactive/docs/reference#DataTable
 
-var chart, chartData, chartOptions, isReDrawing, chartNeedsReDrawing;
+let chart, chartData, chartOptions, isReDrawing, chartNeedsReDrawing;
 
 function initializeChart() {
 
@@ -27,7 +29,7 @@ function initializeChart() {
     chartData.addColumn('number', 'Makespan');
     chartData.addColumn('number', 'H');
 
-  var options = {
+  const options = {
     title : 'Evaluated states',
     hAxis: {title: 'State'},
     seriesType: 'area',
@@ -86,10 +88,14 @@ function reDrawChart() {
     }
 }
 
+/**
+ * Selects state on the chart
+ * @param {number} stateId state id
+ */
 function selectChartRow(stateId) {
-    if (!chartDefined) return;
+    if (!chartDefined) { return; }
     if (stateId !== null) {
-        var rowId = stateIdToRowId.get(stateId);
+        const rowId = stateIdToRowId.get(stateId);
         chart.setSelection([{row: rowId}]);
     }
     else {
@@ -97,14 +103,24 @@ function selectChartRow(stateId) {
     }
 }
 
+/**
+ * Adds state to chart
+ * @param {State} newState state to add 
+ * @param {boolean} batch batch mode on/off
+ */
 function addStateToChart(newState, batch) {
     if (chartData) {
-        var rowId = chartData.addRow([newState.id, newState.earliestTime, sanitizeNumber(newState.totalMakespan), sanitizeNumber(newState.h)]);
+        const rowId = chartData.addRow([newState.id, newState.earliestTime, sanitizeNumber(newState.totalMakespan), sanitizeNumber(newState.h)]);
         addRowId(rowId, newState.id);
-        if (!batch) reDrawChart();
+        if (!batch) { reDrawChart(); }
     }
 }
 
+/**
+ * Records mapping between row and state
+ * @param {number} rowId row ID
+ * @param {number} stateId state ID
+ */
 function addRowId(rowId, stateId) {
     rowIdToStateId.set(rowId, stateId);
     stateIdToRowId.set(stateId, rowId);
@@ -114,23 +130,35 @@ function endChartBatch() {
     reDrawChart();
 }
 
+/**
+ * Turns NaN and infinities to `null`.
+ * @param {number} value unsanitized value
+ */
 function sanitizeNumber(value) {
-    if (!Number.isFinite(value)) return null;
-    else return value;
+    if (!Number.isFinite(value)) {
+        return null;
+    }
+    else {
+        return value;
+    }
 }
 
 const MAKESPAN_COLUMN = 2;
 const H_COLUMN = 3;
 
+/**
+ * Updates state values on the chart
+ * @param {State} state state to re-paint
+ */
 function updateStateOnChart(state) {
-    var rowId = stateIdToRowId.get(state.id);
+    const rowId = stateIdToRowId.get(state.id);
     chartData.setValue(rowId, MAKESPAN_COLUMN, sanitizeNumber(state.totalMakespan));
     chartData.setValue(rowId, H_COLUMN, sanitizeNumber(state.h));
     reDrawChart();
 }
 
 function clearChart() {
-    var rowsToRemove = chartData.getNumberOfRows();
+    const rowsToRemove = chartData.getNumberOfRows();
     chartData.removeRows(0, rowsToRemove);
     stateIdToRowId.clear();
     rowIdToStateId.clear();
@@ -141,14 +169,17 @@ function clearChart() {
 /**
  * Shifts the selected chart data-table row by number of items given by the 'offset'.
  * @param {number} offset number of chart rows by which to move the selection
- * @returns {number} new selected state id, or 'null' if nothing was selected originally
+ * @returns {number | null} new selected state id, or 'null' if nothing was selected originally
  */
 function navigateChart(offset) {
-    var selection = chart.getSelection();
+    const selection = chart.getSelection();
     if (selection.length > 0) {
-        var selectedRow = selection[0].row;
-        if (selectedRow == null) return null;
-        var newSelectedRow = selectedRow + offset;
+        /** @type{number | null | undefined} todo: actually, not sure if unselected translates to null or undefined */
+        const selectedRow = selection[0].row;
+        if (selectedRow === null || selectedRow === undefined) {
+            return null;
+        }
+        const newSelectedRow = selectedRow + offset;
         if (newSelectedRow > -1 && newSelectedRow < chartData.getNumberOfRows()) {
             chart.setSelection([{row: newSelectedRow}]);
             return rowIdToStateId.get(newSelectedRow);
