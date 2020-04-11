@@ -27,26 +27,20 @@ jobs:
 
       - name: NPM Install
         run: npm install
-      - name: Run common module tests
-        run: npm test
-        working-directory: common
 
       - run: npm run compile
-        working-directory: client
 
       - name: Run extension integration tests in head-less VS Code
         if: success()
         uses: GabrielBB/xvfb-action@v1.0
         with:
           run: npm test
-          working-directory: client
 
       - name: Package extension
         if: success()
         run: | 
           npm install -g vsce
           vsce package
-        working-directory: client
 
   publish:
     needs: build
@@ -66,7 +60,6 @@ jobs:
         run: | 
           npm install -g vsce
           vsce publish -p $VSCE_TOKEN
-        working-directory: client
         env: 
           VSCE_TOKEN: ${{ secrets.VSCE_TOKEN }}
         continue-on-error: true

@@ -1,0 +1,21 @@
+{
+	"compilerOptions": {
+		// "strict": true,   /* enable all strict type-checking options */		
+		"noUnusedLocals": true,
+		"noUnusedParameters": true,
+		"noImplicitAny": true,
+		"noImplicitReturns": true,		
+		"target": "es6",
+		"module": "commonjs",
+		"moduleResolution": "node",
+		"forceConsistentCasingInFileNames": true,
+		"rootDir": "src",
+		"outDir": "out",
+		"lib": [ "es6" ],
+		"sourceMap": true
+	},
+	"exclude": [
+		"node_modules",
+		".vscode-test"
+	]
+}

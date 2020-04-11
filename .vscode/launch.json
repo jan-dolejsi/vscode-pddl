@@ -6,7 +6,7 @@
 			"type": "chrome",
 			"request": "launch",
 			"name": "Search debugger (html)",
-			"file": "${workspaceFolder}/client/views/searchview/search.html"
+			"file": "${workspaceFolder}/views/searchview/search.html"
 		},
 		{
 			"name": "Launch Extension",
@@ -14,12 +14,12 @@
 			"request": "launch",
 			"runtimeExecutable": "${execPath}",
 			"args": [
-				"--extensionDevelopmentPath=${workspaceRoot}/client"
+				"--extensionDevelopmentPath=${workspaceRoot}"
 			],
 			"stopOnEntry": false,
 			"sourceMaps": true,
 			"outFiles": [
-				"${workspaceRoot}/client/out/**/*.js"
+				"${workspaceRoot}/out/**/*.js"
 			],
 			"preLaunchTask": "compile"
 		},
@@ -29,12 +29,12 @@
 			"request": "launch",
 			"runtimeExecutable": "${execPath}",
 			"args": [
-				"--folder-uri=${workspaceFolder}/client/src/test/tmpFolder/",
-				"--extensionDevelopmentPath=${workspaceFolder}/client",
-				"--extensionTestsPath=${workspaceFolder}/client/out/client/src/test/suite/index",
+				"--folder-uri=${workspaceFolder}/src/test/tmpFolder/",
+				"--extensionDevelopmentPath=${workspaceFolder}",
+				"--extensionTestsPath=${workspaceFolder}/out/test/suite/index",
 				"--disable-extensions"
 			],
-			"outFiles": ["${workspaceFolder}/client/out/client/src/test/**/*.js"],
+			"outFiles": ["${workspaceFolder}/out/test/**/*.js"],
 			"preLaunchTask": "compile"
 		}
 	]

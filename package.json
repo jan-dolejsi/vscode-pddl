@@ -1,39 +1,920 @@
 {
   "name": "pddl",
   "displayName": "PDDL",
-  "description": "Planning Domain Description Language support - build artifact, not an extension",
+  "description": "Planning Domain Description Language support",
   "author": "Jan Dolejsi",
   "license": "MIT",
-  "version": "0.0.1",
+  "version": "2.15.7",
   "publisher": "jan-dolejsi",
   "engines": {
-    "vscode": "^1.18.0"
+    "vscode": "^1.40.0",
+    "node": "^10.2.0"
+  },
+  "categories": [
+    "Snippets",
+    "Programming Languages",
+    "Debuggers"
+  ],
+  "keywords": [
+    "PDDL",
+    "planning",
+    "AI"
+  ],
+  "icon": "images/icon.png",
+  "galleryBanner": {
+    "color": "#ff402b",
+    "theme": "light"
   },
   "repository": {
     "type": "git",
     "url": "https://github.com/jan-dolejsi/vscode-pddl"
   },
+  "activationEvents": [
+    "onLanguage:pddl",
+    "onLanguage:plan",
+    "onLanguage:happenings",
+    "onCommand:pddl.configureParser",
+    "onCommand:pddl.configurePlanner",
+    "onCommand:pddl.showOverview",
+    "onCommand:pddl.searchDebugger.start",
+    "onCommand:pddl.planning.domains.session.load",
+    "onCommand:pddl.downloadVal",
+    "workspaceContains:.planning.domains.session.json",
+    "onView:pddl.planning.domains",
+    "onView:pddl.tests.explorer",
+    "onUri"
+  ],
+  "main": "./out/extension",
+  "contributes": {
+    "languages": [
+      {
+        "id": "pddl",
+        "aliases": [
+          "PDDL",
+          "pddl"
+        ],
+        "extensions": [
+          ".pddl",
+          ""
+        ],
+        "configuration": "./language-configuration.json",
+        "firstLine": "\\(define\\s\\((domain|problem)\\b"
+      },
+      {
+        "id": "plan",
+        "aliases": [
+          "PDDL Plan",
+          "Plan"
+        ],
+        "extensions": [
+          ".plan"
+        ],
+        "configuration": "./language-configuration.json"
+      },
+      {
+        "id": "happenings",
+        "aliases": [
+          "PDDL Plan Happenings",
+          "Happenings"
+        ],
+        "extensions": [
+          ".happenings"
+        ],
+        "configuration": "./language-configuration.json"
+      }
+    ],
+    "breakpoints": [
+      {
+        "language": "happenings"
+      }
+    ],
+    "grammars": [
+      {
+        "language": "pddl",
+        "scopeName": "source.pddl",
+        "path": "./syntaxes/pddl.tmLanguage.json"
+      },
+      {
+        "language": "plan",
+        "scopeName": "source.pddl.plan",
+        "path": "./syntaxes/plan.tmLanguage.json"
+      },
+      {
+        "language": "happenings",
+        "scopeName": "source.pddl.happenings",
+        "path": "./syntaxes/happenings.tmLanguage.json"
+      }
+    ],
+    "snippets": [
+      {
+        "language": "pddl",
+        "path": "./snippets/pddl.json"
+      }
+    ],
+    "commands": [
+      {
+        "command": "pddl.showOverview",
+        "title": "PDDL: Show overview page"
+      },
+      {
+        "command": "pddl.planAndDisplayResult",
+        "title": "PDDL: Run the planner and display the plan"
+      },
+      {
+        "command": "pddl.stopPlanner",
+        "title": "PDDL: Stop planner"
+      },
+      {
+        "command": "pddl.configureParser",
+        "title": "PDDL: Configure parser"
+      },
+      {
+        "command": "pddl.syntaxTree",
+        "title": "PDDL: Syntax tree"
+      },
+      {
+        "command": "pddl.loginParserService",
+        "title": "PDDL: Login for parser service"
+      },
+      {
+        "command": "pddl.updateTokensParserService",
+        "title": "PDDL: Update tokens for parser service"
+      },
+      {
+        "command": "pddl.configurePlanner",
+        "title": "PDDL: Configure planner"
+      },
+      {
+        "command": "pddl.loginPlannerService",
+        "title": "PDDL: Login for planner service"
+      },
+      {
+        "command": "pddl.updateTokensPlannerService",
+        "title": "PDDL: Update tokens for planner service"
+      },
+      {
+        "command": "pddl.planReport",
+        "title": "PDDL: Generate plan report"
+      },
+      {
+        "command": "pddl.exportPlan",
+        "title": "PDDL: Export plan a to file..."
+      },
+      {
+        "command": "pddl.convertPlanToHappenings",
+        "title": "PDDL: Convert plan to happenings..."
+      },
+      {
+        "command": "pddl.convertHappeningsToPlan",
+        "title": "PDDL: Convert happenings to plan..."
+      },
+      {
+        "command": "pddl.tests.refresh",
+        "title": "PDDL: Refresh test cases",
+        "icon": {
+          "light": "images/light/refresh.svg",
+          "dark": "images/dark/refresh.svg"
+        }
+      },
+      {
+        "command": "pddl.tests.run",
+        "title": "Run",
+        "icon": {
+          "light": "images/light/play.svg",
+          "dark": "images/dark/play.svg"
+        }
+      },
+      {
+        "command": "pddl.tests.runAll",
+        "title": "Run all",
+        "icon": {
+          "light": "images/light/play.svg",
+          "dark": "images/dark/play.svg"
+        }
+      },
+      {
+        "command": "pddl.tests.view",
+        "title": "Open PDDL domain and test problem",
+        "icon": {
+          "light": "images/light/open-file.svg",
+          "dark": "images/dark/open-file.svg"
+        }
+      },
+      {
+        "command": "pddl.tests.viewDefinition",
+        "title": "Open test definition"
+      },
+      {
+        "command": "pddl.tests.viewExpectedPlans",
+        "title": "Open expected plan(s)"
+      },
+      {
+        "command": "pddl.tests.problemSaveAs",
+        "title": "PDDL: Open as an editable problem file..."
+      },
+      {
+        "command": "pddl.tests.report.view",
+        "title": "PDDL: Show test report"
+      },
+      {
+        "command": "pddl.searchDebugger.start",
+        "title": "PDDL: Start search debugger"
+      },
+      {
+        "command": "pddl.searchDebugger.stop",
+        "title": "PDDL: Stop search debugger"
+      },
+      {
+        "command": "pddl.searchDebugger.reset",
+        "title": "PDDL: Reset search debugger"
+      },
+      {
+        "command": "pddl.searchDebugger.mock",
+        "title": "PDDL: Mock search progress to test debugger"
+      },
+      {
+        "command": "pddl.plan.compareNormalized",
+        "title": "PDDL: Normalize and compare 2 plans"
+      },
+      {
+        "command": "pddl.plan.preview",
+        "title": "PDDL: Preview plan"
+      },
+      {
+        "command": "pddl.plan.normalize",
+        "title": "PDDL: Normalize and evaluate plan"
+      },
+      {
+        "command": "pddl.plan.validate",
+        "title": "PDDL: Validate plan"
+      },
+      {
+        "command": "pddl.happenings.debug",
+        "title": "PDDL: Debug plan happenings (mockup only)"
+      },
+      {
+        "command": "pddl.happenings.execute",
+        "title": "PDDL: Execute plan and show effects"
+      },
+      {
+        "command": "pddl.happenings.generatePlanResumeCases",
+        "title": "PDDL: Execute plan and generate plan-resume test cases"
+      },
+      {
+        "command": "pddl.configureValidate",
+        "title": "PDDL: Configure VAL/Validate tool"
+      },
+      {
+        "command": "pddl.planning.domains.session.load",
+        "title": "PDDL: Download Planning.domains session"
+      },
+      {
+        "command": "pddl.planning.domains.session.refresh",
+        "title": "PDDL: Refresh Planning.domains session",
+        "icon": {
+          "light": "images/light/refresh.svg",
+          "dark": "images/dark/refresh.svg"
+        }
+      },
+      {
+        "command": "pddl.planning.domains.session.refresh_all",
+        "title": "PDDL: Refresh all Planning.domains sessions",
+        "icon": {
+          "light": "images/light/refresh.svg",
+          "dark": "images/dark/refresh.svg"
+        }
+      },
+      {
+        "command": "pddl.planning.domains.session.commit",
+        "title": "PDDL: Commit local changes to Planning.Domains session",
+        "icon": {
+          "light": "images/light/cloud-upload.svg",
+          "dark": "images/dark/cloud-upload.svg"
+        }
+      },
+      {
+        "command": "pddl.planning.domains.session.discard",
+        "title": "PDDL: Discard local changes to the Planning.Domains session",
+        "icon": {
+          "light": "images/light/discard.svg",
+          "dark": "images/dark/discard.svg"
+        }
+      },
+      {
+        "command": "pddl.planning.domains.session.checkout",
+        "title": "PDDL: Checkout another version of this Planning.Domains session",
+        "icon": {
+          "light": "images/light/refresh.svg",
+          "dark": "images/dark/refresh.svg"
+        }
+      },
+      {
+        "command": "pddl.planning.domains.session.duplicate",
+        "title": "PDDL: Duplicate a Planning.Domains session as writable"
+      },
+      {
+        "command": "pddl.planning.domains.session.open",
+        "title": "PDDL: Open a Planning.Domains session in the browser"
+      },
+      {
+        "command": "pddl.planning.domains.session.share",
+        "title": "PDDL: Share a Planning.Domains session via email"
+      },
+      {
+        "command": "pddl.planning.domains.session.generateClassroom",
+        "title": "PDDL: Generate Planning.Domains classroom sessions from this template..."
+      },
+      {
+        "command": "pddl.downloadVal",
+        "title": "PDDL: Download VAL tools"
+      },
+      {
+        "command": "pddl.configureTarget",
+        "title": "PDDL: Configure planner output target..."
+      }
+    ],
+    "menus": {
+      "editor/context": [
+        {
+          "command": "pddl.planAndDisplayResult",
+          "when": "resourceLangId == pddl"
+        },
+        {
+          "command": "pddl.tests.problemSaveAs",
+          "when": "resourceLangId == pddl && resourceScheme == tpddl"
+        },
+        {
+          "command": "pddl.plan.preview",
+          "when": "resourceLangId == plan",
+          "group": "pddl"
+        },
+        {
+          "command": "pddl.convertPlanToHappenings",
+          "when": "resourceLangId == plan",
+          "group": "pddl"
+        },
+        {
+          "command": "pddl.convertHappeningsToPlan",
+          "when": "resourceLangId == happenings",
+          "group": "pddl"
+        },
+        {
+          "command": "pddl.plan.validate",
+          "when": "resourceLangId == plan",
+          "group": "pddl"
+        },
+        {
+          "command": "pddl.plan.normalize",
+          "when": "resourceLangId == plan",
+          "group": "pddl"
+        },
+        {
+          "command": "pddl.happenings.debug",
+          "when": "resourceLangId == happenings && false",
+          "group": "pddl"
+        },
+        {
+          "command": "pddl.happenings.execute",
+          "when": "resourceLangId == happenings",
+          "group": "pddl"
+        },
+        {
+          "command": "pddl.happenings.generatePlanResumeCases",
+          "when": "resourceLangId == happenings",
+          "group": "pddl"
+        }
+      ],
+      "view/title": [
+        {
+          "command": "pddl.tests.runAll",
+          "when": "view == pddl.tests.explorer",
+          "group": "navigation"
+        },
+        {
+          "command": "pddl.tests.refresh",
+          "when": "view == pddl.tests.explorer",
+          "group": "navigation"
+        },
+        {
+          "command": "pddl.tests.report.view",
+          "when": "view == pddl.tests.explorer"
+        }
+      ],
+      "view/item/context": [
+        {
+          "command": "pddl.tests.run",
+          "when": "view == pddl.tests.explorer && viewItem == test",
+          "group": "execution"
+        },
+        {
+          "command": "pddl.tests.runAll",
+          "when": "view == pddl.tests.explorer && viewItem != test",
+          "group": "execution"
+        },
+        {
+          "command": "pddl.tests.view",
+          "when": "view == pddl.tests.explorer && viewItem == test",
+          "group": "navigation"
+        },
+        {
+          "command": "pddl.tests.viewDefinition",
+          "when": "view == pddl.tests.explorer && viewItem != folder",
+          "group": "navigation"
+        },
+        {
+          "command": "pddl.tests.viewExpectedPlans",
+          "when": "view == pddl.tests.explorer && viewItem == test",
+          "group": "navigation"
+        }
+      ],
+      "explorer/context": [
+        {
+          "command": "pddl.plan.compareNormalized",
+          "when": "viewItem != folder && resourceLangId == plan",
+          "group": "3_compare"
+        }
+      ],
+      "scm/title": [
+        {
+          "command": "pddl.planning.domains.session.commit",
+          "group": "navigation",
+          "when": "scmProvider == planningDomainsSession"
+        },
+        {
+          "command": "pddl.planning.domains.session.discard",
+          "group": "navigation",
+          "when": "scmProvider == planningDomainsSession"
+        },
+        {
+          "command": "pddl.planning.domains.session.refresh",
+          "group": "navigation",
+          "when": "scmProvider == planningDomainsSession"
+        },
+        {
+          "command": "pddl.planning.domains.session.duplicate",
+          "when": "scmProvider == planningDomainsSession"
+        },
+        {
+          "command": "pddl.planning.domains.session.open",
+          "when": "scmProvider == planningDomainsSession"
+        },
+        {
+          "command": "pddl.planning.domains.session.share",
+          "when": "scmProvider == planningDomainsSession"
+        },
+        {
+          "command": "pddl.planning.domains.session.generateClassroom",
+          "when": "scmProvider == planningDomainsSession"
+        }
+      ]
+    },
+    "keybindings": [
+      {
+        "command": "pddl.planAndDisplayResult",
+        "key": "alt+p",
+        "when": "resourceLangId == pddl"
+      }
+    ],
+    "jsonValidation": [
+      {
+        "fileMatch": "*.planviz.json",
+        "url": "./schemas/planviz.json"
+      },
+      {
+        "fileMatch": "*.ptest.json",
+        "url": "./schemas/ptest.json"
+      }
+    ],
+    "configuration": {
+      "type": "object",
+      "title": "PDDL parser and planner configuration",
+      "properties": {
+        "pddlParser.executableOrService": {
+          "type": "string",
+          "description": "PDDL parser for syntactical analysis. Specify executable location or service URL e.g. parser.exe, validate.exe, or http://localhost:8090/parse."
+        },
+        "pddlParser.executableOptions": {
+          "type": "string",
+          "description": "Override the command-line options passed to the PDDL parser configured in 'pddlParser.executableOrService'.",
+          "pattern": "^\\$\\(parser\\).+\\$\\(domain\\).+\\$\\(problem\\).*$",
+          "default": "$(parser) $(domain) $(problem)"
+        },
+        "pddlParser.problemPattern": {
+          "scope": "resource",
+          "type": "string",
+          "description": "Pattern to match onto the parser output to extract the parsing problems. The syntax must be: '/regex/flags/order'. See more info at https://github.com/jan-dolejsi/vscode-pddl/wiki/Configuring-the-PDDL-parser"
+        },
+        "pddlParser.serviceAuthenticationEnabled": {
+          "scope": "resource",
+          "type": "boolean",
+          "description": "PDDL parser requires authentication."
+        },
+        "pddlParser.serviceAuthenticationUrl": {
+          "scope": "resource",
+          "type": "string",
+          "description": "Authentication URL."
+        },
+        "pddlParser.serviceAuthenticationRequestEncoded": {
+          "scope": "resource",
+          "type": "string",
+          "description": "Authentication request encoded."
+        },
+        "pddlParser.serviceAuthenticationClientId": {
+          "scope": "resource",
+          "type": "string",
+          "description": "Authentication clientid."
+        },
+        "pddlParser.serviceAuthenticationCallbackPort": {
+          "scope": "resource",
+          "type": "string",
+          "description": "Authentication callback port."
+        },
+        "pddlParser.serviceAuthenticationTimeoutInMs": {
+          "scope": "resource",
+          "type": "number",
+          "default": 10000,
+          "description": "Authentication timeout in ms."
+        },
+        "pddlParser.serviceAuthenticationTokensvcUrl": {
+          "scope": "resource",
+          "type": "string",
+          "description": "Authentication token service URL."
+        },
+        "pddlParser.serviceAuthenticationTokensvcApiKey": {
+          "scope": "resource",
+          "type": "string",
+          "description": "Authentication token service API Key."
+        },
+        "pddlParser.serviceAuthenticationTokensvcAccessPath": {
+          "scope": "resource",
+          "type": "string",
+          "description": "Authentication token service access path."
+        },
+        "pddlParser.serviceAuthenticationTokensvcValidatePath": {
+          "scope": "resource",
+          "type": "string",
+          "description": "Authentication token service validate path."
+        },
+        "pddlParser.serviceAuthenticationTokensvcCodePath": {
+          "scope": "resource",
+          "type": "string",
+          "description": "Authentication token service code path."
+        },
+        "pddlParser.serviceAuthenticationTokensvcRefreshPath": {
+          "scope": "resource",
+          "type": "string",
+          "description": "Authentication token service refresh path."
+        },
+        "pddlParser.serviceAuthenticationTokensvcSvctkPath": {
+          "scope": "resource",
+          "type": "string",
+          "description": "Authentication token service svctk path."
+        },
+        "pddlParser.serviceAuthenticationRefreshToken": {
+          "scope": "resource",
+          "type": "string",
+          "description": "Authentication refresh token."
+        },
+        "pddlParser.serviceAuthenticationAccessToken": {
+          "scope": "resource",
+          "type": "string",
+          "description": "Authentication access token."
+        },
+        "pddlParser.serviceAuthenticationSToken": {
+          "scope": "resource",
+          "type": "string",
+          "description": "Authentication s token."
+        },
+        "pddlParser.delayInSecondsBeforeParsing": {
+          "scope": "resource",
+          "type": "number",
+          "default": 3,
+          "minimum": 1,
+          "description": "Delay in seconds the extension should wait after a PDDL file is modified before calls the parser."
+        },
+        "pddlParser.maxNumberOfProblems": {
+          "scope": "resource",
+          "type": "number",
+          "default": 100,
+          "minimum": 1,
+          "description": "Controls the maximum number of problems produced by the parser."
+        },
+        "pddlPlanner.executableOrService": {
+          "scope": "resource",
+          "type": "string",
+          "title": "Planner executable or service URL",
+          "default": "http://solver.planning.domains/solve",
+          "description": "Enter the planner executable (e.g. planner.exe) with full path unless you have its location included in the %path% environment variable. If you are using a parsing service, make sure it starts with http: or https:"
+        },
+        "pddlPlanner.executableOptions": {
+          "scope": "window",
+          "type": "string",
+          "description": "Override the command-line options passed to the PDDL planner configured in 'pddlPlanner.executableOrService'.",
+          "pattern": "^\\$\\(planner\\).+\\$\\(options\\).+\\$\\(domain\\).+\\$\\(problem\\).*$",
+          "default": "$(planner) $(options) $(domain) $(problem)"
+        },
+        "pddlPlanner.executionTarget": {
+          "scope": "window",
+          "description": "Target to direct the planner output to.",
+          "enum": [
+            "Output window",
+            "Terminal",
+            "Search debugger"
+          ],
+          "default": "Output window",
+          "enumDescriptions": [
+            "Planner output is displayed in the VS Code Output Window 'Planner output'.",
+            "Planner is executed in a terminal window. Plan is not displayed visually. Use this to interact with the planner.",
+            "Same as the 'Output window' option, but the output window and resulting plan are not revealed in order to keep the Search debugger in the forefront."
+          ]
+        },
+        "pddlPlanner.serviceAuthenticationEnabled": {
+          "scope": "resource",
+          "type": "boolean",
+          "description": "PDDL planner requires authentication."
+        },
+        "pddlPlanner.serviceAuthenticationUrl": {
+          "scope": "resource",
+          "type": "string",
+          "description": "Authentication URL."
+        },
+        "pddlPlanner.serviceAuthenticationRequestEncoded": {
+          "scope": "resource",
+          "type": "string",
+          "description": "Authentication request encoded."
+        },
+        "pddlPlanner.serviceAuthenticationClientId": {
+          "scope": "resource",
+          "type": "string",
+          "description": "Authentication clientid."
+        },
+        "pddlPlanner.serviceAuthenticationCallbackPort": {
+          "scope": "resource",
+          "type": "string",
+          "description": "Authentication callback port."
+        },
+        "pddlPlanner.serviceAuthenticationTimeoutInMs": {
+          "scope": "resource",
+          "type": "number",
+          "default": 10000,
+          "description": "Authentication timeout in ms."
+        },
+        "pddlPlanner.serviceAuthenticationTokensvcUrl": {
+          "scope": "resource",
+          "type": "string",
+          "description": "Authentication token service URL."
+        },
+        "pddlPlanner.serviceAuthenticationTokensvcApiKey": {
+          "scope": "resource",
+          "type": "string",
+          "description": "Authentication token service API Key."
+        },
+        "pddlPlanner.serviceAuthenticationTokensvcAccessPath": {
+          "scope": "resource",
+          "type": "string",
+          "description": "Authentication token service access path."
+        },
+        "pddlPlanner.serviceAuthenticationTokensvcValidatePath": {
+          "scope": "resource",
+          "type": "string",
+          "description": "Authentication token service validate path."
+        },
+        "pddlPlanner.serviceAuthenticationTokensvcCodePath": {
+          "scope": "resource",
+          "type": "string",
+          "description": "Authentication token service code path."
+        },
+        "pddlPlanner.serviceAuthenticationTokensvcRefreshPath": {
+          "scope": "resource",
+          "type": "string",
+          "description": "Authentication token service refresh path."
+        },
+        "pddlPlanner.serviceAuthenticationTokensvcSvctkPath": {
+          "scope": "resource",
+          "type": "string",
+          "description": "Authentication token service svctk path."
+        },
+        "pddlPlanner.serviceAuthenticationRefreshToken": {
+          "scope": "resource",
+          "type": "string",
+          "description": "Authentication refresh token."
+        },
+        "pddlPlanner.serviceAuthenticationAccessToken": {
+          "scope": "resource",
+          "type": "string",
+          "description": "Authentication access token."
+        },
+        "pddlPlanner.serviceAuthenticationSToken": {
+          "scope": "resource",
+          "type": "string",
+          "description": "Authentication s token."
+        },
+        "pddlPlanner.epsilonTimeStep": {
+          "type": "number",
+          "default": 0.001,
+          "title": "Default epsilon time step used by your planner.",
+          "description": "Default epsilon time step used by your planner. This is used when interpreting/visualizing the plan. "
+        },
+        "pddl.validatorVersion": {
+          "type": "number",
+          "default": 37,
+          "title": "VAL build number",
+          "description": "Stable VAL build number to download or update to."
+        },
+        "pddl.valueSeqPath": {
+          "type": "string",
+          "description": "ValueSeq path - the tool that evaluates numeric values of functions at starts and ends of actions in the plan."
+        },
+        "pddl.validatorPath": {
+          "type": "string",
+          "description": "Path of the 'validate' executable."
+        },
+        "pddl.valStepPath": {
+          "type": "string",
+          "description": "Path of the 'valstep' executable."
+        },
+        "pddl.valVerbose": {
+          "type": "string",
+          "description": "Run Val tools with verbose output (to the console visible in Help > Toggle Developer Tools)",
+          "default": false
+        },
+        "pddl.planReport.linePlot.groupByLifted": {
+          "type": "boolean",
+          "description": "Group line plots of functions for different objects on the same chart - one per lifted function.",
+          "default": true
+        },
+        "pddl.planReport.width": {
+          "title": "PDDL: Plan visualization width (in pixels)",
+          "type": "integer",
+          "default": 200,
+          "minimum": 200
+        },
+        "pddl.planReport.exportWidth": {
+          "title": "PDDL: Plan Report width (in pixels) for exporting",
+          "type": "integer",
+          "default": 1000,
+          "minimum": 500
+        },
+        "pddl.formatter": {
+          "type": "boolean",
+          "default": false,
+          "description": "Enable PDDL formatter (default is 'false'). Warning: this is an experimental feature - work in progress."
+        },
+        "pddl.modelHierarchy": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable the PDDL model hierarchy decorator (predicate and function usage)"
+        },
+        "pddlSearchDebugger.defaultPort": {
+          "type": "integer",
+          "description": "Search debugger static port. If not specified (or set to zero, the port is randomized for security reasons).",
+          "default": 0
+        },
+        "pddlSearchDebugger.stateIdPattern": {
+          "type": "string",
+          "description": "Search debugger regular expression pattern to extract the numeric State ID.",
+          "default": "^(\\d+)$"
+        },
+        "pddlSearchDebugger.stateLogPattern": {
+          "type": "string",
+          "description": "Pattern to find the line in the state log file pertaining to the selected state.",
+          "default": "^\\s*State ID:\\s*(.*)\\s*$"
+        },
+        "pddlSearchDebugger.plannerCommandLine": {
+          "type": "string",
+          "description": "Command-line switch to configure planning engine to work with the Search Debugger pane. The '$(port)' part gets replaced by actual port number.",
+          "default": "--search-tree-dump=http://localhost:$(port)"
+        }
+      }
+    },
+    "views": {
+      "test": [
+        {
+          "id": "pddl.tests.explorer",
+          "name": "PDDL Tests"
+        }
+      ],
+      "explorer": [
+        {
+          "id": "pddl.planning.domains",
+          "name": "Planning.domains"
+        }
+      ]
+    },
+    "debuggers": [
+      {
+        "type": "pddl-happenings",
+        "label": "PDDL Plan Debugger",
+        "program": "./out/debugger/debugAdapter.js",
+        "runtime": "node",
+        "configurationAttributes": {
+          "launch": {
+            "required": [
+              "program"
+            ],
+            "properties": {
+              "program": {
+                "type": "string",
+                "description": "Absolute path to a plan happenings file path.",
+                "default": "${command:PddlPlanHappenings}"
+              },
+              "stopOnEntry": {
+                "type": "boolean",
+                "description": "Automatically stop after launch.",
+                "default": true
+              },
+              "trace": {
+                "type": "boolean",
+                "description": "Enable logging of the Debug Adapter Protocol.",
+                "default": true
+              }
+            }
+          }
+        },
+        "initialConfigurations": [
+          {
+            "type": "pddl-happenings",
+            "request": "launch",
+            "name": "PDDL: Plan Happenings",
+            "program": "${command:PddlPlanHappenings}",
+            "stopOnEntry": true
+          }
+        ],
+        "configurationSnippets": [
+          {
+            "label": "PDDL Plan Debug: Launch",
+            "description": "A new configuration for debugging a user selected PDDL Plan file.",
+            "body": {
+              "type": "pddl-happenings",
+              "request": "launch",
+              "name": "PDDL: Plan Happenings",
+              "program": "^\"\\${command:PddlPlanHappenings}\"",
+              "stopOnEntry": true
+            }
+          }
+        ],
+        "variables": {
+          "PddlPlanHappenings": "pddl.selectAndActivateHappenings"
+        }
+      }
+    ]
+  },
   "scripts": {
-    "install:common": "cd common && npm install --no-optional && npm test && cd ..",
-    "install:client": "cd client && npm install --no-optional && cd ..",
-    "postinstall": "npm run install:common && npm run install:client",
-    "compile:client": "tsc -p ./client",
-    "compile:common": "tsc -p ./common",
-    "compile": "npm run compile:common && npm run compile:client",
-    "watch:client": "tsc -p ./client --watch",
-    "watch:common": "tsc -p ./common --watch",
-    "watch": "npm run watch:common && npm run watch:client",
+    "postinstall": "node downloadVisJs.js",
+    "compile": "tsc -p ./",
+    "watch": "tsc -w -p ./",
+    "lint": "eslint src --ext ts",
+    "vscode:prepublish": "npm run compile",
+    "update-vscode": "node ./node_modules/vscode/bin/install",
+    "package": "vsce package",
     "pretest": "npm run compile",
-    "test:common": "cd common && npm test && cd ..",
-    "test:client": "cd client && npm test && cd ..",
-    "test": "npm run test:common && npm run test:client"
+		"test:unit": "mocha -- out/test/**/*Test.js",
+    "test:integration": "node ./out/test/runVsTests.js",
+    "test": "npm run test:unit && npm run test:integration"
+  },
+  "dependencies": {
+    "ai-planning-val": "^2.1.5",
+    "await-notify": "^1.0.1",
+    "body-parser": "^1.19.0",
+    "events": "^3.1.0",
+    "express": "^4.17.1",
+    "open": "^7.0.2",
+    "pddl-workspace": "^2.3.0",
+    "request": "^2.88.2",
+    "semver": "^7.1.3",
+    "tree-kill": "^1.2.2",
+    "vscode-debugadapter": "1.38.0",
+    "vscode-debugprotocol": "1.38.0",
+    "vscode-extension-telemetry-wrapper": "^0.5.0",
+    "vscode-uri": "^2.1.1"
   },
   "devDependencies": {
-    "eslint": "^6.8.0",
+    "minimist": ">=0.2.1",
+    "download-file": "^0.1.5",
+    "@types/adm-zip": "^0.4.32",
+    "@types/body-parser": "^1.19.0",
+    "@types/chai": "^4.2.11",
+    "@types/chai-string": "^1.4.2",
+    "@types/express": "^4.17.2",
+    "@types/glob": "^7.1.1",
+    "@types/mocha": "^5.2.6",
+    "@types/node": "^10.14.11",
+    "@types/nunjucks": "^3.1.3",
+    "@types/request": "^2.48.4",
+    "@types/semver": "^7.1.0",
+    "@types/tmp": "^0.1.0",
+    "@types/vscode": "^1.40.0",
+    "@types/uuid": "^3.4.6",
     "@typescript-eslint/eslint-plugin": "^2.18.0",
     "@typescript-eslint/parser": "^2.18.0",
-    "typescript": "^3.8.3",
-    "@types/node": "10.14.11"
-  },
-  "dependencies": {}
+    "chai": "^4.2.0",
+    "chai-string": "^1.5.0",
+    "eslint": "^6.8.0",
+    "glob": "^7.1.6",
+    "mocha": "^6.1.4",
+    "tmp": "^0.1.0",
+    "typescript": "^3.7.3",
+    "vsce": "^1.75.0",
+    "vscode-test": "^1.0.0"
+  }
 }
