@@ -1,5 +1,10 @@
 # PDDL support - What's new?
 
+## [2.15.7] Visualization of visited states
+
+The search tree debugger now shows states that were already visited in the search (or are deemed worse than any state previously visited by the planner) in black.
+Here is the [Search Tree Debugger API](https://github.com/jan-dolejsi/vscode-pddl/wiki/Search-tree-debugger-API#post-statevisitedorworse) that a planner needs to send the information to.
+
 ## [2.15.6] Improved VAL binary download and configuration merging
 
 ### Fixes
@@ -960,7 +965,8 @@ Note for open source contributors: all notable changes to the "pddl" extension w
 
 Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
 
-[Unreleased]: https://github.com/jan-dolejsi/vscode-pddl/compare/v2.15.6...HEAD
+[Unreleased]: https://github.com/jan-dolejsi/vscode-pddl/compare/v2.15.7...HEAD
+[2.15.7]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.15.6...v2.15.7
 [2.15.6]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.15.5...v2.15.6
 [2.15.5]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.15.4...v2.15.5
 [2.15.4]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.15.3...v2.15.4
