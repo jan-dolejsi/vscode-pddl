@@ -12,7 +12,7 @@ import { ProblemInfo } from 'pddl-workspace';
 import { DomainInfo } from 'pddl-workspace';
 import { parser } from 'pddl-workspace';
 import { PlanStep } from 'pddl-workspace';
-import { Authentication } from '../../../common/src/Authentication';
+import { Authentication } from '../util/Authentication';
 import { window } from 'vscode';
 
 export abstract class PlannerService extends Planner {

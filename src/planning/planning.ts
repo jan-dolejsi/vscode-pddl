@@ -23,7 +23,7 @@ import { PlannerExecutable } from './PlannerExecutable';
 import { PlannerSyncService } from './PlannerSyncService';
 import { PlannerAsyncService } from './PlannerAsyncService';
 import { Planner } from './planner';
-import { Authentication } from '../../../common/src/Authentication';
+import { Authentication } from '../util/Authentication';
 import { dirname } from 'path';
 import { PlanningResult } from './PlanningResult';
 import { PlanReportGenerator } from './PlanReportGenerator';

@@ -14,7 +14,7 @@ import { Validator } from './validator';
 import { ProblemPattern } from './ProblemPattern';
 import { ProblemInfo } from 'pddl-workspace';
 import { DomainInfo } from 'pddl-workspace';
-import { PddlFactory } from '../../../common/src/PddlFactory';
+import { PddlFactory } from '../util/PddlFactory';
 import { utils } from 'pddl-workspace';
 
 export class ValidatorExecutable extends Validator {

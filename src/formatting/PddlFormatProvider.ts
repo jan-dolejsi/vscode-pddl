@@ -26,7 +26,7 @@ export class PddlFormatProvider implements DocumentFormattingEditProvider {
         let stateString = "beg";
 
         // logical state array to determine location with respect to syntax - [com, fir, ope, req, inh, nes]
-        const logicalState: boolean[] = [false, false, null, false, false, false];
+        const logicalState: (boolean|null)[] = [false, false, null, false, false, false];
 
         const selection = document.getText();
         const textArray = selection.split('');

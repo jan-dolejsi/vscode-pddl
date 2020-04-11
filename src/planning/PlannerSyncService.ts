@@ -9,7 +9,7 @@ import { Plan } from 'pddl-workspace';
 import { ProblemInfo } from 'pddl-workspace';
 import { DomainInfo } from 'pddl-workspace';
 import { parser } from 'pddl-workspace';
-import { Authentication } from '../../../common/src/Authentication';
+import { Authentication } from '../util/Authentication';
 import { PlannerService } from './PlannerService';
 
 /** Wraps the `/solve` planning web service interface. */

@@ -8,7 +8,7 @@ async function main(): Promise<void> {
 		const vsCodeTestArgs = new Map<string, string>();
 		// The folder containing the Extension Manifest package.json
 		// Passed to `--extensionDevelopmentPath`
-		const extensionDevelopmentPath = path.resolve(__dirname, '../../../../');
+		const extensionDevelopmentPath = path.resolve(__dirname, '../../');
 		vsCodeTestArgs.set('--extensionDevelopmentPath', extensionDevelopmentPath);
 
 		// The path to the extension test script

@@ -5,7 +5,7 @@
 [![Ratings](https://vsmarketplacebadge.apphb.com/rating-star/jan-dolejsi.pddl.svg?subject=Reviews)](https://marketplace.visualstudio.com/items?itemName=jan-dolejsi.pddl&ssr=false#review-details)
 [![VS Code PDDL Extension CI/CD](https://img.shields.io/github/workflow/status/jan-dolejsi/vscode-pddl/Build/master.svg?logo=github)](https://github.com/jan-dolejsi/vscode-pddl/actions?query=workflow%3ABuild)
 
-Are you looking for the [End-user documentation](client/README.md)?
+Are you looking for the [End-user documentation](README.md)?
 
 ## Building extension
 
@@ -21,7 +21,7 @@ Install the VS Code extension packaging tool:
 npm install -g vsce
 ```
 
-On Windows, you can use the `client\publish.cmd` script to review the content of the package before building it, installing it, testing it and possibly publishing it.
+On Windows, you can use the `publish.cmd` script to review the content of the package before building it, installing it, testing it and possibly publishing it.
 The extension is published to the marketplace automatically by the GitHub CI/CD workflow, when the master branch is updated and the version number was bumped.
 
 ## Testing the extension
@@ -32,9 +32,9 @@ Run `npm test` when all VS Code windows are closed.
 
 Modify following files:
 
-- Update the version in `client/package.json` (adhere to the major.minor.patch semantic versioning practice)
-- Add section about new features and fixes on top of the `client\CHANGELOG.md` and refer to Git tag at the bottom of the file
-- Add relevant end-user documentation about new features to `client\README.md`
+- Update the version in `package.json` (adhere to the major.minor.patch semantic versioning practice)
+- Add section about new features and fixes on top of the `CHANGELOG.md` and refer to Git tag at the bottom of the file
+- Add relevant end-user documentation about new features to `README.md`
 - Submit pull request
 
 ## Credits

@@ -8,7 +8,7 @@ import {
     Diagnostic, DiagnosticSeverity, DiagnosticCollection, Uri, window, Disposable, workspace
 } from 'vscode';
 
-import { Authentication } from '../../../common/src/Authentication';
+import { Authentication } from '../util/Authentication';
 import { PddlWorkspace } from 'pddl-workspace';
 import { PlanInfo } from 'pddl-workspace';
 import { ProblemInfo } from 'pddl-workspace';
@@ -18,7 +18,7 @@ import { FileInfo, FileStatus, stripComments, ParsingProblem } from 'pddl-worksp
 import { Validator } from './validator';
 import { ValidatorService } from './ValidatorService';
 import { ValidatorExecutable } from './ValidatorExecutable';
-import { PDDLParserSettings } from '../../../common/src/Settings';
+import { PDDLParserSettings } from '../util/Settings';
 import { PddlConfiguration, PDDL_PARSER, VALIDATION_PATH, CONF_PDDL } from '../configuration';
 import { PlanValidator, createDiagnostic } from './PlanValidator';
 import { HappeningsValidator } from './HappeningsValidator';
@@ -44,7 +44,7 @@ export class Diagnostics extends Disposable {
         super(() => this.codePddlWorkspace.pddlWorkspace.removeAllListeners()); //todo: this is probably too harsh
         this.pddlParserSettings = pddlConfiguration.getParserSettings();
 
-        this.codePddlWorkspace.pddlWorkspace.on(PddlWorkspace.UPDATED, _ => this.scheduleValidation());
+        this.codePddlWorkspace.pddlWorkspace.on(PddlWorkspace.UPDATED, () => this.scheduleValidation());
         this.codePddlWorkspace.pddlWorkspace.on(PddlWorkspace.REMOVING, (doc: FileInfo) => this.clearDiagnostics(doc.fileUri));
 
         workspace.onDidChangeConfiguration(e => {

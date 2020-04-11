@@ -12,7 +12,7 @@ import { Validator } from './validator';
 import { ProblemInfo } from 'pddl-workspace';
 import { DomainInfo } from 'pddl-workspace';
 import { FileStatus } from 'pddl-workspace';
-import { Authentication } from '../../../common/src/Authentication';
+import { Authentication } from '../util/Authentication';
 
 import request = require('request');
 

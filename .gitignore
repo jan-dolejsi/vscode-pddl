@@ -1,11 +1,11 @@
 out
 node_modules
-client/**/*.vsix
+**/*.vsix
 npm-debug.log
-client/tsc.log
+tsc.log
 .vscode/cSpell.json
 .vscode-test/
 coverage/
 .nyc_output/
-client/CHANGELOG.html
-client/views/common/vis-network.min.*
+CHANGELOG.html
+views/common/vis-network.min.*

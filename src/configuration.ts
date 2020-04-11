@@ -3,7 +3,7 @@
  * Licensed under the MIT License. See License.txt in the project root for license information.
  * ------------------------------------------------------------------------------------------ */
 import * as vscode from 'vscode';
-import { PDDLParserSettings } from './Settings';
+import { PDDLParserSettings } from './util/Settings';
 
 import { ensureAbsoluteGlobalStoragePath, isHttp } from './utils';
 import { VAL_DOWNLOAD_COMMAND } from './validation/valCommand';

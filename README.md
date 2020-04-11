@@ -474,7 +474,7 @@ The visualization then respects the IDs assigned by the planner rather than usin
 
 Both tree nodes and edges now show an informative tooltip when mouse hover-over.
 
-To participate in this visual search debugging the planning engine must implement a HTTP client. An example of what data is expected may be found in the [mock search](https://github.com/jan-dolejsi/vscode-pddl/blob/master/client/src/searchDebugger/MockSearch.ts).
+To participate in this visual search debugging the planning engine must implement a HTTP client. An example of what data is expected may be found in the [mock search](https://github.com/jan-dolejsi/vscode-pddl/blob/master/src/searchDebugger/MockSearch.ts).
 
 ## Block folding in `:init` section of the problem file
 

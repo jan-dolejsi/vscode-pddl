@@ -44,7 +44,7 @@
     "onView:pddl.tests.explorer",
     "onUri"
   ],
-  "main": "./out/client/src/extension",
+  "main": "./out/extension",
   "contributes": {
     "languages": [
       {
@@ -868,7 +868,9 @@
     "update-vscode": "node ./node_modules/vscode/bin/install",
     "package": "vsce package",
     "pretest": "npm run compile",
-    "test": "node ./out/client/src/test/runTest.js"
+		"test:unit": "mocha -- out/test/**/*Test.js",
+    "test:integration": "node ./out/test/runVsTests.js",
+    "test": "npm run test:unit && npm run test:integration"
   },
   "dependencies": {
     "ai-planning-val": "^2.1.5",
@@ -890,6 +892,7 @@
     "minimist": ">=0.2.1",
     "download-file": "^0.1.5",
     "@types/adm-zip": "^0.4.32",
+    "@types/body-parser": "^1.19.0",
     "@types/chai": "^4.2.11",
     "@types/chai-string": "^1.4.2",
     "@types/express": "^4.17.2",
@@ -901,6 +904,7 @@
     "@types/semver": "^7.1.0",
     "@types/tmp": "^0.1.0",
     "@types/vscode": "^1.40.0",
+    "@types/uuid": "^3.4.6",
     "@typescript-eslint/eslint-plugin": "^2.18.0",
     "@typescript-eslint/parser": "^2.18.0",
     "chai": "^4.2.0",

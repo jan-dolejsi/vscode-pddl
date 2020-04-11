@@ -8,7 +8,7 @@
 import { Uri, workspace } from 'vscode';
 import { PlannerResponseHandler } from './PlannerResponseHandler';
 import { Plan, ProblemInfo, DomainInfo, parser } from 'pddl-workspace';
-import { Authentication } from '../../../common/src/Authentication';
+import { Authentication } from '../util/Authentication';
 import { PlannerService } from './PlannerService';
 import { PlannerConfigurationSelector } from './PlannerConfigurationSelector';
 

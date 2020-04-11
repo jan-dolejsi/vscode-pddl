@@ -10,7 +10,7 @@ import { Planning } from './planning/planning';
 import { PddlWorkspace } from 'pddl-workspace';
 import { PDDL, PLAN, HAPPENINGS } from 'pddl-workspace';
 import { PddlConfiguration, PDDL_CONFIGURE_COMMAND } from './configuration';
-import { Authentication } from '../../common/src/Authentication';
+import { Authentication } from './util/Authentication';
 import { AutoCompletion } from './completion/AutoCompletion';
 import { SymbolRenameProvider } from './symbols/SymbolRenameProvider';
 import { SymbolInfoProvider } from './symbols/SymbolInfoProvider';

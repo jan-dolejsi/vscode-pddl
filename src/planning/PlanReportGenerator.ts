@@ -12,7 +12,7 @@ import * as path from 'path';
 import opn = require('open');
 
 import { DomainInfo } from 'pddl-workspace';
-import { SwimLane } from '../../../common/src/SwimLane';
+import { SwimLane } from './SwimLane';
 import { PlanStep, PlanStepCommitment } from 'pddl-workspace';
 import { HappeningType } from 'pddl-workspace';
 import { Plan, HelpfulAction } from 'pddl-workspace';
