@@ -1,6 +1,7 @@
-var selectedPlan = 0;
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+let selectedPlan = 0;
 
-var vscode = null;
+let vscode = null;
 try {
     vscode = acquireVsCodeApi();
 } catch (error) {
@@ -9,13 +10,15 @@ try {
 }
 
 function postMessage(message) {
-    if (vscode) vscode.postMessage(message);
+    if (vscode) { vscode.postMessage(message); }
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function postCommand(command) {
     postMessage({ command: command });
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function showPlan(planIndex) {
     // remember the index of the plan that is being shown for later manipulation
     selectedPlan = planIndex;
@@ -26,21 +29,24 @@ function showPlan(planIndex) {
     document.querySelectorAll("div.lineChart").forEach(div => showPlanDiv(planIndex, div));
     document.querySelectorAll("div.planSelector").forEach(div => {
         let newClass = "planSelector";
-        let planId = parseInt(div.getAttribute("plan"));
-        if (planIndex == planId) newClass += " planSelector-selected";
+        const planId = parseInt(div.getAttribute("plan"));
+        if (planIndex === planId) { newClass += " planSelector-selected"; }
         div.setAttribute("class", newClass);
     });
     eval("drawPlan" + planIndex + "Charts();");
 }
 function showPlanDiv(planIndex, div) {
-    let planId = parseInt(div.getAttribute("plan"));
-    let newDisplayStyle = planId == planIndex ? "block" : "none";
+    const planId = parseInt(div.getAttribute("plan"));
+    const newDisplayStyle = planId === planIndex ? "block" : "none";
     let style = div.getAttribute("style");
     style = style.replace(/display: (none|block);/i, "display: " + newDisplayStyle + ';');
     div.setAttribute("style", style);
 }
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function scrollPlanSelectorIntoView(planIndex) {
     document.querySelectorAll('div.planSelector').forEach(div => {
-        if (parseInt(div.getAttribute('plan')) == planIndex) div.scrollIntoViewIfNeeded();
+        if (parseInt(div.getAttribute('plan')) === planIndex) {
+            div.scrollIntoViewIfNeeded();
+        }
     });
 }

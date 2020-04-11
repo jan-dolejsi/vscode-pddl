@@ -11,6 +11,13 @@ const downloads = [
         }
     },
     {
+        url: "https://unpkg.com/vis-network@7.5.2/dist/vis-network.min.js.map",
+        options: {
+            directory: "views/common",
+            filename: "vis-network.min.js.map"
+        }
+    },
+    {
         url: "https://unpkg.com/vis-network@7.5.2/dist/vis-network.min.css",
         options: {
             directory: "views/common",

@@ -1,28 +1,29 @@
 
-var nodes = new vis.DataSet([]);
-var edges = new vis.DataSet([]);
-var networkData = {
+const nodes = new vis.DataSet([]);
+const edges = new vis.DataSet([]);
+const networkData = {
   nodes: nodes,
   edges: edges
 };
 
-var network = null;
+let network = null;
 
-var _inverted = false;
+let _inverted = false;
 const TOP_DOWN = "TOP_DOWN";
 const LEFT_RIGHT = "LEFT_RIGHT";
-var _layout = TOP_DOWN;
-var _settings = false;
-var _origData = {
+let _layout = TOP_DOWN;
+let _settings = false;
+let _origData = {
   nodes: [],
   relationships: []
 };
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function initialize() {
   // create a network
-  var container = document.getElementById("network");
+  const container = document.getElementById("network");
 
-  var options = {
+  const options = {
     autoResize: true,
     height: '100%',
     width: '100%',
@@ -65,19 +66,20 @@ function initialize() {
     // this will immediately fix the height of the configuration
     // wrapper to prevent unecessary scrolls in chrome.
     // see https://github.com/almende/vis/issues/1568
-    var div = container.getElementsByClassName("vis-configuration-wrapper")[0];
+    const div = container.getElementsByClassName("vis-configuration-wrapper")[0];
     div.style["height"] = div.getBoundingClientRect().height + "px";
   });
   
   document.body.addEventListener("themeChanged", event => {
-    applyThemeToNetwork(network, event.detail.newTheme)
-  })
+    applyThemeToNetwork(network, event.detail.newTheme);
+  });
 
   if (!vscode) { populateWithTestData(); }
   ensureLayout();
   onLoad();
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function handleMessage(message) {
   switch (message.command) {
     case 'updateContent':
@@ -112,15 +114,15 @@ function clearNetwork() {
 function updateGraph(data) {
   _origData = data;
   clearNetwork();
-  if (data.nodes) nodes.add(data.nodes);
+  if (data.nodes) { nodes.add(data.nodes); }
   edges.add(data.relationships);
   network.fit({animation: true});
 }
 
 function resize() {
-  var container = document.getElementById("network");
-  var visNetwork = container.getElementsByClassName("vis-network")[0];
-  var canvas = visNetwork.canvas;
+  const container = document.getElementById("network");
+  const visNetwork = container.getElementsByClassName("vis-network")[0];
+  const canvas = visNetwork.canvas;
   if (canvas) {
     network.setSize(canvas.style["width"], (window.innerHeight - 6) + "px");
   }
@@ -162,20 +164,23 @@ function setOptions(options) {
   network.setOptions(options);
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function fit() {
   network.fit();
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function toggleSettings() {
   _settings = !_settings;
   network.setOptions({ configure: _settings });
   document.body.style.overflow = _settings ? 'scroll' : 'hidden';
   if (_settings) {
-    var settingsElement = document.getElementsByClassName("vis-configuration-wrapper")[0];
-    if (settingsElement) settingsElement.scrollIntoView();
+    const settingsElement = document.getElementsByClassName("vis-configuration-wrapper")[0];
+    if (settingsElement) { settingsElement.scrollIntoView(); }
   }
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function reset() {
   updateGraph(_origData);
 }

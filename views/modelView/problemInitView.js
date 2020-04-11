@@ -1,18 +1,19 @@
 
-var nodes = new vis.DataSet([]);
-var edges = new vis.DataSet([]);
-var networkData = {
+const nodes = new vis.DataSet([]);
+const edges = new vis.DataSet([]);
+const networkData = {
   nodes: nodes,
   edges: edges
 };
 
-var network = null;
+let network = null;
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function initialize() {
   // create a network
-  var container = document.getElementById("network");
+  const container = document.getElementById("network");
 
-  var options = {
+  const options = {
     clickToUse: true,
     nodes: {
       font: { size: 12 }
@@ -32,18 +33,19 @@ function initialize() {
     // this will immediately fix the height of the configuration
     // wrapper to prevent unecessary scrolls in chrome.
     // see https://github.com/almende/vis/issues/1568
-    var div = container.getElementsByClassName("vis-configuration-wrapper")[0];
+    const div = container.getElementsByClassName("vis-configuration-wrapper")[0];
     div.style["height"] = div.getBoundingClientRect().height + "px";
   });
 
   document.body.addEventListener("themeChanged", event => {
-    applyThemeToNetwork(network, event.detail.newTheme)
-  })
+    applyThemeToNetwork(network, event.detail.newTheme);
+  });
 
   if (!vscode) { populateWithTestData(); }
   onLoad();
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function handleMessage(message) {
   switch (message.command) {
     case 'updateContent':
@@ -166,15 +168,15 @@ function updateGraph(data) {
   edges.add(data.relationships);
   network.fit();
 
-  var container = document.getElementById("networkSection");
+  const container = document.getElementById("networkSection");
   container.style.display = data.nodes.length > 0 ? 'initial' : 'none';
 }
 
 function updateScalarValues(data) {
-  var container = document.getElementById("scalarValues");
-  var header = `<table class="objectValues">
+  const container = document.getElementById("scalarValues");
+  const header = `<table class="objectValues">
   <tr><th></th><th>value</th></tr>`;
-  var footer = `</table>`
+  const footer = `</table>`;
   container.innerHTML = header +
     Object.keys(data)
       .sort((a, b) => a.localeCompare(b))
@@ -192,13 +194,13 @@ function createScalarValuesTableRow(variableName, value) {
  * @param {any} data object properties
  */
 function updateObjectProperties(data) {
-  var container = document.getElementById("objectProperties");
+  const container = document.getElementById("objectProperties");
   container.innerHTML = Object.keys(data).map(type => createTypePropertiesTable(type, data[type])).join('\n');
 }
 
 function createTypePropertiesTable(type, objectProperties) {
-  let headerCells = [th(type)].concat(objectProperties.propertyNames.map(n => th(n)));
-  let objectRows = Object.keys(objectProperties.objects).map(objName => createObjectPropertiesRow(objName, objectProperties.objects[objName], objectProperties.propertyNames));
+  const headerCells = [th(type)].concat(objectProperties.propertyNames.map(n => th(n)));
+  const objectRows = Object.keys(objectProperties.objects).map(objName => createObjectPropertiesRow(objName, objectProperties.objects[objName], objectProperties.propertyNames));
   return '<table class="objectValues">' +
     tr(headerCells) +
     objectRows.join('\n') +
@@ -212,8 +214,8 @@ function createTypePropertiesTable(type, objectProperties) {
  * @param {string[]} propertyNames property names
  */
 function createObjectPropertiesRow(objectName, objectValues, propertyNames) {
-  let valueCells = propertyNames.map(p => td(createObjectPropertyValue(objectValues,p, objectName)));
-  let cells = [th(objectName)].concat(valueCells)
+  const valueCells = propertyNames.map(p => td(createObjectPropertyValue(objectValues,p, objectName)));
+  const cells = [th(objectName)].concat(valueCells);
   return tr(cells);
 }
 
@@ -224,8 +226,8 @@ function createObjectPropertiesRow(objectName, objectValues, propertyNames) {
  * @param {string} objectName name of the object for the tooltip
  */
 function createObjectPropertyValue(objectValues, propertyName, objectName) {
-  let value = objectValues[propertyName];
-  let fullVariableName = `(${propertyName} ${objectName})`;
+  const value = objectValues[propertyName];
+  const fullVariableName = `(${propertyName} ${objectName})`;
   return createValueSnap(fullVariableName, value);
 }
 
@@ -245,19 +247,19 @@ function createValueSnap(fullVariableName, value) {
 }
 
 function updateObjectRelationships(data) {
-  var container = document.getElementById("relationships");
+  const container = document.getElementById("relationships");
   container.innerHTML = data.map(relationship => createTypeRelationshipsTable(relationship)).join('\n');
 }
 
 function createTypeRelationshipsTable(relationship) {
-  let types = Object.keys(relationship.types);
-  if (types.length > 2) return "";
-  let objectType = types[0];
-  let subjectType = types.length == 2 ? types[1] : types[0]; // if relationship is symmetric
+  const types = Object.keys(relationship.types);
+  if (types.length > 2) { return ""; }
+  const objectType = types[0];
+  const subjectType = types.length === 2 ? types[1] : types[0]; // if relationship is symmetric
 
-  let headerCells = [th(types.join(' \\ '))].concat(relationship.types[subjectType].map(n => th(n)));
+  const headerCells = [th(types.join(' \\ '))].concat(relationship.types[subjectType].map(n => th(n)));
 
-  let objectRows = relationship.types[objectType]
+  const objectRows = relationship.types[objectType]
     .map(rowObject => createObjectRelationshipRow(rowObject, relationship, subjectType));
 
   return '<table class="objectValues">' +
@@ -272,10 +274,10 @@ function createTypeRelationshipsTable(relationship) {
  * @param {string} subjectType name of the type in the columns
  */
 function createObjectRelationshipRow(rowObject, relationship, subjectType) {
-  let valueCells = relationship.types[subjectType]
+  const valueCells = relationship.types[subjectType]
     .map(subject => createRelationshipsValue(rowObject, subject, relationship.relationships))
     .map(value => td(value));
-  let cells = [th(rowObject)].concat(valueCells)
+  const cells = [th(rowObject)].concat(valueCells);
   return tr(cells);
 }
 
@@ -286,7 +288,7 @@ function createObjectRelationshipRow(rowObject, relationship, subjectType) {
  * @param {any[]} relationships list of relationship values
  */
 function createRelationshipsValue(rowObject, subject, relationships) {
-  let relevantRelationshipsValues = Object.keys(relationships)
+  const relevantRelationshipsValues = Object.keys(relationships)
     .map(relationshipName => createRelationshipValue(relationshipName, relationships[relationshipName], [rowObject, subject]))
     .filter(r => !!r); // filter out nulls
     
@@ -300,7 +302,7 @@ function createRelationshipsValue(rowObject, subject, relationships) {
  * @param {string[]} objectNames object names
  */
 function createRelationshipValue(relationshipName, relationship, objectNames) {
-  let relevantGrounding = relationship.find(relationshipGrounding => relationshipDescribes(relationshipGrounding, objectNames));
+  const relevantGrounding = relationship.find(relationshipGrounding => relationshipDescribes(relationshipGrounding, objectNames));
   if (relevantGrounding) {
     let cellText = relationshipName;
     let tooltip = `(${relationshipName} ${objectNames.join(' ')})`;
@@ -362,6 +364,7 @@ function td(cell) {
   return "<td>" + cell + "</td>";
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function fit() {
   network.fit();
 }

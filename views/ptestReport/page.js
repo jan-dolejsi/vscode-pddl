@@ -1,5 +1,5 @@
 
-var vscode = null;
+let vscode = null;
 try {
     vscode = acquireVsCodeApi();
 } catch (error) {
@@ -19,6 +19,7 @@ window.addEventListener('message', event => {
     }
 })
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function update(message) {
     // document.getElementById('someElementId').value = message.someValue;
 }
@@ -27,6 +28,7 @@ function update(message) {
  * Opens manifest by its uri
  * @param {string} nodeUri manifest node uri
  */
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function openManifest(nodeUri) {
     postMessage({
         command: 'openManifest',
@@ -39,6 +41,7 @@ function openManifest(nodeUri) {
  * Opens manifest by its uri
  * @param {string} nodeUri test node uri
  */
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function openTest(nodeUri) {
     postMessage({
         command: 'openTest',
@@ -47,9 +50,10 @@ function openTest(nodeUri) {
 }
 
 function postMessage(message) {
-    if (vscode) vscode.postMessage(message);
+    if (vscode) { vscode.postMessage(message); }
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function populateWithTestData() {
     if (!vscode) {
         // for testing only

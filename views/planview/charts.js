@@ -1,17 +1,18 @@
 google.charts.load('current', { packages: ['corechart', 'line'] });
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function drawChart(chartDivId, functionName, unit, objects, columnData) {
 
-    var data = new google.visualization.DataTable();
+    const data = new google.visualization.DataTable();
     data.addColumn('number', 'X');
 
     objects.forEach(obj => {
-        data.addColumn('number', obj);        
+        data.addColumn('number', obj);
     });
 
     data.addRows(columnData);
 
-    var options = {
+    const options = {
         hAxis: {
             title: 'Time'
         },
@@ -22,25 +23,25 @@ function drawChart(chartDivId, functionName, unit, objects, columnData) {
         title: functionName
     };
 
-    var chart = new google.visualization.LineChart(document.getElementById(chartDivId));
+    const chart = new google.visualization.LineChart(document.getElementById(chartDivId));
 
     chart.draw(data, options);
 }
 
 function createDataTable(variableName, variableData) {
-    var data = new google.visualization.DataTable();
+    const data = new google.visualization.DataTable();
     data.addColumn('number', 'X');
-    data.addColumn('number', variableName);        
+    data.addColumn('number', variableName);
 
     data.addRows(variableData);
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function drawChartMultipleSeries(chartDivId, functionName, unit, objects, columnData) {
 
-    var data = columnData.map(variableData, variableName => createDataTable(variableName, variableData));
+    const data = columnData.map(variableData, variableName => createDataTable(variableName, variableData));
 
-
-    var options = {
+    const options = {
         hAxis: {
             title: 'Time'
         },
@@ -51,7 +52,7 @@ function drawChartMultipleSeries(chartDivId, functionName, unit, objects, column
         title: functionName
     };
 
-    var chart = new google.visualization.LineChart(document.getElementById(chartDivId));
+    const chart = new google.visualization.LineChart(document.getElementById(chartDivId));
 
     chart.draw(data, options);
 }

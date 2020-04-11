@@ -9,26 +9,26 @@
     <script src="charts.js" type="text/javascript"></script>
     <script src="../common/vis-network.min.js" type="text/javascript"></script>
     <script src="tree.js" type="text/javascript"></script>
-    <script src="search.js" type="text/javascript"></script>
+    <script defer src="search.js" type="text/javascript"></script>
     <link href="../common/vis-network.min.css" rel="stylesheet" type="text/css" />
     <link href="search.css" rel="stylesheet" type="text/css"></link>
     <!--CSP-->
 </head>
-<body onload="initialize()">
+<body">
     <div style="float: right">
-        <img src="no-signal_gray.svg" onclick="startSearchDebugger()" id="startDebuggerButton" style="width: 20px;" title="Search engine listener is not running. Click here to start it." >
-        <img src="signal_gray.svg" onclick="stopSearchDebugger()" id="stopDebuggerButton" style="width: 20px;" title="Search engine listener is running. Click here to stop it." >
-        <a href="#" onclick="restartSearchDebugger()" id="restartDebuggerButton" class="toolbarButton" title="Clear debugger view and re-start search engine listener.">⟳</a>
-        <a href="#" id="toggleStateLogButton" onclick="toggleStateLog()" class="toolbarButton" title="Open and synchronize navigation through state log file.">🗎</a>
+        <img src="no-signal_gray.svg" id="startDebuggerButton" style="width: 20px;" title="Search engine listener is not running. Click here to start it." >
+        <img src="signal_gray.svg" id="stopDebuggerButton" style="width: 20px;" title="Search engine listener is running. Click here to stop it." >
+        <a href="#" id="restartDebuggerButton" class="toolbarButton" title="Clear debugger view and re-start search engine listener.">⟳</a>
+        <a href="#" id="toggleStateLogButton" class="toolbarButton" title="Open and synchronize navigation through state log file.">🗎</a>
     </div>
 
     <div class="left">
         <div id="mockMenu" style="visibility: collapse;">
-            <button onclick="addMock()">Add</button>
-            <button onclick="setVisitedOrWorseMock()">Kill</button>
-            <button onclick="evaluateMock()">Evaluate</button>
-            <button onclick="deadEndMock()">Dead-end</button>
-            <button onclick="clearStates()">Clear</button>
+            <button id="addMock">Add</button>
+            <button id="setVisitedOrWorseMock">Kill</button>
+            <button id="evaluateMock">Evaluate</button>
+            <button id="deadEndMock">Dead-end</button>
+            <button id="clearStatesMock">Clear</button>
         </div>
         <div id="chart_div"></div>
         <div id="network" style="overflow: scroll"></div>

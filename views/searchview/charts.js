@@ -21,6 +21,7 @@ catch(err) {
 
 let chart, chartData, chartOptions, isReDrawing, chartNeedsReDrawing;
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function initializeChart() {
 
     chartData = new google.visualization.DataTable();
@@ -66,11 +67,14 @@ function initializeChart() {
 
   google.visualization.events.addListener(chart, 'ready',
           function() {
-              if (chartNeedsReDrawing) reDrawChart()
+              if (chartNeedsReDrawing) {
+                  reDrawChart();
+              }
           }
   );
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function reSizeChart(options) {
   chart = new google.visualization.ComboChart(document.getElementById('chart_div'));
   reDrawChart();
@@ -92,6 +96,7 @@ function reDrawChart() {
  * Selects state on the chart
  * @param {number} stateId state id
  */
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function selectChartRow(stateId) {
     if (!chartDefined) { return; }
     if (stateId !== null) {
@@ -108,6 +113,7 @@ function selectChartRow(stateId) {
  * @param {State} newState state to add 
  * @param {boolean} batch batch mode on/off
  */
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function addStateToChart(newState, batch) {
     if (chartData) {
         const rowId = chartData.addRow([newState.id, newState.earliestTime, sanitizeNumber(newState.totalMakespan), sanitizeNumber(newState.h)]);
@@ -126,6 +132,7 @@ function addRowId(rowId, stateId) {
     stateIdToRowId.set(stateId, rowId);
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function endChartBatch() {
     reDrawChart();
 }
@@ -150,6 +157,7 @@ const H_COLUMN = 3;
  * Updates state values on the chart
  * @param {State} state state to re-paint
  */
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function updateStateOnChart(state) {
     const rowId = stateIdToRowId.get(state.id);
     chartData.setValue(rowId, MAKESPAN_COLUMN, sanitizeNumber(state.totalMakespan));
@@ -157,6 +165,7 @@ function updateStateOnChart(state) {
     reDrawChart();
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function clearChart() {
     const rowsToRemove = chartData.getNumberOfRows();
     chartData.removeRows(0, rowsToRemove);
@@ -171,6 +180,7 @@ function clearChart() {
  * @param {number} offset number of chart rows by which to move the selection
  * @returns {number | null} new selected state id, or 'null' if nothing was selected originally
  */
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function navigateChart(offset) {
     const selection = chart.getSelection();
     if (selection.length > 0) {

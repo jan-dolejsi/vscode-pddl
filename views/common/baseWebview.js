@@ -1,14 +1,14 @@
 
-var vscode = null;
+let vscode = null;
 try {
     vscode = acquireVsCodeApi();
 }catch(error){
-    console.error(error);
+    console.warn(error);
     // swallow, so in the script can be tested in a browser
 }
 
 function postMessage(message) {
-    if (vscode) vscode.postMessage(message);
+    if (vscode) { vscode.postMessage(message); }
 }
 
 /**
@@ -19,24 +19,25 @@ function postCommand(command) {
     postMessage({ 'command': command });
 }
 
-var theme = 'unknown';
+let theme = 'unknown';
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function onLoad() {
     postCommand('onload');
     applyTheme(document.body.className);
 
-    var observer = new MutationObserver(function(mutations) {
+    const observer = new MutationObserver(function(mutations) {
         mutations.forEach(function(mutationRecord) {
             applyTheme(mutationRecord.target.className);
         });    
     });
     
-    var target = document.body;
+    const target = document.body;
     observer.observe(target, { attributes : true, attributeFilter : ['class'] });
 }
 
 function applyTheme(newTheme) {
-    var prefix = 'vscode-';
+    const prefix = 'vscode-';
     if (newTheme.startsWith(prefix)) {
         // strip prefix
         newTheme = newTheme.substr(prefix.length);
@@ -46,11 +47,11 @@ function applyTheme(newTheme) {
         newTheme = 'dark'; // the high-contrast theme seems to be an extreme case of the dark theme
     }
 
-    if (theme === newTheme) return;
+    if (theme === newTheme) { return; }
     theme = newTheme;
 
     console.log('Applying theme: ' + newTheme);
-    var buttons = document.getElementsByClassName('menuButton');
+    const buttons = document.getElementsByClassName('menuButton');
     for (let index = 0; index < buttons.length; index++) {
         const button = buttons[index];
         button.style.display = (button.getAttribute('theme') === newTheme) ? 'initial' : 'none';

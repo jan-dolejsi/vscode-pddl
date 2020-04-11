@@ -80,20 +80,20 @@ const states = {};
 /** @type {number | null} */
 let selectedStateId = null;
 
-function addMock() {
+document.getElementById("addMock").onclick = () => {
     if (mockStates.length === 0) { return; }
     const newState = mockStates.shift();
     add(newState);
-}
+};
 
-function setVisitedOrWorseMock() {
+document.getElementById("setVisitedOrWorseMock").onclick = () => {
     if (selectedStateId === null) { return; }
     const state = states[selectedStateId];
     state.wasVisitedOrIsWorse = true;
     update(state);
-}
+};
 
-function evaluateMock() {
+document.getElementById("evaluateMock").onclick = () => {
     if (selectedStateId === null) { return; }
 
     const state = states[selectedStateId];
@@ -118,9 +118,9 @@ function evaluateMock() {
     state.totalMakespan = totalMakespan;
     state.earliestTime = earliestTime;
     update(state);
-}
+};
 
-function deadEndMock() {
+document.getElementById("deadEndMock").onclick = () => {
     if (selectedStateId === null) { return; }
 
     const state = states[selectedStateId];
@@ -134,7 +134,11 @@ function deadEndMock() {
     state.totalMakespan = Number.POSITIVE_INFINITY;
     state.isDeadEnd = true;
     update(state);
-}
+};
+
+document.getElementById("clearStatesMock").onclick = () => {
+    clearStates();
+};
 
 /**
  * Adds state
@@ -202,6 +206,8 @@ function onStateSelected(stateId) {
         showStatePlan('<div style="width: 400px; height: 900px; background-color: green"></div>');
     }
 }
+
+document.body.onload = () => initialize();
 
 function initialize() {
     createTree();
@@ -272,15 +278,21 @@ function clearStates() {
     clearChart();
 }
 
+document.getElementById("startDebuggerButton").onclick = () => startSearchDebugger();
+
 function startSearchDebugger() {
     showDebuggerOn(true);
     postCommand('startDebugger');
 }
 
+document.getElementById("stopDebuggerButton").onclick = () => stopSearchDebugger();
+
 function stopSearchDebugger() {
     showDebuggerOn(false);
     postCommand('stopDebugger');
 }
+
+document.getElementById("restartDebuggerButton").onclick = () => restartSearchDebugger();
 
 function restartSearchDebugger() {
     postCommand('reset');
@@ -393,6 +405,8 @@ function navigateToChildOfSelectedState(actionName) {
     const newSelectedStateId = navigateToChildState(selectedStateId, actionName);
     if (newSelectedStateId !== null) { onStateSelected(newSelectedStateId); }
 }
+
+document.getElementById("toggleStateLogButton").onclick = () => toggleStateLog();
 
 function toggleStateLog() {
     postCommand('toggleStateLog');

@@ -11,6 +11,7 @@ window.addEventListener('message', event => {
     }
 })
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function initialize() {
     if (!vscode) { populateWithTestData(); }
 
@@ -65,9 +66,9 @@ function hasAnyChildrenToDisplay(elementId) {
  * @param {string} value target is output/terminal/search-debugger.
  */
 function updatePlannerOutputTarget(value) {
-    var radioButtons = document.getElementsByName("planner_output_target");
-    for(var i = 0; i < radioButtons.length; i++) {
-        radioButtons[i].checked = value == radioButtons[i].value;
+    const radioButtons = document.getElementsByName("planner_output_target");
+    for(let i = 0; i < radioButtons.length; i++) {
+        radioButtons[i].checked = value === radioButtons[i].value;
     }
 }
 
@@ -75,13 +76,14 @@ function updatePlannerOutputTarget(value) {
  * Notifies the view-model that the should-show selection has changed.
  * @param {boolean} value true if hte overview page should show next time
  */
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function shouldShowOverviewChanged(value) {
     showHowToShowOverview(value);
 
     postMessage({
         command: 'shouldShowOverview',
         value: value
-    })
+    });
 }
 
 /**
@@ -98,13 +100,14 @@ function showHowToShowOverview(shouldShow) {
         (shouldShow ? 'none' : 'unset');
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function onPlannerOutputTargetChanged() {
 
-    var selectedValue = undefined;
+    let selectedValue = undefined;
 
-    var radioButtons = document.getElementsByName("planner_output_target");
-    for(var i = 0; i < radioButtons.length; i++) {
-        if(radioButtons[i].checked == true) {
+    const radioButtons = document.getElementsByName("planner_output_target");
+    for(let i = 0; i < radioButtons.length; i++) {
+        if(radioButtons[i].checked === true) {
             selectedValue = radioButtons[i].value;
             break;
         }
@@ -116,26 +119,32 @@ function onPlannerOutputTargetChanged() {
     });
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function clonePddlSamples() {
     postCommand('clonePddlSamples');
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function tryHelloWorld() {
     postCommand('tryHelloWorld');
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function openNunjucksSample() {
     postCommand('openNunjucksSample');
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function installIcons() {
     postCommand('installIcons');
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function enableIcons() {
     postCommand('enableIcons');
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function downloadValInformed() {
     postMessage({
         command: 'downloadVal',

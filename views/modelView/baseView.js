@@ -1,8 +1,10 @@
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function closeInset() {
     postCommand('close');
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function expandInset() {
     postCommand('expand');
 }
@@ -25,10 +27,10 @@ window.addEventListener('message', event => {
  * @param {boolean} isInset true if this view is an inset
  */
 function setIsInset(isInset) {
-    var insetMenu = document.getElementById('insetMenu');
-    if (insetMenu) insetMenu.style.display = isInset ? 'initial' : 'none';
+    const insetMenu = document.getElementById('insetMenu');
+    if (insetMenu) { insetMenu.style.display = isInset ? 'initial' : 'none'; }
 
-    var separators = document.getElementsByClassName('separator');
+    const separators = document.getElementsByClassName('separator');
     for (let index = 0; index < separators.length; index++) {
         const separator = separators[index];
         separator.style.display = isInset ? 'initial' : 'none';
@@ -44,8 +46,9 @@ function setIsInset(isInset) {
  * @param {vis.Network} network network visualization object
  * @param {string} newTheme new theme applied
  */
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function applyThemeToNetwork(network, newTheme) {
-    var foreground; var background;
+    let foreground; let background;
     switch (newTheme) {
         case 'dark':
             foreground = 'white';
