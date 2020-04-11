@@ -11,7 +11,13 @@ tsconfig.json
 val/**
 .vscodeignore
 package-lock.json
-tslint.json
+.eslintrc.js
 tsconfig.json
 *.vsix
 *.log
+vsc-extension-quickstart.md
+todo.md
+coverage/
+.nyc_output/
+.github/
+downloadVisJs.js
