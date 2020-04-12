@@ -20,9 +20,11 @@ export class Catalog {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     treeView: TreeView<any>;
 
+    public static readonly VIEW = "pddl.planning.domains";
+
     constructor(context: ExtensionContext) {
         const catalogDataProvider = new CatalogDataProvider(context);
-        this.treeView = window.createTreeView("pddl.planning.domains", { treeDataProvider: catalogDataProvider, showCollapseAll: true });
+        this.treeView = window.createTreeView(Catalog.VIEW, { treeDataProvider: catalogDataProvider, showCollapseAll: true });
         const catalogContentProvider = new CatalogDomainProblemProvider();
         context.subscriptions.push(workspace.registerTextDocumentContentProvider(HTTPDDL, catalogContentProvider));
         context.subscriptions.push(workspace.registerTextDocumentContentProvider(HTTPLAN, new CatalogPlanProvider()));
@@ -147,19 +149,23 @@ class CatalogDataProvider implements TreeDataProvider<CatalogEntry> {
 
     public async getChildren(element?: CatalogEntry): Promise<CatalogEntry[]> {
         if (!element) {
-            return this.planningDomains.getCollections();
+            return this.withProgress("Fetching collections", () => this.planningDomains.getCollections());
         }
         else if (element.kind === CatalogEntryKind.Collection) {
             const collection = element as Collection;
-            return this.planningDomains.getDomains(collection);
+            return this.withProgress("Fetching domains", () => this.planningDomains.getDomains(collection));
         }
         else if (element.kind === CatalogEntryKind.Domain) {
             const domain = element as Domain;
-            return this.planningDomains.getProblems(domain);
+            return this.withProgress("Fetching problems", () => this.planningDomains.getProblems(domain));
         }
         else {
             return [];
         }
+    }
+
+    private withProgress<T>(message: string, workload: () => Thenable<T>): Thenable<T> {
+        return window.withProgress({ location: { viewId: Catalog.VIEW }, title: message }, workload);
     }
 }
 

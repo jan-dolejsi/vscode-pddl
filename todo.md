@@ -1,12 +1,18 @@
-Explore these options: 
+# Ideas for further development
 
-https://github.com/dhconnelly/prettybnf
-https://www.npmjs.com/package/prettybnf
-https://pegjs.org/online
-https://github.com/primaryobjects/strips
-https://github.com/hfoffani/pddl-lib
+## VS Code features to exploit
 
-And btw, the online editor (http://editor.planning.domains/) uses the Ace editor (https://ace.c9.io/)
+- [Visual designer for domain/problem/plan](https://code.visualstudio.com/updates/v1_44#_custom-text-editors)
+- Use the [Authentication provider API](https://github.com/microsoft/vscode/issues/88309)
+- Use [Welcome view API](https://code.visualstudio.com/api/extension-guides/tree-view#welcome-content) for the PDDL test creation
 
-Google line chart configured as a sparkline: 
-https://jsfiddle.net/k7sem25f/
+## Things to explore
+
+<https://github.com/dhconnelly/prettybnf>
+<https://www.npmjs.com/package/prettybnf>
+<https://pegjs.org/online>
+<https://github.com/primaryobjects/strips>
+<https://github.com/hfoffani/pddl-lib>
+
+Google line chart configured as a sparkline:
+<https://jsfiddle.net/k7sem25f/>

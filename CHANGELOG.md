@@ -1,5 +1,11 @@
 # PDDL support - What's new?
 
+## Unreleased
+
+- PDDL Test Explorer icons facelift
+- planning.domains catalog expanding with progress indication
+- optimized PTest discovery
+
 ## [2.15.7] Visualization of visited states
 
 The search tree debugger now shows states that were already visited in the search (or are deemed worse than any state previously visited by the planner) in black.

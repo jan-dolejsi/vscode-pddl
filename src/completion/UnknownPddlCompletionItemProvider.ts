@@ -13,9 +13,10 @@ export class UnknownPddlCompletionItemProvider {
     provide(document: TextDocument, position: Position, _context: CompletionContext): CompletionItem[] | PromiseLike<CompletionItem[]> {
         const tree = new parser.PddlSyntaxTreeBuilder(document.getText()).getTree();
         const currentNode = tree.getNodeAt(document.offsetAt(position));
+        const currentNodeParent = currentNode.getParent();
         if (currentNode.isDocument() ||
             currentNode.isType(parser.PddlTokenType.Whitespace) &&
-            currentNode.getParent() && currentNode.getParent()!.isDocument()) {
+            currentNodeParent && currentNodeParent!.isDocument()) {
 
             const domainSnippet = new CompletionItem("domain", CompletionItemKind.Module);
             domainSnippet.command = { command: 'editor.action.insertSnippet', arguments: [{ 'langId': PDDL, 'name': 'domain' }], title: 'Insert domain snippet' };
@@ -27,8 +28,8 @@ export class UnknownPddlCompletionItemProvider {
                 problemSnippet
             ];
         } else if (_context.triggerCharacter === '(') {
-            if (currentNode.getParent() &&
-                currentNode.getParent()!.isType(parser.PddlTokenType.Document)) {
+            if (currentNodeParent &&
+                currentNodeParent.isType(parser.PddlTokenType.Document)) {
                 const domainSnippet = new CompletionItem("(define domain...", CompletionItemKind.Module);
                 domainSnippet.command = { command: 'editor.action.insertSnippet', arguments: [{ 'langId': PDDL, 'name': 'domain' }], title: 'Insert domain snippet' };
                 domainSnippet.range = nodeToRange(document, currentNode.expand());

@@ -5,10 +5,9 @@
 'use strict';
 
 import {
-    workspace, Uri, TreeDataProvider, Event, TreeItem, EventEmitter, TreeItemCollapsibleState, window
+    workspace, Uri, TreeDataProvider, Event, TreeItem, EventEmitter, TreeItemCollapsibleState, window, FileType, WorkspaceFolder, RelativePattern
 } from 'vscode';
 import { basename, join } from 'path';
-import * as fs from 'fs';
 import { utils } from 'pddl-workspace';
 import { TestsManifest } from './TestsManifest';
 import { TestOutcome, Test } from './Test';
@@ -67,10 +66,10 @@ export class PTestTreeDataProvider implements TreeDataProvider<PTestNode> {
         let contextValue: string;
 
         if (element.kind === PTestNodeKind.Directory) {
-            icon = 'folder_16x' + '.svg';
+            icon = 'folder' + '.svg';
             contextValue = 'folder';
         } else if (element.kind === PTestNodeKind.Manifest) {
-            icon = 'file_type_test' + '.svg';
+            icon = 'beaker' + '.svg';
             contextValue = 'manifest';
         } else {
             const testOutcome = this.getTestOutcome(element.resource);
@@ -121,21 +120,30 @@ export class PTestTreeDataProvider implements TreeDataProvider<PTestNode> {
     async getChildren(element?: PTestNode): Promise<PTestNode[]> {
         if (!element) {
             if (workspace.workspaceFolders) {
-                const rootNodes: PTestNode[] = workspace.workspaceFolders
+                const manifestPromises = workspace.workspaceFolders
+                    .map(async wf => await this.findManifests(wf, 1));
+
+                const manifestUris = utils.Util.flatMap(await Promise.all(manifestPromises));
+
+                const rootNodes = workspace.workspaceFolders
+                    .filter(wf => this.containsManifest(wf.uri.fsPath, manifestUris))
                     .map(wf => this.cache({ resource: wf.uri, kind: PTestNodeKind.Directory }));
 
+                // if empty, will show the welcome message
                 return rootNodes;
             } else {
                 return [];
             }
         }
         else {
-            const parentPath = element.resource.fsPath;
+            const parentUri = element.resource;
+            const parentPath = parentUri.fsPath;
 
             if (PTestTreeDataProvider.isTestManifest(parentPath)) {
                 const manifest = this.tryLoadManifest(parentPath);
                 if (!manifest) { return []; }
 
+                // return test cases
                 return manifest.testCases
                     .map(test => this.cache({
                         resource: test.getUri(),
@@ -145,39 +153,63 @@ export class PTestTreeDataProvider implements TreeDataProvider<PTestNode> {
                     }));
             }
             else {
-                let children: string[] = [];
-                children = await utils.afs.readdir(parentPath);
-                return Promise.all(children
-                    .map(child => join(parentPath, child))
-                    .filter(childPath => PTestTreeDataProvider.isOrHasTests(childPath))
-                    .map(childPath => this.toCachedNode(childPath)));
+                const nestedManifestUris = await this.findManifests(parentPath, 1000);
+                const directoryContent = await workspace.fs.readDirectory(parentUri);
+
+                return directoryContent.map(childAndType => {
+                    const [child, childType] = childAndType;
+                    const childPath = join(parentPath, child);
+                    return this.toCachedNode(childPath, childType, nestedManifestUris);
+                })
+                    .filter(node => !!node)
+                    .map(node => node!);
             }
         }
     }
 
-    toCachedNode(childPath: string): PTestNode {
+    toCachedNode(childPath: string, childType: FileType, nestedManifestUris: Uri[]): PTestNode | undefined {
+        if (childType === FileType.File) {
+            if (PTestTreeDataProvider.isTestManifest(childPath)) {
+                let label = childPath;
+                const baseName = basename(childPath);
 
-        const kind = this.filePathToNodeKind(childPath);
-        if (kind === PTestNodeKind.Manifest) {
-            let label = childPath;
-            const baseName = basename(childPath);
-
-            if (baseName.length === PTestTreeDataProvider.PTEST_SUFFIX.length) {
-                label = 'Test cases';
+                if (baseName.length === PTestTreeDataProvider.PTEST_SUFFIX.length) {
+                    label = 'Test cases';
+                } else {
+                    label = baseName.substring(0, baseName.length - PTestTreeDataProvider.PTEST_SUFFIX.length);
+                }
+                return this.cache({
+                    resource: Uri.file(childPath),
+                    kind: PTestNodeKind.Manifest,
+                    label: label
+                });
             } else {
-                label = baseName.substring(0, baseName.length - PTestTreeDataProvider.PTEST_SUFFIX.length);
+                return undefined; // file, but not manifest
             }
-            return this.cache({
-                resource: Uri.file(childPath),
-                kind: kind,
-                label: label
-            });
         }
+        else if (childType === FileType.Directory) {
+            if (this.containsManifest(childPath, nestedManifestUris)) {
+                return this.cache({
+                    resource: Uri.file(childPath),
+                    kind: PTestNodeKind.Directory
+                });
+            }
+            else {
+                return undefined; // does not contain any manifests
+            }
+        }
+        else {
+            return undefined; // not following symbolic links
+        }
+    }
 
-        return this.cache({
-            resource: Uri.file(childPath),
-            kind: kind
-        });
+    containsManifest(folderPath: string, manifestUris: Uri[]): boolean {
+        return manifestUris
+            .some(uri => uri.fsPath.startsWith(folderPath));
+    }
+
+    private async findManifests(folder: WorkspaceFolder | string, maxEntries = 1): Promise<Uri[]> {
+        return await workspace.findFiles(new RelativePattern(folder, '**/*' + PTestTreeDataProvider.PTEST_SUFFIX), '.git/', maxEntries);
     }
 
     tryLoadManifest(manifestPath: string): TestsManifest | undefined {
@@ -190,47 +222,14 @@ ${error}`);
         }
     }
 
-    filePathToNodeKind(filePath: string): PTestNodeKind {
-        if (fs.statSync(filePath).isDirectory()) {
-            return PTestNodeKind.Directory;
-        }
-        else if (PTestTreeDataProvider.isTestManifest(filePath)) {
-            return PTestNodeKind.Manifest;
-        }
-        else {
-            throw new Error("Unexpected file: " + filePath);
-        }
-    }
-
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     getParent?(_element: PTestNode): PTestNode | Thenable<PTestNode> {
         throw new Error("Method not implemented.");
-    }
-
-    static isOrHasTests(childPath: string): boolean {
-        if (fs.statSync(childPath).isDirectory()) {
-            return PTestTreeDataProvider.getAllChildrenFiles(childPath).some(filePath => this.isTestManifest(filePath));
-        } else {
-            return this.isTestManifest(childPath);
-        }
     }
 
     static PTEST_SUFFIX = '.ptest.json';
 
     static isTestManifest(filePath: string): boolean {
         return basename(filePath).toLowerCase().endsWith(this.PTEST_SUFFIX);
-    }
-
-    static getAllChildrenFiles(dir: string): string[] {
-        const fileNames: string[] = fs.readdirSync(dir);
-        return fileNames
-            .filter(file => file !== ".git")
-            .reduce((files: string[], file: string) => {
-                const filePath = join(dir, file);
-                return fs.statSync(filePath).isDirectory() ?
-                    files.concat(PTestTreeDataProvider.getAllChildrenFiles(filePath)) :
-                    files.concat(filePath);
-            },
-                []);
     }
 }

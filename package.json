@@ -7,7 +7,7 @@
   "version": "2.15.7",
   "publisher": "jan-dolejsi",
   "engines": {
-    "vscode": "^1.40.0",
+    "vscode": "^1.44.0",
     "node": "^10.2.0"
   },
   "categories": [
@@ -180,29 +180,33 @@
         "command": "pddl.tests.run",
         "title": "Run",
         "icon": {
-          "light": "images/light/play.svg",
-          "dark": "images/dark/play.svg"
+          "light": "images/light/run.svg",
+          "dark": "images/dark/run.svg"
         }
       },
       {
         "command": "pddl.tests.runAll",
         "title": "Run all",
         "icon": {
-          "light": "images/light/play.svg",
-          "dark": "images/dark/play.svg"
+          "light": "images/light/run-all.svg",
+          "dark": "images/dark/run-all.svg"
         }
       },
       {
         "command": "pddl.tests.view",
         "title": "Open PDDL domain and test problem",
         "icon": {
-          "light": "images/light/open-file.svg",
-          "dark": "images/dark/open-file.svg"
+          "light": "images/light/open-preview.svg",
+          "dark": "images/dark/open-preview.svg"
         }
       },
       {
         "command": "pddl.tests.viewDefinition",
-        "title": "Open test definition"
+        "title": "Open test definition",
+        "icon": {
+          "light": "images/light/settings-gear.svg",
+          "dark": "images/dark/settings-gear.svg"
+        }
       },
       {
         "command": "pddl.tests.viewExpectedPlans",
@@ -404,22 +408,22 @@
         {
           "command": "pddl.tests.run",
           "when": "view == pddl.tests.explorer && viewItem == test",
-          "group": "execution"
+          "group": "inline"
         },
         {
           "command": "pddl.tests.runAll",
           "when": "view == pddl.tests.explorer && viewItem != test",
-          "group": "execution"
+          "group": "inline"
         },
         {
           "command": "pddl.tests.view",
           "when": "view == pddl.tests.explorer && viewItem == test",
-          "group": "navigation"
+          "group": "inline"
         },
         {
           "command": "pddl.tests.viewDefinition",
           "when": "view == pddl.tests.explorer && viewItem != folder",
-          "group": "navigation"
+          "group": "inline"
         },
         {
           "command": "pddl.tests.viewExpectedPlans",
@@ -801,6 +805,12 @@
         }
       ]
     },
+    "viewsWelcome": [
+      {
+        "view": "pddl.tests.explorer",
+        "contents": "No PDDL test manifest found.\n[Create tests](command:pddl...)\n \n[Learn about PDDL Tests](https://github.com/jan-dolejsi/vscode-pddl#regression-testing-of-pddl-domains)\nOr see [tips and tricks](https://github.com/jan-dolejsi/vscode-pddl/wiki/Templating-hints) for templated problem files."
+      }
+    ],
     "debuggers": [
       {
         "type": "pddl-happenings",
@@ -868,7 +878,7 @@
     "update-vscode": "node ./node_modules/vscode/bin/install",
     "package": "vsce package",
     "pretest": "npm run compile",
-		"test:unit": "mocha -- out/test/**/*Test.js",
+    "test:unit": "mocha -- out/test/**/*Test.js",
     "test:integration": "node ./out/test/runVsTests.js",
     "test": "npm run test:unit && npm run test:integration"
   },
@@ -903,7 +913,7 @@
     "@types/request": "^2.48.4",
     "@types/semver": "^7.1.0",
     "@types/tmp": "^0.1.0",
-    "@types/vscode": "^1.40.0",
+    "@types/vscode": "^1.44.0",
     "@types/uuid": "^3.4.6",
     "@typescript-eslint/eslint-plugin": "^2.18.0",
     "@typescript-eslint/parser": "^2.18.0",
