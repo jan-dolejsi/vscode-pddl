@@ -30,6 +30,7 @@
 			"runtimeExecutable": "${execPath}",
 			"args": [
 				"--folder-uri=${workspaceFolder}/src/test/tmpFolder/",
+				"--user-data-dir=${workspaceFolder}/src/test/tmpUserProfile/",
 				"--extensionDevelopmentPath=${workspaceFolder}",
 				"--extensionTestsPath=${workspaceFolder}/out/test/suite/index",
 				"--disable-extensions"

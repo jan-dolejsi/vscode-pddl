@@ -13,6 +13,7 @@ import { PddlWorkspace } from 'pddl-workspace';
 import { FileInfo, PddlLanguage } from 'pddl-workspace';
 import { CodePddlWorkspace } from '../workspace/CodePddlWorkspace';
 import { SimpleDocumentPositionResolver } from 'pddl-workspace';
+import { assertDefined } from '../utils';
 
 /**
  * Content provider for the problem file generated from a template.
@@ -51,7 +52,7 @@ export class GeneratedDocumentContentProvider implements TextDocumentContentProv
 
     mapUri(test: Test): Uri {
         const problemTemplatePath = test.getProblemUri().fsPath;
-        const testIdx = test.getUri().fragment;
+        const testIdx = test.getUriOrThrow().fragment;
 
         let problemPath: string;
 
@@ -84,7 +85,9 @@ export class GeneratedDocumentContentProvider implements TextDocumentContentProv
         const documentText = problemDocument.getText();
 
         try {
-            const preProcessedProblemText =  await test.getPreProcessor()?.transform(documentText, dirname(test.getManifest().path), this.outputWindow) ?? "No pre-processor configured.";
+            const preProcessedProblemText = await test.getPreProcessor()?.transform(
+                documentText,
+                dirname(assertDefined(test.getManifest(), `Test ${test.getLabel()} should have manifest defined.`).path), this.outputWindow) ?? "No pre-processor configured.";
             // force parsing of the generated problem
             this.pddlWorkspace.pddlWorkspace.upsertFile(uri.toString(), PddlLanguage.PDDL, 0, preProcessedProblemText, new SimpleDocumentPositionResolver(preProcessedProblemText), true);
             return preProcessedProblemText;

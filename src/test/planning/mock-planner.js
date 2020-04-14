@@ -6,16 +6,19 @@
 /* This is a mock planner for testing purposes. It output the mock problem.plan, or the content
  * of the plan file if one is supplied via command-line. */
 
-var fs = require('fs');
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const fs = require('fs');
 
-var planFile = 'problem.plan';
+let planFile = 'problem.plan';
+
+console.dir(process.argv);
 
 if (process.argv.length > 4) {
     planFile = process.argv[2];
 }
 
 try {
-    var plannerOutput = fs.readFileSync(planFile, 'utf8');
+    const plannerOutput = fs.readFileSync(planFile, 'utf8');
     console.log(plannerOutput);
 } catch (e) {
     console.error('Error: ', e.stack);

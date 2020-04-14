@@ -9,3 +9,5 @@ coverage/
 .nyc_output/
 CHANGELOG.html
 views/common/vis-network.min.*
+src/test/tmpUserProfile/
+src/test/tmpFolder/

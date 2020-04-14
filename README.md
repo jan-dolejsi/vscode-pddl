@@ -265,6 +265,8 @@ Interesting by-product of this feature is that it can be used to give effective 
 All tests under a given directory may be executed by right clicking on the folder and selecting the _run all_ command.
 All tests in the workspace may be executed by clicking the _Run all_ button in the _PDDL TESTS_ pane's toolbar.
 
+![Test Report](https://raw.githubusercontent.com/wiki/jan-dolejsi/vscode-pddl/img/PDDL_Test_Report.gif)
+
 ## Problem file generation
 
 In order to test the PDDL domain model and its scalability, it is useful to be able to generate realistic problem files from real data. However, as the PDDL model is under development, so is the structure of the problem files. Those test problem file quickly get out of date and are pain to maintain by hand. There are multiple ways how to generate problem files now. Simplest is to use one of the supported templating libraries, which are powerful enough to satisfy great number of use cases. If that is not sufficient (e.g. data needs to be retrieved from a database, cloud service and heavily manipulated), you can invoke any script or program by specifying the command-line call. Such program, however, must accept the templated problem file on its standard input and provide the actual PDDL via its standard output.

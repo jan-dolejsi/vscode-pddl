@@ -23,6 +23,7 @@ import { Menu } from '../Menu';
 const CONTENT = path.join('views', 'planview');
 export const PDDL_GENERATE_PLAN_REPORT = 'pddl.planReport';
 export const PDDL_EXPORT_PLAN = 'pddl.exportPlan';
+export const PDDL_SAVE_AS_EXPECTED_PLAN = 'pddl.saveAsExpectedPlan';
 
 export class PlanView extends Disposable {
 
@@ -220,6 +221,12 @@ export class PlanView extends Disposable {
                 label: "$(file) Export as .plan file...",
                 detail: "Opens a file picker to confirm the name and location of the plan file.",
                 command: PDDL_EXPORT_PLAN,
+                args: [previewPanel.getSelectedPlan()]
+            },
+            {
+                label: "$(beaker) Creates PDDL test with expected test assertion",
+                detail: "Saves this plan into PDDL Test as expected plan assertion.",
+                command: PDDL_SAVE_AS_EXPECTED_PLAN,
                 args: [previewPanel.getSelectedPlan()]
             },
             {

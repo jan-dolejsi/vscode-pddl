@@ -42,12 +42,18 @@ export class PTestReport implements Disposable {
     }
 
     upsertTestResult(test: Test, result: TestResult): void {
-        this.manifests.putIfAbsent(test.getManifest(), () => new TestResultMap());
-        const testMap = this.manifests.get(test.getManifest());
+        const testManifest = test.getManifest();
+        if (!testManifest) { throw new Error(`Test ${test.getLabel()} has no manifest.`); }
+        this.manifests.putIfAbsent(testManifest, () => new TestResultMap());
+        const testMap = this.manifests.get(testManifest);
         testMap && testMap.set(test, result);
         if (this.view) { this.view.updatePage(); }
     }
 
+    /**
+     * Marks manifest test as finished
+     * @param manifest manifest whose tests just finished
+     */
     finishedManifest(manifest: TestsManifest): void {
         const manifestLocation = workspace.asRelativePath(manifest.path, true);
         this.outputWindow.appendLine(`Finished executing tests from ${manifestLocation}.`);
@@ -66,8 +72,12 @@ export class PTestReport implements Disposable {
     }
 
     getTestResultOrThrow(test: Test): TestResult {
-        const results = this.getManifestTestResultsOrThrow(test.getManifest());
-        return assertDefined(results.get(test), `Test not found in the result set: ` + test.getUri().toString());
+        const testManifest = test.getManifest();
+        const testUri = test.getUri();
+        if (!testManifest || !testUri) { throw new Error(`Test ${test.getLabel()} has no manifest or URI.`); }
+
+        const results = this.getManifestTestResultsOrThrow(testManifest);
+        return assertDefined(results.get(test), `Test not found in the result set: ` + testUri.toString());
     }
 
     outputTestResult(test: Test, outcome: TestOutcome, elapsedTime: number, error?: string): void {
@@ -143,6 +153,6 @@ class ManifestMap extends utils.StringifyingMap<TestsManifest, TestResultMap> {
 
 class TestResultMap extends utils.StringifyingMap<Test, TestResult> {
     protected stringifyKey(key: Test): string {
-        return key.getUri().toString();
+        return key.getUriOrThrow().toString();
     }
 }

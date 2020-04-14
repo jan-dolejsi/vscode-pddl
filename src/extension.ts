@@ -51,6 +51,10 @@ const PDDL_UPDATE_TOKENS_PLANNER_SERVICE = 'pddl.updateTokensPlannerService';
 
 const PDDL_CONFIGURE_VALIDATOR = 'pddl.configureValidate';
 let formattingProvider: PddlFormatProvider;
+let pddlConfiguration: PddlConfiguration;
+export let codePddlWorkspace: CodePddlWorkspace | undefined;
+export let planning: Planning | undefined;
+export let ptestExplorer: PTestExplorer | undefined;
 
 export async function activate(context: ExtensionContext): Promise<PddlWorkspace | undefined> {
 
@@ -74,8 +78,6 @@ export async function activate(context: ExtensionContext): Promise<PddlWorkspace
 	}
 }
 
-let pddlConfiguration: PddlConfiguration;
-
 function activateWithTelemetry(_operationId: string, context: ExtensionContext): PddlWorkspace {
 	pddlConfiguration = new PddlConfiguration(context);
 
@@ -87,8 +89,8 @@ function activateWithTelemetry(_operationId: string, context: ExtensionContext):
 	const pddlContext = createPddlExtensionContext(context);
 
 	const pddlWorkspace = new PddlWorkspace(pddlConfiguration.getEpsilonTimeStep(), pddlContext);
-	const codePddlWorkspace = CodePddlWorkspace.getInstance(pddlWorkspace, context, pddlConfiguration);
-	const planning = new Planning(codePddlWorkspace, pddlConfiguration, context);
+	codePddlWorkspace = CodePddlWorkspace.getInstance(pddlWorkspace, context, pddlConfiguration);
+	planning = new Planning(codePddlWorkspace, pddlConfiguration, context);
 	const planValidator = new PlanValidator(planning.output, codePddlWorkspace, pddlConfiguration, context);
 	const happeningsValidator = new HappeningsValidator(planning.output, codePddlWorkspace, pddlConfiguration, context);
 
@@ -223,8 +225,8 @@ function activateWithTelemetry(_operationId: string, context: ExtensionContext):
 	const happeningsHoverProvider = languages.registerHoverProvider(HAPPENINGS, symbolInfoProvider);
 
 	// tslint:disable-next-line:no-unused-expression
-	new PTestExplorer(pddlContext, codePddlWorkspace, planning);
-
+	ptestExplorer = new PTestExplorer(pddlContext, codePddlWorkspace, planning);
+	
 	// tslint:disable-next-line:no-unused-expression
 	new Catalog(context);
 

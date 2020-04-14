@@ -5,11 +5,12 @@
 'use strict';
 
 import {
-    workspace, TreeView, window, commands, ViewColumn, Uri, ProgressLocation, Range, SaveDialogOptions, Position, Disposable
+    workspace, TreeView, window, commands, ViewColumn, Uri, ProgressLocation, SaveDialogOptions, Position, Disposable
 } from 'vscode';
 import { instrumentOperationAsVsCodeCommand } from "vscode-extension-telemetry-wrapper";
 import { dirname } from 'path';
-import { readFileSync, promises } from 'fs';
+import { readFileSync } from 'fs';
+import { findNodeAtLocation, parseTree } from 'jsonc-parser';
 import { utils, parser } from 'pddl-workspace';
 import { Test, TestOutcome } from './Test';
 import { PTestTreeDataProvider, PTestNode, PTestNodeKind } from './PTestTreeDataProvider';
@@ -21,10 +22,12 @@ import { TestsManifest } from './TestsManifest';
 import { PlanStep } from 'pddl-workspace';
 import { PddlExtensionContext } from 'pddl-workspace';
 import { PTestReport } from './PTestReport';
-import { showError } from '../utils';
+import { showError, jsonNodeToRange } from '../utils';
 import { CodePddlWorkspace } from '../workspace/CodePddlWorkspace';
 import { PTEST_VIEW_PROBLEM, PTEST_VIEW, PTEST_REVEAL } from './PTestCommands';
 import { DEFAULT_EPSILON } from '../configuration';
+import { ManifestGenerator } from './ManifestGenerator';
+import { PDDL_SAVE_AS_EXPECTED_PLAN } from '../planning/PlanView';
 
 /**
  * PDDL Test Explorer pane.
@@ -35,6 +38,7 @@ export class PTestExplorer {
     private pTestViewer: TreeView<PTestNode>;
     private pTestTreeDataProvider: PTestTreeDataProvider;
     private report: PTestReport;
+    manifestGenerator: ManifestGenerator;
 
     constructor(private context: PddlExtensionContext, private codePddlWorkspace: CodePddlWorkspace, private planning: Planning) {
         this.pTestTreeDataProvider = new PTestTreeDataProvider(context);
@@ -61,9 +65,25 @@ export class PTestExplorer {
             this.pTestViewer.reveal(this.pTestTreeDataProvider.findNodeByResource(nodeUri), { select: true, expand: true }))
         );
 
+        this.manifestGenerator = new ManifestGenerator(this.codePddlWorkspace.pddlWorkspace, this.context);
+        this.subscribe(instrumentOperationAsVsCodeCommand('pddl.tests.createAll', () => this.generateAllManifests().catch(showError)));
+
+        this.subscribe(instrumentOperationAsVsCodeCommand(PDDL_SAVE_AS_EXPECTED_PLAN, plan => this.manifestGenerator.createPlanAssertion(plan).catch(showError)));
+
         this.subscribe(this.report = new PTestReport(context, this.planning.output));
         this.generatedDocumentContentProvider = new GeneratedDocumentContentProvider(this.planning.output, this.codePddlWorkspace);
         this.subscribe(workspace.registerTextDocumentContentProvider('tpddl', this.generatedDocumentContentProvider));
+    }
+
+    getTreeDataProvider(): PTestTreeDataProvider {
+        return this.pTestTreeDataProvider;
+    }
+
+
+    async generateAllManifests(): Promise<TestsManifest[]> {
+        const manifests = await this.manifestGenerator.generateAll();
+        this.getTreeDataProvider().refresh();
+        return manifests;
     }
 
     private subscribe(disposable: Disposable): void {
@@ -95,24 +115,25 @@ export class PTestExplorer {
     async openDefinition(node: PTestNode): Promise<void> {
         if (node.kind === PTestNodeKind.Test) {
             const test = Test.fromUri(node.resource, this.context);
-            if (test === null) {
+            if (test === undefined) {
                 throw new Error("No test found at: " + node.resource);
             }
 
             const manifest = test.getManifest();
+
+            if (!manifest) {
+                throw new Error(`Test ${test.getLabel()} is not associated to any manifest`);
+            }
+
             const manifestDocument = await workspace.openTextDocument(manifest.uri);
 
-            // todo: try this node module: jsonc-parser - A scanner and fault tolerant parser to process JSON with or without comments.
+            // use jsonc-parser to find the element in the JSON DOM
+            const manifestText = (await workspace.fs.readFile(Uri.file(manifest.path))).toString();
+            const rootNode = parseTree(manifestText);
+            const jsonTestNode = findNodeAtLocation(rootNode, ["cases", test.getIndex() ?? 0]);
 
-            if (test.getLabel()) {
-                const manifestText: string = await promises.readFile(manifest.path, { encoding: "utf8" });
-                const lineIdx = manifestText.split('\n').findIndex(line => new RegExp(`"label"\\s*:\\s*"${test?.getLabel()}"`).test(line));
-
-                await window.showTextDocument(manifestDocument.uri, { preview: true, viewColumn: ViewColumn.One, selection: new Range(lineIdx, 0, lineIdx, Number.MAX_SAFE_INTEGER) });
-            }
-            else {
-                await window.showTextDocument(manifestDocument.uri, { preview: true, viewColumn: ViewColumn.One });
-            }
+            const selection = jsonTestNode && jsonNodeToRange(manifestDocument, jsonTestNode);
+            await window.showTextDocument(manifestDocument.uri, { preview: true, viewColumn: ViewColumn.One, selection: selection });
         } else if (node.kind === PTestNodeKind.Manifest) {
             const manifestDocument = await workspace.openTextDocument(node.resource);
             await window.showTextDocument(manifestDocument.uri, { preview: true, viewColumn: ViewColumn.One });
@@ -278,13 +299,18 @@ export class PTestExplorer {
         this.setTestOutcome(test, TestOutcome.IN_PROGRESS);
 
         return new Promise(async (resolve, reject) => {
-            const testValid = await this.assertValid(test);
-            if (!testValid) {
-                this.outputTestResult(test, TestOutcome.SKIPPED, Number.NaN, "Invalid test definition");
-                reject(new Error('Invalid test ' + test.getLabel()));
+            try {
+                const testValid = await this.assertValid(test);
+                if (!testValid) {
+                    this.outputTestResult(test, TestOutcome.SKIPPED, Number.NaN, "Invalid test definition");
+                    reject(new Error('Invalid test ' + test.getLabel()));
+                    return;
+                }
+            } catch (ex) {
+                reject(ex);
                 return;
             }
-
+            
             const resultSubscription = this.planning.onPlansFound(result => {
                 resultSubscription.dispose();
 
@@ -318,7 +344,8 @@ export class PTestExplorer {
             });
 
             try {
-                await commands.executeCommand('pddl.planAndDisplayResult', test.getDomainUri(), problemUri, dirname(test.getManifest().path), test.getOptions());
+                const cwd = test.getManifest() ? dirname(test.getManifest()!.path) : '.';
+                await commands.executeCommand('pddl.planAndDisplayResult', test.getDomainUri(), problemUri, cwd, test.getOptions());
             } catch (e) {
                 this.setTestOutcome(test, TestOutcome.FAILED);
                 reject(e);

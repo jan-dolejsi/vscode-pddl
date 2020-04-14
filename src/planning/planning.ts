@@ -44,6 +44,7 @@ import { CodePddlWorkspace } from '../workspace/CodePddlWorkspace';
 const PDDL_STOP_PLANNER = 'pddl.stopPlanner';
 const PDDL_CONVERT_PLAN_TO_HAPPENINGS = 'pddl.convertPlanToHappenings';
 const PDDL_CONVERT_HAPPENINGS_TO_PLAN = 'pddl.convertHappeningsToPlan';
+export const PDDL_PLAN_AND_DISPLAY = 'pddl.planAndDisplayResult';
 
 /**
  * Delegate for handling requests to run the planner and visualize the plans.
@@ -64,7 +65,7 @@ export class Planning implements PlannerResponseHandler {
 
         context.subscriptions.push(this.planView = new PlanView(context, codePddlWorkspace));
 
-        context.subscriptions.push(instrumentOperationAsVsCodeCommand('pddl.planAndDisplayResult',
+        context.subscriptions.push(instrumentOperationAsVsCodeCommand(PDDL_PLAN_AND_DISPLAY,
             async (domainUri: Uri, problemUri: Uri, workingFolder: string, options?: string) => {
                 if (problemUri) {
                     await this.planByUri(domainUri, problemUri, workingFolder, options).catch(showError);
@@ -240,7 +241,8 @@ export class Planning implements PlannerResponseHandler {
     }
 
     private readonly _onPlansFound = new EventEmitter<PlanningResult>();
-    public onPlansFound: Event<PlanningResult> = this._onPlansFound.event;
+    public get onPlansFound(): Event<PlanningResult> { return this._onPlansFound.event; }
+
     private progressUpdater: ElapsedTimeProgressUpdater | undefined;
 
     private establishWorkingDirectory(activeDocument: TextDocument, problemFileInfo: ProblemInfo, domainFileInfo: DomainInfo): string {

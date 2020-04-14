@@ -5,6 +5,7 @@
 'use strict';
 
 import * as path from 'path';
+import { Node } from 'jsonc-parser';
 import { ExtensionContext, Uri, workspace, window, Range, TextDocument, Webview, Position } from 'vscode';
 import { utils } from 'pddl-workspace';
 import { PddlExtensionContext } from 'pddl-workspace';
@@ -201,6 +202,12 @@ export function nodeToRange(document: TextDocument, node: parser.PddlSyntaxNode)
 
 export function toPosition(position: PddlPosition): Position {
     return new Position(position.line, position.character);
+}
+
+export function jsonNodeToRange(document: TextDocument, node: Node): Range {
+    return new Range(
+        document.positionAt(node.offset),
+        document.positionAt(node.offset + node.length));
 }
 
 export class UriMap<T> extends utils.StringifyingMap<Uri, T> {

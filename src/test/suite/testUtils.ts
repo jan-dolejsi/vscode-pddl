@@ -1,6 +1,7 @@
 import * as assert from 'assert';
+import * as path from 'path';
 import { PddlExtensionContext, utils } from 'pddl-workspace';
-import { Disposable, workspace, ExtensionContext, Memento } from 'vscode';
+import { Disposable, workspace, ExtensionContext, Memento, extensions, Event, FileType, Uri } from 'vscode';
 import { assertDefined } from '../../utils';
 
 export function assertStrictEqualDecorated(actualText: string, expectedText: string, message: string): void {
@@ -30,7 +31,7 @@ export async function createTestPddlExtensionContext(): Promise<PddlExtensionCon
     };
 }
 
-class MockMemento implements Memento{
+class MockMemento implements Memento {
     map: Map<string, unknown>;
     constructor() {
         this.map = new Map<string, unknown>();
@@ -61,3 +62,66 @@ export async function createTestExtensionContext(): Promise<ExtensionContext> {
     };
 }
 
+export function getMockPlanner(): string {
+    const plannerPath = path.resolve(__dirname, path.join('..', '..', '..', 'src', 'test', 'planning', 'mock-planner.js'));
+
+    return "node " + plannerPath;
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export async function activateExtension(): Promise<any> {
+    const thisExtension = assertDefined(extensions.getExtension("jan-dolejsi.pddl"), `Extension 'jan-dolejsi.pddl' not found`);
+    if (!thisExtension.isActive) {
+        return await thisExtension.activate();
+    }
+}
+
+/**
+ * Awaits a `T` event.
+ * @param event event emitter to subscribe to 
+ * @param param1 action to execute after subscribing to the event and filter to apply to events
+ */
+export async function waitFor<T>(event: Event<T>, { action: workload, filter }: { action?: () => void; filter?: (event: T) => boolean } = {}): Promise<T> {
+    return new Promise<T>(resolve => {
+        const subscription = event(e => {
+            if ((filter && filter(e)) ?? true) {
+                resolve(e);
+                subscription.dispose();
+            }
+        });
+
+        // if the workload action is defined, call it
+        workload && workload();
+    });
+}
+
+/**
+ * Deletes all files in the workspace folder(s) recursively. 
+ */
+export async function clearWorkspaceFolder(): Promise<void> {
+
+    if (!workspace.workspaceFolders) {
+        console.warn('No workspace folder is open.');
+        return;
+    }
+    else {
+
+        const workspaceFolderDeletions = workspace.workspaceFolders.map(async wf => {
+            const workspaceFolderEntries = await workspace.fs.readDirectory(wf.uri);
+
+            const fileDeletions = workspaceFolderEntries
+                .filter(entry => entry[0] !== '.gitkeep')
+                .map(async entry => {
+                    const [fileName, fileType] = entry;
+                    console.log(`Deleting ${fileName}`);
+                    const fileAbsPath = path.join(wf.uri.fsPath, fileName);
+                    const recursive = fileType === FileType.Directory;
+                    return await workspace.fs.delete(Uri.file(fileAbsPath), { recursive: recursive, useTrash: false });
+                });
+
+            await Promise.all(fileDeletions);
+        });
+
+        await Promise.all(workspaceFolderDeletions);
+    }
+}

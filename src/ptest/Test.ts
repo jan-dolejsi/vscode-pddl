@@ -29,22 +29,22 @@ const PRE_PROCESSOR_ARGS = "args";
  * Test definitions
  */
 export class Test {
-    private manifest: TestsManifest;
-    private index: number;
-    private uri: Uri;
+    private manifest: TestsManifest | undefined;
+    private index: number | undefined;
+    private uri: Uri | undefined;
 
-    constructor(private label: string,
-        private description: string,
-        private domain: string,
-        private problem: string,
+    constructor(private label: string | undefined,
+        private description: string | undefined,
+        private domain: string | undefined,
+        private problem: string | undefined,
         private options: string | undefined,
         private preProcessor: PreProcessor | undefined,
-        private expectedPlans: string[]) {
+        private expectedPlans: string[] | undefined) {
 
-        }
+    }
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    static fromJSON(json: any,  context: PddlExtensionContext): Test {
+    static fromJSON(json: any, context: PddlExtensionContext): Test {
         const label = json[LABEL];
         const description = json[DESCRIPTION];
         const domain = json[DOMAIN];
@@ -55,10 +55,10 @@ export class Test {
         const preProcessSettings = json[PRE_PROCESSOR];
         let preProcessor: PreProcessor | undefined;
 
-        if(preProcessSettings) {
+        if (preProcessSettings) {
             const kind = preProcessSettings[PRE_PROCESSOR_KIND];
 
-            switch(kind){
+            switch (kind) {
                 case "command":
                     preProcessor = CommandPreProcessor.fromJson(preProcessSettings as never);
                     break;
@@ -86,15 +86,22 @@ export class Test {
         if (this.description) { json[DESCRIPTION] = this.description; }
         if (this.domain) { json[DOMAIN] = this.domain; }
         if (this.problem) { json[PROBLEM] = this.problem; }
-        if (this.options)  { json[OPTIONS] = this.options; }
-        if (this.expectedPlans.length) {json[EXPECTED_PLANS] = this.expectedPlans; }
+        if (this.options) { json[OPTIONS] = this.options; }
+        if (this.expectedPlans?.length) { json[EXPECTED_PLANS] = this.expectedPlans; }
 
-        if (this.preProcessor) { json[PRE_PROCESSOR] = { kind: "unsupported"}; } // creating test cases with pre-processing is currently not supported
+        if (this.preProcessor) { json[PRE_PROCESSOR] = { kind: "unsupported" }; } // creating test cases with pre-processing is currently not supported
 
         return json;
     }
 
-    getManifest(): TestsManifest {
+    /**
+     * @returns index of this test case in the manifest
+     */
+    getIndex(): number | undefined {
+        return this.index;
+    }
+
+    getManifest(): TestsManifest | undefined {
         return this.manifest;
     }
 
@@ -105,7 +112,7 @@ export class Test {
     }
 
     getDomain(): string {
-        return this.domain ?? this.manifest.defaultDomain ?? throwForUndefined('domain');
+        return this.domain ?? this.manifest?.defaultDomain ?? throwForUndefined('domain');
     }
 
     getDomainUri(): Uri {
@@ -113,27 +120,32 @@ export class Test {
     }
 
     getProblem(): string {
-        return this.problem ?? this.manifest.defaultProblem ?? throwForUndefined("problem");
+        return this.problem ?? this.manifest?.defaultProblem ?? throwForUndefined("problem");
     }
 
     getProblemUri(): Uri {
         return Uri.file(this.toAbsolutePath(this.getProblem()));
     }
 
-    getUri(): Uri {
+    getUri(): Uri | undefined {
+        return this.uri;
+    }
+
+    getUriOrThrow(): Uri {
+        if (!this.uri) { throw new Error(`Test ${this.getLabel()} has no URI.`); }
         return this.uri;
     }
 
     getLabel(): string {
-        return this.label ?? this.problem ?? this.getProblem() + ` (${this.index + 1})`;
+        return this.label ?? this.problem ?? this.getProblem() + ` (${(this.index ?? 0) + 1})`;
     }
 
-    getDescription(): string {
+    getDescription(): string | undefined {
         return this.description;
     }
 
     getOptions(): string | undefined {
-        return this.options ?? this.manifest.defaultOptions;
+        return this.options ?? this.manifest?.defaultOptions;
     }
 
     getPreProcessor(): PreProcessor | undefined {
@@ -141,25 +153,28 @@ export class Test {
     }
 
     hasExpectedPlans(): boolean {
-        return this.expectedPlans.length > 0;
+        return this.expectedPlans !== undefined && this.expectedPlans.length > 0;
     }
 
     getExpectedPlans(): string[] {
-        return this.expectedPlans;
+        return this.expectedPlans ?? [];
     }
 
     toAbsolutePath(fileName: string): string {
+        if (!this.manifest) {
+            throw new Error(`Test ${this.getLabel()} is not associated to a manifest.`);
+        }
         return join(dirname(this.manifest.path), fileName);
     }
 
-    static fromUri(uri: Uri, context: PddlExtensionContext): Test | null {
+    static fromUri(uri: Uri, context: PddlExtensionContext): Test | undefined {
         const testIndex = parseInt(uri.fragment);
         if (Number.isFinite(testIndex)) {
             const manifest = TestsManifest.load(uri.fsPath, context);
             return manifest.testCases[testIndex];
         }
         else {
-            return null;
+            return undefined;
         }
     }
 }

@@ -70,7 +70,7 @@ export class HappeningsToPlanResumeCasesConvertor {
         const manifest = new TestsManifest(defaultDomain, defaultProblem, options, manifestUri);
 
         // add the original problem as a test case
-        manifest.addCase(new Test(null, "Original problem file", null, relative(cwd, Uri.parse(this.context.problem.fileUri).fsPath), "", null, []));
+        manifest.addCase(new Test(undefined, "Original problem file", undefined, relative(cwd, Uri.parse(this.context.problem.fileUri).fsPath), "", undefined, []));
 
         const problemFileWithoutExt = basename(Uri.parse(this.context.problem.fileUri).fsPath, ".pddl");
 
@@ -85,7 +85,7 @@ export class HappeningsToPlanResumeCasesConvertor {
             const problemFileName = `${problemFileWithoutExt}_${time}_${this.getHappeningFullName(lastHappening)}.pddl`.split(' ').join('_');
             const testCaseLabel = `${time}: after (${lastHappening.getFullActionName()}) ${this.getHappeningSnapName(lastHappening)}`;
             const testCaseDescription = `Test case for planning from: \nTime point: ${time} and after the application of \nAction: ${lastHappening.getFullActionName()} ${this.getHappeningSnapName(lastHappening)}`;
-            manifest.addCase(new Test(testCaseLabel, testCaseDescription, null, problemFileName, "", null, []));
+            manifest.addCase(new Test(testCaseLabel, testCaseDescription, undefined, problemFileName, "", undefined, []));
             valStepInput += `w ${problemFileName}\n`;
         }
 

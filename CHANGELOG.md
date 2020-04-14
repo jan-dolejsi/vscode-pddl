@@ -1,10 +1,16 @@
 # PDDL support - What's new?
 
-## Unreleased
+## [2.16.0]
 
-- PDDL Test Explorer icons facelift
+- PDDL Test Explorer
+  - icons facelift and context menu refinement (frequently used commands are visible when you hover)
+  - optimized PTest discovery (faster test tree initialization in large workspaces)
+  - empty test tree shows the _welcome_ message that helps creating tests for active PDDL domains
+  - test _Show definition_ command opens the JSON file highlighting the correct element more successfully now thanks to `jsonc-parser`
 - planning.domains catalog expanding with progress indication
-- optimized PTest discovery
+- refactoring: typescript compiler errors in _strict_ mode in the PTest folder addressed
+
+![Test Explorer](https://raw.githubusercontent.com/wiki/jan-dolejsi/vscode-pddl/img/PDDL_Test_Explorer.gif)
 
 ## [2.15.7] Visualization of visited states
 
@@ -971,7 +977,8 @@ Note for open source contributors: all notable changes to the "pddl" extension w
 
 Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
 
-[Unreleased]: https://github.com/jan-dolejsi/vscode-pddl/compare/v2.15.7...HEAD
+[Unreleased]: https://github.com/jan-dolejsi/vscode-pddl/compare/v2.16.0...HEAD
+[2.15.7]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.15.7...v2.16.0
 [2.15.7]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.15.6...v2.15.7
 [2.15.6]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.15.5...v2.15.6
 [2.15.5]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.15.4...v2.15.5

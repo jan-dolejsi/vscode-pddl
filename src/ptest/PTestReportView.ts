@@ -96,7 +96,7 @@ export class PTestReportView {
     renderTestRow(test: Test): string {
         const testResult = this.report.getTestResultOrThrow(test);
         const elapsedTime = testResult.elapsedTime ? `${(testResult.elapsedTime / 1000).toFixed(2)}` : '';
-        const viewTestLink = `<a  href="#" onclick="openTest('${test.getUri().toString()}')" title="Open test case.">&#128065;</a>`;
+        const viewTestLink = `<a  href="#" onclick="openTest('${test.getUriOrThrow().toString()}')" title="Open test case.">&#128065;</a>`;
         return `<tr><td>${test.getLabel()} ${viewTestLink}</td><td>${testResult.outcomeChar}</td><td>${elapsedTime}</td><td>${testResult.error ?? ""}</td></tr>`;
     }
 

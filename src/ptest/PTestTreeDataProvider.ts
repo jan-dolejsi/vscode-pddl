@@ -26,7 +26,7 @@ export enum PTestNodeKind { Directory, Manifest, Test }
 export class PTestTreeDataProvider implements TreeDataProvider<PTestNode> {
 
     private _onDidChange: EventEmitter<PTestNode> = new EventEmitter<PTestNode>();
-    onDidChangeTreeData?: Event<PTestNode> = this._onDidChange.event;
+    public get onDidChangeTreeData(): Event<PTestNode> { return this._onDidChange.event; }
 
     private testResults: Map<string, TestOutcome> = new Map();
     private treeNodeCache: Map<string, PTestNode> = new Map();
@@ -46,8 +46,8 @@ export class PTestTreeDataProvider implements TreeDataProvider<PTestNode> {
     }
 
     setTestOutcome(test: Test, testOutcome: TestOutcome): void {
-        this.testResults.set(test.getUri().toString(), testOutcome);
-        const node = this.findNodeByResource(test.getUri());
+        this.testResults.set(test.getUriOrThrow().toString(), testOutcome);
+        const node = this.findNodeByResource(test.getUriOrThrow());
         this._onDidChange.fire(node);
     }
 
@@ -146,7 +146,7 @@ export class PTestTreeDataProvider implements TreeDataProvider<PTestNode> {
                 // return test cases
                 return manifest.testCases
                     .map(test => this.cache({
-                        resource: test.getUri(),
+                        resource: test.getUriOrThrow(),
                         kind: PTestNodeKind.Test,
                         label: test.getLabel(),
                         tooltip: test.getDescription()
@@ -227,7 +227,7 @@ ${error}`);
         throw new Error("Method not implemented.");
     }
 
-    static PTEST_SUFFIX = '.ptest.json';
+    public static PTEST_SUFFIX = '.ptest.json';
 
     static isTestManifest(filePath: string): boolean {
         return basename(filePath).toLowerCase().endsWith(this.PTEST_SUFFIX);

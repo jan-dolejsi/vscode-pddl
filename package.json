@@ -4,7 +4,7 @@
   "description": "Planning Domain Description Language support",
   "author": "Jan Dolejsi",
   "license": "MIT",
-  "version": "2.15.7",
+  "version": "2.16.0",
   "publisher": "jan-dolejsi",
   "engines": {
     "vscode": "^1.44.0",
@@ -159,6 +159,10 @@
       {
         "command": "pddl.exportPlan",
         "title": "PDDL: Export plan a to file..."
+      },
+      {
+        "command": "pddl.saveAsExpectedPlan",
+        "title": "PDDL: Save as expected plan in PDDL test"
       },
       {
         "command": "pddl.convertPlanToHappenings",
@@ -422,8 +426,13 @@
         },
         {
           "command": "pddl.tests.viewDefinition",
-          "when": "view == pddl.tests.explorer && viewItem != folder",
+          "when": "view == pddl.tests.explorer && viewItem == manifest",
           "group": "inline"
+        },
+        {
+          "command": "pddl.tests.viewDefinition",
+          "when": "view == pddl.tests.explorer && viewItem == test",
+          "group": "navigation"
         },
         {
           "command": "pddl.tests.viewExpectedPlans",
@@ -808,7 +817,7 @@
     "viewsWelcome": [
       {
         "view": "pddl.tests.explorer",
-        "contents": "No PDDL test manifest found.\n[Create tests](command:pddl...)\n \n[Learn about PDDL Tests](https://github.com/jan-dolejsi/vscode-pddl#regression-testing-of-pddl-domains)\nOr see [tips and tricks](https://github.com/jan-dolejsi/vscode-pddl/wiki/Templating-hints) for templated problem files."
+        "contents": "No PDDL test manifest found.\n[Create tests](command:pddl.tests.createAll)\n [Learn about PDDL Tests](https://github.com/jan-dolejsi/vscode-pddl#regression-testing-of-pddl-domains) and see [tips and tricks](https://github.com/jan-dolejsi/vscode-pddl/wiki/Templating-hints) for templated problem file authoring."
       }
     ],
     "debuggers": [
@@ -888,6 +897,7 @@
     "body-parser": "^1.19.0",
     "events": "^3.1.0",
     "express": "^4.17.1",
+    "jsonc-parser": "^2.2.1",
     "open": "^7.0.2",
     "pddl-workspace": "^2.3.0",
     "request": "^2.88.2",
@@ -899,8 +909,6 @@
     "vscode-uri": "^2.1.1"
   },
   "devDependencies": {
-    "minimist": ">=0.2.1",
-    "download-file": "^0.1.5",
     "@types/adm-zip": "^0.4.32",
     "@types/body-parser": "^1.19.0",
     "@types/chai": "^4.2.11",
@@ -913,14 +921,16 @@
     "@types/request": "^2.48.4",
     "@types/semver": "^7.1.0",
     "@types/tmp": "^0.1.0",
-    "@types/vscode": "^1.44.0",
     "@types/uuid": "^3.4.6",
+    "@types/vscode": "^1.44.0",
     "@typescript-eslint/eslint-plugin": "^2.18.0",
     "@typescript-eslint/parser": "^2.18.0",
     "chai": "^4.2.0",
     "chai-string": "^1.5.0",
+    "download-file": "^0.1.5",
     "eslint": "^6.8.0",
     "glob": "^7.1.6",
+    "minimist": ">=0.2.1",
     "mocha": "^6.1.4",
     "tmp": "^0.1.0",
     "typescript": "^3.7.3",

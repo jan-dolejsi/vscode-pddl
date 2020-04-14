@@ -12,14 +12,15 @@ import { ExtensionInfo } from './ExtensionInfo';
 export const EXECUTABLE_OR_SERVICE = 'executableOrService';
 export const PDDL_PARSER = 'pddlParser';
 export const PARSER_EXECUTABLE_OR_SERVICE = PDDL_PARSER + '.' + EXECUTABLE_OR_SERVICE;
-const PARSER_EXECUTABLE_OPTIONS = PDDL_PARSER + '.executableOptions';
+export const EXECUTABLE_OPTIONS = 'executableOptions';
+const PARSER_EXECUTABLE_OPTIONS = PDDL_PARSER + '.' + EXECUTABLE_OPTIONS;
 const PARSER_SERVICE_AUTHENTICATION_REFRESH_TOKEN = PDDL_PARSER + '.serviceAuthenticationRefreshToken';
 const PARSER_SERVICE_AUTHENTICATION_ACCESS_TOKEN = PDDL_PARSER + '.serviceAuthenticationAccessToken';
 const PARSER_SERVICE_AUTHENTICATION_S_TOKEN = PDDL_PARSER + '.serviceAuthenticationSToken';
 
 export const PDDL_PLANNER = 'pddlPlanner';
 export const PLANNER_EXECUTABLE_OR_SERVICE = PDDL_PLANNER + '.' + EXECUTABLE_OR_SERVICE;
-const PLANNER_EXECUTABLE_OPTIONS = PDDL_PLANNER + '.executableOptions';
+const PLANNER_EXECUTABLE_OPTIONS = PDDL_PLANNER + '.' + EXECUTABLE_OPTIONS;
 const PLANNER_SERVICE_AUTHENTICATION_REFRESH_TOKEN = PDDL_PLANNER + '.serviceAuthenticationRefreshToken';
 const PLANNER_SERVICE_AUTHENTICATION_ACCESS_TOKEN = PDDL_PLANNER + '.serviceAuthenticationAccessToken';
 const PLANNER_SERVICE_AUTHENTICATION_S_TOKEN = PDDL_PLANNER + '.serviceAuthenticationSToken';
