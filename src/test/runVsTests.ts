@@ -40,6 +40,7 @@ async function runTestsInEmptyWorkspaceFolder(options: TestOptions, version: str
 
 	// Create temp folder for the workspace
 	const userDataDirPath = await utils.atmp.dir(0x644, `vscode-user-settings_${version}_`);
+	await utils.afs.mkdirIfDoesNotExist(path.join(userDataDirPath, 'User'), { mode: 0x644, recursive: true });
 
 	options.launchArgs = launchArgs.concat([
 		// The path to the workspace, where the files will be created
