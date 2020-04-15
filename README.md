@@ -244,6 +244,12 @@ The _PDDL Tests_ explorer tree lists all configured test cases and supports sing
 
 ![Test Explorer](https://raw.githubusercontent.com/wiki/jan-dolejsi/vscode-pddl/img/PDDL_Test_Explorer.gif)
 
+If no tests are present in the workspace, a button shows up suggesting test creation for currently open domain and problem(s).
+
+It is also possible to add test case based on recent call
+to the planning engine from the hamburger menu on the plan
+preview pane.
+
 To add a test case, create a file named `*.ptest.json` anywhere in the workspace. This is a simple example:
 
 ```JSON

@@ -8,6 +8,7 @@
   - empty test tree shows the _welcome_ message that helps creating tests for active PDDL domains
   - test _Show definition_ command opens the JSON file highlighting the correct element more successfully now thanks to `jsonc-parser`
 - planning.domains catalog expanding with progress indication
+- PDDL Overview page now shows _gear_ button next to the Configuration title that shows all the settings for this extension
 - refactoring: typescript compiler errors in _strict_ mode in the PTest folder addressed
 
 ![Test Explorer](https://raw.githubusercontent.com/wiki/jan-dolejsi/vscode-pddl/img/PDDL_Test_Explorer.gif)
