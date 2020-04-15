@@ -4,8 +4,9 @@
  * ------------------------------------------------------------------------------------------ */
 'use strict';
 
-import { workspace, window, ExtensionContext, languages } from 'vscode';
+import { workspace, window, ExtensionContext, languages, commands } from 'vscode';
 
+import * as path from 'path';
 import { Planning } from './planning/planning';
 import { PddlWorkspace } from 'pddl-workspace';
 import { PDDL, PLAN, HAPPENINGS } from 'pddl-workspace';
@@ -56,6 +57,10 @@ export let codePddlWorkspace: CodePddlWorkspace | undefined;
 export let planning: Planning | undefined;
 export let ptestExplorer: PTestExplorer | undefined;
 
+export const packageJson = JSON.parse(
+	require('fs').readFileSync(path.join(__dirname, '../package.json')).toString()
+);
+  
 export async function activate(context: ExtensionContext): Promise<PddlWorkspace | undefined> {
 
 	const extensionInfo = new ExtensionInfo();
@@ -235,6 +240,13 @@ function activateWithTelemetry(_operationId: string, context: ExtensionContext):
 
 	// tslint:disable-next-line:no-unused-expression
 	new Debugging(context, codePddlWorkspace, pddlConfiguration);
+
+	context.subscriptions.push(instrumentOperationAsVsCodeCommand('pddl.settings', (): void => {
+		commands.executeCommand(
+			'workbench.action.openSettings',
+			`@ext:${packageJson.publisher}.${packageJson.name}`
+		);
+	}));
 
 	context.subscriptions.push(new PlanComparer(pddlWorkspace, pddlConfiguration));
 
