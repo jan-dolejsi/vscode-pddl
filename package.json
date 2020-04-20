@@ -932,7 +932,7 @@
     "glob": "^7.1.6",
     "minimist": ">=0.2.1",
     "mocha": "^6.1.4",
-    "tmp": "^0.1.0",
+    "tmp-promise": "^2.0.2",
     "typescript": "^3.7.3",
     "vsce": "^1.75.0",
     "vscode-test": "^1.0.0"

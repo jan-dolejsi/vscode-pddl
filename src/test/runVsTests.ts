@@ -3,6 +3,7 @@ import * as path from 'path';
 import { runTests } from 'vscode-test';
 import { URI } from 'vscode-uri';
 import { utils } from 'pddl-workspace';
+import * as tmp from 'tmp-promise';
 import { TestOptions } from 'vscode-test/out/runTest';
 
 async function main(): Promise<void> {
@@ -15,7 +16,7 @@ async function main(): Promise<void> {
 		// Passed to --extensionTestsPath
 		const extensionTestsPath = path.resolve(__dirname, './suite/index');
 
-		const vsCodeVersions = ['stable']; //'1.44.1', 
+		const vsCodeVersions = ['stable']; //'1.44.2', 
 
 		const options: TestOptions = {
 			extensionDevelopmentPath: extensionDevelopmentPath, extensionTestsPath: extensionTestsPath
@@ -26,7 +27,7 @@ async function main(): Promise<void> {
 		}
 
 	} catch (err) {
-		console.error('Failed to run tests');
+		console.error('Failed to run tests:'  + (err.message ?? err));
 		process.exit(1);
 	}
 }
@@ -36,17 +37,23 @@ async function runTestsInEmptyWorkspaceFolder(options: TestOptions, version: str
 	options.version = version;
 
 	// Create temp folder for the workspace
-	const workspaceFolderPath = await utils.atmp.dir(0x644, `pddl-test-workspace-folder_${version}_`);
+	const workspaceFolderName = `pddl-test-workspace-folder_${version}_`;
+	console.log(`Creating temp workspace folder: ${workspaceFolderName}`);
+	const workspaceFolder = await tmp.dir({ prefix: workspaceFolderName });
 
 	// Create temp folder for the workspace
-	const userDataDirPath = await utils.atmp.dir(0x644, `vscode-user-settings_${version}_`);
-	await utils.afs.mkdirIfDoesNotExist(path.join(userDataDirPath, 'User'), { mode: 0x644, recursive: true });
+	const userProfileFolderName = `vscode-user-settings_${version}_`;
+	console.log(`Creating temp user profile folder: ${userProfileFolderName}`);
+	const userDataDir = await tmp.dir({ prefix: userProfileFolderName } );
+	console.log(`Creating the 'User' sub-folder: ${path.join(userDataDir.path, 'User')}`);
+	await utils.afs.mkdirIfDoesNotExist(path.join(userDataDir.path, 'User'), { recursive: true });
+	console.log(`Created 'User' sub-folder`);
 
 	options.launchArgs = launchArgs.concat([
 		// The path to the workspace, where the files will be created
-		"--folder-uri=" + URI.file(workspaceFolderPath),
+		"--folder-uri=" + URI.file(workspaceFolder.path),
 		// user settings
-		"--user-data-dir=" + userDataDirPath
+		"--user-data-dir=" + userDataDir.path
 	]);
 
 	console.log(`Calling vscode-test ${version} with arguments: `);
