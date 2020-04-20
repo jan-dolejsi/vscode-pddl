@@ -36,10 +36,15 @@ async function runTestsInEmptyWorkspaceFolder(options: TestOptions, version: str
 	options.version = version;
 
 	// Create temp folder for the workspace
-	const workspaceFolderPath = await utils.atmp.dir(0x644, `pddl-test-workspace-folder_${version}_`);
+	const workspaceFolderName = `pddl-test-workspace-folder_${version}_`;
+	console.log(`Creating temp workspace folder: ${workspaceFolderName}`);
+	const workspaceFolderPath = await utils.atmp.dir(0x644, workspaceFolderName);
 
 	// Create temp folder for the workspace
-	const userDataDirPath = await utils.atmp.dir(0x644, `vscode-user-settings_${version}_`);
+	const userProfileFolderName = `vscode-user-settings_${version}_`;
+	console.log(`Creating temp user profile folder: ${userProfileFolderName}`);
+	const userDataDirPath = await utils.atmp.dir(0x644, userProfileFolderName);
+	console.log(`Creating the 'User' sub-folder`);
 	await utils.afs.mkdirIfDoesNotExist(path.join(userDataDirPath, 'User'), { mode: 0x644, recursive: true });
 
 	options.launchArgs = launchArgs.concat([
