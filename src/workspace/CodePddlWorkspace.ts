@@ -143,6 +143,15 @@ function subscribeToWorkspace(pddlWorkspace: CodePddlWorkspace, context: Extensi
         if (isAnyPddl(textDoc) && CodePddlWorkspace.isRealDocument(textDoc)) { await pddlWorkspace.removeFile(textDoc); }
     }));
 
+    // subscribe to document deletion event
+    context.subscriptions.push(workspace.onDidDeleteFiles(deletionEvent => {
+        const deletionSuccesses = deletionEvent.files
+            .map(deletedUri => pddlWorkspace.pddlWorkspace.removeFile(deletedUri.toString(), { removeAllReferences: false }));
+        if (deletionSuccesses.some(s => !s)) {
+            console.error(`Some files were not removed from the PDDL repository model`);
+        }
+    }));
+
     if (pddlConfiguration) {
         workspace.onDidChangeConfiguration(() => {
             pddlWorkspace.setEpsilon(pddlConfiguration.getEpsilonTimeStep());

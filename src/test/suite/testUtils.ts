@@ -113,8 +113,8 @@ export async function clearWorkspaceFolder(): Promise<void> {
                 .filter(entry => entry[0] !== '.gitkeep')
                 .map(async entry => {
                     const [fileName, fileType] = entry;
-                    console.log(`Deleting ${fileName}`);
                     const fileAbsPath = path.join(wf.uri.fsPath, fileName);
+                    console.log(`Deleting ${fileAbsPath}`);
                     const recursive = fileType === FileType.Directory;
                     return await workspace.fs.delete(Uri.file(fileAbsPath), { recursive: recursive, useTrash: false });
                 });

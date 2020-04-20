@@ -44,8 +44,9 @@ suite('PTest', () => {
     test('Creates manifest for domain+problem', async () => {
         const wf = assertDefined(workspace.workspaceFolders, "workspace folders")[0];
 
-        // create 'ptesttreedataprovider'
-        const folderPath = path.join(wf.uri.fsPath, "ptesttreedataprovider");
+        const folderName = "ptestTreeDataProvider";
+        // create 'ptestTreeDataProvider'
+        const folderPath = path.join(wf.uri.fsPath, folderName);
         await workspace.fs.createDirectory(Uri.file(folderPath));
 
         // create 'domain.pddl'
@@ -76,8 +77,9 @@ suite('PTest', () => {
 
 
         // THEN
-        expect(manifests).has.lengthOf(1);
-        const manifestFolder1DomainD = manifests[0];
+        expect(manifests).has.length.greaterThan(0);
+        const manifestFolder1DomainD = manifests.find(m => m.path.includes(folderName));
+        expect(manifestFolder1DomainD).to.be.not.undefined;
         expect(manifestFolder1DomainD.defaultDomain).to.equal(domainFileName);
         expect(manifestFolder1DomainD.testCases).to.have.lengthOf(1);
         const testCase1 = manifestFolder1DomainD.testCases[0];
@@ -107,7 +109,7 @@ suite('PTest', () => {
         
         const cwd = path.dirname(assertDefined(domainUri, 'domain uri').fsPath);
         const mockPlanPath = path.join(cwd, 'mockPlan.plan');
-        const planText = `0.001 (action1)`;
+        const planText = `0.001: (action1)`;
         workspace.fs.writeFile(Uri.file(mockPlanPath), Buffer.from(planText, 'utf8'));
 
         if (!planning) { fail('extension.planning should be defined'); return; }
