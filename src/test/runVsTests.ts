@@ -15,7 +15,7 @@ async function main(): Promise<void> {
 		// Passed to --extensionTestsPath
 		const extensionTestsPath = path.resolve(__dirname, './suite/index');
 
-		const vsCodeVersions = ['stable']; //'1.44.1', 
+		const vsCodeVersions = ['stable']; //'1.44.2', 
 
 		const options: TestOptions = {
 			extensionDevelopmentPath: extensionDevelopmentPath, extensionTestsPath: extensionTestsPath
@@ -26,7 +26,7 @@ async function main(): Promise<void> {
 		}
 
 	} catch (err) {
-		console.error('Failed to run tests');
+		console.error('Failed to run tests:'  + (err.message ?? err));
 		process.exit(1);
 	}
 }
@@ -44,8 +44,9 @@ async function runTestsInEmptyWorkspaceFolder(options: TestOptions, version: str
 	const userProfileFolderName = `vscode-user-settings_${version}_`;
 	console.log(`Creating temp user profile folder: ${userProfileFolderName}`);
 	const userDataDirPath = await utils.atmp.dir(0x644, userProfileFolderName);
-	console.log(`Creating the 'User' sub-folder`);
+	console.log(`Creating the 'User' sub-folder: ${path.join(userDataDirPath, 'User')}`);
 	await utils.afs.mkdirIfDoesNotExist(path.join(userDataDirPath, 'User'), { mode: 0x644, recursive: true });
+	console.log(`Created User sub-folder`);
 
 	options.launchArgs = launchArgs.concat([
 		// The path to the workspace, where the files will be created
