@@ -3,6 +3,7 @@ import * as path from 'path';
 import { runTests } from 'vscode-test';
 import { URI } from 'vscode-uri';
 import { utils } from 'pddl-workspace';
+import * as tmp from 'tmp-promise';
 import { TestOptions } from 'vscode-test/out/runTest';
 
 async function main(): Promise<void> {
@@ -38,21 +39,21 @@ async function runTestsInEmptyWorkspaceFolder(options: TestOptions, version: str
 	// Create temp folder for the workspace
 	const workspaceFolderName = `pddl-test-workspace-folder_${version}_`;
 	console.log(`Creating temp workspace folder: ${workspaceFolderName}`);
-	const workspaceFolderPath = await utils.atmp.dir(0x644, workspaceFolderName);
+	const workspaceFolder = await tmp.dir({ prefix: workspaceFolderName });
 
 	// Create temp folder for the workspace
 	const userProfileFolderName = `vscode-user-settings_${version}_`;
 	console.log(`Creating temp user profile folder: ${userProfileFolderName}`);
-	const userDataDirPath = await utils.atmp.dir(0x644, userProfileFolderName);
-	console.log(`Creating the 'User' sub-folder: ${path.join(userDataDirPath, 'User')}`);
-	await utils.afs.mkdirIfDoesNotExist(path.join(userDataDirPath, 'User'), { mode: 0x644, recursive: true });
-	console.log(`Created User sub-folder`);
+	const userDataDir = await tmp.dir({ prefix: userProfileFolderName } );
+	console.log(`Creating the 'User' sub-folder: ${path.join(userDataDir.path, 'User')}`);
+	await utils.afs.mkdirIfDoesNotExist(path.join(userDataDir.path, 'User'), { mode: 0o644, recursive: true });
+	console.log(`Created 'User' sub-folder`);
 
 	options.launchArgs = launchArgs.concat([
 		// The path to the workspace, where the files will be created
-		"--folder-uri=" + URI.file(workspaceFolderPath),
+		"--folder-uri=" + URI.file(workspaceFolder.path),
 		// user settings
-		"--user-data-dir=" + userDataDirPath
+		"--user-data-dir=" + userDataDir.path
 	]);
 
 	console.log(`Calling vscode-test ${version} with arguments: `);
