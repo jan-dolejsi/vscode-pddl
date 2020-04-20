@@ -46,7 +46,7 @@ async function runTestsInEmptyWorkspaceFolder(options: TestOptions, version: str
 	console.log(`Creating temp user profile folder: ${userProfileFolderName}`);
 	const userDataDir = await tmp.dir({ prefix: userProfileFolderName } );
 	console.log(`Creating the 'User' sub-folder: ${path.join(userDataDir.path, 'User')}`);
-	await utils.afs.mkdirIfDoesNotExist(path.join(userDataDir.path, 'User'), { mode: 0o644, recursive: true });
+	await utils.afs.mkdirIfDoesNotExist(path.join(userDataDir.path, 'User'), { recursive: true });
 	console.log(`Created 'User' sub-folder`);
 
 	options.launchArgs = launchArgs.concat([
