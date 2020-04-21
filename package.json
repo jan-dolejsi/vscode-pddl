@@ -4,7 +4,7 @@
   "description": "Planning Domain Description Language support",
   "author": "Jan Dolejsi",
   "license": "MIT",
-  "version": "2.16.0",
+  "version": "2.16.1",
   "publisher": "jan-dolejsi",
   "engines": {
     "vscode": "^1.44.0",
@@ -892,7 +892,7 @@
     "test": "npm run test:unit && npm run test:integration"
   },
   "dependencies": {
-    "ai-planning-val": "^2.1.5",
+    "ai-planning-val": "^2.1.6",
     "await-notify": "^1.0.1",
     "body-parser": "^1.19.0",
     "events": "^3.1.0",
