@@ -1,6 +1,7 @@
 import * as assert from 'assert';
 import * as path from 'path';
-import { PddlExtensionContext, utils } from 'pddl-workspace';
+import * as tmp from 'tmp-promise';
+import { PddlExtensionContext } from 'pddl-workspace';
 import { Disposable, workspace, ExtensionContext, Memento, extensions, Event, FileType, Uri } from 'vscode';
 import { assertDefined } from '../../utils';
 
@@ -17,13 +18,13 @@ export function decorate(text: string): string {
 }
 
 export async function createTestPddlExtensionContext(): Promise<PddlExtensionContext> {
-    const storagePath = await utils.atmp.dir(0o644, 'extensionTestStoragePath');
+    const storage = await tmp.dir({ mode: 0o644, prefix: 'extensionTestStoragePath' });
 
     return {
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
         asAbsolutePath: function (_path: string): string { throw new Error('asAbsolutePath not supported in test extension context'); },
         extensionPath: '.',
-        storagePath: storagePath,
+        storagePath: storage.path,
         subscriptions: new Array<Disposable>(),
         pythonPath: function (): string {
             return workspace.getConfiguration().get("python.pythonPath", "python");
@@ -46,19 +47,19 @@ class MockMemento implements Memento {
 }
 
 export async function createTestExtensionContext(): Promise<ExtensionContext> {
-    const storagePath = await utils.atmp.dir(0o777, 'extensionTestStoragePath');
-    const globalStoragePath = await utils.atmp.dir(0o777, 'extensionGlobalTestStoragePath');
-    const logPath = (await utils.atmp.file(0o644, 'extensionTests', 'log')).path;
+    const storage = await tmp.dir({ prefix: 'extensionTestStoragePath' });
+    const globalStorage = await tmp.dir({ prefix: 'extensionGlobalTestStoragePath' });
+    const log = await tmp.file({ mode: 0o644, prefix: 'extensionTests', postfix: 'log' });
 
     return {
         asAbsolutePath: function (path: string): string { throw new Error(`Unsupported. ` + path); },
         extensionPath: '.',
-        storagePath: storagePath,
+        storagePath: storage.path,
         subscriptions: new Array<Disposable>(),
         globalState: new MockMemento(),
         workspaceState: new MockMemento(),
-        globalStoragePath: globalStoragePath,
-        logPath: logPath,
+        globalStoragePath: globalStorage.path,
+        logPath: log.path,
     };
 }
 
