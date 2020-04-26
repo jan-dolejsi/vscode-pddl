@@ -53,6 +53,7 @@ const PDDL_UPDATE_TOKENS_PLANNER_SERVICE = 'pddl.updateTokensPlannerService';
 const PDDL_CONFIGURE_VALIDATOR = 'pddl.configureValidate';
 let formattingProvider: PddlFormatProvider;
 let pddlConfiguration: PddlConfiguration;
+export let plannersConfiguration: PlannersConfiguration;
 export let codePddlWorkspace: CodePddlWorkspace | undefined;
 export let planning: Planning | undefined;
 export let ptestExplorer: PTestExplorer | undefined;
@@ -92,7 +93,7 @@ function activateWithTelemetry(_operationId: string, context: ExtensionContext):
 	const pddlContext = createPddlExtensionContext(context);
 
 	const pddlWorkspace = new PddlWorkspace(pddlConfiguration.getEpsilonTimeStep(), pddlContext);
-	const plannersConfiguration = new PlannersConfiguration(context, pddlWorkspace);
+	plannersConfiguration = new PlannersConfiguration(context, pddlWorkspace);
 
 	// run start-up actions
 	new StartUp(context, pddlConfiguration, plannersConfiguration, valDownloader).atStartUp();

@@ -204,6 +204,11 @@ export class PlannersConfiguration {
         }
 
         const newConfiguration = await selectedItem.provider.configurePlanner();
+
+        if (!newConfiguration) { // canceled by user
+            return undefined;
+        }
+
         // todo: store configuration in different scopes
         await this.setSelectedPlanner(newConfiguration, this.getPlanners().concat([newConfiguration]));
 
@@ -229,7 +234,7 @@ export class PlannersConfiguration {
             .filter(setting => !!setting);
 
         validDocumentsAndRanges.forEach(async (docAndRange, index) => {
-            window.showTextDocument(docAndRange.settingsDoc, { selection: docAndRange.range, viewColumn: index+1 });
+            window.showTextDocument(docAndRange.settingsDoc, { selection: docAndRange.range, viewColumn: index + 1 });
         });
     }
 
@@ -244,7 +249,7 @@ export class PlannersConfiguration {
     async toDocumentAndRange(setting: { fileUri: Uri | undefined; settingRootPath: string[] }): Promise<{ settingsDoc: TextDocument; range: Range } | undefined> {
         if (!setting.fileUri) { return undefined; }
         const exists = await fileExists(setting.fileUri);
-        if (!exists) { return undefined; } 
+        if (!exists) { return undefined; }
         const settingsText = await workspace.fs.readFile(setting.fileUri);
         const settingsRoot = parseTree(settingsText.toString());
         const plannersNode = findNodeAtLocation(settingsRoot, setting.settingRootPath.concat([CONF_PDDL + '.' + PLANNERS]));

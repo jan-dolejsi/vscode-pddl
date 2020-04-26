@@ -1,7 +1,7 @@
 import * as assert from 'assert';
 import * as path from 'path';
 import * as tmp from 'tmp-promise';
-import { PddlExtensionContext } from 'pddl-workspace';
+import { PddlExtensionContext, planner } from 'pddl-workspace';
 import { Disposable, workspace, ExtensionContext, Memento, extensions, Event, FileType, Uri } from 'vscode';
 import { assertDefined } from '../../utils';
 
@@ -63,7 +63,29 @@ export async function createTestExtensionContext(): Promise<ExtensionContext> {
     };
 }
 
-export function getMockPlanner(): string {
+export class MockPlannerProvider implements planner.PlannerProvider {
+    
+    get kind(): planner.PlannerKind {
+        return { kind: "mock" };
+    }
+
+    getNewPlannerLabel(): string {
+        throw new Error("Method not implemented.");
+    }
+
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    configurePlanner(_previousConfiguration?: planner.PlannerConfiguration): Promise<planner.PlannerConfiguration> {
+        return Promise.resolve({
+            kind: this.kind.kind,
+            canConfigure: false,
+            title: 'Mock planner',
+            path: getMockPlanner(),
+            isSelected: true
+        });
+    }
+}
+
+function getMockPlanner(): string {
     const plannerPath = path.resolve(__dirname, path.join('..', '..', '..', 'src', 'test', 'planning', 'mock-planner.js'));
 
     return "node " + plannerPath;

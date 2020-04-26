@@ -22,6 +22,8 @@ export class PlannerExecutable extends planner.Planner {
     // this property stores the reference to the planner child process, while planning is in progress
     private child: process.ChildProcess | undefined;
 
+    static readonly DEFAULT_SYNTAX = "$(planner) $(domain) $(problem) $(options)";
+
     constructor(plannerPath: string, private plannerOptions: string, private plannerSyntax: string, private workingDirectory: string) {
         super(plannerPath);
     }
@@ -31,7 +33,8 @@ export class PlannerExecutable extends planner.Planner {
         const domainFilePath = await utils.Util.toPddlFile("domain", domainFileInfo.getText());
         const problemFilePath = await utils.Util.toPddlFile("problem", problemFileInfo.getText());
 
-        let command = this.plannerSyntax.replace('$(planner)', utils.Util.q(this.plannerPath))
+        let command = (this.plannerSyntax ?? PlannerExecutable.DEFAULT_SYNTAX)
+            .replace('$(planner)', utils.Util.q(this.plannerPath))
             .replace('$(options)', this.plannerOptions)
             .replace('$(domain)', utils.Util.q(domainFilePath))
             .replace('$(problem)', utils.Util.q(problemFilePath));

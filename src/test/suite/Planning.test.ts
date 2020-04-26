@@ -8,12 +8,11 @@ import { window, workspace, Uri, commands } from 'vscode';
 import { before } from 'mocha';
 import { expect } from 'chai';
 import * as path from 'path';
-import { getMockPlanner, activateExtension, waitFor, clearWorkspaceFolder } from './testUtils';
+import { MockPlannerProvider, activateExtension, waitFor, clearWorkspaceFolder } from './testUtils';
 import { PddlLanguage, SimpleDocumentPositionResolver, DomainInfo, ProblemInfo } from 'pddl-workspace';
 import { assertDefined, toURI } from '../../utils';
-import { PDDL_PLANNER, EXECUTABLE_OR_SERVICE, EXECUTABLE_OPTIONS } from '../../configuration/configuration';
 import { PDDL_PLAN_AND_DISPLAY } from '../../planning/planning';
-import { planning, codePddlWorkspace } from '../../extension';
+import { planning, codePddlWorkspace, plannersConfiguration } from '../../extension';
 import { fail } from 'assert';
 
 suite('Planning test', () => {
@@ -55,8 +54,8 @@ suite('Planning test', () => {
 
         // GIVEN the mock planner is configured
 
-        await workspace.getConfiguration(PDDL_PLANNER).update(EXECUTABLE_OR_SERVICE, getMockPlanner());
-        await workspace.getConfiguration(PDDL_PLANNER).update(EXECUTABLE_OPTIONS, "$(planner) $(domain) $(problem) $(options)");
+        const mockConfiguration = await new MockPlannerProvider().configurePlanner();
+        await plannersConfiguration.setSelectedPlanner(mockConfiguration, [mockConfiguration]);
 
         const cwd = path.dirname(assertDefined(domainUri, 'domain uri').fsPath);
         const mockPlanPath = path.join(cwd, 'mockPlan.plan');

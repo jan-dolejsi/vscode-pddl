@@ -11,7 +11,7 @@ import { Uri, window } from 'vscode';
 import { planner, OutputAdaptor } from 'pddl-workspace';
 import { isHttp } from '../utils';
 
-export class CommandPlannerProvider extends planner.PlannerProvider {
+export class CommandPlannerProvider implements planner.PlannerProvider {
     get kind(): planner.PlannerKind {
         return planner.WellKnownPlannerKind.COMMAND;
     }
@@ -103,7 +103,7 @@ export class CommandPlannerProvider extends planner.PlannerProvider {
     }
 }
 
-export class SolveServicePlannerProvider extends planner.PlannerProvider {
+export class SolveServicePlannerProvider implements planner.PlannerProvider {
     get kind(): planner.PlannerKind {
         return planner.WellKnownPlannerKind.SERVICE_SYNC;
     }
@@ -146,7 +146,7 @@ export class SolveServicePlannerProvider extends planner.PlannerProvider {
     }
 }
 
-export class JavaPlannerProvider extends planner.PlannerProvider {
+export class JavaPlannerProvider implements planner.PlannerProvider {
     get kind(): planner.PlannerKind {
         return planner.WellKnownPlannerKind.JAVA_JAR;
     }
@@ -166,15 +166,15 @@ export class JavaPlannerProvider extends planner.PlannerProvider {
     }
 }
 
-export class ExecutablePlannerProvider extends planner.PlannerProvider {
+export class ExecutablePlannerProvider implements planner.PlannerProvider {
     get kind(): planner.PlannerKind {
         return planner.WellKnownPlannerKind.EXECUTABLE;
     }
     getNewPlannerLabel(): string {
         return "$(symbol-event) Select an executable on this computer...";
     }
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    async configurePlanner(_previousConfiguration?: planner.PlannerConfiguration): Promise<planner.PlannerConfiguration | undefined> {
+
+    async configurePlanner(previousConfiguration?: planner.PlannerConfiguration): Promise<planner.PlannerConfiguration | undefined> {
         const filters = os.platform() === 'win32' ?
             {
                 'Executable': ['exe'],
@@ -182,7 +182,9 @@ export class ExecutablePlannerProvider extends planner.PlannerProvider {
             }
             : undefined;
 
-        const executableUri = await selectedFile(`Select planner executable`, filters);
+        const defaultUri = Uri.file(previousConfiguration.path);
+        
+        const executableUri = await selectedFile(`Select planner executable`, defaultUri, filters);
         if (!executableUri) { return undefined; }
 
         const newPlannerConfiguration: planner.PlannerConfiguration = {
@@ -196,6 +198,7 @@ export class ExecutablePlannerProvider extends planner.PlannerProvider {
 
         return newPlannerConfiguration;
     }
+    
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     showHelp(_output: OutputAdaptor): void {
         throw new Error("Method not implemented.");
@@ -216,13 +219,14 @@ export class ExecutablePlannerProvider extends planner.PlannerProvider {
 // };
 
 
-async function selectedFile(label: string, filters?: { [name: string]: string[] }): Promise<Uri | undefined> {
+async function selectedFile(label: string, defaultUri?: Uri, filters?: { [name: string]: string[] }): Promise<Uri | undefined> {
     const selectedUris = await window.showOpenDialog({
         canSelectFiles: true,
         canSelectFolders: false,
         canSelectMany: false,
         openLabel: label,
-        filters: filters
+        filters: filters,
+        defaultUri: defaultUri
     });
 
     if (!selectedUris) {
