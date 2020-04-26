@@ -1,5 +1,9 @@
 # PDDL support - What's new?
 
+## [2.17.0]
+
+Support for multiple planners, extensibility (other extensions can now inject planner providers) and easy switching between them.
+
 ## [2.16.0]
 
 - PDDL Test Explorer
