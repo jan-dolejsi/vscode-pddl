@@ -25,9 +25,10 @@ import { PTestReport } from './PTestReport';
 import { showError, jsonNodeToRange } from '../utils';
 import { CodePddlWorkspace } from '../workspace/CodePddlWorkspace';
 import { PTEST_VIEW_PROBLEM, PTEST_VIEW, PTEST_REVEAL } from './PTestCommands';
-import { DEFAULT_EPSILON } from '../configuration';
+import { DEFAULT_EPSILON } from '../configuration/configuration';
 import { ManifestGenerator } from './ManifestGenerator';
 import { PDDL_SAVE_AS_EXPECTED_PLAN } from '../planning/PlanView';
+import { URI } from 'vscode-uri';
 
 /**
  * PDDL Test Explorer pane.
@@ -397,7 +398,7 @@ export class PTestExplorer {
     loadPlan(expectedPlanPath: string): Plan {
         const expectedPlanText = readFileSync(expectedPlanPath, { encoding: "utf-8" });
         const epsilon = workspace.getConfiguration().get<number>("pddlPlanner.epsilonTimeStep", DEFAULT_EPSILON);
-        return parser.PddlPlannerOutputParser.parseOnePlan(expectedPlanText, expectedPlanPath, epsilon);
+        return parser.PddlPlannerOutputParser.parseOnePlan(expectedPlanText, URI.file(expectedPlanPath), epsilon);
     }
 
     async assertValid(test: Test): Promise<boolean> {

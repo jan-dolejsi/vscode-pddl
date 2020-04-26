@@ -8,14 +8,15 @@ import {
     window, ExtensionContext, MessageItem, Uri, commands, ViewColumn, workspace, ConfigurationTarget
 } from 'vscode';
 
-import { PddlConfiguration } from '../configuration';
+import { PddlConfiguration } from '../configuration/configuration';
 
 import {diff} from 'semver';
 import { OverviewPage, SHOULD_SHOW_OVERVIEW_PAGE } from './OverviewPage';
 import { utils } from 'pddl-workspace';
 import { ValDownloader } from '../validation/ValDownloader';
 import { ValDownloadReminder } from '../validation/ValDownloadReminder';
-import { ExtensionInfo } from '../ExtensionInfo';
+import { ExtensionInfo } from '../configuration/ExtensionInfo';
+import { PlannersConfiguration } from '../configuration/PlannersConfiguration';
 
 const LATER = 'LATER';
 const NEVER = 'NEVER';
@@ -25,8 +26,8 @@ export class StartUp {
 
     overviewPage: OverviewPage;
 
-    constructor(private context: ExtensionContext, private pddlConfiguration: PddlConfiguration, private val: ValDownloader) {
-        this.overviewPage = new OverviewPage(context, this.pddlConfiguration, this.val);
+    constructor(private context: ExtensionContext, private pddlConfiguration: PddlConfiguration, plannersConfiguration: PlannersConfiguration, private val: ValDownloader) {
+        this.overviewPage = new OverviewPage(context, this.pddlConfiguration, plannersConfiguration, this.val);
     }
 
     atStartUp(): void {

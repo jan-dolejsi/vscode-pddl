@@ -14,10 +14,10 @@ import { Search } from "./Search";
 import { MessageParser } from "./MessageParser";
 import { MockSearch } from "./MockSearch";
 import { SearchDebuggerView } from "./SearchDebuggerView";
-import { PlannerOptionsProvider, PlanningRequestContext } from "../planning/PlannerOptionsProvider";
-import { PddlConfiguration } from "../configuration";
+import { planner } from "pddl-workspace";
+import { PddlConfiguration } from "../configuration/configuration";
 
-export class SearchDebugger implements PlannerOptionsProvider {
+export class SearchDebugger implements planner.PlannerOptionsProvider {
 
     private server: http.Server | null = null;
     private search: Search | undefined; // lazy init
@@ -41,7 +41,7 @@ export class SearchDebugger implements PlannerOptionsProvider {
         this.view = new SearchDebuggerView(this.context);
     }
 
-    providePlannerOptions(context: PlanningRequestContext): string {
+    providePlannerOptions(context: planner.PlanningRequestContext): string {
         if (this.isRunning()) {
             this.reset();
             if (this.view) {

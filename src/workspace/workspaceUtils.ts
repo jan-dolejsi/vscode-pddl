@@ -13,6 +13,7 @@ import { HappeningsInfo } from 'pddl-workspace';
 import { PddlWorkspace } from 'pddl-workspace';
 import { basename, dirname } from 'path';
 import { CodePddlWorkspace } from './CodePddlWorkspace';
+import { toUri } from '../utils';
 
 export function isAnyPddl(doc: TextDocument): boolean {
     return isPddl(doc) || isPlan(doc) || isHappenings(doc);
@@ -179,7 +180,7 @@ export async function selectFile(options: SelectFileOptions, suggestedFiles?: Fi
         if (!selectedPick) {
             return undefined;
         } else if (selectedPick !== anotherDocumentFileInfoQuickPickItem) {
-            return Uri.parse(selectedPick.getFileInfo().fileUri);
+            return toUri(selectedPick.getFileInfo().fileUri);
         }
     }
 
@@ -262,7 +263,7 @@ class SuggestedFileInfoQuickPickItem implements FileInfoQuickPickItem {
     readonly label: string;
     readonly description: string;
     constructor(private fileInfo: FileInfo) {
-        const filePath = Uri.parse(fileInfo.fileUri).fsPath;
+        const filePath = fileInfo.fileUri.fsPath;
         this.label = basename(filePath);
         this.description = dirname(filePath);
     }

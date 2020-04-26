@@ -9,7 +9,7 @@ import { instrumentOperationAsVsCodeCommand } from "vscode-extension-telemetry-w
 import * as path from 'path';
 import { utils } from 'pddl-workspace';
 import { ValDownloader as ValDownloaderBase, ValVersion, readValManifest, writeValManifest } from 'ai-planning-val';
-import { PARSER_EXECUTABLE_OR_SERVICE, CONF_PDDL, VALIDATION_PATH, VALUE_SEQ_PATH, VAL_STEP_PATH, VALIDATOR_VERSION } from '../configuration';
+import { PARSER_EXECUTABLE_OR_SERVICE, CONF_PDDL, VALIDATION_PATH, VALUE_SEQ_PATH, VAL_STEP_PATH, VALIDATOR_VERSION } from '../configuration/configuration';
 import { VAL_DOWNLOAD_COMMAND, ValDownloadOptions } from './valCommand';
 import { ensureAbsoluteGlobalStoragePath } from '../utils';
 

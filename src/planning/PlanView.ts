@@ -17,7 +17,7 @@ import { Plan } from 'pddl-workspace';
 
 import * as path from 'path';
 import { CodePddlWorkspace } from '../workspace/CodePddlWorkspace';
-import { CONF_PDDL, PLAN_REPORT_WIDTH, PDDL_CONFIGURE_COMMAND } from '../configuration';
+import { CONF_PDDL, PLAN_REPORT_WIDTH, PDDL_CONFIGURE_COMMAND } from '../configuration/configuration';
 import { Menu } from '../Menu';
 
 const CONTENT = path.join('views', 'planview');

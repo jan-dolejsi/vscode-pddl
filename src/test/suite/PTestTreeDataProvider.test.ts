@@ -12,8 +12,8 @@ import { PTestTreeDataProvider, PTestNode } from '../../ptest/PTestTreeDataProvi
 import { createTestPddlExtensionContext, getMockPlanner, activateExtension, waitFor, clearWorkspaceFolder } from './testUtils';
 import { PddlExtensionContext, PddlLanguage, SimpleDocumentPositionResolver, DomainInfo, ProblemInfo } from 'pddl-workspace';
 import { ManifestGenerator } from '../../ptest/ManifestGenerator';
-import { assertDefined, throwForUndefined } from '../../utils';
-import { PDDL_PLANNER, EXECUTABLE_OR_SERVICE, EXECUTABLE_OPTIONS } from '../../configuration';
+import { assertDefined, throwForUndefined, toURI } from '../../utils';
+import { PDDL_PLANNER, EXECUTABLE_OR_SERVICE, EXECUTABLE_OPTIONS } from '../../configuration/configuration';
 import { PDDL_PLAN_AND_DISPLAY } from '../../planning/planning';
 import { planning, ptestExplorer, codePddlWorkspace } from '../../extension';
 import { fail } from 'assert';
@@ -64,8 +64,8 @@ suite('PTest', () => {
         await workspace.fs.writeFile(problemUri, Buffer.from(problemText));
 
         const codePddlWorkspace1 = assertDefined(codePddlWorkspace, "code PDDL workspace");
-        await codePddlWorkspace1.pddlWorkspace.upsertFile(domainUri.toString(), PddlLanguage.PDDL, 1, domainText, new SimpleDocumentPositionResolver(domainText)) as DomainInfo;
-        await codePddlWorkspace1.pddlWorkspace.upsertFile(problemUri.toString(), PddlLanguage.PDDL, 1, problemText, new SimpleDocumentPositionResolver(problemText)) as ProblemInfo;
+        await codePddlWorkspace1.pddlWorkspace.upsertFile(toURI(domainUri), PddlLanguage.PDDL, 1, domainText, new SimpleDocumentPositionResolver(domainText)) as DomainInfo;
+        await codePddlWorkspace1.pddlWorkspace.upsertFile(toURI(problemUri), PddlLanguage.PDDL, 1, problemText, new SimpleDocumentPositionResolver(problemText)) as ProblemInfo;
 
         if (!ptestExplorer) { fail('extension.ptestExplorer should be defined'); return; }
 
@@ -130,7 +130,7 @@ suite('PTest', () => {
         const manifest = await manifestGenerator.createPlanAssertion(plan);
 
         // THEN
-        expect(manifest.defaultDomain).to.equal(path.basename(Uri.file(plan.domain.fileUri).fsPath));
+        expect(manifest.defaultDomain).to.equal(path.basename(plan.domain.fileUri.fsPath));
         expect(manifest.testCases).has.lengthOf(1, "test cases after assertion added");
         const actualTestCase = manifest.testCases.find(test => test.getProblemUri().toString() === problemUri?.toString());
         expect(actualTestCase?.getExpectedPlans()).to.be.not.undefined;

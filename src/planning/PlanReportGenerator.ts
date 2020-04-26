@@ -18,7 +18,7 @@ import { HappeningType } from 'pddl-workspace';
 import { Plan, HelpfulAction } from 'pddl-workspace';
 import { PlanFunctionEvaluator } from 'ai-planning-val';
 import { PlanReportSettings } from './PlanReportSettings';
-import { VAL_STEP_PATH, CONF_PDDL, VALUE_SEQ_PATH, PLAN_REPORT_LINE_PLOT_GROUP_BY_LIFTED, DEFAULT_EPSILON, VAL_VERBOSE } from '../configuration';
+import { VAL_STEP_PATH, CONF_PDDL, VALUE_SEQ_PATH, PLAN_REPORT_LINE_PLOT_GROUP_BY_LIFTED, DEFAULT_EPSILON, VAL_VERBOSE } from '../configuration/configuration';
 import { utils } from 'pddl-workspace';
 import { ValStepError, ValStep } from 'ai-planning-val';
 import { ensureAbsoluteGlobalStoragePath } from '../utils';
@@ -114,7 +114,7 @@ States evaluated: ${plan.statesEvaluated}`;
     async renderPlan(plan: Plan, planIndex: number, selectedPlan: number): Promise<string> {
         let planVisualizerPath: string | undefined;
         if (plan.domain) {
-            const settings = new PlanReportSettings(plan.domain.fileUri);
+            const settings = new PlanReportSettings(plan.domain.fileUri.toString());
             planVisualizerPath = settings.getPlanVisualizerScript();
             this.settings.set(plan, settings);
         }
@@ -237,7 +237,7 @@ ${lineCharts}
                 if (choice === exportCase) {
                     const targetPathUris = await window.showOpenDialog({
                         canSelectFolders: true, canSelectFiles: false,
-                        defaultUri: Uri.file(path.dirname(err.domain.fileUri)),
+                        defaultUri: Uri.file(path.dirname(err.domain.fileUri.fsPath)),
                         openLabel: 'Select target folder'
                     });
                     if (!targetPathUris) { return; }

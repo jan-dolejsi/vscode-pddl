@@ -14,7 +14,7 @@ import { PlanInfo } from 'pddl-workspace';
 import { ProblemInfo } from 'pddl-workspace';
 import { DomainInfo } from 'pddl-workspace';
 import { ParsingProblem } from 'pddl-workspace';
-import { PddlConfiguration } from '../configuration';
+import { PddlConfiguration } from '../configuration/configuration';
 import { utils } from 'pddl-workspace';
 import { dirname } from 'path';
 import { PlanStep } from 'pddl-workspace';
@@ -132,7 +132,7 @@ export class PlanValidator {
         const planFilePath = await utils.Util.toPddlFile('plan', planInfo.getText());
 
         const args = ['-t', epsilon.toString(), '-v', domainFilePath, problemFilePath, planFilePath];
-        const workingDir = this.createWorkingFolder(Uri.parse(planInfo.fileUri));
+        const workingDir = this.createWorkingFolder(planInfo.fileUri);
         const child = process.spawnSync(validatePath, args, { cwd: workingDir });
 
         if (showOutput) { this.output.appendLine(validatePath + ' ' + args.join(' ')); }
@@ -263,7 +263,7 @@ class PlanValidationOutcome {
 
     getDiagnostics(): Map<string, Diagnostic[]> {
         const diagnostics = new Map<string, Diagnostic[]>();
-        diagnostics.set(this.planInfo.fileUri, this.diagnostics);
+        diagnostics.set(this.planInfo.fileUri.toString(), this.diagnostics);
         return diagnostics;
     }
 

@@ -8,15 +8,16 @@ import {
     window, ExtensionContext, Uri, ViewColumn, WebviewPanel, commands, workspace, ConfigurationTarget, extensions, TextDocument, Webview
 } from 'vscode';
 
-import { PddlConfiguration } from '../configuration';
+import { PddlConfiguration } from '../configuration/configuration';
 
 import * as path from 'path';
-import { getWebViewHtml, createPddlExtensionContext } from '../utils';
-import { utils } from 'pddl-workspace';
+import { getWebViewHtml, createPddlExtensionContext, showError, asWebviewUri } from '../utils';
+import { utils, planner } from 'pddl-workspace';
 import { ValDownloader } from '../validation/ValDownloader';
 import { VAL_DOWNLOAD_COMMAND, ValDownloadOptions } from '../validation/valCommand';
 import { PTEST_VIEW } from '../ptest/PTestCommands';
 import { instrumentOperationAsVsCodeCommand } from "vscode-extension-telemetry-wrapper";
+import { PlannersConfiguration as PlannersConfiguration } from '../configuration/PlannersConfiguration';
 
 export const SHOULD_SHOW_OVERVIEW_PAGE = 'shouldShowOverviewPage';
 export const LAST_SHOWN_OVERVIEW_PAGE = 'lastShownOverviewPage';
@@ -28,9 +29,9 @@ export class OverviewPage {
 
     private readonly ICONS_EXTENSION_NAME = "vscode-icons-team.vscode-icons";
 
-    constructor(private context: ExtensionContext, private pddlConfiguration: PddlConfiguration, private val: ValDownloader) {
+    constructor(private context: ExtensionContext, private pddlConfiguration: PddlConfiguration, private plannersConfiguration: PlannersConfiguration, private val: ValDownloader) {
         instrumentOperationAsVsCodeCommand("pddl.showOverview", () => this.showWelcomePage(true));
-        workspace.onDidChangeConfiguration(() => this.updatePageConfiguration(), undefined, this.context.subscriptions);
+        workspace.onDidChangeConfiguration(() => this.scheduleUpdatePageConfiguration(), undefined, this.context.subscriptions);
         extensions.onDidChange(() => this.updateIconsAlerts(), this.context.subscriptions);
         this.updateIconsAlerts();
     }
@@ -67,7 +68,10 @@ export class OverviewPage {
                 enableFindWidget: true,
                 enableCommandUris: true,
                 enableScripts: true,
-                localResourceRoots: [Uri.file(this.context.asAbsolutePath(this.VIEWS))]
+                localResourceRoots: [
+                    Uri.file(this.context.asAbsolutePath(this.VIEWS)),
+                    Uri.file(this.context.asAbsolutePath("images"))
+                ]
             }
         );
 
@@ -77,7 +81,7 @@ export class OverviewPage {
 
         webViewPanel.onDidDispose(() => this.webViewPanel = undefined, undefined, this.context.subscriptions);
         webViewPanel.webview.onDidReceiveMessage(message => this.handleMessage(message), undefined, this.context.subscriptions);
-        webViewPanel.onDidChangeViewState(() => this.updatePageConfiguration());
+        webViewPanel.onDidChangeViewState(() => this.scheduleUpdatePageConfiguration());
 
         this.webViewPanel = webViewPanel;
         this.context.subscriptions.push(this.webViewPanel);
@@ -92,29 +96,28 @@ export class OverviewPage {
 
         switch (message.command) {
             case 'onload':
-                await this.updatePageConfiguration();
+                this.scheduleUpdatePageConfiguration();
                 break;
             case 'shouldShowOverview':
                 this.context.globalState.update(SHOULD_SHOW_OVERVIEW_PAGE, message.value);
                 break;
             case 'tryHelloWorld':
-                try {
-                    await this.helloWorld();
-                }
-                catch (ex) {
-                    window.showErrorMessage(ex.message ?? ex);
-                }
+                this.helloWorld().catch(showError);
                 break;
             case 'openNunjucksSample':
-                try {
-                    await this.openNunjucksSample();
-                }
-                catch (ex) {
-                    window.showErrorMessage(ex.message ?? ex);
-                }
+                this.openNunjucksSample().catch(showError);
                 break;
             case 'clonePddlSamples':
                 commands.executeCommand("git.clone", "https://github.com/jan-dolejsi/vscode-pddl-samples.git");
+                break;
+            case 'selectPlanner':
+                this.plannersConfiguration.setSelectedPlanner(message.value as planner.PlannerConfiguration).catch(showError);
+                break;
+            case 'deletePlanner':
+                commands.executeCommand('pddl.deletePlanner', message.value as planner.PlannerConfiguration, message.index);
+                break;
+            case 'configurePlanner':
+                commands.executeCommand('pddl.configurePlanner', message.value as planner.PlannerConfiguration, message.index);
                 break;
             case 'plannerOutputTarget':
                 workspace.getConfiguration("pddlPlanner").update("executionTarget", message.value, ConfigurationTarget.Global);
@@ -135,7 +138,12 @@ export class OverviewPage {
                 await commands.executeCommand(VAL_DOWNLOAD_COMMAND, options);
                 break;
             default:
-                console.warn('Unexpected command: ' + message.command);
+                if (message.command?.startsWith('command:')) {
+                    const command = message.command as string;
+                    await commands.executeCommand(command.substr('command:'.length));
+                } else {
+                    console.warn('Unexpected command: ' + message.command);
+                }
         }
     }
 
@@ -163,7 +171,7 @@ export class OverviewPage {
 
         const ptestJsonName = '.ptest.json';
         const ptestJson = sampleDocuments.find(doc => path.basename(doc.fileName) === ptestJsonName);
-        if (!ptestJson) { throw new Error("Could not find " + ptestJsonName);}
+        if (!ptestJson) { throw new Error("Could not find " + ptestJsonName); }
         const generatedProblemUri = ptestJson.uri.with({ fragment: '0' });
 
         await commands.executeCommand(PTEST_VIEW, generatedProblemUri);
@@ -246,17 +254,35 @@ export class OverviewPage {
 
     updateIconsAlerts(): void {
         this.iconsInstalled = extensions.getExtension(this.ICONS_EXTENSION_NAME) !== undefined;
-        this.updatePageConfiguration();
+        this.scheduleUpdatePageConfiguration();
+    }
+
+    updateTimeout: NodeJS.Timeout | undefined;
+
+    scheduleUpdatePageConfiguration(): void {
+        if (this.updateTimeout) {
+            this.updateTimeout.refresh();
+        }
+        else {
+            this.updateTimeout = setTimeout(() => {
+                this.updatePageConfiguration().catch(showError);
+            }, 500);
+        }
     }
 
     async updatePageConfiguration(): Promise<boolean> {
+        if (this.updateTimeout) {
+            clearTimeout(this.updateTimeout);
+            this.updateTimeout = undefined;
+        }
         if (!this.webViewPanel || !this.webViewPanel.active) { return false; }
         const message: OverviewConfiguration = {
             command: 'updateConfiguration',
-            planner: await this.pddlConfiguration.getPlannerPath(),
+            planners: this.plannersConfiguration.getPlanners(),
             plannerOutputTarget: workspace.getConfiguration("pddlPlanner").get<string>("executionTarget", "Output window"),
             parser: this.pddlConfiguration.getParserPath(),
             validator: this.pddlConfiguration.getValidatorPath(),
+            imagesPath: asWebviewUri(Uri.file(this.context.asAbsolutePath('images')), this.webViewPanel.webview).toString(),
             shouldShow: this.context.globalState.get<boolean>(SHOULD_SHOW_OVERVIEW_PAGE, true),
             autoSave: workspace.getConfiguration().get<string>("files.autoSave", "off"),
             showInstallIconsAlert: !this.iconsInstalled,
@@ -271,10 +297,11 @@ export class OverviewPage {
 
 interface OverviewConfiguration {
     command: string;
-    planner?: string;
+    planners: planner.PlannerConfiguration[];
     plannerOutputTarget: string;
     parser?: string;
     validator?: string;
+    imagesPath: string;
     shouldShow: boolean;
     autoSave: string;
     showInstallIconsAlert: boolean;

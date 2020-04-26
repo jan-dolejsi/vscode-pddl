@@ -19,12 +19,12 @@ import { Validator } from './validator';
 import { ValidatorService } from './ValidatorService';
 import { ValidatorExecutable } from './ValidatorExecutable';
 import { PDDLParserSettings } from '../util/Settings';
-import { PddlConfiguration, PDDL_PARSER, VALIDATION_PATH, CONF_PDDL } from '../configuration';
+import { PddlConfiguration, PDDL_PARSER, VALIDATION_PATH, CONF_PDDL } from '../configuration/configuration';
 import { PlanValidator, createDiagnostic } from './PlanValidator';
 import { HappeningsValidator } from './HappeningsValidator';
 import { HappeningsInfo } from 'pddl-workspace';
 import { NoDomainAssociated, getDomainFileForProblem } from '../workspace/workspaceUtils';
-import { isHttp } from '../utils';
+import { isHttp, toUri } from '../utils';
 import { CodePddlWorkspace } from '../workspace/CodePddlWorkspace';
 
 /**
@@ -139,7 +139,7 @@ export class Diagnostics extends Disposable {
         this.validateAllDirty();
     }
 
-    validatePddlDocumentByUri(fileUri: string, scheduleFurtherValidation: boolean): void {
+    validatePddlDocumentByUri(fileUri: Uri, scheduleFurtherValidation: boolean): void {
         const fileInfo = this.codePddlWorkspace.pddlWorkspace.getFileInfo(fileUri);
         if (!fileInfo) { throw new Error(`File not found in the PDDL workspace: ${fileUri}`); }
         this.validatePddlDocument(fileInfo, scheduleFurtherValidation);
@@ -199,7 +199,7 @@ export class Diagnostics extends Disposable {
         // detect parsing and pre-processing issues
         if (fileInfo.getParsingProblems().length > 0) {
             const parsingProblems = new Map<string, Diagnostic[]>();
-            parsingProblems.set(fileInfo.fileUri, toDiagnostics(fileInfo.getParsingProblems()));
+            parsingProblems.set(fileInfo.fileUri.toString(), toDiagnostics(fileInfo.getParsingProblems()));
             this.sendDiagnostics(parsingProblems);
             return;
         }
@@ -300,7 +300,7 @@ export class Diagnostics extends Disposable {
         }
         catch (err) {
             if (err instanceof NoDomainAssociated) {
-                this.sendDiagnosticInfo(problemFile.fileUri, err.message, NoDomainAssociated.DIAGNOSTIC_CODE);
+                this.sendDiagnosticInfo(toUri(problemFile.fileUri), err.message, NoDomainAssociated.DIAGNOSTIC_CODE);
                 problemFile.setStatus(FileStatus.Validated);
                 return undefined;
             }
@@ -308,20 +308,20 @@ export class Diagnostics extends Disposable {
         }
     }
 
-    sendDiagnosticInfo(fileUri: string, message: string, code?: string | number): void {
+    sendDiagnosticInfo(fileUri: Uri, message: string, code?: string | number): void {
         this.sendDiagnostic(fileUri, message, DiagnosticSeverity.Information, code);
     }
 
-    sendDiagnostic(fileUri: string, message: string, severity: DiagnosticSeverity, code?: string | number): void {
+    sendDiagnostic(fileUri: Uri, message: string, severity: DiagnosticSeverity, code?: string | number): void {
         const diagnostic = new Diagnostic(Validator.createLineRange(0), message, severity);
         if (code !== undefined && code !== null) {
             diagnostic.code = code;
         }
-        this.diagnosticCollection.set(Uri.parse(fileUri), [diagnostic]);
+        this.diagnosticCollection.set(fileUri, [diagnostic]);
     }
 
-    clearDiagnostics(fileUri: string): void {
-        this.diagnosticCollection.delete(Uri.parse(fileUri));
+    clearDiagnostics(fileUri: Uri): void {
+        this.diagnosticCollection.delete(fileUri);
     }
 
     validateUnknownFile(fileInfo: FileInfo): void {

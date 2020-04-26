@@ -5,13 +5,13 @@
 'use strict';
 
 import * as vscode from 'vscode';
-import { WorkspaceFolder, DebugConfiguration, CancellationToken, window, Uri } from 'vscode';
+import { WorkspaceFolder, DebugConfiguration, CancellationToken, window } from 'vscode';
 import { PlanDebugSession } from './PlanDebugSession';
 import * as Net from 'net';
 import { HAPPENINGS } from 'pddl-workspace';
 import { HappeningsInfo } from 'pddl-workspace';
 import { isHappenings, getDomainAndProblemForHappenings, selectHappenings } from '../workspace/workspaceUtils';
-import { PddlConfiguration } from '../configuration';
+import { PddlConfiguration } from '../configuration/configuration';
 import { HappeningsExecutor } from './HappeningsExecutor';
 import { DebuggingSessionFiles } from './DebuggingSessionFiles';
 import { HappeningsToPlanResumeCasesConvertor } from './HappeningsToPlanResumeCasesConvertor';
@@ -99,7 +99,7 @@ export class Debugging {
 			throw new Error('Active document cannot be debugged.');
 		}
 
-		const happeningsInfo = <HappeningsInfo>activeFileInfo;
+		const happeningsInfo = activeFileInfo as HappeningsInfo;
 
 		const context = getDomainAndProblemForHappenings(happeningsInfo, this.pddlWorkspace.pddlWorkspace);
 
@@ -119,9 +119,9 @@ export class Debugging {
 			"name": "PDDL Plan Happenings F5",
 			"type": "pddl-happenings",
 			"request": "launch",
-			"program": Uri.parse(context.happenings.fileUri).fsPath,
-			"domain": Uri.parse(context.domain.fileUri).fsPath,
-			"problem": Uri.parse(context.problem.fileUri).fsPath
+			"program": context.happenings.fileUri.fsPath,
+			"domain": context.domain.fileUri.fsPath,
+			"problem": context.problem.fileUri.fsPath
 		};
 
 		await vscode.debug.startDebugging(folder, debugConfiguration);

@@ -9,6 +9,7 @@ import { basename, extname, dirname, join, relative } from 'path';
 import { PTestTreeDataProvider } from './PTestTreeDataProvider';
 import { Test } from './Test';
 import { Uri, workspace } from 'vscode';
+import { fileExists } from '../utils';
 
 export class ManifestGenerator {
     constructor(private readonly pddlWorkspace: PddlWorkspace,
@@ -57,7 +58,7 @@ export class ManifestGenerator {
 
         const manifestUri = Uri.file(join(dirname(domainPath), domainFileNameWithoutExt + PTestTreeDataProvider.PTEST_SUFFIX));
 
-        if (await this.fileExists(manifestUri)) {
+        if (await fileExists(manifestUri)) {
             const manifestText = await workspace.fs.readFile(manifestUri);
             const manifestJson = JSON.parse(manifestText.toString());
             return TestsManifest.fromJSON(manifestUri.fsPath, manifestJson, context);
@@ -72,7 +73,7 @@ export class ManifestGenerator {
     }
 
     private getPathAndName(fileInfo: FileInfo): { filePath: string; fileName: string } {
-        const domainPath = Uri.parse(fileInfo.fileUri).fsPath;
+        const domainPath = fileInfo.fileUri.fsPath;
         const domainFileName = basename(domainPath);
         return { filePath: domainPath, fileName: domainFileName };
     }
@@ -91,7 +92,7 @@ export class ManifestGenerator {
         const problemRelativePath = relative(dirname(domainPath), problemPath);
 
         const testCaseFound = manifest.testCases
-            .find(c => c.getProblemUri().toString() === problem.fileUri);
+            .find(c => c.getProblemUri().toString() === problem.fileUri.toString());
 
         if (!testCaseFound) {
             const newTestCase = new Test(undefined, undefined, undefined, problemRelativePath, undefined, undefined, expectedPlans);
@@ -108,15 +109,6 @@ export class ManifestGenerator {
                     .forEach(expectedPlan => testCaseFound.getExpectedPlans().push(expectedPlan));
             }
             return testCaseFound;
-        }
-    }
-
-    private async fileExists(manifestUri: Uri): Promise<boolean> {
-        try {
-            await workspace.fs.stat(manifestUri);
-            return true;
-        } catch (err) {
-            return false;
         }
     }
 }

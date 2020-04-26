@@ -6,7 +6,7 @@ import { before, after } from 'mocha';
 import * as vscode from 'vscode';
 import * as path from 'path';
 import { ValDownloader } from '../../validation/ValDownloader';
-import { PddlConfiguration, CONF_PDDL, VAL_STEP_PATH, VALIDATION_PATH, VALUE_SEQ_PATH, PDDL_PARSER, PARSER_EXECUTABLE_OR_SERVICE, EXECUTABLE_OR_SERVICE } from '../../configuration';
+import { PddlConfiguration, CONF_PDDL, VAL_STEP_PATH, VALIDATION_PATH, VALUE_SEQ_PATH, PDDL_PARSER, PARSER_EXECUTABLE_OR_SERVICE, EXECUTABLE_OR_SERVICE } from '../../configuration/configuration';
 import { createTestExtensionContext } from './testUtils';
 import { utils } from 'pddl-workspace';
 import { afs } from 'pddl-workspace/dist/utils';

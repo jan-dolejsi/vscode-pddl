@@ -4,6 +4,7 @@ import { before } from 'mocha';
 // You can import and use all API from the 'vscode' module
 // as well as import your extension to test it
 import * as vscode from 'vscode';
+import { URI } from 'vscode-uri';
 import { ProblemCompletionItemProvider } from '../../completion/ProblemCompletionItemProvider';
 import { parser, ProblemInfo } from 'pddl-workspace';
 import { CodeDocumentPositionResolver } from '../../workspace/CodeDocumentPositionResolver';
@@ -485,7 +486,7 @@ async function testProblemProvider(inputTextHead: string, ch: string, inputTextT
 
     const tree = new parser.PddlSyntaxTreeBuilder(initialText).getTree();
 
-    const problemInfo = new ProblemInfo('file://testProblem.pddl', 1, 'p', 'd', tree, new CodeDocumentPositionResolver(doc));
+    const problemInfo = new ProblemInfo(URI.parse('file:///testProblem.pddl'), 1, 'p', 'd', tree, new CodeDocumentPositionResolver(doc));
 
     return await new ProblemCompletionItemProvider().provide(doc, problemInfo, position, context);
 }
@@ -505,7 +506,7 @@ async function testDomainProvider(inputTextHead: string, ch: string, inputTextTa
 
     const domainNode = tree.getDefineNodeOrThrow().getFirstOpenBracketOrThrow('domain');
     const positionResolver = new CodeDocumentPositionResolver(doc);
-    const domainInfo = new parser.PddlDomainParser().parse('file://testProblem.pddl', 1, initialText, domainNode, tree, positionResolver);
+    const domainInfo = new parser.PddlDomainParser().parse(URI.parse('file:///testProblem.pddl'), 1, initialText, domainNode, tree, positionResolver);
     if (!domainInfo) { throw new Error(`Unable to parse test domain.`); }
 
     return await new DomainCompletionItemProvider().provide(doc, domainInfo, position, context);

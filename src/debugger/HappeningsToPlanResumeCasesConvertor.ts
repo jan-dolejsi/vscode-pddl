@@ -5,7 +5,7 @@
 'use strict';
 
 import { Uri, commands, window } from 'vscode';
-import { PddlConfiguration } from '../configuration';
+import { PddlConfiguration } from '../configuration/configuration';
 import { utils } from 'pddl-workspace';
 import { dirname, relative, basename, join } from 'path';
 import * as process from 'child_process';
@@ -31,7 +31,7 @@ export class HappeningsToPlanResumeCasesConvertor {
      */
     constructor(private context: DebuggingSessionFiles, private pddlConfiguration: PddlConfiguration) {
         this.happeningsConvertor = new HappeningsToValStep();
-        this.problemFilePath = Uri.parse(context.problem.fileUri).fsPath;
+        this.problemFilePath = context.problem.fileUri.fsPath;
     }
 
     /**
@@ -53,7 +53,7 @@ export class HappeningsToPlanResumeCasesConvertor {
         const problemFilePath = await utils.Util.toPddlFile('problem', this.context.problem.getText());
 
         const args = [domainFilePath, problemFilePath];
-        const outputFolderUris = await window.showOpenDialog({ defaultUri: Uri.file(dirname(Uri.parse(this.context.problem.fileUri).fsPath)), canSelectFiles: false, canSelectFolders: true, canSelectMany: false, openLabel: 'Select folder for problem files' });
+        const outputFolderUris = await window.showOpenDialog({ defaultUri: Uri.file(dirname(this.context.problem.fileUri.fsPath)), canSelectFiles: false, canSelectFolders: true, canSelectMany: false, openLabel: 'Select folder for problem files' });
         if (!outputFolderUris || !outputFolderUris.length) { return false; }
         const outputFolderUri = outputFolderUris[0];
         const cwd = outputFolderUri.fsPath;
@@ -63,16 +63,16 @@ export class HappeningsToPlanResumeCasesConvertor {
 
         let valStepInput = '';
 
-        const defaultDomain = relative(cwd, Uri.parse(this.context.domain.fileUri).fsPath);
+        const defaultDomain = relative(cwd, this.context.domain.fileUri.fsPath);
         const defaultProblem: string | undefined = undefined;
         const options = "";
-        const manifestUri = Uri.file(join(cwd, basename(Uri.parse(this.context.problem.fileUri).fsPath) + '_re-planning.ptest.json'));
+        const manifestUri = Uri.file(join(cwd, basename(this.context.problem.fileUri.fsPath) + '_re-planning.ptest.json'));
         const manifest = new TestsManifest(defaultDomain, defaultProblem, options, manifestUri);
 
         // add the original problem as a test case
-        manifest.addCase(new Test(undefined, "Original problem file", undefined, relative(cwd, Uri.parse(this.context.problem.fileUri).fsPath), "", undefined, []));
+        manifest.addCase(new Test(undefined, "Original problem file", undefined, relative(cwd, this.context.problem.fileUri.fsPath), "", undefined, []));
 
-        const problemFileWithoutExt = basename(Uri.parse(this.context.problem.fileUri).fsPath, ".pddl");
+        const problemFileWithoutExt = basename(this.context.problem.fileUri.fsPath, ".pddl");
 
         for (const time of groupedHappenings.keys()) {
             const happeningGroup = groupedHappenings.get(time);

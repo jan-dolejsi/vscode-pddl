@@ -5,7 +5,7 @@
 'use strict';
 
 import {
-    Diagnostic, Range
+    Diagnostic, Range, Uri
 } from 'vscode';
 
 import { Validator } from './validator';
@@ -77,7 +77,7 @@ export class ValidatorService extends Validator {
 
                 const location: string = messages[i].location;
 
-                let fileUri: string | undefined;
+                let fileUri: Uri | undefined;
                 if (location === "DOMAIN") {
                     fileUri = domainInfo.fileUri;
                 }
@@ -95,7 +95,7 @@ export class ValidatorService extends Validator {
                 const range = this.toRange(messages[i].position);
 
                 if (fileUri !== undefined) {
-                    diagnostics.get(fileUri)?.push(new Diagnostic(range, messages[i].message, severity));
+                    diagnostics.get(fileUri.toString())?.push(new Diagnostic(range, messages[i].message, severity));
                 }
             }
 

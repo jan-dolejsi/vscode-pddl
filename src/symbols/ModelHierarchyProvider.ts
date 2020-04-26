@@ -10,7 +10,7 @@ import { ModelHierarchy, VariableReferenceInfo, VariableReferenceKind, VariableE
 import { PDDL } from 'pddl-workspace';
 import { DomainInfo } from 'pddl-workspace';
 import { Variable } from 'pddl-workspace';
-import { toPosition } from '../utils';
+import { toPosition, toURI } from '../utils';
 import { isPddl } from '../workspace/workspaceUtils';
 import { parser } from 'pddl-workspace';
 import { PddlWorkspace } from 'pddl-workspace';
@@ -27,7 +27,7 @@ export class ModelHierarchyProvider implements HoverProvider {
         pddlWorkspace.pddlWorkspace.on(PddlWorkspace.UPDATED, updatedFile => {
             if (updatedFile instanceof DomainInfo) {
                 window.visibleTextEditors
-                    .filter(editor => editor.document.uri.toString() === updatedFile.fileUri)
+                    .filter(editor => editor.document.uri.toString() === updatedFile.fileUri.toString())
                     .forEach(editor => this.scheduleDecoration(editor));
             }
         });
@@ -60,7 +60,7 @@ export class ModelHierarchyProvider implements HoverProvider {
 
     private updateDecoration(editor: TextEditor): void {
         if (editor.visibleRanges.length === 0) { return; }
-        const fileInfo = this.pddlWorkspace.pddlWorkspace.getFileInfo(editor.document.uri.toString());
+        const fileInfo = this.pddlWorkspace.pddlWorkspace.getFileInfo(toURI(editor.document.uri));
 
         if (fileInfo instanceof DomainInfo) {
             const domainInfo = fileInfo as DomainInfo;
@@ -207,7 +207,7 @@ export class ModelHierarchyProvider implements HoverProvider {
 
     private getReferences(references: Location[], domainInfo: DomainInfo, symbolInfo: SymbolInfo, document: TextDocument): VariableReferenceInfo[] {
         return references
-            .filter(r => r.uri.toString() === domainInfo.fileUri) // limit this to the domain file only
+            .filter(r => r.uri.toString() === domainInfo.fileUri.toString()) // limit this to the domain file only
             .map(r => new ModelHierarchy(domainInfo).getReferenceInfo((symbolInfo as VariableInfo).variable, document.offsetAt(r.range.start) + 1));
     }
 

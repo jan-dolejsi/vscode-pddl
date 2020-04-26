@@ -12,6 +12,7 @@ div#menu {
 img.menuButton {
   border: solid 1px transparent;
   vertical-align: middle;
+  cursor: pointer;
 }
 
 img.menuButton:hover {

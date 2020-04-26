@@ -15,7 +15,7 @@ import { PddlWorkspace } from 'pddl-workspace';
 import { FileInfo } from 'pddl-workspace';
 
 import { CodePddlWorkspace } from '../workspace/CodePddlWorkspace';
-import { getWebViewHtml, createPddlExtensionContext, UriMap, showError } from '../utils';
+import { getWebViewHtml, createPddlExtensionContext, UriMap, showError, toUri } from '../utils';
 import { DomainViewPanel } from './DomainViewPanel';
 import { WebviewPanelAdapter } from './view';
 import { instrumentOperationAsVsCodeCommand } from "vscode-extension-telemetry-wrapper";
@@ -61,7 +61,7 @@ export abstract class DomainView<TRendererOptions, TRenderData> extends Disposab
     }
 
     async refreshDomain(domainInfo: DomainInfo): Promise<void> {
-        const domainUri = Uri.parse(domainInfo.fileUri);
+        const domainUri = toUri(domainInfo.fileUri);
         // if no panel was created, skip
         if (!this.webviewPanels.get(domainUri) && !this.webviewInsets.get(domainUri)) { return; }
 
@@ -138,7 +138,7 @@ export abstract class DomainView<TRendererOptions, TRenderData> extends Disposab
     protected abstract createPreviewPanelTitle(uri: Uri): string;
 
     async createPreviewPanelForDocument(domainInfo: DomainInfo, displayColumn: ViewColumn): Promise<DomainViewPanel> {
-        const domainUri = Uri.parse(domainInfo.fileUri);
+        const domainUri = toUri(domainInfo.fileUri);
         const previewTitle = this.createPreviewPanelTitle(domainUri);
         const webViewPanel = window.createWebviewPanel(this.options.webviewType, previewTitle, displayColumn, this.options.webviewOptions);
 

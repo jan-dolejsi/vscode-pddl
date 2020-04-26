@@ -8,12 +8,13 @@ import { CancellationToken, Event, EventEmitter, TextDocumentContentProvider, Ur
 import { parser } from 'pddl-workspace';
 import { PlanStep } from 'pddl-workspace';
 import { PddlWorkspace } from 'pddl-workspace';
-import { PddlConfiguration } from '../configuration';
+import { PddlConfiguration } from '../configuration/configuration';
 import { getDomainAndProblemForPlan } from '../workspace/workspaceUtils';
 import { PlanEvaluator } from 'ai-planning-val';
 import { AbstractPlanExporter } from '../planning/PlanExporter';
 import { PlanningDomains } from '../catalog/PlanningDomains';
 import { HTTPLAN } from '../catalog/Catalog';
+import { toURI } from '../utils';
 
 
 /**
@@ -84,7 +85,7 @@ export class NormalizedPlanDocumentContentProvider implements TextDocumentConten
     async evaluate(uri: Uri, origText: string): Promise<string> {
         const planMetaData = parser.PddlPlanParser.parsePlanMeta(origText);
         if (planMetaData.domainName !== parser.UNSPECIFIED_DOMAIN && planMetaData.problemName !== parser.UNSPECIFIED_DOMAIN) {
-            const planInfo = parser.PddlPlanParser.parseText(origText, this.configuration.getEpsilonTimeStep(), uri.toString());
+            const planInfo = parser.PddlPlanParser.parseText(origText, this.configuration.getEpsilonTimeStep(), toURI(uri));
 
             const context = getDomainAndProblemForPlan(planInfo, this.pddlWorkspace);
             const valStepPath = await this.configuration.getValStepPath();

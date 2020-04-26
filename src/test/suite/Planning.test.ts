@@ -10,8 +10,8 @@ import { expect } from 'chai';
 import * as path from 'path';
 import { getMockPlanner, activateExtension, waitFor, clearWorkspaceFolder } from './testUtils';
 import { PddlLanguage, SimpleDocumentPositionResolver, DomainInfo, ProblemInfo } from 'pddl-workspace';
-import { assertDefined } from '../../utils';
-import { PDDL_PLANNER, EXECUTABLE_OR_SERVICE, EXECUTABLE_OPTIONS } from '../../configuration';
+import { assertDefined, toURI } from '../../utils';
+import { PDDL_PLANNER, EXECUTABLE_OR_SERVICE, EXECUTABLE_OPTIONS } from '../../configuration/configuration';
 import { PDDL_PLAN_AND_DISPLAY } from '../../planning/planning';
 import { planning, codePddlWorkspace } from '../../extension';
 import { fail } from 'assert';
@@ -50,8 +50,8 @@ suite('Planning test', () => {
         await workspace.fs.writeFile(problemUri, Buffer.from(problemText));
 
         const codePddlWorkspace1 = assertDefined(codePddlWorkspace, "code PDDL workspace");
-        domain = await codePddlWorkspace1.pddlWorkspace.upsertFile(domainUri.toString(), PddlLanguage.PDDL, 1, domainText, new SimpleDocumentPositionResolver(domainText)) as DomainInfo;
-        problem = await codePddlWorkspace1.pddlWorkspace.upsertFile(problemUri.toString(), PddlLanguage.PDDL, 1, problemText, new SimpleDocumentPositionResolver(problemText)) as ProblemInfo;
+        domain = await codePddlWorkspace1.pddlWorkspace.upsertFile(toURI(domainUri), PddlLanguage.PDDL, 1, domainText, new SimpleDocumentPositionResolver(domainText)) as DomainInfo;
+        problem = await codePddlWorkspace1.pddlWorkspace.upsertFile(toURI(problemUri), PddlLanguage.PDDL, 1, problemText, new SimpleDocumentPositionResolver(problemText)) as ProblemInfo;
 
         // GIVEN the mock planner is configured
 

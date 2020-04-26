@@ -11,7 +11,7 @@ import { sleep } from '../utils';
 import { SearchHappening, MockSearchHappening, MockHelpfulAction } from './SearchHappening';
 import { HappeningType } from 'pddl-workspace';
 import { HelpfulAction } from 'pddl-workspace';
-import { DEFAULT_EPSILON } from '../configuration';
+import { DEFAULT_EPSILON } from '../configuration/configuration';
 
 export class MockSearch {
     url: string;

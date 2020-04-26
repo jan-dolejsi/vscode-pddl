@@ -4,11 +4,7 @@
  * ------------------------------------------------------------------------------------------ */
 'use strict';
 
-import { PlannerResponseHandler } from './PlannerResponseHandler';
-import { Plan } from 'pddl-workspace';
-import { ProblemInfo } from 'pddl-workspace';
-import { DomainInfo } from 'pddl-workspace';
-import { parser } from 'pddl-workspace';
+import { Plan, ProblemInfo, DomainInfo, parser, planner } from 'pddl-workspace';
 import { Authentication } from '../util/Authentication';
 import { PlannerService } from './PlannerService';
 
@@ -43,7 +39,7 @@ export class PlannerSyncService extends PlannerService {
     }
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    processServerResponseBody(responseBody: any, planParser: parser.PddlPlannerOutputParser, parent: PlannerResponseHandler,
+    processServerResponseBody(responseBody: any, planParser: parser.PddlPlannerOutputParser, callbacks: planner.PlannerResponseHandler,
         resolve: (plans: Plan[]) => void, reject: (error: Error) => void): void {
         const status = responseBody["status"];
 
@@ -52,12 +48,12 @@ export class PlannerSyncService extends PlannerService {
 
             const resultOutput = result["output"];
             if (resultOutput) {
-                parent.handleOutput(resultOutput);
+                callbacks.handleOutput(resultOutput);
             }
 
             const resultError = result["error"];
             if (resultError) {
-                parent.handleOutput(resultError);
+                callbacks.handleOutput(resultError);
                 resolve([]);
             }
             else {
@@ -73,14 +69,14 @@ export class PlannerSyncService extends PlannerService {
         const result = responseBody["result"];
         const resultOutput = result["output"];
         if (resultOutput) {
-            parent.handleOutput(resultOutput);
+            callbacks.handleOutput(resultOutput);
         }
 
         this.parsePlanSteps(result['plan'], planParser);
 
         const plans = planParser.getPlans();
-        if (plans.length > 0) { parent.handleOutput(plans[0].getText() + '\n'); }
-        else { parent.handleOutput('No plan found.'); }
+        if (plans.length > 0) { callbacks.handleOutput(plans[0].getText() + '\n'); }
+        else { callbacks.handleOutput('No plan found.'); }
 
         resolve(plans);
     }

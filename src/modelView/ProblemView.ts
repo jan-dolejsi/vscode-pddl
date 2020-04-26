@@ -17,7 +17,7 @@ import { PddlWorkspace } from 'pddl-workspace';
 import { FileInfo } from 'pddl-workspace';
 
 import { CodePddlWorkspace } from '../workspace/CodePddlWorkspace';
-import { getWebViewHtml, createPddlExtensionContext, UriMap, showError } from '../utils';
+import { getWebViewHtml, createPddlExtensionContext, UriMap, showError, toUri } from '../utils';
 import { ProblemViewPanel } from './ProblemViewPanel';
 import { WebviewPanelAdapter } from './view';
 
@@ -73,7 +73,7 @@ export abstract class ProblemView<TRendererOptions, TRenderData> extends Disposa
     }
 
     async refreshProblem(problemInfo: ProblemInfo, domainInfo?: DomainInfo): Promise<void> {
-        const problemUri = Uri.parse(problemInfo.fileUri);
+        const problemUri = toUri(problemInfo.fileUri);
         // if no panel was created, skip
         if (!this.webviewPanels.get(problemUri) && !this.webviewInsets.get(problemUri)) { return; }
 
@@ -169,7 +169,7 @@ export abstract class ProblemView<TRendererOptions, TRenderData> extends Disposa
     protected abstract createPreviewPanelTitle(uri: Uri): string;
 
     async createPreviewPanelForDocument(problemInfo: ProblemInfo, displayColumn: ViewColumn): Promise<ProblemViewPanel> {
-        const problemUri = Uri.parse(problemInfo.fileUri);
+        const problemUri = toUri(problemInfo.fileUri);
         const previewTitle = this.createPreviewPanelTitle(problemUri);
         const webViewPanel = window.createWebviewPanel(this.options.webviewType, previewTitle, displayColumn, this.options.webviewOptions);
 
