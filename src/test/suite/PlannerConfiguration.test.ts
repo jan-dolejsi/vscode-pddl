@@ -53,19 +53,20 @@ suite('Planner configuration test', () => {
 
 		// WHEN
 		const planners = plannersConfiguration.getPlanners(wf);
-		const [selectedPlanner, selectedIndex] = plannersConfiguration.getSelectedPlanner(wf);
+		const selectedPlanner = plannersConfiguration.getSelectedPlanner(wf);
 
 		// THEN
 		expect(planners).to.have.lengthOf(2);
 		const userPlanners = planners.filter(spc => spc.scope === PlannerConfigurationScope.User);
 		expect(userPlanners).to.have.lengthOf(1);
-		const mockPlanner = userPlanners[0];
-		expect(mockPlanner).to.not.be.undefined;
-		expect(mockPlanner.scope).to.equal(PlannerConfigurationScope.User);
-		expect(mockPlanner.configuration.path).to.not.be.undefined;
-		expect(mockPlanner.configuration.path).to.startWith('node');
-		expect(selectedPlanner).to.deep.equal(mockPlanner);
-		expect(selectedIndex).to.equal(0);
+		const createdPlanner = userPlanners[0];
+		expect(createdPlanner).to.not.be.undefined;
+		expect(createdPlanner.scope).to.equal(PlannerConfigurationScope.User);
+		expect(createdPlanner.configuration.path).to.not.be.undefined;
+		expect(createdPlanner.configuration.path).to.startWith('node');
+		expect(selectedPlanner).to.deep.equal(createdPlanner);
+		expect(selectedPlanner.index).to.equal(0);
+		expect(selectedPlanner.workspaceFolder).to.be.undefined;
 	});
 
 	test('Crates a workspace folder planner', async () => {
@@ -86,18 +87,19 @@ suite('Planner configuration test', () => {
 		// WHEN
 		const allPlanners = plannersConfiguration.getPlanners(wf);
 		const workspaceFolderPlanners = plannersConfiguration.getPlannersPerScope(PlannerConfigurationScope.WorkspaceFolder, wf);
-		const [selectedPlanner, selectedIndex] = plannersConfiguration.getSelectedPlanner(wf);
+		const selectedPlanner = plannersConfiguration.getSelectedPlanner(wf);
 
 		// THEN
 		expect(workspaceFolderPlanners).to.have.lengthOf(1);
 		expect(allPlanners).to.have.lengthOf(2);
-		const mockPlanner = allPlanners[0];
-		expect(mockPlanner).to.not.be.undefined;
-		expect(mockPlanner.scope).to.equal(PlannerConfigurationScope.WorkspaceFolder);
-		expect(mockPlanner.configuration.path).to.not.be.undefined;
-		expect(mockPlanner.configuration.path).to.startWith('node');
-		expect(selectedPlanner).to.deep.equal(mockPlanner);
-		expect(selectedIndex).to.equal(0);
+		const createdPlanner = allPlanners[0];
+		expect(createdPlanner).to.not.be.undefined;
+		expect(createdPlanner.scope).to.equal(PlannerConfigurationScope.WorkspaceFolder);
+		expect(createdPlanner.configuration.path).to.not.be.undefined;
+		expect(createdPlanner.configuration.path).to.startWith('node');
+		expect(selectedPlanner).to.deep.equal(createdPlanner);
+		expect(selectedPlanner.index).to.equal(0);
+		expect(selectedPlanner.workspaceFolder).to.equal(wf.uri.toString());
 	});
 
 	test('When identical planner is created again, title should be made unique', async () => {
@@ -133,7 +135,7 @@ suite('Planner configuration test', () => {
 		const folderPlannerConfig = await plannersConfiguration.addPlannerConfiguration(PlannerConfigurationScope.WorkspaceFolder,
 			await new MockPlannerProvider().configurePlanner(), wf);
 		{
-			const [selectedPlanner] = plannersConfiguration.getSelectedPlanner(wf);
+			const selectedPlanner = plannersConfiguration.getSelectedPlanner(wf);
 			expect(selectedPlanner, "after the folder planner is created, it shall be selected").to.deep.equal(folderPlannerConfig);
 		}
 
@@ -141,7 +143,7 @@ suite('Planner configuration test', () => {
 		await plannersConfiguration.setSelectedPlanner(globalPlannerConfig);
 
 		// THEN
-		const [selectedPlanner] = plannersConfiguration.getSelectedPlanner(wf);
+		const selectedPlanner = plannersConfiguration.getSelectedPlanner(wf);
 		expect(selectedPlanner, "after the global planner is selected, it should be ... selected").to.deep.equal(globalPlannerConfig);
 		const selectedPlannerInspect = workspace.getConfiguration(CONF_PDDL, wf).inspect<string>(CONF_SELECTED_PLANNER);
 		expect(selectedPlannerInspect.globalValue).to.equal(globalPlannerConfig.configuration.title);
@@ -161,7 +163,7 @@ suite('Planner configuration test', () => {
 			await new MockPlannerProvider().configurePlanner());
 		
 		{
-			const [selectedPlanner] = plannersConfiguration.getSelectedPlanner(wf);
+			const selectedPlanner = plannersConfiguration.getSelectedPlanner(wf);
 			expect(selectedPlanner, "after the folder planner is created, it shall be selected").to.deep.equal(globalPlannerConfig);
 		}
 
@@ -169,7 +171,7 @@ suite('Planner configuration test', () => {
 		await plannersConfiguration.setSelectedPlanner(folderPlannerConfig, wf);
 
 		// THEN
-		const [selectedPlanner] = plannersConfiguration.getSelectedPlanner(wf);
+		const selectedPlanner = plannersConfiguration.getSelectedPlanner(wf);
 		expect(selectedPlanner, "after the folder planner is selected, it should be ... selected").to.deep.equal(folderPlannerConfig);
 
 		const selectedPlannerInspect = workspace.getConfiguration(CONF_PDDL, wf).inspect(CONF_SELECTED_PLANNER);
@@ -187,17 +189,17 @@ suite('Planner configuration test', () => {
 		const scopedMockConfiguration = await plannersConfiguration.addPlannerConfiguration(PlannerConfigurationScope.WorkspaceFolder, mockConfiguration, wf);
 
 		// WHEN
-		const [preSelectedPlanner, selectedIndex] = plannersConfiguration.getSelectedPlanner(wf);
+		const preSelectedPlanner = plannersConfiguration.getSelectedPlanner(wf);
 		expect(preSelectedPlanner).to.deep.equal(scopedMockConfiguration);
 		// modify the mock provider
 		plannerProvider.setExpectedPath('java -jar asdf.jar');
-		const updatedConfiguration = await plannersConfiguration.configureAndSavePlanner(preSelectedPlanner, selectedIndex, wf);
+		const updatedConfiguration = await plannersConfiguration.configureAndSavePlanner(preSelectedPlanner, wf);
 		expect(updatedConfiguration).to.not.be.undefined;
 
 		// THEN
 		const allPlanners = plannersConfiguration.getPlanners(wf);
 		const workspaceFolderPlanners = plannersConfiguration.getPlannersPerScope(PlannerConfigurationScope.WorkspaceFolder, wf);
-		const [postSelectedPlanner] = plannersConfiguration.getSelectedPlanner(wf);
+		const postSelectedPlanner = plannersConfiguration.getSelectedPlanner(wf);
 
 		expect(workspaceFolderPlanners).to.have.lengthOf(1);
 		expect(allPlanners).to.have.lengthOf(2);
@@ -207,7 +209,7 @@ suite('Planner configuration test', () => {
 		expect(actualUpdatedPlanner.path).to.startWith('java');
 		expect(postSelectedPlanner.configuration).to.deep.equal(actualUpdatedPlanner);
 		expect(postSelectedPlanner).to.deep.equal(updatedConfiguration);
-		expect(selectedIndex).to.equal(0);
+		expect(postSelectedPlanner.index).to.equal(0);
 	});
 
 	test('Deletes user-level planner', async () => {
@@ -222,7 +224,7 @@ suite('Planner configuration test', () => {
 		const countBeforeDeletion = plannersConfiguration.getPlanners(wf).length;
 
 		// WHEN
-		await plannersConfiguration.deletePlanner(scopedMockConfiguration, 0);
+		await plannersConfiguration.deletePlanner(scopedMockConfiguration);
 
 		// THEN
 		const countAfter = plannersConfiguration.getPlanners(wf).length;
@@ -242,7 +244,7 @@ suite('Planner configuration test', () => {
 		const countBeforeDeletion = plannersConfiguration.getPlanners(wf).length;
 
 		// WHEN
-		await plannersConfiguration.deletePlanner(scopedMockConfiguration, 0, wf);
+		await plannersConfiguration.deletePlanner(scopedMockConfiguration, wf);
 
 		// THEN
 		const countAfter = plannersConfiguration.getPlanners(wf).length;

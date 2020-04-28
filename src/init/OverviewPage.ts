@@ -114,13 +114,13 @@ export class OverviewPage {
                 this.plannersConfiguration.setSelectedPlanner(message.value as ScopedPlannerConfiguration).catch(showError);
                 break;
             case 'deletePlanner':
-                commands.executeCommand('pddl.deletePlanner', message.value as ScopedPlannerConfiguration, message.index);
+                commands.executeCommand('pddl.deletePlanner', message.value as ScopedPlannerConfiguration);
                 break;
             case 'configurePlanner':
-                commands.executeCommand('pddl.configurePlanner', message.value as ScopedPlannerConfiguration, message.index);
+                commands.executeCommand('pddl.configurePlanner', message.value as ScopedPlannerConfiguration);
                 break;
             case 'showConfiguration':
-                commands.executeCommand('pddl.showPlannerConfiguration', message.value as ScopedPlannerConfiguration, message.index);
+                commands.executeCommand('pddl.showPlannerConfiguration', message.value as ScopedPlannerConfiguration);
                 break;
             case 'plannerOutputTarget':
                 workspace.getConfiguration("pddlPlanner").update("executionTarget", message.value, ConfigurationTarget.Global);

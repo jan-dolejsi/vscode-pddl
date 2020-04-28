@@ -61,8 +61,10 @@ function updateConfiguration(message) {
 
 /**
  * @typedef ScopedPlannerConfig Planner configuration and the scope it belongs to
- * @property {PlannerConfig} configuration 
- * @property {number} scope
+ * @property {PlannerConfig} configuration Planner configuration
+ * @property {number} scope configuration scope level
+ * @property {number} index order within the scope
+ * @property {string | undefined} workspaceFolder workspace folder Uri as string, of `scope` === `SCOPE_WORKSPACE_FOLDER`
  */
 
 /**
@@ -91,8 +93,9 @@ function updatePlanners(planners, selectedPlanner, imagesPath) {
 
     const currentTheme = getThemeName(document.body.className);
 
-    planners.forEach((scopedConfig, index) => {
+    planners.forEach(scopedConfig => {
         const config = scopedConfig.configuration;
+        const index = scopedConfig.index;
         const tr = plannersTable.appendChild(document.createElement("tr"));
         const td0 = tr.appendChild(document.createElement("td"));
         td0.className = "plannerLabel";
@@ -112,10 +115,10 @@ function updatePlanners(planners, selectedPlanner, imagesPath) {
         const td2 = tr.appendChild(document.createElement("td"));
         td2.className = "plannerConfig";
         if (scopedConfig.scope !== SCOPE_DEFAULT && config.canConfigure) {
-            addThemedImageButton(td2, imagesPath, "gear.svg", currentTheme, "Configure planner...", () => configurePlanner(scopedConfig, index));
+            addThemedImageButton(td2, imagesPath, "gear.svg", currentTheme, "Configure planner...", () => configurePlanner(scopedConfig));
         }
         if (scopedConfig.scope !== SCOPE_DEFAULT) {
-            addThemedImageButton(td2, imagesPath, "trash.svg", currentTheme, "Remove this planner configuration...", () => deletePlanner(scopedConfig, index));
+            addThemedImageButton(td2, imagesPath, "trash.svg", currentTheme, "Remove this planner configuration...", () => deletePlanner(scopedConfig));
         }
     });
 }
@@ -127,12 +130,11 @@ function updatePlanners(planners, selectedPlanner, imagesPath) {
  * @param {string} imagesPath path to images
  * @param {string} currentTheme current theme
  * @param {ScopedPlannerConfig} scopedConfig planner configuration incl. scope
- * @param {number} index order within the same scope
  */
-function addScopeIcon(td, scope, imagesPath, currentTheme, scopedConfig, index) {
+function addScopeIcon(td, scope, imagesPath, currentTheme, scopedConfig) {
     const imageName = toScopeIconName(scope);
     const tooltip = toScopeTooltip(scope);
-    const onClick = scope > SCOPE_EXTENSION ? () => showConfiguration(scopedConfig, index) : undefined;
+    const onClick = scope > SCOPE_EXTENSION ? () => showConfiguration(scopedConfig) : undefined;
     addThemedImageButton(td, imagesPath, imageName, currentTheme, tooltip, onClick);
 }
 
@@ -211,39 +213,33 @@ function addImageButton(td, theme, imagesPath, imageName, currentTheme, tooltip,
 /**
  * Launches configuration of the
  * @param {ScopedPlannerConfig} selectedPlanner planner
- * @param {number} index selected index
  */
-function configurePlanner(selectedPlanner, index) {
+function configurePlanner(selectedPlanner) {
     postMessage({
         command: 'configurePlanner',
-        value: selectedPlanner,
-        index: index
+        value: selectedPlanner
     });
 }
 
 /**
  * Launches configuration of the
  * @param {ScopedPlannerConfig} scopedConfig planner
- * @param {number} index selected index
  */
-function showConfiguration(scopedConfig, index) {
+function showConfiguration(scopedConfig) {
     postMessage({
         command: 'showConfiguration',
-        value: scopedConfig,
-        index: index
+        value: scopedConfig
     });
 }
 
 /**
  * Deletes planner configuration
  * @param {ScopedPlannerConfig} selectedPlanner planner
- * @param {number} index selected index
  */
-function deletePlanner(selectedPlanner, index) {
+function deletePlanner(selectedPlanner) {
     postMessage({
         command: 'deletePlanner',
-        value: selectedPlanner,
-        index: index
+        value: selectedPlanner
     });
 }
 

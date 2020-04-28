@@ -37,13 +37,6 @@ export class CommandPlannerProvider implements planner.PlannerProvider {
 
             // todo: validate that this planner actually works by sending a dummy request to it
 
-            // const newPlannerScope = await this.askConfigurationScope();
-
-
-            // if (!newPlannerScope) { return undefined; }
-            // const configurationToUpdate = this.getConfigurationForScope(newPlannerScope);
-            // if (!configurationToUpdate) { return undefined; }
-
             if (!isHttp(newPlannerPath)) {
                 syntax = await this.askPlannerSyntax(previousConfiguration);
                 if (syntax.trim() === "") {
@@ -111,7 +104,7 @@ export class SolveServicePlannerProvider implements planner.PlannerProvider {
         const newPlannerUrl = await window.showInputBox({
             prompt: "Enter synchronous service URL",
             placeHolder: `http://host:port/solve`,
-            valueSelection: existingHostAndPort, // [7, 16],
+            valueSelection: existingHostAndPort,
             value: existingValue,
             ignoreFocusOut: true
         });
