@@ -2,11 +2,14 @@
 
 ## [2.17.0]
 
-Support for multiple planners, extensibility (other extensions can now inject planner providers) and easy switching between them.
-Previous planner configuration settings (`pddlPlanner.executableOrService` and `pddlPlanner.executableOptions`) are now deprecated 
+Support for multiple planners, extensibility (other extensions can now inject planner providers) and easy switching between them either
+using the _PDDL: Select planner_ command, or via the status bar item.
+Previous planner configuration settings (`pddlPlanner.executableOrService` and `pddlPlanner.executableOptions`) are now deprecated
 and the extension automatically migrates them to `pddl.planners` and `pddl.selectedPlanner`. The migration is supported for all places,
 where the configuration settings are stored in VS Code: the _User_ settings, _Workspace_ and _WorkspaceFolder_ settings.
 Setting `pddl.showPlannerInStatusBar` may be used to hide the planner selector in the status bar (if you only ever use one planner).
+
+The original command _PDDL: Configure planner_ changed behavior. It now triggers re-configuration of the currently selected planner.
 
 ## [2.16.0]
 

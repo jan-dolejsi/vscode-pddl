@@ -63,6 +63,10 @@ export class PlannersConfiguration {
                 this.configureAndSavePlanner(plannerConfiguration, index).catch(showError);
             }));
 
+        context.subscriptions.push(instrumentOperationAsVsCodeCommand(CONF_PDDL + '.showPlannerConfiguration',
+            (plannerConfiguration: ScopedPlannerConfiguration, index: number) => {
+                this.openPlannerSettingsInJson(plannerConfiguration, index);
+            }));
 
         context.subscriptions.push(instrumentOperationAsVsCodeCommand(PDDL_DELETE_PLANNER, async (plannerConfiguration: ScopedPlannerConfiguration, index: number) => {
             if (!plannerConfiguration || index < 0) {
@@ -86,14 +90,25 @@ export class PlannersConfiguration {
         }));
     }
 
-    async configureAndSavePlanner(plannerConfiguration: ScopedPlannerConfiguration, index: number, workspaceFolder?: WorkspaceFolder): Promise<ScopedPlannerConfiguration> {
+    async configureAndSavePlanner(plannerConfiguration: ScopedPlannerConfiguration, index: number, workspaceFolder?: WorkspaceFolder): Promise<ScopedPlannerConfiguration | undefined> {
         if (!plannerConfiguration.configuration.canConfigure) {
             throw new Error(`Planner configuration ${plannerConfiguration.configuration.title} is not configurable.`);
         }
-        const newPlannerConfiguration = await this.pddlWorkspace.getPlannerRegistrar()
-            .getPlannerProvider({ kind: plannerConfiguration.configuration.kind })
+
+        const plannerProvider = this.pddlWorkspace.getPlannerRegistrar()
+            .getPlannerProvider({ kind: plannerConfiguration.configuration.kind });
+
+        if (!plannerProvider) {
+            new Error(`Planner provider for '${plannerConfiguration.configuration.kind}' is not currently available. Are you missing an extension?`);
+        }
+        
+        const newPlannerConfiguration = await plannerProvider
             .configurePlanner(plannerConfiguration.configuration);
 
+        if (!newPlannerConfiguration) {
+            return undefined;
+        }
+        
         return await this.savePlannerConfiguration(index, plannerConfiguration.scope, newPlannerConfiguration, workspaceFolder);
     }
 
@@ -251,7 +266,7 @@ export class PlannersConfiguration {
     async deletePlanner(plannerConfiguration: ScopedPlannerConfiguration, index: number, workspaceFolder?: WorkspaceFolder): Promise<void> {
         const remainingPlannerConfigs = this.getPlannersPerScope(plannerConfiguration.scope, workspaceFolder);
         remainingPlannerConfigs.splice(index, 1);
-        
+
         await this.savePlanners(plannerConfiguration.scope, remainingPlannerConfigs, workspaceFolder);
     }
 
@@ -416,6 +431,11 @@ export class PlannersConfiguration {
         validDocumentsAndRanges.forEach(async (docAndRange, index) => {
             window.showTextDocument(docAndRange.settingsDoc, { selection: docAndRange.range, viewColumn: index + 1 });
         });
+    }
+
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    openPlannerSettingsInJson(_plannerConfiguration: ScopedPlannerConfiguration, _index: number): void {
+        // not implemented yet
     }
 
     toFolderConfigurationUri(wf: WorkspaceFolder): { fileUri: Uri; settingRootPath: string[] } {

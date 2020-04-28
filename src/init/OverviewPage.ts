@@ -119,6 +119,9 @@ export class OverviewPage {
             case 'configurePlanner':
                 commands.executeCommand('pddl.configurePlanner', message.value as ScopedPlannerConfiguration, message.index);
                 break;
+            case 'showConfiguration':
+                commands.executeCommand('pddl.showPlannerConfiguration', message.value as ScopedPlannerConfiguration, message.index);
+                break;
             case 'plannerOutputTarget':
                 workspace.getConfiguration("pddlPlanner").update("executionTarget", message.value, ConfigurationTarget.Global);
                 break;

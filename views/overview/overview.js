@@ -71,8 +71,6 @@ function updateConfiguration(message) {
  * @property {string} title label 
  * @property {string?} path executable path 
  * @property {string?} url service url 
- * @property {boolean} isSelected true if this planner is currently selected
- * @property {string} scope machine | workspaceFolder | workspace | extension
  * @property {boolean} canConfigure user can configure this planner
  */
 
@@ -109,15 +107,59 @@ function updatePlanners(planners, selectedPlanner, imagesPath) {
         label.innerText = config.title;
 
         const td1 = tr.appendChild(document.createElement("td"));
-        td1.innerText = scopedConfig.scope;
+        addScopeIcon(td1, scopedConfig.scope, imagesPath, currentTheme);
 
         const td2 = tr.appendChild(document.createElement("td"));
         td2.className = "plannerConfig";
-        if (config.canConfigure) {
-            addThemedImageButton(td2, imagesPath, "gear.svg", currentTheme, () => configurePlanner(scopedConfig, index));
+        if (scopedConfig.scope !== SCOPE_DEFAULT && config.canConfigure) {
+            addThemedImageButton(td2, imagesPath, "gear.svg", currentTheme, "Configure planner...", () => configurePlanner(scopedConfig, index));
         }
-        addThemedImageButton(td2, imagesPath, "trash.svg", currentTheme, () => deletePlanner(scopedConfig, index));
+        if (scopedConfig.scope !== SCOPE_DEFAULT) {
+            addThemedImageButton(td2, imagesPath, "trash.svg", currentTheme, "Remove this planner configuration...", () => deletePlanner(scopedConfig, index));
+        }
     });
+}
+
+/**
+ * Creates a themed icon for the config scope
+ * @param {HTMLTableDataCellElement} td cell
+ * @param {number} scope configuration scope/level
+ * @param {string} imagesPath path to images
+ * @param {string} currentTheme current theme
+ * @param {ScopedPlannerConfig} scopedConfig planner configuration incl. scope
+ * @param {number} index order within the same scope
+ */
+function addScopeIcon(td, scope, imagesPath, currentTheme, scopedConfig, index) {
+    const imageName = toScopeIconName(scope);
+    const tooltip = toScopeTooltip(scope);
+    const onClick = scope > SCOPE_EXTENSION ? () => showConfiguration(scopedConfig, index) : undefined;
+    addThemedImageButton(td, imagesPath, imageName, currentTheme, tooltip, onClick);
+}
+
+const SCOPE_DEFAULT = 0;
+const SCOPE_EXTENSION = 1;
+const SCOPE_USER = 2;
+const SCOPE_WORKSPACE = 3;
+const SCOPE_WORKSPACE_FOLDER = 4;
+
+function toScopeIconName(scope) {
+    switch (scope) {
+        case SCOPE_DEFAULT: return "plug.svg";
+        case SCOPE_EXTENSION: return "plug.svg";
+        case SCOPE_USER: return "vm.svg";
+        case SCOPE_WORKSPACE: return "root-folder.svg";
+        case SCOPE_WORKSPACE_FOLDER: return "folder-opened.svg";
+    }
+}
+
+function toScopeTooltip(scope) {
+    switch (scope) {
+        case SCOPE_DEFAULT: return "Default planner installed with the PDDL extension.";
+        case SCOPE_EXTENSION: return "Planner installed by a VS Code extension";
+        case SCOPE_USER: return "Planner from user/global configuration settings";
+        case SCOPE_WORKSPACE: return "Planner from workspace file";
+        case SCOPE_WORKSPACE_FOLDER: return "Planner from workspace folder";
+    }
 }
 
 /**
@@ -125,7 +167,7 @@ function updatePlanners(planners, selectedPlanner, imagesPath) {
  * @param {string | undefined} error reported error message
  */
 function updatePlannersError(error) {
-    document.getElementById('plannerConfigurationError').style.visibility = error ? 'visible' : 'collapse';
+    document.getElementById('plannerConfigurationError').style.display = error ? 'inherit' : 'none';
     document.getElementById('plannerConfigurationErrorMessage').innerText = error;
 }
 
@@ -135,11 +177,12 @@ function updatePlannersError(error) {
  * @param {string} imagesPath path to images
  * @param {string} imageName image file name
  * @param {string} currentTheme current theme
+ * @param {string} tooltip tooltip
  * @param {(this: GlobalEventHandlers, ev: MouseEvent) => any} onclick onclick callback
  */
-function addThemedImageButton(td, imagesPath, imageName, currentTheme, onclick) {
+function addThemedImageButton(td, imagesPath, imageName, currentTheme, tooltip, onclick) {
     ['light', 'dark'].forEach(theme => {
-        addImageButton(td, theme, imagesPath, imageName, currentTheme, onclick);
+        addImageButton(td, theme, imagesPath, imageName, currentTheme, tooltip, onclick);
     });
 }
 
@@ -150,12 +193,14 @@ function addThemedImageButton(td, imagesPath, imageName, currentTheme, onclick) 
  * @param {string} imagesPath path to images
  * @param {string} imageName image file name
  * @param {string} currentTheme current theme
+ * @param {string} tooltip tooltip
  * @param {(this: GlobalEventHandlers, ev: MouseEvent) => any} onclick onclick callback
  */
-function addImageButton(td, theme, imagesPath, imageName, currentTheme, onclick) {
+function addImageButton(td, theme, imagesPath, imageName, currentTheme, tooltip, onclick) {
     const img = td.appendChild(document.createElement("img"));
     img.src = `${imagesPath}/${theme}/${imageName}`;
     img.onclick = onclick;
+    img.title = tooltip;
     img.setAttribute("theme", theme);
     img.className = "menuButton";
 
@@ -172,6 +217,19 @@ function configurePlanner(selectedPlanner, index) {
     postMessage({
         command: 'configurePlanner',
         value: selectedPlanner,
+        index: index
+    });
+}
+
+/**
+ * Launches configuration of the
+ * @param {ScopedPlannerConfig} scopedConfig planner
+ * @param {number} index selected index
+ */
+function showConfiguration(scopedConfig, index) {
+    postMessage({
+        command: 'showConfiguration',
+        value: scopedConfig,
         index: index
     });
 }

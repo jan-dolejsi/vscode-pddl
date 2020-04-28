@@ -192,6 +192,7 @@ suite('Planner configuration test', () => {
 		// modify the mock provider
 		plannerProvider.setExpectedPath('java -jar asdf.jar');
 		const updatedConfiguration = await plannersConfiguration.configureAndSavePlanner(preSelectedPlanner, selectedIndex, wf);
+		expect(updatedConfiguration).to.not.be.undefined;
 
 		// THEN
 		const allPlanners = plannersConfiguration.getPlanners(wf);
