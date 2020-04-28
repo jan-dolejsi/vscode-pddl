@@ -212,7 +212,7 @@ export class ExecutablePlannerProvider implements planner.PlannerProvider {
             }
             : undefined;
 
-        const defaultUri = Uri.file(previousConfiguration.path);
+        const defaultUri = previousConfiguration && previousConfiguration.path && Uri.file(previousConfiguration?.path);
 
         const executableUri = await selectedFile(`Select planner executable`, defaultUri, filters);
         if (!executableUri) { return undefined; }

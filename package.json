@@ -490,6 +490,12 @@
         "command": "pddl.planAndDisplayResult",
         "key": "alt+p",
         "when": "resourceLangId == pddl"
+      },
+      {
+        "mac": "cmd+alt+p",
+        "key": "ctrl+alt+p",
+        "command": "pddl.selectPlanner",
+        "when": "resourceLangId == pddl"
       }
     ],
     "jsonValidation": [
@@ -633,14 +639,13 @@
           "scopeIWantToUse": "machine-overridable",
           "scope": "resource",
           "type": "array",
-          "markdownDescription": "**Documentation...**",
+          "markdownDescription": "The PDDL Extension can work with multiple **PDDL Planners**. It has a notion of planner _kind_. The _kind_s are defined by the PDDL Extension, or by other extensions injecting in their _Planner Providers_. For more information, see [Configuring the PDDL planner](https://github.com/jan-dolejsi/vscode-pddl/wiki/Configuring-the-PDDL-planner) wiki page.",
           "default": [
             {
               "kind": "SERVICE_SYNC",
               "url": "http://solver.planning.domains/solve",
               "title": "http://solver.planning.domains/solve",
-              "canConfigure": false,
-              "isSelected": true
+              "canConfigure": false
             }
           ],
           "items": {
@@ -697,7 +702,7 @@
         },
         "pddlPlanner.executableOptions": {
           "deprecationMessage": "Use pddl.planners setting. It is easy to set up multiple planners using PDDL: Show Overview Page command.",
-          "scope": "window",
+          "scope": "resource",
           "type": "string",
           "description": "Override the command-line options passed to the PDDL planner configured in 'pddlPlanner.executableOrService'.",
           "pattern": "^\\$\\(planner\\).+\\$\\(options\\).+\\$\\(domain\\).+\\$\\(problem\\).*$"

@@ -5,10 +5,10 @@
 'use strict';
 
 import {
-    window, ExtensionContext, Uri, ViewColumn, WebviewPanel, commands, workspace, ConfigurationTarget, extensions, TextDocument, Webview
+    window, ExtensionContext, Uri, ViewColumn, WebviewPanel, commands, workspace, ConfigurationTarget, extensions, TextDocument, Webview, WorkspaceFolder
 } from 'vscode';
 
-import { PddlConfiguration, CONF_PDDL, PDDL_PLANNER } from '../configuration/configuration';
+import { PddlConfiguration, PDDL_PLANNER } from '../configuration/configuration';
 
 import * as path from 'path';
 import { getWebViewHtml, createPddlExtensionContext, showError, asWebviewUri } from '../utils';
@@ -17,7 +17,7 @@ import { ValDownloader } from '../validation/ValDownloader';
 import { VAL_DOWNLOAD_COMMAND, ValDownloadOptions } from '../validation/valCommand';
 import { PTEST_VIEW } from '../ptest/PTestCommands';
 import { instrumentOperationAsVsCodeCommand } from "vscode-extension-telemetry-wrapper";
-import { PlannersConfiguration as PlannersConfiguration, ScopedPlannerConfiguration, CONF_SELECTED_PLANNER } from '../configuration/PlannersConfiguration';
+import { PlannersConfiguration as PlannersConfiguration, ScopedPlannerConfiguration } from '../configuration/PlannersConfiguration';
 
 export const SHOULD_SHOW_OVERVIEW_PAGE = 'shouldShowOverviewPage';
 export const LAST_SHOWN_OVERVIEW_PAGE = 'lastShownOverviewPage';
@@ -26,12 +26,14 @@ export class OverviewPage {
 
     private webViewPanel?: WebviewPanel;
     private iconsInstalled = false;
+    private workspaceFolder: WorkspaceFolder | undefined;
 
     private readonly ICONS_EXTENSION_NAME = "vscode-icons-team.vscode-icons";
 
     constructor(private context: ExtensionContext, private pddlConfiguration: PddlConfiguration, private plannersConfiguration: PlannersConfiguration, private val: ValDownloader) {
         instrumentOperationAsVsCodeCommand("pddl.showOverview", () => this.showWelcomePage(true));
         workspace.onDidChangeConfiguration(() => this.scheduleUpdatePageConfiguration(), undefined, this.context.subscriptions);
+        workspace.onDidChangeWorkspaceFolders(() => this.scheduleUpdatePageConfiguration(), undefined, this.context.subscriptions);
         extensions.onDidChange(() => this.updateIconsAlerts(), this.context.subscriptions);
         this.updateIconsAlerts();
     }
@@ -111,7 +113,7 @@ export class OverviewPage {
                 commands.executeCommand("git.clone", "https://github.com/jan-dolejsi/vscode-pddl-samples.git");
                 break;
             case 'selectPlanner':
-                this.plannersConfiguration.setSelectedPlanner(message.value as ScopedPlannerConfiguration).catch(showError);
+                this.plannersConfiguration.setSelectedPlanner(message.value as ScopedPlannerConfiguration, this.workspaceFolder).catch(showError);
                 break;
             case 'deletePlanner':
                 commands.executeCommand('pddl.deletePlanner', message.value as ScopedPlannerConfiguration);
@@ -123,7 +125,12 @@ export class OverviewPage {
                 commands.executeCommand('pddl.showPlannerConfiguration', message.value as ScopedPlannerConfiguration);
                 break;
             case 'plannerOutputTarget':
-                workspace.getConfiguration("pddlPlanner").update("executionTarget", message.value, ConfigurationTarget.Global);
+                this.pddlConfiguration.updateEffectiveConfiguration("pddlPlanner", "executionTarget", message.value as string);
+                break;
+            case 'workspaceFolderSelected':
+                const workspaceFolderUriAsString = message.workspaceFolderUri as string;
+                this.workspaceFolder = workspace.getWorkspaceFolder(Uri.parse(workspaceFolderUriAsString));
+                this.scheduleUpdatePageConfiguration();
                 break;
             case 'installIcons':
                 try {
@@ -262,14 +269,20 @@ export class OverviewPage {
 
     updateTimeout: NodeJS.Timeout | undefined;
 
-    scheduleUpdatePageConfiguration(): void {
-        if (this.updateTimeout) {
-            this.updateTimeout.refresh();
+    scheduleUpdatePageConfiguration(options?: { immediate?: boolean }): void {
+        if (options?.immediate) {
+            this.updatePageConfiguration();
         }
         else {
-            this.updateTimeout = setTimeout(() => {
-                this.updatePageConfiguration().catch(showError);
-            }, 500);
+            if (this.updateTimeout) {
+                this.updateTimeout.refresh();
+
+            }
+            else {
+                this.updateTimeout = setTimeout(() => {
+                    this.updatePageConfiguration().catch(showError);
+                }, 500);
+            }
         }
     }
 
@@ -279,12 +292,14 @@ export class OverviewPage {
             this.updateTimeout = undefined;
         }
         if (!this.webViewPanel || !this.webViewPanel.active) { return false; }
-        
+
         let planners: ScopedPlannerConfiguration[] | undefined;
         let plannersConfigError: string | undefined;
 
+        this.workspaceFolder = this.workspaceFolder ?? (workspace.workspaceFolders && workspace.workspaceFolders[0]);
+
         try {
-            planners = this.plannersConfiguration.getPlanners();
+            planners = this.plannersConfiguration.getPlanners(this.workspaceFolder);
         }
         catch (err) {
             plannersConfigError = err.message ?? err;
@@ -293,27 +308,38 @@ export class OverviewPage {
 
         const message: OverviewConfiguration = {
             command: 'updateConfiguration',
+            workspaceFolders: workspace.workspaceFolders?.map(wf => this.toWireWorkspaceFolder(wf)) ?? [],
+            selectedWorkspaceFolder: this.workspaceFolder && this.toWireWorkspaceFolder(this.workspaceFolder),
             planners: planners,
-            selectedPlanner: workspace.getConfiguration(CONF_PDDL).get<string>(CONF_SELECTED_PLANNER),
+            selectedPlanner: this.plannersConfiguration.getSelectedPlanner(this.workspaceFolder)?.configuration.title,
             plannersConfigError: plannersConfigError,
-            plannerOutputTarget: workspace.getConfiguration(PDDL_PLANNER).get<string>("executionTarget", "Output window"),
-            parser: this.pddlConfiguration.getParserPath(),
-            validator: this.pddlConfiguration.getValidatorPath(),
+            plannerOutputTarget: workspace.getConfiguration(PDDL_PLANNER, this.workspaceFolder).get<string>("executionTarget", "Output window"),
+            parser: this.pddlConfiguration.getParserPath(this.workspaceFolder),
+            validator: this.pddlConfiguration.getValidatorPath(this.workspaceFolder),
             imagesPath: asWebviewUri(Uri.file(this.context.asAbsolutePath('images')), this.webViewPanel.webview).toString(),
             shouldShow: this.context.globalState.get<boolean>(SHOULD_SHOW_OVERVIEW_PAGE, true),
-            autoSave: workspace.getConfiguration().get<string>("files.autoSave", "off"),
+            autoSave: workspace.getConfiguration("files", this.workspaceFolder).get<string>("autoSave", "off"),
             showInstallIconsAlert: !this.iconsInstalled,
             showEnableIconsAlert: this.iconsInstalled && workspace.getConfiguration().get<string>("workbench.iconTheme") !== "vscode-icons",
-            downloadValAlert: !this.pddlConfiguration.getValidatorPath() || !(await this.val.isInstalled()),
+            downloadValAlert: !this.pddlConfiguration.getValidatorPath(this.workspaceFolder) || !(await this.val.isInstalled()),
             updateValAlert: await this.val.isNewValVersionAvailable()
             // todo: workbench.editor.revealIfOpen
         };
         return this.webViewPanel.webview.postMessage(message);
     }
+
+    private toWireWorkspaceFolder(workspaceFolder: WorkspaceFolder): WireWorkspaceFolder {
+        return {
+            name: workspaceFolder.name,
+            uri: workspaceFolder.uri.toString()
+        };
+    }
 }
 
 interface OverviewConfiguration {
     command: string;
+    workspaceFolders: WireWorkspaceFolder[];
+    selectedWorkspaceFolder?: WireWorkspaceFolder;
     planners: ScopedPlannerConfiguration[];
     selectedPlanner?: string;
     plannersConfigError?: string;
@@ -327,4 +353,9 @@ interface OverviewConfiguration {
     showEnableIconsAlert: boolean;
     downloadValAlert: boolean;
     updateValAlert: boolean;
+}
+
+interface WireWorkspaceFolder {
+    uri: string;
+    name: string;
 }

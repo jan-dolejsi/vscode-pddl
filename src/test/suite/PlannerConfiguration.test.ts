@@ -168,7 +168,7 @@ suite('Planner configuration test', () => {
 		}
 
 		// WHEN
-		await plannersConfiguration.setSelectedPlanner(folderPlannerConfig, wf);
+		await plannersConfiguration.setSelectedPlanner(folderPlannerConfig);
 
 		// THEN
 		const selectedPlanner = plannersConfiguration.getSelectedPlanner(wf);
@@ -193,7 +193,7 @@ suite('Planner configuration test', () => {
 		expect(preSelectedPlanner).to.deep.equal(scopedMockConfiguration);
 		// modify the mock provider
 		plannerProvider.setExpectedPath('java -jar asdf.jar');
-		const updatedConfiguration = await plannersConfiguration.configureAndSavePlanner(preSelectedPlanner, wf);
+		const updatedConfiguration = await plannersConfiguration.configureAndSavePlanner(preSelectedPlanner);
 		expect(updatedConfiguration).to.not.be.undefined;
 
 		// THEN
@@ -244,7 +244,7 @@ suite('Planner configuration test', () => {
 		const countBeforeDeletion = plannersConfiguration.getPlanners(wf).length;
 
 		// WHEN
-		await plannersConfiguration.deletePlanner(scopedMockConfiguration, wf);
+		await plannersConfiguration.deletePlanner(scopedMockConfiguration);
 
 		// THEN
 		const countAfter = plannersConfiguration.getPlanners(wf).length;

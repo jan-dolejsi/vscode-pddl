@@ -3,7 +3,7 @@
  * Licensed under the MIT License. See License.txt in the project root for license information.
  * ------------------------------------------------------------------------------------------ */
 import {
-    Uri, ExtensionContext, workspace, MessageItem, window, commands, WorkspaceConfiguration, ConfigurationTarget, QuickPickItem, extensions
+    Uri, ExtensionContext, workspace, MessageItem, window, commands, WorkspaceConfiguration, ConfigurationTarget, QuickPickItem, extensions, WorkspaceFolder
 } from 'vscode';
 import { PDDLParserSettings } from '../util/Settings';
 
@@ -46,12 +46,27 @@ export class PddlConfiguration {
     constructor(private context: ExtensionContext) {
     }
 
+    async updateEffectiveConfiguration<T>(section: string, key: string, value: T, workspaceFolder?: WorkspaceFolder): Promise<void> {
+        const configuration = workspace.getConfiguration(section, workspaceFolder);
+        const inspect = configuration.inspect(key);
+
+        if (inspect.workspaceFolderValue !== undefined) {
+            await configuration.update(key, value, ConfigurationTarget.WorkspaceFolder);
+        }
+        else if (inspect.workspaceValue !== undefined) {
+            await configuration.update(key, value, ConfigurationTarget.Workspace);
+        }
+        else {
+            await configuration.update(key, value, ConfigurationTarget.Global);
+        }
+    }
+
     getEpsilonTimeStep(): number {
         return workspace.getConfiguration().get(PLANNER_EPSILON_TIMESTEP, DEFAULT_EPSILON);
     }
 
-    getParserPath(): string | undefined {
-        const configuredPath = workspace.getConfiguration().get<string>(PARSER_EXECUTABLE_OR_SERVICE);
+    getParserPath(workspaceFolder?: WorkspaceFolder): string | undefined {
+        const configuredPath = workspace.getConfiguration(PDDL_PARSER, workspaceFolder).get<string>(EXECUTABLE_OR_SERVICE);
         return ensureAbsoluteGlobalStoragePath(configuredPath, this.context);
     }
 
@@ -300,8 +315,8 @@ export class PddlConfiguration {
         return ensureAbsoluteGlobalStoragePath(configuredPath, this.context);
     }
 
-    getValidatorPath(): string | undefined {
-        const configuredPath = workspace.getConfiguration(CONF_PDDL).get<string>(VALIDATION_PATH);
+    getValidatorPath(workspaceFolder?: WorkspaceFolder): string | undefined {
+        const configuredPath = workspace.getConfiguration(CONF_PDDL, workspaceFolder).get<string>(VALIDATION_PATH);
         return ensureAbsoluteGlobalStoragePath(configuredPath, this.context);
     }
 

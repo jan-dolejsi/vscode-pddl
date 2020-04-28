@@ -30,6 +30,8 @@ Simplest way to get started is to:
 1. When you are ready to run the planner on your domain and problem files (both must be open in the editor), invoke the planner via context menu on one of the file text content, or via the <kbd>Alt</kbd> + <kbd>P</kbd> shortcut. The [planning.domains](http://solver.planning.domains/) solver will be used, so do not send any confidential PDDL code.
 1. Configure your own PDDL planner by following [instructions](https://github.com/jan-dolejsi/vscode-pddl/wiki/Configuring-the-PDDL-planner).
 
+![PDDL Planner Configuration](https://raw.githubusercontent.com/wiki/jan-dolejsi/vscode-pddl/img/PDDL_planner_configuration.gif)
+
 ### Explore VS Code PDDL show-cases
 
 To exercise the features of this PDDL Extension, clone this [vscode-pddl-samples](https://github.com/jan-dolejsi/vscode-pddl-samples/) repository and open the folder in VS Code. Follow the instructions and explanations in the [readme](https://github.com/jan-dolejsi/vscode-pddl-samples/blob/master/README.md).
@@ -520,7 +522,14 @@ The `solver` plugin's configuration (i.e. the URL of the solver service) is now 
 
 ```json
 {
-    "pddlPlanner.executableOrService": "http://localhost:8087/solve"
+    "pddl.planners": [
+        {
+            "kind": "SERVICE_SYNC",
+            "url": "http://localhost:12345/solve",
+            "title": "http://localhost:12345/solve",
+            "canConfigure": true
+        }
+    ]
 }
 ```
 

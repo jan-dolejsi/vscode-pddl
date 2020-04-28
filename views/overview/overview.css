@@ -40,6 +40,10 @@ table#planners > tr:nth-child(odd) {
     background-color: rgba(125, 125, 125, .1);
 }
 
+table#planners > tr { 
+    line-height: 150%;
+}
+
 td.plannerLabel {
     text-overflow: ellipsis;
     max-width: 300px;

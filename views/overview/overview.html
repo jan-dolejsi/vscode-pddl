@@ -78,6 +78,12 @@
                     <img src="../../images/light/settings-gear.svg" onclick="postCommand('command:pddl.settings')" theme="light" class="menuButton" title="See all PDDL Extension settings"/>
                     <img src="../../images/dark/settings-gear.svg" onclick="postCommand('command:pddl.settings')" theme="dark" class="menuButton" title="See all PDDL Extension settings"/>
                 </h2>
+                <div id="workspaceFoldersDiv">
+                    <label for="workspaceFolders">Workspace folder:</label>
+                    <select id="workspaceFolders">
+                        <option label="wf1" selected value="file:///asdf/folders/wf1"/>
+                    </select>
+                </div>
                 <h3>
                     Planning engine
                     <img src="../../images/light/json.svg" onclick="postCommand('command:pddl.plannersJsonSettings')" theme="light" class="menuButton" title="See advanced configuration in JSON settings file..."/>

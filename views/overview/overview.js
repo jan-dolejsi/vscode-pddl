@@ -19,6 +19,13 @@ function initialize() {
     else {
         clearData();
     }
+    
+    document.getElementById('workspaceFolders').onchange = function (ev) {
+        postMessage({
+            command: 'workspaceFolderSelected',
+            workspaceFolderUri: ev.target.options[ev.target.selectedIndex].value
+        });
+    };
 
     onLoad();
 }
@@ -28,6 +35,8 @@ function initialize() {
  * @property {string} command
  * @property {ScopedPlannerConfig[]} planners
  * @property {string} selectedPlanner selected planner title
+ * @property {WireWorkspaceFolder[]} workspaceFolders
+ * @property {WireWorkspaceFolder | undefined} selectedWorkspaceFolder
  * @property {string} plannerOutputTarget
  * @property {string?} parser
  * @property {string?} validator
@@ -41,12 +50,19 @@ function initialize() {
  */
 
 /**
+ * @typedef WireWorkspaceFolder Workspace folder
+ * @property {string} name
+ * @property {string} uri
+ */
+
+/**
  * Update the page with configuration info
  * @param {OverviewConfiguration} message configuration
  */
 function updateConfiguration(message) {
     updatePlanners(message.planners, message.selectedPlanner, message.imagesPath);
     updatePlannersError(message.plannersConfigError);
+    updateWorkspaceFolders(message.workspaceFolders, message.selectedWorkspaceFolder);
     document.getElementById('parser').value = message.parser;
     document.getElementById('validator').value = message.validator;
     setStyleDisplay('installIconsAlert', message.showInstallIconsAlert, "list-item");
@@ -77,6 +93,36 @@ function updateConfiguration(message) {
  */
 
 /**
+ * Shows/hides and populates the workspace folder drop-down
+ * @param {WireWorkspaceFolder[]} workspaceFolders
+ * @param {WireWorkspaceFolder | undefined} selectedWorkspaceFolder
+ */
+function updateWorkspaceFolders(workspaceFolders, selectedWorkspaceFolder) {
+    {
+        const divEl = document.getElementById('workspaceFoldersDiv');
+        divEl.style.display = workspaceFolders && workspaceFolders.length > 1 ? 'inline' : 'none';
+    }
+    {
+        const selectEl = document.getElementById('workspaceFolders');
+
+        // clear
+        while (selectEl.hasChildNodes()) {
+            selectEl.childNodes.forEach(child => child.remove());
+        }
+
+        // populate
+        workspaceFolders.forEach(wf => {
+            const optionEl = document.createElement("option");
+            // <option label="wf1" selected value="file:///asdf/folders/wf1"/>
+            optionEl.label = wf.name;
+            optionEl.value = wf.uri;
+            optionEl.selected = selectedWorkspaceFolder && selectedWorkspaceFolder.uri === wf.uri;
+            selectEl.appendChild(optionEl);
+        });
+    }
+}
+
+/**
  * Replaces table of planner configurations
  * @param {ScopedPlannerConfig[]} planners planner configurations
  * @param {string} selectedPlanner title of the selected planner
@@ -102,7 +148,7 @@ function updatePlanners(planners, selectedPlanner, imagesPath) {
         const radio = td0.appendChild(document.createElement("input"));
         radio.type = "radio";
         radio.checked = config.title === selectedPlanner;
-        radio.id = `planner_${config.scope}_${index}`;
+        radio.id = `planner_${scopedConfig.scope}_${index}`;
         radio.name = "planner";
         radio.onchange = () => selectPlanner(scopedConfig);
         const label = td0.appendChild(document.createElement("label"));
@@ -110,7 +156,7 @@ function updatePlanners(planners, selectedPlanner, imagesPath) {
         label.innerText = config.title;
 
         const td1 = tr.appendChild(document.createElement("td"));
-        addScopeIcon(td1, scopedConfig.scope, imagesPath, currentTheme);
+        addScopeIcon(td1, scopedConfig.scope, imagesPath, currentTheme, scopedConfig);
 
         const td2 = tr.appendChild(document.createElement("td"));
         td2.className = "plannerConfig";
@@ -158,7 +204,7 @@ function toScopeTooltip(scope) {
     switch (scope) {
         case SCOPE_DEFAULT: return "Default planner installed with the PDDL extension.";
         case SCOPE_EXTENSION: return "Planner installed by a VS Code extension";
-        case SCOPE_USER: return "Planner from user/global configuration settings";
+        case SCOPE_USER: return "Planner from user/machine global configuration settings";
         case SCOPE_WORKSPACE: return "Planner from workspace file";
         case SCOPE_WORKSPACE_FOLDER: return "Planner from workspace folder";
     }
@@ -409,6 +455,11 @@ function populateWithTestData() {
         ],
         plannersConfigError: "Error in planner configuration xyz",
         selectedPlanner: "http://solver.planning.domains/solve",
+        workspaceFolders: [
+            { name: 'wf1', uri: 'file://asdf/folder1'},
+            { name: 'wf2', uri: 'file://asdf/folder2'},
+        ],
+        selectedWorkspaceFolder: { name: 'wf2', uri: 'file://asdf/folder2'},
         parser: "parser.exe",
         validator: "validate.exe",
         autoSave: "off",
@@ -425,6 +476,7 @@ function clearData() {
     updateConfiguration({
         imagesPath: "../../images",
         planners: [],
+        workspaceFolders: [],
         plannersConfigError: undefined,
         autoSave: "on",
         showInstallIconsAlert: false,
