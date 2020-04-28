@@ -18,6 +18,8 @@ The original command _PDDL: Configure planner_ changed behavior. It now triggers
 ### Other fixes
 
 - Planner output target, parser and validator configuration on Overview Page now sensitive to workspace folder selection
+- Refactored the `pddl-workspace` (API for other extensions to inject their custom PDDL functionality) to use `vscode-uri` form of file Uri rather than string.
+- Overview page does no longer show fake (design-time) content in case something goes wrong during initialization (this was rather confusing)
 
 ## [2.16.0]
 
