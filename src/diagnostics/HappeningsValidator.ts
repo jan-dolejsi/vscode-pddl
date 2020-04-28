@@ -11,16 +11,12 @@ import { instrumentOperationAsVsCodeCommand } from "vscode-extension-telemetry-w
 
 import * as process from 'child_process';
 
-import { ProblemInfo } from 'pddl-workspace';
-import { DomainInfo } from 'pddl-workspace';
-import { HappeningsInfo, Happening } from 'pddl-workspace';
+import { ProblemInfo, DomainInfo, HappeningsInfo, Happening, PlanStep, utils } from 'pddl-workspace';
+import { HappeningsToValStep } from 'ai-planning-val';
 import { PddlConfiguration } from '../configuration/configuration';
-import { utils } from 'pddl-workspace';
 import { dirname } from 'path';
-import { PlanStep } from 'pddl-workspace';
 import { DomainAndProblem, isHappenings, getDomainAndProblemForHappenings } from '../workspace/workspaceUtils';
 import { createRangeFromLine, createDiagnostic } from './PlanValidator';
-import { HappeningsToValStep } from 'ai-planning-val';
 import { CodePddlWorkspace } from '../workspace/CodePddlWorkspace';
 
 export const PDDL_HAPPENINGS_VALIDATE = 'pddl.happenings.validate';

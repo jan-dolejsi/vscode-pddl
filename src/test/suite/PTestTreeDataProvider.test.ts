@@ -16,6 +16,7 @@ import { assertDefined, throwForUndefined, toURI } from '../../utils';
 import { PDDL_PLAN_AND_DISPLAY } from '../../planning/planning';
 import { planning, ptestExplorer, codePddlWorkspace, plannersConfiguration } from '../../extension';
 import { fail } from 'assert';
+import { PlannerConfigurationScope } from '../../configuration/PlannersConfiguration';
 
 suite('PTest', () => {
     let pddlExtensionContext: PddlExtensionContext | undefined;
@@ -104,7 +105,7 @@ suite('PTest', () => {
         // GIVEN result of above tests
 
         const mockConfiguration = await new MockPlannerProvider().configurePlanner();
-        await plannersConfiguration.setSelectedPlanner(mockConfiguration, [mockConfiguration]);
+		await plannersConfiguration.addPlannerConfiguration(PlannerConfigurationScope.User, mockConfiguration);
         
         const cwd = path.dirname(assertDefined(domainUri, 'domain uri').fsPath);
         const mockPlanPath = path.join(cwd, 'mockPlan.plan');

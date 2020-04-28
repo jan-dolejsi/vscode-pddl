@@ -13,7 +13,12 @@ window.addEventListener('message', event => {
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 function initialize() {
-    if (!vscode) { populateWithTestData(); }
+    if (!vscode) {
+        populateWithTestData();
+    }
+    else {
+        clearData();
+    }
 
     onLoad();
 }
@@ -21,7 +26,8 @@ function initialize() {
 /**
  * @typedef OverviewConfiguration Overview page configuration
  * @property {string} command
- * @property {PlannerConfig[]} planners
+ * @property {ScopedPlannerConfig[]} planners
+ * @property {string} selectedPlanner selected planner title
  * @property {string} plannerOutputTarget
  * @property {string?} parser
  * @property {string?} validator
@@ -39,7 +45,8 @@ function initialize() {
  * @param {OverviewConfiguration} message configuration
  */
 function updateConfiguration(message) {
-    updatePlanners(message.planners, message.imagesPath);
+    updatePlanners(message.planners, message.selectedPlanner, message.imagesPath);
+    updatePlannersError(message.plannersConfigError);
     document.getElementById('parser').value = message.parser;
     document.getElementById('validator').value = message.validator;
     setStyleDisplay('installIconsAlert', message.showInstallIconsAlert, "list-item");
@@ -51,6 +58,12 @@ function updateConfiguration(message) {
     updatePlannerOutputTarget(message.plannerOutputTarget);
     updateShowOverviewChanged(message.shouldShow);
 }
+
+/**
+ * @typedef ScopedPlannerConfig Planner configuration and the scope it belongs to
+ * @property {PlannerConfig} configuration 
+ * @property {number} scope
+ */
 
 /**
  * @typedef PlannerConfig Planner configuration
@@ -65,11 +78,13 @@ function updateConfiguration(message) {
 
 /**
  * Replaces table of planner configurations
- * @param {PlannerConfig[]} planners planner configurations
+ * @param {ScopedPlannerConfig[]} planners planner configurations
+ * @param {string} selectedPlanner title of the selected planner
  * @param {string} imagesPath path to images
  * @returns {void}
  */
-function updatePlanners(planners, imagesPath) {
+function updatePlanners(planners, selectedPlanner, imagesPath) {
+    if (!planners) { return; }
     const plannersTable = document.getElementById('planners');
 
     while (plannersTable.hasChildNodes()) {
@@ -78,29 +93,40 @@ function updatePlanners(planners, imagesPath) {
 
     const currentTheme = getThemeName(document.body.className);
 
-    planners.forEach((config, index) => {
+    planners.forEach((scopedConfig, index) => {
+        const config = scopedConfig.configuration;
         const tr = plannersTable.appendChild(document.createElement("tr"));
         const td0 = tr.appendChild(document.createElement("td"));
         td0.className = "plannerLabel";
         const radio = td0.appendChild(document.createElement("input"));
         radio.type = "radio";
-        radio.checked = config.isSelected;
+        radio.checked = config.title === selectedPlanner;
         radio.id = `planner_${config.scope}_${index}`;
         radio.name = "planner";
-        radio.onchange = () => selectPlanner(config);
+        radio.onchange = () => selectPlanner(scopedConfig);
         const label = td0.appendChild(document.createElement("label"));
         label.setAttribute("for", radio.id);
         label.innerText = config.title;
 
-        tr.appendChild(document.createElement("td"));
+        const td1 = tr.appendChild(document.createElement("td"));
+        td1.innerText = scopedConfig.scope;
 
         const td2 = tr.appendChild(document.createElement("td"));
         td2.className = "plannerConfig";
         if (config.canConfigure) {
-            addThemedImageButton(td2, imagesPath, "gear.svg", currentTheme, () => configurePlanner(config, index));
+            addThemedImageButton(td2, imagesPath, "gear.svg", currentTheme, () => configurePlanner(scopedConfig, index));
         }
-        addThemedImageButton(td2, imagesPath, "trash.svg", currentTheme, () => deletePlanner(config, index));
+        addThemedImageButton(td2, imagesPath, "trash.svg", currentTheme, () => deletePlanner(scopedConfig, index));
     });
+}
+
+/**
+ * Show planner configuration error
+ * @param {string | undefined} error reported error message
+ */
+function updatePlannersError(error) {
+    document.getElementById('plannerConfigurationError').style.visibility = error ? 'visible' : 'collapse';
+    document.getElementById('plannerConfigurationErrorMessage').innerText = error;
 }
 
 /**
@@ -139,7 +165,7 @@ function addImageButton(td, theme, imagesPath, imageName, currentTheme, onclick)
 
 /**
  * Launches configuration of the
- * @param {PlannerConfig} selectedPlanner planner
+ * @param {ScopedPlannerConfig} selectedPlanner planner
  * @param {number} index selected index
  */
 function configurePlanner(selectedPlanner, index) {
@@ -152,7 +178,7 @@ function configurePlanner(selectedPlanner, index) {
 
 /**
  * Deletes planner configuration
- * @param {PlannerConfig} selectedPlanner planner
+ * @param {ScopedPlannerConfig} selectedPlanner planner
  * @param {number} index selected index
  */
 function deletePlanner(selectedPlanner, index) {
@@ -165,7 +191,7 @@ function deletePlanner(selectedPlanner, index) {
 
 /**
  * Selected planner.
- * @param {PlannerConfig} selectedPlanner planner
+ * @param {ScopedPlannerConfig} selectedPlanner planner
  */
 function selectPlanner(selectedPlanner) {
     postMessage({
@@ -299,31 +325,36 @@ function populateWithTestData() {
     updateConfiguration({
         planners: [
             {
-                "kind": "executable",
-                "title": "Planner1",
-                "path": "c:\\folder\\executable.exe",
-                "isSelected": false,
-                "scope": "machine",
-                "canConfigure": true
+                scope: 4,
+                configuration: {
+                    "kind": "executable",
+                    "title": "Planner1",
+                    "path": "c:\\folder\\executable.exe",
+                    "canConfigure": true
+                }
             },
             {
-                "kind": "service",
-                "title": "Planning Domains solver",
-                "url": "http://solver.planning.domains/solve",
-                "isSelected": true,
-                "scope": "extension",
-                "canConfigure": false,
-                "documentation": "http://solver.planning.domains"
+                scope: 2,
+                configuration: {
+                    "kind": "executable",
+                    "title": "Very long title Very long title Very long title Very long title Very long title ",
+                    "path": "c:\\folder\\executable.exe",
+                    "canConfigure": true
+                }
             },
             {
-                "kind": "executable",
-                "title": "Very long title Very long title Very long title Very long title Very long title ",
-                "path": "c:\\folder\\executable.exe",
-                "isSelected": false,
-                "scope": "machine",
-                "canConfigure": true
-            },
+                scope: 0,
+                configuration: {
+                    "kind": "service",
+                    "title": "http://solver.planning.domains/solve",
+                    "url": "http://solver.planning.domains/solve",
+                    "canConfigure": false,
+                    "documentation": "http://solver.planning.domains"
+                }
+            }
         ],
+        plannersConfigError: "Error in planner configuration xyz",
+        selectedPlanner: "http://solver.planning.domains/solve",
         parser: "parser.exe",
         validator: "validate.exe",
         autoSave: "off",
@@ -333,5 +364,18 @@ function populateWithTestData() {
         showEnableIconsAlert: true,
         downloadValAlert: true,
         updateValAlert: true
+    });
+}
+
+function clearData() {
+    updateConfiguration({
+        imagesPath: "../../images",
+        planners: [],
+        plannersConfigError: undefined,
+        autoSave: "on",
+        showInstallIconsAlert: false,
+        showEnableIconsAlert: false,
+        downloadValAlert: false,
+        updateValAlert: false
     });
 }

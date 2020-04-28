@@ -8,16 +8,16 @@ import {
     window, ExtensionContext, Uri, ViewColumn, WebviewPanel, commands, workspace, ConfigurationTarget, extensions, TextDocument, Webview
 } from 'vscode';
 
-import { PddlConfiguration } from '../configuration/configuration';
+import { PddlConfiguration, CONF_PDDL, PDDL_PLANNER } from '../configuration/configuration';
 
 import * as path from 'path';
 import { getWebViewHtml, createPddlExtensionContext, showError, asWebviewUri } from '../utils';
-import { utils, planner } from 'pddl-workspace';
+import { utils } from 'pddl-workspace';
 import { ValDownloader } from '../validation/ValDownloader';
 import { VAL_DOWNLOAD_COMMAND, ValDownloadOptions } from '../validation/valCommand';
 import { PTEST_VIEW } from '../ptest/PTestCommands';
 import { instrumentOperationAsVsCodeCommand } from "vscode-extension-telemetry-wrapper";
-import { PlannersConfiguration as PlannersConfiguration } from '../configuration/PlannersConfiguration';
+import { PlannersConfiguration as PlannersConfiguration, ScopedPlannerConfiguration, CONF_SELECTED_PLANNER } from '../configuration/PlannersConfiguration';
 
 export const SHOULD_SHOW_OVERVIEW_PAGE = 'shouldShowOverviewPage';
 export const LAST_SHOWN_OVERVIEW_PAGE = 'lastShownOverviewPage';
@@ -111,13 +111,13 @@ export class OverviewPage {
                 commands.executeCommand("git.clone", "https://github.com/jan-dolejsi/vscode-pddl-samples.git");
                 break;
             case 'selectPlanner':
-                this.plannersConfiguration.setSelectedPlanner(message.value as planner.PlannerConfiguration).catch(showError);
+                this.plannersConfiguration.setSelectedPlanner(message.value as ScopedPlannerConfiguration).catch(showError);
                 break;
             case 'deletePlanner':
-                commands.executeCommand('pddl.deletePlanner', message.value as planner.PlannerConfiguration, message.index);
+                commands.executeCommand('pddl.deletePlanner', message.value as ScopedPlannerConfiguration, message.index);
                 break;
             case 'configurePlanner':
-                commands.executeCommand('pddl.configurePlanner', message.value as planner.PlannerConfiguration, message.index);
+                commands.executeCommand('pddl.configurePlanner', message.value as ScopedPlannerConfiguration, message.index);
                 break;
             case 'plannerOutputTarget':
                 workspace.getConfiguration("pddlPlanner").update("executionTarget", message.value, ConfigurationTarget.Global);
@@ -276,10 +276,24 @@ export class OverviewPage {
             this.updateTimeout = undefined;
         }
         if (!this.webViewPanel || !this.webViewPanel.active) { return false; }
+        
+        let planners: ScopedPlannerConfiguration[] | undefined;
+        let plannersConfigError: string | undefined;
+
+        try {
+            planners = this.plannersConfiguration.getPlanners();
+        }
+        catch (err) {
+            plannersConfigError = err.message ?? err;
+            console.log(plannersConfigError);
+        }
+
         const message: OverviewConfiguration = {
             command: 'updateConfiguration',
-            planners: this.plannersConfiguration.getPlanners(),
-            plannerOutputTarget: workspace.getConfiguration("pddlPlanner").get<string>("executionTarget", "Output window"),
+            planners: planners,
+            selectedPlanner: workspace.getConfiguration(CONF_PDDL).get<string>(CONF_SELECTED_PLANNER),
+            plannersConfigError: plannersConfigError,
+            plannerOutputTarget: workspace.getConfiguration(PDDL_PLANNER).get<string>("executionTarget", "Output window"),
             parser: this.pddlConfiguration.getParserPath(),
             validator: this.pddlConfiguration.getValidatorPath(),
             imagesPath: asWebviewUri(Uri.file(this.context.asAbsolutePath('images')), this.webViewPanel.webview).toString(),
@@ -297,7 +311,9 @@ export class OverviewPage {
 
 interface OverviewConfiguration {
     command: string;
-    planners: planner.PlannerConfiguration[];
+    planners: ScopedPlannerConfiguration[];
+    selectedPlanner?: string;
+    plannersConfigError?: string;
     plannerOutputTarget: string;
     parser?: string;
     validator?: string;

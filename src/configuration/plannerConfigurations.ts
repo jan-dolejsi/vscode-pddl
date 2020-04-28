@@ -29,7 +29,6 @@ export class CommandPlannerProvider implements planner.PlannerProvider {
             ignoreFocusOut: true
         });
 
-        let title: string | undefined;
         let syntax: string | undefined;
 
         if (newPlannerPath) {
@@ -50,24 +49,24 @@ export class CommandPlannerProvider implements planner.PlannerProvider {
                 if (syntax.trim() === "") {
                     syntax = "$(planner) $(options) $(domain) $(problem)";
                 }
-                title = path.basename(newPlannerPath);
             }
-            else {
-                title = newPlannerPath;
-            }
-
-            // Update the value in the target
-            //configurationToUpdate.update(PLANNER_EXECUTABLE_OR_SERVICE, newPlannerPath, newPlannerScope.target);
         }
 
-        return newPlannerPath !== undefined && syntax !== undefined && {
+        return newPlannerPath !== undefined && syntax !== undefined
+            && this.createPlannerConfiguration(newPlannerPath, syntax);
+    }
+
+    createPlannerConfiguration(command: string, syntax: string | undefined): planner.PlannerConfiguration {
+        const title = isHttp(command)
+            ? command
+            : path.basename(command);
+
+        return {
             kind: this.kind.kind,
-            path: newPlannerPath,
+            path: command,
             syntax: syntax,
             title: title,
-            canConfigure: true,
-            isSelected: true,
-            scope: 'machine'
+            canConfigure: true
         };
     }
 
@@ -80,16 +79,6 @@ export class CommandPlannerProvider implements planner.PlannerProvider {
             value: existingValue,
             ignoreFocusOut: true
         });
-
-        // if (newPlannerOptions) {
-        // todo: validate that this planner actually works by sending a dummy request to it
-
-        // const configurationToUpdate = this.getConfigurationForScope(scope);
-        // if (!configurationToUpdate) { return undefined; }
-
-        // Update the value in the target
-        // configurationToUpdate.update(PLANNER_EXECUTABLE_OPTIONS, newPlannerOptions, scope.target);
-        // }
 
         return newPlannerOptions;
     }
@@ -127,13 +116,61 @@ export class SolveServicePlannerProvider implements planner.PlannerProvider {
             ignoreFocusOut: true
         });
 
-        return newPlannerUrl !== undefined && {
+        return newPlannerUrl !== undefined && this.createPlannerConfiguration(newPlannerUrl);
+    }
+
+    createPlannerConfiguration(newPlannerUrl: string): planner.PlannerConfiguration {
+        return {
             kind: this.kind.kind,
             url: newPlannerUrl,
             title: newPlannerUrl,
-            canConfigure: true,
-            isSelected: true,
-            scope: 'machine'
+            canConfigure: true
+        };
+    }
+
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    showHelp(_output: OutputAdaptor): void {
+        throw new Error("Method not implemented.");
+    }
+    createPlanner(): planner.Planner {
+        throw new Error("Method not implemented.");
+    }
+}
+
+export class RequestServicePlannerProvider implements planner.PlannerProvider {
+    get kind(): planner.PlannerKind {
+        return planner.WellKnownPlannerKind.SERVICE_ASYNC;
+    }
+    getNewPlannerLabel(): string {
+        // compare-changes, $(arrow-both)
+        return "$(cloud-upload)$(cloud-download) Input a async. service URL...";
+    }
+
+    async configurePlanner(previousConfiguration?: planner.PlannerConfiguration): Promise<planner.PlannerConfiguration | undefined> {
+        const existingValue = previousConfiguration?.url ?? "http://localhost:8080/request";
+
+        const existingUri = Uri.parse(existingValue);
+        const indexOf = existingValue.indexOf(existingUri.authority);
+        const existingHostAndPort: [number, number] | undefined
+            = indexOf > -1 ? [indexOf, indexOf + existingUri.authority.length] : undefined;
+
+        const newPlannerUrl = await window.showInputBox({
+            prompt: "Enter asynchronous service URL",
+            placeHolder: `http://host:port/request`,
+            valueSelection: existingHostAndPort, //
+            value: existingValue,
+            ignoreFocusOut: true
+        });
+
+        return newPlannerUrl !== undefined && this.createPlannerConfiguration(newPlannerUrl);
+    }
+
+    createPlannerConfiguration(newPlannerUrl: string): planner.PlannerConfiguration {
+        return {
+            kind: this.kind.kind,
+            url: newPlannerUrl,
+            title: newPlannerUrl,
+            canConfigure: true
         };
     }
 
@@ -183,22 +220,20 @@ export class ExecutablePlannerProvider implements planner.PlannerProvider {
             : undefined;
 
         const defaultUri = Uri.file(previousConfiguration.path);
-        
+
         const executableUri = await selectedFile(`Select planner executable`, defaultUri, filters);
         if (!executableUri) { return undefined; }
 
         const newPlannerConfiguration: planner.PlannerConfiguration = {
             kind: this.kind.kind,
             canConfigure: true,
-            scope: "global",
             path: executableUri.fsPath,
-            title: path.basename(executableUri.fsPath),
-            isSelected: true
+            title: path.basename(executableUri.fsPath)
         };
 
         return newPlannerConfiguration;
     }
-    
+
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     showHelp(_output: OutputAdaptor): void {
         throw new Error("Method not implemented.");

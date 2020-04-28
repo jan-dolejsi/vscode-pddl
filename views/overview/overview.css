@@ -50,6 +50,18 @@ td.plannerConfig {
     text-align: right;
 }
 
+div#plannerConfigurationError {
+    color: red;
+    padding-top: 3px;
+}
+
+span#plannerConfigurationErrorMessage {
+    font-weight: bold;
+    text-overflow: ellipsis;
+    max-width: 150px;
+    overflow: hidden;
+}
+
 div.hint {
     color: gray
 }

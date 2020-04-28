@@ -373,8 +373,10 @@ export class Planning implements planner.PlannerResponseHandler {
      * @returns `Planner` instance of the configured planning engine
      */
     async createPlanner(workingDirectory: string, options?: string): Promise<planner.Planner | null> {
-        const plannerConfiguration = await this.plannersConfiguration.getOrAskSelectedPlanner(Uri.file(workingDirectory));
-        if (!plannerConfiguration) { return null; }
+        const scopedPlannerConfiguration = await this.plannersConfiguration.getOrAskSelectedPlanner(workspace.getWorkspaceFolder(Uri.file(workingDirectory)));
+        if (!scopedPlannerConfiguration) { return null; }
+
+        const plannerConfiguration = scopedPlannerConfiguration.configuration;
 
         if (!await this.verifyConsentForSendingPddl(plannerConfiguration)) { return null; }
 

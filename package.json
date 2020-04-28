@@ -612,8 +612,22 @@
           "minimum": 1,
           "description": "Controls the maximum number of problems produced by the parser."
         },
+        "pddl.selectedPlanner": {
+          "scopeIWantToUse": "machine-overridable",
+          "scope": "resource",
+          "type": "string",
+          "description": "Title field of a planner from the `pddl.planners` setting.",
+          "default": "http://solver.planning.domains/solve"
+        },
+        "pddl.showPlannerInStatusBar": {
+          "scope": "application",
+          "type": "boolean",
+          "default": true,
+          "description": "Set to 'false' to hide the planner selector in the status bar. Needs restart to make effect."
+        },
         "pddl.planners": {
-          "scope": "machine-overridable",
+          "scopeIWantToUse": "machine-overridable",
+          "scope": "resource",
           "type": "array",
           "markdownDescription": "**Documentation...**",
           "default": [
@@ -645,14 +659,22 @@
               },
               "title": {
                 "type": "string",
+                "uniqueItems": true,
                 "description": "User friendly (but short) name of the planner"
               },
-              "isSelected": {
-                "type": "boolean"
+              "canConfigure": {
+                "type": "boolean",
+                "description": "Can end-user configure (should the configure button be shown)?"
               },
               "path": {
                 "type": "string",
                 "description": "Path to a local executable."
+              },
+              "syntax": {
+                "type": "string",
+                "description": "Command-line syntax structure.",
+                "pattern": "^\\$\\(planner\\).+\\$\\(options\\).+\\$\\(domain\\).+\\$\\(problem\\).*$",
+                "default": "$(planner) $(options) $(domain) $(problem)"
               },
               "url": {
                 "type": "string",
@@ -663,20 +685,18 @@
           }
         },
         "pddlPlanner.executableOrService": {
-          "deprecationMessage": "Use pddl.planners. It is easy to set up multiple planners using PDDL: Show Overview Page command.",
+          "deprecationMessage": "Use pddl.planners setting. It is easy to set up multiple planners using PDDL: Show Overview Page command.",
           "scope": "resource",
           "type": "string",
           "title": "Planner executable or service URL",
-          "default": "http://solver.planning.domains/solve",
           "description": "Enter the planner executable (e.g. planner.exe) with full path unless you have its location included in the %path% environment variable. If you are using a parsing service, make sure it starts with http: or https:"
         },
         "pddlPlanner.executableOptions": {
-          "deprecationMessage": "Use pddl.planners. It is easy to set up multiple planners using PDDL: Show Overview Page command.",
+          "deprecationMessage": "Use pddl.planners setting. It is easy to set up multiple planners using PDDL: Show Overview Page command.",
           "scope": "window",
           "type": "string",
           "description": "Override the command-line options passed to the PDDL planner configured in 'pddlPlanner.executableOrService'.",
-          "pattern": "^\\$\\(planner\\).+\\$\\(options\\).+\\$\\(domain\\).+\\$\\(problem\\).*$",
-          "default": "$(planner) $(options) $(domain) $(problem)"
+          "pattern": "^\\$\\(planner\\).+\\$\\(options\\).+\\$\\(domain\\).+\\$\\(problem\\).*$"
         },
         "pddlPlanner.executionTarget": {
           "scope": "window",

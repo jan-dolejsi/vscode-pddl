@@ -94,7 +94,7 @@ export class NormalizedPlanDocumentContentProvider implements TextDocumentConten
                 .evaluate(context.domain, context.problem, planInfo, { valStepPath: valStepPath, verbose});
 
             const planValuesAsText = planValues
-                .sort((a, b) => a.getVariableName().localeCompare(b.getVariableName()))
+                ?.sort((a, b) => a.getVariableName().localeCompare(b.getVariableName()))
                 .map(value => `; ${value.getVariableName()}: ${value.getValue()}`)
                 .join("\n");
 
