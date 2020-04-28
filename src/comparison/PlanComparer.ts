@@ -15,7 +15,7 @@ import { PddlLanguage } from 'pddl-workspace';
 import { toLanguage, isPlan } from '../workspace/workspaceUtils';
 
 import { NormalizedPlanDocumentContentProvider } from './NormalizedPlanDocumentContentProvider';
-import { PddlConfiguration } from '../configuration';
+import { PddlConfiguration } from '../configuration/configuration';
 import { instrumentOperationAsVsCodeCommand } from "vscode-extension-telemetry-wrapper";
 
 
@@ -72,7 +72,7 @@ export class PlanComparer implements Disposable {
         this.disposables.forEach(d => d.dispose());
     }
 
-    compare(leftPlan: TextDocument, rightPlan: TextDocument): any {
+    compare(leftPlan: TextDocument, rightPlan: TextDocument): void {
         const title = `${workspace.asRelativePath(leftPlan.uri)} ↔ ${workspace.asRelativePath(rightPlan.uri)}`;
 
         const leftPlanNormalized = this.subscribeToNormalizedUri(leftPlan.uri);

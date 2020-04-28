@@ -1,9 +1,11 @@
 import * as assert from 'assert';
 import * as path from 'path';
 import * as tmp from 'tmp-promise';
-import { PddlExtensionContext } from 'pddl-workspace';
-import { Disposable, workspace, ExtensionContext, Memento, extensions, Event, FileType, Uri } from 'vscode';
+import { PddlExtensionContext, planner } from 'pddl-workspace';
+import { Disposable, workspace, ExtensionContext, Memento, extensions, Event, FileType, Uri, ConfigurationTarget } from 'vscode';
 import { assertDefined } from '../../utils';
+import { CONF_PDDL } from '../../configuration/configuration';
+import { CONF_PLANNERS, CONF_SELECTED_PLANNER } from '../../configuration/PlannersConfiguration';
 
 export function assertStrictEqualDecorated(actualText: string, expectedText: string, message: string): void {
     assert.strictEqual(decorate(actualText), decorate(expectedText), message);
@@ -63,7 +65,38 @@ export async function createTestExtensionContext(): Promise<ExtensionContext> {
     };
 }
 
-export function getMockPlanner(): string {
+export class MockPlannerProvider implements planner.PlannerProvider {
+
+    private path: string | undefined;
+
+    constructor(private options?: { canConfigure?: boolean }) { }
+
+    get kind(): planner.PlannerKind {
+        return { kind: "mock" };
+    }
+
+    getNewPlannerLabel(): string {
+        throw new Error("Method not implemented.");
+    }
+
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    configurePlanner(_previousConfiguration?: planner.PlannerConfiguration): Promise<planner.PlannerConfiguration> {
+        return Promise.resolve({
+            kind: this.kind.kind,
+            canConfigure: this.options?.canConfigure ?? false,
+            title: 'Mock planner',
+            path: this.path ?? getMockPlanner(),
+            isSelected: true
+        });
+    }
+
+    setExpectedPath(path: string): void {
+        this.path = path;
+        this.options.canConfigure = true;
+    }
+}
+
+function getMockPlanner(): string {
     const plannerPath = path.resolve(__dirname, path.join('..', '..', '..', 'src', 'test', 'planning', 'mock-planner.js'));
 
     return "node " + plannerPath;
@@ -115,7 +148,7 @@ export async function clearWorkspaceFolder(): Promise<void> {
                 .map(async entry => {
                     const [fileName, fileType] = entry;
                     const fileAbsPath = path.join(wf.uri.fsPath, fileName);
-                    console.log(`Deleting ${fileAbsPath}`);
+                    console.log(`Deleting ${fileAbsPath}/**`);
                     const recursive = fileType === FileType.Directory;
                     return await workspace.fs.delete(Uri.file(fileAbsPath), { recursive: recursive, useTrash: false });
                 });
@@ -125,4 +158,20 @@ export async function clearWorkspaceFolder(): Promise<void> {
 
         await Promise.all(workspaceFolderDeletions);
     }
+}
+
+export async function clearConfiguration(): Promise<void> {
+    await workspace.getConfiguration(CONF_PDDL).update(CONF_PLANNERS, undefined, ConfigurationTarget.Global);
+    await workspace.getConfiguration(CONF_PDDL).update(CONF_SELECTED_PLANNER, undefined, ConfigurationTarget.Global);
+
+    await workspace.getConfiguration(CONF_PDDL).update(CONF_PLANNERS, undefined, ConfigurationTarget.Workspace);
+    await workspace.getConfiguration(CONF_PDDL).update(CONF_SELECTED_PLANNER, undefined, ConfigurationTarget.Workspace);
+
+    const workspaceFolderDeletions = workspace.workspaceFolders.map(async wf => {
+        console.warn(`Skipped clearing of workspace-folder configuration for ${wf.name}`);
+        // await workspace.getConfiguration(CONF_PDDL, wf).update(CONF_PLANNERS, undefined, ConfigurationTarget.WorkspaceFolder);
+        // await workspace.getConfiguration(CONF_PDDL, wf).update(CONF_SELECTED_PLANNER, undefined, ConfigurationTarget.WorkspaceFolder);
+    });
+
+    await Promise.all(workspaceFolderDeletions);
 }

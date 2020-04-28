@@ -19,8 +19,8 @@ export abstract class Validator {
 
     createEmptyDiagnostics(domainInfo: DomainInfo, problemFiles: ProblemInfo[]): Map<string, Diagnostic[]>{
         const diagnostics: Map<string, Diagnostic[]> = new Map<string, Diagnostic[]>();
-        diagnostics.set(domainInfo.fileUri, []);
-        problemFiles.forEach(p => diagnostics.set(p.fileUri, []));
+        diagnostics.set(domainInfo.fileUri.toString(), []);
+        problemFiles.forEach(p => diagnostics.set(p.fileUri.toString(), []));
         return diagnostics;
     }
 

@@ -10,6 +10,7 @@ import { ExtensionContext, Uri, workspace, window, Range, TextDocument, Webview,
 import { utils } from 'pddl-workspace';
 import { PddlExtensionContext } from 'pddl-workspace';
 import { PddlRange, PddlPosition, parser } from 'pddl-workspace';
+import { URI } from 'vscode-uri';
 
 export function createPddlExtensionContext(context: ExtensionContext): PddlExtensionContext {
     return {
@@ -53,7 +54,7 @@ export interface WebViewHtmlOptions {
     externalImages?: Uri[];
 }
 
-function asWebviewUri(localUri: Uri, webview?: Webview): Uri {
+export function asWebviewUri(localUri: Uri, webview?: Webview): Uri {
     if (webview) {
         return webview.asWebviewUri(localUri);
     }
@@ -188,6 +189,14 @@ export function isHttp(path: string): boolean {
     return path.match(/^http[s]?:/i) !== null;
 }
 
+export function toURI(uri: Uri): URI {
+    return URI.parse(uri.toString());
+}
+
+export function toUri(uri: URI): Uri {
+    return Uri.parse(uri.toString());
+}
+
 export function equalsCaseInsensitive(text1: string, text2: string): boolean {
     return text1.toLowerCase() === text2.toLowerCase();
 }
@@ -249,4 +258,13 @@ export function objToStrMap(obj: any): Map<string, any> {
         strMap.set(k, obj[k]);
     }
     return strMap;
+}
+
+export async function fileExists(manifestUri: Uri): Promise<boolean> {
+    try {
+        await workspace.fs.stat(manifestUri);
+        return true;
+    } catch (err) {
+        return false;
+    }
 }

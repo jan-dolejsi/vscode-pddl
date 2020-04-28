@@ -28,7 +28,7 @@ export class GeneratedDocumentContentProvider implements TextDocumentContentProv
         pddlWorkspace.pddlWorkspace.on(PddlWorkspace.UPDATED, (fileInfo: FileInfo) => {
             // if the URI corresponds one that was already rendered from template, fire event
             this.uriMap.forEach((testCase: Test, uri: string) => {
-                if (testCase.getProblemUri().toString() === fileInfo.fileUri) {
+                if (testCase.getProblemUri().toString() === fileInfo.fileUri.toString()) {
                     this.changed(Uri.parse(uri));
                 }
             });
@@ -89,7 +89,7 @@ export class GeneratedDocumentContentProvider implements TextDocumentContentProv
                 documentText,
                 dirname(assertDefined(test.getManifest(), `Test ${test.getLabel()} should have manifest defined.`).path), this.outputWindow) ?? "No pre-processor configured.";
             // force parsing of the generated problem
-            this.pddlWorkspace.pddlWorkspace.upsertFile(uri.toString(), PddlLanguage.PDDL, 0, preProcessedProblemText, new SimpleDocumentPositionResolver(preProcessedProblemText), true);
+            this.pddlWorkspace.pddlWorkspace.upsertFile(uri, PddlLanguage.PDDL, 0, preProcessedProblemText, new SimpleDocumentPositionResolver(preProcessedProblemText), true);
             return preProcessedProblemText;
         } catch (ex) {
             return `;;Problem file '${basename(uri.fsPath)}' failed to generate: ${ex.message}\n\n` + documentText;

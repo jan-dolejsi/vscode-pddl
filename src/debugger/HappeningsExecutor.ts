@@ -5,8 +5,8 @@
 'use strict';
 
 import * as vscode from 'vscode';
-import { window, Uri } from 'vscode';
-import { PddlConfiguration } from '../configuration';
+import { window } from 'vscode';
+import { PddlConfiguration } from '../configuration/configuration';
 import { dirname } from 'path';
 import { DebuggingSessionFiles } from './DebuggingSessionFiles';
 import { Happening, VariableValue } from 'pddl-workspace';
@@ -44,7 +44,7 @@ export class HappeningsExecutor {
         const valStepPath = await this.pddlConfiguration.getValStepPath();
         const valStepVerbose = this.pddlConfiguration.getValStepVerbose();
         if (!valStepPath) { return []; }
-        const cwd = dirname(Uri.parse(this.context.happenings.fileUri).fsPath);
+        const cwd = dirname(this.context.happenings.fileUri.fsPath);
 
         try {
             this.valStep.on(ValStep.NEW_HAPPENING_EFFECTS, (happenings, values) => this.showValues(happenings, values));

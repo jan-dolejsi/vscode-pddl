@@ -13,35 +13,35 @@ import {
 import * as process from 'child_process';
 import treeKill = require('tree-kill');
 
-import { Planner } from './planner';
-import { PlannerResponseHandler } from './PlannerResponseHandler';
-import { ProblemInfo } from 'pddl-workspace';
-import { DomainInfo } from 'pddl-workspace';
-import { utils, parser } from 'pddl-workspace';
-import { Plan } from 'pddl-workspace';
+import {
+    ProblemInfo, DomainInfo, utils, parser, planner, Plan
+} from 'pddl-workspace';
 
-export class PlannerExecutable extends Planner {
+export class PlannerExecutable extends planner.Planner {
 
     // this property stores the reference to the planner child process, while planning is in progress
     private child: process.ChildProcess | undefined;
+
+    static readonly DEFAULT_SYNTAX = "$(planner) $(domain) $(problem) $(options)";
 
     constructor(plannerPath: string, private plannerOptions: string, private plannerSyntax: string, private workingDirectory: string) {
         super(plannerPath);
     }
 
-    async plan(domainFileInfo: DomainInfo, problemFileInfo: ProblemInfo, planParser: parser.PddlPlannerOutputParser, parent: PlannerResponseHandler): Promise<Plan[]> {
+    async plan(domainFileInfo: DomainInfo, problemFileInfo: ProblemInfo, planParser: parser.PddlPlannerOutputParser, callbacks: planner.PlannerResponseHandler): Promise<Plan[]> {
 
         const domainFilePath = await utils.Util.toPddlFile("domain", domainFileInfo.getText());
         const problemFilePath = await utils.Util.toPddlFile("problem", problemFileInfo.getText());
 
-        let command = this.plannerSyntax.replace('$(planner)', utils.Util.q(this.plannerPath))
+        let command = (this.plannerSyntax ?? PlannerExecutable.DEFAULT_SYNTAX)
+            .replace('$(planner)', utils.Util.q(this.plannerPath))
             .replace('$(options)', this.plannerOptions)
             .replace('$(domain)', utils.Util.q(domainFilePath))
             .replace('$(problem)', utils.Util.q(problemFilePath));
 
-        command += ' ' + parent.providePlannerOptions({ domain: domainFileInfo, problem: problemFileInfo }).join(' ');
+        command += ' ' + callbacks.providePlannerOptions({ domain: domainFileInfo, problem: problemFileInfo }).join(' ');
 
-        parent.handleOutput(command + '\n');
+        callbacks.handleOutput(command + '\n');
 
         const thisPlanner = this;
         super.planningProcessKilled = false;
@@ -73,10 +73,10 @@ export class PlannerExecutable extends Planner {
 
             thisPlanner.child.stdout.on('data', (data: any) => {
                 const dataString = data.toString();
-                parent.handleOutput(dataString);
+                callbacks.handleOutput(dataString);
                 planParser.appendBuffer(dataString);
             });
-            thisPlanner.child.stderr.on('data', (data: any) => parent.handleOutput("Error: " + data));
+            thisPlanner.child.stderr.on('data', (data: any) => callbacks.handleOutput("Error: " + data));
 
             thisPlanner.child.on("close", (code: any, signal: any) => {
                 if (code) { console.log("Exit code: " + code); }

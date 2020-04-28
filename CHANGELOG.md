@@ -1,5 +1,26 @@
 # PDDL support - What's new?
 
+## [2.17.0]
+
+### Planner switching
+
+Support for multiple planners, extensibility (other extensions can now inject planner providers) and easy switching between them either
+using the _PDDL: Select planner_ command, <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>P</kbd> or via the status bar item.
+Previous planner configuration settings (`pddlPlanner.executableOrService` and `pddlPlanner.executableOptions`) are now deprecated
+and the extension automatically migrates them to `pddl.planners` and `pddl.selectedPlanner`. The migration is supported for all places,
+where the configuration settings are stored in VS Code: the _User_ settings, _Workspace_ and _WorkspaceFolder_ settings.
+Setting `pddl.showPlannerInStatusBar` may be used to hide the planner selector in the status bar (if you only ever use one planner).
+
+![PDDL Planner Configuration](https://raw.githubusercontent.com/wiki/jan-dolejsi/vscode-pddl/img/PDDL_planner_configuration.gif)
+
+The original command _PDDL: Configure planner_ changed behavior. It now triggers re-configuration of the currently selected planner.
+
+### Other fixes
+
+- Planner output target, parser and validator configuration on Overview Page now sensitive to workspace folder selection
+- Refactored the `pddl-workspace` (API for other extensions to inject their custom PDDL functionality) to use `vscode-uri` form of file Uri rather than string.
+- Overview page does no longer show fake (design-time) content in case something goes wrong during initialization (this was rather confusing)
+
 ## [2.16.0]
 
 - PDDL Test Explorer

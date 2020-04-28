@@ -5,22 +5,18 @@
 'use strict';
 
 import {
-    window, OutputChannel, ExtensionContext, TextDocument, Diagnostic, Uri, DiagnosticSeverity
+    window, OutputChannel, ExtensionContext, TextDocument, Diagnostic, DiagnosticSeverity
 } from 'vscode';
 import { instrumentOperationAsVsCodeCommand } from "vscode-extension-telemetry-wrapper";
 
 import * as process from 'child_process';
 
-import { ProblemInfo } from 'pddl-workspace';
-import { DomainInfo } from 'pddl-workspace';
-import { HappeningsInfo, Happening } from 'pddl-workspace';
-import { PddlConfiguration } from '../configuration';
-import { utils } from 'pddl-workspace';
+import { ProblemInfo, DomainInfo, HappeningsInfo, Happening, PlanStep, utils } from 'pddl-workspace';
+import { HappeningsToValStep } from 'ai-planning-val';
+import { PddlConfiguration } from '../configuration/configuration';
 import { dirname } from 'path';
-import { PlanStep } from 'pddl-workspace';
 import { DomainAndProblem, isHappenings, getDomainAndProblemForHappenings } from '../workspace/workspaceUtils';
 import { createRangeFromLine, createDiagnostic } from './PlanValidator';
-import { HappeningsToValStep } from 'ai-planning-val';
 import { CodePddlWorkspace } from '../workspace/CodePddlWorkspace';
 
 export const PDDL_HAPPENINGS_VALIDATE = 'pddl.happenings.validate';
@@ -113,7 +109,7 @@ export class HappeningsValidator {
         const valSteps = happeningsConverter.getExportedText(true);
 
         const args = [domainFilePath, problemFilePath];
-        const child = process.spawnSync(valStepPath!, args, { cwd: dirname(Uri.parse(happeningsInfo.fileUri).fsPath), input: valSteps });
+        const child = process.spawnSync(valStepPath!, args, { cwd: dirname(happeningsInfo.fileUri.fsPath), input: valSteps });
 
         if (showOutput) { this.output.appendLine(valStepPath + ' ' + args.join(' ')); }
 
@@ -201,7 +197,7 @@ class HappeningsValidationOutcome {
 
     getDiagnostics(): Map<string, Diagnostic[]> {
         const diagnostics = new Map<string, Diagnostic[]>();
-        diagnostics.set(this.happeningsInfo.fileUri, this.diagnostics);
+        diagnostics.set(this.happeningsInfo.fileUri.toString(), this.diagnostics);
         return diagnostics;
     }
 

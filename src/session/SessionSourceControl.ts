@@ -10,7 +10,7 @@ import { toFuzzyRelativeTime } from '../utils';
 import { utils } from 'pddl-workspace';
 import * as fs from 'fs';
 import { SessionConfiguration, saveConfiguration, SessionMode, toSessionConfiguration, CONFIGURATION_FILE } from './SessionConfiguration';
-import { PDDL_PLANNER, EXECUTABLE_OR_SERVICE } from '../configuration';
+import { PDDL_PLANNER, EXECUTABLE_OR_SERVICE } from '../configuration/configuration';
 
 /**
  * Command for cloning a session to the local storage.

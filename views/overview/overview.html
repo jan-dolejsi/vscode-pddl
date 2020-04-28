@@ -6,14 +6,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script src="../common/baseWebview.js" type="text/javascript"></script>
     <script src="overview.js" type="text/javascript"></script>
-    <link rel="stylesheet" type="text/css" href="overview.css">
-    </link>
+    <link rel="stylesheet" type="text/css" href="../modelView/baseView.css"></link>
+    <link rel="stylesheet" type="text/css" href="overview.css"></link>
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
     <!--CSP-->
     <title>AI Planning and PDDL support in VS Code</title>
 </head>
 
-<body onload="initialize()">
+<body onload="initialize()" class="vscode-light">
     <h1>AI Planning and PDDL support in VS Code</h1>
 
     <ul id="alertList" class="alertList">
@@ -34,7 +34,8 @@
                 <img src="file_type_pddl_happenings.svg" class="fileIcon" title="Icon for happenings files." />
             </button>
         </li>
-        <li id="enableAutoSaveAlert" class="alert">When processing files using command-line tools, it is simpler to enable file auto-saving. <a href="command:workbench.action.toggleAutoSave" class="button" style="width: 150px">Enable auto-save</a>
+        <li id="enableAutoSaveAlert" class="alert">When processing files using command-line tools, it is simpler to enable file auto-saving. 
+            <a href="command:workbench.action.toggleAutoSave" class="button" style="width: 150px">Enable auto-save</a>
             <br />It is also recommended to go run the <i>Git: Initialize Repository</i> command to enjoy safety of
             version control and never miss a working version.
         </li>
@@ -72,17 +73,63 @@
                     onclick="clonePddlSamples()" title="Select a local folder and samples will be downloaded.">clone
                     PDDL samples</a><br />
 
-                <h2>Configuration <a href="command:pddl.settings" class="button" title="See all settings"><img src="gear.svg"
-                    class="configIcon" style="vertical-align: initial;"/></a></h2>
-                <h3>Planning engine</h3>
-                <input type="text" id="planner" class="config" readonly />
-                <a href="command:pddl.configurePlanner" class="button" title="Configure..."><img src="gear.svg"
-                        class="configIcon" /></a><br />
-                See <a href="https://github.com/jan-dolejsi/vscode-pddl/wiki/Configuring-the-PDDL-planner">more info
-                    about PDDL planners</a>
+                <h2>
+                    Configuration
+                    <img src="../../images/light/settings-gear.svg" onclick="postCommand('command:pddl.settings')" theme="light" class="menuButton" title="See all PDDL Extension settings"/>
+                    <img src="../../images/dark/settings-gear.svg" onclick="postCommand('command:pddl.settings')" theme="dark" class="menuButton" title="See all PDDL Extension settings"/>
+                </h2>
+                <div id="workspaceFoldersDiv">
+                    <label for="workspaceFolders">Workspace folder:</label>
+                    <select id="workspaceFolders">
+                        <option label="wf1" selected value="file:///asdf/folders/wf1"/>
+                    </select>
+                </div>
+                <h3>
+                    Planning engine
+                    <img src="../../images/light/json.svg" onclick="postCommand('command:pddl.plannersJsonSettings')" theme="light" class="menuButton" title="See advanced configuration in JSON settings file..."/>
+                    <img src="../../images/dark/json.svg" onclick="postCommand('command:pddl.plannersJsonSettings')" theme="dark" class="menuButton" title="See advanced configuration in JSON settings file..."/>
+                    <img src="../../images/light/add.svg" onclick="postCommand('command:pddl.addPlanner')" theme="light" class="menuButton" title="Add a PDDL Planner..."/>
+                    <img src="../../images/dark/add.svg" onclick="postCommand('command:pddl.addPlanner')" theme="dark" class="menuButton" title="Add a PDDL Planner..."/>
+                </h3>
+                <table id="planners">
+                    <tr>
+                        <td class="plannerLabel">
+                            <input type="radio" checked="false" id="planner0" name="planner"/>
+                            <label for="planner0">http://solver.planning.domains/solve</label>
+                        </td>
+                        <td></td>
+                        <td class="plannerConfig">
+                            <img src="../../images/light/gear.svg" onclick="configurePlanner(0)" theme="light" class="menuButton"/>
+                            <img src="../../images/dark/gear.svg" onclick="configurePlanner(0)" theme="dark" class="menuButton"/>
+                            <img src="../../images/light/trash.svg" onclick="deletePlanner(0)" theme="light" class="menuButton"/>
+                            <img src="../../images/dark/trash.svg" onclick="deletePlanner(0)" theme="dark" class="menuButton"/>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <input type="radio" checked="false" id="planner1" name="planner"/>
+                            <label for="planner1">Java</label>
+                        </td>
+                        <!-- <input type="text" id="planner" class="config" readonly /> -->
+                        <td></td>
+                        <td>
+                            <img src="../../images/light/gear.svg" onclick="configurePlanner(1)" theme="light" class="menuButton"/>
+                            <img src="../../images/dark/gear.svg" onclick="configurePlanner(1)" theme="dark" class="menuButton"/>
+                            <img src="../../images/light/trash.svg" onclick="deletePlanner(1)" theme="light" class="menuButton"/>
+                            <img src="../../images/dark/trash.svg" onclick="deletePlanner(1)" theme="dark" class="menuButton"/>
+                        </td>
+                    </tr>
+                </table>
+                
+                <div id="plannerConfigurationError">Planner configuration error: 
+                    <span id="plannerConfigurationErrorMessage"></span>. 
+                    <a href="command:pddl.plannersJsonSettings">Fix it.</a></div> 
 
-                <br />
-                <form action="#" onchange="return onPlannerOutputTargetChanged();">Output into
+                <div style="margin-top: 10px">
+                Read <a href="https://github.com/jan-dolejsi/vscode-pddl/wiki/Configuring-the-PDDL-planner">more info
+                    about PDDL planners</a>
+                </div>
+                <form action="#" onchange="return onPlannerOutputTargetChanged();" style="margin-top: 10px">Output into
                     <input type="radio" name="planner_output_target" value="Output window"
                         id="planner_output_target_output_window" />
                     <label for="planner_output_target_output_window">Output window</label>
@@ -96,15 +143,17 @@
 
                 <h3>PDDL parser</h3>
                 <input type="text" id="parser" class="config" readonly />
-                <a href="command:pddl.configureParser" class="button" title="Configure..."><img src="gear.svg"
-                        class="configIcon" /></a><br />
+                <img src="../../images/light/settings-gear.svg" onclick="postCommand('command:pddl.configureParser')" theme="light" class="menuButton" title="Configure PDDL parser..."/>
+                <img src="../../images/dark/settings-gear.svg" onclick="postCommand('command:pddl.configureParser')" theme="dark" class="menuButton" title="Configure PDDL parser..."/>
+                <br />
                 See <a href="https://github.com/jan-dolejsi/vscode-pddl/wiki/Configuring-the-PDDL-parser">more info
                     about PDDL parsers</a>
 
                 <h3>Plan Validator</h3>
                 <input type="text" id="validator" class="config" readonly />
-                <a href="command:pddl.configureValidate" class="button" title="Configure..."><img src="gear.svg"
-                        class="configIcon" /></a><br />
+                <img src="../../images/light/settings-gear.svg" onclick="postCommand('command:pddl.configureValidate')" theme="light" class="menuButton" title="Configure Plan Validator..."/>
+                <img src="../../images/dark/settings-gear.svg" onclick="postCommand('command:pddl.configureValidate')" theme="dark" class="menuButton" title="Configure Plan Validator..."/>
+                <br />
                         Clone and compile <a href="https://github.com/KCL-Planning/VAL">VAL from GitHub</a> or...<br/>
                         <a href="command:pddl.downloadVal"
                     title="Click to initiate download. You will be able to see what is being downloaded and from where...">Download</a>

@@ -36,16 +36,40 @@ function onLoad() {
     observer.observe(target, { attributes : true, attributeFilter : ['class'] });
 }
 
-function applyTheme(newTheme) {
+/**
+ * Extracts the VS Code theme from the document.body.class attribute
+ * @param {string} documentBodyClass document.body.class attribute value
+ * @returns {string} 'dark' or 'light'
+ */ 
+function getThemeName(documentBodyClass) {
     const prefix = 'vscode-';
-    if (newTheme.startsWith(prefix)) {
+    if (documentBodyClass.startsWith(prefix)) {
         // strip prefix
-        newTheme = newTheme.substr(prefix.length);
+        documentBodyClass = documentBodyClass.substr(prefix.length);
     }
 
-    if (newTheme === 'high-contrast') {
-        newTheme = 'dark'; // the high-contrast theme seems to be an extreme case of the dark theme
+    if (documentBodyClass === 'high-contrast') {
+        documentBodyClass = 'dark'; // the high-contrast theme seems to be an extreme case of the dark theme
     }
+    return documentBodyClass;
+}
+
+/**
+ * Applies theme
+ * @param {Element} element html element to apply visibility style to based on the theme
+ * @param {string} newTheme theme extracted from the document.body.class attribute
+ */
+function applyThemeToElement(element, newTheme) {
+    element.style.display = (element.getAttribute('theme') === newTheme) ? 'initial' : 'none';
+}
+
+/**
+ * Applies the VS Code theme to all menuButton elements
+ * @param {string} documentBodyClass theme extracted from the document.body.class attribute
+ * @returns {void}
+ */
+function applyTheme(documentBodyClass) {
+    newTheme = getThemeName(documentBodyClass);
 
     if (theme === newTheme) { return; }
     theme = newTheme;
@@ -54,7 +78,7 @@ function applyTheme(newTheme) {
     const buttons = document.getElementsByClassName('menuButton');
     for (let index = 0; index < buttons.length; index++) {
         const button = buttons[index];
-        button.style.display = (button.getAttribute('theme') === newTheme) ? 'initial' : 'none';
+        applyThemeToElement(button, newTheme);
     }
 
     document.body.dispatchEvent(new CustomEvent("themeChanged", { detail: { newTheme: newTheme } }));

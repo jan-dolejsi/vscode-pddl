@@ -10,7 +10,7 @@ import * as path from 'path';
 import { Planning } from './planning/planning';
 import { PddlWorkspace } from 'pddl-workspace';
 import { PDDL, PLAN, HAPPENINGS } from 'pddl-workspace';
-import { PddlConfiguration, PDDL_CONFIGURE_COMMAND } from './configuration';
+import { PddlConfiguration, PDDL_CONFIGURE_COMMAND } from './configuration/configuration';
 import { Authentication } from './util/Authentication';
 import { AutoCompletion } from './completion/AutoCompletion';
 import { SymbolRenameProvider } from './symbols/SymbolRenameProvider';
@@ -20,7 +20,7 @@ import { StartUp } from './init/StartUp';
 import { PTestExplorer } from './ptest/PTestExplorer';
 import { PlanValidator } from './diagnostics/PlanValidator';
 import { Debugging } from './debugger/debugging';
-import { ExtensionInfo } from './ExtensionInfo';
+import { ExtensionInfo } from './configuration/ExtensionInfo';
 import { HappeningsValidator } from './diagnostics/HappeningsValidator';
 import { PlanComparer } from './comparison/PlanComparer';
 import { Catalog } from './catalog/Catalog';
@@ -42,17 +42,18 @@ import { ProblemObjectsView } from './modelView/ProblemObjectsView';
 import { DomainTypesView } from './modelView/DomainTypesView';
 import { ProblemConstraintsView } from './modelView/ProblemConstraintsView';
 import { ModelHierarchyProvider } from './symbols/ModelHierarchyProvider';
+import { PlannersConfiguration } from './configuration/PlannersConfiguration';
 
 const PDDL_CONFIGURE_PARSER = 'pddl.configureParser';
 const PDDL_LOGIN_PARSER_SERVICE = 'pddl.loginParserService';
 const PDDL_UPDATE_TOKENS_PARSER_SERVICE = 'pddl.updateTokensParserService';
-const PDDL_CONFIGURE_PLANNER = 'pddl.configurePlanner';
 const PDDL_LOGIN_PLANNER_SERVICE = 'pddl.loginPlannerService';
 const PDDL_UPDATE_TOKENS_PLANNER_SERVICE = 'pddl.updateTokensPlannerService';
 
 const PDDL_CONFIGURE_VALIDATOR = 'pddl.configureValidate';
 let formattingProvider: PddlFormatProvider;
 let pddlConfiguration: PddlConfiguration;
+export let plannersConfiguration: PlannersConfiguration;
 export let codePddlWorkspace: CodePddlWorkspace | undefined;
 export let planning: Planning | undefined;
 export let ptestExplorer: PTestExplorer | undefined;
@@ -88,14 +89,17 @@ function activateWithTelemetry(_operationId: string, context: ExtensionContext):
 
 	const valDownloader = new ValDownloader(context).registerCommands();
 
-	// run start-up actions
-	new StartUp(context, pddlConfiguration, valDownloader).atStartUp();
 
 	const pddlContext = createPddlExtensionContext(context);
 
 	const pddlWorkspace = new PddlWorkspace(pddlConfiguration.getEpsilonTimeStep(), pddlContext);
+	plannersConfiguration = new PlannersConfiguration(context, pddlWorkspace);
+
+	// run start-up actions
+	new StartUp(context, pddlConfiguration, plannersConfiguration, valDownloader).atStartUp();
+
 	codePddlWorkspace = CodePddlWorkspace.getInstance(pddlWorkspace, context, pddlConfiguration);
-	planning = new Planning(codePddlWorkspace, pddlConfiguration, context);
+	planning = new Planning(codePddlWorkspace, pddlConfiguration, plannersConfiguration, context);
 	const planValidator = new PlanValidator(planning.output, codePddlWorkspace, pddlConfiguration, context);
 	const happeningsValidator = new HappeningsValidator(planning.output, codePddlWorkspace, pddlConfiguration, context);
 
@@ -136,10 +140,6 @@ function activateWithTelemetry(_operationId: string, context: ExtensionContext):
 				},
 				(message: string) => { window.showErrorMessage('Couldn\'t refresh the tokens, try to login: ' + message); });
 		});
-	});
-
-	const configurePlannerCommand = instrumentOperationAsVsCodeCommand(PDDL_CONFIGURE_PLANNER, () => {
-		pddlConfiguration.askNewPlannerPath();
 	});
 
 	const loginPlannerServiceCommand = instrumentOperationAsVsCodeCommand(PDDL_LOGIN_PLANNER_SERVICE, () => {
@@ -251,6 +251,7 @@ function activateWithTelemetry(_operationId: string, context: ExtensionContext):
 	context.subscriptions.push(new PlanComparer(pddlWorkspace, pddlConfiguration));
 
 	workspace.onDidChangeConfiguration(() => {
+		plannersConfiguration.refreshPlanSelector();
 		if (registerDocumentFormattingProvider(context, codePddlWorkspace)) {
 			window.showInformationMessage("PDDL formatter is now available. Right-click on a PDDL file...");
 			console.log('PDDL Formatter enabled.');
@@ -261,13 +262,15 @@ function activateWithTelemetry(_operationId: string, context: ExtensionContext):
 		pddlConfiguration.askConfiguration(configurationName).catch(showError);
 	});
 
+	plannersConfiguration.registerBuiltInPlannerProviders();
+
 	console.log('PDDL Extension initialized.');
 
 	// Push the disposables to the context's subscriptions so that the
 	// client can be deactivated on extension deactivation
 	context.subscriptions.push(diagnostics,
 		configureParserCommand, loginParserServiceCommand, updateTokensParserServiceCommand,
-		configurePlannerCommand, loginPlannerServiceCommand, updateTokensPlannerServiceCommand, completionItemProvider, completionItemProvider2,
+		loginPlannerServiceCommand, updateTokensPlannerServiceCommand, completionItemProvider, completionItemProvider2,
 		renameProvider, suggestionProvider, documentSymbolProvider, definitionProvider, referencesProvider, hoverProvider,
 		planHoverProvider, planDefinitionProvider, happeningsHoverProvider, happeningsDefinitionProvider,
 		problemInitView, problemObjectsView, problemConstraintsView, configureCommand);

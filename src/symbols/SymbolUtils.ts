@@ -5,7 +5,7 @@
 'use strict';
 
 import {
-    Position, Range, Hover, Location, Uri, TextDocument, MarkdownString
+    Position, Range, Hover, Location, TextDocument, MarkdownString
 } from 'vscode';
 
 import { Action, DomainInfo } from 'pddl-workspace';
@@ -13,7 +13,7 @@ import { Variable } from 'pddl-workspace';
 import { PddlRange } from 'pddl-workspace';
 import { CodePddlWorkspace } from '../workspace/CodePddlWorkspace';
 import { parser } from 'pddl-workspace';
-import { nodeToRange, toRange } from '../utils';
+import { nodeToRange, toRange, toUri } from '../utils';
 
 export class SymbolUtils {
     constructor(public workspace: CodePddlWorkspace) { }
@@ -36,7 +36,7 @@ export class SymbolUtils {
             if (predicateFound) {
                 return new VariableInfo(
                     this.createHover(symbol.range, 'Predicate', this.brackets(predicateFound.declaredName), predicateFound.getDocumentation()),
-                    new Location(this.toUri(domainInfo.fileUri), toRange(predicateFound.getLocation())),
+                    new Location(toUri(domainInfo.fileUri), toRange(predicateFound.getLocation())),
                     predicateFound,
                 );
             }
@@ -44,7 +44,7 @@ export class SymbolUtils {
             if (functionFound) {
                 return new VariableInfo(
                     this.createHover(symbol.range, 'Function', this.brackets(functionFound.declaredName), functionFound.getDocumentation()),
-                    new Location(this.toUri(domainInfo.fileUri), toRange(functionFound.getLocation())),
+                    new Location(toUri(domainInfo.fileUri), toRange(functionFound.getLocation())),
                     functionFound
                 );
             }
@@ -52,7 +52,7 @@ export class SymbolUtils {
             if (derivedFound) {
                 return new VariableInfo(
                     this.createHover(symbol.range, 'Derived predicate/function', this.brackets(derivedFound.declaredName), derivedFound.getDocumentation()),
-                    new Location(this.toUri(domainInfo.fileUri), toRange(derivedFound.getLocation())),
+                    new Location(toUri(domainInfo.fileUri), toRange(derivedFound.getLocation())),
                     derivedFound
                 );
             }
@@ -60,7 +60,7 @@ export class SymbolUtils {
             if (actionFound) {
                 return new ActionInfo(
                     this.createActionHover(symbol.range, actionFound),
-                    new Location(this.toUri(domainInfo.fileUri), toRange(actionFound.getLocation())),
+                    new Location(toUri(domainInfo.fileUri), toRange(actionFound.getLocation())),
                     actionFound
                 );
             }
@@ -74,7 +74,7 @@ export class SymbolUtils {
                 if (!typeLocation) { return undefined; }
                 return new TypeInfo(
                     this.createHover(symbol.range, 'Type', symbol.name, [inheritsFromText]),
-                    new Location(this.toUri(domainInfo.fileUri), toRange(typeLocation)),
+                    new Location(toUri(domainInfo.fileUri), toRange(typeLocation)),
                     symbol.name
                 );
             }
@@ -207,7 +207,7 @@ export class SymbolUtils {
             // add variable references found in the domain file
             domainInfo.getVariableReferences((symbol as VariableInfo).variable).forEach(range => {
                 if (includeReference) {
-                    locations.push(new Location(this.toUri(domainInfo.fileUri), toRange(range)));
+                    locations.push(new Location(toUri(domainInfo.fileUri), toRange(range)));
                 } else {
                     // we skipped the declaration, but let's include any further references
                     includeReference = true;
@@ -217,7 +217,7 @@ export class SymbolUtils {
             // add variable references found in all problem files
             problemFiles.forEach(p =>
                 p.getVariableReferences((symbol as VariableInfo).variable)
-                    .forEach(range => locations.push(new Location(this.toUri(p.fileUri), toRange(range)))));
+                    .forEach(range => locations.push(new Location(toUri(p.fileUri), toRange(range)))));
         } else if (symbol instanceof TypeInfo) {
             // add type references found in the domain file
             if (includeDeclaration) {
@@ -227,14 +227,14 @@ export class SymbolUtils {
             domainInfo.getTypeReferences(typeName).forEach(range => {
                 const vsRange = toRange(range);
                 if (!vsRange.isEqual(symbol.location.range)) {
-                    locations.push(new Location(this.toUri(domainInfo.fileUri), vsRange));
+                    locations.push(new Location(toUri(domainInfo.fileUri), vsRange));
                 }
             });
 
             // add type references found in all problem files
             problemFiles.forEach(p =>
                 p.getTypeReferences(typeName)
-                    .forEach(range => locations.push(new Location(this.toUri(p.fileUri), toRange(range))))
+                    .forEach(range => locations.push(new Location(toUri(p.fileUri), toRange(range))))
             );
         } else if (symbol instanceof ParameterInfo) {
             const parameterInfo = symbol as ParameterInfo;
@@ -264,10 +264,6 @@ export class SymbolUtils {
 
     brackets(symbolName: string): string {
         return `(${symbolName})`;
-    }
-
-    toUri(uriString: string): Uri {
-        return Uri.parse(uriString);
     }
 }
 

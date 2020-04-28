@@ -9,6 +9,12 @@
 			"file": "${workspaceFolder}/views/searchview/search.html"
 		},
 		{
+			"type": "chrome",
+			"request": "launch",
+			"name": "Overview (html)",
+			"file": "${workspaceFolder}/views/overview/overview.html"
+		},
+		{
 			"name": "Launch Extension",
 			"type": "extensionHost",
 			"request": "launch",

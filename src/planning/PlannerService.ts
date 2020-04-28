@@ -5,17 +5,11 @@
 'use strict';
 
 import * as request from 'request';
-import { Planner } from './planner';
-import { PlannerResponseHandler } from './PlannerResponseHandler';
-import { Plan } from 'pddl-workspace';
-import { ProblemInfo } from 'pddl-workspace';
-import { DomainInfo } from 'pddl-workspace';
-import { parser } from 'pddl-workspace';
-import { PlanStep } from 'pddl-workspace';
+import { planner, Plan, ProblemInfo, DomainInfo, parser, PlanStep } from 'pddl-workspace';
 import { Authentication } from '../util/Authentication';
 import { window } from 'vscode';
 
-export abstract class PlannerService extends Planner {
+export abstract class PlannerService extends planner.Planner {
 
     constructor(plannerPath: string, private authentication?: Authentication) {
         super(plannerPath);
@@ -27,10 +21,10 @@ export abstract class PlannerService extends Planner {
     abstract createUrl(): string;
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    abstract processServerResponseBody(responseBody: any, planParser: parser.PddlPlanParser, parent: PlannerResponseHandler,
+    abstract processServerResponseBody(responseBody: any, planParser: parser.PddlPlanParser, parent: planner.PlannerResponseHandler,
         resolve: (plans: Plan[]) => void, reject: (error: Error) => void): void;
 
-    async plan(domainFileInfo: DomainInfo, problemFileInfo: ProblemInfo, planParser: parser.PddlPlanParser, parent: PlannerResponseHandler): Promise<Plan[]> {
+    async plan(domainFileInfo: DomainInfo, problemFileInfo: ProblemInfo, planParser: parser.PddlPlanParser, parent: planner.PlannerResponseHandler): Promise<Plan[]> {
         parent.handleOutput(`Planning service: ${this.plannerPath}\nDomain: ${domainFileInfo.name}, Problem: ${problemFileInfo.name}\n`);
 
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -41,7 +35,7 @@ export abstract class PlannerService extends Planner {
             };
         }
 
-        if (parent.providePlannerOptions({ domain: domainFileInfo, problem: problemFileInfo }).length > 0) {
+        if (parent.providePlannerOptions({ domain: domainFileInfo, problem: problemFileInfo }).some(op => op.length)) {
             window.showWarningMessage("Search Debugger is not supported by planning services. Only planner executable may support it.");
         }
 
@@ -54,7 +48,7 @@ export abstract class PlannerService extends Planner {
         const that = this;
         return new Promise<Plan[]>(function (resolve, reject) {
 
-            request.post({ url: url, headers: requestHeader, body: requestBody, json: true, timeout: timeoutInSec*1000*1.1 }, (err, httpResponse, responseBody) => {
+            request.post({ url: url, headers: requestHeader, body: requestBody, json: true, timeout: timeoutInSec * 1000 * 1.1 }, (err, httpResponse, responseBody) => {
 
                 if (err !== null) {
                     reject(err);

@@ -10,7 +10,7 @@ import { PLAN, PDDL, HAPPENINGS } from 'pddl-workspace';
 import { ProblemInfo } from 'pddl-workspace';
 import { DomainInfo } from 'pddl-workspace';
 import { AssociationCodeActionProvider } from './AssociationCodeActionProvider';
-import { showError } from '../utils';
+import { showError, toURI } from '../utils';
 import { selectFile } from './workspaceUtils';
 import { PddlLanguage, FileInfo } from 'pddl-workspace';
 import { CodePddlWorkspace } from './CodePddlWorkspace';
@@ -71,7 +71,7 @@ export class AssociationProvider {
             throw new Error("Selected file is not a problem file.");
         }
         const problemInfo = parsedFileInfo as ProblemInfo;
-        this.codePddlWorkspace.pddlWorkspace.associatePlanToProblem(planUri.toString(), problemInfo);
+        this.codePddlWorkspace.pddlWorkspace.associatePlanToProblem(toURI(planUri), problemInfo);
         console.log(`Associated ${problemDocument.uri} to ${planUri}.`);
         // re-validate the plan file
         const planInfo = this.codePddlWorkspace.getFileInfoByUri(planUri);

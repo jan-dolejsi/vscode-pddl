@@ -27,7 +27,7 @@ export class ValidatorExecutable extends Validator {
 
         if (!problemFiles.length) {
             const problemFilePath = utils.Util.toPddlFileSync("problem", PddlFactory.createEmptyProblem('dummy', domainInfo.name));
-            const pathToUriMap: [string, string][] = [[domainFilePath, domainInfo.fileUri]];
+            const pathToUriMap: [string, string][] = [[domainFilePath, domainInfo.fileUri.toString()]];
 
             this.validateOneProblem(domainFilePath, problemFilePath, output => {
                 this.processOutput(pathToUriMap, output, diagnostics);
@@ -37,7 +37,7 @@ export class ValidatorExecutable extends Validator {
         else {
             problemFiles.forEach(problemFile => {
                 const problemFilePath = utils.Util.toPddlFileSync("problem", problemFile.getText());
-                const pathToUriMap: [string, string][] = [[domainFilePath, domainInfo.fileUri], [problemFilePath, problemFile.fileUri]];
+                const pathToUriMap: [string, string][] = [[domainFilePath, domainInfo.fileUri.toString()], [problemFilePath, problemFile.fileUri.toString()]];
 
                 // todo: the issues in the domain file should only be output once, not as many times as there are problem files
                 this.validateOneProblem(domainFilePath, problemFilePath, output => {

@@ -7,6 +7,7 @@ input.config {
     height: 16px;
     min-width: 270px;
     max-width: 600px;
+    border: 1px solid #ddd;
 }
 a.button {
     -webkit-appearance: button;
@@ -22,6 +23,49 @@ a.button {
     margin-left: 3px;
     text-align: center;
 }
+img.menuButton {
+    /* height: 16px; */
+    margin-left: 5px;
+}
+
+table#planners {
+    border-collapse: collapse;
+    padding: 5px;
+    border: 1px solid rgba(125, 125, 125, .3);
+    min-width: 270px;
+    max-width: 600px;
+}
+
+table#planners > tr:nth-child(odd) { 
+    background-color: rgba(125, 125, 125, .1);
+}
+
+table#planners > tr { 
+    line-height: 150%;
+}
+
+td.plannerLabel {
+    text-overflow: ellipsis;
+    max-width: 300px;
+    overflow: hidden;
+}
+
+td.plannerConfig {
+    text-align: right;
+}
+
+div#plannerConfigurationError {
+    color: red;
+    padding-top: 3px;
+}
+
+span#plannerConfigurationErrorMessage {
+    font-weight: bold;
+    text-overflow: ellipsis;
+    max-width: 150px;
+    overflow: hidden;
+}
+
 div.hint {
     color: gray
 }

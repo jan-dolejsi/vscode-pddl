@@ -11,6 +11,7 @@ import {
 import { Plan } from 'pddl-workspace';
 import { parse, format } from 'path';
 import { exportToAndShow } from './ExportUtil';
+import { toUri } from '../utils';
 
 
 export abstract class AbstractPlanExporter {
@@ -67,8 +68,8 @@ export class PlanExporter extends AbstractPlanExporter {
         if (!this.plan.problem) {
             throw new Error(`Problem not specified.`);
         }
-        let baseUri = Uri.parse(this.plan.problem.fileUri);
-        if (this.plan.problem.fileUri.startsWith('http')) {
+        let baseUri = toUri(this.plan.problem.fileUri);
+        if (this.plan.problem.fileUri.scheme === 'http') {
             baseUri = Uri.file(baseUri.path);
         }
 

@@ -7,9 +7,9 @@
 import { FileInfo, Variable, DomainInfo } from 'pddl-workspace';
 import { CodePddlWorkspace } from "../workspace/CodePddlWorkspace";
 import { PddlWorkspace } from 'pddl-workspace';
-import { languages, DiagnosticCollection, Diagnostic, DiagnosticSeverity, DiagnosticTag, Uri } from "vscode";
+import { languages, DiagnosticCollection, Diagnostic, DiagnosticSeverity, DiagnosticTag } from "vscode";
 import { PDDL } from 'pddl-workspace';
-import { toRange } from "../utils";
+import { toRange, toUri } from "../utils";
 
 export const UNUSED = 'unused';
 
@@ -23,7 +23,7 @@ export class DomainDiagnostics {
         this.diagnosticCollection = languages.createDiagnosticCollection(PDDL+'2');
         codePddlWorkspace.pddlWorkspace.on(PddlWorkspace.UPDATED, (fileInfo: FileInfo) => {
             if (fileInfo.isDomain()) {
-                this.validateDomain(<DomainInfo>fileInfo);
+                this.validateDomain(fileInfo as DomainInfo);
             }
         });
     }
@@ -41,7 +41,7 @@ export class DomainDiagnostics {
 
         const diagnostics = predicateDiagnostic.concat(functionDiagnostic);
 
-        this.diagnosticCollection.set(Uri.parse(domainInfo.fileUri), diagnostics);
+        this.diagnosticCollection.set(toUri(domainInfo.fileUri), diagnostics);
     }
 
     toUnusedDiagnostic(domainInfo: DomainInfo, variable: Variable, variableType: string): Diagnostic | undefined {

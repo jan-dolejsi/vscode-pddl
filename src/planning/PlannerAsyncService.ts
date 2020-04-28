@@ -4,10 +4,8 @@
  * ------------------------------------------------------------------------------------------ */
 'use strict';
 
-// import * as request from 'request';
 import { Uri, workspace } from 'vscode';
-import { PlannerResponseHandler } from './PlannerResponseHandler';
-import { Plan, ProblemInfo, DomainInfo, parser } from 'pddl-workspace';
+import { Plan, ProblemInfo, DomainInfo, parser, planner } from 'pddl-workspace';
 import { Authentication } from '../util/Authentication';
 import { PlannerService } from './PlannerService';
 import { PlannerConfigurationSelector } from './PlannerConfigurationSelector';
@@ -75,7 +73,7 @@ export class PlannerAsyncService extends PlannerService {
     }
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    processServerResponseBody(responseBody: any, planParser: parser.PddlPlannerOutputParser, parent: PlannerResponseHandler, resolve: (plans: Plan[]) => void, reject: (error: Error) => void): void {
+    processServerResponseBody(responseBody: any, planParser: parser.PddlPlannerOutputParser, callbacks: planner.PlannerResponseHandler, resolve: (plans: Plan[]) => void, reject: (error: Error) => void): void {
         let _timedOut = false;
         const responseStatus: string = responseBody['status']['status'];
         if (["STOPPED", "SEARCHING_BETTER_PLAN"].includes(responseStatus)) {
@@ -91,8 +89,8 @@ export class PlannerAsyncService extends PlannerService {
                 }
 
                 const plans = planParser.getPlans();
-                if (plans.length > 0) { parent.handleOutput(plans[0].getText() + '\n'); }
-                else { parent.handleOutput('No plan found.'); }
+                if (plans.length > 0) { callbacks.handleOutput(plans[0].getText() + '\n'); }
+                else { callbacks.handleOutput('No plan found.'); }
 
                 resolve(plans);
                 return;

@@ -8,13 +8,13 @@ import { window, workspace, Uri, commands } from 'vscode';
 import { before } from 'mocha';
 import { expect } from 'chai';
 import * as path from 'path';
-import { getMockPlanner, activateExtension, waitFor, clearWorkspaceFolder } from './testUtils';
+import { MockPlannerProvider, activateExtension, waitFor, clearWorkspaceFolder, clearConfiguration } from './testUtils';
 import { PddlLanguage, SimpleDocumentPositionResolver, DomainInfo, ProblemInfo } from 'pddl-workspace';
-import { assertDefined } from '../../utils';
-import { PDDL_PLANNER, EXECUTABLE_OR_SERVICE, EXECUTABLE_OPTIONS } from '../../configuration';
+import { assertDefined, toURI } from '../../utils';
 import { PDDL_PLAN_AND_DISPLAY } from '../../planning/planning';
-import { planning, codePddlWorkspace } from '../../extension';
+import { planning, codePddlWorkspace, plannersConfiguration } from '../../extension';
 import { fail } from 'assert';
+import { PlannerConfigurationScope } from '../../configuration/PlannersConfiguration';
 
 suite('Planning test', () => {
     let domainUri: Uri | undefined;
@@ -25,6 +25,7 @@ suite('Planning test', () => {
     before(async () => {
         await activateExtension();
         await clearWorkspaceFolder();
+        await clearConfiguration();
         window.showInformationMessage('Start Planning tests.');
     });
 
@@ -50,13 +51,13 @@ suite('Planning test', () => {
         await workspace.fs.writeFile(problemUri, Buffer.from(problemText));
 
         const codePddlWorkspace1 = assertDefined(codePddlWorkspace, "code PDDL workspace");
-        domain = await codePddlWorkspace1.pddlWorkspace.upsertFile(domainUri.toString(), PddlLanguage.PDDL, 1, domainText, new SimpleDocumentPositionResolver(domainText)) as DomainInfo;
-        problem = await codePddlWorkspace1.pddlWorkspace.upsertFile(problemUri.toString(), PddlLanguage.PDDL, 1, problemText, new SimpleDocumentPositionResolver(problemText)) as ProblemInfo;
+        domain = await codePddlWorkspace1.pddlWorkspace.upsertFile(toURI(domainUri), PddlLanguage.PDDL, 1, domainText, new SimpleDocumentPositionResolver(domainText)) as DomainInfo;
+        problem = await codePddlWorkspace1.pddlWorkspace.upsertFile(toURI(problemUri), PddlLanguage.PDDL, 1, problemText, new SimpleDocumentPositionResolver(problemText)) as ProblemInfo;
 
         // GIVEN the mock planner is configured
 
-        await workspace.getConfiguration(PDDL_PLANNER).update(EXECUTABLE_OR_SERVICE, getMockPlanner());
-        await workspace.getConfiguration(PDDL_PLANNER).update(EXECUTABLE_OPTIONS, "$(planner) $(domain) $(problem) $(options)");
+        const mockConfiguration = await new MockPlannerProvider().configurePlanner();
+		await plannersConfiguration.addPlannerConfiguration(PlannerConfigurationScope.User, mockConfiguration);
 
         const cwd = path.dirname(assertDefined(domainUri, 'domain uri').fsPath);
         const mockPlanPath = path.join(cwd, 'mockPlan.plan');

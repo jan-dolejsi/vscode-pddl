@@ -12,7 +12,7 @@ import { PlanStep, PlanStepCommitment } from 'pddl-workspace';
 import { HappeningType } from 'pddl-workspace';
 import { SearchHappening } from "./SearchHappening";
 import { equalsCaseInsensitive } from "../utils";
-import { DEFAULT_EPSILON } from "../configuration";
+import { DEFAULT_EPSILON } from "../configuration/configuration";
 
 export class StateToPlan {
 

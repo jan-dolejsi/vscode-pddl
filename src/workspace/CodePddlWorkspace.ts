@@ -13,8 +13,8 @@ import { DocumentPositionResolver } from 'pddl-workspace';
 import { CodeDocumentPositionResolver } from './CodeDocumentPositionResolver';
 import { utils } from 'pddl-workspace';
 import { DomainInfo } from 'pddl-workspace';
-import { toRange } from '../utils';
-import { PddlConfiguration } from '../configuration';
+import { toRange, toURI, toUri } from '../utils';
+import { PddlConfiguration } from '../configuration/configuration';
 import { ProblemInfo } from 'pddl-workspace';
 
 
@@ -34,7 +34,7 @@ export class CodePddlWorkspace {
 
     registerCommands(): CodePddlWorkspace {
         const revealActionCommand = instrumentOperationAsVsCodeCommand('pddl.revealAction', (domainFileUri: Uri, actionName: string) => {
-            revealAction(this.pddlWorkspace.getFileInfo(domainFileUri.toString()) as DomainInfo, actionName);
+            revealAction(this.pddlWorkspace.getFileInfo(toURI(domainFileUri)) as DomainInfo, actionName);
         });
 
         if (this.context) {
@@ -55,7 +55,7 @@ export class CodePddlWorkspace {
     async upsertFile(document: TextDocument, force = false): Promise<FileInfo | undefined> {
         const language = toLanguage(document);
         if (language === undefined) { return undefined; }
-        return await this.pddlWorkspace.upsertFile(document.uri.toString(),
+        return await this.pddlWorkspace.upsertFile(toURI(document.uri),
             language, document.version, document.getText(),
             this.createPositionResolver(document), force);
     }
@@ -63,11 +63,11 @@ export class CodePddlWorkspace {
     async upsertAndParseFile(document: TextDocument): Promise<FileInfo | undefined> {
         const language = toLanguage(document);
         if (language === undefined) { return undefined; }
-        return this.pddlWorkspace.upsertAndParseFile(document.uri.toString(), language, document.version, document.getText(), this.createPositionResolver(document));
+        return this.pddlWorkspace.upsertAndParseFile(toURI(document.uri), language, document.version, document.getText(), this.createPositionResolver(document));
     }
 
     getFileInfoByUri<T extends FileInfo>(uri: Uri): T | undefined {
-        return this.pddlWorkspace.getFileInfo(uri.toString());
+        return this.pddlWorkspace.getFileInfo(toURI(uri));
     }
 
     getFileInfo<T extends FileInfo>(document: TextDocument): T | undefined {
@@ -76,7 +76,7 @@ export class CodePddlWorkspace {
 
     async removeFile(textDoc: TextDocument): Promise<boolean> {
         const fileExists = await utils.afs.exists(textDoc.fileName);
-        return this.pddlWorkspace.removeFile(textDoc.uri.toString(), { removeAllReferences: !fileExists });
+        return this.pddlWorkspace.removeFile(toURI(textDoc.uri), { removeAllReferences: !fileExists });
     }
 
     getDomainFilesFor(problemFileInfo: ProblemInfo): DomainInfo[] {
@@ -89,7 +89,7 @@ export class CodePddlWorkspace {
     private static readonly GIT_SCHEME = "git";
 
     private isRealFile(domainInfo: DomainInfo): boolean {
-        return Uri.parse(domainInfo.fileUri).scheme !== CodePddlWorkspace.GIT_SCHEME;
+        return domainInfo.fileUri.scheme !== CodePddlWorkspace.GIT_SCHEME;
     }
 
     static isRealDocument(document: TextDocument): boolean {
@@ -132,7 +132,7 @@ function subscribeToWorkspace(pddlWorkspace: CodePddlWorkspace, context: Extensi
                 .filter(problemInfo => !!problemInfo.getPreParsingPreProcessor())
                 .filter(problemInfo => problemInfo.getPreParsingPreProcessor()?.getInputFiles().some(inputFile => docEvent.document.fileName.endsWith(inputFile)))
                 .forEach(async (problemInfo) => {
-                    const problemFile = await workspace.openTextDocument(Uri.parse(problemInfo.fileUri));
+                    const problemFile = await workspace.openTextDocument(toUri(problemInfo.fileUri));
                     pddlWorkspace.upsertFile(problemFile, true);
                 });
         }
@@ -146,7 +146,7 @@ function subscribeToWorkspace(pddlWorkspace: CodePddlWorkspace, context: Extensi
     // subscribe to document deletion event
     context.subscriptions.push(workspace.onDidDeleteFiles(deletionEvent => {
         const deletionSuccesses = deletionEvent.files
-            .map(deletedUri => pddlWorkspace.pddlWorkspace.removeFile(deletedUri.toString(), { removeAllReferences: false }));
+            .map(deletedUri => pddlWorkspace.pddlWorkspace.removeFile(toURI(deletedUri), { removeAllReferences: false }));
         if (deletionSuccesses.some(s => !s)) {
             console.error(`Some files were not removed from the PDDL repository model`);
         }
@@ -160,7 +160,7 @@ function subscribeToWorkspace(pddlWorkspace: CodePddlWorkspace, context: Extensi
 }
 
 async function revealAction(domainInfo: DomainInfo, actionName: string): Promise<void> {
-    const document = await workspace.openTextDocument(Uri.parse(domainInfo.fileUri));
+    const document = await workspace.openTextDocument(toUri(domainInfo.fileUri));
     const actionFound = domainInfo.getActions().find(a => a?.name?.toLowerCase() === actionName.toLowerCase());
     const actionRange = actionFound && toRange(actionFound.getLocation());
     const openEditor = window.visibleTextEditors.find(e => e.document.uri.toString() === document.uri.toString());
