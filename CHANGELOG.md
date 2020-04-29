@@ -1,6 +1,10 @@
 # PDDL support - What's new?
 
-## [2.17.0]
+## [2.17.2]
+
+Added POPF `PlannerProvider`. Fixed default planner syntax to `$(planner) $(options) $(domain) $(problem)`.
+
+## [2.17.1]
 
 ### Planner switching
 
@@ -999,7 +1003,8 @@ Note for open source contributors: all notable changes to the "pddl" extension w
 
 Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
 
-[Unreleased]: https://github.com/jan-dolejsi/vscode-pddl/compare/v2.16.0...HEAD
+[Unreleased]: https://github.com/jan-dolejsi/vscode-pddl/compare/v2.17.1...HEAD
+[2.16.0]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.16.0...v2.17.1
 [2.15.7]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.15.7...v2.16.0
 [2.15.7]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.15.6...v2.15.7
 [2.15.6]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.15.5...v2.15.6

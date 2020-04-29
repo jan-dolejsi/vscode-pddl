@@ -237,6 +237,43 @@ export class ExecutablePlannerProvider implements planner.PlannerProvider {
 
 }
 
+export class Popf implements planner.PlannerProvider {
+
+    get kind(): planner.PlannerKind {
+        return { kind: 'popf' };
+    }
+
+    getNewPlannerLabel(): string {
+        return '$(mortar-board) POPF';
+    }
+
+    async configurePlanner(previousConfiguration?: planner.PlannerConfiguration | undefined): Promise<planner.PlannerConfiguration | undefined> {
+
+        const filters = os.platform() === 'win32' ?
+            {
+                'POPF Executable': ['exe']
+            }
+            : undefined;
+
+        const defaultUri: Uri | undefined = !!(previousConfiguration?.path) ?
+            Uri.file(previousConfiguration.path) :
+            undefined;
+
+        const popfUri = await selectedFile(`Select POPF`, defaultUri, filters);
+        if (!popfUri) { return undefined; }
+
+        const newPlannerConfiguration: planner.PlannerConfiguration = {
+            kind: this.kind.kind,
+            canConfigure: true,
+            path: popfUri.fsPath,
+            syntax: '$(planner) $(options) $(domain) $(problem)',
+            title: 'POPF'
+        };
+
+        return newPlannerConfiguration;
+    }
+}
+
 
 // const node: QuickPickItem = {
 //     label: "$(file-code) Select a Node.js file..."

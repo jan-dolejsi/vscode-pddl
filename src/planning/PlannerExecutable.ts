@@ -22,7 +22,7 @@ export class PlannerExecutable extends planner.Planner {
     // this property stores the reference to the planner child process, while planning is in progress
     private child: process.ChildProcess | undefined;
 
-    static readonly DEFAULT_SYNTAX = "$(planner) $(domain) $(problem) $(options)";
+    static readonly DEFAULT_SYNTAX = "$(planner) $(options) $(domain) $(problem)";
 
     constructor(plannerPath: string, private plannerOptions: string, private plannerSyntax: string, private workingDirectory: string) {
         super(plannerPath);
