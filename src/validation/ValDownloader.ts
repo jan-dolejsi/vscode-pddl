@@ -7,6 +7,7 @@
 import { ExtensionContext, window, ProgressLocation, workspace, ConfigurationTarget } from 'vscode';
 import { instrumentOperationAsVsCodeCommand } from "vscode-extension-telemetry-wrapper";
 import * as path from 'path';
+// import * as os from 'os';
 import { utils } from 'pddl-workspace';
 import { ValDownloader as ValDownloaderBase, ValVersion, readValManifest, writeValManifest } from 'ai-planning-val';
 import { PARSER_EXECUTABLE_OR_SERVICE, CONF_PDDL, VALIDATION_PATH, VALUE_SEQ_PATH, VAL_STEP_PATH, VALIDATOR_VERSION } from '../configuration/configuration';
@@ -190,7 +191,12 @@ export class ValDownloader extends ValDownloaderBase {
     }
 
     private normalizePathIfValid(pathToNormalize?: string): string | undefined {
-        return pathToNormalize ? path.normalize(pathToNormalize) : pathToNormalize;
+        if (!pathToNormalize) { return pathToNormalize; }
+        const normalizedPath = path.normalize(pathToNormalize);
+        // if (os.platform() === 'darwin' && normalizedPath.includes(' ')) {
+        //     normalizedPath = normalizedPath.replace(' ', '\\ ');
+        // }
+        return normalizedPath;
     }
 
     async isNewValVersionAvailable(): Promise<boolean> {
