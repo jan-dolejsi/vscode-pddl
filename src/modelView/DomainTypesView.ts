@@ -77,11 +77,11 @@ export class DomainTypesView extends DomainView<DomainTypesRendererOptions, Grap
         if (token.isCancellationRequested) { return undefined; }
 
         if (codeLens instanceof DocumentInsetCodeLens) {
-            codeLens.command = { command: PDDL_DOMAIN_TYPES_INSET_COMMAND, title: 'View inset', arguments: [codeLens.getDocument().uri, codeLens.getLine()] };
+            codeLens.command = { command: PDDL_DOMAIN_TYPES_INSET_COMMAND, title: 'Show hierarchy inset', arguments: [codeLens.getDocument().uri, codeLens.getLine()] };
             return codeLens;
         }
         else {
-            codeLens.command = { command: PDDL_DOMAIN_TYPES_PREVIEW_COMMAND, title: 'View', arguments: [codeLens.getDocument().uri] };
+            codeLens.command = { command: PDDL_DOMAIN_TYPES_PREVIEW_COMMAND, title: 'Show hierarchy', arguments: [codeLens.getDocument().uri] };
             return codeLens;
         }
     }
