@@ -6,6 +6,7 @@ import { before, after } from 'mocha';
 import * as vscode from 'vscode';
 import * as path from 'path';
 import * as os from 'os';
+import * as fs from 'fs';
 import { ValDownloader } from '../../validation/ValDownloader';
 import { PddlConfiguration, CONF_PDDL, VAL_STEP_PATH, VALIDATION_PATH, VALUE_SEQ_PATH, PDDL_PARSER, PARSER_EXECUTABLE_OR_SERVICE, EXECUTABLE_OR_SERVICE } from '../../configuration/configuration';
 import { createTestExtensionContext } from './testUtils';
@@ -147,7 +148,8 @@ suite('VAL Download and Configuration', () => {
             const actualParserPath = conf.getParserPath();
             console.log(">>>>> Parser path: " + actualParserPath);
             if (actualParserPath.includes(' ') && os.platform() === 'darwin') {
-                expect(actualParserPath).to.include('\\ ', "spaces should be escaped by backslash");
+                expect(fs.existsSync(actualParserPath)).to.equal(true, `Parser at ${actualParserPath} should exist.`);
+                expect(actualParserPath).to.include('\ ', "spaces should be escaped by backslash");
             }
         }
         finally {
