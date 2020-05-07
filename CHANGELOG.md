@@ -1,6 +1,11 @@
 # PDDL support - What's new?
 
-## [2.17.2]
+## 2.17.3
+
+Escaping spaces in VAL paths on MacOS.
+This is to fix [Issue 57](https://github.com/jan-dolejsi/vscode-pddl/issues/57).
+
+## 2.17.2
 
 Added POPF `PlannerProvider`. Fixed default planner syntax to `$(planner) $(options) $(domain) $(problem)`.
 

@@ -5,6 +5,8 @@ import { before, after } from 'mocha';
 
 import * as vscode from 'vscode';
 import * as path from 'path';
+import * as os from 'os';
+import * as fs from 'fs';
 import { ValDownloader } from '../../validation/ValDownloader';
 import { PddlConfiguration, CONF_PDDL, VAL_STEP_PATH, VALIDATION_PATH, VALUE_SEQ_PATH, PDDL_PARSER, PARSER_EXECUTABLE_OR_SERVICE, EXECUTABLE_OR_SERVICE } from '../../configuration/configuration';
 import { createTestExtensionContext } from './testUtils';
@@ -142,6 +144,13 @@ suite('VAL Download and Configuration', () => {
             expect(actualValStepPath).to.not.be.undefined;
             assert.startsWith(actualValueSeqPath!, path.join(valFolderPath, 'Val-20190911.1-win64'), "value seq path");
             expect(askedToOverwrite).to.deep.equal(['ValStep']);
+            
+            const actualParserPath = conf.getParserPath();
+
+            if (actualParserPath.includes(' ') && os.platform() === 'darwin') {
+                expect(fs.existsSync(actualParserPath)).to.equal(true, `Parser at ${actualParserPath} should exist.`);
+                expect(actualParserPath).to.include('\ ', "spaces should be escaped by backslash");
+            }
         }
         finally {
             const allStoredFiles = await utils.afs.getFiles(extensionContext.globalStoragePath);

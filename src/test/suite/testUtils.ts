@@ -1,5 +1,6 @@
 import * as assert from 'assert';
 import * as path from 'path';
+import * as os from 'os';
 import * as tmp from 'tmp-promise';
 import { PddlExtensionContext, planner } from 'pddl-workspace';
 import { Disposable, workspace, ExtensionContext, Memento, extensions, Event, FileType, Uri, ConfigurationTarget } from 'vscode';
@@ -50,7 +51,9 @@ class MockMemento implements Memento {
 
 export async function createTestExtensionContext(): Promise<ExtensionContext> {
     const storage = await tmp.dir({ prefix: 'extensionTestStoragePath' });
-    const globalStorage = await tmp.dir({ prefix: 'extensionGlobalTestStoragePath' });
+    // simulate the space in the 'Application\ Support' on MacOS
+    const globalStoragePrefix = os.platform() === 'darwin' ? 'extensionGlobalTest StoragePath' : 'extensionGlobalTestStoragePath';
+    const globalStorage = await tmp.dir({ prefix: globalStoragePrefix });
     const log = await tmp.file({ mode: 0o644, prefix: 'extensionTests', postfix: 'log' });
 
     return {
