@@ -1,6 +1,6 @@
 .vscode/**
 typings/**
-out/test/**
+out/**
 test/**
 src/**
 **/*.map
@@ -8,7 +8,6 @@ src/**
 tsconfig.json
 *.cmd
 .vscode-test/**
-val/**
 .vscodeignore
 package-lock.json
 .eslintrc.js
@@ -21,3 +20,4 @@ coverage/
 .nyc_output/
 .github/
 downloadVisJs.js
+webpack.config.js

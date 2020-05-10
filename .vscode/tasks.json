@@ -25,7 +25,7 @@
 				"reveal": "never"
 			},
 			"problemMatcher": [
-				"$tsc-watch"
+				"$ts-webpack"
 			]
 		}
 	]

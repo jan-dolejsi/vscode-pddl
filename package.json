@@ -44,7 +44,7 @@
     "onView:pddl.tests.explorer",
     "onUri"
   ],
-  "main": "./out/extension",
+  "main": "./dist/extension",
   "contributes": {
     "languages": [
       {
@@ -964,8 +964,10 @@
     "compile": "tsc -p ./",
     "watch": "tsc -w -p ./",
     "lint": "eslint src --ext ts",
-    "vscode:prepublish": "npm run compile",
+    "vscode:prepublish": "webpack --mode production",
     "update-vscode": "node ./node_modules/vscode/bin/install",
+    "webpack": "webpack --mode development",
+    "webpack-dev": "webpack --mode development --watch",
     "package": "vsce package",
     "pretest": "npm run compile",
     "test:unit": "mocha -- out/test/**/*Test.js",
@@ -1014,8 +1016,11 @@
     "minimist": ">=0.2.1",
     "mocha": "^6.1.4",
     "tmp-promise": "^2.0.2",
+    "ts-loader": "^7.0.3",
     "typescript": "^3.7.3",
     "vsce": "^1.75.0",
-    "vscode-test": "^1.0.0"
+    "vscode-test": "^1.0.0",
+    "webpack": "^4.43.0",
+    "webpack-cli": "^3.3.11"
   }
 }
