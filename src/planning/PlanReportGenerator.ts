@@ -125,9 +125,8 @@ States evaluated: ${plan.statesEvaluated}`;
         if (planVisualizerPath && plan.domain) {
             const absPath = path.join(PddlWorkspace.getFolderPath(plan.domain.fileUri), planVisualizerPath);
             try {
-                delete require.cache[require.resolve(absPath)];
-                // eslint-disable-next-line @typescript-eslint/no-var-requires
-                const visualize = require(absPath);
+                const planVisualizerText = (await workspace.fs.readFile(Uri.file(absPath))).toString();
+                const visualize = eval(planVisualizerText);
                 stateViz = visualize(plan, 300, 100);
                 // todo: document.getElementById("stateviz").innerHTML = stateViz;
                 stateViz = `<div class="stateView" plan="${planIndex}" style="margin: 5px; width: 300px; height: 100px; display: ${styleDisplay};">${stateViz}</div>`;

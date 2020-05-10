@@ -4,9 +4,8 @@
  * ------------------------------------------------------------------------------------------ */
 'use strict';
 
-import { workspace, window, ExtensionContext, languages, commands } from 'vscode';
+import { workspace, window, ExtensionContext, languages, commands, Uri } from 'vscode';
 
-import * as path from 'path';
 import { Planning } from './planning/planning';
 import { PddlWorkspace } from 'pddl-workspace';
 import { PDDL, PLAN, HAPPENINGS } from 'pddl-workspace';
@@ -58,9 +57,7 @@ export let codePddlWorkspace: CodePddlWorkspace | undefined;
 export let planning: Planning | undefined;
 export let ptestExplorer: PTestExplorer | undefined;
 
-export const packageJson = JSON.parse(
-	require('fs').readFileSync(path.join(__dirname, '../package.json')).toString()
-);
+export let packageJson: ExtensionPackage | undefined;
   
 export async function activate(context: ExtensionContext): Promise<PddlWorkspace | undefined> {
 
@@ -84,7 +81,7 @@ export async function activate(context: ExtensionContext): Promise<PddlWorkspace
 	}
 }
 
-function activateWithTelemetry(_operationId: string, context: ExtensionContext): PddlWorkspace {
+async function activateWithTelemetry(_operationId: string, context: ExtensionContext): Promise<PddlWorkspace> {
 	pddlConfiguration = new PddlConfiguration(context);
 
 	const valDownloader = new ValDownloader(context).registerCommands();
@@ -241,6 +238,8 @@ function activateWithTelemetry(_operationId: string, context: ExtensionContext):
 	// tslint:disable-next-line:no-unused-expression
 	new Debugging(context, codePddlWorkspace, pddlConfiguration);
 
+	packageJson = JSON.parse((await workspace.fs.readFile(Uri.file(context.asAbsolutePath('package.json')))).toString());
+
 	context.subscriptions.push(instrumentOperationAsVsCodeCommand('pddl.settings', (): void => {
 		commands.executeCommand(
 			'workbench.action.openSettings',
@@ -304,4 +303,9 @@ function registerDocumentFormattingProvider(context: ExtensionContext, pddlWorks
 	else {
 		return false;
 	}
+}
+
+export interface ExtensionPackage {
+	name: string;
+	publisher: string;
 }
