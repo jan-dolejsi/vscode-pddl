@@ -21,3 +21,4 @@ coverage/
 .github/
 downloadVisJs.js
 webpack.config.js
+node_modules
