@@ -19,7 +19,7 @@ import { StartUp } from './init/StartUp';
 import { PTestExplorer } from './ptest/PTestExplorer';
 import { PlanValidator } from './diagnostics/PlanValidator';
 import { Debugging } from './debugger/debugging';
-import { ExtensionInfo } from './configuration/ExtensionInfo';
+import { ExtensionInfo, ExtensionPackage } from './configuration/ExtensionInfo';
 import { HappeningsValidator } from './diagnostics/HappeningsValidator';
 import { PlanComparer } from './comparison/PlanComparer';
 import { Catalog } from './catalog/Catalog';
@@ -303,9 +303,4 @@ function registerDocumentFormattingProvider(context: ExtensionContext, pddlWorks
 	else {
 		return false;
 	}
-}
-
-export interface ExtensionPackage {
-	name: string;
-	publisher: string;
 }

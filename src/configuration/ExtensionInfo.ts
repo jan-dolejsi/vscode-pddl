@@ -15,7 +15,7 @@ export class ExtensionInfo {
         const extension = extensions.getExtension(extensionId);
         if (extension === undefined) { throw new Error('Extension not found: ' + ExtensionInfo.EXTENSION_ID); }
         this.extensionId = extension.id;
-        this.extensionVersion = extension.packageJSON["version"] as string;
+        this.extensionVersion = (extension.packageJSON as ExtensionPackage).version;
     }
 
     getId(): string {
@@ -25,4 +25,10 @@ export class ExtensionInfo {
     getVersion(): string {
         return this.extensionVersion;
     }
+}
+
+export interface ExtensionPackage {
+	name: string;
+    publisher: string;
+    version: string;
 }
