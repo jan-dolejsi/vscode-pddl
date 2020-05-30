@@ -333,7 +333,7 @@ shapeMap['e'] = 'ellipse';
 function navigate(e) {
     e = e || window.event;
     /** @type{number | undefined} */
-    const newSelectedStateId = undefined;
+    let newSelectedStateId = undefined;
     switch (e.key) {
         case "ArrowLeft":
             newSelectedStateId = e.shiftKey ? navigateChart(-1) : navigateTreeSiblings(-1);

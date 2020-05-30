@@ -63,7 +63,7 @@ export class PTestExplorer {
         this.subscribe(instrumentOperationAsVsCodeCommand('pddl.tests.problemSaveAs', () => this.saveProblemAs().catch(showError)));
 
         this.subscribe(instrumentOperationAsVsCodeCommand(PTEST_REVEAL, nodeUri =>
-            this.pTestViewer.reveal(this.pTestTreeDataProvider.findNodeByResource(nodeUri), { select: true, expand: true }))
+            this.pTestViewer.reveal(this.pTestTreeDataProvider.findNodeByResourceOrThrow(nodeUri), { select: true, expand: true }).then(() => { return; }, showError))
         );
 
         this.manifestGenerator = new ManifestGenerator(this.codePddlWorkspace.pddlWorkspace, this.context);

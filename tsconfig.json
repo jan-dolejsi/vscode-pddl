@@ -5,13 +5,15 @@
 		"noUnusedParameters": true,
 		"noImplicitAny": true,
 		"noImplicitReturns": true,		
-		"target": "es6",
+		"target": "ES2019",
+		"lib": [
+			"es2019"
+		],
 		"module": "commonjs",
 		"moduleResolution": "node",
 		"forceConsistentCasingInFileNames": true,
 		"rootDir": "src",
 		"outDir": "out",
-		"lib": [ "es6" ],
 		"sourceMap": true
 	},
 	"exclude": [

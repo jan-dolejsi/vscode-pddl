@@ -1,5 +1,11 @@
 # PDDL support - What's new?
 
+## 2.17.4
+
+- Faster start-up time due to migration to Webpack. Please report any errors that fell through my week of hands-on usage/testing.
+- Fixed bug, where the test results/outcomes were not being displayed on the tree, if the tree was first-time-expanded _during_ the execution of the tests.
+- Fixed regression on the visual search debugger related to selection of nodes on the tree.
+
 ## 2.17.3
 
 Escaping spaces in VAL paths on MacOS.
