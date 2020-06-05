@@ -66,6 +66,10 @@ export class PlannerAsyncService extends PlannerService {
                 return 1 / 1000;
             case "HOUR":
                 return 60 * 60;
+            case "DAY":
+                return 24 * 60 * 60;
+            case "WEEK":
+                return 7 * 24 * 60 * 60;
             case "SECOND":
             default:
                 return 1;

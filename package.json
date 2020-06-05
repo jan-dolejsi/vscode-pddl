@@ -4,7 +4,7 @@
   "description": "Planning Domain Description Language support",
   "author": "Jan Dolejsi",
   "license": "MIT",
-  "version": "2.17.3",
+  "version": "2.17.4",
   "publisher": "jan-dolejsi",
   "engines": {
     "vscode": "^1.44.0",

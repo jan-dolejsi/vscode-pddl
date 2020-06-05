@@ -1,5 +1,16 @@
 # PDDL support - What's new?
 
+## 2.17.4
+
+- Fixed bug, where the test results/outcomes were not being displayed on the tree, if the tree was first-time-expanded _during_ the execution of the tests.
+- Fixed regression on the visual search debugger related to selection of nodes on the tree.
+- Fixed response to failing plan validation. Instead of opening the _Problems_ pane, we open the _Output_ pane, where the detailed VAL output is printed.
+- Val std-error stream is also now presented in the _Problems_ pane.
+- Small fix for the Overview Page, when it is closed before the current configuration is posted to it.
+- Support for DAY (and WEEK) time resolution in plans.
+- To minimize the refresh of plan visualization, the plans are _no longer_ re-painted when upon the planner exit.
+- Step up to target ES2019
+
 ## 2.17.3
 
 Escaping spaces in VAL paths on MacOS.
