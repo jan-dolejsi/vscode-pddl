@@ -59,7 +59,7 @@ export class AbstractCompletionItemProvider {
     }
 
     protected addConstraintsDocumentation(): void {
-        this.addSuggestionDocumentation(':constraints', 'Constraints', 'Constraints.... you may want to stay away from those.');
+        this.addSuggestionDocumentation(':constraints', 'Constraints', 'Constraints that all plans must satisfy.');
     }
 
     protected addRequirementsDocumentation(): void {
