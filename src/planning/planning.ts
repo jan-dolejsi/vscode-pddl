@@ -484,8 +484,10 @@ export class Planning implements planner.PlannerResponseHandler {
     }
 
     visualizePlans(plans: Plan[]): void {
-        this.plans = plans;
-        this.planView.setPlannerOutput(plans, !this.isSearchDebugger());
+        if (this.plans !== plans) {
+            this.plans = plans;
+            this.planView.setPlannerOutput(plans, !this.isSearchDebugger());
+        }
     }
 
     static q(path: string): string {

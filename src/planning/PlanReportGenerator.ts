@@ -199,11 +199,23 @@ ${objectsHtml}
 
                     functionValues.forEach((values, liftedVariable) => {
                         const chartDivId = `chart_${planIndex}_${liftedVariable.declaredName}`;
-                        lineCharts += `        <div id="${chartDivId}" style="width: ${this.options.displayWidth + 100}px; height: ${Math.round(this.options.displayWidth / 2)}px"></div>\n`;
+                        lineCharts += this.createLineChartDiv(chartDivId);
                         let chartTitleWithUnit = values.legend.length > 1 ? liftedVariable.name : liftedVariable.getFullName();
                         if (liftedVariable.getUnit()) { chartTitleWithUnit += ` [${liftedVariable.getUnit()}]`; }
                         lineChartScripts += `        drawChart('${chartDivId}', '${chartTitleWithUnit}', '', ${JSON.stringify(values.legend)}, ${JSON.stringify(values.values)}, ${this.options.displayWidth});\n`;
                     });
+
+                    // add one plot for declared metric
+                    for (let metricIndex = 0; metricIndex < plan.problem.getMetrics().length; metricIndex++) {
+                        const metric = plan.problem.getMetrics()[metricIndex];
+
+                        const metricValues = await evaluator.evaluateExpression(metric.getExpression());
+                        const chartDivId = `chart_${planIndex}_metric${metricIndex}`;
+                        lineCharts += this.createLineChartDiv(chartDivId);
+                        const chartTitleWithUnit = metric.getDocumentation()[metric.getDocumentation().length - 1];
+                        lineChartScripts += `        drawChart('${chartDivId}', '${chartTitleWithUnit}', '', ['${/*unit?*/""}'], ${JSON.stringify(metricValues.values)}, ${this.options.displayWidth});\n`;
+                    }
+
                 } catch (err) {
                     console.error(err);
                     const valStepPath = evaluator.getValStepPath();
@@ -225,6 +237,10 @@ ${swimLanes}
 ${lineCharts}
         <script>function drawPlan${planIndex}Charts(){\n${lineChartScripts}}</script>
 `;
+    }
+
+    private createLineChartDiv(chartDivId: string): string {
+        return `        <div id="${chartDivId}" style="width: ${this.options.displayWidth + 100}px; height: ${Math.round(this.options.displayWidth / 2)}px"></div>\n`;
     }
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any

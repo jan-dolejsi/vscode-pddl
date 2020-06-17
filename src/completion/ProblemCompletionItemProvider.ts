@@ -92,7 +92,7 @@ export class ProblemCompletionItemProvider extends AbstractCompletionItemProvide
             case parser.PddlStructure.OBJECTS:
             case parser.PddlStructure.INIT:
             case parser.PddlStructure.CONSTRAINTS:
-                return this.createSnippetCompletionItem(suggestion, "(" + suggestion.sectionName + " \n\t$0\n)", range, context, index);
+                return this.createSnippetCompletionItem(suggestion, "(" + suggestion.sectionName + " (and\n\t$0\n))", range, context, index);
             case parser.PddlStructure.GOAL:
                 return this.createSnippetCompletionItem(suggestion, "(" + suggestion.sectionName + " (and\n\t$0\n))", range, context, index);
             case parser.PddlStructure.METRIC:

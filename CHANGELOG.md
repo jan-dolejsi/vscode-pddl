@@ -1,10 +1,37 @@
 # PDDL support - What's new?
 
-## 2.17.4
+## [Unreleased]
 
 - Faster start-up time due to migration to Webpack. Please report any errors that fell through my week of hands-on usage/testing.
+
+## [2.18.0]
+
+### Features
+
+### Line plots for multiple metric expressions
+
+If your planner supports multiple `(:metric ...)` expressions in the problem file (VAL actually does),
+you can use it to get some ad-hoc expressions displayed on a line plot below the plan.
+This is very useful, to debug numerically-rich domains.
+
+![Plan metric plots](https://raw.githubusercontent.com/wiki/jan-dolejsi/vscode-pddl/img/plan_metric_plots.jpg)
+
+### Other improvements
+
+- Auto completion for (:constraints ) includes the nested (and ), which I always forget
+- Val std-error stream is also now presented in the _Problems_ pane.
+- Support for DAY (and WEEK) time resolution in plans.
+- To minimize the refresh of plan visualization, the plans are _no longer_ re-painted when upon the planner exit.
+
+### Fixes
+
 - Fixed bug, where the test results/outcomes were not being displayed on the tree, if the tree was first-time-expanded _during_ the execution of the tests.
 - Fixed regression on the visual search debugger related to selection of nodes on the tree.
+- Fixed response to failing plan validation. Instead of opening the _Problems_ pane, we open the _Output_ pane, where the detailed VAL output is printed.
+- Small fix for the Overview Page, when it is closed before the current configuration is posted to it.
+- Async service call handles multiple plans and xml plan format
+- Fixed bug that caused the extension to hang in an endless loop, while resolving a PDDL symbol references (while hover-over)
+- Step up to target ES2019
 
 ## 2.17.3
 
@@ -1014,7 +1041,8 @@ Note for open source contributors: all notable changes to the "pddl" extension w
 
 Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
 
-[Unreleased]: https://github.com/jan-dolejsi/vscode-pddl/compare/v2.17.1...HEAD
+[Unreleased]: https://github.com/jan-dolejsi/vscode-pddl/compare/v2.18.0...HEAD
+[2.17.1]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.17.1...v2.18.0
 [2.16.0]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.16.0...v2.17.1
 [2.15.7]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.15.7...v2.16.0
 [2.15.7]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.15.6...v2.15.7

@@ -17,7 +17,8 @@ function drawChart(chartDivId, functionName, unit, objects, columnData) {
             title: 'Time'
         },
         vAxis: {
-            title: unit
+            title: unit,
+            scaleType: 'linear' //vAxisScaleType = 'log'
         },
         interpolateNulls: true,
         title: functionName
@@ -46,7 +47,8 @@ function drawChartMultipleSeries(chartDivId, functionName, unit, objects, column
             title: 'Time'
         },
         vAxis: {
-            title: unit
+            title: unit,
+            scaleType: 'linear' //vAxisScaleType = 'log'
         },
         interpolateNulls: true,
         title: functionName

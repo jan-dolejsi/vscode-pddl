@@ -190,7 +190,7 @@ export class DomainCompletionItemProvider extends AbstractCompletionItemProvider
             case parser.PddlStructure.PREDICATES:
             case parser.PddlStructure.FUNCTIONS:
             case parser.PddlStructure.CONSTRAINTS:
-                return this.createSnippetCompletionItem(suggestion, "(" + suggestion.sectionName + " \n\t$0\n)", range, context, index);
+                return this.createSnippetCompletionItem(suggestion, "(" + suggestion.sectionName + " (and\n\t$0\n))", range, context, index);
 
             case parser.PddlStructure.ACTION:
                 return this.createSnippetCompletionItem(suggestion, ["(:action ${1:action_name}",
