@@ -325,7 +325,7 @@ export class OverviewPage {
             updateValAlert: await this.val.isNewValVersionAvailable()
             // todo: workbench.editor.revealIfOpen
         };
-        return this.webViewPanel.webview.postMessage(message);
+        return this.webViewPanel.webview?.postMessage(message) ?? false;
     }
 
     private toWireWorkspaceFolder(workspaceFolder: WorkspaceFolder): WireWorkspaceFolder {

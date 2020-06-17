@@ -48,11 +48,16 @@ export class PTestTreeDataProvider implements TreeDataProvider<PTestNode> {
     setTestOutcome(test: Test, testOutcome: TestOutcome): void {
         this.testResults.set(test.getUriOrThrow().toString(), testOutcome);
         const node = this.findNodeByResource(test.getUriOrThrow());
-        this._onDidChange.fire(node);
+        // the node may not exist, if the tree hasn't been expanded yet
+        node && this._onDidChange.fire(node);
+    }
+
+    findNodeByResourceOrThrow(resource: Uri): PTestNode {
+        return assertDefined(this.findNodeByResourceOrThrow(resource), `No node for ${resource.toString()}`);
     }
 
     findNodeByResource(resource: Uri): PTestNode {
-        return assertDefined(this.treeNodeCache.get(resource.toString()), `No node for ${resource.toString()}`);
+        return this.treeNodeCache.get(resource.toString());
     }
 
     cache(node: PTestNode): PTestNode {

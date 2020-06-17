@@ -66,6 +66,10 @@ export class PlannerAsyncService extends PlannerService {
                 return 1 / 1000;
             case "HOUR":
                 return 60 * 60;
+            case "DAY":
+                return 24 * 60 * 60;
+            case "WEEK":
+                return 7 * 24 * 60 * 60;
             case "SECOND":
             default:
                 return 1;
@@ -73,7 +77,7 @@ export class PlannerAsyncService extends PlannerService {
     }
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    processServerResponseBody(responseBody: any, planParser: parser.PddlPlannerOutputParser, callbacks: planner.PlannerResponseHandler, resolve: (plans: Plan[]) => void, reject: (error: Error) => void): void {
+    async processServerResponseBody(responseBody: any, planParser: parser.PddlPlannerOutputParser, callbacks: planner.PlannerResponseHandler, resolve: (plans: Plan[]) => void, reject: (error: Error) => void): Promise<void> {
         let _timedOut = false;
         const responseStatus: string = responseBody['status']['status'];
         if (["STOPPED", "SEARCHING_BETTER_PLAN"].includes(responseStatus)) {
@@ -82,15 +86,20 @@ export class PlannerAsyncService extends PlannerService {
                 const plansJson = responseBody['plans'];
                 try {
                     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                    plansJson.forEach((plan: any) => this.parsePlan(plan, planParser));
+                    const parserPromises = plansJson.map((plan: any) => this.parsePlan(plan, planParser));
+                    await Promise.all(parserPromises);
                 }
                 catch (err) {
                     reject(err);
                 }
 
                 const plans = planParser.getPlans();
-                if (plans.length > 0) { callbacks.handleOutput(plans[0].getText() + '\n'); }
-                else { callbacks.handleOutput('No plan found.'); }
+                if (plans.length > 0) {
+                    callbacks.handleOutput(plans[0].getText() + '\n');
+                }
+                else {
+                    callbacks.handleOutput('No plan found.');
+                }
 
                 resolve(plans);
                 return;
@@ -117,7 +126,7 @@ export class PlannerAsyncService extends PlannerService {
     }
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    parsePlan(plan: any, planParser: parser.PddlPlannerOutputParser): void {
+    async parsePlan(plan: any, planParser: parser.PddlPlannerOutputParser): Promise<void> {
         const makespan: number = plan['makespan'];
         const metric: number = plan['metricValue'];
         const searchPerformanceInfo = plan['searchPerformanceInfo'];
@@ -127,19 +136,19 @@ export class PlannerAsyncService extends PlannerService {
         planParser.setPlanMetaData(makespan, metric, statesEvaluated, elapsedTimeInSeconds, this.planTimeScale);
 
         const planFormat: string | undefined = plan['format'];
-        if (planFormat && planFormat.toLowerCase() === 'json') {
+        if (planFormat?.toLowerCase() === 'json') {
             const planSteps = JSON.parse(plan['content']);
             this.parsePlanSteps(planSteps, planParser);
             planParser.onPlanFinished();
         }
-        else if (planFormat && planFormat.toLowerCase() === 'tasks') {
+        else if (planFormat?.toLowerCase() === 'tasks') {
             const planText = plan['content'];
             planParser.appendLine(planText);
             planParser.onPlanFinished();
         }
-        else if (planFormat && planFormat.toLowerCase() === 'xplan') {
+        else if (planFormat?.toLowerCase() === 'xplan') {
             const planText = plan['content'];
-            planParser.appendLine(planText); // the underlying 
+            await planParser.appendXplan(planText); // must await the underlying async xml parsing
         }
         else {
             throw new Error('Unsupported plan format: ' + planFormat);

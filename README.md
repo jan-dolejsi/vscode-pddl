@@ -163,6 +163,15 @@ If one of the rules above is not satisfied, the editor will not naturally associ
 
 ![domain/problem/plann associations](https://raw.githubusercontent.com/wiki/jan-dolejsi/vscode-pddl/img/PDDL_explicit_domain-problem-plan_associations.gif)
 
+#### Line plots for multiple metric expressions
+
+If your planner supports multiple `(:metric ...)` expressions in the problem file (VAL actually does),
+you can use it to get some ad-hoc expressions displayed on a line plot below the plan.
+This is very useful, to debug numerically-rich domains.
+
+![Plan metric plots](https://raw.githubusercontent.com/wiki/jan-dolejsi/vscode-pddl/img/plan_metric_plots.jpg)
+
+
 #### Running the planner interactively
 
 See configuration setting `pddlPlanner.executionTarget` to select where is the planner executable started. You can either direct planner executable output to a _Terminal_ window instead of the _Output window_. This can be configured on the _Overview page_.

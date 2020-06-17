@@ -59,7 +59,8 @@ export class PlanValidator {
             try {
                 const outcome = await this.validatePlanDocument(planDocument);
                 if (outcome.getError()) {
-                    commands.executeCommand('workbench.actions.view.problems');
+                    // do not open the _Problems_ pane, unless you can direct the error there
+                    // commands.executeCommand('workbench.actions.view.problems');
                     throw new Error(outcome.getError());
                 }
             } catch (ex) {
@@ -157,7 +158,7 @@ export class PlanValidator {
                 this.output.appendLine(child.stderr.toString());
             }
 
-            outcome = this.analyzeOutput(planInfo, child.error, output);
+            outcome = this.analyzeOutput(planInfo, child.stderr.toString(), child.error, output);
             onSuccess(outcome.getDiagnostics());
         }
 
@@ -185,7 +186,7 @@ export class PlanValidator {
         return ".";
     }
 
-    analyzeOutput(planInfo: PlanInfo, error: Error | undefined, output: string): PlanValidationOutcome {
+    analyzeOutput(planInfo: PlanInfo, stderr: string, error: Error | undefined, output: string): PlanValidationOutcome {
         if (error) {
             return PlanValidationOutcome.failed(planInfo, error);
         }
@@ -210,6 +211,10 @@ export class PlanValidator {
             return PlanValidationOutcome.invalidPlanDescription(planInfo);
         } else if (output.match("Plan valid")) {
             return PlanValidationOutcome.valid(planInfo);
+        }
+
+        if (stderr?.trim()) {
+            return PlanValidationOutcome.otherError(planInfo, stderr.trim());
         }
 
         return PlanValidationOutcome.unknown(planInfo);
@@ -317,6 +322,11 @@ class PlanValidationOutcome {
 
         const diagnostics = repairHints.map(hint => new Diagnostic(createRangeFromLine(errorLine), hint, DiagnosticSeverity.Warning));
         return new PlanValidationOutcome(planInfo, diagnostics);
+    }
+
+    static otherError(planInfo: PlanInfo, error: string): PlanValidationOutcome {
+        const diagnostics = [new Diagnostic(createRangeFromLine(0), `${error}. Run the 'PDDL: Validate plan' command for more information.`, DiagnosticSeverity.Error)];
+        return new PlanValidationOutcome(planInfo, diagnostics, error);
     }
 
     static unknown(planInfo: PlanInfo): PlanValidationOutcome {
