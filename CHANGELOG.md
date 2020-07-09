@@ -3,7 +3,6 @@
 ## 2.18.1
 
 - Fixed display of multiple displaying plans, which due to a race condition in the code sometimes showed and sometimes did not.
-- Updated VAL version dependency
 
 ## [2.18.0]
 
