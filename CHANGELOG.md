@@ -1,6 +1,11 @@
 # PDDL support - What's new?
 
-## 2.18.0
+## 2.18.1
+
+- Fixed display of multiple displaying plans, which due to a race condition in the code sometimes showed and sometimes did not.
+- Updated VAL version dependency
+
+## [2.18.0]
 
 ### Features
 
@@ -1038,7 +1043,7 @@ Note for open source contributors: all notable changes to the "pddl" extension w
 Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
 
 [Unreleased]: https://github.com/jan-dolejsi/vscode-pddl/compare/v2.18.0...HEAD
-[2.16.0]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.17.1...v2.18.0
+[2.17.1]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.17.1...v2.18.0
 [2.16.0]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.16.0...v2.17.1
 [2.15.7]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.15.7...v2.16.0
 [2.15.7]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.15.6...v2.15.7

@@ -484,8 +484,8 @@ export class Planning implements planner.PlannerResponseHandler {
     }
 
     visualizePlans(plans: Plan[]): void {
-        if (this.plans !== plans) {
-            this.plans = plans;
+        if (this.plans.length !== plans.length) {
+            this.plans = [...plans]; // making a copy of the list, so the above comparison works
             this.planView.setPlannerOutput(plans, !this.isSearchDebugger());
         }
     }
