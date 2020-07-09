@@ -247,7 +247,8 @@ Error: terminate called after throwing an instance of 'std::bad_alloc'
         // invoke the mock planner
         const planningResult = await waitFor(planning.onPlansFound, {
             action: async () =>
-                await commands.executeCommand(PDDL_PLAN_AND_DISPLAY, domainUri, problemUri, cwd, mockPlanPath)
+                await commands.executeCommand(PDDL_PLAN_AND_DISPLAY, domainUri, problemUri, cwd, mockPlanPath),
+            filter: planningResult => planningResult.plans.length === 9
         });
 
         // THEN
