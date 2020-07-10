@@ -2,7 +2,7 @@
 
 ## 2.18.1
 
-- Fixed visualization of multiple improving plans. Most of the times only the first plan would show and the improving plans would be ignored by the visualization. This was due to a race condition in the extension code.
+- Fixed visualization of multiple improving plans. Most of the times only the first plan would show and the improving plans would be ignored by the visualization. This was due to a race condition in the extension code..
 
 ## [2.18.0]
 
