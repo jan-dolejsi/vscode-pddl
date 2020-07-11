@@ -21,7 +21,7 @@ import { PlanReportSettings } from './PlanReportSettings';
 import { VAL_STEP_PATH, CONF_PDDL, VALUE_SEQ_PATH, PLAN_REPORT_LINE_PLOT_GROUP_BY_LIFTED, DEFAULT_EPSILON, VAL_VERBOSE } from '../configuration/configuration';
 import { utils } from 'pddl-workspace';
 import { ValStepError, ValStep } from 'ai-planning-val';
-import { ensureAbsoluteGlobalStoragePath } from '../utils';
+import { ensureAbsoluteGlobalStoragePath, WebviewUriConverter } from '../utils';
 import { PddlWorkspace } from 'pddl-workspace';
 const DIGITS = 4;
 
@@ -81,8 +81,8 @@ export class PlanReportGenerator {
 
     asAbsolutePath(...paths: string[]): Uri {
         let uri = Uri.file(this.context.asAbsolutePath(path.join(...paths)));
-        if (!this.options.selfContained) {
-            uri = uri.with({ scheme: "vscode-resource" });
+        if (!this.options.selfContained && this.options.resourceUriConverter) {
+            uri = this.options.resourceUriConverter.asWebviewUri(uri);
         }
         return uri;
     }
@@ -516,4 +516,5 @@ export interface PlanReportOptions {
     disableSwimLaneView?: boolean;
     disableLinePlots?: boolean;
     disableHamburgerMenu?: boolean;
+    resourceUriConverter?: WebviewUriConverter;
 }

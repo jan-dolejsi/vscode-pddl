@@ -173,7 +173,7 @@ export class PlanView extends Disposable {
         }
         else {
             const width = workspace.getConfiguration(CONF_PDDL).get<number>(PLAN_REPORT_WIDTH, 300);
-            return new PlanReportGenerator(this.context, { displayWidth: width, selfContained: false })
+            return new PlanReportGenerator(this.context, { displayWidth: width, selfContained: false, resourceUriConverter: previewPanel.getPanel().webview })
                 .generateHtml(previewPanel.getPlans());
         }
     }

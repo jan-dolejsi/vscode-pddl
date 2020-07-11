@@ -72,6 +72,10 @@ function createContentSecurityPolicy(webview: Webview, options: WebViewHtmlOptio
 \t/>`;
 }
 
+export interface WebviewUriConverter {
+    asWebviewUri(localResource: Uri): Uri;
+}
+
 export function sleep(ms: number): Promise<void> {
     return new Promise(resolve => {
         setTimeout(resolve, ms);

@@ -217,7 +217,10 @@ export class SearchDebuggerView {
         if (!state) { return; }
         const statePlan = new StateToPlan(this.domain, this.problem).convert(state);
         const planHtml = await new PlanReportGenerator(this.context,
-            { displayWidth: 200, selfContained: false, disableLinePlots: true, disableSwimLaneView: false, disableHamburgerMenu: true })
+            {
+                displayWidth: 200, selfContained: false, disableLinePlots: true, disableSwimLaneView: false, disableHamburgerMenu: true,
+                resourceUriConverter: this.webViewPanel.webview
+            })
             .generateHtml([statePlan]);
         this.postMessage({ command: 'showStatePlan', state: planHtml });
     }
