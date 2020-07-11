@@ -811,7 +811,7 @@
         },
         "pddl.validatorVersion": {
           "type": "number",
-          "default": 37,
+          "default": 46,
           "title": "VAL build number",
           "description": "Stable VAL build number to download or update to."
         },
@@ -973,7 +973,7 @@
     "test": "npm run test:unit && npm run test:integration"
   },
   "dependencies": {
-    "ai-planning-val": "^2.2.1",
+    "ai-planning-val": "^2.3.1",
     "await-notify": "^1.0.1",
     "body-parser": "^1.19.0",
     "events": "^3.1.0",
@@ -1014,7 +1014,7 @@
     "minimist": ">=0.2.1",
     "mocha": "^6.1.4",
     "tmp-promise": "^2.0.2",
-    "typescript": "^3.7.3",
+    "typescript": "^3.9.6",
     "vsce": "^1.75.0",
     "vscode-test": "^1.0.0"
   }
