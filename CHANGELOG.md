@@ -1,6 +1,6 @@
 # PDDL support - What's new?
 
-## 2.18.1
+## 2.18.2
 
 - Fixed display of multiple displaying plans, which due to a race condition in the code sometimes showed and sometimes did not.
 
