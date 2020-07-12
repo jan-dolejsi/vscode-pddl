@@ -2,7 +2,7 @@
 
 ## 2.18.2
 
-- Fixed display of multiple displaying plans, which due to a race condition in the code sometimes showed and sometimes did not.
+- Fixed visualization of multiple improving plans. Most of the times only the first plan would show and the improving plans would be ignored by the visualization. This was due to a race condition in the extension code..
 
 ## [2.18.0]
 
