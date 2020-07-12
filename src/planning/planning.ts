@@ -484,10 +484,38 @@ export class Planning implements planner.PlannerResponseHandler {
     }
 
     visualizePlans(plans: Plan[]): void {
-        if (this.plans.length !== plans.length) {
+        if (!this.arePlanListsEqual(this.plans, plans)) {
             this.plans = [...plans]; // making a copy of the list, so the above comparison works
             this.planView.setPlannerOutput(plans, !this.isSearchDebugger());
         }
+    }
+
+    arePlanListsEqual(plans1: Plan[], plans2: Plan[]): boolean {
+        if (plans1.length !== plans2.length) {
+            return false;
+        }
+
+        for (let i = 0; i < plans1.length; i++) {
+            if (!this.arePlansEqual(plans1[i], plans2[i])) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    arePlansEqual(plan1: Plan, plan2: Plan): boolean {
+        if (plan1.steps.length !== plan2.steps.length) {
+            return false;
+        }
+
+        for (let i = 0; i < plan1.steps.length; i++) {
+            if (!plan1.steps[i].equals(plan2.steps[i], this.pddlConfiguration.getEpsilonTimeStep())) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     static q(path: string): string {
