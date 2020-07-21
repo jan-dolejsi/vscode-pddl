@@ -207,8 +207,10 @@ export class ExecutablePlannerProvider implements planner.PlannerProvider {
     async configurePlanner(previousConfiguration?: planner.PlannerConfiguration): Promise<planner.PlannerConfiguration | undefined> {
         const filters = os.platform() === 'win32' ?
             {
+                'Executable or batch file': ['exe', 'bat', 'cmd'],
                 'Executable': ['exe'],
-                'Batch file': ['bat', 'cmd']
+                'Batch file': ['bat', 'cmd'],
+                'All files': ['*']
             }
             : undefined;
 
