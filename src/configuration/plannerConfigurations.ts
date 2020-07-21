@@ -274,6 +274,31 @@ export class Popf implements planner.PlannerProvider {
 
         return newPlannerConfiguration;
     }
+
+    getPlannerOptions(): planner.PlannerOption[] {
+        return [
+            { option: "-n", description: "Continuous searching after the first plan is reached in quest for alternative plans with a better metric" },
+            { option: "-citation", description: "Display citation to relevant conference paper (ICAPS 2010)" },
+            { option: "-b", description: "Disable best-first search - if EHC fails, abort" },
+            { option: "-E", description: "Skip EHC: go straight to best-first search" },
+            { option: "-e", description: "Use standard EHC instead of steepest descent" },
+            { option: "-h", description: "Disable helpful-action pruning" },
+            { option: "-k", description: "Disable compression-safe action detection" },
+            { option: "-c", description: "Enable the tie-breaking in RPG that favour actions that slot into the partial order earlier" },
+            { option: "-S", description: "Sort initial layer facts in RPG by availability order (only use if using -c)" },
+            { option: "-m", description: "Disable the tie-breaking in search that favours plans with shorter makespans" },
+            { option: "-F", description: "Full FF helpful actions (rather than just those in the RP applicable in the current state)" },
+            { option: "-I", description: "Disable the hybrid Bellman-Ford--LP solver" },
+            { option: "-T", description: "Rather than building a partial order, build a total-order" },
+            // { option: "-J123", description: "Generate search graph" },
+            { option: "-v16", description: "Info about RPG generation instanciation of action found (Number of applicable actions)" },
+            { option: "-v64", description: "Numeric fluents output" },
+            { option: "-v1048576", description: "Verbose output details the relaxed plan for each action applied (in the standard output)." },
+            { option: "-L4", description: "Prints out some LP stuff to the console " },
+            { option: "-L8", description: "Outputs the LP program into a stateevaluation.lp file" },
+            { option: "-L16", description: "Generates the lp program with bounds of the state variables; but overwrites the files, so you only get files for the last variable" },
+        ];
+    }
 }
 
 

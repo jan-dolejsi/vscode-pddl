@@ -392,7 +392,7 @@ export class Planning implements planner.PlannerResponseHandler {
             }
 
             if (plannerConfiguration.url.endsWith("/solve")) {
-                options = await this.getPlannerLineOptions(options);
+                options = await this.getPlannerLineOptions(plannerConfiguration, options);
                 if (options === undefined) { return null; }
 
                 return new PlannerSyncService(plannerConfiguration.url, options, authentication);
@@ -407,7 +407,7 @@ export class Planning implements planner.PlannerResponseHandler {
             }
         }
         else {
-            options = await this.getPlannerLineOptions(options);
+            options = await this.getPlannerLineOptions(plannerConfiguration, options);
             if (options === undefined) { return null; }
 
             return new PlannerExecutable(plannerConfiguration.path, options, plannerConfiguration.syntax, workingDirectory);
@@ -421,9 +421,12 @@ export class Planning implements planner.PlannerResponseHandler {
         return Uri.file(absoluteConfigPath);
     }
 
-    async getPlannerLineOptions(options: string | undefined): Promise<string | undefined> {
+    async getPlannerLineOptions(configuration: planner.PlannerConfiguration, options: string | undefined): Promise<string | undefined> {
         if (options === undefined) {
-            return await this.userOptionsProvider.getPlannerOptions();
+            const plannerProvider = this.codePddlWorkspace.pddlWorkspace.getPlannerRegistrar()
+                .getPlannerProvider({ kind: configuration.kind });
+
+            return await this.userOptionsProvider.getPlannerOptions(plannerProvider);
         }
         else {
             return options;
