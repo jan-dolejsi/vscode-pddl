@@ -273,7 +273,7 @@ class MockStateContext {
     apply(actionName: string, shotCounter: number, kind: HappeningType, timeIncrement: number): MockStateContext {
         const id = ++MockState.lastStateId;
         const earliestTime = this.earliestTime + timeIncrement;
-        const appliedAction = new MockSearchHappening(earliestTime, actionName, shotCounter, kind, false);
+        const appliedAction = new MockSearchHappening(earliestTime, actionName, shotCounter, 1, kind, false);
         const newPlanHead = this.planHead.concat([appliedAction]);
         return new MockStateContext(new MockState(id.toString()), this.g + 1, earliestTime, appliedAction, newPlanHead, this.state.id);
     }
@@ -322,13 +322,13 @@ class RelaxedPlanBuilder {
 
     start(actionName: string): RelaxedPlanBuilder {
         const time = this.time += EPSILON;
-        this.happenings.push(new MockSearchHappening(time, actionName, 0, HappeningType.START, true));
+        this.happenings.push(new MockSearchHappening(time, actionName, 0, 1, HappeningType.START, true));
         return this;
     }
 
     end(timeOffset: number, actionName: string): RelaxedPlanBuilder {
         const time = this.time += timeOffset;
-        this.happenings.push(new MockSearchHappening(time, actionName, 0, HappeningType.END, true));
+        this.happenings.push(new MockSearchHappening(time, actionName, 0, 1, HappeningType.END, true));
         return this;
     }
 

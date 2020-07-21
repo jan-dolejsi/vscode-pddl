@@ -4,25 +4,26 @@
  * ------------------------------------------------------------------------------------------ */
 'use strict';
 
-import { HappeningType } from 'pddl-workspace';
-import { HelpfulAction } from 'pddl-workspace';
+import { HappeningType, HelpfulAction } from 'pddl-workspace';
 
 export interface SearchHappening {
     earliestTime: number;
     actionName: string;
     shotCounter: number;
+    iterations: number;
     kind: HappeningType;
     isRelaxed: boolean;
 }
 
 export class MockSearchHappening implements SearchHappening{
     constructor(public readonly earliestTime: number, public readonly actionName: string,
-        public readonly shotCounter: number, public readonly kind: HappeningType, 
-        public readonly isRelaxed: boolean) { }
+        public readonly shotCounter: number, public readonly iterations: number,
+        public readonly kind: HappeningType, public readonly isRelaxed: boolean) { }
 
     toString(): string {
         const relaxed = this.isRelaxed ? '*' : '';
-        return `${this.earliestTime}: ${this.actionName}[${this.shotCounter}] ${this.kind}${relaxed}`;
+        const iterations = this.iterations > 1 ? ` ${this.iterations}x` : '';
+        return `${this.earliestTime}: ${this.actionName}[${this.shotCounter}] ${this.kind}${relaxed}${iterations}`;
     }
 }
 

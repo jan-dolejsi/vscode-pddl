@@ -83,6 +83,10 @@ export class MessageParser {
                 break;
         }
 
+        if (lastHappening.iterations > 1) {
+            actionName += ` ${lastHappening.iterations}x`;
+        }
+
         return actionName;
     }
 
@@ -117,6 +121,7 @@ export class MessageParser {
             actionName: happening.actionName,
             earliestTime: happening.earliestTime,
             shotCounter: happening.shotCounter,
+            iterations: happening.iterations,
             kind: this.parseHappeningType(happening.kind),
             isRelaxed: isRelaxed
         };
