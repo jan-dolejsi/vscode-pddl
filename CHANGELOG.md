@@ -1,5 +1,9 @@
 # PDDL support - What's new?
 
+## 2.18.4
+
+- Added visualization of action (with numeric effects) iterations in relaxed plan.
+
 ## 2.18.3
 
 - Added support out-of-the-box planner options.
