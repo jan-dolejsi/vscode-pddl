@@ -9,7 +9,7 @@ import * as path from 'path';
 import { parseTree, findNodeAtLocation } from 'jsonc-parser';
 import { window, commands, workspace, ConfigurationTarget, QuickPickItem, ExtensionContext, StatusBarItem, StatusBarAlignment, Uri, Range, WorkspaceFolder, TextDocument, ViewColumn } from 'vscode';
 import { PddlWorkspace, planner } from 'pddl-workspace';
-import { CommandPlannerProvider, SolveServicePlannerProvider, RequestServicePlannerProvider, ExecutablePlannerProvider, Popf } from './plannerConfigurations';
+import { CommandPlannerProvider, SolveServicePlannerProvider, RequestServicePlannerProvider, ExecutablePlannerProvider, Popf, JavaPlannerProvider } from './plannerConfigurations';
 import { CONF_PDDL, PDDL_PLANNER, EXECUTABLE_OR_SERVICE, EXECUTABLE_OPTIONS } from './configuration';
 import { instrumentOperationAsVsCodeCommand } from 'vscode-extension-telemetry-wrapper';
 import { showError, jsonNodeToRange, fileExists, isHttp } from '../utils';
@@ -171,7 +171,7 @@ export class PlannersConfiguration {
             new SolveServicePlannerProvider(),
             new RequestServicePlannerProvider(),
             new Popf(),
-            // new JavaPlannerProvider(),
+            new JavaPlannerProvider(),
         ].forEach(provider =>
             this.pddlWorkspace.getPlannerRegistrar().registerPlannerProvider(provider.kind, provider));
     }

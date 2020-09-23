@@ -1,5 +1,9 @@
 # PDDL support - What's new?
 
+## 2.18.5
+
+- Added Java executable jar planner configuration kind.
+
 ## 2.18.4
 
 - Added visualization of action (with numeric effects) iterations in relaxed plan.

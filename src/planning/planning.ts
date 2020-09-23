@@ -410,7 +410,9 @@ export class Planning implements planner.PlannerResponseHandler {
             options = await this.getPlannerLineOptions(plannerConfiguration, options);
             if (options === undefined) { return null; }
 
-            return new PlannerExecutable(plannerConfiguration.path, options, plannerConfiguration.syntax, workingDirectory);
+            return this.codePddlWorkspace.pddlWorkspace.getPlannerRegistrar()
+                .getPlannerProvider({ kind: plannerConfiguration.kind })?.createPlanner?.(plannerConfiguration, options, workingDirectory) ?? 
+                new PlannerExecutable(plannerConfiguration.path, options, plannerConfiguration.syntax, workingDirectory);
         }
     }
 

@@ -8,8 +8,9 @@ import * as os from 'os';
 import * as path from 'path';
 import { Uri, window } from 'vscode';
 
-import { planner, OutputAdaptor } from 'pddl-workspace';
+import { planner, OutputAdaptor, utils } from 'pddl-workspace';
 import { isHttp } from '../utils';
+import { PlannerExecutable } from '../planning/PlannerExecutable';
 
 export class CommandPlannerProvider implements planner.PlannerProvider {
     get kind(): planner.PlannerKind {
@@ -80,9 +81,6 @@ export class CommandPlannerProvider implements planner.PlannerProvider {
     showHelp(_output: OutputAdaptor): void {
         throw new Error("Method not implemented.");
     }
-    createPlanner(): planner.Planner {
-        throw new Error("Method not implemented.");
-    }
 }
 
 export class SolveServicePlannerProvider implements planner.PlannerProvider {
@@ -123,9 +121,6 @@ export class SolveServicePlannerProvider implements planner.PlannerProvider {
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     showHelp(_output: OutputAdaptor): void {
-        throw new Error("Method not implemented.");
-    }
-    createPlanner(): planner.Planner {
         throw new Error("Method not implemented.");
     }
 }
@@ -171,9 +166,6 @@ export class RequestServicePlannerProvider implements planner.PlannerProvider {
     showHelp(_output: OutputAdaptor): void {
         throw new Error("Method not implemented.");
     }
-    createPlanner(): planner.Planner {
-        throw new Error("Method not implemented.");
-    }
 }
 
 export class JavaPlannerProvider implements planner.PlannerProvider {
@@ -183,16 +175,33 @@ export class JavaPlannerProvider implements planner.PlannerProvider {
     getNewPlannerLabel(): string {
         return "$(file-binary) Select a Java JAR file...";
     }
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    configurePlanner(_previousConfiguration?: planner.PlannerConfiguration): Promise<planner.PlannerConfiguration | undefined> {
-        throw new Error("Method not implemented.");
+
+    async configurePlanner(previousConfiguration?: planner.PlannerConfiguration): Promise<planner.PlannerConfiguration | undefined> {
+        const filters = 
+            {
+                'Java executable archive': ['jar'],
+            };
+
+        const defaultUri = previousConfiguration && previousConfiguration.path && Uri.file(previousConfiguration?.path);
+
+        const executableUri = await selectedFile(`Select executable JAR`, defaultUri, filters);
+        if (!executableUri) { return undefined; }
+
+        const newPlannerConfiguration: planner.PlannerConfiguration = {
+            kind: this.kind.kind,
+            canConfigure: true,
+            path: executableUri.fsPath,
+            title: path.basename(executableUri.fsPath)
+        };
+
+        return newPlannerConfiguration;
     }
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     showHelp(_output: OutputAdaptor): void {
         // do nothing
     }
-    createPlanner(): planner.Planner {
-        throw new Error("Method not implemented.");
+    createPlanner(configuration: planner.PlannerConfiguration, plannerOptions: string, workingDirectory: string): planner.Planner | undefined {
+        return new PlannerExecutable(`java -jar ${utils.Util.q(configuration.path)}`, plannerOptions, configuration.syntax, workingDirectory);
     }
 }
 
@@ -233,10 +242,6 @@ export class ExecutablePlannerProvider implements planner.PlannerProvider {
     showHelp(_output: OutputAdaptor): void {
         throw new Error("Method not implemented.");
     }
-    createPlanner(): planner.Planner {
-        throw new Error("Method not implemented.");
-    }
-
 }
 
 export class Popf implements planner.PlannerProvider {
