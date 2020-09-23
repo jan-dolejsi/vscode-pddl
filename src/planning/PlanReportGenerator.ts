@@ -397,8 +397,9 @@ ${stepsInvolvingThisObject}
         const widthRelaxed = this.computeRelaxedWidth(step, plan);
 
         const actionColor = plan.domain ? this.getActionColor(step, plan.domain) : 'gray';
+        const actionIterations = step.getIterations() > 1 ? `${step.getIterations()}x` : '';
 
-        return `        <div class="planstep" id="plan${planIndex}step${index}" style="left: ${fromLeft}px; top: ${fromTop}px; "><div class="planstep-bar" title="${this.toActionTooltipPlain(step)}" style="width: ${width}px; background-color: ${actionColor}"></div><div class="planstep-bar-relaxed whitecarbon" style="width: ${widthRelaxed}px;"></div>${actionLink} ${step.getObjects().join(' ')}</div>`;
+        return `        <div class="planstep" id="plan${planIndex}step${index}" style="left: ${fromLeft}px; top: ${fromTop}px; "><div class="planstep-bar" title="${this.toActionTooltipPlain(step)}" style="width: ${width}px; background-color: ${actionColor}"></div><div class="planstep-bar-relaxed whitecarbon" style="width: ${widthRelaxed}px;"></div>${actionLink} ${step.getObjects().join(' ')} ${actionIterations}</div>`;
     }
 
     toActionLink(actionName: string, plan: Plan): string {

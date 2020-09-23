@@ -1,5 +1,21 @@
 # PDDL support - What's new?
 
+## 2.18.5
+
+- Added Java executable jar planner configuration kind.
+
+## 2.18.4
+
+- Added visualization of action (with numeric effects) iterations in relaxed plan.
+
+## 2.18.3
+
+- Added support out-of-the-box planner options.
+- Planner executable selection usability improved on Windows - by default the file-open dialog filters all of .exe, .bat and .cmd.
+- Fixed auto-completion for PDDL types, constants, predicates and functions, where a `(and )` block was created in error.
+
+![Planner built-in options](https://raw.githubusercontent.com/wiki/jan-dolejsi/vscode-pddl/img/planner_built-in_options.gif)
+
 ## 2.18.2
 
 - Fixed visualization of multiple improving plans. Most of the times only the first plan would show and the improving plans would be ignored by the visualization. This was due to a race condition in the extension code..

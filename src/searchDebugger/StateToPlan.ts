@@ -91,6 +91,10 @@ class PlanStepBuilder {
         }
     }
 
+    private getIterations(): number {
+        return Math.max(this.start.iterations, this.end?.iterations ?? 1);
+    }
+
     toPalStep(stateTime: number): PlanStep {
         const isDurative = this.start.kind === HappeningType.START;
 
@@ -107,7 +111,7 @@ class PlanStepBuilder {
 
         const commitment = this.getCommitment(isDurative);
 
-        return new PlanStep(this.start.earliestTime, this.start.actionName, isDurative, duration, -1, commitment);
+        return new PlanStep(this.start.earliestTime, this.start.actionName, isDurative, duration, -1, commitment, this.getIterations());
     }
 
     private getCommitment(isDurative: boolean): PlanStepCommitment {

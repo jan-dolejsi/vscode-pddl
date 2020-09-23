@@ -8,8 +8,9 @@ import * as os from 'os';
 import * as path from 'path';
 import { Uri, window } from 'vscode';
 
-import { planner, OutputAdaptor } from 'pddl-workspace';
+import { planner, OutputAdaptor, utils } from 'pddl-workspace';
 import { isHttp } from '../utils';
+import { PlannerExecutable } from '../planning/PlannerExecutable';
 
 export class CommandPlannerProvider implements planner.PlannerProvider {
     get kind(): planner.PlannerKind {
@@ -80,9 +81,6 @@ export class CommandPlannerProvider implements planner.PlannerProvider {
     showHelp(_output: OutputAdaptor): void {
         throw new Error("Method not implemented.");
     }
-    createPlanner(): planner.Planner {
-        throw new Error("Method not implemented.");
-    }
 }
 
 export class SolveServicePlannerProvider implements planner.PlannerProvider {
@@ -123,9 +121,6 @@ export class SolveServicePlannerProvider implements planner.PlannerProvider {
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     showHelp(_output: OutputAdaptor): void {
-        throw new Error("Method not implemented.");
-    }
-    createPlanner(): planner.Planner {
         throw new Error("Method not implemented.");
     }
 }
@@ -171,9 +166,6 @@ export class RequestServicePlannerProvider implements planner.PlannerProvider {
     showHelp(_output: OutputAdaptor): void {
         throw new Error("Method not implemented.");
     }
-    createPlanner(): planner.Planner {
-        throw new Error("Method not implemented.");
-    }
 }
 
 export class JavaPlannerProvider implements planner.PlannerProvider {
@@ -183,16 +175,33 @@ export class JavaPlannerProvider implements planner.PlannerProvider {
     getNewPlannerLabel(): string {
         return "$(file-binary) Select a Java JAR file...";
     }
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    configurePlanner(_previousConfiguration?: planner.PlannerConfiguration): Promise<planner.PlannerConfiguration | undefined> {
-        throw new Error("Method not implemented.");
+
+    async configurePlanner(previousConfiguration?: planner.PlannerConfiguration): Promise<planner.PlannerConfiguration | undefined> {
+        const filters = 
+            {
+                'Java executable archive': ['jar'],
+            };
+
+        const defaultUri = previousConfiguration && previousConfiguration.path && Uri.file(previousConfiguration?.path);
+
+        const executableUri = await selectedFile(`Select executable JAR`, defaultUri, filters);
+        if (!executableUri) { return undefined; }
+
+        const newPlannerConfiguration: planner.PlannerConfiguration = {
+            kind: this.kind.kind,
+            canConfigure: true,
+            path: executableUri.fsPath,
+            title: path.basename(executableUri.fsPath)
+        };
+
+        return newPlannerConfiguration;
     }
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     showHelp(_output: OutputAdaptor): void {
         // do nothing
     }
-    createPlanner(): planner.Planner {
-        throw new Error("Method not implemented.");
+    createPlanner(configuration: planner.PlannerConfiguration, plannerOptions: string, workingDirectory: string): planner.Planner | undefined {
+        return new PlannerExecutable(`java -jar ${utils.Util.q(configuration.path)}`, plannerOptions, configuration.syntax, workingDirectory);
     }
 }
 
@@ -207,8 +216,10 @@ export class ExecutablePlannerProvider implements planner.PlannerProvider {
     async configurePlanner(previousConfiguration?: planner.PlannerConfiguration): Promise<planner.PlannerConfiguration | undefined> {
         const filters = os.platform() === 'win32' ?
             {
+                'Executable or batch file': ['exe', 'bat', 'cmd'],
                 'Executable': ['exe'],
-                'Batch file': ['bat', 'cmd']
+                'Batch file': ['bat', 'cmd'],
+                'All files': ['*']
             }
             : undefined;
 
@@ -231,10 +242,6 @@ export class ExecutablePlannerProvider implements planner.PlannerProvider {
     showHelp(_output: OutputAdaptor): void {
         throw new Error("Method not implemented.");
     }
-    createPlanner(): planner.Planner {
-        throw new Error("Method not implemented.");
-    }
-
 }
 
 export class Popf implements planner.PlannerProvider {
@@ -271,6 +278,31 @@ export class Popf implements planner.PlannerProvider {
         };
 
         return newPlannerConfiguration;
+    }
+
+    getPlannerOptions(): planner.PlannerOption[] {
+        return [
+            { option: "-n", description: "Continuous searching after the first plan is reached in quest for alternative plans with a better metric" },
+            { option: "-citation", description: "Display citation to relevant conference paper (ICAPS 2010)" },
+            { option: "-b", description: "Disable best-first search - if EHC fails, abort" },
+            { option: "-E", description: "Skip EHC: go straight to best-first search" },
+            { option: "-e", description: "Use standard EHC instead of steepest descent" },
+            { option: "-h", description: "Disable helpful-action pruning" },
+            { option: "-k", description: "Disable compression-safe action detection" },
+            { option: "-c", description: "Enable the tie-breaking in RPG that favour actions that slot into the partial order earlier" },
+            { option: "-S", description: "Sort initial layer facts in RPG by availability order (only use if using -c)" },
+            { option: "-m", description: "Disable the tie-breaking in search that favours plans with shorter makespans" },
+            { option: "-F", description: "Full FF helpful actions (rather than just those in the RP applicable in the current state)" },
+            { option: "-I", description: "Disable the hybrid Bellman-Ford--LP solver" },
+            { option: "-T", description: "Rather than building a partial order, build a total-order" },
+            // { option: "-J123", description: "Generate search graph" },
+            { option: "-v16", description: "Info about RPG generation instanciation of action found (Number of applicable actions)" },
+            { option: "-v64", description: "Numeric fluents output" },
+            { option: "-v1048576", description: "Verbose output details the relaxed plan for each action applied (in the standard output)." },
+            { option: "-L4", description: "Prints out some LP stuff to the console " },
+            { option: "-L8", description: "Outputs the LP program into a stateevaluation.lp file" },
+            { option: "-L16", description: "Generates the lp program with bounds of the state variables; but overwrites the files, so you only get files for the last variable" },
+        ];
     }
 }
 
