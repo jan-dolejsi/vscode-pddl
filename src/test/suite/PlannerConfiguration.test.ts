@@ -29,7 +29,7 @@ suite('Planner configuration test', () => {
 		await clearConfiguration();
 	});
 
-	test('Default planners are returned in blank configuration', async () => {
+	test('Default planners are returned in blank configuration', () => {
 		const wf = assertDefined(workspace.workspaceFolders, "workspace folders")[0];
 
 		// WHEN
