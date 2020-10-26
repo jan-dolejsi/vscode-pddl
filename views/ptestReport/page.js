@@ -62,3 +62,5 @@ function populateWithTestData() {
         });
     }
 }
+
+document.body.onload = populateWithTestData;

@@ -27,7 +27,7 @@ export async function getWebViewHtml(extensionContext: PddlExtensionContext, opt
     let html = await utils.afs.readFile(overviewHtmlPath, { encoding: "utf-8", flag: 'r' });
 
     // generate nonce for secure calling of javascript
-    const nonce = options.disableUnsafeInlineScript ? generateNonce() : undefined;
+    const nonce = !options.allowUnsafeInlineScripts ? generateNonce() : undefined;
 
     html = html.replace(/<(script|img|link) ([^>]*)(src|href)="([^"]+)"/g, (sourceElement: string, elementName: string, middleBits: string, attribName: string, attribValue: string) => {
         if (attribValue.startsWith('http')) {
@@ -60,8 +60,8 @@ export interface WebViewHtmlOptions {
     fonts?: Uri[];
     /** Disallow inline styles. */
     disableUnsafeInlineStyle?: boolean;
-    /** Disallow inline scripts. */
-    disableUnsafeInlineScript?: boolean;
+    /** Allow inline scripts. */
+    allowUnsafeInlineScripts?: boolean;
 }
 
 export function asWebviewUri(localUri: Uri, webview?: Webview): Uri {
@@ -79,7 +79,7 @@ function createContentSecurityPolicy(webview: Webview, options: WebViewHtmlOptio
     const externalImages = options.externalImages?.map(uri => uri.toString()).join(" ") ?? "";
     const fonts = options.fonts?.map(uri => uri.toString()).join(" ") ?? "";
     const unsafeInline = "'unsafe-inline'";
-    const scriptUnsafeInline = options.disableUnsafeInlineScript ? '' : unsafeInline;
+    const scriptUnsafeInline = options.allowUnsafeInlineScripts ? unsafeInline : '';
     const styleUnsafeInline = options.disableUnsafeInlineStyle ? '' : unsafeInline;
     const nonceCsp = nonce ? `'nonce-${nonce}'` : '';
 

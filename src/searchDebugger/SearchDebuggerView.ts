@@ -152,6 +152,7 @@ export class SearchDebuggerView {
         return getWebViewHtml(createPddlExtensionContext(this.context), {
             relativePath: this.CONTENT_FOLDER, htmlFileName: 'search.html',
             externalImages: [Uri.parse('data:')],
+            allowUnsafeInlineScripts: true,
             externalScripts: [googleCharts],
             externalStyles: [googleCharts],
             fonts: [

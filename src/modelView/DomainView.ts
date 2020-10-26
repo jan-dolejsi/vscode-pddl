@@ -170,7 +170,6 @@ export abstract class DomainView<TRendererOptions, TRenderData> extends Disposab
         else {
             const webview = viewPanel.getPanel().webview;
             return getWebViewHtml(createPddlExtensionContext(this.context), {
-                disableUnsafeInlineScript: true,
                 fonts: [
                     webview.asWebviewUri(Uri.file(this.context.asAbsolutePath(path.join(COMMON_FOLDER, "codicon.ttf"))))
                 ],

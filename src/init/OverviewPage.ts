@@ -259,7 +259,9 @@ export class OverviewPage {
 
     async getHtml(webview: Webview): Promise<string> {
         return getWebViewHtml(createPddlExtensionContext(this.context), {
-            relativePath: this.CONTENT_FOLDER, htmlFileName: 'overview.html',
+            relativePath: this.CONTENT_FOLDER,
+            htmlFileName: 'overview.html',
+            allowUnsafeInlineScripts: true, // used mostly by the alerts
             fonts: [
                 webview.asWebviewUri(Uri.file(this.context.asAbsolutePath(path.join(this.COMMON_FOLDER, "codicon.ttf"))))
             ]
