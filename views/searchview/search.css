@@ -40,10 +40,19 @@ body {
 .menu {
     display: none;
 }
-.toolbarButton {
-    font-size: 28px;
-    color: gray";
-}
 .help {
     color: gray
+}
+div.iconBar {
+    margin: 3px;
+}
+div.iconBar .codicon {
+    font-size: 25px;
+    cursor: pointer;
+}
+
+
+div.iconBar .disabled {
+	opacity: 0.3;
+	cursor: not-allowed;
 }

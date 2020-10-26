@@ -9,6 +9,7 @@ import {
     ViewColumn, ExtensionContext, TextDocument, Disposable, Event, EventEmitter, TextEditor, WebviewOptions, WebviewPanelOptions
 } from 'vscode';
 import { instrumentOperationAsVsCodeCommand } from "vscode-extension-telemetry-wrapper";
+import * as path from 'path';
 
 import { isPddl, getDomainFileForProblem } from '../workspace/workspaceUtils';
 import { DomainInfo } from 'pddl-workspace';
@@ -20,6 +21,9 @@ import { CodePddlWorkspace } from '../workspace/CodePddlWorkspace';
 import { getWebViewHtml, createPddlExtensionContext, UriMap, showError, toUri } from '../utils';
 import { ProblemViewPanel } from './ProblemViewPanel';
 import { WebviewPanelAdapter } from './view';
+
+const VIEWS = "views";
+const COMMON_FOLDER = path.join(VIEWS, "common");
 
 /**
  * Base-class for different problem views.
@@ -195,7 +199,12 @@ export abstract class ProblemView<TRendererOptions, TRenderData> extends Disposa
             return error.message;
         }
         else {
+            const webview = viewPanel.getPanel().webview;
             return getWebViewHtml(createPddlExtensionContext(this.context), {
+                disableUnsafeInlineScript: true,
+                fonts: [
+                    webview.asWebviewUri(Uri.file(this.context.asAbsolutePath(path.join(COMMON_FOLDER, "codicon.ttf"))))
+                ],
                 relativePath: this.options.content, htmlFileName: this.options.webviewHtmlPath
             }, viewPanel.getPanel().webview);
         }

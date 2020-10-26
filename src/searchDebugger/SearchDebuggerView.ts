@@ -143,7 +143,9 @@ export class SearchDebuggerView {
         }
     }
 
-    CONTENT_FOLDER = path.join('views', 'searchview');
+    readonly VIEWS = "views";
+    readonly CONTENT_FOLDER = path.join(this.VIEWS, "searchview");
+    readonly COMMON_FOLDER = path.join(this.VIEWS, "common");
 
     async getHtml(webview: Webview): Promise<string> {
         const googleCharts = Uri.parse("https://www.gstatic.com/charts/");
@@ -151,7 +153,10 @@ export class SearchDebuggerView {
             relativePath: this.CONTENT_FOLDER, htmlFileName: 'search.html',
             externalImages: [Uri.parse('data:')],
             externalScripts: [googleCharts],
-            externalStyles: [googleCharts]
+            externalStyles: [googleCharts],
+            fonts: [
+                webview.asWebviewUri(Uri.file(this.context.asAbsolutePath(path.join(this.COMMON_FOLDER, "codicon.ttf"))))
+            ]
         }, webview);
     }
 

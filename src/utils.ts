@@ -26,16 +26,20 @@ export async function getWebViewHtml(extensionContext: PddlExtensionContext, opt
     const overviewHtmlPath = extensionContext.asAbsolutePath(path.join(options.relativePath, options.htmlFileName));
     let html = await utils.afs.readFile(overviewHtmlPath, { encoding: "utf-8", flag: 'r' });
 
+    // generate nonce for secure calling of javascript
+    const nonce = options.disableUnsafeInlineScript ? generateNonce() : undefined;
+
     html = html.replace(/<(script|img|link) ([^>]*)(src|href)="([^"]+)"/g, (sourceElement: string, elementName: string, middleBits: string, attribName: string, attribValue: string) => {
         if (attribValue.startsWith('http')) {
             return sourceElement;
         }
         const resource = asWebviewUri(Uri.file(extensionContext.asAbsolutePath(path.join(options.relativePath, attribValue))), webview);
-        return `<${elementName} ${middleBits}${attribName}="${resource}"`;
+        const nonceAttr = attribName.toLowerCase() === "src" && nonce ? `nonce="${nonce}"` : "";
+        return `<${elementName} ${middleBits ?? ""}${nonceAttr}${attribName}="${resource}"`;
     });
 
     if (webview) {
-        html = html.replace("<!--CSP-->", createContentSecurityPolicy(webview, options));
+        html = html.replace("<!--CSP-->", createContentSecurityPolicy(webview, options, nonce));
     }
 
     return html;
@@ -52,6 +56,12 @@ export interface WebViewHtmlOptions {
     externalStyles?: Uri[];
     /** Locations of any external images, e.g. https://somewhere, or data: */
     externalImages?: Uri[];
+    /** Locations of any fonts, e.g. file://../.ttf: */
+    fonts?: Uri[];
+    /** Disallow inline styles. */
+    disableUnsafeInlineStyle?: boolean;
+    /** Disallow inline scripts. */
+    disableUnsafeInlineScript?: boolean;
 }
 
 export function asWebviewUri(localUri: Uri, webview?: Webview): Uri {
@@ -63,13 +73,32 @@ export function asWebviewUri(localUri: Uri, webview?: Webview): Uri {
     }
 }
 
-function createContentSecurityPolicy(webview: Webview, options: WebViewHtmlOptions): string {
+function createContentSecurityPolicy(webview: Webview, options: WebViewHtmlOptions, nonce: string): string {
     const externalStyles = options.externalStyles?.map(uri => uri.toString()).join(" ") ?? "";
     const externalScripts = options.externalScripts?.map(uri => uri.toString()).join(" ") ?? "";
     const externalImages = options.externalImages?.map(uri => uri.toString()).join(" ") ?? "";
+    const fonts = options.fonts?.map(uri => uri.toString()).join(" ") ?? "";
+    const unsafeInline = "'unsafe-inline'";
+    const scriptUnsafeInline = options.disableUnsafeInlineScript ? '' : unsafeInline;
+    const styleUnsafeInline = options.disableUnsafeInlineStyle ? '' : unsafeInline;
+    const nonceCsp = nonce ? `'nonce-${nonce}'` : '';
+
     return `<meta http-equiv="Content-Security-Policy"
-\t\tcontent="default-src 'none'; img-src ${webview.cspSource} ${externalImages} https:; script-src ${webview.cspSource} ${externalScripts} 'unsafe-inline'; style-src ${webview.cspSource} ${externalStyles} 'unsafe-inline';"
+\t\tcontent="default-src 'none'; `+
+        `img-src ${webview.cspSource} ${externalImages} https:; ` +
+        `font-src ${fonts};` +
+        `script-src ${webview.cspSource} ${externalScripts} ${scriptUnsafeInline} ${nonceCsp}; ` +
+        `style-src ${webview.cspSource} ${externalStyles} ${styleUnsafeInline};"
 \t/>`;
+}
+
+function generateNonce(): string {
+    let text = '';
+    const possible = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    for (let i = 0; i < 32; i++) {
+        text += possible.charAt(Math.floor(Math.random() * possible.length));
+    }
+    return text;
 }
 
 export interface WebviewUriConverter {

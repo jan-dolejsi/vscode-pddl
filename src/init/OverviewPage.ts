@@ -157,8 +157,9 @@ export class OverviewPage {
         }
     }
 
-    VIEWS = "views";
-    CONTENT_FOLDER = path.join(this.VIEWS, "overview");
+    readonly VIEWS = "views";
+    readonly CONTENT_FOLDER = path.join(this.VIEWS, "overview");
+    readonly COMMON_FOLDER = path.join(this.VIEWS, "common");
 
     async helloWorld(): Promise<void> {
         const sampleDocuments = await this.createSample('helloworld', 'Hello World!');
@@ -258,7 +259,10 @@ export class OverviewPage {
 
     async getHtml(webview: Webview): Promise<string> {
         return getWebViewHtml(createPddlExtensionContext(this.context), {
-            relativePath: this.CONTENT_FOLDER, htmlFileName: 'overview.html'
+            relativePath: this.CONTENT_FOLDER, htmlFileName: 'overview.html',
+            fonts: [
+                webview.asWebviewUri(Uri.file(this.context.asAbsolutePath(path.join(this.COMMON_FOLDER, "codicon.ttf"))))
+            ]
         }, webview);
     }
 
@@ -325,7 +329,7 @@ export class OverviewPage {
             updateValAlert: await this.val.isNewValVersionAvailable()
             // todo: workbench.editor.revealIfOpen
         };
-        return this.webViewPanel.webview?.postMessage(message) ?? false;
+        return this?.webViewPanel.webview?.postMessage(message) ?? false;
     }
 
     private toWireWorkspaceFolder(workspaceFolder: WorkspaceFolder): WireWorkspaceFolder {
