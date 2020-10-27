@@ -1,5 +1,15 @@
 # PDDL support - What's new?
 
+## 2.??.?
+
+- Planning.domains session synchronization (via the source control panel) does not show the useless commit message text input component.
+- Codicon icon font is used in the custom views wherever possible
+
+### Engineering work
+
+- Minimum requirement VS Code 1.45, update to Typescript 4 and Mocha 8
+- tighter security applied to custom views. Javascripts are secured by a one time random nonce, etc...
+
 ## 2.18.5
 
 - Added Java executable jar planner configuration kind.

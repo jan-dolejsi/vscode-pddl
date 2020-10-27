@@ -114,15 +114,15 @@ export class MockSearch {
     //     });
     // }
 
-    private state0: MockStateContext | undefined;
-    private state0_0: MockStateContext | undefined;
-    private state0_1: MockStateContext | undefined;
-    private state0_0_0: MockStateContext | undefined;
-    private state0_0_1: MockStateContext | undefined;
-    private state0_1_0: MockStateContext | undefined;
-    private state0_1_1: MockStateContext | undefined;
-    private state0_1_0_0: MockStateContext | undefined;
-    private state0_1_0_0_0: MockStateContext | undefined;
+    private state0: MockStateContext | undefined = undefined;
+    private state0_0: MockStateContext | undefined = undefined;
+    private state0_1: MockStateContext | undefined = undefined;
+    private state0_0_0: MockStateContext | undefined = undefined;
+    private state0_0_1: MockStateContext | undefined = undefined;
+    private state0_1_0: MockStateContext | undefined = undefined;
+    private state0_1_1: MockStateContext | undefined = undefined;
+    private state0_1_0_0: MockStateContext | undefined = undefined;
+    private state0_1_0_0_0: MockStateContext | undefined = undefined;
 
     private readonly events = [
         new MockStateContextEvent("post-initial", this.state0 = MockStateContext.createInitial()),

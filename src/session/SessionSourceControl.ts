@@ -49,6 +49,7 @@ export class SessionSourceControl implements vscode.Disposable {
 		this.sessionRepository = new SessionRepository(workspaceFolder, session);
 		this.sessionScm.quickDiffProvider = this.sessionRepository;
 		this.sessionScm.inputBox.placeholder = session.canCommit() ? '' : 'Read-only session!';
+		this.sessionScm.inputBox.visible = false; // available from VS Code 1.45
 
 		const fileSystemWatcher = vscode.workspace.createFileSystemWatcher(new vscode.RelativePattern(workspaceFolder, "*.*"));
 		fileSystemWatcher.onDidChange(uri => this.onResourceChange(uri), context.subscriptions);
