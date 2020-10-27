@@ -24,22 +24,29 @@ export function createPddlExtensionContext(context: ExtensionContext): PddlExten
 
 export async function getWebViewHtml(extensionContext: PddlExtensionContext, options: WebViewHtmlOptions, webview?: Webview): Promise<string> {
     const overviewHtmlPath = extensionContext.asAbsolutePath(path.join(options.relativePath, options.htmlFileName));
-    let html = await utils.afs.readFile(overviewHtmlPath, { encoding: "utf-8", flag: 'r' });
+    const templateHtml = await utils.afs.readFile(overviewHtmlPath, { encoding: "utf-8", flag: 'r' });
 
     // generate nonce for secure calling of javascript
     const nonce = !options.allowUnsafeInlineScripts ? generateNonce() : undefined;
 
-    html = html.replace(/<(script|img|link) ([^>]*)(src|href)="([^"]+)"/g, (sourceElement: string, elementName: string, middleBits: string, attribName: string, attribValue: string) => {
+    // be sure that the template has a placeholder for Content Security Policy
+    const cspPlaceholderPattern = /<!--\s*CSP\s*-->/i;
+    if (!templateHtml.match(cspPlaceholderPattern) || templateHtml.includes('http-equiv="Content-Security-Policy"')) {
+        throw new Error(`Template does not contain CSP placeholder or contains rogue CSP.`);
+    }
+    
+    let html = templateHtml.replace(/<(script|img|link) ([^>]*)(src|href)="([^"]+)"/g, (sourceElement: string, elementName: string, middleBits: string, attribName: string, attribValue: string) => {
         if (isAbsoluteWebview(attribValue)) {
             return sourceElement;
         }
         const resource = getWebviewUri(extensionContext, options.relativePath, attribValue, webview);
-        const nonceAttr = attribName.toLowerCase() === "src" && nonce ? `nonce="${nonce}"` : "";
+        const nonceAttr = elementName.toLowerCase() === "script" && attribName.toLowerCase() === "src" && nonce ? `nonce="${nonce}" ` : "";
         return `<${elementName} ${middleBits ?? ""}${nonceAttr}${attribName}="${resource}"`;
     });
 
     if (webview) {
-        html = html.replace("<!--CSP-->", createContentSecurityPolicy(extensionContext, webview, options, nonce));
+        cspPlaceholderPattern.lastIndex = 0;
+        html = html.replace(cspPlaceholderPattern, createContentSecurityPolicy(extensionContext, webview, options, nonce));
     }
 
     return html;
