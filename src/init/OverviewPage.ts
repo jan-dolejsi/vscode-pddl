@@ -263,7 +263,7 @@ export class OverviewPage {
             htmlFileName: 'overview.html',
             allowUnsafeInlineScripts: true, // used mostly by the alerts
             fonts: [
-                webview.asWebviewUri(Uri.file(this.context.asAbsolutePath(path.join(this.COMMON_FOLDER, "codicon.ttf"))))
+                Uri.file(path.join("..", "..", this.COMMON_FOLDER, "codicon.ttf"))
             ]
         }, webview);
     }

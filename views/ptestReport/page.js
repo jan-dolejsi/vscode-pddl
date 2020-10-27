@@ -17,7 +17,7 @@ window.addEventListener('message', event => {
         default:
             console.log("Unexpected message: " + message.command);
     }
-})
+});
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 function update(message) {

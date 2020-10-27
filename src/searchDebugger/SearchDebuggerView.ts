@@ -156,7 +156,7 @@ export class SearchDebuggerView {
             externalScripts: [googleCharts],
             externalStyles: [googleCharts],
             fonts: [
-                webview.asWebviewUri(Uri.file(this.context.asAbsolutePath(path.join(this.COMMON_FOLDER, "codicon.ttf"))))
+                Uri.file(path.join("..", "..", this.COMMON_FOLDER, "codicon.ttf"))
             ]
         }, webview);
     }

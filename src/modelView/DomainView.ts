@@ -168,10 +168,9 @@ export abstract class DomainView<TRendererOptions, TRenderData> extends Disposab
             return error.message;
         }
         else {
-            const webview = viewPanel.getPanel().webview;
             return getWebViewHtml(createPddlExtensionContext(this.context), {
                 fonts: [
-                    webview.asWebviewUri(Uri.file(this.context.asAbsolutePath(path.join(COMMON_FOLDER, "codicon.ttf"))))
+                    Uri.file(path.join("..", "..", COMMON_FOLDER, "codicon.ttf"))
                 ],
                 relativePath: this.options.content,
                 htmlFileName: this.options.webviewHtmlPath
