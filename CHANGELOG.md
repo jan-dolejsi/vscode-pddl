@@ -1,12 +1,28 @@
 # PDDL support - What's new?
 
-## 2.??.?
+## [2.19.0] ICAPS 2020 face lift (while attending the late night conference sessions)
 
+## Features
+
+The _PDDL: Configure planner output target..._ command and the _PDDL Overview Screen_ already helped configuring how the planner output is consumed. The three options are:
+
+- _Output window_ - Planner output is displayed in the VS Code Output Window _Planner output_.
+- _Terminal_ - Planner is executed in a terminal window. Plan is not displayed visually. Use this to interact with the planner.
+- _Search debugger_ - Same as the _Output window_ option, but the output window and resulting plan are not revealed in order to keep the Search debugger in the forefront.
+
+The weak spot was that there was no apparent indication in VS Code where is the planner output going to go. Now there is.\
+The status bar now shows both the planner selector and right next to it, the output target selector.
+
+![Planner output re-direction switch in status bar](https://raw.githubusercontent.com/wiki/jan-dolejsi/vscode-pddl/img/pddl_planner_output_target_selector_status_bar.gif)
+
+## Fixes
+
+- Command _PDDL: Preview plan_ accessible from the right-click menu on any .plan file in the editor now shows the plan even if the problem and domain is not associate with it.
 - Planning.domains session synchronization (via the source control panel) does not show the useless commit message text input component.
-- Codicon icon font is used in the custom views wherever possible
 
 ### Engineering work
 
+- Codicon icon font is used in the custom views wherever possible
 - Minimum requirement VS Code 1.45, update to Typescript 4 and Mocha 8
 - tighter security applied to custom views. Javascripts are secured by a one time random nonce, etc...
 
@@ -1067,10 +1083,11 @@ Note for open source contributors: all notable changes to the "pddl" extension w
 
 Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
 
-[Unreleased]: https://github.com/jan-dolejsi/vscode-pddl/compare/v2.18.0...HEAD
-[2.17.1]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.17.1...v2.18.0
-[2.16.0]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.16.0...v2.17.1
-[2.15.7]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.15.7...v2.16.0
+[Unreleased]: https://github.com/jan-dolejsi/vscode-pddl/compare/v2.19.0...HEAD
+[2.19.0]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.18.0...v2.19.0
+[2.18.0]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.17.1...v2.18.0
+[2.17.1]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.16.0...v2.17.1
+[2.16.0]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.15.7...v2.16.0
 [2.15.7]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.15.6...v2.15.7
 [2.15.6]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.15.5...v2.15.6
 [2.15.5]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.15.4...v2.15.5

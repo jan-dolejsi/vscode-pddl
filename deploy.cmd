@@ -7,11 +7,11 @@ call npm install -g vsce
 call export-md.cmd
 start CHANGELOG.html
 echo Check the CHANGELOG file that just opened in your favorit browser before you continue.
-pause
+:: pause
 
 call vsce ls
 echo Review the files included before you continue
-pause
+:: pause
 
 if not exist vsix-archive mkdir vsix-archive
 move /Y *.vsix vsix-archive

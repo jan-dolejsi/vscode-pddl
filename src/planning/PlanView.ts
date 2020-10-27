@@ -179,15 +179,16 @@ export class PlanView extends Disposable {
     }
 
     async parsePlanFile(planDocument: TextDocument): Promise<Plan> {
-        try {
-            const planFileInfo = await this.codePddlWorkspace.upsertAndParseFile(planDocument) as PlanInfo;
+        const planFileInfo = await this.codePddlWorkspace.upsertAndParseFile(planDocument) as PlanInfo;
 
+        try {
             const domainAndProblem = getDomainAndProblemForPlan(planFileInfo, this.codePddlWorkspace.pddlWorkspace);
 
             return new Plan(planFileInfo.getSteps(), domainAndProblem.domain, domainAndProblem.problem);
         }
         catch (ex) {
-            throw new Error("Domain and problem associated with this plan are not open.");
+            // show a hint that domain & problem were not associated
+            return new Plan(planFileInfo.getSteps());
         }
     }
 

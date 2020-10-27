@@ -17,7 +17,7 @@ import { ValDownloader } from '../validation/ValDownloader';
 import { VAL_DOWNLOAD_COMMAND, ValDownloadOptions } from '../validation/valCommand';
 import { PTEST_VIEW } from '../ptest/PTestCommands';
 import { instrumentOperationAsVsCodeCommand } from "vscode-extension-telemetry-wrapper";
-import { PlannersConfiguration as PlannersConfiguration, ScopedPlannerConfiguration } from '../configuration/PlannersConfiguration';
+import { DEF_PLANNER_OUTPUT_TARGET, EXECUTION_TARGET, PlannersConfiguration, ScopedPlannerConfiguration } from '../configuration/PlannersConfiguration';
 
 export const SHOULD_SHOW_OVERVIEW_PAGE = 'shouldShowOverviewPage';
 export const LAST_SHOWN_OVERVIEW_PAGE = 'lastShownOverviewPage';
@@ -319,7 +319,7 @@ export class OverviewPage {
             planners: planners,
             selectedPlanner: this.plannersConfiguration.getSelectedPlanner(this.workspaceFolder)?.configuration.title,
             plannersConfigError: plannersConfigError,
-            plannerOutputTarget: workspace.getConfiguration(PDDL_PLANNER, this.workspaceFolder).get<string>("executionTarget", "Output window"),
+            plannerOutputTarget: workspace.getConfiguration(PDDL_PLANNER, this.workspaceFolder).get<string>(EXECUTION_TARGET, DEF_PLANNER_OUTPUT_TARGET),
             parser: this.pddlConfiguration.getParserPath(this.workspaceFolder),
             validator: this.pddlConfiguration.getValidatorPath(this.workspaceFolder),
             imagesPath: asWebviewUri(Uri.file(this.context.asAbsolutePath('images')), this.webViewPanel.webview).toString(),

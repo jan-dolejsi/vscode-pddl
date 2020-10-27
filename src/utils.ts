@@ -85,12 +85,7 @@ function getAbsoluteWebviewUrisSSV(extensionContext: PddlExtensionContext, webvi
 }
 
 export function asWebviewUri(localUri: Uri, webview?: Webview): Uri {
-    if (webview) {
-        return webview.asWebviewUri(localUri);
-    }
-    else {
-        return localUri.with({ scheme: "vscode-resource" });
-    }
+    return webview?.asWebviewUri(localUri) ?? localUri.with({ scheme: "vscode-resource" });
 }
 
 function createContentSecurityPolicy(extensionContext: PddlExtensionContext, webview: Webview, options: WebViewHtmlOptions, nonce: string): string {

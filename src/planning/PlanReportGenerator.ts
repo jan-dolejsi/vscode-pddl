@@ -231,11 +231,14 @@ ${objectsHtml}
         }
         lineCharts += `\n    </div>`;
 
+        const hint = plan.domain && plan.problem ? '' : `<div class="hint"><b>Hint:</b> Problem file was not identified for this plan. Open the associated domain and problem and visualize the plan again.</div>`;
+
         return `${this.options.selfContained || this.options.disableHamburgerMenu ? '' : this.renderMenu()}
 ${stateViz}
 ${ganttChart}
 ${swimLanes}
 ${lineCharts}
+${hint}
         <script>function drawPlan${planIndex}Charts(){\n${lineChartScripts}}</script>
 `;
     }

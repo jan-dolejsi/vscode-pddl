@@ -14,7 +14,7 @@ import * as path from 'path';
 import {
     PddlWorkspace, parser, planner, ProblemInfo, Plan, DomainInfo, PddlLanguage
 } from 'pddl-workspace';
-import { PddlConfiguration, CONF_PDDL, PLAN_REPORT_EXPORT_WIDTH, PDDL_CONFIGURE_COMMAND } from '../configuration/configuration';
+import { PddlConfiguration, CONF_PDDL, PLAN_REPORT_EXPORT_WIDTH, PDDL_CONFIGURE_COMMAND, PDDL_PLANNER } from '../configuration/configuration';
 import { PlannerExecutable } from './PlannerExecutable';
 import { PlannerSyncService } from './PlannerSyncService';
 import { PlannerAsyncService } from './PlannerAsyncService';
@@ -34,7 +34,7 @@ import { PlannerConfigurationSelector } from './PlannerConfigurationSelector';
 import { AssociationProvider } from '../workspace/AssociationProvider';
 import { showError, isHttp } from '../utils';
 import { CodePddlWorkspace } from '../workspace/CodePddlWorkspace';
-import { PlannersConfiguration } from '../configuration/PlannersConfiguration';
+import { EXECUTION_TARGET, PDDL_CONFIGURE_PLANNER_OUTPUT_TARGET, PlannersConfiguration } from '../configuration/PlannersConfiguration';
 
 const PDDL_STOP_PLANNER = 'pddl.stopPlanner';
 const PDDL_CONVERT_PLAN_TO_HAPPENINGS = 'pddl.convertPlanToHappenings';
@@ -126,7 +126,8 @@ export class Planning implements planner.PlannerResponseHandler {
             }
         }));
 
-        context.subscriptions.push(instrumentOperationAsVsCodeCommand("pddl.configureTarget", () => commands.executeCommand(PDDL_CONFIGURE_COMMAND, "pddlPlanner.executionTarget")));
+        context.subscriptions.push(instrumentOperationAsVsCodeCommand(PDDL_CONFIGURE_PLANNER_OUTPUT_TARGET,
+            () => commands.executeCommand(PDDL_CONFIGURE_COMMAND, PDDL_PLANNER + '.' + EXECUTION_TARGET)));
     }
 
     addOptionsProvider(optionsProvider: planner.PlannerOptionsProvider): void {

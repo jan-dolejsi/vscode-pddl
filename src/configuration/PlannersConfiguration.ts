@@ -17,9 +17,14 @@ import { showError, jsonNodeToRange, fileExists, isHttp } from '../utils';
 export const CONF_PLANNERS = "planners";
 export const CONF_SELECTED_PLANNER = "selectedPlanner";
 export const PDDL_SELECT_PLANNER = CONF_PDDL + '.' + 'selectPlanner';
+export const CONFIGURE_PLANNER_OUTPUT_TARGET = 'configureTarget';
+export const PDDL_CONFIGURE_PLANNER_OUTPUT_TARGET = CONF_PDDL + '.' + CONFIGURE_PLANNER_OUTPUT_TARGET;
+export const DEF_PLANNER_OUTPUT_TARGET = "Output window";
 const PDDL_CONFIGURE_PLANNER = CONF_PDDL + '.' + 'configurePlanner';
 const PDDL_DELETE_PLANNER = CONF_PDDL + '.' + 'deletePlanner';
 const PDDL_JSON_SETTINGS = CONF_PDDL + '.' + 'plannersJsonSettings';
+
+export const EXECUTION_TARGET = "executionTarget";
 
 export enum PlannerConfigurationScope {
     Default = 0,
@@ -32,6 +37,7 @@ export enum PlannerConfigurationScope {
 export class PlannersConfiguration {
 
     plannerSelector: StatusBarItem;
+    plannerOutputSelector: StatusBarItem;
 
     constructor(context: ExtensionContext, private pddlWorkspace: PddlWorkspace) {
         context.subscriptions.push(instrumentOperationAsVsCodeCommand("pddl.addPlanner", () => this.createPlannerConfiguration().catch(showError)));
@@ -41,7 +47,12 @@ export class PlannersConfiguration {
             this.plannerSelector = window.createStatusBarItem(StatusBarAlignment.Left, 10);
             this.plannerSelector.command = PDDL_SELECT_PLANNER;
             context.subscriptions.push(this.plannerSelector);
-            setTimeout(() => this.refreshPlanSelector(), 3000); // delayed initialization
+
+            this.plannerOutputSelector = window.createStatusBarItem(StatusBarAlignment.Left, 10);
+            this.plannerOutputSelector.command = PDDL_CONFIGURE_PLANNER_OUTPUT_TARGET;
+            context.subscriptions.push(this.plannerOutputSelector);
+
+            setTimeout(() => this.refreshStatusBar(), 3000); // delayed initialization
         }
 
         context.subscriptions.push(instrumentOperationAsVsCodeCommand(PDDL_CONFIGURE_PLANNER,
@@ -154,14 +165,40 @@ export class PlannersConfiguration {
         console.log(`Migrated ${legacyPlanner} to ${newPlannerConfig.scope.toString()}:${newPlannerConfig.configuration.title}`);
     }
 
-    refreshPlanSelector(): void {
-        if (!this.plannerSelector) { return; }
-        const selectedPlanner = this.getSelectedPlanner();
-        const activePlannerTitle = selectedPlanner?.configuration.title ?? '$(warning)';
-        this.plannerSelector.text = `$(circuit-board) ${activePlannerTitle}`;
-        this.plannerSelector.tooltip = selectedPlanner?.configuration.path ?? selectedPlanner?.configuration.url ?? 'Click here to select a planning engine.';
-        this.plannerSelector.color = !selectedPlanner ? "yellow" : undefined;
-        this.plannerSelector.show();
+    refreshStatusBar(): void {
+        if (!this.plannerSelector) {
+            return;
+        } else {
+            const selectedPlanner = this.getSelectedPlanner();
+            const activePlannerTitle = selectedPlanner?.configuration.title ?? '$(warning)';
+            this.plannerSelector.text = `$(circuit-board) ${activePlannerTitle}`;
+            this.plannerSelector.tooltip = selectedPlanner?.configuration.path ?? selectedPlanner?.configuration.url ?? 'Click here to select a planning engine.';
+            this.plannerSelector.color = !selectedPlanner ? "yellow" : undefined;
+            this.plannerSelector.show();
+        }
+
+        if (!this.plannerOutputSelector) {
+            return;
+        } else {
+            const target = workspace.getConfiguration(PDDL_PLANNER).get<string>(EXECUTION_TARGET, DEF_PLANNER_OUTPUT_TARGET);
+            const targetIcon = this.createTargetIcon(target);
+            this.plannerOutputSelector.text = `$(arrow-small-right)$(${targetIcon})`;
+            this.plannerOutputSelector.tooltip = 'Planner output is being re-directed to the ' + target;
+            this.plannerOutputSelector.show();
+        }
+    }
+    
+    createTargetIcon(target: string): string {
+        switch (target) {
+            case DEF_PLANNER_OUTPUT_TARGET:
+                return 'graph';
+            case "Terminal":
+                return 'terminal';
+            case "Search debugger":
+                return 'git-merge';
+            default:
+                return 'warning';
+        }
     }
 
     registerBuiltInPlannerProviders(): void {

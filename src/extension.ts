@@ -251,7 +251,7 @@ function activateWithTelemetry(_operationId: string, context: ExtensionContext):
 	context.subscriptions.push(new PlanComparer(pddlWorkspace, pddlConfiguration));
 
 	workspace.onDidChangeConfiguration(() => {
-		plannersConfiguration.refreshPlanSelector();
+		plannersConfiguration.refreshStatusBar();
 		if (registerDocumentFormattingProvider(context, codePddlWorkspace)) {
 			window.showInformationMessage("PDDL formatter is now available. Right-click on a PDDL file...");
 			console.log('PDDL Formatter enabled.');
