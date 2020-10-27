@@ -960,7 +960,7 @@
     ]
   },
   "scripts": {
-    "postinstall": "node downloadVisJs.js",
+    "postinstall": "node downloadVisJs.js && copyfiles --flat ./node_modules/vscode-codicons/dist/codicon.css ./node_modules/vscode-codicons/dist/codicon.ttf  ./views/common/",
     "compile": "tsc -p ./",
     "watch": "tsc -w -p ./",
     "lint": "eslint src --ext ts",
@@ -1008,6 +1008,7 @@
     "@typescript-eslint/parser": "^2.18.0",
     "chai": "^4.2.0",
     "chai-string": "^1.5.0",
+    "copyfiles": "^2.3.0",
     "download-file": "^0.1.5",
     "eslint": "^6.8.0",
     "glob": "^7.1.6",
@@ -1016,6 +1017,7 @@
     "tmp-promise": "^2.0.2",
     "typescript": "^3.9.6",
     "vsce": "^1.75.0",
+    "vscode-codicons": "0.0.12",
     "vscode-test": "^1.0.0"
   }
 }

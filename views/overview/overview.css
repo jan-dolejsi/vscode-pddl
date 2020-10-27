@@ -2,12 +2,14 @@ p, div, h1, h2, h3 {
     font-weight: 400
 }
 img.fileIcon {width: 18px; vertical-align: text-bottom;}
-img.configIcon {vertical-align: text-bottom;}
 input.config {
     height: 16px;
     min-width: 270px;
     max-width: 600px;
     border: 1px solid #ddd;
+}
+i.codicon {
+    cursor: pointer;
 }
 a.button {
     -webkit-appearance: button;
@@ -22,10 +24,6 @@ a.button {
     vertical-align: inherit;
     margin-left: 3px;
     text-align: center;
-}
-img.menuButton {
-    /* height: 16px; */
-    margin-left: 5px;
 }
 
 table#planners {

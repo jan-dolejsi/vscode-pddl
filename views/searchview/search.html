@@ -12,14 +12,15 @@
     <script defer src="search.js" type="text/javascript"></script>
     <link href="../common/vis-network.min.css" rel="stylesheet" type="text/css"></link>
     <link href="search.css" rel="stylesheet" type="text/css"></link>
+    <link href="../common/codicon.css" rel="stylesheet" type="text/css"></link>
     <!--CSP-->
 </head>
 <body">
-    <div style="float: right">
-        <img src="no-signal_gray.svg" id="startDebuggerButton" style="width: 20px;" title="Search engine listener is not running. Click here to start it." >
-        <img src="signal_gray.svg" id="stopDebuggerButton" style="width: 20px;" title="Search engine listener is running. Click here to stop it." >
-        <a href="#" id="restartDebuggerButton" class="toolbarButton" title="Clear debugger view and re-start search engine listener.">⟳</a>
-        <a href="#" id="toggleStateLogButton" class="toolbarButton" title="Open and synchronize navigation through state log file.">🗎</a>
+    <div style="float: right" class=iconBar>
+        <i id="restartDebuggerButton" class="codicon codicon-refresh" title="Clear debugger view and re-start search engine listener."></i>
+        <i id="startDebuggerButton" class="codicon codicon-record" title="Search engine listener is not running. Click here to start it." ></i>
+        <i id="stopDebuggerButton" class="codicon disabled codicon-stop-circle" title="Search engine listener is running. Click here to stop it." ></i>
+        <i id="toggleStateLogButton" class="codicon codicon-output" title="Open and synchronize navigation through state log file."></i>
     </div>
 
     <div class="left">

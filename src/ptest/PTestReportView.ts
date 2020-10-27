@@ -72,7 +72,9 @@ export class PTestReportView {
 
     async getHtml(webview: Webview): Promise<string> {
         let html = await getWebViewHtml(this.context, {
-            relativePath: this.CONTENT_FOLDER, htmlFileName: 'page.html'
+            allowUnsafeInlineScripts: true, // it is used by the generated html
+            relativePath: this.CONTENT_FOLDER,
+            htmlFileName: 'page.html'
         }, webview);
 
         const tableRowsHtml = this.report.getManifests().map(manifest => this.renderManifestRow(manifest));

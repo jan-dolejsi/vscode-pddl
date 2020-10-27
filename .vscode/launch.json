@@ -15,6 +15,18 @@
 			"file": "${workspaceFolder}/views/overview/overview.html"
 		},
 		{
+			"type": "chrome",
+			"request": "launch",
+			"name": "Problem/State view (html)",
+			"file": "${workspaceFolder}/views/modelView/problemInitView.html"
+		},
+		{
+			"type": "chrome",
+			"request": "launch",
+			"name": "Graph view (html)",
+			"file": "${workspaceFolder}/views/modelView/graphView.html"
+		},
+		{
 			"name": "Launch Extension",
 			"type": "extensionHost",
 			"request": "launch",

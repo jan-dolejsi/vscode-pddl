@@ -278,21 +278,25 @@ function clearStates() {
     clearChart();
 }
 
-document.getElementById("startDebuggerButton").onclick = () => startSearchDebugger();
+const START_DEBUGGER_BUTTON_ID = "startDebuggerButton";
+const STOP_DEBUGGER_BUTTON_ID = "stopDebuggerButton";
+const CLEAR_DEBUGGER_BUTTON_ID = "restartDebuggerButton";
+
+document.getElementById(START_DEBUGGER_BUTTON_ID).onclick = () => startSearchDebugger();
 
 function startSearchDebugger() {
     showDebuggerOn(true);
     postCommand('startDebugger');
 }
 
-document.getElementById("stopDebuggerButton").onclick = () => stopSearchDebugger();
+document.getElementById(STOP_DEBUGGER_BUTTON_ID).onclick = () => stopSearchDebugger();
 
 function stopSearchDebugger() {
     showDebuggerOn(false);
     postCommand('stopDebugger');
 }
 
-document.getElementById("restartDebuggerButton").onclick = () => restartSearchDebugger();
+document.getElementById(CLEAR_DEBUGGER_BUTTON_ID).onclick = () => restartSearchDebugger();
 
 function restartSearchDebugger() {
     postCommand('reset');
@@ -306,14 +310,26 @@ function restartSearchDebugger() {
  * @param {number} port HTTP port the debugger is listening on
  */
 function showDebuggerOn(on, port) {
-    stopDisplay = on ? 'initial' : 'none';
-    startDisplay = on ? 'none' : 'initial';
+    enableButton(!on, START_DEBUGGER_BUTTON_ID);
+    enableButton(on, STOP_DEBUGGER_BUTTON_ID);
+    enableButton(on, CLEAR_DEBUGGER_BUTTON_ID);
 
-    window.document.getElementById("startDebuggerButton").style.display = startDisplay;
-    window.document.getElementById("stopDebuggerButton").style.display = stopDisplay;
-    window.document.getElementById("restartDebuggerButton").style.display = stopDisplay;
+    window.document.getElementById(STOP_DEBUGGER_BUTTON_ID).title = "Search engine listener is running on port " + port + ". Click here to stop it.";
+}
 
-    window.document.getElementById("stopDebuggerButton").title = "Search engine listener is running on port " + port + ". Click here to stop it.";
+/**
+ * Enable/disable icon-based button.
+ * @param {boolean} enable enable/disable
+ * @param {string} buttonId button element ID
+ */
+function enableButton(enable, buttonId) {
+    const icon = window.document.getElementById(buttonId);
+
+    if (enable) {
+        icon.classList.remove('disabled');
+    } else {
+        icon.classList.add('disabled');
+    }
 }
 
 function showStatePlan(statePlanHtml) {

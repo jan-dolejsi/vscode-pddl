@@ -11,24 +11,11 @@ div#menu {
 
 img.menuButton {
   border: solid 1px transparent;
-  vertical-align: middle;
+  vertical-align: baseline;
   cursor: pointer;
 }
 
 img.menuButton:hover {
-  border-color: gray;
-}
-
-a.menuButton {
-  border: solid 1px transparent;
-  font: 16px sans;
-  text-decoration: none;
-  width: 30px;
-  padding-left: 3px;
-  padding-right: 3px;
-}
-
-a.menuButton:hover {
   border-color: gray;
 }
 
@@ -52,4 +39,15 @@ td.menuBarCell {
   text-align: right;
   padding-right: 1em;
   border: none;
+}
+
+i.codicon {
+  cursor: pointer;
+  margin-left: 3px;
+  margin-right: 3px;
+  border: solid 1px transparent;
+  font: 16px sans;
+}
+i.codicon:hover {
+  border-color: gray;
 }
