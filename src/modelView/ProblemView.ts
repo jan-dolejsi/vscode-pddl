@@ -235,7 +235,7 @@ export abstract class ProblemView<TRendererOptions, TRenderData> extends Disposa
                     Uri.file(path.join("..", "..", COMMON_FOLDER, "codicon.ttf"))
                 ],
                 relativePath: this.options.content, htmlFileName: this.options.webviewHtmlPath
-            }, viewPanel.getPanel().webview);
+            }, viewPanel.getPanel().isInset ? undefined : viewPanel.getPanel().webview);
         }
     }
 

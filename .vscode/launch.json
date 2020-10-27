@@ -33,7 +33,8 @@
 			"runtimeExecutable": "${execPath}",
 			"args": [
 				"--extensionDevelopmentPath=${workspaceRoot}",
-				"--enable-proposed-api=jan-dolejsi.pddl"
+				"--enable-proposed-api", 
+				"jan-dolejsi.pddl"
 			],
 			"stopOnEntry": false,
 			"sourceMaps": true,
