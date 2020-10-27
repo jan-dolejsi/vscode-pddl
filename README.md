@@ -176,7 +176,7 @@ This is very useful, to debug numerically-rich domains.
 See configuration setting `pddlPlanner.executionTarget` to select where is the planner executable started. You can either direct planner executable output to a _Terminal_ window instead of the _Output window_. This can be configured on the _Overview page_.
 The _Terminal_ option is useful when the planner takes keyboard input while executing. In case of the _Terminal_, the plan(s) are not visualized. Planner could be stopped by _Ctrl+C_ (or equivalent).
 
-The planner output can be re-directed between the three destinations simply using a button in the stats bar:
+The planner output can be re-directed between the three destinations, including the interactive Terminal window, simply using a button in the stats bar:
 
 ![Planner output re-direction switch in status bar](https://raw.githubusercontent.com/wiki/jan-dolejsi/vscode-pddl/img/pddl_planner_output_target_selector_status_bar.gif)
 
