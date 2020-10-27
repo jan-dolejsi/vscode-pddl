@@ -38,7 +38,7 @@ export class PTestTreeDataProvider implements TreeDataProvider<PTestNode> {
     refresh(): void {
         this.testResults.clear();
         this.treeNodeCache.clear();
-        this._onDidChange.fire();
+        this._onDidChange.fire(undefined);
     }
 
     getTestOutcome(testUri: Uri): TestOutcome {

@@ -3,7 +3,7 @@ import * as path from 'path';
 import * as os from 'os';
 import * as tmp from 'tmp-promise';
 import { PddlExtensionContext, planner } from 'pddl-workspace';
-import { Disposable, workspace, ExtensionContext, Memento, extensions, Event, FileType, Uri, ConfigurationTarget } from 'vscode';
+import { Disposable, workspace, ExtensionContext, Memento, extensions, Event, FileType, Uri, ConfigurationTarget, EnvironmentVariableCollection, EnvironmentVariableMutator, ExtensionMode } from 'vscode';
 import { assertDefined } from '../../utils';
 import { CONF_PDDL } from '../../configuration/configuration';
 import { CONF_PLANNERS, CONF_SELECTED_PLANNER } from '../../configuration/PlannersConfiguration';
@@ -49,6 +49,38 @@ class MockMemento implements Memento {
     }
 }
 
+class MockEnvironmentVariableCollection implements EnvironmentVariableCollection {
+    persistent: boolean;
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    replace(_variable: string, _value: string): void {
+        throw new Error('Method not implemented.');
+    }
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    append(_variable: string, _value: string): void {
+        throw new Error('Method not implemented.');
+    }
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    prepend(_variable: string, _value: string): void {
+        throw new Error('Method not implemented.');
+    }
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    get(_variable: string): EnvironmentVariableMutator {
+        throw new Error('Method not implemented.');
+    }
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    forEach(callback: (variable: string, mutator: EnvironmentVariableMutator, collection: EnvironmentVariableCollection) => any, thisArg?: any): void {
+        throw new Error(`Method not implemented. ${callback}, ${thisArg}`);
+    }
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    delete(_variable: string): void {
+        throw new Error('Method not implemented.');
+    }
+    clear(): void {
+        throw new Error('Method not implemented.');
+    }
+    
+}
+
 export async function createTestExtensionContext(): Promise<ExtensionContext> {
     const storage = await tmp.dir({ prefix: 'extensionTestStoragePath' });
     // simulate the space in the 'Application\ Support' on MacOS
@@ -60,11 +92,17 @@ export async function createTestExtensionContext(): Promise<ExtensionContext> {
         asAbsolutePath: function (path: string): string { throw new Error(`Unsupported. ` + path); },
         extensionPath: '.',
         storagePath: storage.path,
+        storageUri: Uri.file(storage.path),
         subscriptions: new Array<Disposable>(),
         globalState: new MockMemento(),
         workspaceState: new MockMemento(),
         globalStoragePath: globalStorage.path,
+        globalStorageUri: Uri.file(globalStorage.path),
         logPath: log.path,
+        logUri: Uri.file(log.path),
+        environmentVariableCollection: new MockEnvironmentVariableCollection(),
+        extensionMode: ExtensionMode.Development,
+        extensionUri: Uri.file(process.cwd()),
     };
 }
 

@@ -16,7 +16,7 @@ async function main(): Promise<void> {
 		// Passed to --extensionTestsPath
 		const extensionTestsPath = path.resolve(__dirname, './suite/index');
 
-		const vsCodeVersions = ['stable']; //'1.44.2', 
+		const vsCodeVersions = ['stable']; //'1.50.x', 
 
 		const options: TestOptions = {
 			extensionDevelopmentPath: extensionDevelopmentPath, extensionTestsPath: extensionTestsPath
