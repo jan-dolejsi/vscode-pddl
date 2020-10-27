@@ -31,6 +31,7 @@ downloads.forEach(task => {
 
     download(task.url, task.options, function (error) {
         if (error) {
+            console.error("Failed to download: " + task.options.directory + "/" + task.options.filename + " with error " + error);
             throw error;
         }
         console.log("Success: " + task.options.directory + "/" + task.options.filename);
