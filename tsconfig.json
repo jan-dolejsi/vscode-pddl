@@ -1,0 +1,23 @@
+{
+	"compilerOptions": {
+		// "strict": true,   /* enable all strict type-checking options */		
+		"noUnusedLocals": true,
+		"noUnusedParameters": true,
+		"noImplicitAny": true,
+		"noImplicitReturns": true,		
+		"target": "ES2019",
+		"lib": [
+			"es2019"
+		],
+		"module": "commonjs",
+		"moduleResolution": "node",
+		"forceConsistentCasingInFileNames": true,
+		"rootDir": "src",
+		"outDir": "out",
+		"sourceMap": true
+	},
+	"exclude": [
+		"node_modules",
+		".vscode-test"
+	]
+}

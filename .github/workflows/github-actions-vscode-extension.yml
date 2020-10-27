@@ -1,0 +1,66 @@
+name: Build
+
+on: 
+  push: 
+    branches:
+      - master
+  pull_request: 
+    branches: 
+      - master
+
+jobs:
+  build:
+    
+    strategy:
+      matrix:
+        node-version: [10.16]
+        os: [windows-latest, macos-latest, ubuntu-latest]
+      # fail-fast: false
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - uses: actions/checkout@v2
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v1
+        with:
+          node-version: ${{ matrix.node-version }}
+
+      - name: NPM Install
+        run: npm install
+
+      - run: npm run compile
+
+      - name: Run extension integration tests in head-less VS Code
+        if: success()
+        uses: GabrielBB/xvfb-action@v1.0
+        with:
+          run: npm test
+
+      - name: Package extension
+        if: success()
+        run: | 
+          npm install -g vsce
+          vsce package
+
+  publish:
+    needs: build
+    runs-on: ubuntu-latest
+    if: success() && github.ref == 'refs/heads/master'
+    steps:
+      - uses: actions/checkout@v2
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v1
+        with:
+          node-version: 10.16
+
+      - name: NPM Install
+        run: npm install
+
+      - name: Publish extension to marketplace
+        run: | 
+          npm install -g vsce
+          vsce publish -p $VSCE_TOKEN
+        env: 
+          VSCE_TOKEN: ${{ secrets.VSCE_TOKEN }}
+        continue-on-error: true

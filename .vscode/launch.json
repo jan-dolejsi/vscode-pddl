@@ -3,32 +3,58 @@
 	// List of configurations. Add new configurations or edit existing ones.
 	"configurations": [
 		{
+			"type": "chrome",
+			"request": "launch",
+			"name": "Search debugger (html)",
+			"file": "${workspaceFolder}/views/searchview/search.html"
+		},
+		{
+			"type": "chrome",
+			"request": "launch",
+			"name": "Overview (html)",
+			"file": "${workspaceFolder}/views/overview/overview.html"
+		},
+		{
+			"type": "chrome",
+			"request": "launch",
+			"name": "Problem/State view (html)",
+			"file": "${workspaceFolder}/views/modelView/problemInitView.html"
+		},
+		{
+			"type": "chrome",
+			"request": "launch",
+			"name": "Graph view (html)",
+			"file": "${workspaceFolder}/views/modelView/graphView.html"
+		},
+		{
 			"name": "Launch Extension",
 			"type": "extensionHost",
 			"request": "launch",
 			"runtimeExecutable": "${execPath}",
 			"args": [
-				"--extensionDevelopmentPath=${workspaceRoot}/client",
+				"--extensionDevelopmentPath=${workspaceRoot}",
 				"--enable-proposed-api=jan-dolejsi.pddl"
 			],
 			"stopOnEntry": false,
 			"sourceMaps": true,
 			"outFiles": [
-				"${workspaceRoot}/client/out/**/*.js"
+				"${workspaceRoot}/out/**/*.js"
 			],
 			"preLaunchTask": "compile"
 		},
 		{
-			"name": "Run Extension Tests",
+			"name": "Integration Tests",
 			"type": "extensionHost",
 			"request": "launch",
 			"runtimeExecutable": "${execPath}",
 			"args": [
-				"--folder-uri=${workspaceFolder}/client/src/test/tmpFolder/",
-				"--extensionDevelopmentPath=${workspaceFolder}/client",
-				"--extensionTestsPath=${workspaceFolder}/client/out/client/src/test/suite/index"
+				"--folder-uri=${workspaceFolder}/src/test/tmpFolder/",
+				"--user-data-dir=${workspaceFolder}/src/test/tmpUserProfile/",
+				"--extensionDevelopmentPath=${workspaceFolder}",
+				"--extensionTestsPath=${workspaceFolder}/out/test/suite/index",
+				"--disable-extensions"
 			],
-			"outFiles": ["${workspaceFolder}/client/out/client/src/test/**/*.js"],
+			"outFiles": ["${workspaceFolder}/out/test/**/*.js"],
 			"preLaunchTask": "compile"
 		}
 	]
