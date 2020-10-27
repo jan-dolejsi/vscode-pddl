@@ -33,7 +33,7 @@ echo Installing the extension locally...
 
 echo Installing %vsix_name%
 call code --install-extension %vsix_name%
-echo Test extension before you continue or press Ctrl+C to exit before publishing
-pause
-call vsce publish --packagePath %vsix_name%
+:: echo Test extension before you continue or press Ctrl+C to exit before publishing
+:: pause
+:: call vsce publish --packagePath %vsix_name%
 
