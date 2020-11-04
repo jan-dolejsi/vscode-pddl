@@ -237,6 +237,10 @@ function toNodeTitle(newState) {
     title += '\nGeneration: ' + newState.g
         + '\nEarliest time: ' + newState.earliestTime;
 
+    if (newState.satisfiedLandmarks !== undefined) {
+        title += '\nLandmarks: ' + newState.satisfiedLandmarks;
+    }
+    
     if (newState.wasVisitedOrIsWorse) {
         title += '\nState was visited or is worse than a previously visited state';
     }
@@ -267,10 +271,12 @@ function updateStateOnTree(state) {
  */
 function showPlanOnTree(planStates) {
     planStates.forEach(state => updateStateOnTree(state));
-    const lastStateId = Math.max(planStates.map(state => state.id));
+    const lastStateId = Math.max(...planStates.map(state => state.id));
     const lastState = planStates.find(state => state.id === lastStateId);
-    lastState.isGoal = true;
-    updateStateOnTree(lastState);
+    if (lastState) {
+        lastState.isGoal = true;
+        updateStateOnTree(lastState);
+    }
 }
 
 /**

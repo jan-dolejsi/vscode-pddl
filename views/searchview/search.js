@@ -22,7 +22,7 @@ window.addEventListener('message', event => {
             showAllStates(message.state);
             break;
         case 'showPlan':
-            showPlan(message.state);
+            showPlan(message.state); // the message.state contains list of states actually
             break;
         case 'stateLog':
             showStateLogButton(message.state);
@@ -41,6 +41,7 @@ window.addEventListener('message', event => {
  * @property {string} actionName action that created this state
  * @property {number} h heuristic value of the state
  * @property {number} earliestTime earliest time this state can be scheduled
+ * @property {number} satisfiedLandmarks landmark facts satisfied by this state
  * @property {number} totalMakespan makespan of the hypotetical plan that concatenates the planhead of this state and its relaxed plan
  * @property {boolean | undefined} isDeadEnd state is dead end (goal cannot be reached)
  * @property {boolean | undefined} isGoal state reaches the goal condition
@@ -53,9 +54,10 @@ window.addEventListener('message', event => {
  * @param {number} parentId mock state's parent ID
  * @param {string} actionName creating action
  * @param {number} earliestTime earliest state time
+ * @param {number} satisfiedLandmarks landmark facts satisfied in this state
  * @returns {State} mock state
  */
-function createMockState(id, parentId, actionName, earliestTime) {
+function createMockState(id, parentId, actionName, earliestTime, satisfiedLandmarks) {
     return {
         id: id,
         origId: id.toString(),
@@ -63,19 +65,20 @@ function createMockState(id, parentId, actionName, earliestTime) {
         actionName: actionName,
         h: undefined,
         earliestTime: earliestTime,
+        satisfiedLandmarks: satisfiedLandmarks,
         totalMakespan: undefined
     };
 }
 
 const mockStates = [
-    createMockState(10, null, null, 0),
-    createMockState(11, 10, 'drive start', .1),
-    createMockState(12, 10, 'load start', .1),
-    createMockState(13, 11, 'drive end', 2),
-    createMockState(14, 13, 'unload start', 2.1),
+    createMockState(10, null, null, 0, 1),
+    createMockState(11, 10, 'drive start', .1, 2),
+    createMockState(12, 10, 'load start', .1, 2),
+    createMockState(13, 11, 'drive end', 2, 3),
+    createMockState(14, 13, 'unload start', 2.1, 3),
 ];
 
-/** @type {State[]} */
+/** @type {Map<number, State>} */
 const states = {};
 /** @type {number | null} */
 let selectedStateId = null;
@@ -134,6 +137,24 @@ document.getElementById("deadEndMock").onclick = () => {
     state.totalMakespan = Number.POSITIVE_INFINITY;
     state.isDeadEnd = true;
     update(state);
+};
+
+document.getElementById("planMock").onclick = () => {
+    if (selectedStateId === null) { return; }
+
+    let state = states[selectedStateId];
+
+    const planStates = [];
+
+    while (state) {
+        state.isPlan = true;
+        planStates.push(state);
+        const parentId = state.parentId;
+        state = parentId !== undefined && parentId !== null ?
+            states[parentId] : undefined;
+    }
+
+    showPlan(planStates);
 };
 
 document.getElementById("clearStatesMock").onclick = () => {
