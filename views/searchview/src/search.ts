@@ -1,3 +1,15 @@
+import {
+    SearchTree
+} from "./tree";
+import {
+    addStateToChart, chart, clearChart, endChartBatch, google, initializeChart, navigateChart, reSizeChart, rowIdToStateId, selectChartRow, updateStateOnChart
+} from "./charts";
+import { getElementByIdOrThrow, postCommand, State, vscode } from "./utils";
+
+/* implemented in baseWebview.js */
+declare function onLoad(): void;
+
+let searchTree: SearchTree;
 
 window.addEventListener('message', event => {
     const message = event.data;
@@ -7,7 +19,7 @@ window.addEventListener('message', event => {
             add(message.state, false);
             break;
         case 'stateUpdated':
-            update(message.state, false);
+            update(message.state);
             break;
         case 'debuggerState':
             showDebuggerOn(message.state.running === 'on', message.state.port);
@@ -33,67 +45,56 @@ window.addEventListener('message', event => {
 });
 
 /**
- * @typedef {Object} State
- * @property {number} id state ID
- * @property {string} origId original state ID (as received from the planner)
- * @property {number} parentId parent state ID
- * @property {number} g generation
- * @property {string} actionName action that created this state
- * @property {number} h heuristic value of the state
- * @property {number} earliestTime earliest time this state can be scheduled
- * @property {number} totalMakespan makespan of the hypotetical plan that concatenates the planhead of this state and its relaxed plan
- * @property {boolean | undefined} isDeadEnd state is dead end (goal cannot be reached)
- * @property {boolean | undefined} isGoal state reaches the goal condition
- * @property {boolean | undefined} wasVisitedOrIsWorse state was previously visited in the search, or other state(s) dominate it
- */
-
-/**
  * Creates a mock state
- * @param {number} id mock state ID
- * @param {number} parentId mock state's parent ID
- * @param {string} actionName creating action
- * @param {number} earliestTime earliest state time
- * @returns {State} mock state
+ * @param g mock state generation
+ * @param id mock state ID
+ * @param parentId mock state's parent ID
+ * @param actionName creating action
+ * @param earliestTime earliest state time
+ * @returns mock state
  */
-function createMockState(id, parentId, actionName, earliestTime) {
+function createMockState(g: number, id: number, parentId: number | undefined, actionName: string | undefined, earliestTime: number): State {
     return {
+        g: g,
         id: id,
         origId: id.toString(),
         parentId: parentId,
         actionName: actionName,
-        h: undefined,
         earliestTime: earliestTime,
-        totalMakespan: undefined
+        isGoal: false
     };
 }
 
 const mockStates = [
-    createMockState(10, null, null, 0),
-    createMockState(11, 10, 'drive start', .1),
-    createMockState(12, 10, 'load start', .1),
-    createMockState(13, 11, 'drive end', 2),
-    createMockState(14, 13, 'unload start', 2.1),
+    createMockState(0, 10, undefined, undefined, 0),
+    createMockState(1, 11, 10, 'drive start', .1),
+    createMockState(1, 12, 10, 'load start', .1),
+    createMockState(2, 13, 11, 'drive end', 2),
+    createMockState(3, 14, 13, 'unload start', 2.1),
 ];
 
-/** @type {State[]} */
-const states = {};
-/** @type {number | null} */
-let selectedStateId = null;
+/** All states displayed. */
+const states: State[] = [];
 
-document.getElementById("addMock").onclick = () => {
+/** Selected state ID or null if no state was selected yet. */
+let selectedStateId: number | null;
+
+getElementByIdOrThrow("addMock").onclick = (): void => {
     if (mockStates.length === 0) { return; }
     const newState = mockStates.shift();
-    add(newState);
+    if (newState) {
+        add(newState, false);
+    }
 };
 
-document.getElementById("setVisitedOrWorseMock").onclick = () => {
+getElementByIdOrThrow("setVisitedOrWorseMock").onclick = (): void => {
     if (selectedStateId === null) { return; }
     const state = states[selectedStateId];
     state.wasVisitedOrIsWorse = true;
     update(state);
 };
 
-document.getElementById("evaluateMock").onclick = () => {
+getElementByIdOrThrow("evaluateMock").onclick = (): void => {
     if (selectedStateId === null) { return; }
 
     const state = states[selectedStateId];
@@ -107,10 +108,10 @@ document.getElementById("evaluateMock").onclick = () => {
     let totalMakespan = 5;
     let earliestTime = 0;
 
-    if (state.parentId !== null) {
+    if (state.parentId !== undefined) {
         const parentState = states[state.parentId];
-        h = parentState.h - Math.floor(Math.random() * 2);
-        totalMakespan = parentState.totalMakespan + Math.floor(Math.random() * 1.5);
+        h = parentState.h ?? 2 - Math.floor(Math.random() * 2);
+        totalMakespan = parentState.totalMakespan ?? 1.5 + Math.floor(Math.random() * 1.5);
         earliestTime = parentState.earliestTime + Math.random() * 1.5;
     }
 
@@ -120,7 +121,7 @@ document.getElementById("evaluateMock").onclick = () => {
     update(state);
 };
 
-document.getElementById("deadEndMock").onclick = () => {
+getElementByIdOrThrow("deadEndMock").onclick = (): void => {
     if (selectedStateId === null) { return; }
 
     const state = states[selectedStateId];
@@ -136,29 +137,29 @@ document.getElementById("deadEndMock").onclick = () => {
     update(state);
 };
 
-document.getElementById("clearStatesMock").onclick = () => {
+getElementByIdOrThrow("clearStatesMock").onclick = (): void => {
     clearStates();
 };
 
 /**
  * Adds state
- * @param {State} newState state to add
- * @param {boolean} batch batch-mode on/off
+ * @param newState state to add
+ * @param batch batch-mode on/off
  * @returns {void}
  */
-function add(newState, batch) {
-    addStateToTree(newState, batch);
+function add(newState: State, batch: boolean): void {
+    searchTree.addStateToTree(newState, batch);
     addStateToChart(newState, batch);
     states[newState.id] = newState;
 }
 
 /**
  * Updates state on the view
- * @param {State} state state to update
+ * @param state state to update
  */
-function update(state) {
+function update(state: State): void {
     updateStateOnChart(state);
-    updateStateOnTree(state);
+    searchTree.updateStateOnTree(state);
 
     if (selectedStateId === state.id) {
         selectChartRow(state.id);
@@ -167,17 +168,17 @@ function update(state) {
 
 /**
  * Highlight states that belong to plan
- * @param {State[]} states state chain that form a plan
+ * @param states state chain that form a plan
  */
-function showPlan(states) {
-    showPlanOnTree(states);
+function showPlan(states: State[]): void {
+    searchTree.showPlanOnTree(states);
 }
 
 /**
  * Clear pre-existing states and show new ones
- * @param {State[]} states states to display (instead of currently shown states)
+ * @param states states to display (instead of currently shown states)
  */
-function showAllStates(states) {
+function showAllStates(states: State[]): void {
     clearStates();
     for (const state of states) {
         add(state, true);
@@ -185,39 +186,39 @@ function showAllStates(states) {
     endBatch();
 }
 
-function endBatch() {
+function endBatch(): void {
     endChartBatch();
-    endTreeBatch();
+    searchTree.endTreeBatch();
 }
 
 /**
  * State was selected
- * @param {number} stateId state id
+ * @param stateId state id or null to unselect
  */
-function onStateSelected(stateId) {
+function onStateSelected(stateId: number | null): void {
     if (selectedStateId === stateId) { return; }
 
     selectedStateId = stateId;
     selectChartRow(stateId);
-    selectTreeNode(stateId);
-    postMessage({ command: 'stateSelected', stateId: stateId });
+    searchTree.selectTreeNode(stateId);
+    vscode?.postMessage({ command: 'stateSelected', stateId: stateId });
 
     if (!vscode) {
         showStatePlan('<div style="width: 400px; height: 900px; background-color: green"></div>');
     }
 }
 
-document.body.onload = () => initialize();
+document.body.onload = (): void => initialize();
 
-function initialize() {
-    createTree();
-    network.on('selectNode', function (nodeEvent) {
+function initialize(): void {
+    searchTree = new SearchTree();
+    searchTree.network.on('selectNode', function (nodeEvent) {
         if (nodeEvent.nodes.length > 0) {
             onStateSelected(nodeEvent.nodes[0]);
         }
     });
 
-    network.on('deselectNode', function (nodeEvent) {
+    searchTree.network.on('deselectNode', function (nodeEvent) {
         if (nodeEvent.nodes.length > 0) {
             onStateSelected(nodeEvent.nodes[0]);
         }
@@ -230,7 +231,7 @@ function initialize() {
         navigate(event);
     });
 
-    window.onresize = function () {
+    window.onresize = function (): void {
         unsubscribeChartEvents();
         reSizeChart();
         subscribeToChartEvents();
@@ -243,14 +244,15 @@ function initialize() {
     initializeChart();
     subscribeToChartEvents();
 
-    document.getElementById("mockMenu").style.visibility = vscode ? 'collapse' : 'visible';
+    getElementByIdOrThrow("mockMenu").style.visibility = vscode ? 'collapse' : 'visible';
 
     onLoad();
 }
 
-let chartSelectEvent;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+let chartSelectEvent: any;
 
-function subscribeToChartEvents() {
+function subscribeToChartEvents(): void {
     console.log("subscribing to chart select event for "); console.log(chart);
     chartSelectEvent = google.visualization.events.addListener(chart, 'select', function () {
         console.log("chart selection changed");
@@ -258,7 +260,7 @@ function subscribeToChartEvents() {
         console.log(selection);
         if (selection && selection.length > 0) {
             const newSelectedStateId = rowIdToStateId.get(selection[0].row);
-            onStateSelected(newSelectedStateId);
+            onStateSelected(newSelectedStateId ?? null);
         }
         else {
             onStateSelected(null);
@@ -266,15 +268,15 @@ function subscribeToChartEvents() {
     });
 }
 
-function unsubscribeChartEvents() {
+function unsubscribeChartEvents(): void {
     if (chartSelectEvent && chart) {
         google.visualization.events.removeListener(chartSelectEvent);
     }
 }
 
-function clearStates() {
+function clearStates(): void {
     console.log('clearing all states');
-    clearTree();
+    searchTree.clearTree();
     clearChart();
 }
 
@@ -282,23 +284,23 @@ const START_DEBUGGER_BUTTON_ID = "startDebuggerButton";
 const STOP_DEBUGGER_BUTTON_ID = "stopDebuggerButton";
 const CLEAR_DEBUGGER_BUTTON_ID = "restartDebuggerButton";
 
-document.getElementById(START_DEBUGGER_BUTTON_ID).onclick = () => startSearchDebugger();
+getElementByIdOrThrow(START_DEBUGGER_BUTTON_ID).onclick = (): void => startSearchDebugger();
 
-function startSearchDebugger() {
+function startSearchDebugger(): void {
     showDebuggerOn(true);
     postCommand('startDebugger');
 }
 
-document.getElementById(STOP_DEBUGGER_BUTTON_ID).onclick = () => stopSearchDebugger();
+getElementByIdOrThrow(STOP_DEBUGGER_BUTTON_ID).onclick = (): void => stopSearchDebugger();
 
-function stopSearchDebugger() {
+function stopSearchDebugger(): void {
     showDebuggerOn(false);
     postCommand('stopDebugger');
 }
 
-document.getElementById(CLEAR_DEBUGGER_BUTTON_ID).onclick = () => restartSearchDebugger();
+getElementByIdOrThrow(CLEAR_DEBUGGER_BUTTON_ID).onclick = (): void => restartSearchDebugger();
 
-function restartSearchDebugger() {
+function restartSearchDebugger(): void {
     postCommand('reset');
     showStatePlan("");
     clearStates();
@@ -306,24 +308,26 @@ function restartSearchDebugger() {
 
 /**
  * Display debugger status
- * @param {boolean} on debugger is active
- * @param {number} port HTTP port the debugger is listening on
+ * @param on debugger is active
+ * @param port HTTP port the debugger is listening on
  */
-function showDebuggerOn(on, port) {
+function showDebuggerOn(on: boolean, port?: number): void {
     enableButton(!on, START_DEBUGGER_BUTTON_ID);
     enableButton(on, STOP_DEBUGGER_BUTTON_ID);
     enableButton(on, CLEAR_DEBUGGER_BUTTON_ID);
 
-    window.document.getElementById(STOP_DEBUGGER_BUTTON_ID).title = "Search engine listener is running on port " + port + ". Click here to stop it.";
+    if (port) {
+        getElementByIdOrThrow(STOP_DEBUGGER_BUTTON_ID).title = "Search engine listener is running on port " + port + ". Click here to stop it.";
+    }
 }
 
 /**
  * Enable/disable icon-based button.
- * @param {boolean} enable enable/disable
- * @param {string} buttonId button element ID
+ * @param enable enable/disable
+ * @param buttonId button element ID
  */
-function enableButton(enable, buttonId) {
-    const icon = window.document.getElementById(buttonId);
+function enableButton(enable: boolean, buttonId: string): void {
+    const icon = getElementByIdOrThrow(buttonId);
 
     if (enable) {
         icon.classList.remove('disabled');
@@ -332,55 +336,55 @@ function enableButton(enable, buttonId) {
     }
 }
 
-function showStatePlan(statePlanHtml) {
-    window.document.getElementById("statePlan").innerHTML = statePlanHtml;
+function showStatePlan(statePlanHtml: string): void {
+    getElementByIdOrThrow("statePlan").innerHTML = statePlanHtml;
 }
 
-const shapeMap = new Map();
-shapeMap['h'] = 'hexagon';
-shapeMap['b'] = 'box';
-shapeMap['d'] = 'diamond';
-shapeMap['s'] = 'star';
-shapeMap['t'] = 'triangle';
-shapeMap['h'] = 'hexagon';
-shapeMap['q'] = 'square';
-shapeMap['e'] = 'ellipse';
+const shapeMap = new Map<string, string>();
+shapeMap.set('h', 'hexagon');
+shapeMap.set('b', 'box');
+shapeMap.set('d', 'diamond');
+shapeMap.set('s', 'star');
+shapeMap.set('t', 'triangle');
+shapeMap.set('h', 'hexagon');
+shapeMap.set('q', 'square');
+shapeMap.set('e', 'ellipse');
 
-function navigate(e) {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function navigate(e: any): void {
     e = e || window.event;
-    /** @type{number | undefined} */
-    let newSelectedStateId = undefined;
+    let newSelectedStateId: number | null;
     switch (e.key) {
         case "ArrowLeft":
-            newSelectedStateId = e.shiftKey ? navigateChart(-1) : navigateTreeSiblings(-1);
+            newSelectedStateId = e.shiftKey ? navigateChart(-1) : searchTree.navigateTreeSiblings(-1);
             onStateSelected(newSelectedStateId);
             if (newSelectedStateId !== null) { e.cancelBubble = true; }
             break;
         case "ArrowRight":
-            newSelectedStateId = e.shiftKey ? navigateChart(+1) : navigateTreeSiblings(+1);
+            newSelectedStateId = e.shiftKey ? navigateChart(+1) : searchTree.navigateTreeSiblings(+1);
             onStateSelected(newSelectedStateId);
             if (newSelectedStateId !== null) { e.cancelBubble = true; }
             break;
         case "ArrowUp":
-            newSelectedStateId = navigateTreeUp();
+            newSelectedStateId = searchTree.navigateTreeUp();
             onStateSelected(newSelectedStateId);
             if (newSelectedStateId !== null) { e.cancelBubble = true; }
             break;
         case "ArrowDown":
-            newSelectedStateId = navigateTreeDown();
+            newSelectedStateId = searchTree.navigateTreeDown();
             onStateSelected(newSelectedStateId);
             if (newSelectedStateId !== null) { e.cancelBubble = true; }
             break;
         case "f":
-            autoFitEnabled = !autoFitEnabled;
+            searchTree.toggleAutoFit();
             break;
         case "F":
-            fitTree();
+            searchTree.fitTree();
             break;
     }
 
     if (e.key in shapeMap) {
-        changeSelectedNodeShape(shapeMap[e.key]);
+        searchTree.changeSelectedNodeShape(shapeMap.get(e.key)!);
     }
 
     if (Number.isFinite(parseInt(e.key))) {
@@ -391,20 +395,20 @@ function navigate(e) {
 }
 
 let stateIdToFind = 0;
-/** @type{number | undefined} */
-let stateFindingTimeout;
+/** Timeout for keyboard typing state ID. */
+let stateFindingTimeout: NodeJS.Timeout | undefined;
 
 /**
  * Turns on state finding and appends a stateId digit.
- * @param {number} digit of the state number to append
+ * @param digit of the state number to append
  */
-function findingStateWithDigit(digit) {
+function findingStateWithDigit(digit: number): void {
     stateIdToFind = stateIdToFind * 10 + digit;
     if (stateFindingTimeout) { clearTimeout(stateFindingTimeout); }
     stateFindingTimeout = setTimeout(() => findState(), 1000);
 }
 
-function findState() {
+function findState(): void {
     try {
         onStateSelected(stateIdToFind);
     } catch (ex) {
@@ -415,31 +419,34 @@ function findState() {
 
 /**
  * Navigates to child
- * @param {string} actionName action name
+ * @param actionName action name
+ * @todo this is called by the helpful action link on the relaxed plan display
  */
-function navigateToChildOfSelectedState(actionName) {
-    const newSelectedStateId = navigateToChildState(selectedStateId, actionName);
-    if (newSelectedStateId !== null) { onStateSelected(newSelectedStateId); }
+export function navigateToChildOfSelectedState(actionName: string): void {
+    if (selectedStateId) {
+        const newSelectedStateId = searchTree.navigateToChildState(selectedStateId, actionName);
+        if (newSelectedStateId !== null) { onStateSelected(newSelectedStateId); }
+    }
 }
 
-document.getElementById("toggleStateLogButton").onclick = () => toggleStateLog();
+getElementByIdOrThrow("toggleStateLogButton").onclick = (): void => toggleStateLog();
 
-function toggleStateLog() {
+function toggleStateLog(): void {
     postCommand('toggleStateLog');
 }
 
 /**
  * Shows heuristic log path
- * @param {string} logFilePath heuristic log path
+ * @param logFilePath heuristic log path
  */
-function showStateLogButton(logFilePath) {
-    const button = document.getElementById("toggleStateLogButton");
+function showStateLogButton(logFilePath: string): void {
+    const button = getElementByIdOrThrow("toggleStateLogButton");
 
     if (logFilePath) {
-        button.style = "color: green";
+        button.style.color = "green";
         button.title = "State selection synchronized with log file file: " + logFilePath;
     } else {
-        button.style = "color: red";
+        button.style.color = "red";
         button.title = "State log file synchronization disabled. Click here to re-enable.";
     }
 }

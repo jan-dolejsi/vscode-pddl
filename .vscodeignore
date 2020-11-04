@@ -1,5 +1,7 @@
 .vscode/**
 typings/**
+out/**/*.map
+out/**/*.d.ts
 out/test/**
 test/**
 src/**

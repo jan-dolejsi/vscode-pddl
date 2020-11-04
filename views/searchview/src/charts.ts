@@ -1,9 +1,15 @@
-// two maps help translating state IDs to chart data set rows and vice versa
-/** @type {Map<number, number>} */
-const stateIdToRowId = new Map();
-/** @type {Map<number, number>} */
-const rowIdToStateId = new Map();
+import { State } from "./utils";
+
+// following two maps help translating state IDs to chart data set rows and vice versa
+
+/** Translates state ID to chart dataset row ID */
+const stateIdToRowId = new Map<number, number>();
+/** Translates chart row ID to State ID */
+export const rowIdToStateId = new Map<number, number>();
 let chartDefined = false;
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export declare const google: any;
 
 try {
     google.charts.load('current', { packages: ['corechart', 'line'] });
@@ -19,10 +25,13 @@ catch(err) {
 // see documentation at
 // https://developers.google.com/chart/interactive/docs/reference#DataTable
 
-let chart, chartData, chartOptions, isReDrawing, chartNeedsReDrawing;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export let chart: any; let chartData: any; let chartOptions: any;
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-function initializeChart() {
+let isReDrawing = false;
+let chartNeedsReDrawing = false;
+
+export function initializeChart(): void {
 
     chartData = new google.visualization.DataTable();
     chartData.addColumn('number', 'State');
@@ -74,13 +83,12 @@ function initializeChart() {
   );
 }
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-function reSizeChart(options) {
+export function reSizeChart(): void {
   chart = new google.visualization.ComboChart(document.getElementById('chart_div'));
   reDrawChart();
 }
 
-function reDrawChart() {
+function reDrawChart(): void {
     if (isReDrawing) {
         chartNeedsReDrawing = true;
     }
@@ -94,10 +102,9 @@ function reDrawChart() {
 
 /**
  * Selects state on the chart
- * @param {number} stateId state id
+ * @param stateId state id or null 
  */
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-function selectChartRow(stateId) {
+export function selectChartRow(stateId: number | null): void {
     if (!chartDefined) { return; }
     if (stateId !== null) {
         const rowId = stateIdToRowId.get(stateId);
@@ -110,11 +117,10 @@ function selectChartRow(stateId) {
 
 /**
  * Adds state to chart
- * @param {State} newState state to add 
- * @param {boolean} batch batch mode on/off
+ * @param newState state to add 
+ * @param batch batch mode on/off
  */
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-function addStateToChart(newState, batch) {
+export function addStateToChart(newState: State, batch: boolean): void {
     if (chartData) {
         const rowId = chartData.addRow([newState.id, newState.earliestTime, sanitizeNumber(newState.totalMakespan), sanitizeNumber(newState.h)]);
         addRowId(rowId, newState.id);
@@ -124,25 +130,24 @@ function addStateToChart(newState, batch) {
 
 /**
  * Records mapping between row and state
- * @param {number} rowId row ID
- * @param {number} stateId state ID
+ * @param rowId row ID
+ * @param stateId state ID
  */
-function addRowId(rowId, stateId) {
+function addRowId(rowId: number, stateId: number): void {
     rowIdToStateId.set(rowId, stateId);
     stateIdToRowId.set(stateId, rowId);
 }
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-function endChartBatch() {
+export function endChartBatch(): void {
     reDrawChart();
 }
 
 /**
  * Turns NaN and infinities to `null`.
- * @param {number} value unsanitized value
+ * @param value unsanitized value
  */
-function sanitizeNumber(value) {
-    if (!Number.isFinite(value)) {
+function sanitizeNumber(value: number | undefined): number | null {
+    if (value === undefined || !Number.isFinite(value)) {
         return null;
     }
     else {
@@ -155,18 +160,16 @@ const H_COLUMN = 3;
 
 /**
  * Updates state values on the chart
- * @param {State} state state to re-paint
+ * @param state state to re-paint
  */
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-function updateStateOnChart(state) {
+export function updateStateOnChart(state: State): void {
     const rowId = stateIdToRowId.get(state.id);
     chartData.setValue(rowId, MAKESPAN_COLUMN, sanitizeNumber(state.totalMakespan));
     chartData.setValue(rowId, H_COLUMN, sanitizeNumber(state.h));
     reDrawChart();
 }
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-function clearChart() {
+export function clearChart(): void {
     const rowsToRemove = chartData.getNumberOfRows();
     chartData.removeRows(0, rowsToRemove);
     stateIdToRowId.clear();
@@ -177,25 +180,24 @@ function clearChart() {
 
 /**
  * Shifts the selected chart data-table row by number of items given by the 'offset'.
- * @param {number} offset number of chart rows by which to move the selection
- * @returns {number | null} new selected state id, or 'null' if nothing was selected originally
+ * @param offset number of chart rows by which to move the selection
+ * @returns new selected state id, or 'null' if nothing was selected originally
  */
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-function navigateChart(offset) {
+export function navigateChart(offset: number): number | null {
     const selection = chart.getSelection();
     if (selection.length > 0) {
-        /** @type{number | null | undefined} todo: actually, not sure if unselected translates to null or undefined */
-        const selectedRow = selection[0].row;
-        if (selectedRow === null || selectedRow === undefined) {
+        /** todo: actually, not sure if unselected translates to null or undefined */
+        const selectedRow: number | null = selection[0].row ?? null;
+        if (selectedRow === null) {
             return null;
         }
         const newSelectedRow = selectedRow + offset;
         if (newSelectedRow > -1 && newSelectedRow < chartData.getNumberOfRows()) {
             chart.setSelection([{row: newSelectedRow}]);
-            return rowIdToStateId.get(newSelectedRow);
+            return rowIdToStateId.get(newSelectedRow) ?? null;
         }
         else {
-            return rowIdToStateId.get(selectedRow);
+            return rowIdToStateId.get(selectedRow) ?? null;
         }
     }
     return null;

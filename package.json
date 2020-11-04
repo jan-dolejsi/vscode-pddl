@@ -960,6 +960,7 @@
     ]
   },
   "scripts": {
+    "prepare": "cd views/searchview && npm install && cd ../..",
     "postinstall": "node downloadVisJs.js && copyfiles --flat ./node_modules/vscode-codicons/dist/codicon.css ./node_modules/vscode-codicons/dist/codicon.ttf  ./views/common/",
     "compile": "tsc -p ./",
     "watch": "tsc -w -p ./",

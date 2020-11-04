@@ -27,6 +27,34 @@
 			"problemMatcher": [
 				"$tsc-watch"
 			]
+		},
+		{
+			"type": "npm",
+			"script": "test-watch",
+			"path": "views/searchview/",
+			"problemMatcher": [
+				"$tsc-watch"
+			],
+			"group": "build",
+			"presentation": {
+				"panel": "dedicated",
+				"reveal": "never"
+			},
+			"label": "npm: test-watch - views/searchview",
+			"detail": "tsc -w",
+			"isBackground": true,
+			"runOptions": {
+				"runOn": "folderOpen"
+			}
+		},
+		{
+			"type": "npm",
+			"script": "compile",
+			"path": "views/searchview/",
+			"group": "build",
+			"problemMatcher": [],
+			"label": "npm: compile - views/searchview",
+			"detail": "npm run lint && browserify src/search.ts -p tsify > out/search.js"
 		}
 	]
 }
