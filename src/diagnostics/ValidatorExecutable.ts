@@ -90,17 +90,17 @@ export class ValidatorExecutable extends Validator {
         }
 
         const args = syntaxFragments
-            .slice(1)
+            .slice(1) // strips the $(parser) part, if first
             .map(fragment => {
                 switch (fragment) {
-                    case '$(parser)': return utils.Util.q(this.path);
+                    case '$(parser)': return this.path;
                     case '$(domain)': return utils.Util.q(domainFilePath);
                     case '$(problem)': return utils.Util.q(problemFilePath);
                     default: return fragment;
                 }
             });
 
-        this.runProcess(utils.Util.q(this.path), args, onOutput, onError);
+        this.runProcess(this.path, args, onOutput, onError);
     }
 
     private runProcess(parserPath: string, args: string[], onOutput: (output: string) => void, onError: (error: string) => void): void {
