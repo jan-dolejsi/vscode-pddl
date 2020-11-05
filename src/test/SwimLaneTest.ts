@@ -5,7 +5,7 @@
 'use strict';
 
 import { SwimLane } from '../planning/SwimLane';
-import * as assert from 'assert';
+import { expect } from 'chai';
 
 describe('SwimLaneTests', () => {
 
@@ -20,9 +20,9 @@ describe('SwimLaneTests', () => {
             const availableLane = lanes.placeNext(startTime, duration);
 
             // then
-            assert.equal(availableLane, 0, 'the first lane should be selected');
-            assert.equal(lanes.laneCount(), 1, 'there should be just one lane');
-            assert.equal(lanes.laneEnd(availableLane), duration, `the first lane should now finish at time ${startTime}+${duration}`);
+            expect(availableLane).to.equal(0, 'the first lane should be selected');
+            expect(lanes.laneCount()).to.equal(1, 'there should be just one lane');
+            expect(lanes.laneEnd(availableLane)).to.equal(duration, `the first lane should now finish at time ${startTime}+${duration}`);
         });
 
         it('first action should go to first lane and finish with the right offset', () => {
@@ -35,9 +35,9 @@ describe('SwimLaneTests', () => {
             const availableLane = lanes.placeNext(startTime, duration);
 
             // then
-            assert.equal(availableLane, 0, 'the first lane should be selected');
-            assert.equal(lanes.laneCount(), 1, 'there should be just one lane');
-            assert.equal(lanes.laneEnd(availableLane), startTime + duration, `the first lane should now finish at time ${startTime}+${duration}`);
+            expect(availableLane).to.equal(0, 'the first lane should be selected');
+            expect(lanes.laneCount()).to.equal(1, 'there should be just one lane');
+            expect(lanes.laneEnd(availableLane)).to.equal(startTime + duration, `the first lane should now finish at time ${startTime}+${duration}`);
         });
 
         it('second action should go to first lane after the first action', () => {
@@ -51,9 +51,9 @@ describe('SwimLaneTests', () => {
             const availableLane = lanes.placeNext(startTime, duration);
 
             // then
-            assert.equal(availableLane, 0, 'the first lane should be selected');
-            assert.equal(lanes.laneCount(), 1, 'there should be just one lane');
-            assert.equal(lanes.laneEnd(availableLane), startTime + duration, `the first lane should now finish at time ${startTime}+${duration}`);
+            expect(availableLane).to.equal(0, 'the first lane should be selected');
+            expect(lanes.laneCount()).to.equal(1, 'there should be just one lane');
+            expect(lanes.laneEnd(availableLane)).to.equal(startTime + duration, `the first lane should now finish at time ${startTime}+${duration}`);
         });
 
         it('second action should go to the second lane in parallel to the first action', () => {
@@ -67,10 +67,10 @@ describe('SwimLaneTests', () => {
             const availableLane = lanes.placeNext(startTime, duration);
 
             // then
-            assert.equal(availableLane, 1, 'the second lane should be selected');
-            assert.equal(lanes.laneCount(), 2, 'there should be two lanes');
-            assert.equal(lanes.laneEnd(0), 20, 'the first lane should now finish at time 20');
-            assert.equal(lanes.laneEnd(availableLane), startTime + duration, `the second lane should now finish at time ${startTime}+${duration}`);
+            expect(availableLane).to.equal(1, 'the second lane should be selected');
+            expect(lanes.laneCount()).to.equal(2, 'there should be two lanes');
+            expect(lanes.laneEnd(0)).to.equal(20, 'the first lane should now finish at time 20');
+            expect(lanes.laneEnd(availableLane)).to.equal(startTime + duration, `the second lane should now finish at time ${startTime}+${duration}`);
         });
 
         it('third action (parallel to the second) should go again to the first lane', () => {
@@ -85,9 +85,9 @@ describe('SwimLaneTests', () => {
             const availableLane = lanes.placeNext(startTime, duration);
 
             // then
-            assert.equal(availableLane, 0, 'the first lane should be selected');
-            assert.equal(lanes.laneCount(), 2, 'there should be two lanes');
-            assert.equal(lanes.laneEnd(availableLane), startTime + duration, `the selected lane should now finish at time ${startTime}+${duration}`);
+            expect(availableLane).to.equal(0, 'the first lane should be selected');
+            expect(lanes.laneCount()).to.equal(2, 'there should be two lanes');
+            expect(lanes.laneEnd(availableLane)).to.equal(startTime + duration, `the selected lane should now finish at time ${startTime}+${duration}`);
         });
 
         it('third action should go again to the first lane', () => {
@@ -102,9 +102,9 @@ describe('SwimLaneTests', () => {
             const availableLane = lanes.placeNext(startTime, duration);
 
             // then
-            assert.equal(availableLane, 0, 'the first lane should be selected');
-            assert.equal(lanes.laneCount(), 2, 'there should be two lanes');
-            assert.equal(lanes.laneEnd(availableLane), startTime + duration, `the selected lane should now finish at time ${startTime}+${duration}`);
+            expect(availableLane).to.equal(0, 'the first lane should be selected');
+            expect(lanes.laneCount()).to.equal(2, 'there should be two lanes');
+            expect(lanes.laneEnd(availableLane)).to.equal(startTime + duration, `the selected lane should now finish at time ${startTime}+${duration}`);
         });
     });
 
@@ -123,10 +123,10 @@ describe('SwimLaneTests', () => {
             const availableLane = lanes.placeNext(startTime, duration);
 
             // then
-            assert.equal(availableLane, 1, 'the second lane should be selected');
-            assert.equal(lanes.laneCount(), 2, 'there should be two lanes');
-            assert.equal(lanes.laneEnd(0), 10, `the first lane should now finish at time 10`);
-            assert.equal(lanes.laneEnd(availableLane), startTime + duration, `the second lane should now finish at time ${startTime}+${duration}`);
+            expect(availableLane).to.equal(1, 'the second lane should be selected');
+            expect(lanes.laneCount()).to.equal(2, 'there should be two lanes');
+            expect(lanes.laneEnd(0)).to.equal(10, `the first lane should now finish at time 10`);
+            expect(lanes.laneEnd(availableLane)).to.equal(startTime + duration, `the second lane should now finish at time ${startTime}+${duration}`);
         });
     });
 });

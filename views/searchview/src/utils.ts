@@ -34,6 +34,8 @@ export interface State {
     h?: number;
     /* earliest time this state can be scheduled */
     earliestTime: number;
+    /* landmark facts satisfied by this state */
+    satisfiedLandmarks: number | undefined;
     /* makespan of the hypotetical plan that concatenates the planhead of this state and its relaxed plan */
     totalMakespan?: number;
     /* state is dead end (goal cannot be reached) */

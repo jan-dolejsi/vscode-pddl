@@ -38,6 +38,8 @@ export function initializeChart(): void {
     chartData.addColumn('number', 'Now');
     chartData.addColumn('number', 'Makespan');
     chartData.addColumn('number', 'H');
+    // the additional column crashes the webview (?!) for larger problems like driverlog p2
+    // chartData.addColumn('number', 'Landmarks');
 
   const options = {
     title : 'Evaluated states',
@@ -58,6 +60,13 @@ export function initializeChart(): void {
             type: 'line',
             targetAxisIndex: 0,
             color: 'blue'
+        /*},
+        3: { // This seems to crash the webview
+            type: 'line',
+            targetAxisIndex: 0,
+            color: 'brown',
+            lineWidth: 1,
+            lineDashStyle: [1, 1]*/
         }
     },
     vAxes: {
@@ -122,7 +131,10 @@ export function selectChartRow(stateId: number | null): void {
  */
 export function addStateToChart(newState: State, batch: boolean): void {
     if (chartData) {
-        const rowId = chartData.addRow([newState.id, newState.earliestTime, sanitizeNumber(newState.totalMakespan), sanitizeNumber(newState.h)]);
+        const rowId = chartData.addRow([newState.id, newState.earliestTime,
+            sanitizeNumber(newState.totalMakespan), sanitizeNumber(newState.h),
+            // sanitizeNumber(newState.satisfiedLandmarks)
+        ]);
         addRowId(rowId, newState.id);
         if (!batch) { reDrawChart(); }
     }

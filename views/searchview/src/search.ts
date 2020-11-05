@@ -34,7 +34,7 @@ window.addEventListener('message', event => {
             showAllStates(message.state);
             break;
         case 'showPlan':
-            showPlan(message.state);
+            showPlan(message.state); // the message.state contains list of states actually
             break;
         case 'stateLog':
             showStateLogButton(message.state);
@@ -51,9 +51,10 @@ window.addEventListener('message', event => {
  * @param parentId mock state's parent ID
  * @param actionName creating action
  * @param earliestTime earliest state time
+ * @param satisfiedLandmarks landmark facts satisfied in this state
  * @returns mock state
  */
-function createMockState(g: number, id: number, parentId: number | undefined, actionName: string | undefined, earliestTime: number): State {
+function createMockState(g: number, id: number, parentId: number | undefined, actionName: string | undefined, earliestTime: number, satisfiedLandmarks?: number): State {
     return {
         g: g,
         id: id,
@@ -61,19 +62,21 @@ function createMockState(g: number, id: number, parentId: number | undefined, ac
         parentId: parentId,
         actionName: actionName,
         earliestTime: earliestTime,
-        isGoal: false
+        isGoal: false,
+        satisfiedLandmarks: satisfiedLandmarks,
+        totalMakespan: undefined
     };
 }
 
 const mockStates = [
-    createMockState(0, 10, undefined, undefined, 0),
-    createMockState(1, 11, 10, 'drive start', .1),
-    createMockState(1, 12, 10, 'load start', .1),
-    createMockState(2, 13, 11, 'drive end', 2),
-    createMockState(3, 14, 13, 'unload start', 2.1),
+    createMockState(0, 10, undefined, undefined, 0, 1),
+    createMockState(1, 11, 10, 'drive start', .1, 2),
+    createMockState(1, 12, 10, 'load start', .1, 2),
+    createMockState(2, 13, 11, 'drive end', 2, 3),
+    createMockState(3, 14, 13, 'unload start', 2.1, 3),
 ];
 
-/** All states displayed. */
+/** All states displayed. todo: should this be a map?*/
 const states: State[] = [];
 
 /** Selected state ID or null if no state was selected yet. */
@@ -139,6 +142,24 @@ getElementByIdOrThrow("deadEndMock").onclick = (): void => {
 
 getElementByIdOrThrow("clearStatesMock").onclick = (): void => {
     clearStates();
+};
+
+getElementByIdOrThrow("planMock").onclick = (): void => {
+    if (selectedStateId === null) { return; }
+
+    let state: State | undefined = states[selectedStateId];
+
+    const planStates = [];
+
+    while (state) {
+        state.isPlan = true;
+        planStates.push(state);
+        const parentId: number | undefined = state.parentId;
+        state = parentId !== undefined && parentId !== null ?
+            states[parentId] : undefined;
+    }
+
+    showPlan(planStates);
 };
 
 /**

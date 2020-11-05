@@ -450,6 +450,10 @@ function toNodeTitle(newState: State): string {
     title += '\nGeneration: ' + newState.g
         + '\nEarliest time: ' + newState.earliestTime;
 
+    if (newState.satisfiedLandmarks !== undefined) {
+        title += '\nLandmarks: ' + newState.satisfiedLandmarks;
+    }
+    
     if (newState.wasVisitedOrIsWorse) {
         title += '\nState was visited or is worse than a previously visited state';
     }

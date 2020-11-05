@@ -1,8 +1,19 @@
 # PDDL support - What's new?
 
+## 2.19.3
+
+### Fixes
+
+VAL Parser path is not being double-quoted even if it contains a space. The node.js process.spawn should handle that.
+
+### Features
+
+Search tree can visualize number of satisfied landmarks on states searched. But this was subsequently rolled back,
+because the additional line on the Google line plot causes crash of the webview after all the data is rendered.
+
 ## [2.19.0] ICAPS 2020 face lift (while attending the late night conference sessions)
 
-## Features
+### Features
 
 The _PDDL: Configure planner output target..._ command and the _PDDL Overview Screen_ already helped configuring how the planner output is consumed. The three options are:
 
@@ -15,12 +26,12 @@ The status bar now shows both the planner selector and right next to it, the out
 
 ![Planner output re-direction switch in status bar](https://raw.githubusercontent.com/wiki/jan-dolejsi/vscode-pddl/img/pddl_planner_output_target_selector_status_bar.gif)
 
-## Fixes
+### Fixes
 
 - Command _PDDL: Preview plan_ accessible from the right-click menu on any .plan file in the editor now shows the plan even if the problem and domain is not associate with it.
 - Planning.domains session synchronization (via the source control panel) does not show the useless commit message text input component.
 
-### Engineering work
+#### Engineering work
 
 - Codicon icon font is used in the custom views wherever possible
 - Minimum requirement VS Code 1.45, update to Typescript 4 and Mocha 8
