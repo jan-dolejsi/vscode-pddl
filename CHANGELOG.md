@@ -1,6 +1,6 @@
 # PDDL support - What's new?
 
-## 2.19.2
+## 2.19.3
 
 ### Fixes
 
@@ -8,7 +8,8 @@ VAL Parser path is not being double-quoted even if it contains a space. The node
 
 ### Features
 
-Search tree can visualize number of satisfied landmarks on states searched.
+Search tree can visualize number of satisfied landmarks on states searched. But this was subsequently rolled back,
+because the additional line on the Google line plot causes crash of the webview after all the data is rendered.
 
 ## [2.19.0] ICAPS 2020 face lift (while attending the late night conference sessions)
 
