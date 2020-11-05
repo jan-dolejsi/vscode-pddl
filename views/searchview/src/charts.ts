@@ -1,21 +1,61 @@
-import { State } from "./utils";
+/* --------------------------------------------------------------------------------------------
+ * Copyright (c) Jan Dolejsi. All rights reserved.
+ * Licensed under the MIT License. See License.txt in the project root for license information.
+ * ------------------------------------------------------------------------------------------ */
 
-// following two maps help translating state IDs to chart data set rows and vice versa
+import { getElementByIdOrThrow, State } from "./utils";
 
-/** Translates state ID to chart dataset row ID */
-const stateIdToRowId = new Map<number, number>();
-/** Translates chart row ID to State ID */
-export const rowIdToStateId = new Map<number, number>();
+// eslint-disable-next-line @typescript-eslint/no-namespace
+declare namespace google {
+    // eslint-disable-next-line @typescript-eslint/no-namespace
+    namespace charts {
+        function load(version: string, options: { packages: string[] }): void;
+
+        export class ChartOptions {
+
+        }
+
+        export class Line {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            static convertOptions(options: any): ChartOptions;
+
+        }
+    }
+
+    // eslint-disable-next-line @typescript-eslint/no-namespace
+    export namespace visualization {
+        export class DataTable {
+            addColumn(type: string, legend: string): void;
+        }
+
+        // eslint-disable-next-line @typescript-eslint/no-empty-interface
+        interface Chart {
+            draw(chartData: DataTable, chartOptions: charts.ChartOptions): void;
+        }
+
+        export class ComboChart implements Chart {
+            constructor(host: HTMLElement);
+            draw(chartData: DataTable, chartOptions: charts.ChartOptions): void;
+        }
+
+        // eslint-disable-next-line @typescript-eslint/no-namespace
+        export namespace events {
+            // eslint-disable-next-line @typescript-eslint/no-empty-interface
+            interface ChartEventListener { }
+
+            function addListener(chart: Chart, eventName: string, handler: () => void): ChartEventListener;
+            function removeListener(chartSelectEvent: ChartEventListener): void;
+        }
+    }
+}
+
 let chartDefined = false;
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export declare const google: any;
 
 try {
     google.charts.load('current', { packages: ['corechart', 'line'] });
     chartDefined = true;
 }
-catch(err) {
+catch (err) {
     console.log(err);
 }
 
@@ -25,133 +65,220 @@ catch(err) {
 // see documentation at
 // https://developers.google.com/chart/interactive/docs/reference#DataTable
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export let chart: any; let chartData: any; let chartOptions: any;
 
-let isReDrawing = false;
-let chartNeedsReDrawing = false;
+export class StateChart {
+    // following two maps help translating state IDs to chart data set rows and vice versa
 
-export function initializeChart(): void {
+    /** Translates state ID to chart dataset row ID */
+    private stateIdToRowId = new Map<number, number>();
+    /** Translates chart row ID to State ID */
+    private rowIdToStateId = new Map<number, number>();
 
-    chartData = new google.visualization.DataTable();
-    chartData.addColumn('number', 'State');
-    chartData.addColumn('number', 'Now');
-    chartData.addColumn('number', 'Makespan');
-    chartData.addColumn('number', 'H');
-    // the additional column crashes the webview (?!) for larger problems like driverlog p2
-    // chartData.addColumn('number', 'Landmarks');
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    private chart: any; // todo: google.visualization.Chart; 
 
-  const options = {
-    title : 'Evaluated states',
-    hAxis: {title: 'State'},
-    seriesType: 'area',
-    series: {
-        0: {
-            targetAxisIndex: 1,
-            color: 'green',
-            lineWidth: 1
-        },
-        1: {
-            targetAxisIndex: 1,
-            color: 'lightgreen',
-            lineWidth: 1
-        },
-        2: {
-            type: 'line',
-            targetAxisIndex: 0,
-            color: 'blue'
-        /*},
-        3: { // This seems to crash the webview
-            type: 'line',
-            targetAxisIndex: 0,
-            color: 'brown',
-            lineWidth: 1,
-            lineDashStyle: [1, 1]*/
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    private chartData: any; // todo: google.visualization.DataTable;
+
+    private chartOptions: google.charts.ChartOptions;
+
+    private isReDrawing = false;
+    private chartNeedsReDrawing = false;
+
+
+    constructor(private onStateSelected: (stateId: number | null) => void) {
+
+        this.chartData = new google.visualization.DataTable();
+        this.chartData.addColumn('number', 'State');
+        this.chartData.addColumn('number', 'Now');
+        this.chartData.addColumn('number', 'Makespan');
+        this.chartData.addColumn('number', 'H');
+        // the additional column crashes the webview (?!) for larger problems like driverlog p2
+        // chartData.addColumn('number', 'Landmarks');
+
+        const options = {
+            title: 'Evaluated states',
+            hAxis: { title: 'State' },
+            seriesType: 'area',
+            series: {
+                0: {
+                    targetAxisIndex: 1,
+                    color: 'green',
+                    lineWidth: 1
+                },
+                1: {
+                    targetAxisIndex: 1,
+                    color: 'lightgreen',
+                    lineWidth: 1
+                },
+                2: {
+                    type: 'line',
+                    targetAxisIndex: 0,
+                    color: 'blue'
+                    /*},
+                    3: { // This seems to crash the webview
+                        type: 'line',
+                        targetAxisIndex: 0,
+                        color: 'brown',
+                        lineWidth: 1,
+                        lineDashStyle: [1, 1]*/
+                }
+            },
+            vAxes: {
+                0: { title: 'Heuristic value', textStyle: { color: 'blue' }, minValue: 0 },
+                1: { title: 'Makespan', textStyle: { color: 'green' } }
+            },
+            crosshair: {
+                trigger: 'both',
+                orientation: 'vertical',
+                color: 'gray'
+            }
+        };
+
+        this.chartOptions = google.charts.Line.convertOptions(options);
+        this.chart = this.reSizeChart();
+
+        google.visualization.events.addListener(this.chart, 'ready',
+            () => {
+                if (this.chartNeedsReDrawing) {
+                    this.reDrawChart();
+                }
+            }
+        );
+    }
+
+    reSizeChart(): google.visualization.Chart {
+        this.chart = new google.visualization.ComboChart(getElementByIdOrThrow('chart_div'));
+        this.reDrawChart();
+        return this.chart;
+    }
+
+    private reDrawChart(): void {
+        if (this.isReDrawing) {
+            this.chartNeedsReDrawing = true;
         }
-    },
-    vAxes: {
-        0: { title: 'Heuristic value', textStyle: {color: 'blue'}, minValue: 0},
-        1: { title: 'Makespan', textStyle: {color: 'green'}}
-    },
-    crosshair: {
-        trigger: 'both',
-        orientation: 'vertical',
-        color: 'gray'
+        else {
+            this.isReDrawing = true;
+            this.chartNeedsReDrawing = false;
+            new Promise(() => {
+                this.chart.draw(this.chartData, this.chartOptions);
+                this.isReDrawing = false;
+            });
+        }
     }
-  };
 
-  chartOptions = google.charts.Line.convertOptions(options);
-  reSizeChart();
-
-  google.visualization.events.addListener(chart, 'ready',
-          function() {
-              if (chartNeedsReDrawing) {
-                  reDrawChart();
-              }
-          }
-  );
-}
-
-export function reSizeChart(): void {
-  chart = new google.visualization.ComboChart(document.getElementById('chart_div'));
-  reDrawChart();
-}
-
-function reDrawChart(): void {
-    if (isReDrawing) {
-        chartNeedsReDrawing = true;
+    /**
+     * Selects state on the chart
+     * @param stateId state id or null 
+     */
+    selectChartRow(stateId: number | null): void {
+        if (!chartDefined) { return; }
+        if (stateId !== null) {
+            const rowId = this.stateIdToRowId.get(stateId);
+            this.chart.setSelection([{ row: rowId }]);
+        }
+        else {
+            this.chart.setSelection();
+        }
     }
-    else {
-        isReDrawing = true;
-        chartNeedsReDrawing = false;
-        new Promise(() => chart.draw(chartData, chartOptions));
-        isReDrawing = false;
-    }
-}
 
-/**
- * Selects state on the chart
- * @param stateId state id or null 
- */
-export function selectChartRow(stateId: number | null): void {
-    if (!chartDefined) { return; }
-    if (stateId !== null) {
-        const rowId = stateIdToRowId.get(stateId);
-        chart.setSelection([{row: rowId}]);
-    }
-    else {
-        chart.setSelection();
-    }
-}
-
-/**
- * Adds state to chart
- * @param newState state to add 
- * @param batch batch mode on/off
- */
-export function addStateToChart(newState: State, batch: boolean): void {
-    if (chartData) {
-        const rowId = chartData.addRow([newState.id, newState.earliestTime,
+    /**
+     * Adds state to chart
+     * @param newState state to add 
+     * @param batch batch mode on/off
+     */
+    addStateToChart(newState: State, batch: boolean): void {
+        if (this.chartData) {
+            const rowId = this.chartData.addRow([newState.id, newState.earliestTime,
             sanitizeNumber(newState.totalMakespan), sanitizeNumber(newState.h),
-            // sanitizeNumber(newState.satisfiedLandmarks)
-        ]);
-        addRowId(rowId, newState.id);
-        if (!batch) { reDrawChart(); }
+                // sanitizeNumber(newState.satisfiedLandmarks)
+            ]);
+            this.addRowId(rowId, newState.id);
+            if (!batch) { this.reDrawChart(); }
+        }
     }
-}
 
-/**
- * Records mapping between row and state
- * @param rowId row ID
- * @param stateId state ID
- */
-function addRowId(rowId: number, stateId: number): void {
-    rowIdToStateId.set(rowId, stateId);
-    stateIdToRowId.set(stateId, rowId);
-}
+    /**
+     * Records mapping between row and state
+     * @param rowId row ID
+     * @param stateId state ID
+     */
+    addRowId(rowId: number, stateId: number): void {
+        this.rowIdToStateId.set(rowId, stateId);
+        this.stateIdToRowId.set(stateId, rowId);
+    }
 
-export function endChartBatch(): void {
-    reDrawChart();
+    endChartBatch(): void {
+        this.reDrawChart();
+    }
+
+    /**
+     * Updates state values on the chart
+     * @param state state to re-paint
+     */
+    updateStateOnChart(state: State): void {
+        const rowId = this.stateIdToRowId.get(state.id);
+        this.chartData.setValue(rowId, MAKESPAN_COLUMN, sanitizeNumber(state.totalMakespan));
+        this.chartData.setValue(rowId, H_COLUMN, sanitizeNumber(state.h));
+        this.reDrawChart();
+    }
+
+    clearChart(): void {
+        const rowsToRemove = this.chartData.getNumberOfRows();
+        this.chartData.removeRows(0, rowsToRemove);
+        this.stateIdToRowId.clear();
+        this.rowIdToStateId.clear();
+        this.reDrawChart();
+        console.log("Removed " + rowsToRemove + " rows from the chart data table.");
+    }
+
+    /**
+     * Shifts the selected chart data-table row by number of items given by the 'offset'.
+     * @param offset number of chart rows by which to move the selection
+     * @returns new selected state id, or 'null' if nothing was selected originally
+     */
+    navigateChart(offset: number): number | null {
+        const selection = this.chart.getSelection();
+        if (selection.length > 0) {
+            /** todo: actually, not sure if unselected translates to null or undefined */
+            const selectedRow: number | null = selection[0].row ?? null;
+            if (selectedRow === null) {
+                return null;
+            }
+            const newSelectedRow = selectedRow + offset;
+            if (newSelectedRow > -1 && newSelectedRow < this.chartData.getNumberOfRows()) {
+                this.chart.setSelection([{ row: newSelectedRow }]);
+                return this.rowIdToStateId.get(newSelectedRow) ?? null;
+            }
+            else {
+                return this.rowIdToStateId.get(selectedRow) ?? null;
+            }
+        }
+        return null;
+    }
+
+    private chartSelectEvent: google.visualization.events.ChartEventListener | undefined;
+
+    subscribeToChartEvents(): void {
+        this.chartSelectEvent = google.visualization.events.addListener(this.chart, 'select', () => {
+            console.log("chart selection changed");
+            const selection = this.chart.getSelection();
+            console.log(selection);
+            if (selection && selection.length > 0) {
+                const newSelectedStateId = this.rowIdToStateId.get(selection[0].row);
+                this.onStateSelected(newSelectedStateId ?? null);
+            }
+            else {
+                this.onStateSelected(null);
+            }
+        });
+    }
+
+    unsubscribeChartEvents(): void {
+        if (this.chartSelectEvent && this.chart) {
+            google.visualization.events.removeListener(this.chartSelectEvent);
+        }
+    }
 }
 
 /**
@@ -169,48 +296,3 @@ function sanitizeNumber(value: number | undefined): number | null {
 
 const MAKESPAN_COLUMN = 2;
 const H_COLUMN = 3;
-
-/**
- * Updates state values on the chart
- * @param state state to re-paint
- */
-export function updateStateOnChart(state: State): void {
-    const rowId = stateIdToRowId.get(state.id);
-    chartData.setValue(rowId, MAKESPAN_COLUMN, sanitizeNumber(state.totalMakespan));
-    chartData.setValue(rowId, H_COLUMN, sanitizeNumber(state.h));
-    reDrawChart();
-}
-
-export function clearChart(): void {
-    const rowsToRemove = chartData.getNumberOfRows();
-    chartData.removeRows(0, rowsToRemove);
-    stateIdToRowId.clear();
-    rowIdToStateId.clear();
-    reDrawChart();
-    console.log("Removed " + rowsToRemove + " rows from the chart data table.");
-}
-
-/**
- * Shifts the selected chart data-table row by number of items given by the 'offset'.
- * @param offset number of chart rows by which to move the selection
- * @returns new selected state id, or 'null' if nothing was selected originally
- */
-export function navigateChart(offset: number): number | null {
-    const selection = chart.getSelection();
-    if (selection.length > 0) {
-        /** todo: actually, not sure if unselected translates to null or undefined */
-        const selectedRow: number | null = selection[0].row ?? null;
-        if (selectedRow === null) {
-            return null;
-        }
-        const newSelectedRow = selectedRow + offset;
-        if (newSelectedRow > -1 && newSelectedRow < chartData.getNumberOfRows()) {
-            chart.setSelection([{row: newSelectedRow}]);
-            return rowIdToStateId.get(newSelectedRow) ?? null;
-        }
-        else {
-            return rowIdToStateId.get(selectedRow) ?? null;
-        }
-    }
-    return null;
-}

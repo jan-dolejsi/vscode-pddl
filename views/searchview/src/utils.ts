@@ -1,3 +1,8 @@
+/* --------------------------------------------------------------------------------------------
+ * Copyright (c) Jan Dolejsi. All rights reserved.
+ * Licensed under the MIT License. See License.txt in the project root for license information.
+ * ------------------------------------------------------------------------------------------ */
+
 /** VS Code stub, so we can work with it in a type safe way. */
 export interface VsCodeApi {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -34,8 +39,8 @@ export interface State {
     h?: number;
     /* earliest time this state can be scheduled */
     earliestTime: number;
-    /* landmark facts satisfied by this state */
-    satisfiedLandmarks: number | undefined;
+    /* landmark facts satisfied up to and by this state */
+    landmarks: number | undefined;
     /* makespan of the hypotetical plan that concatenates the planhead of this state and its relaxed plan */
     totalMakespan?: number;
     /* state is dead end (goal cannot be reached) */

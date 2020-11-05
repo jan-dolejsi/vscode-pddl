@@ -1,9 +1,10 @@
-import {
-    SearchTree
-} from "./tree";
-import {
-    addStateToChart, chart, clearChart, endChartBatch, google, initializeChart, navigateChart, reSizeChart, rowIdToStateId, selectChartRow, updateStateOnChart
-} from "./charts";
+/* --------------------------------------------------------------------------------------------
+ * Copyright (c) Jan Dolejsi. All rights reserved.
+ * Licensed under the MIT License. See License.txt in the project root for license information.
+ * ------------------------------------------------------------------------------------------ */
+
+import { SearchTree } from "./tree";
+import { StateChart } from "./charts";
 import { getElementByIdOrThrow, postCommand, State, vscode } from "./utils";
 
 /* implemented in baseWebview.js */
@@ -51,10 +52,10 @@ window.addEventListener('message', event => {
  * @param parentId mock state's parent ID
  * @param actionName creating action
  * @param earliestTime earliest state time
- * @param satisfiedLandmarks landmark facts satisfied in this state
+ * @param landmarks landmark facts satisfied in this state
  * @returns mock state
  */
-function createMockState(g: number, id: number, parentId: number | undefined, actionName: string | undefined, earliestTime: number, satisfiedLandmarks?: number): State {
+function createMockState(g: number, id: number, parentId: number | undefined, actionName: string | undefined, earliestTime: number, landmarks?: number): State {
     return {
         g: g,
         id: id,
@@ -63,7 +64,7 @@ function createMockState(g: number, id: number, parentId: number | undefined, ac
         actionName: actionName,
         earliestTime: earliestTime,
         isGoal: false,
-        satisfiedLandmarks: satisfiedLandmarks,
+        landmarks: landmarks,
         totalMakespan: undefined
     };
 }
@@ -162,6 +163,8 @@ getElementByIdOrThrow("planMock").onclick = (): void => {
     showPlan(planStates);
 };
 
+let stateChart: StateChart;
+
 /**
  * Adds state
  * @param newState state to add
@@ -170,7 +173,7 @@ getElementByIdOrThrow("planMock").onclick = (): void => {
  */
 function add(newState: State, batch: boolean): void {
     searchTree.addStateToTree(newState, batch);
-    addStateToChart(newState, batch);
+    stateChart.addStateToChart(newState, batch);
     states[newState.id] = newState;
 }
 
@@ -179,11 +182,11 @@ function add(newState: State, batch: boolean): void {
  * @param state state to update
  */
 function update(state: State): void {
-    updateStateOnChart(state);
+    stateChart.updateStateOnChart(state);
     searchTree.updateStateOnTree(state);
 
     if (selectedStateId === state.id) {
-        selectChartRow(state.id);
+        stateChart.selectChartRow(state.id);
     }
 }
 
@@ -208,7 +211,7 @@ function showAllStates(states: State[]): void {
 }
 
 function endBatch(): void {
-    endChartBatch();
+    stateChart.endChartBatch();
     searchTree.endTreeBatch();
 }
 
@@ -220,7 +223,7 @@ function onStateSelected(stateId: number | null): void {
     if (selectedStateId === stateId) { return; }
 
     selectedStateId = stateId;
-    selectChartRow(stateId);
+    stateChart.selectChartRow(stateId);
     searchTree.selectTreeNode(stateId);
     vscode?.postMessage({ command: 'stateSelected', stateId: stateId });
 
@@ -253,52 +256,27 @@ function initialize(): void {
     });
 
     window.onresize = function (): void {
-        unsubscribeChartEvents();
-        reSizeChart();
-        subscribeToChartEvents();
+        stateChart.unsubscribeChartEvents();
+        stateChart.reSizeChart();
+        stateChart.subscribeToChartEvents();
     };
 
     if (!vscode) {
         showDebuggerOn(false);
     }
 
-    initializeChart();
-    subscribeToChartEvents();
+    stateChart = new StateChart(onStateSelected);
+    stateChart.subscribeToChartEvents();
 
     getElementByIdOrThrow("mockMenu").style.visibility = vscode ? 'collapse' : 'visible';
 
     onLoad();
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-let chartSelectEvent: any;
-
-function subscribeToChartEvents(): void {
-    console.log("subscribing to chart select event for "); console.log(chart);
-    chartSelectEvent = google.visualization.events.addListener(chart, 'select', function () {
-        console.log("chart selection changed");
-        const selection = chart.getSelection();
-        console.log(selection);
-        if (selection && selection.length > 0) {
-            const newSelectedStateId = rowIdToStateId.get(selection[0].row);
-            onStateSelected(newSelectedStateId ?? null);
-        }
-        else {
-            onStateSelected(null);
-        }
-    });
-}
-
-function unsubscribeChartEvents(): void {
-    if (chartSelectEvent && chart) {
-        google.visualization.events.removeListener(chartSelectEvent);
-    }
-}
-
 function clearStates(): void {
     console.log('clearing all states');
     searchTree.clearTree();
-    clearChart();
+    stateChart.clearChart();
 }
 
 const START_DEBUGGER_BUTTON_ID = "startDebuggerButton";
@@ -377,12 +355,12 @@ function navigate(e: any): void {
     let newSelectedStateId: number | null;
     switch (e.key) {
         case "ArrowLeft":
-            newSelectedStateId = e.shiftKey ? navigateChart(-1) : searchTree.navigateTreeSiblings(-1);
+            newSelectedStateId = e.shiftKey ? stateChart.navigateChart(-1) : searchTree.navigateTreeSiblings(-1);
             onStateSelected(newSelectedStateId);
             if (newSelectedStateId !== null) { e.cancelBubble = true; }
             break;
         case "ArrowRight":
-            newSelectedStateId = e.shiftKey ? navigateChart(+1) : searchTree.navigateTreeSiblings(+1);
+            newSelectedStateId = e.shiftKey ? stateChart.navigateChart(+1) : searchTree.navigateTreeSiblings(+1);
             onStateSelected(newSelectedStateId);
             if (newSelectedStateId !== null) { e.cancelBubble = true; }
             break;

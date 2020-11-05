@@ -26,7 +26,7 @@
     "@types/mocha": "file:../../node_modules/@types/mocha",
     "mocha": "file:../../node_modules/mocha",
     "@types/chai": "file:../../node_modules/@types/chai",
-    "chai": "^file:../../node_modules/chai",
+    "chai": "file:../../node_modules/chai",
     "@types/chai-string": "file:../../node_modules/@types/chai-string",
     "chai-string": "file:../../node_modules/chai-string",
     "vis-network": "8.3.2",

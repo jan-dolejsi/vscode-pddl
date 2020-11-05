@@ -19,7 +19,7 @@ export class State {
 
     constructor(public readonly id: number, public readonly origId: string, public readonly g: number,
         public readonly earliestTime: number, public readonly planHead: SearchHappening[],
-        public readonly satisfiedLandmarks: number,
+        public readonly landmarks: number,
         public readonly parentId?: number, public readonly actionName?: string) {
 
     }

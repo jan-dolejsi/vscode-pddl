@@ -6,7 +6,7 @@
 			"type": "chrome",
 			"request": "launch",
 			"name": "Search debugger (html)",
-			"file": "${workspaceFolder}/views/searchview/search.html"
+			"file": "${workspaceFolder}/views/searchview/out/search.html"
 		},
 		{
 			"type": "chrome",

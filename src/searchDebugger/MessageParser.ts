@@ -49,7 +49,7 @@ export class MessageParser {
         const assignedStateId = this.parseStateId(state.id);
         this.stateIdToOrder.set(state.id, assignedStateId);
 
-        return new State(assignedStateId, state.id, state.g, state.earliestTime, [], state.satisfiedLandmarks);
+        return new State(assignedStateId, state.id, state.g, state.earliestTime, [], state.landmarks);
     }
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -66,7 +66,7 @@ export class MessageParser {
         const actionName = state.appliedAction ? this.createActionName(this.parseSearchHappening(state.appliedAction, false)) : undefined;
 
         return new State(assignedStateId, state.id, state.g, state.earliestTime, planHead,
-            state.satisfiedLandmarks, parentId, actionName);
+            state.landmarks, parentId, actionName);
     }
 
     createActionName(lastHappening: SearchHappening): string {

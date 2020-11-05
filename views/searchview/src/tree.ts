@@ -1,4 +1,8 @@
-import { DataSet, IdType, Network } from 'vis-network/standalone';
+/* --------------------------------------------------------------------------------------------
+ * Copyright (c) Jan Dolejsi. All rights reserved.
+ * Licensed under the MIT License. See License.txt in the project root for license information.
+ * ------------------------------------------------------------------------------------------ */
+
 import { getElementByIdOrThrow, State } from './utils';
 
 // see vis.js documentation at
@@ -24,15 +28,47 @@ interface ActionEdge {
     readonly actionName: string; // this is a custom extension to the vis.js network Edge
 };
 
+// eslint-disable-next-line @typescript-eslint/no-namespace
+declare namespace vis {
+
+    type IdType = number | string;
+
+    class DataSet<T> {
+        constructor(content: T[]);
+
+        length: number;
+
+        add(node: T): void;
+        get(id: number): T;
+        get(filter: { filter: (edge: ActionEdge) => boolean }): T[];
+        clear(): void;
+        update(nodes: Node[]): void;
+        update(node: Node): void;
+    }
+
+    export class Network {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        constructor(container: HTMLElement, treeData: { nodes: DataSet<Node>; edges: DataSet<ActionEdge> }, options: any);
+
+        fit(): void;
+        getSelectedNodes(): number[];
+        releaseNode(): void;
+        focus(nodeId: number, arg1: { animation: boolean; locked: boolean }): void;
+        selectNodes(arg0: number[]): void;
+
+        on(arg0: string, event: (nodeEvent: { nodes: number[] }) => void): void;
+    }
+}
+
 export class SearchTree {
-    readonly network: Network;
+    readonly network: vis.Network;
     autoFitEnabled = true;
 
     // create an array with nodes
-    readonly nodes: DataSet<Node> = new DataSet([]);
+    readonly nodes: vis.DataSet<Node> = new vis.DataSet([]);
 
     // create an array with edges
-    readonly edges: DataSet<ActionEdge> = new DataSet([]);
+    readonly edges: vis.DataSet<ActionEdge> = new vis.DataSet([]);
 
     readonly treeData = {
         nodes: this.nodes,
@@ -111,7 +147,7 @@ export class SearchTree {
                 }
             }
         };
-        this.network = new Network(container, this.treeData, options);
+        this.network = new vis.Network(container, this.treeData, options);
     }
 
     toggleAutoFit(): void {
@@ -450,8 +486,8 @@ function toNodeTitle(newState: State): string {
     title += '\nGeneration: ' + newState.g
         + '\nEarliest time: ' + newState.earliestTime;
 
-    if (newState.satisfiedLandmarks !== undefined) {
-        title += '\nLandmarks: ' + newState.satisfiedLandmarks;
+    if (newState.landmarks !== undefined) {
+        title += '\nLandmarks: ' + newState.landmarks;
     }
     
     if (newState.wasVisitedOrIsWorse) {
@@ -474,7 +510,7 @@ function toNodeTitle(newState: State): string {
     return title;
 }
 
-function toIntNodeId(nodeId: IdType): number {
+function toIntNodeId(nodeId: vis.IdType): number {
     return nodeId as number;
 }
 
