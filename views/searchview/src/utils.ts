@@ -3,18 +3,6 @@
  * Licensed under the MIT License. See License.txt in the project root for license information.
  * ------------------------------------------------------------------------------------------ */
 
-/** VS Code stub, so we can work with it in a type safe way. */
-export interface VsCodeApi {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    postMessage(payload: any): void;
-}
-
-export declare function postCommand(command: string): void;
-
-declare const acquireVsCodeApi: () => VsCodeApi;
-
-export declare const vscode: VsCodeApi | undefined;
-
 export function getElementByIdOrThrow(elementId: string): HTMLElement {
     const el = document.getElementById(elementId);
     if (!el) {

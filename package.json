@@ -962,14 +962,14 @@
   "scripts": {
     "prepare": "cd views/searchview && npm install && cd ../..",
     "postinstall": "node downloadVisJs.js && copyfiles --flat ./node_modules/vscode-codicons/dist/codicon.css ./node_modules/vscode-codicons/dist/codicon.ttf  ./views/common/",
-    "compile": "tsc -p ./",
+    "compile": "tsc -p ./ && cd views/searchview && npm run compile && cd ../..",
     "watch": "tsc -w -p ./",
     "lint": "eslint src --ext ts",
     "vscode:prepublish": "npm run compile",
     "update-vscode": "node ./node_modules/vscode/bin/install",
     "package": "vsce package",
     "pretest": "npm run compile",
-    "test:unit": "mocha -- out/test/**/*Test.js",
+    "test:unit": "mocha -- out/test/**/*Test.js && cd views/searchview && npm test && cd ../..",
     "test:integration": "node ./out/test/runVsTests.js",
     "test": "npm run test:unit && npm run test:integration"
   },

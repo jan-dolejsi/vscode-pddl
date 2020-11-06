@@ -5,7 +5,20 @@
 
 import { SearchTree } from "./tree";
 import { StateChart } from "./charts";
-import { getElementByIdOrThrow, postCommand, State, vscode } from "./utils";
+import { getElementByIdOrThrow, State } from "./utils";
+
+/** VS Code stub, so we can work with it in a type safe way. */
+interface VsCodeApi {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    postMessage(payload: any): void;
+}
+
+declare function postCommand(command: string): void;
+
+declare const acquireVsCodeApi: () => VsCodeApi;
+
+declare const vscode: VsCodeApi;
+
 
 /* implemented in baseWebview.js */
 declare function onLoad(): void;
@@ -14,7 +27,7 @@ let searchTree: SearchTree;
 
 window.addEventListener('message', event => {
     const message = event.data;
-    console.log("Message: " + message);
+    // console.log("Message: " + message);
     switch (message.command) {
         case 'stateAdded':
             add(message.state, false);
