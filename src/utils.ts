@@ -257,7 +257,7 @@ export function equalsCaseInsensitive(text1: string, text2: string): boolean {
 }
 
 export function toRange(pddlRange: PddlRange): Range {
-    return new Range(pddlRange.startLine, pddlRange.startCharacter, pddlRange.endLine, pddlRange.endCharacter);
+    return new Range(toPosition(pddlRange.start), toPosition(pddlRange.end));
 }
 
 export function nodeToRange(document: TextDocument, node: parser.PddlSyntaxNode): Range {

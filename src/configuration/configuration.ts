@@ -147,7 +147,7 @@ export class PddlConfiguration {
 
         const newParserOptions = await window.showInputBox({
             prompt: "In case you use command line switches and options, override the default syntax. For more info, see (the wiki)[https://github.com/jan-dolejsi/vscode-pddl/wiki/Configuring-the-PDDL-parser].",
-            placeHolder: `$(parser) $(domain) $(problem)`,
+            placeHolder: `$(domain) $(problem)`,
             value: existingValue,
             ignoreFocusOut: true
         });
