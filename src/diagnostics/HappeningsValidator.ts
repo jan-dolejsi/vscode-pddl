@@ -16,7 +16,7 @@ import { HappeningsToValStep } from 'ai-planning-val';
 import { PddlConfiguration } from '../configuration/configuration';
 import { dirname } from 'path';
 import { DomainAndProblem, isHappenings, getDomainAndProblemForHappenings } from '../workspace/workspaceUtils';
-import { createRangeFromLine, createDiagnostic } from './PlanValidator';
+import { createRangeFromLine, createDiagnostic, createDiagnosticFromParsingProblem } from './validatorUtils';
 import { CodePddlWorkspace } from '../workspace/CodePddlWorkspace';
 
 export const PDDL_HAPPENINGS_VALIDATE = 'pddl.happenings.validate';
@@ -62,7 +62,7 @@ export class HappeningsValidator {
     async validateAndReportDiagnostics(happeningsInfo: HappeningsInfo, showOutput: boolean, onSuccess: (diagnostics: Map<string, Diagnostic[]>) => void, onError: (error: string) => void): Promise<HappeningsValidationOutcome> {
         if (happeningsInfo.getParsingProblems().length > 0) {
             const diagnostics = happeningsInfo.getParsingProblems()
-                .map(problem => new Diagnostic(createRangeFromLine(problem.lineIndex, problem.columnIndex), problem.problem));
+                .map(problem => createDiagnosticFromParsingProblem(problem));
             const outcome = HappeningsValidationOutcome.failedWithDiagnostics(happeningsInfo, diagnostics);
             onSuccess(outcome.getDiagnostics());
             return outcome;

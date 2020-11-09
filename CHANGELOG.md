@@ -1,5 +1,13 @@
 # PDDL support - What's new?
 
+## 2.19.4
+
+### Engineering work
+
+PDDL Parser was generalized and moved to the ai-planning-val.js repository.
+PDDL Parser syntax does no longer use the `$(parser)` macro. The default syntax arguments are now: `$(domain) $(problem)`.
+Details are described on the [Configure the PDDL parser](https://github.com/jan-dolejsi/vscode-pddl/wiki/Configuring-the-PDDL-parser) page.
+
 ## 2.19.3
 
 ### Fixes
