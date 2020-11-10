@@ -81,6 +81,10 @@ export class PlanView extends Disposable {
         return plannerOutputPanel;
     }
 
+    hasPlannerOutput(): boolean {
+        return this.webviewPanels.has(PlanView.PLANNER_OUTPUT_URI);
+    }
+
     async setNeedsRebuild(planDocument: TextDocument): Promise<void> {
         const panel = this.webviewPanels.get(planDocument.uri);
 
