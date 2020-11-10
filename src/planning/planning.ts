@@ -50,7 +50,7 @@ export class Planning implements planner.PlannerResponseHandler {
     planner: planner.Planner | null = null;
     plans: Plan[] = [];
     planningProcessKilled = false;
-    planView: PlanView;
+    private planView: PlanView;
     optionProviders: planner.PlannerOptionsProvider[] = [];
     userOptionsProvider: PlannerUserOptionsSelector;
 
@@ -490,7 +490,10 @@ export class Planning implements planner.PlannerResponseHandler {
     }
 
     visualizePlans(plans: Plan[]): void {
-        if (!this.arePlanListsEqual(this.plans, plans)) {
+        // visualize if either
+        // 1. plan(s) are different
+        // 2. the plan preview was closed/disposed meanwhile
+        if (!this.arePlanListsEqual(this.plans, plans) || !this.planView.hasPlannerOutput()) {
             this.plans = [...plans]; // making a copy of the list, so the above comparison works
             this.planView.setPlannerOutput(plans, !this.isSearchDebugger());
         }

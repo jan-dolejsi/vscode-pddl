@@ -220,7 +220,7 @@ export class SearchDebuggerView {
         if (this.search === undefined) { return void 0; }
         if (stateId === null) { return void 0; }
         const state = this.search.getState(stateId);
-        if (!state) { return; }
+        if (!state || !this.webViewPanel) { return; }
         const statePlan = new StateToPlan(this.domain, this.problem).convert(state);
         const planHtml = await new PlanReportGenerator(this.context,
             {
