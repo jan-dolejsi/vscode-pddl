@@ -28,10 +28,7 @@
     "@types/chai": "file:../../node_modules/@types/chai",
     "chai": "file:../../node_modules/chai",
     "@types/chai-string": "file:../../node_modules/@types/chai-string",
-    "chai-string": "file:../../node_modules/chai-string",
-    "vis-network": "8.3.2",
-    "vis-data": "^7.0.0",
-    "vis-util": "4.3.4"
+    "chai-string": "file:../../node_modules/chai-string"
   },
   "dependencies": {}
 }
