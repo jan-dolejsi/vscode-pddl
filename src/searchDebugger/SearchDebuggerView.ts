@@ -144,7 +144,7 @@ export class SearchDebuggerView {
     }
 
     readonly VIEWS = "views";
-    readonly CONTENT_FOLDER = path.join(this.VIEWS, "searchview");
+    readonly CONTENT_FOLDER = path.join(this.VIEWS, "searchview", "out");
     readonly COMMON_FOLDER = path.join(this.VIEWS, "common");
 
     async getHtml(webview: Webview): Promise<string> {
@@ -156,7 +156,7 @@ export class SearchDebuggerView {
             externalScripts: [googleCharts],
             externalStyles: [googleCharts],
             fonts: [
-                Uri.file(path.join("..", "..", this.COMMON_FOLDER, "codicon.ttf"))
+                Uri.file(path.join("..", "..", "..", this.COMMON_FOLDER, "codicon.ttf"))
             ]
         }, webview);
     }

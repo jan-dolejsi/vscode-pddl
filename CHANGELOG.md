@@ -1,5 +1,21 @@
 # PDDL support - What's new?
 
+## 2.19.4
+
+### Support for LPG planner
+
+The [LPG Planner](https://lpg.unibs.it/lpg/) uses slightly different format for the plans. Now those plans are parsed and visualized.
+
+LPG command-line options are also presented in the drop down, while invoking the planner:
+
+![LPG Planner Support](https://raw.githubusercontent.com/wiki/jan-dolejsi/vscode-pddl/img/lpg_support.gif)
+
+### Engineering work
+
+PDDL Parser was generalized and moved to the ai-planning-val.js repository.
+PDDL Parser syntax does no longer use the `$(parser)` macro. The default syntax arguments are now: `$(domain) $(problem)`.
+Details are described on the [Configure the PDDL parser](https://github.com/jan-dolejsi/vscode-pddl/wiki/Configuring-the-PDDL-parser) page.
+
 ## 2.19.3
 
 ### Fixes

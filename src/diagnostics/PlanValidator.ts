@@ -5,24 +5,20 @@
 'use strict';
 
 import {
-    window, commands, OutputChannel, ExtensionContext, TextDocument, Diagnostic, Uri, Range, DiagnosticSeverity, workspace
+    window, commands, OutputChannel, ExtensionContext, TextDocument, Diagnostic, Uri, DiagnosticSeverity, workspace
 } from 'vscode';
 
 import * as process from 'child_process';
 
-import { PlanInfo } from 'pddl-workspace';
-import { ProblemInfo } from 'pddl-workspace';
-import { DomainInfo } from 'pddl-workspace';
-import { ParsingProblem } from 'pddl-workspace';
-import { PddlConfiguration } from '../configuration/configuration';
-import { utils } from 'pddl-workspace';
+import { PlanInfo, ProblemInfo, DomainInfo, PlanStep, utils } from 'pddl-workspace';
 import { dirname } from 'path';
-import { PlanStep } from 'pddl-workspace';
+import { PddlConfiguration } from '../configuration/configuration';
 import { DomainAndProblem, getDomainAndProblemForPlan, isPlan, NoProblemAssociated, NoDomainAssociated } from '../workspace/workspaceUtils';
 import { showError } from '../utils';
 import { VAL_DOWNLOAD_COMMAND } from '../validation/valCommand';
 import { CodePddlWorkspace } from '../workspace/CodePddlWorkspace';
 import { instrumentOperationAsVsCodeCommand } from "vscode-extension-telemetry-wrapper";
+import { createDiagnostic, createRangeFromLine } from './validatorUtils';
 
 export const PDDL_PLAN_VALIDATE = 'pddl.plan.validate';
 
@@ -333,16 +329,4 @@ class PlanValidationOutcome {
         const diagnostics = [new Diagnostic(createRangeFromLine(0), "Unknown error. Run the 'PDDL: Validate plan' command for more information.", DiagnosticSeverity.Warning)];
         return new PlanValidationOutcome(planInfo, diagnostics, "Unknown error.");
     }
-}
-
-export function createRangeFromLine(errorLine: number, errorColumn = 0): Range {
-    return new Range(errorLine, errorColumn, errorLine, errorColumn + 100);
-}
-
-export function createDiagnostic(errorLine: number, errorColumn: number, error: string, severity: DiagnosticSeverity): Diagnostic {
-    return new Diagnostic(createRangeFromLine(errorLine, errorColumn), error, severity);
-}
-
-export function createDiagnosticFromParsingProblem(problem: ParsingProblem, severity: DiagnosticSeverity): Diagnostic {
-    return new Diagnostic(createRangeFromLine(problem.lineIndex, problem.columnIndex), problem.problem, severity);
 }

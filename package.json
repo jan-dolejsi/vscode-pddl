@@ -4,7 +4,7 @@
   "description": "Planning Domain Description Language support",
   "author": "Jan Dolejsi",
   "license": "MIT",
-  "version": "2.19.3",
+  "version": "2.19.4",
   "publisher": "jan-dolejsi",
   "engines": {
     "vscode": "^1.45.0",
@@ -519,8 +519,8 @@
         "pddlParser.executableOptions": {
           "type": "string",
           "description": "Override the command-line options passed to the PDDL parser configured in 'pddlParser.executableOrService'.",
-          "pattern": "^\\$\\(parser\\).+\\$\\(domain\\).+\\$\\(problem\\).*$",
-          "default": "$(parser) $(domain) $(problem)"
+          "pattern": "(\\$\\((domain|problem)\\).*){2}",
+          "default": "$(domain) $(problem)"
         },
         "pddlParser.problemPattern": {
           "scope": "resource",
@@ -960,27 +960,28 @@
     ]
   },
   "scripts": {
+    "prepare": "cd views/searchview && npm install && cd ../..",
     "postinstall": "node downloadVisJs.js && copyfiles --flat ./node_modules/vscode-codicons/dist/codicon.css ./node_modules/vscode-codicons/dist/codicon.ttf  ./views/common/",
-    "compile": "tsc -p ./",
+    "compile": "tsc -p ./ && cd views/searchview && npm run compile && cd ../..",
     "watch": "tsc -w -p ./",
     "lint": "eslint src --ext ts",
     "vscode:prepublish": "npm run compile",
     "update-vscode": "node ./node_modules/vscode/bin/install",
     "package": "vsce package",
     "pretest": "npm run compile",
-    "test:unit": "mocha -- out/test/**/*Test.js",
+    "test:unit": "mocha -- out/test/**/*Test.js && cd views/searchview && npm test && cd ../..",
     "test:integration": "node ./out/test/runVsTests.js",
     "test": "npm run test:unit && npm run test:integration"
   },
   "dependencies": {
-    "ai-planning-val": "^2.3.1",
+    "ai-planning-val": "^2.4.2",
     "await-notify": "^1.0.1",
     "body-parser": "^1.19.0",
     "events": "^3.1.0",
     "express": "^4.17.1",
     "jsonc-parser": "^2.2.1",
     "open": "^7.0.2",
-    "pddl-workspace": "^3.5.0",
+    "pddl-workspace": "^4.1.0",
     "request": "^2.88.2",
     "semver": "^7.1.3",
     "tree-kill": "^1.2.2",

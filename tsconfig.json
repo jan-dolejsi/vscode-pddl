@@ -14,10 +14,13 @@
 		"forceConsistentCasingInFileNames": true,
 		"rootDir": "src",
 		"outDir": "out",
+		"declaration": true, // api for webview
 		"sourceMap": true
 	},
 	"exclude": [
 		"node_modules",
-		".vscode-test"
+		".vscode-test",
+		"views",
+		"out"
 	]
 }
