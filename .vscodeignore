@@ -1,4 +1,4 @@
-.vscode/**
+**/.vscode/**
 typings/**
 out/**/*.map
 out/**/*.d.ts
@@ -12,7 +12,7 @@ tsconfig.json
 .vscode-test/**
 .vscodeignore
 package-lock.json
-.eslintrc.js
+**/.eslintrc.js
 tsconfig.json
 *.vsix
 *.log
@@ -22,3 +22,8 @@ coverage/
 .nyc_output/
 .github/
 downloadVisJs.js
+views/searchview/node_modules
+views/searchview/out-test 
+views/searchview/src
+views/searchview/test 
+views/searchview/tsconfig.json
