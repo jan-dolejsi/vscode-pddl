@@ -2,6 +2,14 @@
 
 ## 2.19.4
 
+### Support for LPG planner
+
+The [LPG Planner](https://lpg.unibs.it/lpg/) uses slightly different format for the plans. Now those plans are parsed and visualized.
+
+LPG command-line options are also presented in the drop down, while invoking the planner:
+
+![LPG Planner Support](https://raw.githubusercontent.com/wiki/jan-dolejsi/vscode-pddl/img/lpg_support.gif)
+
 ### Engineering work
 
 PDDL Parser was generalized and moved to the ai-planning-val.js repository.
