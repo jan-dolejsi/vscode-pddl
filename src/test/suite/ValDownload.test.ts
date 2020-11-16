@@ -11,7 +11,6 @@ import { ValDownloader } from '../../validation/ValDownloader';
 import { PddlConfiguration, CONF_PDDL, VAL_STEP_PATH, VALIDATION_PATH, VALUE_SEQ_PATH, PDDL_PARSER, PARSER_EXECUTABLE_OR_SERVICE, EXECUTABLE_OR_SERVICE } from '../../configuration/configuration';
 import { createTestExtensionContext } from './testUtils';
 import { utils } from 'pddl-workspace';
-import { afs } from 'pddl-workspace/dist/utils';
 import { assertDefined } from '../../utils';
 
 class TestableValDownloader extends ValDownloader {
@@ -27,7 +26,7 @@ class TestableValDownloader extends ValDownloader {
         const extensionPath = thisExtension.extensionPath;
         const sourcePath = path.join(extensionPath, "src", "test", "val-drop-mock.zip");
         console.log(`Copying mock VAL drop from ${sourcePath} to ${zipPath}.`);
-        return await afs.copyFile(sourcePath, zipPath);
+        return await fs.promises.copyFile(sourcePath, zipPath);
     }
     
     protected getLatestStableValBuildId(): number {
@@ -115,7 +114,7 @@ suite('VAL Download and Configuration', () => {
                 // "valueSeqPath": "Val-20190805.2-win64/bin/ValueSeq.exe",
                 // "valStepPath": "Val-20190805.2-win64/bin/ValStep.exe"
             };
-            await utils.afs.writeFile(valManifestPath, JSON.stringify(previousValManifest, null, 2));
+            await fs.promises.writeFile(valManifestPath, JSON.stringify(previousValManifest, null, 2));
 
             const myValStepPath = 'MyValStep.exe';
             await pddlConf.update(VAL_STEP_PATH, myValStepPath, vscode.ConfigurationTarget.Global);
