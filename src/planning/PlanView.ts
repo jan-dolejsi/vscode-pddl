@@ -188,7 +188,7 @@ export class PlanView extends Disposable {
         try {
             const domainAndProblem = getDomainAndProblemForPlan(planFileInfo, this.codePddlWorkspace.pddlWorkspace);
 
-            return new Plan(planFileInfo.getSteps(), domainAndProblem.domain, domainAndProblem.problem);
+            return planFileInfo.getPlan(domainAndProblem.domain, domainAndProblem.problem);
         }
         catch (ex) {
             // show a hint that domain & problem were not associated

@@ -19,7 +19,7 @@ import { Plan, HelpfulAction } from 'pddl-workspace';
 import { PlanFunctionEvaluator } from 'ai-planning-val';
 import { PlanReportSettings } from './PlanReportSettings';
 import { VAL_STEP_PATH, CONF_PDDL, VALUE_SEQ_PATH, PLAN_REPORT_LINE_PLOT_GROUP_BY_LIFTED, DEFAULT_EPSILON, VAL_VERBOSE } from '../configuration/configuration';
-import { utils } from 'pddl-workspace';
+import { Util as ValUtil } from 'ai-planning-val';
 import { ValStepError, ValStep } from 'ai-planning-val';
 import { ensureAbsoluteGlobalStoragePath, WebviewUriConverter } from '../utils';
 import { PddlWorkspace } from 'pddl-workspace';
@@ -37,7 +37,7 @@ export class PlanReportGenerator {
     async export(plans: Plan[], planId: number): Promise<boolean> {
         const html = await this.generateHtml(plans, planId);
 
-        const htmlFile = await utils.Util.toFile("plan-report", ".html", html);
+        const htmlFile = await ValUtil.toFile("plan-report", ".html", html);
         const uri = Uri.parse("file://" + htmlFile);
         opn(uri.toString());
         return true; //env.openExternal(uri);

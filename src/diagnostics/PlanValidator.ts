@@ -10,7 +10,8 @@ import {
 
 import * as process from 'child_process';
 
-import { PlanInfo, ProblemInfo, DomainInfo, PlanStep, utils } from 'pddl-workspace';
+import { PlanInfo, ProblemInfo, DomainInfo, PlanStep } from 'pddl-workspace';
+import { Util } from 'ai-planning-val';
 import { dirname } from 'path';
 import { PddlConfiguration } from '../configuration/configuration';
 import { DomainAndProblem, getDomainAndProblemForPlan, isPlan, NoProblemAssociated, NoDomainAssociated } from '../workspace/workspaceUtils';
@@ -124,9 +125,9 @@ export class PlanValidator {
         }
 
         // copy editor content to temp files to avoid using out-of-date content on disk
-        const domainFilePath = await utils.Util.toPddlFile('domain', context.domain.getText());
-        const problemFilePath = await utils.Util.toPddlFile('problem', context.problem.getText());
-        const planFilePath = await utils.Util.toPddlFile('plan', planInfo.getText());
+        const domainFilePath = await Util.toPddlFile('domain', context.domain.getText());
+        const problemFilePath = await Util.toPddlFile('problem', context.problem.getText());
+        const planFilePath = await Util.toPddlFile('plan', planInfo.getText());
 
         const args = ['-t', epsilon.toString(), '-v', domainFilePath, problemFilePath, planFilePath];
         const workingDir = this.createWorkingFolder(planInfo.fileUri);

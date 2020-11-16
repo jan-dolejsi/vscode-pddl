@@ -11,8 +11,8 @@ import { instrumentOperationAsVsCodeCommand } from "vscode-extension-telemetry-w
 
 import * as process from 'child_process';
 
-import { ProblemInfo, DomainInfo, HappeningsInfo, Happening, PlanStep, utils } from 'pddl-workspace';
-import { HappeningsToValStep } from 'ai-planning-val';
+import { ProblemInfo, DomainInfo, HappeningsInfo, Happening, PlanStep } from 'pddl-workspace';
+import { HappeningsToValStep, Util } from 'ai-planning-val';
 import { PddlConfiguration } from '../configuration/configuration';
 import { dirname } from 'path';
 import { DomainAndProblem, isHappenings, getDomainAndProblemForHappenings } from '../workspace/workspaceUtils';
@@ -102,8 +102,8 @@ export class HappeningsValidator {
         }
 
         // copy editor content to temp files to avoid using out-of-date content on disk
-        const domainFilePath = await utils.Util.toPddlFile('domain', context.domain.getText());
-        const problemFilePath = await utils.Util.toPddlFile('problem', context.problem.getText());
+        const domainFilePath = await Util.toPddlFile('domain', context.domain.getText());
+        const problemFilePath = await Util.toPddlFile('problem', context.problem.getText());
         const happeningsConverter = new HappeningsToValStep();
         happeningsConverter.convertAllHappenings(happeningsInfo);
         const valSteps = happeningsConverter.getExportedText(true);
