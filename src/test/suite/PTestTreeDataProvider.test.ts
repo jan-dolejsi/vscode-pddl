@@ -46,22 +46,20 @@ suite('PTest', () => {
 
         const folderName = "ptestTreeDataProvider";
         // create 'ptestTreeDataProvider'
-        const folderPath = path.join(wf.uri.fsPath, folderName);
-        await workspace.fs.createDirectory(Uri.file(folderPath));
+        const folderUri = Uri.joinPath(wf.uri, folderName);
+        await workspace.fs.createDirectory(folderUri);
 
         // create 'domain.pddl'
         const domainFileName = 'domain.pddl';
-        const domainPath = path.join(folderPath, domainFileName);
-        domainUri = Uri.file(domainPath);
+        domainUri = Uri.joinPath(folderUri, domainFileName);
         const domainText = '(define (domain d))';
-        await workspace.fs.writeFile(domainUri, Buffer.from(domainText));
+        await workspace.fs.writeFile(domainUri, Buffer.from(domainText, "utf8"));
 
         // create 'problem.pddl'
         const problemFileName = 'problem.pddl';
-        const problemPath = path.join(folderPath, problemFileName);
-        problemUri = Uri.file(problemPath);
+        problemUri = Uri.joinPath(folderUri, problemFileName);
         const problemText = '(define (problem p) (:domain d))';
-        await workspace.fs.writeFile(problemUri, Buffer.from(problemText));
+        await workspace.fs.writeFile(problemUri, Buffer.from(problemText, "utf8"));
 
         const codePddlWorkspace1 = assertDefined(codePddlWorkspace, "code PDDL workspace");
         await codePddlWorkspace1.pddlWorkspace.upsertFile(toURI(domainUri), PddlLanguage.PDDL, 1, domainText, new SimpleDocumentPositionResolver(domainText)) as DomainInfo;
@@ -90,17 +88,22 @@ suite('PTest', () => {
         const children = await treeDataProvider.getChildren();
 
         // THEN
-        expect(children).to.have.lengthOf(1);
+        expect(children, "tree children nodes (workspace folders)").to.have.lengthOf(1);
         const folder1TreeNodes = await treeDataProvider.getChildren(children[0]);
-        expect(folder1TreeNodes).to.have.lengthOf(1);
-        const manifestTreeNodes = await treeDataProvider.getChildren(folder1TreeNodes[0]);
-        expect(manifestTreeNodes).to.have.lengthOf(1);
+
+        folder1TreeNodes.forEach((n, i) => console.log(`${i}: ${n.resource} ${n.label} ${n.kind} ${n.tooltip}`));
+
+        expect(folder1TreeNodes, "tree.folder1 tree nodes").to.have.length.greaterThan(0);
+        const ptestTreeDataProviderNode = assertDefined(folder1TreeNodes.find(n => n.resource.fsPath.endsWith(folderName)), "Cannot find " + folderName);
+        const manifestTreeNodes = await treeDataProvider.getChildren(ptestTreeDataProviderNode);
+        expect(manifestTreeNodes, "tree.folder1.manifest children").to.have.lengthOf(1);
         const manifestTreeNode = manifestTreeNodes[0];
-        expect(manifestTreeNode.resource.fsPath).to.deep.equal(manifestFolder1DomainD.uri.fsPath);
+        expect(manifestTreeNode.resource.fsPath).to.equal(manifestFolder1DomainD.uri.fsPath);
         
-        expect(nodesChanged).to.have.length(1);
+        expect(nodesChanged, "number of nodes changed or refresh events").to.have.length(1);
     });
 
+    // must run after the previous test, which creates the domain+problem files
     test("creates manifest from planner output", async () => { 
         // GIVEN result of above tests
 
