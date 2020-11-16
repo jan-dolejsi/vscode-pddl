@@ -5,6 +5,7 @@
 'use strict';
 
 import * as path from 'path';
+import * as fs from 'fs';
 import { Node } from 'jsonc-parser';
 import { ExtensionContext, Uri, workspace, window, Range, TextDocument, Webview, Position } from 'vscode';
 import { utils } from 'pddl-workspace';
@@ -16,7 +17,7 @@ export function createPddlExtensionContext(context: ExtensionContext): PddlExten
     return {
         asAbsolutePath: context.asAbsolutePath,
         extensionPath: context.extensionPath,
-        storagePath: context.storagePath,
+        storagePath: context.storagePath, // todo: replace with storageUri
         subscriptions: context.subscriptions,
         pythonPath: function (): string { return workspace.getConfiguration().get("python.pythonPath", "python"); }
     };
@@ -24,7 +25,7 @@ export function createPddlExtensionContext(context: ExtensionContext): PddlExten
 
 export async function getWebViewHtml(extensionContext: PddlExtensionContext, options: WebViewHtmlOptions, webview?: Webview): Promise<string> {
     const overviewHtmlPath = extensionContext.asAbsolutePath(path.join(options.relativePath, options.htmlFileName));
-    const templateHtml = await utils.afs.readFile(overviewHtmlPath, { encoding: "utf-8", flag: 'r' });
+    const templateHtml = (await fs.promises.readFile(overviewHtmlPath, { encoding: "utf-8", flag: 'r' })).toString();
 
     // generate nonce for secure calling of javascript
     const nonce = !options.allowUnsafeInlineScripts ? generateNonce() : undefined;

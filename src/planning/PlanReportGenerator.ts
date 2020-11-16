@@ -9,6 +9,7 @@ import {
 } from 'vscode';
 
 import * as path from 'path';
+import * as fs from 'fs';
 import opn = require('open');
 
 import { DomainInfo, ProblemInfo } from 'pddl-workspace';
@@ -499,7 +500,7 @@ ${stepsInvolvingThisObject}
 
     async includeStyle(uri: Uri): Promise<string> {
         if (this.options.selfContained) {
-            const styleText = await utils.afs.readFile(uri.fsPath, { encoding: 'utf-8' });
+            const styleText = await fs.promises.readFile(uri.fsPath, { encoding: 'utf-8' });
             return `<style>\n${styleText}\n</style>`;
         } else {
             return `<link rel = "stylesheet" type = "text/css" href = "${uri.toString()}" />`;
@@ -508,7 +509,7 @@ ${stepsInvolvingThisObject}
 
     async includeScript(uri: Uri): Promise<string> {
         if (this.options.selfContained) {
-            const scriptText = await utils.afs.readFile(uri.fsPath, { encoding: 'utf-8' });
+            const scriptText = await fs.promises.readFile(uri.fsPath, { encoding: 'utf-8' });
             return `<script>\n${scriptText}\n</script>`;
         } else {
             return `<script src="${uri.toString()}"></script>`;
