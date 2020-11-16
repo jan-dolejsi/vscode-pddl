@@ -5,6 +5,7 @@
 'use strict';
 
 import * as path from 'path';
+import * as fs from 'fs';
 import { utils } from 'pddl-workspace';
 import { StudentName } from "./StudentNameParser";
 import { SessionSourceControl } from "./SessionSourceControl";
@@ -35,7 +36,7 @@ export class Classroom {
         const workspaceAsString = JSON.stringify(workspaceObj, null, 4);
 
         const workspaceFilePath = await this.createNewWorkspaceFile();
-        await utils.afs.writeFile(workspaceFilePath, workspaceAsString);
+        await fs.promises.writeFile(workspaceFilePath, workspaceAsString);
 
         return workspaceFilePath;
     }
@@ -69,6 +70,7 @@ export class Classroom {
 
     async createFolderWithConfig(studentSession: StudentSession): Promise<void> {
         const folderPath = Classroom.getSessionPath(this.templateSourceControl, studentSession.identity);
+        // todo: use workspace.fs.createDirectory
         await utils.afs.mkdirIfDoesNotExist(folderPath, 0o644);
 
         await saveConfiguration(Uri.file(folderPath), studentSession.sessionConfiguration);

@@ -3,10 +3,9 @@
  * Licensed under the MIT License. See License.txt in the project root for license information.
  * ------------------------------------------------------------------------------------------ */
 
-import { WorkspaceFolder, Uri } from "vscode";
-import { utils } from 'pddl-workspace';
-import * as path from 'path';
+import { WorkspaceFolder, Uri, workspace } from "vscode";
 import { strMapToObj, objToStrMap } from "../utils";
+import { exists } from "../util/workspaceFs";
 
 export const CONFIGURATION_FILE = '.planning.domains.session.json';
 
@@ -35,19 +34,19 @@ export function toSessionConfiguration(id: string, mode: SessionMode): SessionCo
 	return sessionConfiguration;
 }
 
-function toConfigurationFilePath(folder: WorkspaceFolder): string {
-	return path.join(folder.uri.fsPath, CONFIGURATION_FILE);
+function toConfigurationFileUri(folder: WorkspaceFolder): Uri {
+	return Uri.joinPath(folder.uri, CONFIGURATION_FILE);
 }
 
 export async function isSessionFolder(folder: WorkspaceFolder): Promise<boolean> {
-	const configurationPath = toConfigurationFilePath(folder);
-	return utils.afs.exists(configurationPath);
+	const configurationUri = toConfigurationFileUri(folder);
+	return exists(configurationUri);
 }
 
 export async function readSessionConfiguration(folder: WorkspaceFolder): Promise<SessionConfiguration> {
-	const configurationPath = toConfigurationFilePath(folder);
-	const data = await utils.afs.readFile(configurationPath, { flag: 'r' });
-	return JSON.parse(data.toString("utf-8"), (key, value) => {
+	const configurationPath = toConfigurationFileUri(folder);
+	const data = await workspace.fs.readFile(configurationPath);
+	return JSON.parse(data.toString(), (key, value) => {
 		if (key === "files") {
 			return objToStrMap(value);
 		}
@@ -73,5 +72,5 @@ export async function saveConfiguration(workspaceFolderUri: Uri, sessionConfigur
 		}
 	}, 4);
 
-	return utils.afs.writeFile(path.join(workspaceFolderUri.fsPath, CONFIGURATION_FILE), sessionConfigurationString);
+	return workspace.fs.writeFile(Uri.joinPath(workspaceFolderUri, CONFIGURATION_FILE), Buffer.from(sessionConfigurationString, 'utf8'));
 }

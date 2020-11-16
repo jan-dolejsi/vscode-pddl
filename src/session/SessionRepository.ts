@@ -68,9 +68,20 @@ export class SessionRepository implements QuickDiffProvider {
 	 *
 	 * @param fileName session file name
 	 * @returns path of the locally cloned session file
+	 * @deprecated use createLocalResourceUri
 	 */
 	createLocalResourcePath(fileName: string): string {
 		return path.join(this.workspaceFolder.uri.fsPath, fileName);
+	}
+
+	/**
+	 * Creates a local file URI in the local workspace that corresponds to the given file in the session.
+	 *
+	 * @param fileName session file name
+	 * @returns URI of the locally cloned session file
+	 */
+	createLocalResourceUri(fileName: string): Uri {
+		return Uri.joinPath(this.workspaceFolder.uri, fileName);
 	}
 
 	/**
