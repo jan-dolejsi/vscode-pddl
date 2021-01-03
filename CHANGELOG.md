@@ -1,6 +1,6 @@
 # PDDL support - What's new?
 
-## [Unreleased] 2.19.5
+## 2.19.5
 
 While switching between planners (using the button in the status bar),
 you may realize that the planner you want to switch to needs also a tweak in its configuration.
@@ -8,6 +8,10 @@ The only way to change the configuration is to go to the Overview Page (or edit 
 but none of those choices are at hand.
 
 It is now possible to jump to the Overview Page and configure the planner right from the drop down that lets you select a planner.
+
+### Engineering work
+
+Dependencies updated to Node 14.
 
 ## 2.19.4
 
@@ -1128,7 +1132,8 @@ Note for open source contributors: all notable changes to the "pddl" extension w
 
 Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
 
-[Unreleased]: https://github.com/jan-dolejsi/vscode-pddl/compare/v2.19.0...HEAD
+[Unreleased]: https://github.com/jan-dolejsi/vscode-pddl/compare/v2.19.5...HEAD
+[2.19.5]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.19.0...v2.19.5
 [2.19.0]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.18.0...v2.19.0
 [2.18.0]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.17.1...v2.18.0
 [2.17.1]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.16.0...v2.17.1
