@@ -11,7 +11,7 @@ It is now possible to jump to the Overview Page and configure the planner right 
 
 ### Engineering work
 
-Dependencies updated to Node 14.
+Dependencies updated to Node 12.14.1.
 
 ## 2.19.4
 
