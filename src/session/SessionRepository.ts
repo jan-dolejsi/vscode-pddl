@@ -4,8 +4,9 @@
  * ------------------------------------------------------------------------------------------ */
 
 import { QuickDiffProvider, Uri, CancellationToken, WorkspaceFolder, workspace } from "vscode";
+import { utils } from "pddl-workspace";
 import * as path from 'path';
-import { compareMaps, strMapToObj, throwForUndefined, assertDefined } from "../utils";
+import { compareMaps, throwForUndefined, assertDefined } from "../utils";
 import { SessionConfiguration, SessionMode } from "./SessionConfiguration";
 import { getText, postJson, getJson } from "../httpUtils";
 import { checkResponseForError } from "../catalog/PlanningDomains";
@@ -166,7 +167,7 @@ export async function uploadSession(session: SessionContent): Promise<SessionCon
 				newPlugin = {
 					name: oldPlugin.name,
 					url: oldPlugin.url,
-					settings: strMapToObj(session.files),
+					settings: utils.serializationUtils.strMapToObj(session.files),
 					settingsAsString: undefined
 				};
 			} else {
@@ -207,7 +208,7 @@ export async function duplicateSession(session: SessionContent): Promise<string>
 	const rawLatestOrigSession = await getRawSession(session);
 
 	// replace the session files
-	const newFilesAsString = JSON.stringify(strMapToObj(session.files), null, 4);
+	const newFilesAsString = JSON.stringify(utils.serializationUtils.strMapToObj(session.files), null, 4);
 	const newContent = rawLatestOrigSession.sessionContent
 		.replace(rawLatestOrigSession.sessionDetails, '') // strip the window.session.details= assignment
 		.replace(rawLatestOrigSession.domainFilesAsString, newFilesAsString);

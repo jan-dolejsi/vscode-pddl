@@ -6,7 +6,23 @@
 			"type": "chrome",
 			"request": "launch",
 			"name": "Search debugger (html)",
-			"file": "${workspaceFolder}/views/searchview/out/search.html"
+			"file": "${workspaceFolder}/views/searchview/out/search.html",
+			"preLaunchTask": "npm: compile - views/searchview",
+			"outFiles": [
+				"${workspaceFolder}/views/searchview/out/**/*.js"
+			]
+
+		},
+		{
+			"type": "chrome",
+			"request": "launch",
+			"name": "Plan view (html)",
+			"file": "${workspaceFolder}/views/planview/static/plans.html",
+			"cwd": "${workspaceFolder}/views/planview/out",
+			"preLaunchTask": "npm: compile - views/planview",
+			"outFiles": [
+				"${workspaceFolder}/views/planview/out/**/*.js"
+			]
 		},
 		{
 			"type": "chrome",

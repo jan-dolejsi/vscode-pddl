@@ -55,6 +55,29 @@
 			"problemMatcher": [],
 			"label": "npm: compile - views/searchview",
 			"detail": "npm run lint && browserify src/search.ts -p tsify > out/search.js"
+		},
+		{
+			"type": "npm",
+			"script": "watch",
+			"path": "views/searchview/",
+			"problemMatcher": [
+				"$ts-webpack-watch"
+			],
+			"group": "build",
+			"label": "npm: watch - views/searchview",
+			"detail": "watchify src/search.ts -p tsify -o out/search.js --verbose",
+			"isBackground": true
+		},
+		{
+			"type": "npm",
+			"script": "compile",
+			"path": "views/planview/",
+			"problemMatcher": [
+				"$tsc"
+			],
+			"group": "build",
+			"label": "npm: compile - views/planview",
+			"detail": "npm run lint && browserify src/plans.ts -p tsify > out/plans.js"
 		}
 	]
 }

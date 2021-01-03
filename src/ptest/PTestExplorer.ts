@@ -261,7 +261,7 @@ export class PTestExplorer {
                         }
                         this.report.finishedManifest(manifest);
                     }
-                    resolve();
+                    resolve(null); // should be resolve(void);
                 }
                 finally {
                     this.report.show();

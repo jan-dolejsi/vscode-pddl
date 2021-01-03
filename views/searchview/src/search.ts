@@ -6,6 +6,8 @@
 import { SearchTree } from "./tree";
 import { StateChart } from "./charts";
 import { getElementByIdOrThrow, State } from "./utils";
+import { createPlanView, JsonPlanVizSettings, PlanView } from "pddl-gantt";
+import { Plan, PlanStep } from "pddl-workspace";
 
 /** VS Code stub, so we can work with it in a type safe way. */
 interface VsCodeApi {
@@ -39,7 +41,7 @@ window.addEventListener('message', event => {
             showDebuggerOn(message.state.running === 'on', message.state.port);
             break;
         case 'showStatePlan':
-            showStatePlan(message.state);
+            showStatePlan(message.state.plan);
             break;
         case 'clear':
             clearStates();
@@ -178,6 +180,8 @@ getElementByIdOrThrow("planMock").onclick = (): void => {
 
 let stateChart: StateChart;
 
+let planViz: PlanView;
+
 /**
  * Adds state
  * @param newState state to add
@@ -239,9 +243,12 @@ function onStateSelected(stateId: number | null): void {
     stateChart.selectChartRow(stateId);
     searchTree.selectTreeNode(stateId);
     vscode?.postMessage({ command: 'stateSelected', stateId: stateId });
-
     if (!vscode) {
-        showStatePlan('<div style="width: 400px; height: 900px; background-color: green"></div>');
+        const statePlan = new Plan([
+            new PlanStep(.5, "hello world " + stateId, true, 1, 1)
+        ]);
+
+        showStatePlan(statePlan);
     }
 }
 
@@ -281,6 +288,15 @@ function initialize(): void {
     stateChart = new StateChart(onStateSelected);
     stateChart.subscribeToChartEvents();
 
+    planViz = createPlanView("statePlan",
+        {
+            displayWidth: 400,
+            epsilon: 1e-3,
+            disableLinePlots: true,
+            onActionSelected: actionName => vscode?.postMessage({ "command": "revealAction", "action": actionName }),
+            onHelpfulActionSelected: helpfulAction => navigateToChildOfSelectedState(helpfulAction)
+        });
+
     getElementByIdOrThrow("mockMenu").style.visibility = vscode ? 'collapse' : 'visible';
 
     onLoad();
@@ -314,7 +330,7 @@ getElementByIdOrThrow(CLEAR_DEBUGGER_BUTTON_ID).onclick = (): void => restartSea
 
 function restartSearchDebugger(): void {
     postCommand('reset');
-    showStatePlan("");
+    showStatePlan(new Plan([]));
     clearStates();
 }
 
@@ -348,8 +364,9 @@ function enableButton(enable: boolean, buttonId: string): void {
     }
 }
 
-function showStatePlan(statePlanHtml: string): void {
-    getElementByIdOrThrow("statePlan").innerHTML = statePlanHtml;
+function showStatePlan(plan: Plan): void {
+    const clonedPlan = Plan.clone(plan);
+    planViz.showPlan(clonedPlan, 0, new JsonPlanVizSettings({}));
 }
 
 const shapeMap = new Map<string, string>();

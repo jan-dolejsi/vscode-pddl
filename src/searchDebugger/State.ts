@@ -59,6 +59,7 @@ export class State {
         return this;
     }
 
+    /** Returns the plan head, and if present, the actions from the relaxed plan. */
     getTotalPlan(): SearchHappening[] {
         if (this.relaxedPlan) {
             return this.planHead.concat(this.relaxedPlan);

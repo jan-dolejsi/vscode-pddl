@@ -6,21 +6,29 @@
 
 import {
     window, workspace, Uri,
-    ViewColumn, ExtensionContext, TextDocument, WebviewPanel, Disposable, TextDocumentChangeEvent
+    ViewColumn, ExtensionContext, TextDocument, WebviewPanel, Disposable, TextDocumentChangeEvent, Webview, commands
 } from 'vscode';
 import { instrumentOperationAsVsCodeCommand } from "vscode-extension-telemetry-wrapper";
 
 import { isPlan, getDomainAndProblemForPlan } from '../workspace/workspaceUtils';
-import { PlanReportGenerator } from './PlanReportGenerator';
 import { PlanInfo, PLAN } from 'pddl-workspace';
 import { Plan } from 'pddl-workspace';
 
 import * as path from 'path';
 import { CodePddlWorkspace } from '../workspace/CodePddlWorkspace';
-import { CONF_PDDL, PLAN_REPORT_WIDTH, PDDL_CONFIGURE_COMMAND } from '../configuration/configuration';
+import { CONF_PDDL, PLAN_REPORT_WIDTH, PDDL_CONFIGURE_COMMAND, VAL_STEP_PATH, VALUE_SEQ_PATH, VAL_VERBOSE, PLAN_REPORT_LINE_PLOT_GROUP_BY_LIFTED } from '../configuration/configuration';
 import { Menu } from '../Menu';
+import { makeSerializable } from 'pddl-workspace/dist/utils/serializationUtils';
+import { createPddlExtensionContext, ensureAbsoluteGlobalStoragePath, getWebViewHtml } from '../utils';
+import { LinePlotData } from './model';
+import { PlanFunctionEvaluator } from 'ai-planning-val';
+import { PlanReportGenerator } from './PlanReportGenerator';
 
-const CONTENT = path.join('views', 'planview');
+const VIEWS = "views";
+const COMMON_FOLDER = path.join(VIEWS, "common");
+const STATIC_CONTENT_FOLDER = path.join(VIEWS, 'planview', 'static');
+// const JS_FOLDER = path.join(VIEWS, 'planview', 'out');
+
 export const PDDL_GENERATE_PLAN_REPORT = 'pddl.planReport';
 export const PDDL_EXPORT_PLAN = 'pddl.exportPlan';
 export const PDDL_SAVE_AS_EXPECTED_PLAN = 'pddl.saveAsExpectedPlan';
@@ -35,9 +43,9 @@ export class PlanView extends Disposable {
         super(() => this.dispose());
 
         context.subscriptions.push(instrumentOperationAsVsCodeCommand("pddl.plan.preview", async planUri => {
-            const dotDocument = await getPlanDocument(planUri);
-            if (dotDocument) {
-                return this.revealOrCreatePreview(dotDocument, ViewColumn.Beside);
+            const planDocument = await getPlanDocument(planUri);
+            if (planDocument) {
+                return this.revealOrCreatePreview(planDocument, ViewColumn.Beside);
             }
         }));
 
@@ -121,11 +129,19 @@ export class PlanView extends Disposable {
     }
 
     async updateContent(previewPanel: PlanPreviewPanel): Promise<void> {
-        if (!previewPanel.getPanel().webview.html) {
-            previewPanel.getPanel().webview.html = "Please wait...";
-        }
         previewPanel.setNeedsRebuild(false);
-        previewPanel.getPanel().webview.html = await this.getPreviewHtml(previewPanel);
+
+        if (previewPanel.getError()) {
+            previewPanel.getPanel().webview.postMessage({ command: 'error', message: previewPanel.getError().message});
+        }
+        else {
+            const width = workspace.getConfiguration(CONF_PDDL).get<number>(PLAN_REPORT_WIDTH, 300);
+
+            // todo: only send the additional plan, not all of them
+            const plans = previewPanel.getPlans()
+                .map(p => makeSerializable(p));
+            previewPanel.getPanel().webview.postMessage({ command: 'showPlans', plans: plans, width: width });
+        }
     }
 
     async revealOrCreatePreview(doc: TextDocument, displayColumn: ViewColumn): Promise<void> {
@@ -140,7 +156,6 @@ export class PlanView extends Disposable {
         }
 
         await this.setNeedsRebuild(doc);
-        this.updateContent(previewPanel);
     }
 
     createPreviewPanelForDocument(doc: TextDocument, displayColumn: ViewColumn): PlanPreviewPanel {
@@ -154,10 +169,13 @@ export class PlanView extends Disposable {
             enableFindWidget: true,
             enableCommandUris: true,
             enableScripts: true,
-            localResourceRoots: [Uri.file(this.context.asAbsolutePath(CONTENT))]
+            localResourceRoots: [Uri.file(this.context.asAbsolutePath(VIEWS))]
         });
 
         webViewPanel.iconPath = Uri.file(this.context.asAbsolutePath(path.join("views", "overview", "file_type_pddl_plan.svg")));
+
+        this.getHtml(webViewPanel.webview).then(html => 
+            webViewPanel.webview.html = html);
 
         const previewPanel = new PlanPreviewPanel(uri, webViewPanel);
 
@@ -171,15 +189,18 @@ export class PlanView extends Disposable {
         return previewPanel;
     }
 
-    private async getPreviewHtml(previewPanel: PlanPreviewPanel): Promise<string> {
-        if (previewPanel.getError()) {
-            return previewPanel.getError()!.message;
-        }
-        else {
-            const width = workspace.getConfiguration(CONF_PDDL).get<number>(PLAN_REPORT_WIDTH, 300);
-            return new PlanReportGenerator(this.context, { displayWidth: width, selfContained: false, resourceUriConverter: previewPanel.getPanel().webview })
-                .generateHtml(previewPanel.getPlans());
-        }
+    async getHtml(webview: Webview): Promise<string> {
+        const googleCharts = Uri.parse("https://www.gstatic.com/charts/");
+        return getWebViewHtml(createPddlExtensionContext(this.context), {
+            relativePath: STATIC_CONTENT_FOLDER, htmlFileName: 'plans.html',
+            externalImages: [Uri.parse('data:')],
+            allowUnsafeInlineScripts: true,
+            externalScripts: [googleCharts],
+            externalStyles: [googleCharts],
+            fonts: [
+                Uri.file(path.join("..", "..", "..", COMMON_FOLDER, "codicon.ttf"))
+            ]
+        }, webview);
     }
 
     async parsePlanFile(planDocument: TextDocument): Promise<Plan> {
@@ -201,6 +222,15 @@ export class PlanView extends Disposable {
         console.log(`Message received from the webview: ${message.command}`);
 
         switch (message.command) {
+            case 'onload':
+                // Webview (and its resources) finished loading
+                this.updateContent(previewPanel);
+                break;
+            case 'linePlotDataRequest': {
+                const planIndex: number = message.planIndex;
+                this.getLinePlotData(previewPanel, planIndex);
+                break;
+            }
             case 'selectPlan':
                 const planIndex: number = message.planIndex;
                 previewPanel.setSelectedPlanIndex(planIndex);
@@ -208,9 +238,95 @@ export class PlanView extends Disposable {
             case 'showMenu':
                 this.showMenu(previewPanel);
                 break;
+            case 'revealAction':
+                commands.executeCommand("pddl.revealAction", Uri.file(message.domainUri.fsPath), message.action);
+                break;
             default:
                 console.warn('Unexpected command: ' + message.command);
         }
+    }
+
+    async getLinePlotData(previewPanel: PlanPreviewPanel, planIndex: number): Promise<void> {
+        if (planIndex >= previewPanel.getPlans().length) {
+            console.error(`requesting data for plan index {} while there are only {} plans`, planIndex, previewPanel.getPlans().length);
+            return;
+        }
+
+        const plan = previewPanel.getPlans()[planIndex];
+
+        const valStepPath = ensureAbsoluteGlobalStoragePath(workspace.getConfiguration(CONF_PDDL).get<string>(VAL_STEP_PATH), this.context);
+        const valueSeqPath = ensureAbsoluteGlobalStoragePath(workspace.getConfiguration(CONF_PDDL).get<string>(VALUE_SEQ_PATH), this.context);
+        const valVerbose = workspace.getConfiguration(CONF_PDDL).get<boolean>(VAL_VERBOSE, false);
+
+        if (plan.domain && plan.problem) {
+            const groupByLifted = workspace.getConfiguration(CONF_PDDL).get<boolean>(PLAN_REPORT_LINE_PLOT_GROUP_BY_LIFTED, true);
+            const evaluator = new PlanFunctionEvaluator(plan, { valStepPath, valueSeqPath, shouldGroupByLifted: groupByLifted, verbose: valVerbose });
+
+            if (evaluator.isAvailable()) {
+
+                try {
+
+                    const functionValues = await evaluator.evaluate();
+
+                    functionValues.forEach((values, liftedVariable) => {
+                        let chartTitleWithUnit = values.legend.length > 1 ? liftedVariable.name : liftedVariable.getFullName();
+                        if (liftedVariable.getUnit()) { chartTitleWithUnit += ` [${liftedVariable.getUnit()}]`; }
+
+                        this.sendLinePlotData(previewPanel, {
+                            planIndex: planIndex,
+                            name: chartTitleWithUnit,
+                            unit: liftedVariable.getUnit(),
+                            legend: values.legend,
+                            data: values.values
+                        });
+                    });
+
+                    // add one plot for declared metric
+                    // todo: use valstep's ability to handle metric directly
+                    for (let metricIndex = 0; metricIndex < plan.problem.getMetrics().length; metricIndex++) {
+                        const metric = plan.problem.getMetrics()[metricIndex];
+
+                        const metricValues = await evaluator.evaluateExpression(metric.getExpression());
+                        const chartTitle = metric.getDocumentation()[metric.getDocumentation().length - 1] ?? "Metric";
+
+                        this.sendLinePlotData(previewPanel, {
+                            planIndex: planIndex,
+                            name: chartTitle,
+                            unit: "",
+                            legend: [''],
+                            data: metricValues.values
+                        });
+                    }
+
+                } catch (err) {
+                    console.error(err);
+                    const valStepPath = evaluator.getValStepPath();
+                    if (valStepPath) {
+                        PlanReportGenerator.handleValStepError(err, valStepPath);
+                    }
+                }
+            }
+            else {
+                previewPanel.getPanel().webview.postMessage({
+                    "command": "setVisibility",
+                    "elementId": "downloadVal",
+                    "visible": true
+                });
+            }
+        } else {
+            previewPanel.getPanel().webview.postMessage({
+                "command": "setVisibility",
+                "elementId": "domainProblemAssociation",
+                "visible": true
+            });
+        }
+    }
+
+    sendLinePlotData(previewPanel: PlanPreviewPanel, data: LinePlotData): void {
+        previewPanel.getPanel().webview.postMessage({
+            "command": "showLinePlot",
+            "data": data
+        });
     }
 
     // tslint:disable-next-line:no-unused-expression

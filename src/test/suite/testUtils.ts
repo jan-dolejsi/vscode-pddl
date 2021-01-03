@@ -47,6 +47,11 @@ class MockMemento implements Memento {
     async update(key: string, value: any): Promise<void> {
         this.map.set(key, value);
     }
+
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    setKeysForSync(keys: string[]): void {
+        console.warn(`Key syncing not supported in mock. ${keys}`);
+    }
 }
 
 class MockEnvironmentVariableCollection implements EnvironmentVariableCollection {

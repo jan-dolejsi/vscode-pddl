@@ -284,7 +284,7 @@ ${objectsHtml}
                     console.error(err);
                     const valStepPath = evaluator.getValStepPath();
                     if (valStepPath) {
-                        this.handleValStepError(err, valStepPath);
+                        PlanReportGenerator.handleValStepError(err, valStepPath);
                     }
                 }
             }
@@ -311,7 +311,7 @@ ${hint}
     }
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    private async handleValStepError(err: any, valStepPath: string): Promise<void> {
+    static async handleValStepError(err: any, valStepPath: string): Promise<void> {
         if (err instanceof ValStepError) {
             try {
                 const exportCase = "Export valstep case...";

@@ -14,3 +14,5 @@ views/common/codicon.*
 /views/searchview/out-test/
 src/test/tmpUserProfile/
 src/test/tmpFolder/
+views/planview/out-test/*
+debug.log

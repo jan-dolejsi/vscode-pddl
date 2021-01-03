@@ -1,5 +1,5 @@
 {
-  "name": "search-webview",
+  "name": "plan-webview",
   "version": "1.0.0",
   "description": "",
   "main": "out/index.js",
@@ -8,9 +8,9 @@
     "test-watch": "tsc -w",
     "test-compile": "tsc",
     "test": "mocha -- out-test/test/**/*.js",
-    "compile": "npm run lint && browserify src/search.ts -p tsify > out/search.js",
+    "compile": "npm run lint && browserify src/plans.ts -p tsify > out/plans.js",
     "lint": "eslint src --ext ts",
-    "watch": "watchify src/search.ts -p tsify -o out/search.js --verbose"
+    "watch": "watchify src/plans.ts -p tsify -o out/plans.js --verbose"
   },
   "author": "Jan Dolejsi",
   "license": "MIT",
@@ -27,7 +27,8 @@
     "@types/chai": "file:../../node_modules/@types/chai",
     "chai": "file:../../node_modules/chai",
     "@types/chai-string": "file:../../node_modules/@types/chai-string",
-    "chai-string": "file:../../node_modules/chai-string"
+    "chai-string": "file:../../node_modules/chai-string",
+    "model": "file:../../out/planning/model/"
   },
   "dependencies": {
     "pddl-gantt": "file:../../../pddl-gantt/pddl-gantt-1.0.0.tgz"

@@ -4,7 +4,7 @@
  * ------------------------------------------------------------------------------------------ */
 
 import { WorkspaceFolder, Uri, workspace } from "vscode";
-import { strMapToObj, objToStrMap } from "../utils";
+import { utils } from "pddl-workspace";
 import { exists } from "../util/workspaceFs";
 
 export const CONFIGURATION_FILE = '.planning.domains.session.json';
@@ -48,7 +48,7 @@ export async function readSessionConfiguration(folder: WorkspaceFolder): Promise
 	const data = await workspace.fs.readFile(configurationPath);
 	return JSON.parse(data.toString(), (key, value) => {
 		if (key === "files") {
-			return objToStrMap(value);
+			return utils.serializationUtils.objToStrMap(value);
 		}
 		else if (key ==="versionDate"){
 			return Date.parse(value);
@@ -62,7 +62,7 @@ export async function readSessionConfiguration(folder: WorkspaceFolder): Promise
 export async function saveConfiguration(workspaceFolderUri: Uri, sessionConfiguration: SessionConfiguration): Promise<void> {
 	const sessionConfigurationString = JSON.stringify(sessionConfiguration, (name, val) => {
 		if (name === "files") {
-			return strMapToObj(val);
+			return utils.serializationUtils.strMapToObj(val);
 		}
 		else if (name === "versionDate"){
 			return new Date(val).toISOString();

@@ -11,11 +11,9 @@ import * as path from 'path';
 
 import { getWebViewHtml, createPddlExtensionContext } from '../utils';
 import { State } from './State';
-import { PlanReportGenerator } from '../planning/PlanReportGenerator';
 import { StateToPlan } from './StateToPlan';
 import { StateResolver } from './StateResolver';
-import { ProblemInfo } from 'pddl-workspace';
-import { DomainInfo } from 'pddl-workspace';
+import { ProblemInfo, DomainInfo, utils } from 'pddl-workspace';
 
 export class SearchDebuggerView {
     private webViewPanel: WebviewPanel | undefined;
@@ -27,6 +25,8 @@ export class SearchDebuggerView {
     private stateLogLineCache = new Map<string, number>();
     private domain: DomainInfo | undefined;
     private problem: ProblemInfo | undefined;
+    private serializableDomain: DomainInfo | undefined;
+    private serializableProblem: ProblemInfo | undefined;
 
     // cached values
     private debuggerState: boolean | undefined;
@@ -54,6 +54,16 @@ export class SearchDebuggerView {
     setDomainAndProblem(domain: DomainInfo, problem: ProblemInfo): void {
         this.domain = domain;
         this.problem = problem;
+        this.serializableDomain = undefined;
+        this.serializableProblem = undefined;
+    }
+
+    getSerializableDomain(): DomainInfo | undefined {
+        return this.serializableDomain ?? (this.serializableDomain = this.domain && utils.serializationUtils.makeSerializable(this.domain));
+    }
+
+    getSerializableProblem(): ProblemInfo | undefined {
+        return this.serializableProblem ?? (this.serializableProblem = this.problem && utils.serializationUtils.makeSerializable(this.problem));
     }
 
     async showDebugView(): Promise<void> {
@@ -138,6 +148,9 @@ export class SearchDebuggerView {
             case 'toggleStateLog':
                 this.toggleStateLog();
                 break;
+            case 'revealAction':
+                commands.executeCommand("pddl.revealAction", this.domain.fileUri, message.action);
+                break;
             default:
                 console.warn('Unexpected command: ' + message.command);
         }
@@ -221,14 +234,14 @@ export class SearchDebuggerView {
         if (stateId === null) { return void 0; }
         const state = this.search.getState(stateId);
         if (!state || !this.webViewPanel) { return; }
-        const statePlan = new StateToPlan(this.domain, this.problem).convert(state);
-        const planHtml = await new PlanReportGenerator(this.context,
-            {
-                displayWidth: 200, selfContained: false, disableLinePlots: true, disableSwimLaneView: false, disableHamburgerMenu: true,
-                resourceUriConverter: this.webViewPanel.webview
-            })
-            .generateHtml([statePlan]);
-        this.postMessage({ command: 'showStatePlan', state: planHtml });
+        
+        const statePlanSerializable = new StateToPlan(this.getSerializableDomain(),
+            this.getSerializableProblem()).convert(state);
+        this.postMessage({
+            command: 'showStatePlan', state: {
+                plan: statePlanSerializable
+            }
+        });
     }
 
     clear(): void {
