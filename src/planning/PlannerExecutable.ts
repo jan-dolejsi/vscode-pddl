@@ -17,6 +17,8 @@ import {
     ProblemInfo, DomainInfo, utils, parser, planner, Plan
 } from 'pddl-workspace';
 
+import { Util } from 'ai-planning-val';
+
 export class PlannerExecutable extends planner.Planner {
 
     // this property stores the reference to the planner child process, while planning is in progress
@@ -30,8 +32,8 @@ export class PlannerExecutable extends planner.Planner {
 
     async plan(domainFileInfo: DomainInfo, problemFileInfo: ProblemInfo, planParser: parser.PddlPlannerOutputParser, callbacks: planner.PlannerResponseHandler): Promise<Plan[]> {
 
-        const domainFilePath = await utils.Util.toPddlFile("domain", domainFileInfo.getText());
-        const problemFilePath = await utils.Util.toPddlFile("problem", problemFileInfo.getText());
+        const domainFilePath = await Util.toPddlFile("domain", domainFileInfo.getText());
+        const problemFilePath = await Util.toPddlFile("problem", problemFileInfo.getText());
 
         let command = (this.plannerSyntax ?? PlannerExecutable.DEFAULT_SYNTAX)
             .replace('$(planner)', utils.Util.q(this.plannerPath))
