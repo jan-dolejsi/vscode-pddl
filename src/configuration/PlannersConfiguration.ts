@@ -258,6 +258,7 @@ export class PlannersConfiguration {
             case PlannerConfigurationScope.Extension:
                 // clear workspace-level selection (if any)
                 await pddlConfig.update(CONF_SELECTED_PLANNER, undefined, this.toConfigurationTarget(PlannerConfigurationScope.Workspace));
+                // falling through intentionally
             case PlannerConfigurationScope.Workspace:
                 // clear workspaceFolder-level selection (if any)
                 if (workspaceFolder) {
