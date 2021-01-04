@@ -23,6 +23,7 @@ export const DEF_PLANNER_OUTPUT_TARGET = "Output window";
 const PDDL_CONFIGURE_PLANNER = CONF_PDDL + '.' + 'configurePlanner';
 const PDDL_DELETE_PLANNER = CONF_PDDL + '.' + 'deletePlanner';
 const PDDL_JSON_SETTINGS = CONF_PDDL + '.' + 'plannersJsonSettings';
+const PDDL_ADD_PLANNER = CONF_PDDL + '.' + 'addPlanner';
 
 export const EXECUTION_TARGET = "executionTarget";
 
@@ -40,7 +41,7 @@ export class PlannersConfiguration {
     plannerOutputSelector: StatusBarItem;
 
     constructor(context: ExtensionContext, private pddlWorkspace: PddlWorkspace) {
-        context.subscriptions.push(instrumentOperationAsVsCodeCommand("pddl.addPlanner", () => this.createPlannerConfiguration().catch(showError)));
+        context.subscriptions.push(instrumentOperationAsVsCodeCommand(PDDL_ADD_PLANNER, () => this.createPlannerConfiguration().catch(showError)));
         context.subscriptions.push(instrumentOperationAsVsCodeCommand(PDDL_SELECT_PLANNER, () => this.selectPlanner()));
 
         if (workspace.getConfiguration(CONF_PDDL).get('showPlannerInStatusBar', true)) {
@@ -217,8 +218,11 @@ export class PlannersConfiguration {
     async selectPlanner(): Promise<ScopedPlannerConfiguration | undefined> {
         const planners = this.getPlanners();
 
-        const items = planners.map(plannerConfig => new PlannerQuickPickItem(plannerConfig));
-        items.push(PlannerQuickPickItem.CREATE_NEW);
+        const items = [
+            PlannerQuickPickItem.CREATE_NEW,
+            PlannerQuickPickItem.CONFIGURE,
+            ... planners.map(plannerConfig => new PlannerQuickPickItem(plannerConfig))
+        ];
 
         const selectedItem = await window.showQuickPick(items, { placeHolder: 'Select planner ...' });
 
@@ -227,7 +231,10 @@ export class PlannersConfiguration {
         }
 
         if (selectedItem === PlannerQuickPickItem.CREATE_NEW) {
-            commands.executeCommand("pddl.addPlanner");
+            commands.executeCommand(PDDL_ADD_PLANNER);
+            return undefined;
+        } else if (selectedItem === PlannerQuickPickItem.CONFIGURE) {
+            commands.executeCommand('pddl.showOverview');
             return undefined;
         } else {
             await this.setSelectedPlanner(selectedItem.planner);
@@ -569,13 +576,25 @@ class PlannerQuickPickItem implements QuickPickItem {
     alwaysShow?: boolean;
     planner: ScopedPlannerConfiguration;
 
-    constructor(plannerConfig: ScopedPlannerConfiguration | undefined) {
+    constructor(plannerConfig: ScopedPlannerConfiguration | undefined | null) {
         this.planner = plannerConfig;
         this.alwaysShow = plannerConfig === undefined;
-        this.label = plannerConfig?.configuration.title ?? "$(add) Create new planner configuration";
+        this.label = this.createLabel(plannerConfig);
+    }
+
+    createLabel(plannerConfig: ScopedPlannerConfiguration | undefined | null): string {
+        if (plannerConfig === undefined) {
+            return "$(add) Create new planner configuration";
+        } else if (plannerConfig === null) {
+            return "$(gear) Configure planners";
+        } else {
+            return plannerConfig.configuration.title;
+        }
     }
 
     static readonly CREATE_NEW = new PlannerQuickPickItem(undefined);
+
+    static readonly CONFIGURE = new PlannerQuickPickItem(null);
 }
 
 class PlannerSpecPickItem implements QuickPickItem {

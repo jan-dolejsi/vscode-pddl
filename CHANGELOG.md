@@ -1,5 +1,14 @@
 # PDDL support - What's new?
 
+## [Unreleased] 2.19.5
+
+While switching between planners (using the button in the status bar),
+you may realize that the planner you want to switch to needs also a tweak in its configuration.
+The only way to change the configuration is to go to the Overview Page (or edit it directly in the `settings.json` file)
+but none of those choices are at hand.
+
+It is now possible to jump to the Overview Page and configure the planner right from the drop down that lets you select a planner.
+
 ## 2.19.4
 
 ### Support for LPG planner
@@ -12,9 +21,18 @@ LPG command-line options are also presented in the drop down, while invoking the
 
 ### Engineering work
 
-PDDL Parser was generalized and moved to the ai-planning-val.js repository.
-PDDL Parser syntax does no longer use the `$(parser)` macro. The default syntax arguments are now: `$(domain) $(problem)`.
-Details are described on the [Configure the PDDL parser](https://github.com/jan-dolejsi/vscode-pddl/wiki/Configuring-the-PDDL-parser) page.
+- PDDL Parser was generalized and moved to the ai-planning-val.js repository.
+- PDDL Parser syntax does no longer use the `$(parser)` macro. The default syntax arguments are now: `$(domain) $(problem)`.
+- Details are described on the [Configure the PDDL parser](https://github.com/jan-dolejsi/vscode-pddl/wiki/Configuring-the-PDDL-parser) page.
+- Upgrade to Node 12.14.1
+- Replaced nodejs fs with vscode fs to support remote workspaces
+
+### Fixes
+
+- Overview Page
+  - Fixed race condition when closed before update
+  - fixed capitalization of helloWorld directory, so the sample opens on Linux
+  - pddl sample creation asks to skip/overwrite existing files
 
 ## 2.19.3
 
