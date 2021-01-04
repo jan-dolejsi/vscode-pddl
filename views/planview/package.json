@@ -31,6 +31,6 @@
     "model": "file:../../out/planning/model/"
   },
   "dependencies": {
-    "pddl-gantt": "file:../../../pddl-gantt/pddl-gantt-1.0.0.tgz"
+    "pddl-gantt": "file:../../../pddl-gantt"
   }
 }
