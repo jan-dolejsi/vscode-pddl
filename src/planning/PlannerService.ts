@@ -21,10 +21,10 @@ export abstract class PlannerService extends planner.Planner {
     abstract createUrl(): string;
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    abstract processServerResponseBody(responseBody: any, planParser: parser.PddlPlanParser, parent: planner.PlannerResponseHandler,
+    abstract processServerResponseBody(responseBody: any, planParser: parser.PddlPlannerOutputParser, parent: planner.PlannerResponseHandler,
         resolve: (plans: Plan[]) => void, reject: (error: Error) => void): void;
 
-    async plan(domainFileInfo: DomainInfo, problemFileInfo: ProblemInfo, planParser: parser.PddlPlanParser, parent: planner.PlannerResponseHandler): Promise<Plan[]> {
+    async plan(domainFileInfo: DomainInfo, problemFileInfo: ProblemInfo, planParser: parser.PddlPlannerOutputParser, parent: planner.PlannerResponseHandler): Promise<Plan[]> {
         parent.handleOutput(`Planning service: ${this.plannerPath}\nDomain: ${domainFileInfo.name}, Problem: ${problemFileInfo.name}\n`);
 
         // eslint-disable-next-line @typescript-eslint/no-explicit-any

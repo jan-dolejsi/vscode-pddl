@@ -117,7 +117,7 @@ function showPlans(plans: Plan[], width: number): void {
         const plan = plans[plans.length - 1];
         const clonedPlan = Plan.clone(plan);
         planViz.setDisplayWidth(width);
-        planViz.showPlan(clonedPlan, 0, new JsonPlanVizSettings({}));
+        planViz.showPlan(clonedPlan, new JsonPlanVizSettings({}));
     } else {
         planViz.clear();
     }
@@ -149,23 +149,8 @@ function showPlanDiv(planIndex: number, div: Element): void {
     div.setAttribute("style", style);
 }
 
-/*
-declare interface ScrollableIntoView extends Element {
-    scrollIntoViewIfNeeded(center?: boolean): void;
-}
-
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-function scrollPlanSelectorIntoView(planIndex: number): void {
-    document.querySelectorAll('div.planSelector').forEach(div => {
-        if (parseInt(div.getAttribute('plan') ?? "-1") === planIndex) {
-            (div as ScrollableIntoView).scrollIntoViewIfNeeded();
-        }
-    });
-}
-*/
-
 function requestLinePlotData(planView: PlanView): void {
-    vscode?.postMessage({ 'command': 'linePlotDataRequest', 'planIndex': planView.planId });
+    vscode?.postMessage({ 'command': 'linePlotDataRequest', 'planIndex': planView.planIndex });
 }
 
 function showLinePlot(data: LinePlotData): void {

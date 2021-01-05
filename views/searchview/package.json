@@ -30,6 +30,6 @@
     "chai-string": "file:../../node_modules/chai-string"
   },
   "dependencies": {
-    "pddl-gantt": "file:../../../pddl-gantt/pddl-gantt-1.0.0.tgz"
+    "pddl-gantt": "file:../../node_modules/pddl-gantt"
   }
 }

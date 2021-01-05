@@ -17,7 +17,7 @@ import { exportToAndShow } from './ExportUtil';
  */
 export class PlanHappeningsExporter {
 
-    decimals: number;
+    private readonly decimals: number;
 
     constructor(private planDocument: TextDocument, private epsilon: number) {
         this.decimals = -Math.log10(epsilon);
@@ -54,7 +54,10 @@ export class PlanHappeningsExporter {
 
     computeHappeningsText(planText: string): void {
 
-        planText.split('\n').forEach(line => {
+        const planParser = new parser.PddlPlanParser();
+        const planBuilder = new parser.PddlPlanBuilder(this.epsilon);
+
+        planText.split('\n').forEach((line, index) => {
             if (line.match(/^\s*;/)) {
                 // comment lines are accumulated and flushed later 
                 this.comments += line + '\n';
@@ -68,7 +71,7 @@ export class PlanHappeningsExporter {
                     this.flushComments();
                 }
 
-                const happening = this.parseStepAndEnqueueEnd(line);
+                const happening = this.parseStepAndEnqueueEnd(line, index, planParser, planBuilder);
                 if (happening) {
                     this.flushHappeningsBefore(happening.time);
 
@@ -88,26 +91,27 @@ export class PlanHappeningsExporter {
         this.flushComments();
     }
 
-    parseStepAndEnqueueEnd(line: string): Happening | null {
-        parser.PddlPlannerOutputParser.planStepPattern.lastIndex = 0;
-        const group = parser.PddlPlannerOutputParser.planStepPattern.exec(line);
+    parseStepAndEnqueueEnd(line: string, lineIndex: number, planParser: parser.PddlPlanParser, planBuilder: parser.PddlPlanBuilder): Happening | null {
+        const planStep = planParser.parse(line, lineIndex, planBuilder);
 
-        if (!group) {
+        if (!planStep) {
             this.happeningsText += `; Warning: line did not parse: ${line}`;
             return null;
         } else {
             // this line is a plan step
-            const time = group[2] ? parseFloat(group[2]) : this.makespan;
-            const action = group[3];
-            const isDurative = group[5] ? true : false;
-            const duration = isDurative ? parseFloat(group[5]) : this.epsilon;
 
-            const count = this.getActionCount(action);
+            const actionName = planStep.getFullActionName();
+            const count = this.getActionCount(actionName);
 
-            const thisHappening = new Happening(time, action, isDurative ? HappeningType.Start : HappeningType.Instantaneous, count);
+            const thisHappening = new Happening(
+                planStep.getStartTime(), 
+                actionName,
+                planStep.isDurative ? HappeningType.Start : HappeningType.Instantaneous,
+                count);
 
-            if (isDurative) {
-                const endHappening = new Happening(time + duration, action, HappeningType.End, count);
+            if (planStep.isDurative) {
+                const endTime = planStep.getStartTime() + planStep.getDuration();
+                const endHappening = new Happening(endTime, actionName, HappeningType.End, count);
                 this.enqueue(endHappening);
             }
 

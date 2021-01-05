@@ -366,7 +366,7 @@ function enableButton(enable: boolean, buttonId: string): void {
 
 function showStatePlan(plan: Plan): void {
     const clonedPlan = Plan.clone(plan);
-    planViz.showPlan(clonedPlan, 0, new JsonPlanVizSettings({}));
+    planViz.showPlan(clonedPlan, new JsonPlanVizSettings({}));
 }
 
 const shapeMap = new Map<string, string>();

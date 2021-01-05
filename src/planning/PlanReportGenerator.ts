@@ -12,18 +12,14 @@ import * as path from 'path';
 import * as fs from 'fs';
 import opn = require('open');
 
-import { DomainInfo, ProblemInfo } from 'pddl-workspace';
+import { DomainInfo, PlanStep, PlanStepCommitment, HappeningType, Plan, HelpfulAction, PddlWorkspace } from 'pddl-workspace';
+import { PlanFunctionEvaluator, Util as ValUtil, ValStepError, ValStep } from 'ai-planning-val';
+import { capitalize } from 'pddl-gantt';
 import { SwimLane } from './SwimLane';
-import { PlanStep, PlanStepCommitment } from 'pddl-workspace';
-import { HappeningType } from 'pddl-workspace';
-import { Plan, HelpfulAction } from 'pddl-workspace';
-import { PlanFunctionEvaluator } from 'ai-planning-val';
 import { PlanReportSettings } from './PlanReportSettings';
 import { VAL_STEP_PATH, CONF_PDDL, VALUE_SEQ_PATH, PLAN_REPORT_LINE_PLOT_GROUP_BY_LIFTED, DEFAULT_EPSILON, VAL_VERBOSE } from '../configuration/configuration';
-import { Util as ValUtil } from 'ai-planning-val';
-import { ValStepError, ValStep } from 'ai-planning-val';
 import { ensureAbsoluteGlobalStoragePath, WebviewUriConverter } from '../utils';
-import { PddlWorkspace } from 'pddl-workspace';
+
 const DIGITS = 4;
 
 export class PlanReportGenerator {
@@ -112,68 +108,8 @@ States evaluated: ${plan.statesEvaluated}`;
         else { return true; }
     }
 
-    /**
-     * Changes capitalization of the plan action names and object names to match the domain/problem.
-     * This is assuming the case-insensitive PDDL treatment.
-     * @param plan orig plan
-     */
-    private capitalize(plan: Plan): Plan {
-        if (!plan.domain || !plan.problem) {
-            return plan;
-        }
-
-        const actionNames = plan.domain.getActions().map(a => a.name);
-
-        const capitalizedSteps = plan.steps
-            .map(step => this.capitalizeStep(step, actionNames, plan.problem));
-
-        const capitalizedPlan = new Plan(capitalizedSteps, plan.domain, plan.problem, plan.now, plan.helpfulActions);
-        if (plan.isCostDefined()) {
-            capitalizedPlan.cost = plan.cost;
-        }
-        return capitalizedPlan;
-    }
-    
-    private capitalizeStep(step: PlanStep, actionNames: string[], problem: ProblemInfo): PlanStep {
-        let changed = false;
-        let changedActionName = step.getActionName();
-        if (!actionNames.includes(step.getActionName())) {
-            const matchingDomainAction = actionNames.find(name => name.toLowerCase() === step.getActionName().toLowerCase());            
-            if (matchingDomainAction) {
-                changed = true;
-                changedActionName = matchingDomainAction;
-            }
-        }
-
-        const changedObjects = [];
-        for (let i = 0; i < step.getObjects().length; i++) {
-            const origObject = step.getObjects()[i];
-
-            const matchingObject = problem.getObjectsTypeMap()
-                .getTypeOf(origObject)?.getObjects()
-                ?.find(o => o.toLowerCase() === origObject.toLowerCase());
-            if (matchingObject) {
-                changed = true;    
-                changedObjects[i] = matchingObject;
-            } else {
-                changedObjects[i] = origObject;
-            }
-        }
-
-        if (changed) {
-            let fullActionName = changedActionName;
-            if (changedObjects.length) {
-                fullActionName += ' ' + changedObjects.join(' ');
-            }
-            return new PlanStep(step.getStartTime(), fullActionName, step.isDurative, step.getDuration(), step.lineIndex, step.commitment, step.getIterations());
-        }
-        else {
-            return step;
-        }
-    }
-
     async renderPlan(plan: Plan, planIndex: number, selectedPlan: number): Promise<string> {
-        plan = this.capitalize(plan);
+        plan = capitalize(plan);
 
         let planVisualizerPath: string | undefined;
         if (plan.domain) {
