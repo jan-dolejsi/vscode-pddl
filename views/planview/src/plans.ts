@@ -3,7 +3,7 @@
  * Licensed under the MIT License. See License.txt in the project root for license information.
  * ------------------------------------------------------------------------------------------ */
 
-import { createPlanView, JsonPlanVizSettings, PlanView } from "pddl-gantt";
+import { createPlansView, JsonPlanVizSettings, PlansView, PlanView } from "pddl-gantt";
 import { Plan, PlanStep } from "pddl-workspace";
 import { LinePlotData } from 'model';
 
@@ -55,7 +55,7 @@ document.body.onload = (): void => initialize();
 
 function initialize(): void {
 
-    planViz = createPlanView("plans",
+    plansViz = createPlansView("plans",
         {
             displayWidth: 400,
             epsilon: 1e-3,
@@ -75,14 +75,16 @@ function initialize(): void {
         showPlans([dummyPlan], 300);
         showError("Some issue...");
     }
-    else {
+
+    const menu = document.getElementById("menu");
+    if (menu) {
+        menu.onclick = (): void => postCommand('showMenu');
     }
 
     onLoad();
 }
 
-// todo: switch to PlansView
-let planViz: PlanView;
+let plansViz: PlansView;
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 let selectedPlan = 0;
@@ -114,12 +116,11 @@ function showPlans(plans: Plan[], width: number): void {
     plansShown = plans;
     showElement("pleaseWait", false);
     if (plans.length > 0) {
-        const plan = plans[plans.length - 1];
-        const clonedPlan = Plan.clone(plan);
-        planViz.setDisplayWidth(width);
-        planViz.showPlan(clonedPlan, new JsonPlanVizSettings({}));
+        const clonedPlans = plans.map(p => Plan.clone(p));
+        plansViz.setDisplayWidth(width);
+        plansViz.showPlans(clonedPlans, undefined, new JsonPlanVizSettings({}));
     } else {
-        planViz.clear();
+        plansViz.clear();
     }
 }
 
@@ -154,5 +155,5 @@ function requestLinePlotData(planView: PlanView): void {
 }
 
 function showLinePlot(data: LinePlotData): void {
-    planViz.showPlanLinePlots(data.name, data.unit, data.legend, data.data);
+    plansViz.getView(data.planIndex).showPlanLinePlots(data.name, data.unit, data.legend, data.data);
 }
