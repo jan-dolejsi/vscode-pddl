@@ -78,10 +78,10 @@ suite('PTest', () => {
         expect(manifests).has.length.greaterThan(0);
         const manifestFolder1DomainD = manifests.find(m => m.path.includes(folderName));
         expect(manifestFolder1DomainD).to.be.not.undefined;
-        expect(manifestFolder1DomainD.defaultDomain).to.equal(domainFileName);
-        expect(manifestFolder1DomainD.testCases).to.have.lengthOf(1);
-        const testCase1 = manifestFolder1DomainD.testCases[0];
-        expect(testCase1.getProblem()).to.equal(problemFileName);
+        expect(manifestFolder1DomainD?.defaultDomain).to.equal(domainFileName);
+        expect(manifestFolder1DomainD?.testCases).to.have.lengthOf(1);
+        const testCase1 = manifestFolder1DomainD?.testCases[0];
+        expect(testCase1?.getProblem()).to.equal(problemFileName);
 
         // WHEN
         const treeDataProvider = new PTestTreeDataProvider(pddlExtensionContext ?? throwForUndefined('test extension context'));
@@ -98,7 +98,7 @@ suite('PTest', () => {
         const manifestTreeNodes = await treeDataProvider.getChildren(ptestTreeDataProviderNode);
         expect(manifestTreeNodes, "tree.folder1.manifest children").to.have.lengthOf(1);
         const manifestTreeNode = manifestTreeNodes[0];
-        expect(manifestTreeNode.resource.fsPath).to.equal(manifestFolder1DomainD.uri.fsPath);
+        expect(manifestTreeNode.resource.fsPath).to.equal(manifestFolder1DomainD?.uri.fsPath);
         
         expect(nodesChanged, "number of nodes changed or refresh events").to.have.length(1);
     });
@@ -133,6 +133,9 @@ suite('PTest', () => {
         const manifest = await manifestGenerator.createPlanAssertion(plan);
 
         // THEN
+        if (!plan.domain) {
+            fail('plan.domain is undefined');
+        }
         expect(manifest.defaultDomain).to.equal(path.basename(plan.domain.fileUri.fsPath));
         expect(manifest.testCases).has.lengthOf(1, "test cases after assertion added");
         const actualTestCase = manifest.testCases.find(test => test.getProblemUri().toString() === problemUri?.toString());

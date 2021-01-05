@@ -74,9 +74,9 @@ suite('Planner configuration test', () => {
 
 		{
 			const plannersInspect = workspace.getConfiguration(CONF_PDDL, wf).inspect(CONF_PLANNERS);
-			expect(plannersInspect.globalValue).to.be.undefined;
-			expect(plannersInspect.workspaceValue).to.be.undefined;
-			expect(plannersInspect.workspaceFolderValue).to.be.undefined;
+			expect(plannersInspect?.globalValue).to.be.undefined;
+			expect(plannersInspect?.workspaceValue).to.be.undefined;
+			expect(plannersInspect?.workspaceFolderValue).to.be.undefined;
 		}
 
 		// GIVEN the mock planner is configured
@@ -146,8 +146,8 @@ suite('Planner configuration test', () => {
 		const selectedPlanner = plannersConfiguration.getSelectedPlanner(wf);
 		expect(selectedPlanner, "after the global planner is selected, it should be ... selected").to.deep.equal(globalPlannerConfig);
 		const selectedPlannerInspect = workspace.getConfiguration(CONF_PDDL, wf).inspect<string>(CONF_SELECTED_PLANNER);
-		expect(selectedPlannerInspect.globalValue).to.equal(globalPlannerConfig.configuration.title);
-		expect(selectedPlannerInspect.workspaceFolderValue).to.be.undefined;
+		expect(selectedPlannerInspect?.globalValue).to.equal(globalPlannerConfig.configuration.title);
+		expect(selectedPlannerInspect?.workspaceFolderValue).to.be.undefined;
 	});
 
 	test('Selecting planner in a scope is saved to the given scope', async () => {
@@ -175,8 +175,8 @@ suite('Planner configuration test', () => {
 		expect(selectedPlanner, "after the folder planner is selected, it should be ... selected").to.deep.equal(folderPlannerConfig);
 
 		const selectedPlannerInspect = workspace.getConfiguration(CONF_PDDL, wf).inspect(CONF_SELECTED_PLANNER);
-		expect(selectedPlannerInspect.globalValue).to.equal(globalPlannerConfig.configuration.title);
-		expect(selectedPlannerInspect.workspaceFolderValue).to.equal(folderPlannerConfig.configuration.title);
+		expect(selectedPlannerInspect?.globalValue).to.equal(globalPlannerConfig.configuration.title);
+		expect(selectedPlannerInspect?.workspaceFolderValue).to.equal(folderPlannerConfig.configuration.title);
 	});
 
 	test('Re-configures planner', async () => {
@@ -184,7 +184,7 @@ suite('Planner configuration test', () => {
 		const plannerProvider = new MockPlannerProvider({ canConfigure: true });
 
 		// GIVEN the mock planner is configured
-		codePddlWorkspace.pddlWorkspace.getPlannerRegistrar().registerPlannerProvider(plannerProvider.kind, plannerProvider);
+		codePddlWorkspace?.pddlWorkspace.getPlannerRegistrar().registerPlannerProvider(plannerProvider.kind, plannerProvider);
 		const mockConfiguration = await plannerProvider.configurePlanner();
 		const scopedMockConfiguration = await plannersConfiguration.addPlannerConfiguration(PlannerConfigurationScope.WorkspaceFolder, mockConfiguration, wf);
 

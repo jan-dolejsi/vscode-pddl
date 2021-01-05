@@ -6,12 +6,13 @@
 /** Plan line plot data */
 export interface LinePlotData {
     /** Plan index in the web view. */
-    planIndex: number,
+    planIndex: number;
     /** Line plot name */
-    name: string,
+    name: string;
     /** Unit of measure */
-    unit: string,
+    unit: string;
     /** Legend string for each series (should correspond to the number of data series) */
-    legend: string[],
-    data: number[][],
+    legend: string[];
+    
+    data: (number | null)[][];
 }

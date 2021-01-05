@@ -55,7 +55,7 @@ class MockMemento implements Memento {
 }
 
 class MockEnvironmentVariableCollection implements EnvironmentVariableCollection {
-    persistent: boolean;
+    persistent = true;
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     replace(_variable: string, _value: string): void {
         throw new Error('Method not implemented.');
@@ -138,7 +138,9 @@ export class MockPlannerProvider implements planner.PlannerProvider {
 
     setExpectedPath(path: string): void {
         this.path = path;
-        this.options.canConfigure = true;
+        if (this.options) {
+            this.options.canConfigure = true;
+        }
     }
 }
 
@@ -213,11 +215,11 @@ export async function clearConfiguration(): Promise<void> {
     await workspace.getConfiguration(CONF_PDDL).update(CONF_PLANNERS, undefined, ConfigurationTarget.Workspace);
     await workspace.getConfiguration(CONF_PDDL).update(CONF_SELECTED_PLANNER, undefined, ConfigurationTarget.Workspace);
 
-    const workspaceFolderDeletions = workspace.workspaceFolders.map(async wf => {
+    const workspaceFolderDeletions = workspace.workspaceFolders?.map(async wf => {
         console.warn(`Skipped clearing of workspace-folder configuration for ${wf.name}`);
         // await workspace.getConfiguration(CONF_PDDL, wf).update(CONF_PLANNERS, undefined, ConfigurationTarget.WorkspaceFolder);
         // await workspace.getConfiguration(CONF_PDDL, wf).update(CONF_SELECTED_PLANNER, undefined, ConfigurationTarget.WorkspaceFolder);
-    });
+    }) ?? [];
 
     await Promise.all(workspaceFolderDeletions);
 }

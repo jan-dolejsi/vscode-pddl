@@ -158,7 +158,7 @@ export class HappeningsValidator {
     validateActionNames(domain: DomainInfo, problem: ProblemInfo, happeningsInfo: HappeningsInfo): Diagnostic[] {
         return happeningsInfo.getHappenings()
             .filter(happening => !this.isDomainAction(domain, problem, happening))
-            .map(happening => new Diagnostic(createRangeFromLine(happening.lineIndex), `Action '${happening.getAction()}' not known by the domain '${domain.name}'`, DiagnosticSeverity.Error));
+            .map(happening => new Diagnostic(createRangeFromLine(happening.lineIndex ?? 0), `Action '${happening.getAction()}' not known by the domain '${domain.name}'`, DiagnosticSeverity.Error));
     }
 
     /**

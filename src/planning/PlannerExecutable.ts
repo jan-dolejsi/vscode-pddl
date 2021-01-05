@@ -73,12 +73,12 @@ export class PlannerExecutable extends planner.Planner {
                     thisPlanner.child = undefined;
                 });
 
-            thisPlanner.child.stdout.on('data', (data: any) => {
+            thisPlanner.child.stdout?.on('data', (data: any) => {
                 const dataString = data.toString();
                 callbacks.handleOutput(dataString);
                 planParser.appendBuffer(dataString);
             });
-            thisPlanner.child.stderr.on('data', (data: any) => callbacks.handleOutput("Error: " + data));
+            thisPlanner.child.stderr?.on('data', (data: any) => callbacks.handleOutput("Error: " + data));
 
             thisPlanner.child.on("close", (code: any, signal: any) => {
                 if (code) { console.log("Exit code: " + code); }

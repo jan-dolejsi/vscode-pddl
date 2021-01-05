@@ -96,7 +96,7 @@ export function asWebviewUri(localUri: Uri, webview?: Webview): Uri {
     return webview?.asWebviewUri(localUri) ?? localUri.with({ scheme: "vscode-resource" });
 }
 
-function createContentSecurityPolicy(extensionContext: PddlExtensionContext, webview: Webview, options: WebViewHtmlOptions, nonce: string): string {
+function createContentSecurityPolicy(extensionContext: PddlExtensionContext, webview: Webview, options: WebViewHtmlOptions, nonce: string | undefined): string {
     const externalStyles = getAbsoluteWebviewUrisSSV(extensionContext, webview, options, options.externalStyles);
     const externalScripts = getAbsoluteWebviewUrisSSV(extensionContext, webview, options, options.externalScripts);
     const externalImages = getAbsoluteWebviewUrisSSV(extensionContext, webview, options, options.externalImages);

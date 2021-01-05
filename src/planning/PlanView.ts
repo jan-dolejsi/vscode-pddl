@@ -131,8 +131,9 @@ export class PlanView extends Disposable {
     async updateContent(previewPanel: PlanPreviewPanel): Promise<void> {
         previewPanel.setNeedsRebuild(false);
 
-        if (previewPanel.getError()) {
-            previewPanel.getPanel().webview.postMessage({ command: 'error', message: previewPanel.getError().message});
+        const error = previewPanel.getError();
+        if (error) {
+            previewPanel.getPanel().webview.postMessage({ command: 'error', message: error.message});
         }
         else {
             const width = workspace.getConfiguration(CONF_PDDL).get<number>(PLAN_REPORT_WIDTH, 300);

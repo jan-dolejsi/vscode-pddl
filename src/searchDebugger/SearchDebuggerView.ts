@@ -149,7 +149,7 @@ export class SearchDebuggerView {
                 this.toggleStateLog();
                 break;
             case 'revealAction':
-                commands.executeCommand("pddl.revealAction", this.domain.fileUri, message.action);
+                this.domain && commands.executeCommand("pddl.revealAction", this.domain.fileUri, message.action);
                 break;
             default:
                 console.warn('Unexpected command: ' + message.command);
