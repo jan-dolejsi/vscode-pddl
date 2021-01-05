@@ -43,7 +43,7 @@ export class PlanReportGenerator {
     async generateHtml(plans: Plan[], planId = -1): Promise<string> {
         const selectedPlan = planId < 0 ? plans.length - 1 : planId;
 
-        const maxCost = Math.max(...plans.map(plan => plan.cost ?? 0));
+        const maxCost = Math.max(...plans.map(plan => plan.metric ?? 0));
 
         const planSelectors = plans.map((plan, planIndex) => this.renderPlanSelector(plan, planIndex, selectedPlan, maxCost)).join(" ");
 
@@ -53,18 +53,20 @@ export class PlanReportGenerator {
         const plansHtml = planHtmlArr.join("\n\n");
         const plansChartsScript = this.createPlansChartsScript(plans);
         const relativePath = path.join('views', 'planview');
+        const staticPath = path.join(relativePath, 'static');
+        const ganttStylesPath = path.join('node_modules', 'pddl-gantt', 'styles');
         const html = `<!DOCTYPE html>
         <head>
             <title>Plan report</title>
             <meta http-equiv="Content-Security-Policy"
                 content="default-src 'none'; img-src vscode-resource: https: data:; script-src vscode-resource: https://www.gstatic.com/charts/ 'unsafe-inline'; style-src vscode-resource: https://www.gstatic.com/charts/ 'unsafe-inline';"
             />    
-            ${await this.includeStyle(this.asAbsolutePath(relativePath, 'plans.css'))}
-            ${await this.includeStyle(this.asAbsolutePath(relativePath, 'plan-resource-task.css'))}
-            ${await this.includeStyle(this.asAbsolutePath(relativePath, 'menu.css'))}
-            ${await this.includeScript(this.asAbsolutePath(relativePath, 'plans.js'))}
+            ${await this.includeStyle(this.asAbsolutePath(ganttStylesPath, 'plans.css'))}
+            ${await this.includeStyle(this.asAbsolutePath(ganttStylesPath, 'plan-resource-task.css'))}
+            ${await this.includeStyle(this.asAbsolutePath(staticPath, 'menu.css'))}
+            ${await this.includeScript(this.asAbsolutePath(path.join(relativePath, 'out'), 'plans.js'))}
             <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
-            ${await this.includeScript(this.asAbsolutePath(relativePath, 'charts.js'))}
+            ${await this.includeScript(this.asAbsolutePath(staticPath, 'charts.js'))}
         </head>
         <body onload="scrollPlanSelectorIntoView(${selectedPlan})">
             <div class="planSelectors" style="display: ${planSelectorsDisplayStyle};">${planSelectors}
