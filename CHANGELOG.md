@@ -2,12 +2,39 @@
 
 ## [Unreleased] 2.19.5
 
+### More usable plan preview and planner invocation via editor title icons
+
+The planner invocation is now also available in the editor title context menu (by right-clicking on the editor tab of the domain/problem file).
+
+Plan preview command is available in the editor title bar when a _.plan_ file is focussed. This is consistent by other file _preview_ extensions.
+
+### Planner configuration and addition available from planner switch drop down
+
 While switching between planners (using the button in the status bar),
 you may realize that the planner you want to switch to needs also a tweak in its configuration.
 The only way to change the configuration is to go to the Overview Page (or edit it directly in the `settings.json` file)
 but none of those choices are at hand.
 
 It is now possible to jump to the Overview Page and configure the planner right from the drop down that lets you select a planner.
+
+> screenshot needed
+
+### Fixes
+
+For custom planner syntax is specified (in one of the user/workspace `settings.json` files) the syntax validation is now more permissive.
+Currently it flagged many valid planner syntaxes with a red squiggly line.
+
+Example of syntax for LPG planner:
+
+```json
+{
+    "kind": "lpg-td",
+    "canConfigure": true,
+    "path": "c:\\path\\lpg-td-1.0.exe",
+    "syntax": "$(planner) -o $(domain) -f $(problem) $(options)",
+    "title": "LPG-td"
+},
+```
 
 ## 2.19.4
 
