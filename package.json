@@ -347,6 +347,26 @@
       }
     ],
     "menus": {
+      "editor/title": [
+        {
+          "command": "pddl.plan.preview",
+          "when": "resourceLangId == plan",
+          "icon": "$(open-preview)",
+          "group": "navigation"
+        }
+      ],
+      "editor/title/context": [
+        {
+          "command": "pddl.planAndDisplayResult",
+          "when": "resourceLangId == pddl"
+        },
+        {
+          "command": "pddl.plan.preview",
+          "when": "resourceLangId == plan",
+          "icon": "$(open-preview)",
+          "group": "navigation"
+        }
+      ],
       "editor/context": [
         {
           "command": "pddl.planAndDisplayResult",
@@ -683,7 +703,7 @@
               "syntax": {
                 "type": "string",
                 "description": "Command-line syntax structure.",
-                "pattern": "^\\$\\(planner\\).+\\$\\(options\\).+\\$\\(domain\\).+\\$\\(problem\\).*$",
+                "pattern": "^(\\$\\(planner\\))? (.*\\$\\((?:domain|problem|options)\\))(.*\\$\\((?:domain|problem|options)\\))(.*\\$\\((?:domain|problem|options)\\)).*$",
                 "default": "$(planner) $(options) $(domain) $(problem)"
               },
               "url": {
@@ -706,7 +726,7 @@
           "scope": "resource",
           "type": "string",
           "description": "Override the command-line options passed to the PDDL planner configured in 'pddlPlanner.executableOrService'.",
-          "pattern": "^\\$\\(planner\\).+\\$\\(options\\).+\\$\\(domain\\).+\\$\\(problem\\).*$"
+          "pattern": "^(\\$\\(planner\\))? (.*\\$\\((?:domain|problem|options)\\))(.*\\$\\((?:domain|problem|options)\\))(.*\\$\\((?:domain|problem|options)\\)).*$"
         },
         "pddlPlanner.executionTarget": {
           "scope": "window",

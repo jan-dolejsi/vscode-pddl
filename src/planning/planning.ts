@@ -76,8 +76,12 @@ export class Planning implements planner.PlannerResponseHandler {
 
         context.subscriptions.push(instrumentOperationAsVsCodeCommand(PDDL_GENERATE_PLAN_REPORT, async (plans: Plan[] | undefined, selectedPlan: number) => {
             if (plans) {
-                const width = workspace.getConfiguration(CONF_PDDL).get<number>(PLAN_REPORT_EXPORT_WIDTH, 200);
-                await new PlanReportGenerator(context, { displayWidth: width, selfContained: true }).export(plans, selectedPlan);
+                const width = workspace.getConfiguration(CONF_PDDL).get<number>(PLAN_REPORT_EXPORT_WIDTH, 1000);
+                try {
+                    await new PlanReportGenerator(context, { displayWidth: width, selfContained: true }).export(plans, selectedPlan);
+                } catch(ex) {
+                    showError(ex);
+                }
             } else {
                 window.showErrorMessage("There is no plan to export.");
             }
