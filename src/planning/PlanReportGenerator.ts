@@ -61,8 +61,7 @@ export class PlanReportGenerator {
             <meta http-equiv="Content-Security-Policy"
                 content="default-src 'none'; img-src vscode-resource: https: data:; script-src vscode-resource: https://www.gstatic.com/charts/ 'unsafe-inline'; style-src vscode-resource: https://www.gstatic.com/charts/ 'unsafe-inline';"
             />    
-            ${await this.includeStyle(this.asAbsolutePath(ganttStylesPath, 'plans.css'))}
-            ${await this.includeStyle(this.asAbsolutePath(ganttStylesPath, 'plan-resource-task.css'))}
+            ${await this.includeStyle(this.asAbsolutePath(ganttStylesPath, 'pddl-gantt.css'))}
             ${await this.includeStyle(this.asAbsolutePath(staticPath, 'menu.css'))}
             ${await this.includeScript(this.asAbsolutePath(path.join(relativePath, 'out'), 'plans.js'))}
             <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>

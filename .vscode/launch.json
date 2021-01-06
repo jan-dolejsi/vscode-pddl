@@ -6,7 +6,8 @@
 			"type": "chrome",
 			"request": "launch",
 			"name": "Search debugger (html)",
-			"file": "${workspaceFolder}/views/searchview/out/search.html",
+			"file": "${workspaceFolder}/views/searchview/static/search.html",
+			"cwd": "${workspaceFolder}/views/searchview/out",
 			"preLaunchTask": "npm: compile - views/searchview",
 			"outFiles": [
 				"${workspaceFolder}/views/searchview/out/**/*.js"

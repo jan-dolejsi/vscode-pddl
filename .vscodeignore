@@ -11,7 +11,7 @@ tsconfig.json
 *.cmd
 .vscode-test/**
 .vscodeignore
-package-lock.json
+**/package-lock.json
 **/.eslintrc.js
 tsconfig.json
 *.vsix
@@ -27,3 +27,9 @@ views/searchview/out-test
 views/searchview/src
 views/searchview/test 
 views/searchview/tsconfig.json
+
+views/planview/node_modules
+views/planview/out-test 
+views/planview/src
+views/planview/test 
+views/planview/tsconfig.json

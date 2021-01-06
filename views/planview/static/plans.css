@@ -1,3 +1,10 @@
+
+div.plans {
+    width: 100%;
+}
+
+/* MENU */
+
 .menu {
     display: inline-block;
     font-size: 200%;
@@ -16,6 +23,8 @@ div.iconBar .codicon {
     font-size: 25px;
     cursor: pointer;
 }
+
+/* WARNINGS AND HINTS */
 
 a#downloadVal {
     margin-top: 10px;

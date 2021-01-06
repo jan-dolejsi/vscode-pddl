@@ -981,9 +981,9 @@
     ]
   },
   "scripts": {
-    "prepare": "cd views/searchview && npm install && cd ../planview && npm install && cd ../..",
+    "prepare": "cd views/common && npm install && cd ../searchview && npm install && cd ../planview && npm install && cd ../..",
     "postinstall": "node downloadVisJs.js && copyfiles --flat ./node_modules/vscode-codicons/dist/codicon.css ./node_modules/vscode-codicons/dist/codicon.ttf  ./views/common/",
-    "compile": "tsc -p ./ && copyfiles --flat ./src/planning/model/package.json ./out/planning/model/ && cd views/searchview && npm run compile && cd ../../views/planview && npm run compile && cd ../..",
+    "compile": "tsc -p ./ && copyfiles --flat ./src/planning/model/package.json ./out/planning/model/ && cd views/common && npm run compile && cd ../searchview && npm run compile && cd ../planview && npm run compile && cd ../..",
     "watch": "tsc -w -p ./",
     "lint": "eslint src --ext ts",
     "vscode:prepublish": "npm run compile",
@@ -1002,7 +1002,7 @@
     "express": "^4.17.1",
     "jsonc-parser": "^2.2.1",
     "open": "^7.0.2",
-    "pddl-gantt": "../pddl-gantt",
+    "pddl-gantt": "file:../pddl-gantt",
     "pddl-workspace": "^6.0.1",
     "request": "^2.88.2",
     "semver": "^7.1.3",

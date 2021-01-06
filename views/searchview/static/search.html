@@ -7,12 +7,12 @@
     <script src="https://www.gstatic.com/charts/loader.js" type="text/javascript"></script>
     <script src="../../common/baseWebview.js" type="text/javascript"></script>
     <script src="../../common/vis-network.min.js" type="text/javascript"></script>
-    <script defer src="search.js" type="text/javascript"></script>
+    <script defer src="../out/search.js" type="text/javascript"></script>
     <link href="../../common/vis-network.min.css" rel="stylesheet" type="text/css"></link>
-    <link href="search.css" rel="stylesheet" type="text/css"></link>
     <link href="../../common/codicon.css" rel="stylesheet" type="text/css"></link>
-    <link href="../node_modules/pddl-gantt/styles/plans.css" rel="stylesheet" type="text/css"></link>
-    <link href="../node_modules/pddl-gantt/styles/plan-resource-task.css" rel="stylesheet" type="text/css"></link>
+    <link href="../../common/pddl-gantt.css" rel="stylesheet" type="text/css"></link>
+    <link href="search.css" rel="stylesheet" type="text/css"></link>
+        
     <!-- CSP -->
 </head>
 <body">
@@ -40,7 +40,7 @@
         </div>
     </div>
     <div class="right">
-        <div id="statePlan" style="overflow-x: scroll"></div>
+        <div id="statePlan" style="overflow-x: scroll; width: 100%"></div>
         <div class="help">Legend: <br/>
             <table>
                 <tr><td><div class="planstep-bar" style="width: 15px; height: 15px; white-space: nowrap"></div></td><td> plan-head action, </td></tr>

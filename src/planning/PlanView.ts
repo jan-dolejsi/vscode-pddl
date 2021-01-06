@@ -11,7 +11,7 @@ import {
 import { instrumentOperationAsVsCodeCommand } from "vscode-extension-telemetry-wrapper";
 
 import { isPlan, getDomainAndProblemForPlan } from '../workspace/workspaceUtils';
-import { PlanInfo, PLAN } from 'pddl-workspace';
+import { PlanInfo, PLAN, VariableExpression } from 'pddl-workspace';
 import { Plan } from 'pddl-workspace';
 
 import * as path from 'path';
@@ -19,7 +19,7 @@ import { CodePddlWorkspace } from '../workspace/CodePddlWorkspace';
 import { CONF_PDDL, PLAN_REPORT_WIDTH, PDDL_CONFIGURE_COMMAND, VAL_STEP_PATH, VALUE_SEQ_PATH, VAL_VERBOSE, PLAN_REPORT_LINE_PLOT_GROUP_BY_LIFTED } from '../configuration/configuration';
 import { Menu } from '../Menu';
 import { makeSerializable } from 'pddl-workspace/dist/utils/serializationUtils';
-import { createPddlExtensionContext, ensureAbsoluteGlobalStoragePath, getWebViewHtml } from '../utils';
+import { createPddlExtensionContext, ensureAbsoluteGlobalStoragePath, getWebViewHtml, showError } from '../utils';
 import { LinePlotData } from './model';
 import { PlanFunctionEvaluator } from 'ai-planning-val';
 import { PlanReportGenerator } from './PlanReportGenerator';
@@ -120,12 +120,14 @@ export class PlanView extends Disposable {
         if (this.timeout) { clearTimeout(this.timeout); }
     }
 
-    rebuild(): void {
+    rebuild(webviewPanel?: WebviewPanel): void {
         this.webviewPanels.forEach(async (panel) => {
-            if (panel.getNeedsRebuild() && panel.getPanel().visible) {
+            const updateThisPanel = webviewPanel === undefined || webviewPanel === panel.getPanel();
+
+            if (updateThisPanel && panel.getNeedsRebuild() && panel.getPanel().visible) {
                 this.updateContent(panel);
             }
-        });
+    });
     }
 
     async updateContent(previewPanel: PlanPreviewPanel): Promise<void> {
@@ -183,7 +185,7 @@ export class PlanView extends Disposable {
         // when the user closes the tab, remove the panel
         previewPanel.getPanel().onDidDispose(() => this.webviewPanels.delete(uri), undefined, this.context.subscriptions);
         // when the pane becomes visible again, refresh it
-        previewPanel.getPanel().onDidChangeViewState(() => this.rebuild());
+        previewPanel.getPanel().onDidChangeViewState(e => this.rebuild(e.webviewPanel));
 
         previewPanel.getPanel().webview.onDidReceiveMessage(e => this.handleMessage(previewPanel, e), undefined, this.context.subscriptions);
 
@@ -195,7 +197,7 @@ export class PlanView extends Disposable {
         return getWebViewHtml(createPddlExtensionContext(this.context), {
             relativePath: STATIC_CONTENT_FOLDER, htmlFileName: 'plans.html',
             externalImages: [Uri.parse('data:')],
-            allowUnsafeInlineScripts: true,
+            allowUnsafeInlineScripts: true, // todo: false?
             externalScripts: [googleCharts],
             externalStyles: [googleCharts],
             fonts: [
@@ -229,7 +231,7 @@ export class PlanView extends Disposable {
                 break;
             case 'linePlotDataRequest': {
                 const planIndex: number = message.planIndex;
-                this.getLinePlotData(previewPanel, planIndex);
+                this.getLinePlotData(previewPanel, planIndex).catch(showError);
                 break;
             }
             case 'selectPlan':
@@ -259,66 +261,80 @@ export class PlanView extends Disposable {
         const valueSeqPath = ensureAbsoluteGlobalStoragePath(workspace.getConfiguration(CONF_PDDL).get<string>(VALUE_SEQ_PATH), this.context);
         const valVerbose = workspace.getConfiguration(CONF_PDDL).get<boolean>(VAL_VERBOSE, false);
 
-        if (plan.domain && plan.problem) {
-            const groupByLifted = workspace.getConfiguration(CONF_PDDL).get<boolean>(PLAN_REPORT_LINE_PLOT_GROUP_BY_LIFTED, true);
-            const evaluator = new PlanFunctionEvaluator(plan, { valStepPath, valueSeqPath, shouldGroupByLifted: groupByLifted, verbose: valVerbose });
+        try {
 
-            if (evaluator.isAvailable()) {
+            if (plan.domain && plan.problem) {
+                const groupByLifted = workspace.getConfiguration(CONF_PDDL).get<boolean>(PLAN_REPORT_LINE_PLOT_GROUP_BY_LIFTED, true);
+                const evaluator = new PlanFunctionEvaluator(plan, { valStepPath, valueSeqPath, shouldGroupByLifted: groupByLifted, verbose: valVerbose });
 
-                try {
+                if (evaluator.isAvailable()) {
 
-                    const functionValues = await evaluator.evaluate();
+                    try {
 
-                    functionValues.forEach((values, liftedVariable) => {
-                        let chartTitleWithUnit = values.legend.length > 1 ? liftedVariable.name : liftedVariable.getFullName();
-                        if (liftedVariable.getUnit()) { chartTitleWithUnit += ` [${liftedVariable.getUnit()}]`; }
+                        const functionValues = await evaluator.evaluate();
 
-                        this.sendLinePlotData(previewPanel, {
-                            planIndex: planIndex,
-                            name: chartTitleWithUnit,
-                            unit: liftedVariable.getUnit(),
-                            legend: values.legend,
-                            data: values.values
+                        functionValues.forEach((values, liftedVariable) => {
+                            let chartTitleWithUnit = values.legend.length > 1 ? liftedVariable.name : liftedVariable.getFullName();
+                            if (liftedVariable.getUnit()) { chartTitleWithUnit += ` [${liftedVariable.getUnit()}]`; }
+
+                            this.sendLinePlotData(previewPanel, {
+                                planIndex: planIndex,
+                                name: chartTitleWithUnit,
+                                unit: liftedVariable.getUnit(),
+                                legend: values.legend,
+                                data: values.values
+                            });
                         });
-                    });
 
-                    // add one plot for declared metric
-                    // todo: use valstep's ability to handle metric directly
-                    for (let metricIndex = 0; metricIndex < plan.problem.getMetrics().length; metricIndex++) {
-                        const metric = plan.problem.getMetrics()[metricIndex];
+                        // add one plot for declared metric
+                        // todo: use valstep's ability to handle metric directly using the $metrics variable name
+                        for (let metricIndex = 0; metricIndex < plan.problem.getMetrics().length; metricIndex++) {
+                            const metric = plan.problem.getMetrics()[metricIndex];
+                            const metricExpression = metric.getExpression();
+                            if (metricExpression instanceof VariableExpression) {
+                                if (metricExpression.name === "total-time") {
+                                    continue;
+                                }
+                            }
+                            const metricValues = await evaluator.evaluateExpression(metric.getExpression());
+                            const chartTitle = metric.getDocumentation()[metric.getDocumentation().length - 1] ?? "Metric";
 
-                        const metricValues = await evaluator.evaluateExpression(metric.getExpression());
-                        const chartTitle = metric.getDocumentation()[metric.getDocumentation().length - 1] ?? "Metric";
+                            this.sendLinePlotData(previewPanel, {
+                                planIndex: planIndex,
+                                name: chartTitle,
+                                unit: "",
+                                legend: [''],
+                                data: metricValues.values
+                            });
+                        }
 
-                        this.sendLinePlotData(previewPanel, {
-                            planIndex: planIndex,
-                            name: chartTitle,
-                            unit: "",
-                            legend: [''],
-                            data: metricValues.values
-                        });
-                    }
-
-                } catch (err) {
-                    console.error(err);
-                    const valStepPath = evaluator.getValStepPath();
-                    if (valStepPath) {
-                        PlanReportGenerator.handleValStepError(err, valStepPath);
+                    } catch (err) {
+                        console.error(err);
+                        const valStepPath = evaluator.getValStepPath();
+                        if (valStepPath) {
+                            PlanReportGenerator.handleValStepError(err, valStepPath);
+                        }
                     }
                 }
-            }
-            else {
+                else {
+                    previewPanel.getPanel().webview.postMessage({
+                        "command": "setVisibility",
+                        "elementId": "downloadVal",
+                        "visible": true
+                    });
+                }
+            } else {
                 previewPanel.getPanel().webview.postMessage({
                     "command": "setVisibility",
-                    "elementId": "downloadVal",
+                    "elementId": "domainProblemAssociation",
                     "visible": true
                 });
             }
-        } else {
+        } finally {
+            // in case there is no data to display, we must send a message that clears the loading progress indicator.
             previewPanel.getPanel().webview.postMessage({
-                "command": "setVisibility",
-                "elementId": "domainProblemAssociation",
-                "visible": true
+                "command": "hideLinePlotLoadingProgress",
+                "planIndex": planIndex
             });
         }
     }

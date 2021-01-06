@@ -41,7 +41,10 @@ window.addEventListener('message', event => {
             break;
         case 'showLinePlot':
             showLinePlot(message.data);
-            break;        
+            break;
+        case 'hideLinePlotLoadingProgress':
+            hideLinePlotLoadingProgress(message.planIndex);
+            break;
         case 'error':
             showError(message.message);
             break;        
@@ -156,4 +159,8 @@ function requestLinePlotData(planView: PlanView): void {
 
 function showLinePlot(data: LinePlotData): void {
     plansViz.getView(data.planIndex).showPlanLinePlots(data.name, data.unit, data.legend, data.data);
+}
+
+function hideLinePlotLoadingProgress(planIndex: number): void {
+    plansViz.getView(planIndex).hideLinePlotLoadingProgress();
 }

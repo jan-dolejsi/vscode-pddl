@@ -156,15 +156,15 @@ export class SearchDebuggerView {
     }
 
     readonly VIEWS = "views";
-    readonly CONTENT_FOLDER = path.join(this.VIEWS, "searchview", "out");
+    readonly STATIC_CONTENT_FOLDER = path.join(this.VIEWS, "searchview", "static");
     readonly COMMON_FOLDER = path.join(this.VIEWS, "common");
 
     async getHtml(webview: Webview): Promise<string> {
         const googleCharts = Uri.parse("https://www.gstatic.com/charts/");
         return getWebViewHtml(createPddlExtensionContext(this.context), {
-            relativePath: this.CONTENT_FOLDER, htmlFileName: 'search.html',
+            relativePath: this.STATIC_CONTENT_FOLDER, htmlFileName: 'search.html',
             externalImages: [Uri.parse('data:')],
-            allowUnsafeInlineScripts: true,
+            allowUnsafeInlineScripts: true, // todo: false?
             externalScripts: [googleCharts],
             externalStyles: [googleCharts],
             fonts: [
