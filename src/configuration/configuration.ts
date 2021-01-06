@@ -488,7 +488,7 @@ export class PddlConfiguration {
 
         if (itemSelected === undefined) { return; }
 
-        await workspace.getConfiguration().update(configName, itemSelected.label);
+        await workspace.getConfiguration().update(configName, itemSelected.label); // todo: same scope; use code from setSelectedPlanner
     }
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -536,7 +536,7 @@ export class PddlConfiguration {
 
         if (enteredValueAsString === undefined) { return; }
 
-        await workspace.getConfiguration().update(configName, parser(enteredValueAsString));
+        await workspace.getConfiguration().update(configName, parser(enteredValueAsString)); // todo: same scope; use code from setSelectedPlanner
     }
 }
 
