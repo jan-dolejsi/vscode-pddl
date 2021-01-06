@@ -10,10 +10,9 @@ import {
 import * as path from 'path';
 
 import { getWebViewHtml, createPddlExtensionContext } from '../utils';
-import { State } from './State';
-import { StateToPlan } from './StateToPlan';
 import { StateResolver } from './StateResolver';
-import { ProblemInfo, DomainInfo, utils } from 'pddl-workspace';
+import { ProblemInfo, DomainInfo, utils, search } from 'pddl-workspace';
+import { DEFAULT_EPSILON } from '../configuration/configuration';
 
 export class SearchDebuggerView {
     private webViewPanel: WebviewPanel | undefined;
@@ -189,12 +188,12 @@ export class SearchDebuggerView {
         });
     }
 
-    addState(newState: State): void {
+    addState(newState: search.SearchState): void {
         new Promise(() => this.postMessage({ command: 'stateAdded', state: newState }))
             .catch(reason => console.log(reason));
     }
 
-    update(state: State): void {
+    update(state: search.SearchState): void {
         new Promise(() => this.postMessage({ command: 'stateUpdated', state: state }))
             .catch(reason => console.log(reason));
     }
@@ -205,7 +204,7 @@ export class SearchDebuggerView {
             .catch(reason => console.log(reason));
     }
 
-    displayBetterState(state: State): void {
+    displayBetterState(state: search.SearchState): void {
         try {
             this.showStatePlan(state.id);
         } catch (ex) {
@@ -213,7 +212,7 @@ export class SearchDebuggerView {
         }
     }
 
-    displayPlan(planStates: State[]): void {
+    displayPlan(planStates: search.SearchState[]): void {
         new Promise(() => this.postMessage({ command: 'showPlan', state: planStates }))
             .catch(reason => console.log(reason));
     }
@@ -235,8 +234,8 @@ export class SearchDebuggerView {
         const state = this.search.getState(stateId);
         if (!state || !this.webViewPanel) { return; }
         
-        const statePlanSerializable = new StateToPlan(this.getSerializableDomain(),
-            this.getSerializableProblem()).convert(state);
+        const statePlanSerializable = new search.SearchStateToPlan(this.getSerializableDomain(),
+            this.getSerializableProblem(), DEFAULT_EPSILON).convert(state);
         this.postMessage({
             command: 'showStatePlan', state: {
                 plan: statePlanSerializable

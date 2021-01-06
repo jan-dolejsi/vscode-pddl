@@ -8,9 +8,7 @@
 
 import request = require('request');
 import { sleep } from '../utils';
-import { SearchHappening, MockSearchHappening, MockHelpfulAction } from './SearchHappening';
-import { HappeningType } from 'pddl-workspace';
-import { HelpfulAction } from 'pddl-workspace';
+import { HappeningType, HelpfulAction, search } from 'pddl-workspace';
 import { DEFAULT_EPSILON } from '../configuration/configuration';
 
 export class MockSearch {
@@ -211,7 +209,7 @@ class MockStateSearchContextEvent extends MockEvent {
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-function toWireSearchHappening(happening: SearchHappening): any {
+function toWireSearchHappening(happening: search.SearchHappening): any {
     return {
         earliestTime: happening.earliestTime,
         actionName: happening.actionName,
@@ -231,7 +229,7 @@ function toWireHelpfulAction(action: HelpfulAction): any {
 class MockStateSearchContext {
     constructor(public readonly stateContext: MockStateContext, public readonly totalMakespan: number,
         public readonly h: number, public readonly helpfulActions: HelpfulAction[],
-        public readonly relaxedPlan: SearchHappening[]) {
+        public readonly relaxedPlan: search.SearchHappening[]) {
 
     }
 }
@@ -244,7 +242,7 @@ class MockStateContext {
 
     constructor(public readonly state: MockState, public readonly g: number, public readonly earliestTime: number,
         public readonly appliedAction: MockSearchHappening | undefined,
-        public readonly planHead: SearchHappening[], public readonly parentId?: string) {
+        public readonly planHead: search.SearchHappening[], public readonly parentId?: string) {
     }
 
     get actionName(): string | undefined{
@@ -255,7 +253,7 @@ class MockStateContext {
         return this.planHead.length === 0;
     }
 
-    getLastHappening(): SearchHappening {
+    getLastHappening(): search.SearchHappening {
         if (this.isInitialState()) {
             throw new Error("Check if this is an initial state first..");
         }
@@ -313,7 +311,7 @@ const EPSILON = DEFAULT_EPSILON;
 
 class RelaxedPlanBuilder {
 
-    happenings: SearchHappening[] = [];
+    happenings: search.SearchHappening[] = [];
     time: number;
 
     constructor(private readonly earliestStateTime: number) {
@@ -332,7 +330,32 @@ class RelaxedPlanBuilder {
         return this;
     }
 
-    build(): SearchHappening[] {
+    build(): search.SearchHappening[] {
         return this.happenings;
+    }
+}
+
+
+class MockSearchHappening implements search.SearchHappening{
+    constructor(public readonly earliestTime: number, public readonly actionName: string,
+        public readonly shotCounter: number, public readonly iterations: number,
+        public readonly kind: HappeningType, public readonly isRelaxed: boolean) { }
+
+    toString(): string {
+        const relaxed = this.isRelaxed ? '*' : '';
+        const iterations = this.iterations > 1 ? ` ${this.iterations}x` : '';
+        return `${this.earliestTime}: ${this.actionName}[${this.shotCounter}] ${this.kind}${relaxed}${iterations}`;
+    }
+}
+
+class MockHelpfulAction implements HelpfulAction {
+    constructor(public readonly actionName: string, public readonly kind: HappeningType) { }
+
+    static start(actionName: string): MockHelpfulAction {
+        return new MockHelpfulAction(actionName, HappeningType.START);
+    }
+
+    static end(actionName: string): MockHelpfulAction {
+        return new MockHelpfulAction(actionName, HappeningType.END);
     }
 }

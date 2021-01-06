@@ -253,10 +253,6 @@ export function toUri(uri: URI): Uri {
     return Uri.parse(uri.toString());
 }
 
-export function equalsCaseInsensitive(text1: string, text2: string): boolean {
-    return text1.toLowerCase() === text2.toLowerCase();
-}
-
 export function toRange(pddlRange: PddlRange): Range {
     return new Range(toPosition(pddlRange.start), toPosition(pddlRange.end));
 }
