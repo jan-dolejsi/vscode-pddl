@@ -15,6 +15,20 @@
 			]
 		},
 		{
+			"label": "compile - extension code only",
+			"type": "shell",
+			"command": "npx",
+			"args": ["tsc"],
+			"group": "build",
+			"presentation": {
+				"panel": "dedicated",
+				"reveal": "never"
+			},
+			"problemMatcher": [
+				"$tsc"
+			]
+		},
+		{
 			"label": "watch",
 			"type": "npm",
 			"script": "watch",

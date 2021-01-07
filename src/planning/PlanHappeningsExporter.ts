@@ -94,10 +94,7 @@ export class PlanHappeningsExporter {
     parseStepAndEnqueueEnd(line: string, lineIndex: number, planParser: parser.PddlPlanParser, planBuilder: parser.PddlPlanBuilder): Happening | null {
         const planStep = planParser.parse(line, lineIndex, planBuilder);
 
-        if (!planStep) {
-            this.happeningsText += `; Warning: line did not parse: ${line}`;
-            return null;
-        } else {
+        if (planStep) {
             // this line is a plan step
 
             const actionName = planStep.getFullActionName();
@@ -110,12 +107,15 @@ export class PlanHappeningsExporter {
                 count);
 
             if (planStep.isDurative) {
-                const endTime = planStep.getStartTime() + planStep.getDuration();
+                const endTime = planStep.getStartTime() + (planStep.getDuration() ?? 0) ;
                 const endHappening = new Happening(endTime, actionName, HappeningType.End, count);
                 this.enqueue(endHappening);
             }
 
             return thisHappening;
+        } else {
+            this.happeningsText += `; Warning: line did not parse: ${line}`;
+            return null;
         }
     }
 

@@ -47,12 +47,12 @@ export class HappeningsValidator {
             }));
     }
 
-    async validateTextDocument(planDocument: TextDocument): Promise<HappeningsValidationOutcome> {
+    async validateTextDocument(happeningsDocument: TextDocument): Promise<HappeningsValidationOutcome> {
 
-        const planFileInfo = await this.codePddlWorkspace.upsertAndParseFile(planDocument) as HappeningsInfo;
+        const planFileInfo = await this.codePddlWorkspace.upsertAndParseFile(happeningsDocument) as HappeningsInfo;
 
         if (!planFileInfo) {
-            return HappeningsValidationOutcome.failed(null, new Error("Cannot open or parse plan file."));
+            throw new Error("Cannot open or parse plan file: " + happeningsDocument.uri.fsPath);
         }
 
         // eslint-disable-next-line @typescript-eslint/no-empty-function
@@ -171,7 +171,7 @@ export class HappeningsValidator {
         return happeningsInfo.getHappenings()
             .slice(1)
             .filter((happening: Happening, index: number) => !this.isTimeMonotonociallyIncreasing(happeningsInfo.getHappenings()[index], happening))
-            .map(happening => new Diagnostic(createRangeFromLine(happening.lineIndex), `Action '${happening.getAction()}' time ${happening.getTime()} is before the preceding action time`, DiagnosticSeverity.Error));
+            .map(happening => new Diagnostic(createRangeFromLine(happening.lineIndex ?? 0), `Action '${happening.getAction()}' time ${happening.getTime()} is before the preceding action time`, DiagnosticSeverity.Error));
     }
 
     private isDomainAction(domain: DomainInfo, problem: ProblemInfo, happening: Happening): boolean {

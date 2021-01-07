@@ -14,7 +14,7 @@ import { PddlExtensionContext, PddlLanguage, SimpleDocumentPositionResolver, Dom
 import { ManifestGenerator } from '../../ptest/ManifestGenerator';
 import { assertDefined, throwForUndefined, toURI } from '../../utils';
 import { PDDL_PLAN_AND_DISPLAY } from '../../planning/planning';
-import { planning, ptestExplorer, codePddlWorkspace, plannersConfiguration } from '../../extension';
+import { planning, ptestExplorer, codePddlWorkspaceForTests, plannersConfiguration } from '../../extension';
 import { fail } from 'assert';
 import { PlannerConfigurationScope } from '../../configuration/PlannersConfiguration';
 
@@ -61,14 +61,14 @@ suite('PTest', () => {
         const problemText = '(define (problem p) (:domain d))';
         await workspace.fs.writeFile(problemUri, Buffer.from(problemText, "utf8"));
 
-        const codePddlWorkspace1 = assertDefined(codePddlWorkspace, "code PDDL workspace");
+        const codePddlWorkspace1 = assertDefined(codePddlWorkspaceForTests, "code PDDL workspace");
         await codePddlWorkspace1.pddlWorkspace.upsertFile(toURI(domainUri), PddlLanguage.PDDL, 1, domainText, new SimpleDocumentPositionResolver(domainText)) as DomainInfo;
         await codePddlWorkspace1.pddlWorkspace.upsertFile(toURI(problemUri), PddlLanguage.PDDL, 1, problemText, new SimpleDocumentPositionResolver(problemText)) as ProblemInfo;
 
         if (!ptestExplorer) { fail('extension.ptestExplorer should be defined'); return; }
 
         const nodesChanged = new Array<PTestNode>();
-        ptestExplorer.getTreeDataProvider().onDidChangeTreeData(e => nodesChanged.push(e));
+        ptestExplorer.getTreeDataProvider().onDidChangeTreeData(e => e && nodesChanged.push(e));
 
         // WHEN
         const manifests = await ptestExplorer.generateAllManifests();
@@ -125,7 +125,7 @@ suite('PTest', () => {
 
         expect(planningResult.plans).to.have.lengthOf(1);
         const plan = planningResult.plans[0];
-        const codePddlWorkspace1 = assertDefined(codePddlWorkspace, "code PDDL workspace");
+        const codePddlWorkspace1 = assertDefined(codePddlWorkspaceForTests, "code PDDL workspace");
 
         // WHEN
         const manifestGenerator = new ManifestGenerator(assertDefined(codePddlWorkspace1.pddlWorkspace, 'test pddl workspace'),

@@ -9,7 +9,7 @@ import { before, beforeEach, afterEach } from 'mocha';
 import { expect } from 'chai';
 import { MockPlannerProvider, activateExtension, clearWorkspaceFolder, clearConfiguration } from './testUtils';
 import { assertDefined } from '../../utils';
-import { plannersConfiguration, codePddlWorkspace } from '../../extension';
+import { plannersConfiguration, codePddlWorkspaceForTests } from '../../extension';
 import { PlannerConfigurationScope, CONF_PLANNERS, CONF_SELECTED_PLANNER } from '../../configuration/PlannersConfiguration';
 import { PDDL_PLANNER, EXECUTABLE_OR_SERVICE, EXECUTABLE_OPTIONS, CONF_PDDL } from '../../configuration/configuration';
 
@@ -184,7 +184,7 @@ suite('Planner configuration test', () => {
 		const plannerProvider = new MockPlannerProvider({ canConfigure: true });
 
 		// GIVEN the mock planner is configured
-		codePddlWorkspace?.pddlWorkspace.getPlannerRegistrar().registerPlannerProvider(plannerProvider.kind, plannerProvider);
+		codePddlWorkspaceForTests?.pddlWorkspace.getPlannerRegistrar().registerPlannerProvider(plannerProvider.kind, plannerProvider);
 		const mockConfiguration = await plannerProvider.configurePlanner();
 		const scopedMockConfiguration = await plannersConfiguration.addPlannerConfiguration(PlannerConfigurationScope.WorkspaceFolder, mockConfiguration, wf);
 

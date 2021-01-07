@@ -411,13 +411,15 @@ export class Planning implements planner.PlannerResponseHandler {
                 throw new Error(`Planning service not supported: ${plannerConfiguration.url}. Only /solve or /request service endpoints are supported.`);
             }
         }
-        else {
+        else if(plannerConfiguration.path && plannerConfiguration.syntax) {
             options = await this.getPlannerLineOptions(plannerConfiguration, options);
             if (options === undefined) { return null; }
 
             return this.codePddlWorkspace.pddlWorkspace.getPlannerRegistrar()
                 .getPlannerProvider({ kind: plannerConfiguration.kind })?.createPlanner?.(plannerConfiguration, options, workingDirectory) ?? 
                 new PlannerExecutable(plannerConfiguration.path, options, plannerConfiguration.syntax, workingDirectory);
+        } else {
+            throw new Error(`Planner configuration must define at least one of the properties 'uri' or 'path' (including 'syntax'): ${plannerConfiguration.title}`);
         }
     }
 
