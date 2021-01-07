@@ -1002,7 +1002,7 @@
     "express": "^4.17.1",
     "jsonc-parser": "^2.2.1",
     "open": "^7.0.2",
-    "pddl-gantt": "file:../pddl-gantt",
+    "pddl-gantt": "^1.2.0",
     "pddl-workspace": "^6.0.1",
     "request": "^2.88.2",
     "semver": "^7.1.3",
