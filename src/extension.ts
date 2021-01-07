@@ -43,6 +43,7 @@ import { DomainTypesView } from './modelView/DomainTypesView';
 import { ProblemConstraintsView } from './modelView/ProblemConstraintsView';
 import { ModelHierarchyProvider } from './symbols/ModelHierarchyProvider';
 import { PlannersConfiguration } from './configuration/PlannersConfiguration';
+import { registerPlanReport } from './planReport/planReport';
 
 const PDDL_CONFIGURE_PARSER = 'pddl.configureParser';
 const PDDL_LOGIN_PARSER_SERVICE = 'pddl.loginParserService';
@@ -102,6 +103,7 @@ function activateWithTelemetry(_operationId: string, context: ExtensionContext):
 	const codePddlWorkspace = CodePddlWorkspace.getInstance(pddlWorkspace, context, pddlConfiguration);
 	codePddlWorkspaceForTests = codePddlWorkspace;
 	planning = new Planning(codePddlWorkspace, pddlConfiguration, plannersConfiguration, context);
+	registerPlanReport(context);
 	const planValidator = new PlanValidator(planning.output, codePddlWorkspace, pddlConfiguration, context);
 	const happeningsValidator = new HappeningsValidator(planning.output, codePddlWorkspace, pddlConfiguration, context);
 

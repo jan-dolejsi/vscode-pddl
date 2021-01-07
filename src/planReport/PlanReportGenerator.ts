@@ -5,7 +5,7 @@
 'use strict';
 
 import {
-    ExtensionContext, workspace, window, env, Uri
+    ExtensionContext, workspace, Uri
 } from 'vscode';
 
 import * as path from 'path';
@@ -13,12 +13,13 @@ import * as fs from 'fs';
 import opn = require('open');
 
 import { DomainInfo, PlanStep, PlanStepCommitment, HappeningType, Plan, HelpfulAction, PddlWorkspace, VariableExpression } from 'pddl-workspace';
-import { PlanFunctionEvaluator, Util as ValUtil, ValStepError, ValStep } from 'ai-planning-val';
+import { PlanFunctionEvaluator, Util as ValUtil } from 'ai-planning-val';
 import { capitalize } from 'pddl-gantt';
 import { SwimLane } from './SwimLane';
 import { PlanReportSettings } from './PlanReportSettings';
 import { VAL_STEP_PATH, CONF_PDDL, VALUE_SEQ_PATH, PLAN_REPORT_LINE_PLOT_GROUP_BY_LIFTED, DEFAULT_EPSILON, VAL_VERBOSE } from '../configuration/configuration';
 import { ensureAbsoluteGlobalStoragePath, WebviewUriConverter } from '../utils';
+import { handleValStepError } from '../planView/valStepErrorHandler';
 
 const DIGITS = 4;
 
@@ -227,7 +228,7 @@ ${objectsHtml}
                     console.error(err);
                     const valStepPath = evaluator.getValStepPath();
                     if (valStepPath) {
-                        PlanReportGenerator.handleValStepError(err, valStepPath);
+                        handleValStepError(err, valStepPath);
                     }
                 }
             }
@@ -251,36 +252,6 @@ ${hint}
 
     private createLineChartDiv(chartDivId: string): string {
         return `        <div id="${chartDivId}" style="width: ${this.options.displayWidth + 100}px; height: ${Math.round(this.options.displayWidth / 2)}px"></div>\n`;
-    }
-
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    static async handleValStepError(err: any, valStepPath: string): Promise<void> {
-        if (err instanceof ValStepError) {
-            try {
-                const exportCase = "Export valstep case...";
-                const choice = await window.showErrorMessage("ValStep failed to evaluate the plan values.", exportCase, "Ignore");
-                if (choice === exportCase) {
-                    const targetPathUris = await window.showOpenDialog({
-                        canSelectFolders: true, canSelectFiles: false,
-                        defaultUri: Uri.file(path.dirname(err.domain.fileUri.fsPath)),
-                        openLabel: 'Select target folder'
-                    });
-                    if (!targetPathUris) { return; }
-                    const targetPath = targetPathUris[0];
-                    const outputPath = await ValStep.storeError(err, targetPath.fsPath, valStepPath);
-                    const success = await env.openExternal(Uri.file(outputPath));
-                    if (!success) {
-                        window.showErrorMessage(`Files for valstep bug report: ${outputPath}.`);
-                    }
-                }
-            }
-            catch (err1) {
-                console.log(err1);
-            }
-        }
-        else {
-            window.showWarningMessage(err?.message ?? err);
-        }
     }
 
     renderHelpfulActions(plan: Plan, planHeadLength: number): string {

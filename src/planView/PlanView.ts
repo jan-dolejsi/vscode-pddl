@@ -22,7 +22,7 @@ import { makeSerializable } from 'pddl-workspace/dist/utils/serializationUtils';
 import { createPddlExtensionContext, ensureAbsoluteGlobalStoragePath, getWebViewHtml, showError } from '../utils';
 import { LinePlotData } from './model';
 import { PlanFunctionEvaluator } from 'ai-planning-val';
-import { PlanReportGenerator } from './PlanReportGenerator';
+import { handleValStepError } from './valStepErrorHandler';
 
 const VIEWS = "views";
 const COMMON_FOLDER = path.join(VIEWS, "common");
@@ -312,7 +312,7 @@ export class PlanView extends Disposable {
                         console.error(err);
                         const valStepPath = evaluator.getValStepPath();
                         if (valStepPath) {
-                            PlanReportGenerator.handleValStepError(err, valStepPath);
+                            handleValStepError(err, valStepPath);
                         }
                     }
                 }

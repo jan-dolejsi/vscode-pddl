@@ -67,8 +67,8 @@ suite('PTest', () => {
 
         if (!ptestExplorer) { fail('extension.ptestExplorer should be defined'); return; }
 
-        const nodesChanged = new Array<PTestNode>();
-        ptestExplorer.getTreeDataProvider().onDidChangeTreeData(e => e && nodesChanged.push(e));
+        const nodesChanged = new Array<PTestNode | undefined>();
+        ptestExplorer.getTreeDataProvider().onDidChangeTreeData(e => nodesChanged.push(e));
 
         // WHEN
         const manifests = await ptestExplorer.generateAllManifests();

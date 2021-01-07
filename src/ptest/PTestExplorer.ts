@@ -11,24 +11,22 @@ import { instrumentOperationAsVsCodeCommand } from "vscode-extension-telemetry-w
 import { dirname } from 'path';
 import { readFileSync } from 'fs';
 import { findNodeAtLocation, parseTree } from 'jsonc-parser';
-import { utils, parser } from 'pddl-workspace';
+import { URI } from 'vscode-uri';
+import { PddlExtensionContext, Plan, PlanStep, parser, utils } from 'pddl-workspace';
+
 import { Test, TestOutcome } from './Test';
 import { PTestTreeDataProvider, PTestNode, PTestNodeKind } from './PTestTreeDataProvider';
 import { GeneratedDocumentContentProvider } from './GeneratedDocumentContentProvider';
 import { Planning } from '../planning/planning';
 import { PlanningOutcome, PlanningResult } from '../planning/PlanningResult';
-import { Plan } from 'pddl-workspace';
 import { TestsManifest } from './TestsManifest';
-import { PlanStep } from 'pddl-workspace';
-import { PddlExtensionContext } from 'pddl-workspace';
 import { PTestReport } from './PTestReport';
 import { showError, jsonNodeToRange } from '../utils';
 import { CodePddlWorkspace } from '../workspace/CodePddlWorkspace';
 import { PTEST_VIEW_PROBLEM, PTEST_VIEW, PTEST_REVEAL } from './PTestCommands';
 import { DEFAULT_EPSILON } from '../configuration/configuration';
 import { ManifestGenerator } from './ManifestGenerator';
-import { PDDL_SAVE_AS_EXPECTED_PLAN } from '../planning/PlanView';
-import { URI } from 'vscode-uri';
+import { PDDL_SAVE_AS_EXPECTED_PLAN } from '../planView/PlanView';
 
 /**
  * PDDL Test Explorer pane.

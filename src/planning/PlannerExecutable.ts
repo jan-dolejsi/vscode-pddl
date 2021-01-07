@@ -19,15 +19,18 @@ import {
 
 import { Util } from 'ai-planning-val';
 
+/** Planner implemented as an executable process. */
 export class PlannerExecutable extends planner.Planner {
 
     // this property stores the reference to the planner child process, while planning is in progress
     private child: process.ChildProcess | undefined;
 
     static readonly DEFAULT_SYNTAX = "$(planner) $(options) $(domain) $(problem)";
+    private readonly plannerSyntax: string;
 
-    constructor(plannerPath: string, private plannerOptions: string, private plannerSyntax: string, private workingDirectory: string) {
+    constructor(plannerPath: string, private plannerOptions: string, plannerSyntax: string | undefined, private workingDirectory: string) {
         super(plannerPath);
+        this.plannerSyntax = plannerSyntax ?? PlannerExecutable.DEFAULT_SYNTAX;
     }
 
     async plan(domainFileInfo: DomainInfo, problemFileInfo: ProblemInfo, planParser: parser.PddlPlannerOutputParser, callbacks: planner.PlannerResponseHandler): Promise<Plan[]> {
@@ -35,7 +38,7 @@ export class PlannerExecutable extends planner.Planner {
         const domainFilePath = await Util.toPddlFile("domain", domainFileInfo.getText());
         const problemFilePath = await Util.toPddlFile("problem", problemFileInfo.getText());
 
-        let command = (this.plannerSyntax ?? PlannerExecutable.DEFAULT_SYNTAX)
+        let command = this.plannerSyntax
             .replace('$(planner)', utils.Util.q(this.plannerPath))
             .replace('$(options)', this.plannerOptions)
             .replace('$(domain)', utils.Util.q(domainFilePath))

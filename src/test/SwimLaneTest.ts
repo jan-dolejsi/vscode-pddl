@@ -4,7 +4,7 @@
  * ------------------------------------------------------------------------------------------ */
 'use strict';
 
-import { SwimLane } from '../planning/SwimLane';
+import { SwimLane } from '../planReport/SwimLane';
 import { expect } from 'chai';
 
 describe('SwimLaneTests', () => {
