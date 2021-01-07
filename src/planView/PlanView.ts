@@ -9,19 +9,18 @@ import {
     ViewColumn, ExtensionContext, TextDocument, WebviewPanel, Disposable, TextDocumentChangeEvent, Webview, commands
 } from 'vscode';
 import { instrumentOperationAsVsCodeCommand } from "vscode-extension-telemetry-wrapper";
+import * as path from 'path';
+
+import { PlanFunctionEvaluator } from 'ai-planning-val';
+import { PlanInfo, PLAN, VariableExpression, Plan, utils } from 'pddl-workspace';
+const makeSerializable = utils.serializationUtils.makeSerializable; 
 
 import { isPlan, getDomainAndProblemForPlan } from '../workspace/workspaceUtils';
-import { PlanInfo, PLAN, VariableExpression } from 'pddl-workspace';
-import { Plan } from 'pddl-workspace';
-
-import * as path from 'path';
 import { CodePddlWorkspace } from '../workspace/CodePddlWorkspace';
 import { CONF_PDDL, PLAN_REPORT_WIDTH, PDDL_CONFIGURE_COMMAND, VAL_STEP_PATH, VALUE_SEQ_PATH, VAL_VERBOSE, PLAN_REPORT_LINE_PLOT_GROUP_BY_LIFTED } from '../configuration/configuration';
 import { Menu } from '../Menu';
-import { makeSerializable } from 'pddl-workspace/dist/utils/serializationUtils';
 import { createPddlExtensionContext, ensureAbsoluteGlobalStoragePath, getWebViewHtml, showError } from '../utils';
 import { LinePlotData } from './model';
-import { PlanFunctionEvaluator } from 'ai-planning-val';
 import { handleValStepError } from './valStepErrorHandler';
 
 const VIEWS = "views";
