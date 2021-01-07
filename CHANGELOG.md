@@ -36,9 +36,12 @@ Example of syntax for LPG planner:
 },
 ```
 
+No longer attempting to display the `total-time` metric on the line-plot.
+
 ### Engineering work
 
-Dependencies updated to Node 12.14.1.
+* Dependencies updated to Node 12.14.1.
+* Updated to latest VAL binaries (build 55).
 
 ## 2.19.4
 

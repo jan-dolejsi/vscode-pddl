@@ -8,9 +8,8 @@ tsc.log
 coverage/
 .nyc_output/
 CHANGELOG.html
-/views/searchview/out/*.js
-/views/searchview/out-test/
+**/out-test/
 src/test/tmpUserProfile/
 src/test/tmpFolder/
-views/planview/out-test/*
 debug.log
+**/package-lock.json
