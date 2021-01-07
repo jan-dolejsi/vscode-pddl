@@ -12,6 +12,7 @@ import { assertDefined } from '../../utils';
 import { plannersConfiguration, codePddlWorkspaceForTests } from '../../extension';
 import { PlannerConfigurationScope, CONF_PLANNERS, CONF_SELECTED_PLANNER } from '../../configuration/PlannersConfiguration';
 import { PDDL_PLANNER, EXECUTABLE_OR_SERVICE, EXECUTABLE_OPTIONS, CONF_PDDL } from '../../configuration/configuration';
+import { fail } from 'assert';
 
 suite('Planner configuration test', () => {
 
@@ -64,9 +65,10 @@ suite('Planner configuration test', () => {
 		expect(createdPlanner.scope).to.equal(PlannerConfigurationScope.User);
 		expect(createdPlanner.configuration.path).to.not.be.undefined;
 		expect(createdPlanner.configuration.path).to.startWith('node');
+		expect(selectedPlanner).to.not.be.undefined;
 		expect(selectedPlanner).to.deep.equal(createdPlanner);
-		expect(selectedPlanner.index).to.equal(0);
-		expect(selectedPlanner.workspaceFolder).to.be.undefined;
+		expect(selectedPlanner?.index).to.equal(0);
+		expect(selectedPlanner?.workspaceFolder).to.be.undefined;
 	});
 
 	test('Crates a workspace folder planner', async () => {
@@ -97,9 +99,10 @@ suite('Planner configuration test', () => {
 		expect(createdPlanner.scope).to.equal(PlannerConfigurationScope.WorkspaceFolder);
 		expect(createdPlanner.configuration.path).to.not.be.undefined;
 		expect(createdPlanner.configuration.path).to.startWith('node');
+		expect(selectedPlanner).to.not.be.undefined;
 		expect(selectedPlanner).to.deep.equal(createdPlanner);
-		expect(selectedPlanner.index).to.equal(0);
-		expect(selectedPlanner.workspaceFolder).to.equal(wf.uri.toString());
+		expect(selectedPlanner?.index).to.equal(0);
+		expect(selectedPlanner?.workspaceFolder).to.equal(wf.uri.toString());
 	});
 
 	test('When identical planner is created again, title should be made unique', async () => {
@@ -191,6 +194,8 @@ suite('Planner configuration test', () => {
 		// WHEN
 		const preSelectedPlanner = plannersConfiguration.getSelectedPlanner(wf);
 		expect(preSelectedPlanner).to.deep.equal(scopedMockConfiguration);
+		expect(preSelectedPlanner).to.not.be.undefined;
+		if (!preSelectedPlanner) { fail(); }
 		// modify the mock provider
 		plannerProvider.setExpectedPath('java -jar asdf.jar');
 		const updatedConfiguration = await plannersConfiguration.configureAndSavePlanner(preSelectedPlanner);
@@ -207,9 +212,10 @@ suite('Planner configuration test', () => {
 		expect(actualUpdatedPlanner).to.not.be.undefined;
 		expect(actualUpdatedPlanner.path).to.not.be.undefined;
 		expect(actualUpdatedPlanner.path).to.startWith('java');
-		expect(postSelectedPlanner.configuration).to.deep.equal(actualUpdatedPlanner);
+		expect(postSelectedPlanner).to.not.be.undefined;
 		expect(postSelectedPlanner).to.deep.equal(updatedConfiguration);
-		expect(postSelectedPlanner.index).to.equal(0);
+		expect(postSelectedPlanner?.configuration).to.deep.equal(actualUpdatedPlanner);
+		expect(postSelectedPlanner?.index).to.equal(0);
 	});
 
 	test('Deletes user-level planner', async () => {

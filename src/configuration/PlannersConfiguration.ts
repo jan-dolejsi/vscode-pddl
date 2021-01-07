@@ -57,7 +57,7 @@ export class PlannersConfiguration {
         }
 
         context.subscriptions.push(instrumentOperationAsVsCodeCommand(PDDL_CONFIGURE_PLANNER,
-            (plannerConfiguration: ScopedPlannerConfiguration) => {
+            (plannerConfiguration: ScopedPlannerConfiguration | undefined) => {
                 if (!plannerConfiguration) {
                     plannerConfiguration = this.getSelectedPlanner();
                 }
@@ -77,7 +77,7 @@ export class PlannersConfiguration {
                 }
             }));
 
-        context.subscriptions.push(instrumentOperationAsVsCodeCommand(PDDL_DELETE_PLANNER, async (plannerConfiguration: ScopedPlannerConfiguration) => {
+        context.subscriptions.push(instrumentOperationAsVsCodeCommand(PDDL_DELETE_PLANNER, async (plannerConfiguration: ScopedPlannerConfiguration | undefined) => {
             if (!plannerConfiguration) {
                 plannerConfiguration = this.getSelectedPlanner();
             }
@@ -391,7 +391,7 @@ export class PlannersConfiguration {
         PlannerConfigurationScope.Default,
     ];
 
-    getSelectedPlanner(workingFolder?: WorkspaceFolder): ScopedPlannerConfiguration {
+    getSelectedPlanner(workingFolder?: WorkspaceFolder): ScopedPlannerConfiguration | undefined {
         const selectedPlannerTitle = workspace.getConfiguration(CONF_PDDL, workingFolder).get<string>(CONF_SELECTED_PLANNER);
 
         if (selectedPlannerTitle !== undefined) {
@@ -408,7 +408,7 @@ export class PlannersConfiguration {
             return undefined;
         }
         else {
-            throw new Error(`Configuration is missing default value: ${CONF_PDDL}.${CONF_SELECTED_PLANNER}`);
+            throw new Error(`Configuration is missing default value for: ${CONF_PDDL}.${CONF_SELECTED_PLANNER}`);
         }
     }
 
