@@ -12,7 +12,7 @@ import * as path from 'path';
 import * as fs from 'fs';
 import opn = require('open');
 
-import { DomainInfo, ProblemInfo } from 'pddl-workspace';
+import { DomainInfo, ProblemInfo, VariableExpression } from 'pddl-workspace';
 import { SwimLane } from './SwimLane';
 import { PlanStep, PlanStepCommitment } from 'pddl-workspace';
 import { HappeningType } from 'pddl-workspace';
@@ -272,6 +272,12 @@ ${objectsHtml}
                     // add one plot for declared metric
                     for (let metricIndex = 0; metricIndex < plan.problem.getMetrics().length; metricIndex++) {
                         const metric = plan.problem.getMetrics()[metricIndex];
+                        const metricExpression = metric.getExpression();
+                        if (metricExpression instanceof VariableExpression) {
+                            if (metricExpression.name === "total-time") {
+                                continue;
+                            }
+                        }
 
                         const metricValues = await evaluator.evaluateExpression(metric.getExpression());
                         const chartDivId = `chart_${planIndex}_metric${metricIndex}`;
