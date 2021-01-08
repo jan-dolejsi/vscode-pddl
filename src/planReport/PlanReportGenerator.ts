@@ -115,7 +115,7 @@ States evaluated: ${plan.statesEvaluated}`;
 
         let planVisualizerPath: string | undefined;
         if (plan.domain) {
-            const settings = new PlanReportSettings(plan.domain.fileUri.toString());
+            const settings = await PlanReportSettings.load(plan.domain.fileUri);
             planVisualizerPath = settings.getPlanVisualizerScript();
             this.settings.set(plan, settings);
         }

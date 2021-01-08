@@ -4,3 +4,4 @@
  */
 
 export * from './LinePlotData';
+export * from './PlansData';

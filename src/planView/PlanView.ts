@@ -12,7 +12,7 @@ import { instrumentOperationAsVsCodeCommand } from "vscode-extension-telemetry-w
 import * as path from 'path';
 
 import { PlanFunctionEvaluator } from 'ai-planning-val';
-import { PlanInfo, PLAN, VariableExpression, Plan, utils } from 'pddl-workspace';
+import { PlanInfo, PLAN, VariableExpression, Plan, utils, PddlWorkspace } from 'pddl-workspace';
 const makeSerializable = utils.serializationUtils.makeSerializable; 
 
 import { isPlan, getDomainAndProblemForPlan } from '../workspace/workspaceUtils';
@@ -20,13 +20,14 @@ import { CodePddlWorkspace } from '../workspace/CodePddlWorkspace';
 import { CONF_PDDL, PLAN_REPORT_WIDTH, PDDL_CONFIGURE_COMMAND, VAL_STEP_PATH, VALUE_SEQ_PATH, VAL_VERBOSE, PLAN_REPORT_LINE_PLOT_GROUP_BY_LIFTED } from '../configuration/configuration';
 import { Menu } from '../Menu';
 import { createPddlExtensionContext, ensureAbsoluteGlobalStoragePath, getWebViewHtml, showError } from '../utils';
-import { LinePlotData } from './model';
+import { LinePlotData, PlansData } from './model';
 import { handleValStepError } from './valStepErrorHandler';
+import { PlanReportSettings } from '../planReport/PlanReportSettings';
+import { exists } from '../util/workspaceFs';
 
 const VIEWS = "views";
 const COMMON_FOLDER = path.join(VIEWS, "common");
 const STATIC_CONTENT_FOLDER = path.join(VIEWS, 'planview', 'static');
-// const JS_FOLDER = path.join(VIEWS, 'planview', 'out');
 
 export const PDDL_GENERATE_PLAN_REPORT = 'pddl.planReport';
 export const PDDL_EXPORT_PLAN = 'pddl.exportPlan';
@@ -126,7 +127,7 @@ export class PlanView extends Disposable {
             if (updateThisPanel && panel.getNeedsRebuild() && panel.getPanel().visible) {
                 this.updateContent(panel);
             }
-    });
+        });
     }
 
     async updateContent(previewPanel: PlanPreviewPanel): Promise<void> {
@@ -142,8 +143,44 @@ export class PlanView extends Disposable {
             // todo: only send the additional plan, not all of them
             const plans = previewPanel.getPlans()
                 .map(p => makeSerializable(p));
-            previewPanel.getPanel().webview.postMessage({ command: 'showPlans', plans: plans, width: width });
+
+            const domain = plans.length > 0 ? plans[0].domain : undefined;
+            const domainVizConfiguration = domain &&
+                await this.getDomainVisualizationConfiguration(plans[0]);
+            
+            const planVisualizerRelativePath = domainVizConfiguration?.getPlanVisualizerScript();
+
+            const planVisualizationScriptPath = domain && planVisualizerRelativePath &&
+                path.join(PddlWorkspace.getFolderPath(domain.fileUri), planVisualizerRelativePath);
+
+            const planVisualizationScript = planVisualizationScriptPath
+                && await this.getDocumentText(Uri.file(planVisualizationScriptPath));
+
+            const plansData: PlansData = {
+                plans: plans,
+                domainVisualizationConfiguration: domainVizConfiguration,
+                planVisualizationScript: planVisualizationScript,
+                width: width
+            };
+
+            previewPanel.getPanel().webview.postMessage({
+                command: 'showPlans',
+                data: plansData
+            });
         }
+    }
+
+    async getDocumentText(fileUri: Uri, defaultText?: string): Promise<string> {
+        if (await exists(fileUri)) {
+            return (await workspace.fs.readFile(fileUri)).toString();
+        } else {
+            return defaultText ?? 'File not found ' + fileUri.fsPath;
+        }
+    }
+
+    async getDomainVisualizationConfiguration(plan: Plan): Promise<PlanReportSettings | undefined> {
+        return plan.domain
+            && PlanReportSettings.loadFromText(await this.getDocumentText(PlanReportSettings.toVisualizationSettings(plan.domain.fileUri)));
     }
 
     async revealOrCreatePreview(doc: TextDocument, displayColumn: ViewColumn): Promise<void> {
@@ -196,7 +233,7 @@ export class PlanView extends Disposable {
         return getWebViewHtml(createPddlExtensionContext(this.context), {
             relativePath: STATIC_CONTENT_FOLDER, htmlFileName: 'plans.html',
             externalImages: [Uri.parse('data:')],
-            allowUnsafeInlineScripts: true, // todo: false?
+            allowUnsafeEval: true,
             externalScripts: [googleCharts],
             externalStyles: [googleCharts],
             fonts: [
@@ -345,7 +382,6 @@ export class PlanView extends Disposable {
         });
     }
 
-    // tslint:disable-next-line:no-unused-expression
     async showMenu(previewPanel: PlanPreviewPanel): Promise<void> {
         await new Menu([
             {

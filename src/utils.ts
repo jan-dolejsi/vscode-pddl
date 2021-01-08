@@ -70,6 +70,8 @@ export interface WebViewHtmlOptions {
     disableUnsafeInlineStyle?: boolean;
     /** Allow inline scripts. */
     allowUnsafeInlineScripts?: boolean;
+    /** Allow eval() */
+    allowUnsafeEval?: boolean;
 }
 
 function isAbsoluteWebview(attribValue: string): boolean {
@@ -103,6 +105,7 @@ function createContentSecurityPolicy(extensionContext: PddlExtensionContext, web
     const fonts = getAbsoluteWebviewUrisSSV(extensionContext, webview, options, options.fonts);
     const unsafeInline = "'unsafe-inline'";
     const scriptUnsafeInline = options.allowUnsafeInlineScripts ? unsafeInline : '';
+    const scriptUnsafeEval = options.allowUnsafeEval ? "'unsafe-eval'" : '';
     const styleUnsafeInline = options.disableUnsafeInlineStyle ? '' : unsafeInline;
     const nonceCsp = nonce ? `'nonce-${nonce}'` : '';
 
@@ -110,7 +113,7 @@ function createContentSecurityPolicy(extensionContext: PddlExtensionContext, web
 \t\tcontent="default-src 'none'; `+
         `img-src ${webview.cspSource} ${externalImages} https:; ` +
         `font-src ${fonts};` +
-        `script-src ${webview.cspSource} ${externalScripts} ${scriptUnsafeInline} ${nonceCsp}; ` +
+        `script-src ${webview.cspSource} ${externalScripts} ${scriptUnsafeInline} ${scriptUnsafeEval} ${nonceCsp}; ` +
         `style-src ${webview.cspSource} ${externalStyles} ${styleUnsafeInline};"
 \t/>`;
 }

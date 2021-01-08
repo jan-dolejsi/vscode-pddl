@@ -5,7 +5,7 @@
 
 import { createPlansView, JsonPlanVizSettings, PlansView, PlanView } from "pddl-gantt";
 import { Plan, PlanStep } from "pddl-workspace";
-import { LinePlotData } from 'model';
+import { LinePlotData, PlansData } from 'model';
 
 /** VS Code stub, so we can work with it in a type safe way. */
 interface VsCodeApi {
@@ -34,7 +34,8 @@ window.addEventListener('message', event => {
     // console.debug("Message: " + JSON.stringify(message));
     switch (message.command) {
         case 'showPlans':
-            showPlans(message.plans, message.width);
+            const plansData = message.data as PlansData;
+            showPlans(plansData);
             break;
         case 'setVisibility':
             showElement(message.elementId, message.visible);
@@ -63,7 +64,8 @@ function initialize(): void {
             displayWidth: 400,
             epsilon: 1e-3,
             onActionSelected: actionName => revealAction(actionName),
-            onLinePlotsVisible: planView => requestLinePlotData(planView)
+            onLinePlotsVisible: planView => requestLinePlotData(planView),
+            onPlanSelected: planIndex => selectedPlan = planIndex
         }
     );
 
@@ -75,7 +77,9 @@ function initialize(): void {
         ]);
 
         showElement('downloadVal', true);
-        showPlans([dummyPlan], 300);
+        showPlans({
+            plans: [dummyPlan],
+            width: 300});
         showError("Some issue...");
     }
 
@@ -115,42 +119,17 @@ function showError(message: string): void {
     }
 }
 
-function showPlans(plans: Plan[], width: number): void {
-    plansShown = plans;
+function showPlans(plansData: PlansData): void {
+    const plans = plansShown = plansData.plans;
     showElement("pleaseWait", false);
     if (plans.length > 0) {
         const clonedPlans = plans.map(p => Plan.clone(p));
-        plansViz.setDisplayWidth(width);
-        plansViz.showPlans(clonedPlans, undefined, new JsonPlanVizSettings({}));
+        plansViz.setDisplayWidth(plansData.width);
+        const settings = new JsonPlanVizSettings(plansData.domainVisualizationConfiguration, plansData.planVisualizationScript);
+        plansViz.showPlans(clonedPlans, undefined, settings);
     } else {
         plansViz.clear();
     }
-}
-
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-function showPlan(planIndex: number): void {
-    // remember the index of the plan that is being shown for later manipulation
-    selectedPlan = planIndex;
-    vscode?.postMessage({ "command": "selectPlan", "planIndex": planIndex});
-    document.querySelectorAll("div.stateView").forEach(div => showPlanDiv(planIndex, div));
-    document.querySelectorAll("div.gantt").forEach(div => showPlanDiv(planIndex, div));
-    document.querySelectorAll("div.resourceUtilization").forEach(div => showPlanDiv(planIndex, div));
-    document.querySelectorAll("div.lineChart").forEach(div => showPlanDiv(planIndex, div));
-    document.querySelectorAll("div.planSelector").forEach(div => {
-        let newClass = "planSelector";
-        const planId = parseInt(div.getAttribute("plan") ?? "-1");
-        if (planIndex === planId) { newClass += " planSelector-selected"; }
-        div.setAttribute("class", newClass);
-    });
-    eval("drawPlan" + planIndex + "Charts();");
-}
-
-function showPlanDiv(planIndex: number, div: Element): void {
-    const planId = parseInt(div.getAttribute("plan") ?? "-1");
-    const newDisplayStyle = planId === planIndex ? "block" : "none";
-    let style = div.getAttribute("style") ?? "display: none";
-    style = style.replace(/display: (none|block);/i, "display: " + newDisplayStyle + ';');
-    div.setAttribute("style", style);
 }
 
 function requestLinePlotData(planView: PlanView): void {
