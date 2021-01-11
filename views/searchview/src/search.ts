@@ -3,11 +3,13 @@
  * Licensed under the MIT License. See License.txt in the project root for license information.
  * ------------------------------------------------------------------------------------------ */
 
+import { Plan, PlanStep } from "pddl-workspace";
+import { createPlanView, JsonDomainVizConfiguration, PlanView } from "pddl-gantt";
+
 import { SearchTree } from "./tree";
 import { StateChart } from "./charts";
 import { getElementByIdOrThrow, State } from "./utils";
-import { createPlanView, JsonPlanVizSettings, PlanView } from "pddl-gantt";
-import { Plan, PlanStep } from "pddl-workspace";
+import { PlanData } from 'model';
 
 /** VS Code stub, so we can work with it in a type safe way. */
 interface VsCodeApi {
@@ -41,7 +43,7 @@ window.addEventListener('message', event => {
             showDebuggerOn(message.state.running === 'on', message.state.port);
             break;
         case 'showStatePlan':
-            showStatePlan(message.state.plan);
+            showStatePlan(message.state);
             break;
         case 'clear':
             clearStates();
@@ -248,7 +250,10 @@ function onStateSelected(stateId: number | null): void {
             new PlanStep(.5, "hello world " + stateId, true, 1, 1)
         ]);
 
-        showStatePlan(statePlan);
+        showStatePlan({
+            plan: statePlan,
+            width: 300
+        });
     }
 }
 
@@ -293,8 +298,8 @@ function initialize(): void {
             displayWidth: 400,
             epsilon: 1e-3,
             disableLinePlots: true,
-            onActionSelected: actionName => vscode?.postMessage({ "command": "revealAction", "action": actionName }),
-            onHelpfulActionSelected: helpfulAction => navigateToChildOfSelectedState(helpfulAction)
+            onActionSelected: (actionName: string) => vscode?.postMessage({ "command": "revealAction", "action": actionName }),
+            onHelpfulActionSelected: (helpfulAction: string) => navigateToChildOfSelectedState(helpfulAction)
         });
 
     getElementByIdOrThrow("mockMenu").style.visibility = vscode ? 'collapse' : 'visible';
@@ -330,7 +335,7 @@ getElementByIdOrThrow(CLEAR_DEBUGGER_BUTTON_ID).onclick = (): void => restartSea
 
 function restartSearchDebugger(): void {
     postCommand('reset');
-    showStatePlan(new Plan([]));
+    showStatePlan({ plan: new Plan([]), width: 300 });
     clearStates();
 }
 
@@ -364,9 +369,14 @@ function enableButton(enable: boolean, buttonId: string): void {
     }
 }
 
-function showStatePlan(plan: Plan): void {
-    const clonedPlan = Plan.clone(plan);
-    planViz.showPlan(clonedPlan, new JsonPlanVizSettings({}));
+function showStatePlan(data: PlanData): void {
+    const clonedPlan = Plan.clone(data.plan);
+    
+    const configuration = JsonDomainVizConfiguration.withCustomVisualizationScript(
+        data.domainVisualizationConfiguration,
+        data.customDomainVisualizationScript);
+
+    planViz.showPlan(clonedPlan, configuration);
 }
 
 const shapeMap = new Map<string, string>();

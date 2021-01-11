@@ -13,6 +13,7 @@ import { getWebViewHtml, createPddlExtensionContext } from '../utils';
 import { StateResolver } from './StateResolver';
 import { ProblemInfo, DomainInfo, utils, search } from 'pddl-workspace';
 import { DEFAULT_EPSILON } from '../configuration/configuration';
+import { getDomainVisualizationConfigurationDataForPlan } from '../planView/DomainVisualization';
 
 export class SearchDebuggerView {
     private webViewPanel: WebviewPanel | undefined;
@@ -165,6 +166,7 @@ export class SearchDebuggerView {
             relativePath: this.STATIC_CONTENT_FOLDER, htmlFileName: 'search.html',
             externalImages: [Uri.parse('data:')],
             allowUnsafeInlineScripts: true, // todo: false?
+            allowUnsafeEval: true,
             externalScripts: [googleCharts],
             externalStyles: [googleCharts],
             fonts: [
@@ -234,12 +236,13 @@ export class SearchDebuggerView {
         const state = this.search.getState(stateId);
         if (!state || !this.webViewPanel) { return; }
         
-        const statePlanSerializable = new search.SearchStateToPlan(this.getSerializableDomain(),
+        const statePlan = new search.SearchStateToPlan(this.getSerializableDomain(),
             this.getSerializableProblem(), DEFAULT_EPSILON).convert(state);
+        
+        const plansData = await getDomainVisualizationConfigurationDataForPlan(statePlan);
+
         this.postMessage({
-            command: 'showStatePlan', state: {
-                plan: statePlanSerializable
-            }
+            command: 'showStatePlan', state: plansData
         });
     }
 

@@ -12,7 +12,7 @@ import { instrumentOperationAsVsCodeCommand } from "vscode-extension-telemetry-w
 import * as path from 'path';
 
 import { PlanFunctionEvaluator } from 'ai-planning-val';
-import { PlanInfo, PLAN, VariableExpression, Plan, utils, PddlWorkspace } from 'pddl-workspace';
+import { PlanInfo, PLAN, VariableExpression, Plan, utils } from 'pddl-workspace';
 const makeSerializable = utils.serializationUtils.makeSerializable; 
 
 import { isPlan, getDomainAndProblemForPlan } from '../workspace/workspaceUtils';
@@ -20,10 +20,9 @@ import { CodePddlWorkspace } from '../workspace/CodePddlWorkspace';
 import { CONF_PDDL, PLAN_REPORT_WIDTH, PDDL_CONFIGURE_COMMAND, VAL_STEP_PATH, VALUE_SEQ_PATH, VAL_VERBOSE, PLAN_REPORT_LINE_PLOT_GROUP_BY_LIFTED } from '../configuration/configuration';
 import { Menu } from '../Menu';
 import { createPddlExtensionContext, ensureAbsoluteGlobalStoragePath, getWebViewHtml, showError } from '../utils';
-import { LinePlotData, PlansData } from './model';
+import { LinePlotData } from './model';
 import { handleValStepError } from './valStepErrorHandler';
-import { PlanReportSettings } from '../planReport/PlanReportSettings';
-import { exists } from '../util/workspaceFs';
+import { getDomainVisualizationConfigurationDataForPlans } from './DomainVisualization';
 
 const VIEWS = "views";
 const COMMON_FOLDER = path.join(VIEWS, "common");
@@ -138,49 +137,17 @@ export class PlanView extends Disposable {
             previewPanel.getPanel().webview.postMessage({ command: 'error', message: error.message});
         }
         else {
-            const width = workspace.getConfiguration(CONF_PDDL).get<number>(PLAN_REPORT_WIDTH, 300);
-
             // todo: only send the additional plan, not all of them
             const plans = previewPanel.getPlans()
                 .map(p => makeSerializable(p));
 
-            const domain = plans.length > 0 ? plans[0].domain : undefined;
-            const domainVizConfiguration = domain &&
-                await this.getDomainVisualizationConfiguration(plans[0]);
-            
-            const planVisualizerRelativePath = domainVizConfiguration?.getPlanVisualizerScript();
-
-            const planVisualizationScriptPath = domain && planVisualizerRelativePath &&
-                path.join(PddlWorkspace.getFolderPath(domain.fileUri), planVisualizerRelativePath);
-
-            const planVisualizationScript = planVisualizationScriptPath
-                && await this.getDocumentText(Uri.file(planVisualizationScriptPath));
-
-            const plansData: PlansData = {
-                plans: plans,
-                domainVisualizationConfiguration: domainVizConfiguration,
-                planVisualizationScript: planVisualizationScript,
-                width: width
-            };
+            const plansData = await getDomainVisualizationConfigurationDataForPlans(plans);
 
             previewPanel.getPanel().webview.postMessage({
                 command: 'showPlans',
                 data: plansData
             });
         }
-    }
-
-    async getDocumentText(fileUri: Uri, defaultText?: string): Promise<string> {
-        if (await exists(fileUri)) {
-            return (await workspace.fs.readFile(fileUri)).toString();
-        } else {
-            return defaultText ?? 'File not found ' + fileUri.fsPath;
-        }
-    }
-
-    async getDomainVisualizationConfiguration(plan: Plan): Promise<PlanReportSettings | undefined> {
-        return plan.domain
-            && PlanReportSettings.loadFromText(await this.getDocumentText(PlanReportSettings.toVisualizationSettings(plan.domain.fileUri)));
     }
 
     async revealOrCreatePreview(doc: TextDocument, displayColumn: ViewColumn): Promise<void> {

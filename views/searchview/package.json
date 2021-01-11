@@ -27,7 +27,8 @@
     "@types/chai": "file:../../node_modules/@types/chai",
     "chai": "file:../../node_modules/chai",
     "@types/chai-string": "file:../../node_modules/@types/chai-string",
-    "chai-string": "file:../../node_modules/chai-string"
+    "chai-string": "file:../../node_modules/chai-string",
+    "model": "file:../../out/planView/model/"
   },
   "dependencies": {
     "pddl-gantt": "file:../../node_modules/pddl-gantt"

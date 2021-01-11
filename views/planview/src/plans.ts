@@ -3,7 +3,7 @@
  * Licensed under the MIT License. See License.txt in the project root for license information.
  * ------------------------------------------------------------------------------------------ */
 
-import { createPlansView, JsonPlanVizSettings, PlansView, PlanView } from "pddl-gantt";
+import { createPlansView, CustomVisualization, JsonDomainVizConfiguration, PlansView, PlanView } from "pddl-gantt";
 import { Plan, PlanStep } from "pddl-workspace";
 import { LinePlotData, PlansData } from 'model';
 
@@ -65,7 +65,7 @@ function initialize(): void {
             epsilon: 1e-3,
             onActionSelected: actionName => revealAction(actionName),
             onLinePlotsVisible: planView => requestLinePlotData(planView),
-            onPlanSelected: planIndex => selectedPlan = planIndex
+            onPlanSelected: planIndex => setSelectedPlan(planIndex)
         }
     );
 
@@ -76,10 +76,26 @@ function initialize(): void {
             new PlanStep(1, "hello universe", true, .8, 2),
         ]);
 
+        const mockVisualization = function visualizeHtml(plan: Plan, width: number): string {
+            const height = 100;
+            return `<svg height="${height}" width="${width}">
+                <rect width="${width}" height="${height}" style="fill:rgb(0,0,255);stroke-width:3;stroke:rgb(0,0,0)" />
+                <circle cx="${height / 2}" cy="${height / 2}" r="${plan.metric}" stroke="black" stroke-width="3" fill="red" />
+              </svg> `;
+        };
+
+        const customDomainVisualization: CustomVisualization = {
+            visualizeHtml: mockVisualization
+        };
+
         showElement('downloadVal', true);
         showPlans({
             plans: [dummyPlan],
-            width: 300});
+            width: 300,
+            domainVisualizationConfiguration: {
+                customVisualization: "see further"
+            }
+        }, customDomainVisualization);
         showError("Some issue...");
     }
 
@@ -89,11 +105,17 @@ function initialize(): void {
     }
 
     onLoad();
+
+    function setSelectedPlan(planIndex: number): void {
+        if (selectedPlan !== planIndex) {
+            selectedPlan = planIndex;
+            vscode?.postMessage({ "command": "selectPlan", "planIndex": planIndex });
+        }
+    }
 }
 
 let plansViz: PlansView;
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 let selectedPlan = 0;
 
 let plansShown: Plan[] = [];
@@ -119,14 +141,27 @@ function showError(message: string): void {
     }
 }
 
-function showPlans(plansData: PlansData): void {
+function showPlans(plansData: PlansData, customDomainVisualization?: CustomVisualization): void {
     const plans = plansShown = plansData.plans;
     showElement("pleaseWait", false);
     if (plans.length > 0) {
         const clonedPlans = plans.map(p => Plan.clone(p));
+        if (!plansViz) {
+            console.error(`Plan visualization is not initialized.`);
+            return;
+        }
+
         plansViz.setDisplayWidth(plansData.width);
-        const settings = new JsonPlanVizSettings(plansData.domainVisualizationConfiguration, plansData.planVisualizationScript);
-        plansViz.showPlans(clonedPlans, undefined, settings);
+
+        const configuration = customDomainVisualization ?
+            JsonDomainVizConfiguration.withCustomVisualization(
+                plansData.domainVisualizationConfiguration,
+                customDomainVisualization) :
+            JsonDomainVizConfiguration.withCustomVisualizationScript(
+                plansData.domainVisualizationConfiguration,
+                plansData.customDomainVisualizationScript);
+        
+        plansViz.showPlans(clonedPlans, undefined, configuration);
     } else {
         plansViz.clear();
     }

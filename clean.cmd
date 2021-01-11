@@ -1,18 +1,18 @@
-rmdir /S node_modules
-rmdir /S out
+rmdir /S /Q node_modules
+rmdir /S /Q out
 del package-lock.json
 
-rmdir /s views\common\node_modules
-rmdir /s views\common\out
-rmdir /s views\common\out-test
+rmdir /S /Q views\common\node_modules
+rmdir /S /Q views\common\out
+rmdir /S /Q views\common\out-test
 del views\common\package-lock.json
 
-rmdir /s views\planview\node_modules
-rmdir /s views\planview\out
-rmdir /s views\planview\out-test
+rmdir /S /Q views\planview\node_modules
+rmdir /S /Q views\planview\out
+rmdir /S /Q views\planview\out-test
 del views\planview\package-lock.json
 
-rmdir /s views\searchview\node_modules
-rmdir /s views\searchview\out
-rmdir /s views\searchview\out-test
+rmdir /S /Q views\searchview\node_modules
+rmdir /S /Q views\searchview\out
+rmdir /S /Q views\searchview\out-test
 del views\searchview\package-lock.json

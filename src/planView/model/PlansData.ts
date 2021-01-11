@@ -3,19 +3,28 @@
  * Licensed under the MIT License. See License.txt in the project root for license information.
  * ------------------------------------------------------------------------------------------ */
 'use strict';
+import { DomainVizConfigurationSchema } from 'pddl-gantt';
 import { Plan } from 'pddl-workspace';
 
-export interface PlansData {
-    /** Plans to display */
-    plans: Plan[];
+interface VisualizationConfiguration {
 
     /** Width in pixels. */
     width: number;
     
     /** Domain visualization configuration. */
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    domainVisualizationConfiguration?: any;
+    domainVisualizationConfiguration?: DomainVizConfigurationSchema;
     
-    /** Plan visualization script. */
-    planVisualizationScript?: string;
+    /** Plan/state visualization script. */
+    customDomainVisualizationScript?: string;
+}
+
+
+export interface PlansData extends VisualizationConfiguration {
+    /** Plans to display */
+    plans: Plan[];
+}
+
+export interface PlanData extends VisualizationConfiguration {
+    /** Plan to display */
+    plan: Plan;
 }

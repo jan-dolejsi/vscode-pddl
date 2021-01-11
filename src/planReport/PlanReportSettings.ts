@@ -5,17 +5,17 @@
  * ------------------------------------------------------------------------------------------ */
 'use strict';
 
+import { DomainVizConfigurationSchema } from 'pddl-gantt';
 import { PlanStep } from 'pddl-workspace';
 import { Uri, workspace } from 'vscode';
 import { exists } from '../util/workspaceFs';
 
+// todo: replace by JsonDomainVisualizationConfiguration
 export class PlanReportSettings {
     excludeActions: string[] | undefined;
     ignoreActionParameters: ActionParameterPattern[] | undefined;
 
-
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    constructor(private readonly settings: any | undefined) {
+    constructor(public readonly settings: DomainVizConfigurationSchema | undefined) {
     }
 
     static toVisualizationSettings(domainFileUri: Uri): Uri {
@@ -47,7 +47,7 @@ export class PlanReportSettings {
         if (!this.settings) { return true; }
 
         if (this.excludeActions === undefined) {
-            this.excludeActions = this.settings["excludeActions"];
+            this.excludeActions = this.settings.excludeActions;
         }
 
         if (!this.excludeActions) { return true; }
@@ -72,7 +72,7 @@ export class PlanReportSettings {
     }
 
     getPlanVisualizerScript(): string | undefined {
-        return this.settings && this.settings["planVisualizer"];
+        return this.settings?.customVisualization;
     }
 }
 

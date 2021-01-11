@@ -19,6 +19,10 @@ It is now possible to jump to the Overview Page and configure the planner right 
 
 > screenshot needed
 
+### Custom domain-specific plan/state visualization
+
+Evolved the domain-specific plan/state visualization, which can be specified using the `customVisualization` (originally `planVisualizer`) property in the `<<domain>>.planviz.json` config file.
+
 ### Fixes
 
 For custom planner syntax is specified (in one of the user/workspace `settings.json` files) the syntax validation is now more permissive.
@@ -419,7 +423,7 @@ Fixed opening the plan report in the default browser.
 ![Nunjucks sample](https://raw.githubusercontent.com/wiki/jan-dolejsi/vscode-pddl/img/PDDL_nunjucks_sample.gif)
 * For templated problem files a code action (bulb) can open the live preview of the generated problem file
 ![Templated problem preview](https://raw.githubusercontent.com/wiki/jan-dolejsi/vscode-pddl/img/PDDL_templated_problem_preview.gif)
-* Early preview of domain-specific plan/state visualization via the new `planVisualizer` property in the `<<domain>>.planviz.json` config file.
+* Early preview of domain-specific plan/state visualization via the new `planVisualizer` property in the `<<domain>>.planviz.json` config file. This has since been renamed to `customVisualization`.
 * Generated problem file previews are live updating when the data in .json file is modified!
 
 ### Fixes
