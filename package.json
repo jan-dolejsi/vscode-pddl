@@ -251,7 +251,11 @@
       },
       {
         "command": "pddl.plan.preview",
-        "title": "PDDL: Preview plan"
+        "title": "PDDL: Preview plan",
+        "icon": {
+          "light": "images/light/plan-preview.svg",
+          "dark": "images/dark/plan-preview.svg"
+        }
       },
       {
         "command": "pddl.plan.normalize",
@@ -351,7 +355,6 @@
         {
           "command": "pddl.plan.preview",
           "when": "resourceLangId == plan",
-          "icon": "$(open-preview)",
           "group": "navigation"
         }
       ],
@@ -363,7 +366,6 @@
         {
           "command": "pddl.plan.preview",
           "when": "resourceLangId == plan",
-          "icon": "$(open-preview)",
           "group": "navigation"
         }
       ],
@@ -1002,7 +1004,7 @@
     "express": "^4.17.1",
     "jsonc-parser": "^2.2.1",
     "open": "^7.0.2",
-    "pddl-gantt": "^1.4.0",
+    "pddl-gantt": "^1.5.0",
     "pddl-workspace": "^6.0.2",
     "request": "^2.88.2",
     "semver": "^7.1.3",

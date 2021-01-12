@@ -2,11 +2,21 @@
 
 ## 2.19.5
 
+### New faster plan visualization component with custom domain-specific plan visualization
+
+![Plan visualization in VS Code](https://raw.githubusercontent.com/wiki/jan-dolejsi/vscode-pddl/img/PDDL_plan_custom_vizualization.gif)
+
+To study the files used in the above example, see [blocksworld.planviz.json](https://github.com/jan-dolejsi/vscode-pddl-samples/blob/master/Blocksworld/blocksworld.planviz.json) and [blocksWorldViz.js](https://github.com/jan-dolejsi/vscode-pddl-samples/blob/master/Blocksworld/blocksWorldViz.js).
+
+To see all the options for plan visualization as HTML/DOM/SVG, see the function signatures here: [CustomVisualization.ts](https://github.com/jan-dolejsi/pddl-gantt/blob/master/src/CustomVisualization.ts).
+
 ### More usable plan preview and planner invocation via editor title icons
 
 The planner invocation is now also available in the editor title context menu (by right-clicking on the editor tab of the domain/problem file).
 
-Plan preview command is available in the editor title bar when a _.plan_ file is focussed. This is consistent by other file _preview_ extensions.
+Plan preview command is available in the editor title bar when a _.plan_ file is focussed.
+
+![Plan preview button](https://raw.githubusercontent.com/wiki/jan-dolejsi/vscode-pddl/img/plan_preview_button.jpg)
 
 ### Planner configuration and addition available from planner switch drop down
 
@@ -17,7 +27,7 @@ but none of those choices are at hand.
 
 It is now possible to jump to the Overview Page and configure the planner right from the drop down that lets you select a planner.
 
-> screenshot needed
+![Adding and configuring planners through the status bar button](https://raw.githubusercontent.com/wiki/jan-dolejsi/vscode-pddl/img/adding_and_configuring_planners_through_status_bar.gif)
 
 ### Custom domain-specific plan/state visualization
 

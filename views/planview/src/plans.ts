@@ -85,7 +85,7 @@ function initialize(): void {
         };
 
         const customDomainVisualization: CustomVisualization = {
-            visualizeHtml: mockVisualization
+            visualizePlanHtml: mockVisualization
         };
 
         showElement('downloadVal', true);
