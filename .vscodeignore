@@ -23,6 +23,10 @@ coverage/
 .nyc_output/
 .github/
 downloadVisJs.js
+how_to_contribute.md
+
+views/common/node_modules
+
 views/searchview/node_modules
 views/searchview/out-test 
 views/searchview/src
