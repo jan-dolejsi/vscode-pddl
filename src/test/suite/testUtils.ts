@@ -3,7 +3,7 @@ import * as path from 'path';
 import * as os from 'os';
 import * as tmp from 'tmp-promise';
 import { PddlExtensionContext, planner } from 'pddl-workspace';
-import { Disposable, workspace, ExtensionContext, Memento, extensions, Event, FileType, Uri, ConfigurationTarget, EnvironmentVariableCollection, EnvironmentVariableMutator, ExtensionMode } from 'vscode';
+import { Disposable, workspace, ExtensionContext, Memento, extensions, Event, FileType, Uri, ConfigurationTarget, EnvironmentVariableCollection, EnvironmentVariableMutator, ExtensionMode, ExtensionRuntime } from 'vscode';
 import { assertDefined } from '../../utils';
 import { CONF_PDDL } from '../../configuration/configuration';
 import { CONF_PLANNERS, CONF_SELECTED_PLANNER } from '../../configuration/PlannersConfiguration';
@@ -96,6 +96,7 @@ export async function createTestExtensionContext(): Promise<ExtensionContext> {
     return {
         asAbsolutePath: function (path: string): string { throw new Error(`Unsupported. ` + path); },
         extensionPath: '.',
+        extensionRuntime: ExtensionRuntime.Node,
         storagePath: storage.path,
         storageUri: Uri.file(storage.path),
         subscriptions: new Array<Disposable>(),
