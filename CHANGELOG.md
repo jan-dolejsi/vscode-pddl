@@ -1,5 +1,12 @@
 # PDDL support - What's new?
 
+## 2.20.1
+
+### Fixes
+
+- Non-temporal plans do not display fully (especially the hello world sample) [#90](https://github.com/jan-dolejsi/vscode-pddl/issues/90)
+- Try HelloWorld overrides domain.pddl file [#87](https://github.com/jan-dolejsi/vscode-pddl/issues/87)
+
 ## 2.20.0 - New and customizable Plan Visualization
 
 ### New faster plan visualization component with custom domain-specific plan visualization
