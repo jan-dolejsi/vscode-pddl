@@ -14,17 +14,26 @@ import { PlanData, PlansData } from './model';
 import { CONF_PDDL, PLAN_REPORT_WIDTH } from '../configuration/configuration';
 
 
-export async function getDocumentText(fileUri: Uri, defaultText?: string): Promise<string> {
+export async function getDocumentText(fileUri: Uri, defaultText?: string): Promise<string | undefined> {
     if (await exists(fileUri)) {
         return (await workspace.fs.readFile(fileUri)).toString();
     } else {
-        return defaultText ?? 'File not found ' + fileUri.fsPath;
+        return defaultText;
     }
 }
 
 export async function getDomainVisualizationConfiguration(plan: Plan): Promise<PlanReportSettings | undefined> {
-    return plan.domain
-        && PlanReportSettings.loadFromText(await getDocumentText(PlanReportSettings.toVisualizationSettings(plan.domain.fileUri)));
+    if (!plan.domain) {
+        return undefined;
+    }
+
+    const visualizationConfigurationText = await getDocumentText(PlanReportSettings.toVisualizationSettings(plan.domain.fileUri));
+
+    if (visualizationConfigurationText !== undefined) {
+        return PlanReportSettings.loadFromText(visualizationConfigurationText);
+    }
+
+    return undefined;
 }
 
 export async function getDomainVisualizationConfigurationDataForPlan(plan: Plan): Promise<PlanData> {

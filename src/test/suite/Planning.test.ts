@@ -259,5 +259,5 @@ Error: terminate called after throwing an instance of 'std::bad_alloc'
         expect(plan.domain).to.equal(domain);
         expect(plan.problem).to.equal(problem);
         expect(plan.steps).to.have.lengthOf(9);
-    });
+    }).retries(3);
 });
