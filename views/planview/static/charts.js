@@ -1,3 +1,5 @@
+// this file is only needed as long as the PlanReportGenerator is used to generate the standalone plan report html file
+
 google.charts.load('current', { packages: ['corechart', 'line'] });
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars

@@ -10,7 +10,8 @@ import {
 
 import * as process from 'child_process';
 
-import { PlanInfo, ProblemInfo, DomainInfo, PlanStep, utils } from 'pddl-workspace';
+import { PlanInfo, ProblemInfo, DomainInfo, PlanStep } from 'pddl-workspace';
+import { Util } from 'ai-planning-val';
 import { dirname } from 'path';
 import { PddlConfiguration } from '../configuration/configuration';
 import { DomainAndProblem, getDomainAndProblemForPlan, isPlan, NoProblemAssociated, NoDomainAssociated } from '../workspace/workspaceUtils';
@@ -83,7 +84,7 @@ export class PlanValidator {
 
         const planFileInfo = await this.codePddlWorkspace.upsertAndParseFile(planDocument) as PlanInfo;
 
-        if (!planFileInfo) { return PlanValidationOutcome.failed(null, new Error("Cannot open or parse plan file.")); }
+        if (!planFileInfo) { throw new Error("Cannot open or parse plan file from: " + planDocument.uri.fsPath); }
 
         // eslint-disable-next-line @typescript-eslint/no-empty-function
         return this.validatePlanAndReportDiagnostics(planFileInfo, true, () => { }, () => { });
@@ -124,9 +125,9 @@ export class PlanValidator {
         }
 
         // copy editor content to temp files to avoid using out-of-date content on disk
-        const domainFilePath = await utils.Util.toPddlFile('domain', context.domain.getText());
-        const problemFilePath = await utils.Util.toPddlFile('problem', context.problem.getText());
-        const planFilePath = await utils.Util.toPddlFile('plan', planInfo.getText());
+        const domainFilePath = await Util.toPddlFile('domain', context.domain.getText());
+        const problemFilePath = await Util.toPddlFile('problem', context.problem.getText());
+        const planFilePath = await Util.toPddlFile('plan', planInfo.getText());
 
         const args = ['-t', epsilon.toString(), '-v', domainFilePath, problemFilePath, planFilePath];
         const workingDir = this.createWorkingFolder(planInfo.fileUri);
@@ -225,7 +226,7 @@ export class PlanValidator {
     validateActionNames(domain: DomainInfo, problem: ProblemInfo, plan: PlanInfo): Diagnostic[] {
         return plan.getSteps()
             .filter(step => !this.isDomainAction(domain, problem, step))
-            .map(step => new Diagnostic(createRangeFromLine(step.lineIndex), `Action '${step.getActionName()}' not known by the domain '${domain.name}'`, DiagnosticSeverity.Error));
+            .map(step => new Diagnostic(createRangeFromLine(step.lineIndex ?? 0), `Action '${step.getActionName()}' not known by the domain '${domain.name}'`, DiagnosticSeverity.Error));
     }
 
     /**
@@ -238,7 +239,7 @@ export class PlanValidator {
         return plan.getSteps()
             .slice(1)
             .filter((step: PlanStep, index: number) => !this.isTimeMonotonicallyIncreasing(plan.getSteps()[index], step))
-            .map(step => new Diagnostic(createRangeFromLine(step.lineIndex), `Action '${step.getActionName()}' time ${step.getStartTime()} is before the preceding action time`, DiagnosticSeverity.Error));
+            .map(step => new Diagnostic(createRangeFromLine(step.lineIndex ?? 0), `Action '${step.getActionName()}' time ${step.getStartTime()} is before the preceding action time`, DiagnosticSeverity.Error));
     }
 
     private isDomainAction(domain: DomainInfo, problem: ProblemInfo, step: PlanStep): boolean {

@@ -1,12 +1,33 @@
 # PDDL support - What's new?
 
-## [Unreleased] 2.19.5
+## 2.20.0 - New and customizable Plan Visualization
+
+### New faster plan visualization component with custom domain-specific plan visualization
+
+The plan visualization component was extracted to a separate NPM package [pddl-gantt](https://www.npmjs.com/package/pddl-gantt).
+This has two drivers:
+
+* ability to replace the plan visualization in this extension
+* ability to use this plan visualization as a plugin to editor.planning.domains
+* faster search debugger view, which now hosts the same component
+
+The new version is also going to display the plan faster.
+What made the old one slow was the upfront evaluation of the line plots.
+Now the line plots are evaluated lazily - only when they are scrolled into the view.
+
+![Plan visualization in VS Code](https://raw.githubusercontent.com/wiki/jan-dolejsi/vscode-pddl/img/PDDL_plan_custom_vizualization.gif)
+
+To study the files used in the above example, see [blocksworld.planviz.json](https://github.com/jan-dolejsi/vscode-pddl-samples/blob/master/Blocksworld/blocksworld.planviz.json) and [blocksWorldViz.js](https://github.com/jan-dolejsi/vscode-pddl-samples/blob/master/Blocksworld/blocksWorldViz.js).
+
+To see all the options for plan visualization as HTML/DOM/SVG, see the function signatures here: [CustomVisualization.ts](https://github.com/jan-dolejsi/pddl-gantt/blob/master/src/CustomVisualization.ts).
 
 ### More usable plan preview and planner invocation via editor title icons
 
 The planner invocation is now also available in the editor title context menu (by right-clicking on the editor tab of the domain/problem file).
 
-Plan preview command is available in the editor title bar when a _.plan_ file is focussed. This is consistent by other file _preview_ extensions.
+Plan preview command is available in the editor title bar when a _.plan_ file is focussed.
+
+![Plan preview button](https://raw.githubusercontent.com/wiki/jan-dolejsi/vscode-pddl/img/plan_preview_button.jpg)
 
 ### Planner configuration and addition available from planner switch drop down
 
@@ -17,7 +38,11 @@ but none of those choices are at hand.
 
 It is now possible to jump to the Overview Page and configure the planner right from the drop down that lets you select a planner.
 
-> screenshot needed
+![Adding and configuring planners through the status bar button](https://raw.githubusercontent.com/wiki/jan-dolejsi/vscode-pddl/img/adding_and_configuring_planners_through_status_bar.gif)
+
+### Custom domain-specific plan/state visualization
+
+Evolved the domain-specific plan/state visualization, which can be specified using the `customVisualization` (originally `planVisualizer`) property in the `<<domain>>.planviz.json` config file.
 
 ### Fixes
 
@@ -40,7 +65,8 @@ No longer attempting to display the `total-time` metric on the line-plot.
 
 ### Engineering work
 
-Updated to latest VAL binaries (build 55).
+* Dependencies updated to Node 12.14.1.
+* Updated to latest VAL binaries (build 55).
 
 ## 2.19.4
 
@@ -418,7 +444,7 @@ Fixed opening the plan report in the default browser.
 ![Nunjucks sample](https://raw.githubusercontent.com/wiki/jan-dolejsi/vscode-pddl/img/PDDL_nunjucks_sample.gif)
 * For templated problem files a code action (bulb) can open the live preview of the generated problem file
 ![Templated problem preview](https://raw.githubusercontent.com/wiki/jan-dolejsi/vscode-pddl/img/PDDL_templated_problem_preview.gif)
-* Early preview of domain-specific plan/state visualization via the new `planVisualizer` property in the `<<domain>>.planviz.json` config file.
+* Early preview of domain-specific plan/state visualization via the new `planVisualizer` property in the `<<domain>>.planviz.json` config file. This has since been renamed to `customVisualization`.
 * Generated problem file previews are live updating when the data in .json file is modified!
 
 ### Fixes
@@ -1161,7 +1187,8 @@ Note for open source contributors: all notable changes to the "pddl" extension w
 
 Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
 
-[Unreleased]: https://github.com/jan-dolejsi/vscode-pddl/compare/v2.19.0...HEAD
+[Unreleased]: https://github.com/jan-dolejsi/vscode-pddl/compare/v2.20.0...HEAD
+[2.20.0]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.19.0...v2.20.0
 [2.19.0]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.18.0...v2.19.0
 [2.18.0]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.17.1...v2.18.0
 [2.17.1]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.16.0...v2.17.1

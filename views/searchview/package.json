@@ -12,7 +12,6 @@
     "lint": "eslint src --ext ts",
     "watch": "watchify src/search.ts -p tsify -o out/search.js --verbose"
   },
-  "keywords": [],
   "author": "Jan Dolejsi",
   "license": "MIT",
   "devDependencies": {
@@ -28,7 +27,10 @@
     "@types/chai": "file:../../node_modules/@types/chai",
     "chai": "file:../../node_modules/chai",
     "@types/chai-string": "file:../../node_modules/@types/chai-string",
-    "chai-string": "file:../../node_modules/chai-string"
+    "chai-string": "file:../../node_modules/chai-string",
+    "model": "file:../../out/planView/model/"
   },
-  "dependencies": {}
+  "dependencies": {
+    "pddl-gantt": "file:../../node_modules/pddl-gantt"
+  }
 }

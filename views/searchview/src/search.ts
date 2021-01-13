@@ -3,9 +3,13 @@
  * Licensed under the MIT License. See License.txt in the project root for license information.
  * ------------------------------------------------------------------------------------------ */
 
+import { Plan, PlanStep } from "pddl-workspace";
+import { createPlanView, JsonDomainVizConfiguration, PlanView } from "pddl-gantt";
+
 import { SearchTree } from "./tree";
 import { StateChart } from "./charts";
 import { getElementByIdOrThrow, State } from "./utils";
+import { PlanData } from 'model';
 
 /** VS Code stub, so we can work with it in a type safe way. */
 interface VsCodeApi {
@@ -178,6 +182,8 @@ getElementByIdOrThrow("planMock").onclick = (): void => {
 
 let stateChart: StateChart;
 
+let planViz: PlanView;
+
 /**
  * Adds state
  * @param newState state to add
@@ -239,9 +245,15 @@ function onStateSelected(stateId: number | null): void {
     stateChart.selectChartRow(stateId);
     searchTree.selectTreeNode(stateId);
     vscode?.postMessage({ command: 'stateSelected', stateId: stateId });
-
     if (!vscode) {
-        showStatePlan('<div style="width: 400px; height: 900px; background-color: green"></div>');
+        const statePlan = new Plan([
+            new PlanStep(.5, "hello world " + stateId, true, 1, 1)
+        ]);
+
+        showStatePlan({
+            plan: statePlan,
+            width: 300
+        });
     }
 }
 
@@ -281,6 +293,15 @@ function initialize(): void {
     stateChart = new StateChart(onStateSelected);
     stateChart.subscribeToChartEvents();
 
+    planViz = createPlanView("statePlan",
+        {
+            displayWidth: 400,
+            epsilon: 1e-3,
+            disableLinePlots: true,
+            onActionSelected: (actionName: string) => vscode?.postMessage({ "command": "revealAction", "action": actionName }),
+            onHelpfulActionSelected: (helpfulAction: string) => navigateToChildOfSelectedState(helpfulAction)
+        });
+
     getElementByIdOrThrow("mockMenu").style.visibility = vscode ? 'collapse' : 'visible';
 
     onLoad();
@@ -314,7 +335,7 @@ getElementByIdOrThrow(CLEAR_DEBUGGER_BUTTON_ID).onclick = (): void => restartSea
 
 function restartSearchDebugger(): void {
     postCommand('reset');
-    showStatePlan("");
+    showStatePlan({ plan: new Plan([]), width: 300 });
     clearStates();
 }
 
@@ -348,8 +369,14 @@ function enableButton(enable: boolean, buttonId: string): void {
     }
 }
 
-function showStatePlan(statePlanHtml: string): void {
-    getElementByIdOrThrow("statePlan").innerHTML = statePlanHtml;
+function showStatePlan(data: PlanData): void {
+    const clonedPlan = Plan.clone(data.plan);
+    
+    const configuration = JsonDomainVizConfiguration.withCustomVisualizationScript(
+        data.domainVisualizationConfiguration,
+        data.customDomainVisualizationScript);
+
+    planViz.showPlan(clonedPlan, configuration);
 }
 
 const shapeMap = new Map<string, string>();

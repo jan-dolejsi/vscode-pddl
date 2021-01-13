@@ -8,10 +8,8 @@ tsc.log
 coverage/
 .nyc_output/
 CHANGELOG.html
-views/common/vis-network.min.*
-views/common/codicon.*
-/views/searchview/out/*.js
-/views/searchview/out-test/
+**/out-test/
 src/test/tmpUserProfile/
 src/test/tmpFolder/
+debug.log
 **/package-lock.json

@@ -6,21 +6,28 @@
 
 import {
     window, workspace, Uri,
-    ViewColumn, ExtensionContext, TextDocument, WebviewPanel, Disposable, TextDocumentChangeEvent
+    ViewColumn, ExtensionContext, TextDocument, WebviewPanel, Disposable, TextDocumentChangeEvent, Webview, commands
 } from 'vscode';
 import { instrumentOperationAsVsCodeCommand } from "vscode-extension-telemetry-wrapper";
+import * as path from 'path';
+
+import { PlanFunctionEvaluator } from 'ai-planning-val';
+import { PlanInfo, PLAN, VariableExpression, Plan, utils } from 'pddl-workspace';
+const makeSerializable = utils.serializationUtils.makeSerializable; 
 
 import { isPlan, getDomainAndProblemForPlan } from '../workspace/workspaceUtils';
-import { PlanReportGenerator } from './PlanReportGenerator';
-import { PlanInfo, PLAN } from 'pddl-workspace';
-import { Plan } from 'pddl-workspace';
-
-import * as path from 'path';
 import { CodePddlWorkspace } from '../workspace/CodePddlWorkspace';
-import { CONF_PDDL, PLAN_REPORT_WIDTH, PDDL_CONFIGURE_COMMAND } from '../configuration/configuration';
+import { CONF_PDDL, PLAN_REPORT_WIDTH, PDDL_CONFIGURE_COMMAND, VAL_STEP_PATH, VALUE_SEQ_PATH, VAL_VERBOSE, PLAN_REPORT_LINE_PLOT_GROUP_BY_LIFTED } from '../configuration/configuration';
 import { Menu } from '../Menu';
+import { createPddlExtensionContext, ensureAbsoluteGlobalStoragePath, getWebViewHtml, showError } from '../utils';
+import { LinePlotData } from './model';
+import { handleValStepError } from './valStepErrorHandler';
+import { getDomainVisualizationConfigurationDataForPlans } from './DomainVisualization';
 
-const CONTENT = path.join('views', 'planview');
+const VIEWS = "views";
+const COMMON_FOLDER = path.join(VIEWS, "common");
+const STATIC_CONTENT_FOLDER = path.join(VIEWS, 'planview', 'static');
+
 export const PDDL_GENERATE_PLAN_REPORT = 'pddl.planReport';
 export const PDDL_EXPORT_PLAN = 'pddl.exportPlan';
 export const PDDL_SAVE_AS_EXPECTED_PLAN = 'pddl.saveAsExpectedPlan';
@@ -35,9 +42,9 @@ export class PlanView extends Disposable {
         super(() => this.dispose());
 
         context.subscriptions.push(instrumentOperationAsVsCodeCommand("pddl.plan.preview", async planUri => {
-            const dotDocument = await getPlanDocument(planUri);
-            if (dotDocument) {
-                return this.revealOrCreatePreview(dotDocument, ViewColumn.Beside);
+            const planDocument = await getPlanDocument(planUri);
+            if (planDocument) {
+                return this.revealOrCreatePreview(planDocument, ViewColumn.Beside);
             }
         }));
 
@@ -112,20 +119,35 @@ export class PlanView extends Disposable {
         if (this.timeout) { clearTimeout(this.timeout); }
     }
 
-    rebuild(): void {
+    rebuild(webviewPanel?: WebviewPanel): void {
         this.webviewPanels.forEach(async (panel) => {
-            if (panel.getNeedsRebuild() && panel.getPanel().visible) {
+            const updateThisPanel = webviewPanel === undefined || webviewPanel === panel.getPanel();
+
+            if (updateThisPanel && panel.getNeedsRebuild() && panel.getPanel().visible) {
                 this.updateContent(panel);
             }
         });
     }
 
     async updateContent(previewPanel: PlanPreviewPanel): Promise<void> {
-        if (!previewPanel.getPanel().webview.html) {
-            previewPanel.getPanel().webview.html = "Please wait...";
-        }
         previewPanel.setNeedsRebuild(false);
-        previewPanel.getPanel().webview.html = await this.getPreviewHtml(previewPanel);
+
+        const error = previewPanel.getError();
+        if (error) {
+            previewPanel.getPanel().webview.postMessage({ command: 'error', message: error.message});
+        }
+        else {
+            // todo: only send the additional plan, not all of them
+            const plans = previewPanel.getPlans()
+                .map(p => makeSerializable(p));
+
+            const plansData = await getDomainVisualizationConfigurationDataForPlans(plans);
+
+            previewPanel.getPanel().webview.postMessage({
+                command: 'showPlans',
+                data: plansData
+            });
+        }
     }
 
     async revealOrCreatePreview(doc: TextDocument, displayColumn: ViewColumn): Promise<void> {
@@ -140,7 +162,6 @@ export class PlanView extends Disposable {
         }
 
         await this.setNeedsRebuild(doc);
-        this.updateContent(previewPanel);
     }
 
     createPreviewPanelForDocument(doc: TextDocument, displayColumn: ViewColumn): PlanPreviewPanel {
@@ -154,32 +175,38 @@ export class PlanView extends Disposable {
             enableFindWidget: true,
             enableCommandUris: true,
             enableScripts: true,
-            localResourceRoots: [Uri.file(this.context.asAbsolutePath(CONTENT))]
+            localResourceRoots: [Uri.file(this.context.asAbsolutePath(VIEWS))]
         });
 
         webViewPanel.iconPath = Uri.file(this.context.asAbsolutePath(path.join("views", "overview", "file_type_pddl_plan.svg")));
+
+        this.getHtml(webViewPanel.webview).then(html => 
+            webViewPanel.webview.html = html);
 
         const previewPanel = new PlanPreviewPanel(uri, webViewPanel);
 
         // when the user closes the tab, remove the panel
         previewPanel.getPanel().onDidDispose(() => this.webviewPanels.delete(uri), undefined, this.context.subscriptions);
         // when the pane becomes visible again, refresh it
-        previewPanel.getPanel().onDidChangeViewState(() => this.rebuild());
+        previewPanel.getPanel().onDidChangeViewState(e => this.rebuild(e.webviewPanel));
 
         previewPanel.getPanel().webview.onDidReceiveMessage(e => this.handleMessage(previewPanel, e), undefined, this.context.subscriptions);
 
         return previewPanel;
     }
 
-    private async getPreviewHtml(previewPanel: PlanPreviewPanel): Promise<string> {
-        if (previewPanel.getError()) {
-            return previewPanel.getError()!.message;
-        }
-        else {
-            const width = workspace.getConfiguration(CONF_PDDL).get<number>(PLAN_REPORT_WIDTH, 300);
-            return new PlanReportGenerator(this.context, { displayWidth: width, selfContained: false, resourceUriConverter: previewPanel.getPanel().webview })
-                .generateHtml(previewPanel.getPlans());
-        }
+    async getHtml(webview: Webview): Promise<string> {
+        const googleCharts = Uri.parse("https://www.gstatic.com/charts/");
+        return getWebViewHtml(createPddlExtensionContext(this.context), {
+            relativePath: STATIC_CONTENT_FOLDER, htmlFileName: 'plans.html',
+            externalImages: [Uri.parse('data:')],
+            allowUnsafeEval: true,
+            externalScripts: [googleCharts],
+            externalStyles: [googleCharts],
+            fonts: [
+                Uri.file(path.join("..", "..", "..", COMMON_FOLDER, "codicon.ttf"))
+            ]
+        }, webview);
     }
 
     async parsePlanFile(planDocument: TextDocument): Promise<Plan> {
@@ -188,7 +215,7 @@ export class PlanView extends Disposable {
         try {
             const domainAndProblem = getDomainAndProblemForPlan(planFileInfo, this.codePddlWorkspace.pddlWorkspace);
 
-            return new Plan(planFileInfo.getSteps(), domainAndProblem.domain, domainAndProblem.problem);
+            return planFileInfo.getPlan(domainAndProblem.domain, domainAndProblem.problem);
         }
         catch (ex) {
             // show a hint that domain & problem were not associated
@@ -201,6 +228,15 @@ export class PlanView extends Disposable {
         console.log(`Message received from the webview: ${message.command}`);
 
         switch (message.command) {
+            case 'onload':
+                // Webview (and its resources) finished loading
+                this.updateContent(previewPanel);
+                break;
+            case 'linePlotDataRequest': {
+                const planIndex: number = message.planIndex;
+                this.getLinePlotData(previewPanel, planIndex).catch(showError);
+                break;
+            }
             case 'selectPlan':
                 const planIndex: number = message.planIndex;
                 previewPanel.setSelectedPlanIndex(planIndex);
@@ -208,12 +244,111 @@ export class PlanView extends Disposable {
             case 'showMenu':
                 this.showMenu(previewPanel);
                 break;
+            case 'revealAction':
+                commands.executeCommand("pddl.revealAction", Uri.file(message.domainUri.fsPath), message.action);
+                break;
             default:
                 console.warn('Unexpected command: ' + message.command);
         }
     }
 
-    // tslint:disable-next-line:no-unused-expression
+    async getLinePlotData(previewPanel: PlanPreviewPanel, planIndex: number): Promise<void> {
+        if (planIndex >= previewPanel.getPlans().length) {
+            console.error(`requesting data for plan index {} while there are only {} plans`, planIndex, previewPanel.getPlans().length);
+            return;
+        }
+
+        const plan = previewPanel.getPlans()[planIndex];
+
+        const valStepPath = ensureAbsoluteGlobalStoragePath(workspace.getConfiguration(CONF_PDDL).get<string>(VAL_STEP_PATH), this.context);
+        const valueSeqPath = ensureAbsoluteGlobalStoragePath(workspace.getConfiguration(CONF_PDDL).get<string>(VALUE_SEQ_PATH), this.context);
+        const valVerbose = workspace.getConfiguration(CONF_PDDL).get<boolean>(VAL_VERBOSE, false);
+
+        try {
+
+            if (plan.domain && plan.problem) {
+                const groupByLifted = workspace.getConfiguration(CONF_PDDL).get<boolean>(PLAN_REPORT_LINE_PLOT_GROUP_BY_LIFTED, true);
+                const evaluator = new PlanFunctionEvaluator(plan, { valStepPath, valueSeqPath, shouldGroupByLifted: groupByLifted, verbose: valVerbose });
+
+                if (evaluator.isAvailable()) {
+
+                    try {
+
+                        const functionValues = await evaluator.evaluate();
+
+                        functionValues.forEach((values, liftedVariable) => {
+                            let chartTitleWithUnit = values.legend.length > 1 ? liftedVariable.name : liftedVariable.getFullName();
+                            if (liftedVariable.getUnit()) { chartTitleWithUnit += ` [${liftedVariable.getUnit()}]`; }
+
+                            this.sendLinePlotData(previewPanel, {
+                                planIndex: planIndex,
+                                name: chartTitleWithUnit,
+                                unit: liftedVariable.getUnit(),
+                                legend: values.legend,
+                                data: values.values
+                            });
+                        });
+
+                        // add one plot for declared metric
+                        // todo: use valstep's ability to handle metric directly using the $metrics variable name
+                        for (let metricIndex = 0; metricIndex < plan.problem.getMetrics().length; metricIndex++) {
+                            const metric = plan.problem.getMetrics()[metricIndex];
+                            const metricExpression = metric.getExpression();
+                            if (metricExpression instanceof VariableExpression) {
+                                if (metricExpression.name === "total-time") {
+                                    continue;
+                                }
+                            }
+                            const metricValues = await evaluator.evaluateExpression(metric.getExpression());
+                            const chartTitle = metric.getDocumentation()[metric.getDocumentation().length - 1] ?? "Metric";
+
+                            this.sendLinePlotData(previewPanel, {
+                                planIndex: planIndex,
+                                name: chartTitle,
+                                unit: "",
+                                legend: [''],
+                                data: metricValues.values
+                            });
+                        }
+
+                    } catch (err) {
+                        console.error(err);
+                        const valStepPath = evaluator.getValStepPath();
+                        if (valStepPath) {
+                            handleValStepError(err, valStepPath);
+                        }
+                    }
+                }
+                else {
+                    previewPanel.getPanel().webview.postMessage({
+                        "command": "setVisibility",
+                        "elementId": "downloadVal",
+                        "visible": true
+                    });
+                }
+            } else {
+                previewPanel.getPanel().webview.postMessage({
+                    "command": "setVisibility",
+                    "elementId": "domainProblemAssociation",
+                    "visible": true
+                });
+            }
+        } finally {
+            // in case there is no data to display, we must send a message that clears the loading progress indicator.
+            previewPanel.getPanel().webview.postMessage({
+                "command": "hideLinePlotLoadingProgress",
+                "planIndex": planIndex
+            });
+        }
+    }
+
+    sendLinePlotData(previewPanel: PlanPreviewPanel, data: LinePlotData): void {
+        previewPanel.getPanel().webview.postMessage({
+            "command": "showLinePlot",
+            "data": data
+        });
+    }
+
     async showMenu(previewPanel: PlanPreviewPanel): Promise<void> {
         await new Menu([
             {

@@ -243,9 +243,9 @@ export class OverviewPage {
 
         const sampleDocumentPromises = sampleFiles
             .map(child => child[0]) // pick up the file name
-            .filter(async (sampleFile) => this.overwriteIfExists(folder, sampleFile))
+            .filter(async (sampleFile) => this.overwriteIfExists(folder!, sampleFile))
             .map(async (sampleFile) => {
-                const sampleTargetPath = Uri.joinPath(folder, sampleFile);
+                const sampleTargetPath = Uri.joinPath(folder!, sampleFile);
                 const sampleResourcePath = Uri.joinPath(this.context.extensionUri, this.CONTENT_FOLDER, subDirectory, sampleFile);//'overview/helloWorld/domain.pddl'
                 await workspace.fs.copy(sampleResourcePath, sampleTargetPath, { overwrite: true });
                 const sampleDocument = await workspace.openTextDocument(sampleTargetPath);
@@ -329,7 +329,7 @@ export class OverviewPage {
             command: 'updateConfiguration',
             workspaceFolders: workspace.workspaceFolders?.map(wf => this.toWireWorkspaceFolder(wf)) ?? [],
             selectedWorkspaceFolder: this.workspaceFolder && this.toWireWorkspaceFolder(this.workspaceFolder),
-            planners: planners,
+            planners: planners ?? [],
             selectedPlanner: this.plannersConfiguration.getSelectedPlanner(this.workspaceFolder)?.configuration.title,
             plannersConfigError: plannersConfigError,
             plannerOutputTarget: workspace.getConfiguration(PDDL_PLANNER, this.workspaceFolder).get<string>(EXECUTION_TARGET, DEF_PLANNER_OUTPUT_TARGET),

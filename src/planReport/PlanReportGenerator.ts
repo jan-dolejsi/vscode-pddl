@@ -5,25 +5,22 @@
 'use strict';
 
 import {
-    ExtensionContext, workspace, window, env, Uri
+    ExtensionContext, workspace, Uri
 } from 'vscode';
 
 import * as path from 'path';
 import * as fs from 'fs';
 import opn = require('open');
 
-import { DomainInfo, ProblemInfo, VariableExpression } from 'pddl-workspace';
+import { DomainInfo, PlanStep, PlanStepCommitment, HappeningType, Plan, HelpfulAction, PddlWorkspace, VariableExpression } from 'pddl-workspace';
+import { PlanFunctionEvaluator, Util as ValUtil } from 'ai-planning-val';
+import { capitalize } from 'pddl-gantt';
 import { SwimLane } from './SwimLane';
-import { PlanStep, PlanStepCommitment } from 'pddl-workspace';
-import { HappeningType } from 'pddl-workspace';
-import { Plan, HelpfulAction } from 'pddl-workspace';
-import { PlanFunctionEvaluator } from 'ai-planning-val';
 import { PlanReportSettings } from './PlanReportSettings';
 import { VAL_STEP_PATH, CONF_PDDL, VALUE_SEQ_PATH, PLAN_REPORT_LINE_PLOT_GROUP_BY_LIFTED, DEFAULT_EPSILON, VAL_VERBOSE } from '../configuration/configuration';
-import { utils } from 'pddl-workspace';
-import { ValStepError, ValStep } from 'ai-planning-val';
 import { ensureAbsoluteGlobalStoragePath, WebviewUriConverter } from '../utils';
-import { PddlWorkspace } from 'pddl-workspace';
+import { handleValStepError } from '../planView/valStepErrorHandler';
+
 const DIGITS = 4;
 
 export class PlanReportGenerator {
@@ -38,7 +35,7 @@ export class PlanReportGenerator {
     async export(plans: Plan[], planId: number): Promise<boolean> {
         const html = await this.generateHtml(plans, planId);
 
-        const htmlFile = await utils.Util.toFile("plan-report", ".html", html);
+        const htmlFile = await ValUtil.toFile("plan-report", ".html", html);
         const uri = Uri.parse("file://" + htmlFile);
         opn(uri.toString());
         return true; //env.openExternal(uri);
@@ -47,7 +44,7 @@ export class PlanReportGenerator {
     async generateHtml(plans: Plan[], planId = -1): Promise<string> {
         const selectedPlan = planId < 0 ? plans.length - 1 : planId;
 
-        const maxCost = Math.max(...plans.map(plan => plan.cost ?? 0));
+        const maxCost = Math.max(...plans.map(plan => plan.metric ?? 0));
 
         const planSelectors = plans.map((plan, planIndex) => this.renderPlanSelector(plan, planIndex, selectedPlan, maxCost)).join(" ");
 
@@ -57,18 +54,19 @@ export class PlanReportGenerator {
         const plansHtml = planHtmlArr.join("\n\n");
         const plansChartsScript = this.createPlansChartsScript(plans);
         const relativePath = path.join('views', 'planview');
+        const staticPath = path.join(relativePath, 'static');
+        const ganttStylesPath = path.join('node_modules', 'pddl-gantt', 'styles');
         const html = `<!DOCTYPE html>
         <head>
             <title>Plan report</title>
             <meta http-equiv="Content-Security-Policy"
                 content="default-src 'none'; img-src vscode-resource: https: data:; script-src vscode-resource: https://www.gstatic.com/charts/ 'unsafe-inline'; style-src vscode-resource: https://www.gstatic.com/charts/ 'unsafe-inline';"
             />    
-            ${await this.includeStyle(this.asAbsolutePath(relativePath, 'plans.css'))}
-            ${await this.includeStyle(this.asAbsolutePath(relativePath, 'plan-resource-task.css'))}
-            ${await this.includeStyle(this.asAbsolutePath(relativePath, 'menu.css'))}
-            ${await this.includeScript(this.asAbsolutePath(relativePath, 'plans.js'))}
+            ${await this.includeStyle(this.asAbsolutePath(ganttStylesPath, 'pddl-gantt.css'))}
+            ${await this.includeStyle(this.asAbsolutePath(staticPath, 'menu.css'))}
+            ${await this.includeScript(this.asAbsolutePath(path.join(relativePath, 'out'), 'plans.js'))}
             <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
-            ${await this.includeScript(this.asAbsolutePath(relativePath, 'charts.js'))}
+            ${await this.includeScript(this.asAbsolutePath(staticPath, 'charts.js'))}
         </head>
         <body onload="scrollPlanSelectorIntoView(${selectedPlan})">
             <div class="planSelectors" style="display: ${planSelectorsDisplayStyle};">${planSelectors}
@@ -112,72 +110,12 @@ States evaluated: ${plan.statesEvaluated}`;
         else { return true; }
     }
 
-    /**
-     * Changes capitalization of the plan action names and object names to match the domain/problem.
-     * This is assuming the case-insensitive PDDL treatment.
-     * @param plan orig plan
-     */
-    private capitalize(plan: Plan): Plan {
-        if (!plan.domain || !plan.problem) {
-            return plan;
-        }
-
-        const actionNames = plan.domain.getActions().map(a => a.name);
-
-        const capitalizedSteps = plan.steps
-            .map(step => this.capitalizeStep(step, actionNames, plan.problem));
-
-        const capitalizedPlan = new Plan(capitalizedSteps, plan.domain, plan.problem, plan.now, plan.helpfulActions);
-        if (plan.isCostDefined()) {
-            capitalizedPlan.cost = plan.cost;
-        }
-        return capitalizedPlan;
-    }
-    
-    private capitalizeStep(step: PlanStep, actionNames: string[], problem: ProblemInfo): PlanStep {
-        let changed = false;
-        let changedActionName = step.getActionName();
-        if (!actionNames.includes(step.getActionName())) {
-            const matchingDomainAction = actionNames.find(name => name.toLowerCase() === step.getActionName().toLowerCase());            
-            if (matchingDomainAction) {
-                changed = true;
-                changedActionName = matchingDomainAction;
-            }
-        }
-
-        const changedObjects = [];
-        for (let i = 0; i < step.getObjects().length; i++) {
-            const origObject = step.getObjects()[i];
-
-            const matchingObject = problem.getObjectsTypeMap()
-                .getTypeOf(origObject)?.getObjects()
-                ?.find(o => o.toLowerCase() === origObject.toLowerCase());
-            if (matchingObject) {
-                changed = true;    
-                changedObjects[i] = matchingObject;
-            } else {
-                changedObjects[i] = origObject;
-            }
-        }
-
-        if (changed) {
-            let fullActionName = changedActionName;
-            if (changedObjects.length) {
-                fullActionName += ' ' + changedObjects.join(' ');
-            }
-            return new PlanStep(step.getStartTime(), fullActionName, step.isDurative, step.getDuration(), step.lineIndex, step.commitment, step.getIterations());
-        }
-        else {
-            return step;
-        }
-    }
-
     async renderPlan(plan: Plan, planIndex: number, selectedPlan: number): Promise<string> {
-        plan = this.capitalize(plan);
+        plan = capitalize(plan);
 
         let planVisualizerPath: string | undefined;
         if (plan.domain) {
-            const settings = new PlanReportSettings(plan.domain.fileUri.toString());
+            const settings = await PlanReportSettings.load(plan.domain.fileUri);
             planVisualizerPath = settings.getPlanVisualizerScript();
             this.settings.set(plan, settings);
         }
@@ -290,7 +228,7 @@ ${objectsHtml}
                     console.error(err);
                     const valStepPath = evaluator.getValStepPath();
                     if (valStepPath) {
-                        this.handleValStepError(err, valStepPath);
+                        handleValStepError(err, valStepPath);
                     }
                 }
             }
@@ -314,36 +252,6 @@ ${hint}
 
     private createLineChartDiv(chartDivId: string): string {
         return `        <div id="${chartDivId}" style="width: ${this.options.displayWidth + 100}px; height: ${Math.round(this.options.displayWidth / 2)}px"></div>\n`;
-    }
-
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    private async handleValStepError(err: any, valStepPath: string): Promise<void> {
-        if (err instanceof ValStepError) {
-            try {
-                const exportCase = "Export valstep case...";
-                const choice = await window.showErrorMessage("ValStep failed to evaluate the plan values.", exportCase, "Ignore");
-                if (choice === exportCase) {
-                    const targetPathUris = await window.showOpenDialog({
-                        canSelectFolders: true, canSelectFiles: false,
-                        defaultUri: Uri.file(path.dirname(err.domain.fileUri.fsPath)),
-                        openLabel: 'Select target folder'
-                    });
-                    if (!targetPathUris) { return; }
-                    const targetPath = targetPathUris[0];
-                    const outputPath = await ValStep.storeError(err, targetPath.fsPath, valStepPath);
-                    const success = await env.openExternal(Uri.file(outputPath));
-                    if (!success) {
-                        window.showErrorMessage(`Files for valstep bug report: ${outputPath}.`);
-                    }
-                }
-            }
-            catch (err1) {
-                console.log(err1);
-            }
-        }
-        else {
-            window.showWarningMessage(err?.message ?? err);
-        }
     }
 
     renderHelpfulActions(plan: Plan, planHeadLength: number): string {
