@@ -13,19 +13,20 @@ import { PddlWorkspace } from 'pddl-workspace';
 import { PlanInfo } from 'pddl-workspace';
 import { ProblemInfo } from 'pddl-workspace';
 import { DomainInfo } from 'pddl-workspace';
-import { FileInfo, FileStatus, stripComments, ParsingProblem } from 'pddl-workspace';
+import { FileInfo, FileStatus, stripComments } from 'pddl-workspace';
 
 import { Validator } from './validator';
 import { ValidatorService } from './ValidatorService';
 import { ValidatorExecutable } from './ValidatorExecutable';
 import { PDDLParserSettings } from '../util/Settings';
 import { PddlConfiguration, PDDL_PARSER, VALIDATION_PATH, CONF_PDDL } from '../configuration/configuration';
-import { PlanValidator, createDiagnostic } from './PlanValidator';
+import { PlanValidator } from './PlanValidator';
 import { HappeningsValidator } from './HappeningsValidator';
 import { HappeningsInfo } from 'pddl-workspace';
 import { NoDomainAssociated, getDomainFileForProblem } from '../workspace/workspaceUtils';
 import { isHttp, toUri } from '../utils';
 import { CodePddlWorkspace } from '../workspace/CodePddlWorkspace';
+import { toDiagnosticsFromParsingProblems } from './validatorUtils';
 
 /**
  * Listens to updates to PDDL files and performs detailed parsing and syntactical analysis and report problems as `Diagnostics`.
@@ -199,7 +200,7 @@ export class Diagnostics extends Disposable {
         // detect parsing and pre-processing issues
         if (fileInfo.getParsingProblems().length > 0) {
             const parsingProblems = new Map<string, Diagnostic[]>();
-            parsingProblems.set(fileInfo.fileUri.toString(), toDiagnostics(fileInfo.getParsingProblems()));
+            parsingProblems.set(fileInfo.fileUri.toString(), toDiagnosticsFromParsingProblems(fileInfo.getParsingProblems()));
             this.sendDiagnostics(parsingProblems);
             return;
         }
@@ -333,12 +334,4 @@ export class Diagnostics extends Disposable {
 
         fileInfo.setStatus(FileStatus.Validated);
     }
-}
-
-function toDiagnostics(problems: ParsingProblem[]): Diagnostic[] {
-    return problems.map(p => toDiagnostic(p));
-}
-
-function toDiagnostic(problem: ParsingProblem): Diagnostic {
-    return createDiagnostic(problem.lineIndex ?? 0, problem.columnIndex, problem.problem, DiagnosticSeverity.Error);
 }

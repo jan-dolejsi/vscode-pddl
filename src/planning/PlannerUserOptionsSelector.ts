@@ -3,14 +3,24 @@
  * Licensed under the MIT License. See License.txt in the project root for license information.
  * ------------------------------------------------------------------------------------------ */
 import * as vscode from 'vscode';
+import { planner } from 'pddl-workspace';
 
 export class PlannerUserOptionsSelector {
 
     private NO_OPTIONS: OptionsQuickPickItem = { label: 'No options (use defaults)', options: '', description: '' };
     private optionsHistory: OptionsQuickPickItem[] = [ this.NO_OPTIONS, { label: 'Specify options...', newValue: true, options: '', description: '' }];
 
-    async getPlannerOptions(): Promise<string | undefined> {
-        let optionsSelected = await vscode.window.showQuickPick(this.optionsHistory,
+    async getPlannerOptions(plannerProvider?: planner.PlannerProvider): Promise<string | undefined> {
+
+        let builtInOptions: OptionsQuickPickItem[];
+        
+        if (plannerProvider?.getPlannerOptions) {
+            builtInOptions = plannerProvider?.getPlannerOptions()?.map(option => this.toOptionsQuickPickItem(option)) ?? [];
+        } else {
+            builtInOptions = [];
+        }
+
+        let optionsSelected = await vscode.window.showQuickPick(this.optionsHistory.concat(builtInOptions),
             { placeHolder: 'Optionally specify planner switches or press ENTER to use default planner configuration.', ignoreFocusOut: true });
 
         if (!optionsSelected) { return undefined; } // operation canceled by the user by pressing Escape
@@ -32,6 +42,14 @@ export class PlannerUserOptionsSelector {
         }
         this.optionsHistory.unshift(optionsSelected); // insert to the first position
         return optionsSelected.options;
+    }
+
+    toOptionsQuickPickItem(option: planner.PlannerOption): OptionsQuickPickItem {
+        return {
+            label: option.label ?? option.option,
+            options: option.option,
+            description: option.description ?? ''
+        };
     }
 }
 

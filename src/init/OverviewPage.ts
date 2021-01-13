@@ -12,12 +12,12 @@ import { PddlConfiguration, PDDL_PLANNER } from '../configuration/configuration'
 
 import * as path from 'path';
 import { getWebViewHtml, createPddlExtensionContext, showError, asWebviewUri } from '../utils';
-import { utils } from 'pddl-workspace';
 import { ValDownloader } from '../validation/ValDownloader';
 import { VAL_DOWNLOAD_COMMAND, ValDownloadOptions } from '../validation/valCommand';
 import { PTEST_VIEW } from '../ptest/PTestCommands';
 import { instrumentOperationAsVsCodeCommand } from "vscode-extension-telemetry-wrapper";
-import { PlannersConfiguration as PlannersConfiguration, ScopedPlannerConfiguration } from '../configuration/PlannersConfiguration';
+import { DEF_PLANNER_OUTPUT_TARGET, EXECUTION_TARGET, PlannersConfiguration, ScopedPlannerConfiguration } from '../configuration/PlannersConfiguration';
+import { exists } from '../util/workspaceFs';
 
 export const SHOULD_SHOW_OVERVIEW_PAGE = 'shouldShowOverviewPage';
 export const LAST_SHOWN_OVERVIEW_PAGE = 'lastShownOverviewPage';
@@ -157,11 +157,12 @@ export class OverviewPage {
         }
     }
 
-    VIEWS = "views";
-    CONTENT_FOLDER = path.join(this.VIEWS, "overview");
+    readonly VIEWS = "views";
+    readonly CONTENT_FOLDER = path.join(this.VIEWS, "overview");
+    readonly COMMON_FOLDER = path.join(this.VIEWS, "common");
 
     async helloWorld(): Promise<void> {
-        const sampleDocuments = await this.createSample('helloworld', 'Hello World!');
+        const sampleDocuments = await this.createSample('helloWorld', 'Hello World!');
 
         if (!sampleDocuments) { return; } // canceled
 
@@ -238,16 +239,15 @@ export class OverviewPage {
 
         if (!folder) { return undefined; }
 
-        const sampleFiles = await utils.afs.readdir(this.context.asAbsolutePath(path.join(this.CONTENT_FOLDER, subDirectory)));
+        const sampleFiles = await workspace.fs.readDirectory(Uri.joinPath(this.context.extensionUri, this.CONTENT_FOLDER, subDirectory));
 
         const sampleDocumentPromises = sampleFiles
+            .map(child => child[0]) // pick up the file name
+            .filter(async (sampleFile) => this.overwriteIfExists(folder!, sampleFile))
             .map(async (sampleFile) => {
-                const sampleResourcePath = this.context.asAbsolutePath(path.join(this.CONTENT_FOLDER, subDirectory, sampleFile));//'overview/helloWorld/domain.pddl'
-                const sampleText = await utils.afs.readFile(sampleResourcePath, { encoding: "utf-8" });
-                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                const sampleTargetPath = path.join(folder!.fsPath, sampleFile);//"helloWorldDomain.pddl"
-                if (await utils.afs.exists(sampleTargetPath)) { throw new Error(`File '${sampleFile}' already exists.`); }
-                await utils.afs.writeFile(sampleTargetPath, sampleText, { encoding: "utf-8" });
+                const sampleTargetPath = Uri.joinPath(folder!, sampleFile);
+                const sampleResourcePath = Uri.joinPath(this.context.extensionUri, this.CONTENT_FOLDER, subDirectory, sampleFile);//'overview/helloWorld/domain.pddl'
+                await workspace.fs.copy(sampleResourcePath, sampleTargetPath, { overwrite: true });
                 const sampleDocument = await workspace.openTextDocument(sampleTargetPath);
                 return sampleDocument;
             });
@@ -256,9 +256,28 @@ export class OverviewPage {
         return sampleDocuments;
     }
 
+    async overwriteIfExists(folder: Uri, sampleFile: string): Promise<boolean> {
+        const sampleTargetPath = Uri.joinPath(folder, sampleFile);
+        if (await exists(sampleTargetPath)) {
+            const answer = await window.showWarningMessage(`File '${sampleFile}' already exists.`, "Overwrite", "Skip");
+            if (answer === "Overwrite") {
+                return true;
+            } else {
+                return false;
+            }
+        } else {
+            return true;
+        }
+    }
+
     async getHtml(webview: Webview): Promise<string> {
         return getWebViewHtml(createPddlExtensionContext(this.context), {
-            relativePath: this.CONTENT_FOLDER, htmlFileName: 'overview.html'
+            relativePath: this.CONTENT_FOLDER,
+            htmlFileName: 'overview.html',
+            allowUnsafeInlineScripts: true, // used mostly by the alerts
+            fonts: [
+                Uri.file(path.join("..", "..", this.COMMON_FOLDER, "codicon.ttf"))
+            ]
         }, webview);
     }
 
@@ -310,10 +329,10 @@ export class OverviewPage {
             command: 'updateConfiguration',
             workspaceFolders: workspace.workspaceFolders?.map(wf => this.toWireWorkspaceFolder(wf)) ?? [],
             selectedWorkspaceFolder: this.workspaceFolder && this.toWireWorkspaceFolder(this.workspaceFolder),
-            planners: planners,
+            planners: planners ?? [],
             selectedPlanner: this.plannersConfiguration.getSelectedPlanner(this.workspaceFolder)?.configuration.title,
             plannersConfigError: plannersConfigError,
-            plannerOutputTarget: workspace.getConfiguration(PDDL_PLANNER, this.workspaceFolder).get<string>("executionTarget", "Output window"),
+            plannerOutputTarget: workspace.getConfiguration(PDDL_PLANNER, this.workspaceFolder).get<string>(EXECUTION_TARGET, DEF_PLANNER_OUTPUT_TARGET),
             parser: this.pddlConfiguration.getParserPath(this.workspaceFolder),
             validator: this.pddlConfiguration.getValidatorPath(this.workspaceFolder),
             imagesPath: asWebviewUri(Uri.file(this.context.asAbsolutePath('images')), this.webViewPanel.webview).toString(),
@@ -325,7 +344,7 @@ export class OverviewPage {
             updateValAlert: await this.val.isNewValVersionAvailable()
             // todo: workbench.editor.revealIfOpen
         };
-        return this.webViewPanel.webview?.postMessage(message) ?? false;
+        return this?.webViewPanel?.webview?.postMessage(message) ?? false;
     }
 
     private toWireWorkspaceFolder(workspaceFolder: WorkspaceFolder): WireWorkspaceFolder {

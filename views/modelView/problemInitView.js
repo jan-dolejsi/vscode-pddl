@@ -368,3 +368,9 @@ function td(cell) {
 function fit() {
   network.fit();
 }
+
+// subscribe to view events
+document.body.onload = initialize;
+document.getElementById("fit").onclick = fit;
+document.getElementById("expandInset").onclick = expandInset;
+document.getElementById("closeInset").onclick = closeInset;

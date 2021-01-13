@@ -7,10 +7,9 @@ import * as vscode from 'vscode';
 import { SessionRepository, getSession, SessionContent, uploadSession, duplicateSession, checkSession } from './SessionRepository';
 import * as path from 'path';
 import { toFuzzyRelativeTime } from '../utils';
-import { utils } from 'pddl-workspace';
-import * as fs from 'fs';
 import { SessionConfiguration, saveConfiguration, SessionMode, toSessionConfiguration, CONFIGURATION_FILE } from './SessionConfiguration';
 import { PDDL_PLANNER, EXECUTABLE_OR_SERVICE } from '../configuration/configuration';
+import { exists } from '../util/workspaceFs';
 
 /**
  * Command for cloning a session to the local storage.
@@ -49,6 +48,7 @@ export class SessionSourceControl implements vscode.Disposable {
 		this.sessionRepository = new SessionRepository(workspaceFolder, session);
 		this.sessionScm.quickDiffProvider = this.sessionRepository;
 		this.sessionScm.inputBox.placeholder = session.canCommit() ? '' : 'Read-only session!';
+		this.sessionScm.inputBox.visible = false; // available from VS Code 1.45
 
 		const fileSystemWatcher = vscode.workspace.createFileSystemWatcher(new vscode.RelativePattern(workspaceFolder, "*.*"));
 		fileSystemWatcher.onDidChange(uri => this.onResourceChange(uri), context.subscriptions);
@@ -172,13 +172,13 @@ export class SessionSourceControl implements vscode.Disposable {
 
 	/** Resets the given local file content to the checked-out version. */
 	private async resetFile(fileName: string, fileContent: string): Promise<void> {
-		const filePath = this.sessionRepository.createLocalResourcePath(fileName);
-		await utils.afs.writeFile(filePath, fileContent);
+		const fileUri = this.sessionRepository.createLocalResourceUri(fileName);
+		await vscode.workspace.fs.writeFile(fileUri, Buffer.from(fileContent, "utf-8"));
 	}
 
 	private async getFileContent(fileName: string): Promise<string> {
-		const filePath = this.sessionRepository.createLocalResourcePath(fileName);
-		const document = await vscode.workspace.openTextDocument(vscode.Uri.file(filePath));
+		const fileUri = this.sessionRepository.createLocalResourceUri(fileName);
+		const document = await vscode.workspace.openTextDocument(fileUri);
 		return document.getText();
 	}
 
@@ -337,7 +337,7 @@ export class SessionSourceControl implements vscode.Disposable {
 		for (const uri of uris) {
 			let state: ChangedResourceState | undefined;
 
-			if (await utils.afs.exists(uri.fsPath)) {
+			if (await exists(uri)) {
 				const document = await vscode.workspace.openTextDocument(uri);
 				if (this.isDirty(document)) {
 					state = ChangedResourceState.Dirty;
@@ -355,12 +355,11 @@ export class SessionSourceControl implements vscode.Disposable {
 		}
 
 		for (const otherFile of otherFolderFiles) {
-			const resourcePath = path.join(this.getWorkspaceFolder().uri.fsPath, otherFile);
-			const fileStats = await utils.afs.stat(resourcePath);
-			if (fileStats.isDirectory()) { continue; }
+			const resourceUri = vscode.Uri.joinPath(this.getWorkspaceFolder().uri, otherFile);
+			const fileStats = await vscode.workspace.fs.stat(resourceUri);
+			if (fileStats.type === vscode.FileType.Directory) { continue; }
 
 			// add this file as a new file to the session changed resources
-			const resourceUri = vscode.Uri.file(resourcePath);
 			const resourceState = this.toSourceControlResourceState(resourceUri, ChangedResourceState.New);
 			changedResources.push(resourceState);
 		}
@@ -377,21 +376,17 @@ export class SessionSourceControl implements vscode.Disposable {
 	 */
 	provideSourceControlledResources(): vscode.Uri[] {
 		return [...this.session.files.keys()]
-			.map(fileName => this.sessionRepository.createLocalResourcePath(fileName))
-			.map(filePath => vscode.Uri.file(filePath));
+			.map(fileName => this.sessionRepository.createLocalResourceUri(fileName));
 	}
 
 	async getLocalFileNames(): Promise<string[]> {
-		// when VS Code upgrades to node.js 10.10, use { withFileTypes: true }
-		const fileNames: string[] //fs.Dirent[]
-			= await utils.afs.readdir(this.getWorkspaceFolder().uri.fsPath);
+		const children: [string, vscode.FileType][]
+			= await vscode.workspace.fs.readDirectory(this.getWorkspaceFolder().uri);
 
-		return fileNames
-			// use following two lines, when VS Code upgrades to node.js 10.10.*
-			// . filter(fileEnt => fileEnt.isFile())
-			// .map(fileEnt => fileEnt.name)
+		return children
 			// keep only files, not directories
-			.filter(fileName => fs.statSync(path.join(this.getWorkspaceFolder().uri.fsPath, fileName)).isFile())
+			.filter(fileEnt => fileEnt[1] === vscode.FileType.File)
+			.map(fileEnt => fileEnt[0])
 			// keep only pddl files, exclude the config file
 			.filter(fileName => fileName !== CONFIGURATION_FILE)
 			// keep only pddl files, exclude VS Code workspace file

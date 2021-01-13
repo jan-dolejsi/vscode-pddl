@@ -5,6 +5,7 @@
 'use strict';
 
 import * as path from 'path';
+import * as fs from 'fs';
 import { Node } from 'jsonc-parser';
 import { ExtensionContext, Uri, workspace, window, Range, TextDocument, Webview, Position } from 'vscode';
 import { utils } from 'pddl-workspace';
@@ -16,7 +17,7 @@ export function createPddlExtensionContext(context: ExtensionContext): PddlExten
     return {
         asAbsolutePath: context.asAbsolutePath,
         extensionPath: context.extensionPath,
-        storagePath: context.storagePath,
+        storagePath: context.storagePath, // todo: replace with storageUri
         subscriptions: context.subscriptions,
         pythonPath: function (): string { return workspace.getConfiguration().get("python.pythonPath", "python"); }
     };
@@ -24,18 +25,29 @@ export function createPddlExtensionContext(context: ExtensionContext): PddlExten
 
 export async function getWebViewHtml(extensionContext: PddlExtensionContext, options: WebViewHtmlOptions, webview?: Webview): Promise<string> {
     const overviewHtmlPath = extensionContext.asAbsolutePath(path.join(options.relativePath, options.htmlFileName));
-    let html = await utils.afs.readFile(overviewHtmlPath, { encoding: "utf-8", flag: 'r' });
+    const templateHtml = (await fs.promises.readFile(overviewHtmlPath, { encoding: "utf-8", flag: 'r' })).toString();
 
-    html = html.replace(/<(script|img|link) ([^>]*)(src|href)="([^"]+)"/g, (sourceElement: string, elementName: string, middleBits: string, attribName: string, attribValue: string) => {
-        if (attribValue.startsWith('http')) {
+    // generate nonce for secure calling of javascript
+    const nonce = !options.allowUnsafeInlineScripts ? generateNonce() : undefined;
+
+    // be sure that the template has a placeholder for Content Security Policy
+    const cspPlaceholderPattern = /<!--\s*CSP\s*-->/i;
+    if (!templateHtml.match(cspPlaceholderPattern) || templateHtml.includes('http-equiv="Content-Security-Policy"')) {
+        throw new Error(`Template does not contain CSP placeholder or contains rogue CSP.`);
+    }
+    
+    let html = templateHtml.replace(/<(script|img|link) ([^>]*)(src|href)="([^"]+)"/g, (sourceElement: string, elementName: string, middleBits: string, attribName: string, attribValue: string) => {
+        if (isAbsoluteWebview(attribValue)) {
             return sourceElement;
         }
-        const resource = asWebviewUri(Uri.file(extensionContext.asAbsolutePath(path.join(options.relativePath, attribValue))), webview);
-        return `<${elementName} ${middleBits}${attribName}="${resource}"`;
+        const resource = getWebviewUri(extensionContext, options.relativePath, attribValue, webview);
+        const nonceAttr = elementName.toLowerCase() === "script" && attribName.toLowerCase() === "src" && nonce ? `nonce="${nonce}" ` : "";
+        return `<${elementName} ${middleBits ?? ""}${nonceAttr}${attribName}="${resource}"`;
     });
 
     if (webview) {
-        html = html.replace("<!--CSP-->", createContentSecurityPolicy(webview, options));
+        cspPlaceholderPattern.lastIndex = 0;
+        html = html.replace(cspPlaceholderPattern, createContentSecurityPolicy(extensionContext, webview, options, nonce));
     }
 
     return html;
@@ -52,24 +64,71 @@ export interface WebViewHtmlOptions {
     externalStyles?: Uri[];
     /** Locations of any external images, e.g. https://somewhere, or data: */
     externalImages?: Uri[];
+    /** Locations of any fonts, e.g. file://../.ttf: */
+    fonts?: Uri[];
+    /** Disallow inline styles. */
+    disableUnsafeInlineStyle?: boolean;
+    /** Allow inline scripts. */
+    allowUnsafeInlineScripts?: boolean;
+    /** Allow eval() */
+    allowUnsafeEval?: boolean;
+}
+
+function isAbsoluteWebview(attribValue: string): boolean {
+    return attribValue.match(/^(http[s]?|data):/i) !== null;
+}
+
+function getWebviewUri(extensionContext: PddlExtensionContext, relativePath: string, fileName: string, webview?: Webview): Uri {
+    return asWebviewUri(Uri.file(extensionContext.asAbsolutePath(path.join(relativePath, fileName))), webview);
+}
+
+function getAbsoluteWebviewUri(extensionContext: PddlExtensionContext, webview: Webview, options: WebViewHtmlOptions, uri: Uri): Uri {
+    if (uri.scheme === "file") {
+        return getWebviewUri(extensionContext, options.relativePath, uri.fsPath.replace(/^\/..\//, '../'), webview);
+    } else {
+        return uri;
+    }
+}
+
+function getAbsoluteWebviewUrisSSV(extensionContext: PddlExtensionContext, webview: Webview, options: WebViewHtmlOptions, uris?: Uri[]): string {
+    return uris?.map(uri => getAbsoluteWebviewUri(extensionContext, webview, options, uri).toString()).join(" ") ?? "";
 }
 
 export function asWebviewUri(localUri: Uri, webview?: Webview): Uri {
-    if (webview) {
-        return webview.asWebviewUri(localUri);
-    }
-    else {
-        return localUri.with({ scheme: "vscode-resource" });
-    }
+    return webview?.asWebviewUri(localUri) ?? localUri.with({ scheme: "vscode-resource" });
 }
 
-function createContentSecurityPolicy(webview: Webview, options: WebViewHtmlOptions): string {
-    const externalStyles = options.externalStyles?.map(uri => uri.toString()).join(" ") ?? "";
-    const externalScripts = options.externalScripts?.map(uri => uri.toString()).join(" ") ?? "";
-    const externalImages = options.externalImages?.map(uri => uri.toString()).join(" ") ?? "";
+function createContentSecurityPolicy(extensionContext: PddlExtensionContext, webview: Webview, options: WebViewHtmlOptions, nonce: string | undefined): string {
+    const externalStyles = getAbsoluteWebviewUrisSSV(extensionContext, webview, options, options.externalStyles);
+    const externalScripts = getAbsoluteWebviewUrisSSV(extensionContext, webview, options, options.externalScripts);
+    const externalImages = getAbsoluteWebviewUrisSSV(extensionContext, webview, options, options.externalImages);
+    const fonts = getAbsoluteWebviewUrisSSV(extensionContext, webview, options, options.fonts);
+    const unsafeInline = "'unsafe-inline'";
+    const scriptUnsafeInline = options.allowUnsafeInlineScripts ? unsafeInline : '';
+    const scriptUnsafeEval = options.allowUnsafeEval ? "'unsafe-eval'" : '';
+    const styleUnsafeInline = options.disableUnsafeInlineStyle ? '' : unsafeInline;
+    const nonceCsp = nonce ? `'nonce-${nonce}'` : '';
+
     return `<meta http-equiv="Content-Security-Policy"
-\t\tcontent="default-src 'none'; img-src ${webview.cspSource} ${externalImages} https:; script-src ${webview.cspSource} ${externalScripts} 'unsafe-inline'; style-src ${webview.cspSource} ${externalStyles} 'unsafe-inline';"
+\t\tcontent="default-src 'none'; `+
+        `img-src ${webview.cspSource} ${externalImages} https:; ` +
+        `font-src ${fonts};` +
+        `script-src ${webview.cspSource} ${externalScripts} ${scriptUnsafeInline} ${scriptUnsafeEval} ${nonceCsp}; ` +
+        `style-src ${webview.cspSource} ${externalStyles} ${styleUnsafeInline};"
 \t/>`;
+}
+
+function generateNonce(): string {
+    let text = '';
+    const possible = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    for (let i = 0; i < 32; i++) {
+        text += possible.charAt(Math.floor(Math.random() * possible.length));
+    }
+    return text;
+}
+
+export interface WebviewUriConverter {
+    asWebviewUri(localResource: Uri): Uri;
 }
 
 export function sleep(ms: number): Promise<void> {
@@ -197,12 +256,8 @@ export function toUri(uri: URI): Uri {
     return Uri.parse(uri.toString());
 }
 
-export function equalsCaseInsensitive(text1: string, text2: string): boolean {
-    return text1.toLowerCase() === text2.toLowerCase();
-}
-
 export function toRange(pddlRange: PddlRange): Range {
-    return new Range(pddlRange.startLine, pddlRange.startCharacter, pddlRange.endLine, pddlRange.endCharacter);
+    return new Range(toPosition(pddlRange.start), toPosition(pddlRange.end));
 }
 
 export function nodeToRange(document: TextDocument, node: parser.PddlSyntaxNode): Range {
@@ -223,41 +278,6 @@ export class UriMap<T> extends utils.StringifyingMap<Uri, T> {
     protected stringifyKey(key: Uri): string {
         return key.toString();
     }
-}
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function asSerializable(obj: any): any {
-    if (obj instanceof Map) {
-        return strMapToObj(obj);
-    }
-    else if (obj instanceof Array) {
-        return obj.map(o => asSerializable(o));
-    }
-    else if (obj instanceof Object) {
-        const serObj = Object.create(null);
-        Object.keys(obj).forEach(key => serObj[key] = asSerializable(obj[key]));
-        return serObj;
-    }
-    else {
-        return obj;
-    }
-}
-
-export function strMapToObj(strMap: Map<string, unknown>): unknown {
-    const obj = Object.create(null);
-    for (const [k, v] of strMap) {
-        obj[k] = asSerializable(v);
-    }
-    return obj;
-}
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function objToStrMap(obj: any): Map<string, any> {
-    const strMap = new Map();
-    for (const k of Object.keys(obj)) {
-        strMap.set(k, obj[k]);
-    }
-    return strMap;
 }
 
 export async function fileExists(manifestUri: Uri): Promise<boolean> {

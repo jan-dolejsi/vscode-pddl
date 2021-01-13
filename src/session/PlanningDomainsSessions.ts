@@ -4,11 +4,9 @@
  * ------------------------------------------------------------------------------------------ */
 'use strict';
 
-import { ExtensionContext, window, Uri, commands, workspace, Disposable, WorkspaceFolder, QuickPickItem, ViewColumn, SourceControl, env } from 'vscode';
+import { ExtensionContext, window, Uri, commands, workspace, Disposable, WorkspaceFolder, QuickPickItem, ViewColumn, SourceControl, env, FileType } from 'vscode';
 import { instrumentOperationAsVsCodeCommand } from "vscode-extension-telemetry-wrapper";
 import { firstIndex, showError } from '../utils';
-import { utils } from 'pddl-workspace';
-import * as path from 'path';
 import * as opn from 'open';
 import { SessionDocumentContentProvider } from './SessionDocumentContentProvider';
 import { SessionSourceControl, SESSION_COMMAND_LOAD, SESSION_COMMAND_CHECKOUT, SESSION_COMMAND_REFRESH_ALL } from './SessionSourceControl';
@@ -18,6 +16,7 @@ import { SessionUriHandler } from './SessionUriHandler';
 import { StudentNameParser, StudentName } from './StudentNameParser';
 import { Classroom, StudentSession } from './Classroom';
 import { ChildProcess } from 'child_process';
+import { doesNotExist, isNotDirectory } from '../util/workspaceFs';
 
 /**
  * Handles the life-cycle of the planning-domains sessions.
@@ -274,9 +273,9 @@ export class PlanningDomainsSessions {
                 workspaceFolderIndex = selectedFolder.index;
                 workspaceFolderUri = selectedFolder.uri;
             } else {
-                if (!(await utils.afs.exists(folderUri.fsPath))) {
-                    await utils.afs.mkdirIfDoesNotExist(folderUri.fsPath, 0o777);
-                } else if (!(await utils.afs.stat(folderUri.fsPath)).isDirectory()) {
+                if (await doesNotExist(folderUri)) {                    
+                    await workspace.fs.createDirectory(folderUri); /* 0o777 */
+                } else if (isNotDirectory(folderUri)) {
                     window.showErrorMessage("Selected path is not a directory.");
                     return undefined;
                 }
@@ -291,8 +290,13 @@ export class PlanningDomainsSessions {
             if (workspace.workspaceFolders && workspace.workspaceFolders.length > 0) {
                 folderPicks.push(newWorkspaceFolderPick);
 
+                // for all workspace folders...
                 for (const wf of workspace.workspaceFolders) {
-                    const content = await utils.afs.readdir(wf.uri.fsPath);
+                    // ... add all their nested folders
+                    const content = (await workspace.fs.readDirectory(wf.uri))
+                        .filter(child => child[1] === FileType.Directory)
+                        .map(child => child[0]); // get name
+                    
                     folderPicks.push(new ExistingWorkspaceFolderPick(wf, content));
                 }
             }
@@ -357,7 +361,9 @@ export class PlanningDomainsSessions {
         if (!workspaceFolderUri) { return undefined; }
 
         // check if the workspace is empty, or clear it
-        const existingWorkspaceFiles: string[] = await utils.afs.readdir(workspaceFolderUri.fsPath);
+        const existingWorkspaceFiles: string[] = (await workspace.fs.readDirectory(workspaceFolderUri))
+            .map(child => child[0]); // take file name, not the type
+        
         if (existingWorkspaceFiles.length > 0) {
             const answer = await window.showQuickPick(["Yes", "No"],
                 { placeHolder: `Remove ${existingWorkspaceFiles.length} file(s) from the folder ${workspaceFolderUri.fsPath} before cloning the remote repository?` });
@@ -366,7 +372,7 @@ export class PlanningDomainsSessions {
             if (answer === "Yes") {
                 existingWorkspaceFiles
                     .forEach(async filename =>
-                        await utils.afs.unlink(path.join(workspaceFolderUri.fsPath, filename)));
+                        await workspace.fs.delete(Uri.joinPath(workspaceFolderUri, filename), { recursive: true, useTrash: true }));
             }
         }
 

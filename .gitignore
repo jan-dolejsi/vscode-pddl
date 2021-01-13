@@ -9,6 +9,8 @@ tsc.log
 coverage/
 .nyc_output/
 CHANGELOG.html
-views/common/vis-network.min.*
+**/out-test/
 src/test/tmpUserProfile/
 src/test/tmpFolder/
+debug.log
+**/package-lock.json

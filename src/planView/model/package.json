@@ -1,0 +1,6 @@
+{
+	"name": "plan-webview-model",
+	"description": "This module exposes the contract for communication with the plan webview",
+	"main": "./index.js",
+	"types": "./index.d.ts"
+}

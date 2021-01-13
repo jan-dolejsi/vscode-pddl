@@ -9,9 +9,10 @@ import { before, beforeEach, afterEach } from 'mocha';
 import { expect } from 'chai';
 import { MockPlannerProvider, activateExtension, clearWorkspaceFolder, clearConfiguration } from './testUtils';
 import { assertDefined } from '../../utils';
-import { plannersConfiguration, codePddlWorkspace } from '../../extension';
+import { plannersConfiguration, codePddlWorkspaceForTests } from '../../extension';
 import { PlannerConfigurationScope, CONF_PLANNERS, CONF_SELECTED_PLANNER } from '../../configuration/PlannersConfiguration';
 import { PDDL_PLANNER, EXECUTABLE_OR_SERVICE, EXECUTABLE_OPTIONS, CONF_PDDL } from '../../configuration/configuration';
+import { fail } from 'assert';
 
 suite('Planner configuration test', () => {
 
@@ -29,7 +30,7 @@ suite('Planner configuration test', () => {
 		await clearConfiguration();
 	});
 
-	test('Default planners are returned in blank configuration', async () => {
+	test('Default planners are returned in blank configuration', () => {
 		const wf = assertDefined(workspace.workspaceFolders, "workspace folders")[0];
 
 		// WHEN
@@ -64,9 +65,10 @@ suite('Planner configuration test', () => {
 		expect(createdPlanner.scope).to.equal(PlannerConfigurationScope.User);
 		expect(createdPlanner.configuration.path).to.not.be.undefined;
 		expect(createdPlanner.configuration.path).to.startWith('node');
+		expect(selectedPlanner).to.not.be.undefined;
 		expect(selectedPlanner).to.deep.equal(createdPlanner);
-		expect(selectedPlanner.index).to.equal(0);
-		expect(selectedPlanner.workspaceFolder).to.be.undefined;
+		expect(selectedPlanner?.index).to.equal(0);
+		expect(selectedPlanner?.workspaceFolder).to.be.undefined;
 	});
 
 	test('Crates a workspace folder planner', async () => {
@@ -74,9 +76,9 @@ suite('Planner configuration test', () => {
 
 		{
 			const plannersInspect = workspace.getConfiguration(CONF_PDDL, wf).inspect(CONF_PLANNERS);
-			expect(plannersInspect.globalValue).to.be.undefined;
-			expect(plannersInspect.workspaceValue).to.be.undefined;
-			expect(plannersInspect.workspaceFolderValue).to.be.undefined;
+			expect(plannersInspect?.globalValue).to.be.undefined;
+			expect(plannersInspect?.workspaceValue).to.be.undefined;
+			expect(plannersInspect?.workspaceFolderValue).to.be.undefined;
 		}
 
 		// GIVEN the mock planner is configured
@@ -97,9 +99,10 @@ suite('Planner configuration test', () => {
 		expect(createdPlanner.scope).to.equal(PlannerConfigurationScope.WorkspaceFolder);
 		expect(createdPlanner.configuration.path).to.not.be.undefined;
 		expect(createdPlanner.configuration.path).to.startWith('node');
+		expect(selectedPlanner).to.not.be.undefined;
 		expect(selectedPlanner).to.deep.equal(createdPlanner);
-		expect(selectedPlanner.index).to.equal(0);
-		expect(selectedPlanner.workspaceFolder).to.equal(wf.uri.toString());
+		expect(selectedPlanner?.index).to.equal(0);
+		expect(selectedPlanner?.workspaceFolder).to.equal(wf.uri.toString());
 	});
 
 	test('When identical planner is created again, title should be made unique', async () => {
@@ -146,8 +149,8 @@ suite('Planner configuration test', () => {
 		const selectedPlanner = plannersConfiguration.getSelectedPlanner(wf);
 		expect(selectedPlanner, "after the global planner is selected, it should be ... selected").to.deep.equal(globalPlannerConfig);
 		const selectedPlannerInspect = workspace.getConfiguration(CONF_PDDL, wf).inspect<string>(CONF_SELECTED_PLANNER);
-		expect(selectedPlannerInspect.globalValue).to.equal(globalPlannerConfig.configuration.title);
-		expect(selectedPlannerInspect.workspaceFolderValue).to.be.undefined;
+		expect(selectedPlannerInspect?.globalValue).to.equal(globalPlannerConfig.configuration.title);
+		expect(selectedPlannerInspect?.workspaceFolderValue).to.be.undefined;
 	});
 
 	test('Selecting planner in a scope is saved to the given scope', async () => {
@@ -175,8 +178,8 @@ suite('Planner configuration test', () => {
 		expect(selectedPlanner, "after the folder planner is selected, it should be ... selected").to.deep.equal(folderPlannerConfig);
 
 		const selectedPlannerInspect = workspace.getConfiguration(CONF_PDDL, wf).inspect(CONF_SELECTED_PLANNER);
-		expect(selectedPlannerInspect.globalValue).to.equal(globalPlannerConfig.configuration.title);
-		expect(selectedPlannerInspect.workspaceFolderValue).to.equal(folderPlannerConfig.configuration.title);
+		expect(selectedPlannerInspect?.globalValue).to.equal(globalPlannerConfig.configuration.title);
+		expect(selectedPlannerInspect?.workspaceFolderValue).to.equal(folderPlannerConfig.configuration.title);
 	});
 
 	test('Re-configures planner', async () => {
@@ -184,13 +187,15 @@ suite('Planner configuration test', () => {
 		const plannerProvider = new MockPlannerProvider({ canConfigure: true });
 
 		// GIVEN the mock planner is configured
-		codePddlWorkspace.pddlWorkspace.getPlannerRegistrar().registerPlannerProvider(plannerProvider.kind, plannerProvider);
+		codePddlWorkspaceForTests?.pddlWorkspace.getPlannerRegistrar().registerPlannerProvider(plannerProvider.kind, plannerProvider);
 		const mockConfiguration = await plannerProvider.configurePlanner();
 		const scopedMockConfiguration = await plannersConfiguration.addPlannerConfiguration(PlannerConfigurationScope.WorkspaceFolder, mockConfiguration, wf);
 
 		// WHEN
 		const preSelectedPlanner = plannersConfiguration.getSelectedPlanner(wf);
 		expect(preSelectedPlanner).to.deep.equal(scopedMockConfiguration);
+		expect(preSelectedPlanner).to.not.be.undefined;
+		if (!preSelectedPlanner) { fail(); }
 		// modify the mock provider
 		plannerProvider.setExpectedPath('java -jar asdf.jar');
 		const updatedConfiguration = await plannersConfiguration.configureAndSavePlanner(preSelectedPlanner);
@@ -207,9 +212,10 @@ suite('Planner configuration test', () => {
 		expect(actualUpdatedPlanner).to.not.be.undefined;
 		expect(actualUpdatedPlanner.path).to.not.be.undefined;
 		expect(actualUpdatedPlanner.path).to.startWith('java');
-		expect(postSelectedPlanner.configuration).to.deep.equal(actualUpdatedPlanner);
+		expect(postSelectedPlanner).to.not.be.undefined;
 		expect(postSelectedPlanner).to.deep.equal(updatedConfiguration);
-		expect(postSelectedPlanner.index).to.equal(0);
+		expect(postSelectedPlanner?.configuration).to.deep.equal(actualUpdatedPlanner);
+		expect(postSelectedPlanner?.index).to.equal(0);
 	});
 
 	test('Deletes user-level planner', async () => {

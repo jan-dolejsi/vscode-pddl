@@ -8,9 +8,7 @@
 
 import request = require('request');
 import { sleep } from '../utils';
-import { SearchHappening, MockSearchHappening, MockHelpfulAction } from './SearchHappening';
-import { HappeningType } from 'pddl-workspace';
-import { HelpfulAction } from 'pddl-workspace';
+import { HappeningType, HelpfulAction, search } from 'pddl-workspace';
 import { DEFAULT_EPSILON } from '../configuration/configuration';
 
 export class MockSearch {
@@ -114,15 +112,15 @@ export class MockSearch {
     //     });
     // }
 
-    private state0: MockStateContext | undefined;
-    private state0_0: MockStateContext | undefined;
-    private state0_1: MockStateContext | undefined;
-    private state0_0_0: MockStateContext | undefined;
-    private state0_0_1: MockStateContext | undefined;
-    private state0_1_0: MockStateContext | undefined;
-    private state0_1_1: MockStateContext | undefined;
-    private state0_1_0_0: MockStateContext | undefined;
-    private state0_1_0_0_0: MockStateContext | undefined;
+    private state0: MockStateContext | undefined = undefined;
+    private state0_0: MockStateContext | undefined = undefined;
+    private state0_1: MockStateContext | undefined = undefined;
+    private state0_0_0: MockStateContext | undefined = undefined;
+    private state0_0_1: MockStateContext | undefined = undefined;
+    private state0_1_0: MockStateContext | undefined = undefined;
+    private state0_1_1: MockStateContext | undefined = undefined;
+    private state0_1_0_0: MockStateContext | undefined = undefined;
+    private state0_1_0_0_0: MockStateContext | undefined = undefined;
 
     private readonly events = [
         new MockStateContextEvent("post-initial", this.state0 = MockStateContext.createInitial()),
@@ -211,7 +209,7 @@ class MockStateSearchContextEvent extends MockEvent {
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-function toWireSearchHappening(happening: SearchHappening): any {
+function toWireSearchHappening(happening: search.SearchHappening): any {
     return {
         earliestTime: happening.earliestTime,
         actionName: happening.actionName,
@@ -231,7 +229,7 @@ function toWireHelpfulAction(action: HelpfulAction): any {
 class MockStateSearchContext {
     constructor(public readonly stateContext: MockStateContext, public readonly totalMakespan: number,
         public readonly h: number, public readonly helpfulActions: HelpfulAction[],
-        public readonly relaxedPlan: SearchHappening[]) {
+        public readonly relaxedPlan: search.SearchHappening[]) {
 
     }
 }
@@ -244,7 +242,7 @@ class MockStateContext {
 
     constructor(public readonly state: MockState, public readonly g: number, public readonly earliestTime: number,
         public readonly appliedAction: MockSearchHappening | undefined,
-        public readonly planHead: SearchHappening[], public readonly parentId?: string) {
+        public readonly planHead: search.SearchHappening[], public readonly parentId?: string) {
     }
 
     get actionName(): string | undefined{
@@ -255,7 +253,7 @@ class MockStateContext {
         return this.planHead.length === 0;
     }
 
-    getLastHappening(): SearchHappening {
+    getLastHappening(): search.SearchHappening {
         if (this.isInitialState()) {
             throw new Error("Check if this is an initial state first..");
         }
@@ -273,7 +271,7 @@ class MockStateContext {
     apply(actionName: string, shotCounter: number, kind: HappeningType, timeIncrement: number): MockStateContext {
         const id = ++MockState.lastStateId;
         const earliestTime = this.earliestTime + timeIncrement;
-        const appliedAction = new MockSearchHappening(earliestTime, actionName, shotCounter, kind, false);
+        const appliedAction = new MockSearchHappening(earliestTime, actionName, shotCounter, 1, kind, false);
         const newPlanHead = this.planHead.concat([appliedAction]);
         return new MockStateContext(new MockState(id.toString()), this.g + 1, earliestTime, appliedAction, newPlanHead, this.state.id);
     }
@@ -313,7 +311,7 @@ const EPSILON = DEFAULT_EPSILON;
 
 class RelaxedPlanBuilder {
 
-    happenings: SearchHappening[] = [];
+    happenings: search.SearchHappening[] = [];
     time: number;
 
     constructor(private readonly earliestStateTime: number) {
@@ -322,17 +320,42 @@ class RelaxedPlanBuilder {
 
     start(actionName: string): RelaxedPlanBuilder {
         const time = this.time += EPSILON;
-        this.happenings.push(new MockSearchHappening(time, actionName, 0, HappeningType.START, true));
+        this.happenings.push(new MockSearchHappening(time, actionName, 0, 1, HappeningType.START, true));
         return this;
     }
 
     end(timeOffset: number, actionName: string): RelaxedPlanBuilder {
         const time = this.time += timeOffset;
-        this.happenings.push(new MockSearchHappening(time, actionName, 0, HappeningType.END, true));
+        this.happenings.push(new MockSearchHappening(time, actionName, 0, 1, HappeningType.END, true));
         return this;
     }
 
-    build(): SearchHappening[] {
+    build(): search.SearchHappening[] {
         return this.happenings;
+    }
+}
+
+
+class MockSearchHappening implements search.SearchHappening{
+    constructor(public readonly earliestTime: number, public readonly actionName: string,
+        public readonly shotCounter: number, public readonly iterations: number,
+        public readonly kind: HappeningType, public readonly isRelaxed: boolean) { }
+
+    toString(): string {
+        const relaxed = this.isRelaxed ? '*' : '';
+        const iterations = this.iterations > 1 ? ` ${this.iterations}x` : '';
+        return `${this.earliestTime}: ${this.actionName}[${this.shotCounter}] ${this.kind}${relaxed}${iterations}`;
+    }
+}
+
+class MockHelpfulAction implements HelpfulAction {
+    constructor(public readonly actionName: string, public readonly kind: HappeningType) { }
+
+    static start(actionName: string): MockHelpfulAction {
+        return new MockHelpfulAction(actionName, HappeningType.START);
+    }
+
+    static end(actionName: string): MockHelpfulAction {
+        return new MockHelpfulAction(actionName, HappeningType.END);
     }
 }

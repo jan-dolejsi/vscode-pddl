@@ -3,7 +3,7 @@ import * as path from 'path';
 import * as os from 'os';
 import * as tmp from 'tmp-promise';
 import { PddlExtensionContext, planner } from 'pddl-workspace';
-import { Disposable, workspace, ExtensionContext, Memento, extensions, Event, FileType, Uri, ConfigurationTarget } from 'vscode';
+import { Disposable, workspace, ExtensionContext, Memento, extensions, Event, FileType, Uri, ConfigurationTarget, EnvironmentVariableCollection, EnvironmentVariableMutator, ExtensionMode } from 'vscode';
 import { assertDefined } from '../../utils';
 import { CONF_PDDL } from '../../configuration/configuration';
 import { CONF_PLANNERS, CONF_SELECTED_PLANNER } from '../../configuration/PlannersConfiguration';
@@ -47,6 +47,43 @@ class MockMemento implements Memento {
     async update(key: string, value: any): Promise<void> {
         this.map.set(key, value);
     }
+
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    setKeysForSync(keys: string[]): void {
+        console.warn(`Key syncing not supported in mock. ${keys}`);
+    }
+}
+
+class MockEnvironmentVariableCollection implements EnvironmentVariableCollection {
+    persistent = true;
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    replace(_variable: string, _value: string): void {
+        throw new Error('Method not implemented.');
+    }
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    append(_variable: string, _value: string): void {
+        throw new Error('Method not implemented.');
+    }
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    prepend(_variable: string, _value: string): void {
+        throw new Error('Method not implemented.');
+    }
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    get(_variable: string): EnvironmentVariableMutator {
+        throw new Error('Method not implemented.');
+    }
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    forEach(callback: (variable: string, mutator: EnvironmentVariableMutator, collection: EnvironmentVariableCollection) => any, thisArg?: any): void {
+        throw new Error(`Method not implemented. ${callback}, ${thisArg}`);
+    }
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    delete(_variable: string): void {
+        throw new Error('Method not implemented.');
+    }
+    clear(): void {
+        throw new Error('Method not implemented.');
+    }
+    
 }
 
 export async function createTestExtensionContext(): Promise<ExtensionContext> {
@@ -60,11 +97,17 @@ export async function createTestExtensionContext(): Promise<ExtensionContext> {
         asAbsolutePath: function (path: string): string { throw new Error(`Unsupported. ` + path); },
         extensionPath: '.',
         storagePath: storage.path,
+        storageUri: Uri.file(storage.path),
         subscriptions: new Array<Disposable>(),
         globalState: new MockMemento(),
         workspaceState: new MockMemento(),
         globalStoragePath: globalStorage.path,
+        globalStorageUri: Uri.file(globalStorage.path),
         logPath: log.path,
+        logUri: Uri.file(log.path),
+        environmentVariableCollection: new MockEnvironmentVariableCollection(),
+        extensionMode: ExtensionMode.Development,
+        extensionUri: Uri.file(process.cwd()),
     };
 }
 
@@ -95,7 +138,9 @@ export class MockPlannerProvider implements planner.PlannerProvider {
 
     setExpectedPath(path: string): void {
         this.path = path;
-        this.options.canConfigure = true;
+        if (this.options) {
+            this.options.canConfigure = true;
+        }
     }
 }
 
@@ -170,11 +215,11 @@ export async function clearConfiguration(): Promise<void> {
     await workspace.getConfiguration(CONF_PDDL).update(CONF_PLANNERS, undefined, ConfigurationTarget.Workspace);
     await workspace.getConfiguration(CONF_PDDL).update(CONF_SELECTED_PLANNER, undefined, ConfigurationTarget.Workspace);
 
-    const workspaceFolderDeletions = workspace.workspaceFolders.map(async wf => {
+    const workspaceFolderDeletions = workspace.workspaceFolders?.map(async wf => {
         console.warn(`Skipped clearing of workspace-folder configuration for ${wf.name}`);
         // await workspace.getConfiguration(CONF_PDDL, wf).update(CONF_PLANNERS, undefined, ConfigurationTarget.WorkspaceFolder);
         // await workspace.getConfiguration(CONF_PDDL, wf).update(CONF_SELECTED_PLANNER, undefined, ConfigurationTarget.WorkspaceFolder);
-    });
+    }) ?? [];
 
     await Promise.all(workspaceFolderDeletions);
 }

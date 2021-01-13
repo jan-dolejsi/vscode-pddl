@@ -184,3 +184,20 @@ function toggleSettings() {
 function reset() {
   updateGraph(_origData);
 }
+
+
+// subscribe to view events
+document.body.onload = initialize;
+document.body.onresize = resize; 
+document.getElementById("reset").onclick = reset;
+document.getElementById("toggleSettings").onclick = toggleSettings;
+document.getElementById("fit").onclick = fit;
+
+document.getElementById("topDown-light").onclick = topDown;
+document.getElementById("topDown-dark").onclick = topDown;
+
+document.getElementById("leftRight-light").onclick = leftRight;
+document.getElementById("leftRight-dark").onclick = leftRight;
+
+document.getElementById("expandInset").onclick = expandInset;
+document.getElementById("closeInset").onclick = closeInset;

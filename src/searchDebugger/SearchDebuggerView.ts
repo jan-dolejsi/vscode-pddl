@@ -10,12 +10,10 @@ import {
 import * as path from 'path';
 
 import { getWebViewHtml, createPddlExtensionContext } from '../utils';
-import { State } from './State';
-import { PlanReportGenerator } from '../planning/PlanReportGenerator';
-import { StateToPlan } from './StateToPlan';
 import { StateResolver } from './StateResolver';
-import { ProblemInfo } from 'pddl-workspace';
-import { DomainInfo } from 'pddl-workspace';
+import { ProblemInfo, DomainInfo, utils, search } from 'pddl-workspace';
+import { DEFAULT_EPSILON } from '../configuration/configuration';
+import { getDomainVisualizationConfigurationDataForPlan } from '../planView/DomainVisualization';
 
 export class SearchDebuggerView {
     private webViewPanel: WebviewPanel | undefined;
@@ -27,6 +25,8 @@ export class SearchDebuggerView {
     private stateLogLineCache = new Map<string, number>();
     private domain: DomainInfo | undefined;
     private problem: ProblemInfo | undefined;
+    private serializableDomain: DomainInfo | undefined;
+    private serializableProblem: ProblemInfo | undefined;
 
     // cached values
     private debuggerState: boolean | undefined;
@@ -54,6 +54,16 @@ export class SearchDebuggerView {
     setDomainAndProblem(domain: DomainInfo, problem: ProblemInfo): void {
         this.domain = domain;
         this.problem = problem;
+        this.serializableDomain = undefined;
+        this.serializableProblem = undefined;
+    }
+
+    getSerializableDomain(): DomainInfo | undefined {
+        return this.serializableDomain ?? (this.serializableDomain = this.domain && utils.serializationUtils.makeSerializable(this.domain));
+    }
+
+    getSerializableProblem(): ProblemInfo | undefined {
+        return this.serializableProblem ?? (this.serializableProblem = this.problem && utils.serializationUtils.makeSerializable(this.problem));
     }
 
     async showDebugView(): Promise<void> {
@@ -138,20 +148,30 @@ export class SearchDebuggerView {
             case 'toggleStateLog':
                 this.toggleStateLog();
                 break;
+            case 'revealAction':
+                this.domain && commands.executeCommand("pddl.revealAction", this.domain.fileUri, message.action);
+                break;
             default:
                 console.warn('Unexpected command: ' + message.command);
         }
     }
 
-    CONTENT_FOLDER = path.join('views', 'searchview');
+    readonly VIEWS = "views";
+    readonly STATIC_CONTENT_FOLDER = path.join(this.VIEWS, "searchview", "static");
+    readonly COMMON_FOLDER = path.join(this.VIEWS, "common");
 
     async getHtml(webview: Webview): Promise<string> {
         const googleCharts = Uri.parse("https://www.gstatic.com/charts/");
         return getWebViewHtml(createPddlExtensionContext(this.context), {
-            relativePath: this.CONTENT_FOLDER, htmlFileName: 'search.html',
+            relativePath: this.STATIC_CONTENT_FOLDER, htmlFileName: 'search.html',
             externalImages: [Uri.parse('data:')],
+            allowUnsafeInlineScripts: true, // todo: false?
+            allowUnsafeEval: true,
             externalScripts: [googleCharts],
-            externalStyles: [googleCharts]
+            externalStyles: [googleCharts],
+            fonts: [
+                Uri.file(path.join("..", "..", "..", this.COMMON_FOLDER, "codicon.ttf"))
+            ]
         }, webview);
     }
 
@@ -170,12 +190,12 @@ export class SearchDebuggerView {
         });
     }
 
-    addState(newState: State): void {
+    addState(newState: search.SearchState): void {
         new Promise(() => this.postMessage({ command: 'stateAdded', state: newState }))
             .catch(reason => console.log(reason));
     }
 
-    update(state: State): void {
+    update(state: search.SearchState): void {
         new Promise(() => this.postMessage({ command: 'stateUpdated', state: state }))
             .catch(reason => console.log(reason));
     }
@@ -186,7 +206,7 @@ export class SearchDebuggerView {
             .catch(reason => console.log(reason));
     }
 
-    displayBetterState(state: State): void {
+    displayBetterState(state: search.SearchState): void {
         try {
             this.showStatePlan(state.id);
         } catch (ex) {
@@ -194,7 +214,7 @@ export class SearchDebuggerView {
         }
     }
 
-    displayPlan(planStates: State[]): void {
+    displayPlan(planStates: search.SearchState[]): void {
         new Promise(() => this.postMessage({ command: 'showPlan', state: planStates }))
             .catch(reason => console.log(reason));
     }
@@ -214,12 +234,16 @@ export class SearchDebuggerView {
         if (this.search === undefined) { return void 0; }
         if (stateId === null) { return void 0; }
         const state = this.search.getState(stateId);
-        if (!state) { return; }
-        const statePlan = new StateToPlan(this.domain, this.problem).convert(state);
-        const planHtml = await new PlanReportGenerator(this.context,
-            { displayWidth: 200, selfContained: false, disableLinePlots: true, disableSwimLaneView: false, disableHamburgerMenu: true })
-            .generateHtml([statePlan]);
-        this.postMessage({ command: 'showStatePlan', state: planHtml });
+        if (!state || !this.webViewPanel) { return; }
+        
+        const statePlan = new search.SearchStateToPlan(this.getSerializableDomain(),
+            this.getSerializableProblem(), DEFAULT_EPSILON).convert(state);
+        
+        const plansData = await getDomainVisualizationConfigurationDataForPlan(statePlan);
+
+        this.postMessage({
+            command: 'showStatePlan', state: plansData
+        });
     }
 
     clear(): void {

@@ -27,6 +27,12 @@ function initialize() {
         });
     };
 
+    document.getElementById('settings').onclick = () => postCommand('command:pddl.settings');
+    document.getElementById('plannersJsonSettings').onclick = () => postCommand('command:pddl.plannersJsonSettings');
+    document.getElementById('addPlanner').onclick = () => postCommand('command:pddl.addPlanner');
+    document.getElementById('configureParser').onclick = () => postCommand('command:pddl.configureParser');
+    document.getElementById('configureValidate').onclick = () => postCommand('command:pddl.configureValidate');
+    
     onLoad();
 }
 
@@ -126,18 +132,15 @@ function updateWorkspaceFolders(workspaceFolders, selectedWorkspaceFolder) {
  * Replaces table of planner configurations
  * @param {ScopedPlannerConfig[]} planners planner configurations
  * @param {string} selectedPlanner title of the selected planner
- * @param {string} imagesPath path to images
  * @returns {void}
  */
-function updatePlanners(planners, selectedPlanner, imagesPath) {
+function updatePlanners(planners, selectedPlanner) {
     if (!planners) { return; }
     const plannersTable = document.getElementById('planners');
 
     while (plannersTable.hasChildNodes()) {
         plannersTable.childNodes.forEach(child => child.remove());
     }
-
-    const currentTheme = getThemeName(document.body.className);
 
     planners.forEach(scopedConfig => {
         const config = scopedConfig.configuration;
@@ -156,15 +159,15 @@ function updatePlanners(planners, selectedPlanner, imagesPath) {
         label.innerText = config.title;
 
         const td1 = tr.appendChild(document.createElement("td"));
-        addScopeIcon(td1, scopedConfig.scope, imagesPath, currentTheme, scopedConfig);
+        addScopeIcon(td1, scopedConfig.scope, scopedConfig);
 
         const td2 = tr.appendChild(document.createElement("td"));
         td2.className = "plannerConfig";
         if (scopedConfig.scope !== SCOPE_DEFAULT && config.canConfigure) {
-            addThemedImageButton(td2, imagesPath, "gear.svg", currentTheme, "Configure planner...", () => configurePlanner(scopedConfig));
+            addCodiconButton(td2, "gear", "Configure planner...", () => configurePlanner(scopedConfig));
         }
         if (scopedConfig.scope !== SCOPE_DEFAULT) {
-            addThemedImageButton(td2, imagesPath, "trash.svg", currentTheme, "Remove this planner configuration...", () => deletePlanner(scopedConfig));
+            addCodiconButton(td2, "trash", "Remove this planner configuration...", () => deletePlanner(scopedConfig));
         }
     });
 }
@@ -173,15 +176,13 @@ function updatePlanners(planners, selectedPlanner, imagesPath) {
  * Creates a themed icon for the config scope
  * @param {HTMLTableDataCellElement} td cell
  * @param {number} scope configuration scope/level
- * @param {string} imagesPath path to images
- * @param {string} currentTheme current theme
  * @param {ScopedPlannerConfig} scopedConfig planner configuration incl. scope
  */
-function addScopeIcon(td, scope, imagesPath, currentTheme, scopedConfig) {
+function addScopeIcon(td, scope, scopedConfig) {
     const imageName = toScopeIconName(scope);
     const tooltip = toScopeTooltip(scope);
     const onClick = scope > SCOPE_EXTENSION ? () => showConfiguration(scopedConfig) : undefined;
-    addThemedImageButton(td, imagesPath, imageName, currentTheme, tooltip, onClick);
+    addCodiconButton(td, imageName, tooltip, onClick);
 }
 
 const SCOPE_DEFAULT = 0;
@@ -192,11 +193,11 @@ const SCOPE_WORKSPACE_FOLDER = 4;
 
 function toScopeIconName(scope) {
     switch (scope) {
-        case SCOPE_DEFAULT: return "plug.svg";
-        case SCOPE_EXTENSION: return "plug.svg";
-        case SCOPE_USER: return "vm.svg";
-        case SCOPE_WORKSPACE: return "root-folder.svg";
-        case SCOPE_WORKSPACE_FOLDER: return "folder-opened.svg";
+        case SCOPE_DEFAULT: return "plug";
+        case SCOPE_EXTENSION: return "plug";
+        case SCOPE_USER: return "vm";
+        case SCOPE_WORKSPACE: return "root-folder";
+        case SCOPE_WORKSPACE_FOLDER: return "folder-opened";
     }
 }
 
@@ -220,40 +221,18 @@ function updatePlannersError(error) {
 }
 
 /**
- * Add themed image button to a cell.
+ * Add codicon based button to a cell.
  * @param {HTMLTableDataCellElement} td cell
- * @param {string} imagesPath path to images
- * @param {string} imageName image file name
- * @param {string} currentTheme current theme
+ * @param {string} imageName codicon image name
  * @param {string} tooltip tooltip
  * @param {(this: GlobalEventHandlers, ev: MouseEvent) => any} onclick onclick callback
  */
-function addThemedImageButton(td, imagesPath, imageName, currentTheme, tooltip, onclick) {
-    ['light', 'dark'].forEach(theme => {
-        addImageButton(td, theme, imagesPath, imageName, currentTheme, tooltip, onclick);
-    });
-}
-
-/**
- * Add image button to a cell.
- * @param {HTMLTableDataCellElement} td cell
- * @param {string} theme image theme
- * @param {string} imagesPath path to images
- * @param {string} imageName image file name
- * @param {string} currentTheme current theme
- * @param {string} tooltip tooltip
- * @param {(this: GlobalEventHandlers, ev: MouseEvent) => any} onclick onclick callback
- */
-function addImageButton(td, theme, imagesPath, imageName, currentTheme, tooltip, onclick) {
-    const img = td.appendChild(document.createElement("img"));
-    img.src = `${imagesPath}/${theme}/${imageName}`;
+function addCodiconButton(td, imageName, tooltip, onclick) {
+    // <i class="clickable codicon codicon-gear" onclick="callback(argument)" title="Tooltip..."></i>
+    const img = td.appendChild(document.createElement("i"));
+    img.classList.add("clickable", "codicon", "codicon-" + imageName);
     img.onclick = onclick;
     img.title = tooltip;
-    img.setAttribute("theme", theme);
-    img.className = "menuButton";
-
-    // apply the visual theme to the buttons just created
-    applyThemeToElement(img, currentTheme);
 }
 
 /**

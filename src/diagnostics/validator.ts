@@ -8,8 +8,7 @@ import {
     Diagnostic, DiagnosticSeverity, Range, Position
 } from 'vscode';
 
-import { ProblemInfo } from 'pddl-workspace';
-import { DomainInfo } from 'pddl-workspace';
+import { ProblemInfo, DomainInfo } from 'pddl-workspace';
 
 export abstract class Validator {
 

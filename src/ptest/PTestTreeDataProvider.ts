@@ -25,8 +25,9 @@ export enum PTestNodeKind { Directory, Manifest, Test }
 
 export class PTestTreeDataProvider implements TreeDataProvider<PTestNode> {
 
-    private _onDidChange: EventEmitter<PTestNode> = new EventEmitter<PTestNode>();
-    public get onDidChangeTreeData(): Event<PTestNode> { return this._onDidChange.event; }
+    // fire event with 'undefined' payload to refresh he entire tree
+    private _onDidChange: EventEmitter<PTestNode | undefined> = new EventEmitter<PTestNode>();
+    public get onDidChangeTreeData(): Event<PTestNode | undefined> { return this._onDidChange.event; }
 
     private testResults: Map<string, TestOutcome> = new Map();
     private treeNodeCache: Map<string, PTestNode> = new Map();
@@ -38,7 +39,8 @@ export class PTestTreeDataProvider implements TreeDataProvider<PTestNode> {
     refresh(): void {
         this.testResults.clear();
         this.treeNodeCache.clear();
-        this._onDidChange.fire();
+        // update all visible tree nodes
+        this._onDidChange.fire(undefined);
     }
 
     getTestOutcome(testUri: Uri): TestOutcome {
@@ -56,7 +58,7 @@ export class PTestTreeDataProvider implements TreeDataProvider<PTestNode> {
         return assertDefined(this.findNodeByResourceOrThrow(resource), `No node for ${resource.toString()}`);
     }
 
-    findNodeByResource(resource: Uri): PTestNode {
+    findNodeByResource(resource: Uri): PTestNode | undefined {
         return this.treeNodeCache.get(resource.toString());
     }
 

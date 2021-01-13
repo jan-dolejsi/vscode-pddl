@@ -6,6 +6,7 @@
 
 import { Uri, commands, window } from 'vscode';
 import { PddlConfiguration } from '../configuration/configuration';
+import { Util as ValUtil } from 'ai-planning-val';
 import { utils } from 'pddl-workspace';
 import { dirname, relative, basename, join } from 'path';
 import * as process from 'child_process';
@@ -49,8 +50,8 @@ export class HappeningsToPlanResumeCasesConvertor {
         if (!valStepPath) { return false; }
 
         // copy editor content to temp files to avoid using out-of-date content on disk
-        const domainFilePath = await utils.Util.toPddlFile('domain', this.context.domain.getText());
-        const problemFilePath = await utils.Util.toPddlFile('problem', this.context.problem.getText());
+        const domainFilePath = await ValUtil.toPddlFile('domain', this.context.domain.getText());
+        const problemFilePath = await ValUtil.toPddlFile('problem', this.context.problem.getText());
 
         const args = [domainFilePath, problemFilePath];
         const outputFolderUris = await window.showOpenDialog({ defaultUri: Uri.file(dirname(this.context.problem.fileUri.fsPath)), canSelectFiles: false, canSelectFolders: true, canSelectMany: false, openLabel: 'Select folder for problem files' });
