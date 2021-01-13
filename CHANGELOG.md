@@ -1,8 +1,19 @@
 # PDDL support - What's new?
 
-## 2.19.5
+## 2.20.0 - New and customizable Plan Visualization
 
 ### New faster plan visualization component with custom domain-specific plan visualization
+
+The plan visualization component was extracted to a separate NPM package [pddl-gantt](https://www.npmjs.com/package/pddl-gantt).
+This has two drivers:
+
+* ability to replace the plan visualization in this extension
+* ability to use this plan visualization as a plugin to editor.planning.domains
+* faster search debugger view, which now hosts the same component
+
+The new version is also going to display the plan faster.
+What made the old one slow was the upfront evaluation of the line plots.
+Now the line plots are evaluated lazily - only when they are scrolled into the view.
 
 ![Plan visualization in VS Code](https://raw.githubusercontent.com/wiki/jan-dolejsi/vscode-pddl/img/PDDL_plan_custom_vizualization.gif)
 
@@ -1176,8 +1187,8 @@ Note for open source contributors: all notable changes to the "pddl" extension w
 
 Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
 
-[Unreleased]: https://github.com/jan-dolejsi/vscode-pddl/compare/v2.19.5...HEAD
-[2.19.5]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.19.0...v2.19.5
+[Unreleased]: https://github.com/jan-dolejsi/vscode-pddl/compare/v2.20.0...HEAD
+[2.20.0]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.19.0...v2.20.0
 [2.19.0]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.18.0...v2.19.0
 [2.18.0]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.17.1...v2.18.0
 [2.17.1]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.16.0...v2.17.1
