@@ -2,7 +2,7 @@
 
 (define (domain domain1)
 
-(:requirements :strips)
+(:requirements :strips :negative-preconditions)
 
 (:predicates
     (p)

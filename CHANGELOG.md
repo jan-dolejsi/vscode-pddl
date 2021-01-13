@@ -1,8 +1,112 @@
 # PDDL support - What's new?
 
+## 2.20.0 - New and customizable Plan Visualization
+
+### New faster plan visualization component with custom domain-specific plan visualization
+
+The plan visualization component was extracted to a separate NPM package [pddl-gantt](https://www.npmjs.com/package/pddl-gantt).
+This has two drivers:
+
+* ability to replace the plan visualization in this extension
+* ability to use this plan visualization as a plugin to editor.planning.domains
+* faster search debugger view, which now hosts the same component
+
+The new version is also going to display the plan faster.
+What made the old one slow was the upfront evaluation of the line plots.
+Now the line plots are evaluated lazily - only when they are scrolled into the view.
+
+![Plan visualization in VS Code](https://raw.githubusercontent.com/wiki/jan-dolejsi/vscode-pddl/img/PDDL_plan_custom_vizualization.gif)
+
+To study the files used in the above example, see [blocksworld.planviz.json](https://github.com/jan-dolejsi/vscode-pddl-samples/blob/master/Blocksworld/blocksworld.planviz.json) and [blocksWorldViz.js](https://github.com/jan-dolejsi/vscode-pddl-samples/blob/master/Blocksworld/blocksWorldViz.js).
+
+To see all the options for plan visualization as HTML/DOM/SVG, see the function signatures here: [CustomVisualization.ts](https://github.com/jan-dolejsi/pddl-gantt/blob/master/src/CustomVisualization.ts).
+
+### More usable plan preview and planner invocation via editor title icons
+
+The planner invocation is now also available in the editor title context menu (by right-clicking on the editor tab of the domain/problem file).
+
+Plan preview command is available in the editor title bar when a _.plan_ file is focussed.
+
+![Plan preview button](https://raw.githubusercontent.com/wiki/jan-dolejsi/vscode-pddl/img/plan_preview_button.jpg)
+
+### Planner configuration and addition available from planner switch drop down
+
+While switching between planners (using the button in the status bar),
+you may realize that the planner you want to switch to needs also a tweak in its configuration.
+The only way to change the configuration is to go to the Overview Page (or edit it directly in the `settings.json` file)
+but none of those choices are at hand.
+
+It is now possible to jump to the Overview Page and configure the planner right from the drop down that lets you select a planner.
+
+![Adding and configuring planners through the status bar button](https://raw.githubusercontent.com/wiki/jan-dolejsi/vscode-pddl/img/adding_and_configuring_planners_through_status_bar.gif)
+
+### Custom domain-specific plan/state visualization
+
+Evolved the domain-specific plan/state visualization, which can be specified using the `customVisualization` (originally `planVisualizer`) property in the `<<domain>>.planviz.json` config file.
+
+### Fixes
+
+For custom planner syntax is specified (in one of the user/workspace `settings.json` files) the syntax validation is now more permissive.
+Currently it flagged many valid planner syntaxes with a red squiggly line.
+
+Example of syntax for LPG planner:
+
+```json
+{
+    "kind": "lpg-td",
+    "canConfigure": true,
+    "path": "c:\\path\\lpg-td-1.0.exe",
+    "syntax": "$(planner) -o $(domain) -f $(problem) $(options)",
+    "title": "LPG-td"
+},
+```
+
+No longer attempting to display the `total-time` metric on the line-plot.
+
+### Engineering work
+
+* Dependencies updated to Node 12.14.1.
+* Updated to latest VAL binaries (build 55).
+
+## 2.19.4
+
+### Support for LPG planner
+
+The [LPG Planner](https://lpg.unibs.it/lpg/) uses slightly different format for the plans. Now those plans are parsed and visualized.
+
+LPG command-line options are also presented in the drop down, while invoking the planner:
+
+![LPG Planner Support](https://raw.githubusercontent.com/wiki/jan-dolejsi/vscode-pddl/img/lpg_support.gif)
+
+### Engineering work
+
+- PDDL Parser was generalized and moved to the ai-planning-val.js repository.
+- PDDL Parser syntax does no longer use the `$(parser)` macro. The default syntax arguments are now: `$(domain) $(problem)`.
+- Details are described on the [Configure the PDDL parser](https://github.com/jan-dolejsi/vscode-pddl/wiki/Configuring-the-PDDL-parser) page.
+- Upgrade to Node 12.14.1
+- Replaced nodejs fs with vscode fs to support remote workspaces
+
+### Fixes
+
+- Overview Page
+  - Fixed race condition when closed before update
+  - fixed capitalization of helloWorld directory, so the sample opens on Linux
+  - pddl sample creation asks to skip/overwrite existing files
+
+## 2.19.3
+
+### Fixes
+
+VAL Parser path is not being double-quoted even if it contains a space. The node.js process.spawn should handle that.
+
+### Features
+
+Search tree can visualize number of satisfied landmarks on states searched. But this was subsequently rolled back,
+because the additional line on the Google line plot causes crash of the webview after all the data is rendered.
+
 ## [2.19.0] ICAPS 2020 face lift (while attending the late night conference sessions)
 
-## Features
+### Features
 
 The _PDDL: Configure planner output target..._ command and the _PDDL Overview Screen_ already helped configuring how the planner output is consumed. The three options are:
 
@@ -15,12 +119,12 @@ The status bar now shows both the planner selector and right next to it, the out
 
 ![Planner output re-direction switch in status bar](https://raw.githubusercontent.com/wiki/jan-dolejsi/vscode-pddl/img/pddl_planner_output_target_selector_status_bar.gif)
 
-## Fixes
+### Fixes
 
 - Command _PDDL: Preview plan_ accessible from the right-click menu on any .plan file in the editor now shows the plan even if the problem and domain is not associate with it.
 - Planning.domains session synchronization (via the source control panel) does not show the useless commit message text input component.
 
-### Engineering work
+#### Engineering work
 
 - Codicon icon font is used in the custom views wherever possible
 - Minimum requirement VS Code 1.45, update to Typescript 4 and Mocha 8
@@ -340,7 +444,7 @@ Fixed opening the plan report in the default browser.
 ![Nunjucks sample](https://raw.githubusercontent.com/wiki/jan-dolejsi/vscode-pddl/img/PDDL_nunjucks_sample.gif)
 * For templated problem files a code action (bulb) can open the live preview of the generated problem file
 ![Templated problem preview](https://raw.githubusercontent.com/wiki/jan-dolejsi/vscode-pddl/img/PDDL_templated_problem_preview.gif)
-* Early preview of domain-specific plan/state visualization via the new `planVisualizer` property in the `<<domain>>.planviz.json` config file.
+* Early preview of domain-specific plan/state visualization via the new `planVisualizer` property in the `<<domain>>.planviz.json` config file. This has since been renamed to `customVisualization`.
 * Generated problem file previews are live updating when the data in .json file is modified!
 
 ### Fixes
@@ -1083,7 +1187,8 @@ Note for open source contributors: all notable changes to the "pddl" extension w
 
 Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
 
-[Unreleased]: https://github.com/jan-dolejsi/vscode-pddl/compare/v2.19.0...HEAD
+[Unreleased]: https://github.com/jan-dolejsi/vscode-pddl/compare/v2.20.0...HEAD
+[2.20.0]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.19.0...v2.20.0
 [2.19.0]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.18.0...v2.19.0
 [2.18.0]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.17.1...v2.18.0
 [2.17.1]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.16.0...v2.17.1

@@ -58,7 +58,7 @@ export class UndeclaredVariable {
                 .find(p => p.name.toLowerCase() === parameterName.toLowerCase());
     }
 
-    createEdit(document: TextDocument, variable: Variable, node: parser.PddlSyntaxNode): [WorkspaceEdit, VariableType] {
+    createEdit(document: TextDocument, variable: Variable, node: parser.PddlSyntaxNode): [WorkspaceEdit | undefined, VariableType] {
         let type = VariableType.Undecided;
         while (type === VariableType.Undecided && !node.isDocument()) {
             node = node.getParent()!;
@@ -103,7 +103,8 @@ export class UndeclaredVariable {
                 newSectionName = parser.PddlStructure.PREDICATES;
                 break;
             default:
-                throw new Error(`Could not determine whether ${variable.getFullName()} is a predicate or a function.`);
+                console.log(`Could not determine whether ${variable.getFullName()} inside ${node.getToken().tokenText} is a predicate or a function.`);
+                return [undefined, type];
         }
 
         const defineNode = this.syntaxTree.getDefineNode();

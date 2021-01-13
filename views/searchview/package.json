@@ -1,0 +1,36 @@
+{
+  "name": "search-webview",
+  "version": "1.0.0",
+  "description": "",
+  "main": "out/index.js",
+  "scripts": {
+    "pretest": "tsc && npm run lint",
+    "test-watch": "tsc -w",
+    "test-compile": "tsc",
+    "test": "mocha -- out-test/test/**/*.js",
+    "compile": "npm run lint && browserify src/search.ts -p tsify > out/search.js",
+    "lint": "eslint src --ext ts",
+    "watch": "watchify src/search.ts -p tsify -o out/search.js --verbose"
+  },
+  "author": "Jan Dolejsi",
+  "license": "MIT",
+  "devDependencies": {
+    "@typescript-eslint/eslint-plugin": "file:../../node_modules/@typescript-eslint/eslint-plugin",
+    "@typescript-eslint/parser": "file:../../node_modules/@typescript-eslint/parser",
+    "eslint": "file:../../node_modules/eslint",
+    "typescript": "file:../../node_modules/typescript",
+    "browserify": "^16.5.2",
+    "tsify": "^5.0.2",
+    "watchify": "^3.11.1",
+    "@types/mocha": "file:../../node_modules/@types/mocha",
+    "mocha": "file:../../node_modules/mocha",
+    "@types/chai": "file:../../node_modules/@types/chai",
+    "chai": "file:../../node_modules/chai",
+    "@types/chai-string": "file:../../node_modules/@types/chai-string",
+    "chai-string": "file:../../node_modules/chai-string",
+    "model": "file:../../out/planView/model/"
+  },
+  "dependencies": {
+    "pddl-gantt": "file:../../node_modules/pddl-gantt"
+  }
+}

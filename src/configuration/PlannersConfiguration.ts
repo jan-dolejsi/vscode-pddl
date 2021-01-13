@@ -9,7 +9,7 @@ import * as path from 'path';
 import { parseTree, findNodeAtLocation } from 'jsonc-parser';
 import { window, commands, workspace, ConfigurationTarget, QuickPickItem, ExtensionContext, StatusBarItem, StatusBarAlignment, Uri, Range, WorkspaceFolder, TextDocument, ViewColumn } from 'vscode';
 import { PddlWorkspace, planner } from 'pddl-workspace';
-import { CommandPlannerProvider, SolveServicePlannerProvider, RequestServicePlannerProvider, ExecutablePlannerProvider, Popf, JavaPlannerProvider } from './plannerConfigurations';
+import { CommandPlannerProvider, SolveServicePlannerProvider, RequestServicePlannerProvider, ExecutablePlannerProvider, Popf, JavaPlannerProvider, Lpg } from './plannerConfigurations';
 import { CONF_PDDL, PDDL_PLANNER, EXECUTABLE_OR_SERVICE, EXECUTABLE_OPTIONS } from './configuration';
 import { instrumentOperationAsVsCodeCommand } from 'vscode-extension-telemetry-wrapper';
 import { showError, jsonNodeToRange, fileExists, isHttp } from '../utils';
@@ -23,6 +23,7 @@ export const DEF_PLANNER_OUTPUT_TARGET = "Output window";
 const PDDL_CONFIGURE_PLANNER = CONF_PDDL + '.' + 'configurePlanner';
 const PDDL_DELETE_PLANNER = CONF_PDDL + '.' + 'deletePlanner';
 const PDDL_JSON_SETTINGS = CONF_PDDL + '.' + 'plannersJsonSettings';
+const PDDL_ADD_PLANNER = CONF_PDDL + '.' + 'addPlanner';
 
 export const EXECUTION_TARGET = "executionTarget";
 
@@ -36,11 +37,11 @@ export enum PlannerConfigurationScope {
 
 export class PlannersConfiguration {
 
-    plannerSelector: StatusBarItem;
-    plannerOutputSelector: StatusBarItem;
+    private plannerSelector: StatusBarItem | undefined;
+    private plannerOutputSelector: StatusBarItem | undefined;
 
     constructor(context: ExtensionContext, private pddlWorkspace: PddlWorkspace) {
-        context.subscriptions.push(instrumentOperationAsVsCodeCommand("pddl.addPlanner", () => this.createPlannerConfiguration().catch(showError)));
+        context.subscriptions.push(instrumentOperationAsVsCodeCommand(PDDL_ADD_PLANNER, () => this.createPlannerConfiguration().catch(showError)));
         context.subscriptions.push(instrumentOperationAsVsCodeCommand(PDDL_SELECT_PLANNER, () => this.selectPlanner()));
 
         if (workspace.getConfiguration(CONF_PDDL).get('showPlannerInStatusBar', true)) {
@@ -56,7 +57,7 @@ export class PlannersConfiguration {
         }
 
         context.subscriptions.push(instrumentOperationAsVsCodeCommand(PDDL_CONFIGURE_PLANNER,
-            (plannerConfiguration: ScopedPlannerConfiguration) => {
+            (plannerConfiguration: ScopedPlannerConfiguration | undefined) => {
                 if (!plannerConfiguration) {
                     plannerConfiguration = this.getSelectedPlanner();
                 }
@@ -76,7 +77,7 @@ export class PlannersConfiguration {
                 }
             }));
 
-        context.subscriptions.push(instrumentOperationAsVsCodeCommand(PDDL_DELETE_PLANNER, async (plannerConfiguration: ScopedPlannerConfiguration) => {
+        context.subscriptions.push(instrumentOperationAsVsCodeCommand(PDDL_DELETE_PLANNER, async (plannerConfiguration: ScopedPlannerConfiguration | undefined) => {
             if (!plannerConfiguration) {
                 plannerConfiguration = this.getSelectedPlanner();
             }
@@ -98,7 +99,7 @@ export class PlannersConfiguration {
         }));
 
         // migrate legacy configuration in all workspaces
-        (workspace.workspaceFolders ?? [undefined]).forEach(wf =>
+        (workspace.workspaceFolders ?? [undefined]).forEach((wf: WorkspaceFolder | undefined) =>
             this.migrateLegacyConfiguration(wf).catch(showError)
         );
     }
@@ -116,7 +117,7 @@ export class PlannersConfiguration {
         }
 
         const newPlannerConfiguration = await plannerProvider
-            .configurePlanner(plannerConfiguration.configuration);
+            ?.configurePlanner(plannerConfiguration.configuration);
 
         if (!newPlannerConfiguration) {
             return undefined;
@@ -132,19 +133,19 @@ export class PlannersConfiguration {
         const legacyPlannerInspect = config.inspect<string>(EXECUTABLE_OR_SERVICE);
         const legacySyntaxInspect = config.inspect<string>(EXECUTABLE_OPTIONS);
 
-        if (legacyPlannerInspect.globalValue) {
+        if (legacyPlannerInspect?.globalValue) {
             await this.migrateLegacyConfigurationInTarget(legacyPlannerInspect.globalValue,
-                legacySyntaxInspect.globalValue, PlannerConfigurationScope.User);
+                legacySyntaxInspect?.globalValue, PlannerConfigurationScope.User);
         }
 
-        if (legacyPlannerInspect.workspaceValue) {
+        if (legacyPlannerInspect?.workspaceValue) {
             await this.migrateLegacyConfigurationInTarget(legacyPlannerInspect.workspaceValue,
-                legacySyntaxInspect.workspaceValue, PlannerConfigurationScope.Workspace);
+                legacySyntaxInspect?.workspaceValue, PlannerConfigurationScope.Workspace);
         }
 
-        if (legacyPlannerInspect.workspaceFolderValue) {
+        if (legacyPlannerInspect?.workspaceFolderValue) {
             await this.migrateLegacyConfigurationInTarget(legacyPlannerInspect.workspaceFolderValue,
-                legacySyntaxInspect.workspaceFolderValue, PlannerConfigurationScope.WorkspaceFolder, workspaceFolder);
+                legacySyntaxInspect?.workspaceFolderValue, PlannerConfigurationScope.WorkspaceFolder, workspaceFolder);
         }
     }
 
@@ -208,6 +209,7 @@ export class PlannersConfiguration {
             new SolveServicePlannerProvider(),
             new RequestServicePlannerProvider(),
             new Popf(),
+            new Lpg(),
             new JavaPlannerProvider(),
         ].forEach(provider =>
             this.pddlWorkspace.getPlannerRegistrar().registerPlannerProvider(provider.kind, provider));
@@ -216,8 +218,11 @@ export class PlannersConfiguration {
     async selectPlanner(): Promise<ScopedPlannerConfiguration | undefined> {
         const planners = this.getPlanners();
 
-        const items = planners.map(plannerConfig => new PlannerQuickPickItem(plannerConfig));
-        items.push(PlannerQuickPickItem.CREATE_NEW);
+        const items = [
+            NewPlannerQuickPickItem.CREATE_NEW,
+            ConfigurePlannerQuickPickItem.CONFIGURE,
+            ... planners.map(plannerConfig => new ExistingPlannerQuickPickItem(plannerConfig))
+        ];
 
         const selectedItem = await window.showQuickPick(items, { placeHolder: 'Select planner ...' });
 
@@ -225,12 +230,17 @@ export class PlannersConfiguration {
             return undefined;
         }
 
-        if (selectedItem === PlannerQuickPickItem.CREATE_NEW) {
-            commands.executeCommand("pddl.addPlanner");
+        if (selectedItem === NewPlannerQuickPickItem.CREATE_NEW) {
+            commands.executeCommand(PDDL_ADD_PLANNER);
             return undefined;
-        } else {
+        } else if (selectedItem === ConfigurePlannerQuickPickItem.CONFIGURE) {
+            commands.executeCommand('pddl.showOverview');
+            return undefined;
+        } else if (selectedItem instanceof ExistingPlannerQuickPickItem) {
             await this.setSelectedPlanner(selectedItem.planner);
             return selectedItem.planner;
+        } else {
+            throw new Error(`Unexpected item: ${selectedItem}`);
         }
     }
 
@@ -250,6 +260,7 @@ export class PlannersConfiguration {
             case PlannerConfigurationScope.Extension:
                 // clear workspace-level selection (if any)
                 await pddlConfig.update(CONF_SELECTED_PLANNER, undefined, this.toConfigurationTarget(PlannerConfigurationScope.Workspace));
+                // falling through intentionally
             case PlannerConfigurationScope.Workspace:
                 // clear workspaceFolder-level selection (if any)
                 if (workspaceFolder) {
@@ -262,7 +273,7 @@ export class PlannersConfiguration {
     }
 
     toWorkspaceFolder(selectedPlanner: ScopedPlannerConfiguration): WorkspaceFolder | undefined {
-        return selectedPlanner.workspaceFolder && workspace.getWorkspaceFolder(Uri.parse(selectedPlanner.workspaceFolder));
+        return selectedPlanner.workspaceFolder ? workspace.getWorkspaceFolder(Uri.parse(selectedPlanner.workspaceFolder)) : undefined;
     }
 
     getPlannersPerScope(scope: PlannerConfigurationScope, workingFolder?: WorkspaceFolder): planner.PlannerConfiguration[] {
@@ -271,16 +282,16 @@ export class PlannersConfiguration {
 
         switch (scope) {
             case PlannerConfigurationScope.Default:
-                return plannersConf.defaultValue ?? [];
+                return plannersConf?.defaultValue ?? [];
             case PlannerConfigurationScope.User:
-                return plannersConf.globalValue ?? [];
+                return plannersConf?.globalValue ?? [];
             case PlannerConfigurationScope.Workspace:
-                return plannersConf.workspaceValue ?? [];
+                return plannersConf?.workspaceValue ?? [];
             case PlannerConfigurationScope.WorkspaceFolder:
-                return plannersConf.workspaceFolderValue ?? [];
+                return plannersConf?.workspaceFolderValue ?? [];
             default:
                 console.warn(`Unexpected scope in getPlannersPerScope(): ${scope}`);
-                return undefined;
+                return [];
         }
     }
 
@@ -289,10 +300,10 @@ export class PlannersConfiguration {
             .inspect<planner.PlannerConfiguration[]>(CONF_PLANNERS);
 
         const scopedConfigs = [
-            plannersConf.workspaceFolderValue?.map((conf, index) => this.toScopedConfiguration(conf, index, PlannerConfigurationScope.WorkspaceFolder, workingFolder)) ?? [],
-            plannersConf.workspaceValue?.map((conf, index) => this.toScopedConfiguration(conf, index, PlannerConfigurationScope.Workspace)) ?? [],
-            plannersConf.globalValue?.map((conf, index) => this.toScopedConfiguration(conf, index, PlannerConfigurationScope.User)) ?? [],
-            plannersConf.defaultValue?.map((conf, index) => this.toScopedConfiguration(conf, index, PlannerConfigurationScope.Default)) ?? []
+            plannersConf?.workspaceFolderValue?.map((conf, index) => this.toScopedConfiguration(conf, index, PlannerConfigurationScope.WorkspaceFolder, workingFolder)) ?? [],
+            plannersConf?.workspaceValue?.map((conf, index) => this.toScopedConfiguration(conf, index, PlannerConfigurationScope.Workspace)) ?? [],
+            plannersConf?.globalValue?.map((conf, index) => this.toScopedConfiguration(conf, index, PlannerConfigurationScope.User)) ?? [],
+            plannersConf?.defaultValue?.map((conf, index) => this.toScopedConfiguration(conf, index, PlannerConfigurationScope.Default)) ?? []
         ];
 
         // flatten the structure, but ignore the workspace-level configurations that repeat the workspaceFolder-level configs
@@ -349,14 +360,15 @@ export class PlannersConfiguration {
     private async savePlanners(scope: PlannerConfigurationScope, scopePlanners: planner.PlannerConfiguration[], workspaceFolder?: WorkspaceFolder): Promise<void> {
         const target = this.toConfigurationTarget(scope);
 
-        if (scopePlanners.length === 0) {
-            scopePlanners = undefined; // remove the setting key altogether to keep settings.json tidy
-        }
+        const scopedPlannersToSave = scopePlanners.length ?
+            scopePlanners :
+            // remove the setting key altogether to keep settings.json tidy
+            undefined;
 
         const configuration = workspace.getConfiguration(CONF_PDDL, workspaceFolder);
 
         await configuration
-            .update(CONF_PLANNERS, scopePlanners, target);
+            .update(CONF_PLANNERS, scopedPlannersToSave, target);
     }
 
     private toConfigurationTarget(scope: PlannerConfigurationScope): ConfigurationTarget | undefined {
@@ -379,10 +391,10 @@ export class PlannersConfiguration {
         PlannerConfigurationScope.Default,
     ];
 
-    getSelectedPlanner(workingFolder?: WorkspaceFolder): ScopedPlannerConfiguration {
+    getSelectedPlanner(workingFolder?: WorkspaceFolder): ScopedPlannerConfiguration | undefined {
         const selectedPlannerTitle = workspace.getConfiguration(CONF_PDDL, workingFolder).get<string>(CONF_SELECTED_PLANNER);
 
-        if (selectedPlannerTitle) {
+        if (selectedPlannerTitle !== undefined) {
             for (const scope of PlannersConfiguration.SCOPES) {
                 const planners = this.getPlannersPerScope(scope, workingFolder);
                 if (!Array.isArray(planners)) { console.error(`Planners for scope ${scope} is invalid: ${planners}`); continue; }
@@ -391,13 +403,17 @@ export class PlannersConfiguration {
                     return this.toScopedConfiguration(planners[indexFound], indexFound, scope, workingFolder);
                 }
             }
-        }
 
-        return undefined;
+            console.warn(`selected planner ${selectedPlannerTitle} was not found in any scope (configuration is out of sync)`);
+            return undefined;
+        }
+        else {
+            throw new Error(`Configuration is missing default value for: ${CONF_PDDL}.${CONF_SELECTED_PLANNER}`);
+        }
     }
 
     async getOrAskSelectedPlanner(workingFolder?: WorkspaceFolder): Promise<ScopedPlannerConfiguration | undefined> {
-        let selectedPlanner = this.getSelectedPlanner(workingFolder);
+        let selectedPlanner: ScopedPlannerConfiguration | undefined = this.getSelectedPlanner(workingFolder);
 
         if (!selectedPlanner) {
             selectedPlanner = await this.selectPlanner();
@@ -476,12 +492,15 @@ export class PlannersConfiguration {
         const settings = [
             this.createSettingForScope(PlannerConfigurationScope.User),
             this.createSettingForScope(PlannerConfigurationScope.Workspace),
-        ].concat(workspace.workspaceFolders?.map(wf => this.toFolderConfigurationUri(wf)) ?? []);
+        ].concat(workspace.workspaceFolders?.map(wf => this.toFolderConfigurationUri(wf)) ?? [])
+            .filter(s => !!s)
+            .map(s => s!);
 
         const documentsAndRanges = await Promise.all(settings.map(s => this.toDocumentAndRange(s)));
 
         const validDocumentsAndRanges = documentsAndRanges
-            .filter(setting => !!setting);
+            .filter(setting => !!setting)
+            .map(setting => setting!);
 
         validDocumentsAndRanges.forEach(async (docAndRange, index) => {
             window.showTextDocument(docAndRange.settingsDoc, { selection: docAndRange.range, viewColumn: index + 1 });
@@ -489,12 +508,12 @@ export class PlannersConfiguration {
     }
 
     async openPlannerSettingsInJson(plannerConfiguration: ScopedPlannerConfiguration): Promise<void> {
-        const workspaceFolder: WorkspaceFolder | undefined = plannerConfiguration.workspaceFolder && workspace.getWorkspaceFolder(Uri.parse(plannerConfiguration.workspaceFolder));
+        const workspaceFolder: WorkspaceFolder | undefined = plannerConfiguration.workspaceFolder ? workspace.getWorkspaceFolder(Uri.parse(plannerConfiguration.workspaceFolder)) : undefined;
         const setting = this.createSettingForScope(plannerConfiguration.scope, workspaceFolder);
 
-        const documentAndRange = await this.toDocumentAndRange(setting, plannerConfiguration.index);
+        const documentAndRange = setting && await this.toDocumentAndRange(setting, plannerConfiguration.index);
 
-        await window.showTextDocument(documentAndRange.settingsDoc, { selection: documentAndRange.range, viewColumn: ViewColumn.Beside });
+        documentAndRange && await window.showTextDocument(documentAndRange.settingsDoc, { selection: documentAndRange.range, viewColumn: ViewColumn.Beside });
     }
 
     private createSettingForScope(scope: PlannerConfigurationScope, workspaceFolder?: WorkspaceFolder): { fileUri: Uri; settingRootPath: string[] } | undefined {
@@ -502,9 +521,9 @@ export class PlannersConfiguration {
             case PlannerConfigurationScope.User:
                 return { fileUri: Uri.file(this.getUserSettings()), settingRootPath: [] };
             case PlannerConfigurationScope.Workspace:
-                return { fileUri: workspace.workspaceFile, settingRootPath: ["settings"] };
+                return workspace.workspaceFile && { fileUri: workspace.workspaceFile, settingRootPath: ["settings"] };
             case PlannerConfigurationScope.WorkspaceFolder:
-                return this.toFolderConfigurationUri(workspaceFolder);
+                return workspaceFolder && this.toFolderConfigurationUri(workspaceFolder);
             default:
                 return undefined;
         }
@@ -548,7 +567,7 @@ export class PlannersConfiguration {
             case 'darwin':
                 return macOS;
             case 'win32':
-                return windows.replace(/%([^%]+)%/g, (_, n) => process.env[n]);
+                return windows.replace(/%([^%]+)%/g, (_, n) => process.env[n] ?? n);
             default:
                 // 'freebsd'
                 // 'linux'
@@ -560,21 +579,38 @@ export class PlannersConfiguration {
     }
 }
 
-class PlannerQuickPickItem implements QuickPickItem {
-    label: string;
+abstract class PlannerQuickPickItem implements QuickPickItem {
     description?: string;
     detail?: string;
     picked?: boolean;
     alwaysShow?: boolean;
-    planner: ScopedPlannerConfiguration;
 
-    constructor(plannerConfig: ScopedPlannerConfiguration | undefined) {
+    constructor(public readonly label: string){}
+}
+
+class ExistingPlannerQuickPickItem extends PlannerQuickPickItem {
+    readonly planner: ScopedPlannerConfiguration;
+
+    constructor(plannerConfig: ScopedPlannerConfiguration) {
+        super(plannerConfig.configuration.title);
         this.planner = plannerConfig;
-        this.alwaysShow = plannerConfig === undefined;
-        this.label = plannerConfig?.configuration.title ?? "$(add) Create new planner configuration";
+        this.alwaysShow = false;
+    }
+}
+
+class NewPlannerQuickPickItem extends PlannerQuickPickItem {
+    constructor() {
+        super("$(add) Create new planner configuration");
     }
 
-    static readonly CREATE_NEW = new PlannerQuickPickItem(undefined);
+    public static readonly CREATE_NEW = new NewPlannerQuickPickItem();
+}
+
+class ConfigurePlannerQuickPickItem extends PlannerQuickPickItem {
+    constructor() {
+        super("$(gear) Configure planners");
+    }
+    public static readonly CONFIGURE = new ConfigurePlannerQuickPickItem();
 }
 
 class PlannerSpecPickItem implements QuickPickItem {

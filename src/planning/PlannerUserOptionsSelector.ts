@@ -48,7 +48,7 @@ export class PlannerUserOptionsSelector {
         return {
             label: option.label ?? option.option,
             options: option.option,
-            description: option.description
+            description: option.description ?? ''
         };
     }
 }

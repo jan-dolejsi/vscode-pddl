@@ -4,12 +4,12 @@
   "description": "Planning Domain Description Language support",
   "author": "Jan Dolejsi",
   "license": "MIT",
-  "version": "2.19.0",
+  "version": "2.20.0",
   "publisher": "jan-dolejsi",
   "enableProposedApi": true,
   "engines": {
     "vscode": "^1.45.0",
-    "node": "^10.2.0"
+    "node": "^12.14.1"
   },
   "categories": [
     "Snippets",
@@ -19,7 +19,8 @@
   "keywords": [
     "PDDL",
     "planning",
-    "AI"
+    "AI",
+    "ai-planning"
   ],
   "icon": "images/icon.png",
   "galleryBanner": {
@@ -251,7 +252,11 @@
       },
       {
         "command": "pddl.plan.preview",
-        "title": "PDDL: Preview plan"
+        "title": "PDDL: Preview plan",
+        "icon": {
+          "light": "images/light/plan-preview.svg",
+          "dark": "images/dark/plan-preview.svg"
+        }
       },
       {
         "command": "pddl.plan.normalize",
@@ -347,6 +352,24 @@
       }
     ],
     "menus": {
+      "editor/title": [
+        {
+          "command": "pddl.plan.preview",
+          "when": "resourceLangId == plan",
+          "group": "navigation"
+        }
+      ],
+      "editor/title/context": [
+        {
+          "command": "pddl.planAndDisplayResult",
+          "when": "resourceLangId == pddl"
+        },
+        {
+          "command": "pddl.plan.preview",
+          "when": "resourceLangId == plan",
+          "group": "navigation"
+        }
+      ],
       "editor/context": [
         {
           "command": "pddl.planAndDisplayResult",
@@ -520,8 +543,8 @@
         "pddlParser.executableOptions": {
           "type": "string",
           "description": "Override the command-line options passed to the PDDL parser configured in 'pddlParser.executableOrService'.",
-          "pattern": "^\\$\\(parser\\).+\\$\\(domain\\).+\\$\\(problem\\).*$",
-          "default": "$(parser) $(domain) $(problem)"
+          "pattern": "(\\$\\((domain|problem)\\).*){2}",
+          "default": "$(domain) $(problem)"
         },
         "pddlParser.problemPattern": {
           "scope": "resource",
@@ -683,7 +706,7 @@
               "syntax": {
                 "type": "string",
                 "description": "Command-line syntax structure.",
-                "pattern": "^\\$\\(planner\\).+\\$\\(options\\).+\\$\\(domain\\).+\\$\\(problem\\).*$",
+                "pattern": "^(\\$\\(planner\\))? (.*\\$\\((?:domain|problem|options)\\))(.*\\$\\((?:domain|problem|options)\\))(.*\\$\\((?:domain|problem|options)\\)).*$",
                 "default": "$(planner) $(options) $(domain) $(problem)"
               },
               "url": {
@@ -706,7 +729,7 @@
           "scope": "resource",
           "type": "string",
           "description": "Override the command-line options passed to the PDDL planner configured in 'pddlPlanner.executableOrService'.",
-          "pattern": "^\\$\\(planner\\).+\\$\\(options\\).+\\$\\(domain\\).+\\$\\(problem\\).*$"
+          "pattern": "^(\\$\\(planner\\))? (.*\\$\\((?:domain|problem|options)\\))(.*\\$\\((?:domain|problem|options)\\))(.*\\$\\((?:domain|problem|options)\\)).*$"
         },
         "pddlPlanner.executionTarget": {
           "scope": "window",
@@ -812,7 +835,7 @@
         },
         "pddl.validatorVersion": {
           "type": "number",
-          "default": 46,
+          "default": 55,
           "title": "VAL build number",
           "description": "Stable VAL build number to download or update to."
         },
@@ -961,27 +984,29 @@
     ]
   },
   "scripts": {
+    "prepare": "copyfiles --flat ./src/planView/model/package.json ./out/planView/model/ && cd views/common && npm install && cd ../searchview && npm install && cd ../planview && npm install && cd ../..",
     "postinstall": "node downloadVisJs.js && copyfiles --flat ./node_modules/vscode-codicons/dist/codicon.css ./node_modules/vscode-codicons/dist/codicon.ttf  ./views/common/",
-    "compile": "tsc -p ./",
+    "compile": "tsc -p ./ && copyfiles --flat ./src/planView/model/package.json ./out/planView/model/ && cd views/common && npm run compile && cd ../searchview && npm run compile && cd ../planview && npm run compile && cd ../..",
     "watch": "tsc -w -p ./",
     "lint": "eslint src --ext ts",
     "vscode:prepublish": "npm run compile",
     "update-vscode": "node ./node_modules/vscode/bin/install",
     "package": "vsce package",
     "pretest": "npm run compile",
-    "test:unit": "mocha -- out/test/**/*Test.js",
+    "test:unit": "mocha -- out/test/**/*Test.js && cd views/searchview && npm test && cd ../..",
     "test:integration": "node ./out/test/runVsTests.js",
     "test": "npm run test:unit && npm run test:integration"
   },
   "dependencies": {
-    "ai-planning-val": "^2.3.1",
+    "ai-planning-val": "^2.4.6",
     "await-notify": "^1.0.1",
     "body-parser": "^1.19.0",
     "events": "^3.1.0",
     "express": "^4.17.1",
     "jsonc-parser": "^2.2.1",
     "open": "^7.0.2",
-    "pddl-workspace": "^3.5.0",
+    "pddl-gantt": "^1.5.0",
+    "pddl-workspace": "^6.0.2",
     "request": "^2.88.2",
     "semver": "^7.1.3",
     "tree-kill": "^1.2.2",
@@ -998,7 +1023,7 @@
     "@types/express": "^4.17.2",
     "@types/glob": "^7.1.1",
     "@types/mocha": "^5.2.6",
-    "@types/node": "^10.14.11",
+    "@types/node": "^12.14.1",
     "@types/nunjucks": "^3.1.3",
     "@types/request": "^2.48.4",
     "@types/semver": "^7.1.0",
@@ -1009,14 +1034,14 @@
     "@typescript-eslint/parser": "^2.18.0",
     "chai": "^4.2.0",
     "chai-string": "^1.5.0",
-    "copyfiles": "^2.4.0",
+    "copyfiles": "^2.4.1",
     "download-file": "^0.1.5",
     "eslint": "^6.8.0",
     "glob": "^7.1.6",
     "minimist": ">=0.2.1",
     "mocha": "^8.2.0",
     "tmp-promise": "^2.0.2",
-    "typescript": "^4.0.5",
+    "typescript": "^4.1.3",
     "vsce": "^1.80.0",
     "vscode-codicons": "0.0.12",
     "vscode-test": "^1.0.0"

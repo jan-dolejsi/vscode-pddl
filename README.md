@@ -3,6 +3,7 @@
 [![Downloads](https://vsmarketplacebadge.apphb.com/downloads/jan-dolejsi.pddl.svg?subject=Downloads)](https://marketplace.visualstudio.com/items?itemName=jan-dolejsi.pddl)
 [![Installs](https://vsmarketplacebadge.apphb.com/installs/jan-dolejsi.pddl.svg?subject=Installations)](https://marketplace.visualstudio.com/items?itemName=jan-dolejsi.pddl)
 [![Ratings](https://vsmarketplacebadge.apphb.com/rating-star/jan-dolejsi.pddl.svg?subject=Reviews)](https://marketplace.visualstudio.com/items?itemName=jan-dolejsi.pddl&ssr=false#review-details)
+[![Version](https://vsmarketplacebadge.apphb.com/version/jan-dolejsi.pddl.svg)](https://marketplace.visualstudio.com/items?itemName=jan-dolejsi.pddl)
 [![VS Code PDDL Extension CI/CD](https://github.com/jan-dolejsi/vscode-pddl/workflows/Build/badge.svg)](https://github.com/jan-dolejsi/vscode-pddl/actions?query=workflow%3ABuild)
 
 This extension makes VS Code a great place for modeling planning domains.
@@ -215,6 +216,33 @@ It is now possible to exclude selected action parameters from swim-lane plan vis
 }
 ```
 
+#### Custom domain-specific plan visualization
+
+![Plan visualization in VS Code](https://raw.githubusercontent.com/wiki/jan-dolejsi/vscode-pddl/img/PDDL_plan_custom_vizualization.gif)
+
+To study the files used in the above example, see [blocksworld.planviz.json](https://github.com/jan-dolejsi/vscode-pddl-samples/blob/master/Blocksworld/blocksworld.planviz.json) ...
+
+```json
+{
+    "customVisualization": "blocksWorldViz.js"
+}
+```
+
+... and [blocksWorldViz.js](https://github.com/jan-dolejsi/vscode-pddl-samples/blob/master/Blocksworld/blocksWorldViz.js).
+
+```js
+function visualizePlanHtml(plan, width) {
+   const height = 250;
+   return `...`; // your plan visualization logic goes here
+}
+module.exports = {
+   visualizePlanHtml: visualizePlanHtml, 
+};
+
+```
+
+To see all the options for plan visualization as HTML/DOM/SVG, see the function signatures here: [CustomVisualization.ts](https://github.com/jan-dolejsi/pddl-gantt/blob/master/src/CustomVisualization.ts).
+
 #### Generate plan report
 
 Plan visualization displays a menu symbol &#x2630; in the top-right corner, which shows applicable commands. For example the _PDDL: Generate plan report_, which opens the plan report generated into a self-contained HTML file that you can save and share/email.
@@ -233,6 +261,10 @@ Right-clicking on any `.plan` file offers _PDDL: Preview plan_ command to visual
 ;;!domain: domain-name
 ;;!problem: problem-name
 ```
+
+Plan preview command is available in the editor title bar when a _.plan_ file is focussed.
+
+![Plan preview button](https://raw.githubusercontent.com/wiki/jan-dolejsi/vscode-pddl/img/plan_preview_button.jpg)
 
 ### Planning with command-line switches
 

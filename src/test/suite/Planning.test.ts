@@ -12,7 +12,7 @@ import { MockPlannerProvider, activateExtension, waitFor, clearWorkspaceFolder, 
 import { PddlLanguage, SimpleDocumentPositionResolver, DomainInfo, ProblemInfo } from 'pddl-workspace';
 import { assertDefined, toURI } from '../../utils';
 import { PDDL_PLAN_AND_DISPLAY } from '../../planning/planning';
-import { planning, codePddlWorkspace, plannersConfiguration } from '../../extension';
+import { planning, codePddlWorkspaceForTests, plannersConfiguration } from '../../extension';
 import { fail } from 'assert';
 import { PlannerConfigurationScope } from '../../configuration/PlannersConfiguration';
 
@@ -50,7 +50,7 @@ suite('Planning test', () => {
         const problemText = '(define (problem p) (:domain d))';
         await workspace.fs.writeFile(problemUri, Buffer.from(problemText));
 
-        const codePddlWorkspace1 = assertDefined(codePddlWorkspace, "code PDDL workspace");
+        const codePddlWorkspace1 = assertDefined(codePddlWorkspaceForTests, "code PDDL workspace");
         domain = await codePddlWorkspace1.pddlWorkspace.upsertFile(toURI(domainUri), PddlLanguage.PDDL, 1, domainText, new SimpleDocumentPositionResolver(domainText)) as DomainInfo;
         problem = await codePddlWorkspace1.pddlWorkspace.upsertFile(toURI(problemUri), PddlLanguage.PDDL, 1, problemText, new SimpleDocumentPositionResolver(problemText)) as ProblemInfo;
 
@@ -227,7 +227,7 @@ Error: terminate called after throwing an instance of 'std::bad_alloc'
         const problemText = '(define (problem p) (:domain d))';
         await workspace.fs.writeFile(problemUri, Buffer.from(problemText));
 
-        const codePddlWorkspace1 = assertDefined(codePddlWorkspace, "code PDDL workspace");
+        const codePddlWorkspace1 = assertDefined(codePddlWorkspaceForTests, "code PDDL workspace");
         domain = await codePddlWorkspace1.pddlWorkspace.upsertFile(toURI(domainUri), PddlLanguage.PDDL, 1, domainText, new SimpleDocumentPositionResolver(domainText)) as DomainInfo;
         problem = await codePddlWorkspace1.pddlWorkspace.upsertFile(toURI(problemUri), PddlLanguage.PDDL, 1, problemText, new SimpleDocumentPositionResolver(problemText)) as ProblemInfo;
 
@@ -259,5 +259,5 @@ Error: terminate called after throwing an instance of 'std::bad_alloc'
         expect(plan.domain).to.equal(domain);
         expect(plan.problem).to.equal(problem);
         expect(plan.steps).to.have.lengthOf(9);
-    });
+    }).retries(3);
 });

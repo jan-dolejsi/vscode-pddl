@@ -1,0 +1,42 @@
+
+div.plans {
+    width: 100%;
+}
+
+/* MENU */
+
+.menu {
+    display: inline-block;
+    font-size: 200%;
+    position: fixed;
+    z-index: 10;
+    top: 0;
+    right: 0;
+    cursor: pointer;
+}
+
+
+div.iconBar {
+    margin: 3px;
+}
+div.iconBar .codicon {
+    font-size: 25px;
+    cursor: pointer;
+}
+
+/* WARNINGS AND HINTS */
+
+a#downloadVal {
+    margin-top: 10px;
+    visibility: collapse;
+}
+
+div.hint {
+    opacity: 60%;
+    visibility: collapse;
+}
+
+div.error {
+    color: red;
+    visibility: collapse;
+}

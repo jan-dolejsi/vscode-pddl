@@ -4,18 +4,18 @@
  * ------------------------------------------------------------------------------------------ */
 'use strict';
 
-import { State } from "./State";
+import { search } from "pddl-workspace";
 import { EventEmitter, Event } from "vscode";
 import { StateResolver } from "./StateResolver";
 
 /** Represents the running/completed search and notifies when new states are added or evaluated. */
 export class Search implements StateResolver {
-    private _onStateAdded: EventEmitter<State> = new EventEmitter<State>();
-    private _onStateUpdated: EventEmitter<State> = new EventEmitter<State>();
-    private _onBetterState: EventEmitter<State> = new EventEmitter<State>();
-    private _onPlanFound: EventEmitter<State[]> = new EventEmitter<State[]>();
+    private _onStateAdded: EventEmitter<search.SearchState> = new EventEmitter<search.SearchState>();
+    private _onStateUpdated: EventEmitter<search.SearchState> = new EventEmitter<search.SearchState>();
+    private _onBetterState: EventEmitter<search.SearchState> = new EventEmitter<search.SearchState>();
+    private _onPlanFound: EventEmitter<search.SearchState[]> = new EventEmitter<search.SearchState[]>();
 
-    private states = new Map<number, State>();
+    private states = new Map<number, search.SearchState>();
     private bestStateHeuristic = Number.MAX_VALUE;
 
     clear(): void {
@@ -23,29 +23,29 @@ export class Search implements StateResolver {
         this.bestStateHeuristic = Number.MAX_VALUE;
     }
 
-    get onStateAdded(): Event<State> {
+    get onStateAdded(): Event<search.SearchState> {
         return this._onStateAdded.event;
     }
 
-    get onStateUpdated(): Event<State> {
+    get onStateUpdated(): Event<search.SearchState> {
         return this._onStateUpdated.event;
     }
 
-    get onBetterState(): Event<State> {
+    get onBetterState(): Event<search.SearchState> {
         return this._onBetterState.event;
     }
 
-    get onPlanFound(): Event<State[]> {
+    get onPlanFound(): Event<search.SearchState[]> {
         return this._onPlanFound.event;
     }
 
-    addInitialState(state: State): void {
+    addInitialState(state: search.SearchState): void {
         console.log('Added initial: ' + state);
         this.states.set(state.id, state);
         this._onStateAdded.fire(state);
     }
 
-    addState(state: State): void {
+    addState(state: search.SearchState): void {
         if (this.states.has(state.id)) {
             // todo: this may need modifications to align with state ordering and memoisation
             console.log('Ignoring: ' + state);
@@ -57,7 +57,7 @@ export class Search implements StateResolver {
         }
     }
 
-    update(state: State): void {
+    update(state: search.SearchState): void {
         console.log('Updated: ' + state);
         this.states.set(state.id, state);
         this._onStateUpdated.fire(state);
@@ -68,9 +68,9 @@ export class Search implements StateResolver {
         }
     }
 
-    showPlan(goalState: State): void {
-        const plan: State[] = [];
-        let state: State | undefined = goalState;
+    showPlan(goalState: search.SearchState): void {
+        const plan: search.SearchState[] = [];
+        let state: search.SearchState | undefined = goalState;
         while(state !== undefined) {
             state.isPlan = true;
             plan.push(state);
@@ -79,7 +79,7 @@ export class Search implements StateResolver {
         this._onPlanFound.fire(plan);
     }
 
-    setPlan(state: State): void {
+    setPlan(state: search.SearchState): void {
         console.log('Plan found: ' + state);
         const goalState = state.evaluate(0, state.earliestTime, [], []);
 
@@ -87,11 +87,11 @@ export class Search implements StateResolver {
         this.showPlan(goalState);
     }
 
-    getState(stateId: number): State | undefined {
+    getState(stateId: number): search.SearchState | undefined {
         return this.states.get(stateId);
     }
 
-    getStates(): State[] {
+    getStates(): search.SearchState[] {
         return [...this.states.values()];
     }
 }

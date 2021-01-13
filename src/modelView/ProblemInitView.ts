@@ -9,16 +9,16 @@ import {
     ExtensionContext, TextDocument, CodeLens, CancellationToken, CodeLensProvider
 } from 'vscode';
 
-import { DomainInfo } from 'pddl-workspace';
-import { ProblemInfo, TimedVariableValue } from 'pddl-workspace';
-import { Variable, ObjectInstance, Parameter, Term } from 'pddl-workspace';
+import {
+    DomainInfo, ProblemInfo, TimedVariableValue,
+    Variable, ObjectInstance, Parameter, Term,
+    parser, utils
+} from 'pddl-workspace';
 
 import * as path from 'path';
 import { CodePddlWorkspace } from '../workspace/CodePddlWorkspace';
-import { parser } from 'pddl-workspace';
-import { nodeToRange, asSerializable } from '../utils';
+import { nodeToRange } from '../utils';
 import { getObjectsInheritingFrom, getTypesInheritingFromPlusSelf } from 'pddl-workspace';
-import { utils } from 'pddl-workspace';
 import { DocumentCodeLens, DocumentInsetCodeLens } from './view';
 import { ProblemView, ProblemRenderer, ProblemRendererOptions } from './ProblemView';
 import { GraphViewData, NetworkEdge, NetworkNode } from './GraphViewData';
@@ -106,9 +106,9 @@ class ProblemInitRenderer implements ProblemRenderer<ProblemInitViewOptions, Pro
                 nodes: renderer.getNodes(),
                 relationships: renderer.getRelationships()
             },
-            typeProperties: asSerializable(renderer.getTypeProperties()),
-            typeRelationships: asSerializable(renderer.getTypeRelationships()),
-            scalarValues: asSerializable(renderer.getScalarValues())
+            typeProperties: utils.serializationUtils.asSerializable(renderer.getTypeProperties()),
+            typeRelationships: utils.serializationUtils.asSerializable(renderer.getTypeRelationships()),
+            scalarValues: utils.serializationUtils.asSerializable(renderer.getScalarValues())
         };
     }
 }

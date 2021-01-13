@@ -8,9 +8,8 @@
 
 import { readFileSync } from 'fs';
 import { Test } from './Test';
-import { Uri, window } from 'vscode';
+import { Uri, window, workspace } from 'vscode';
 import { PddlExtensionContext } from 'pddl-workspace';
-import { utils } from 'pddl-workspace';
 
 /**
  * Tests manifest
@@ -43,6 +42,7 @@ export class TestsManifest {
     }
 
     static load(path: string, context: PddlExtensionContext): TestsManifest {
+        // todo: use workspace.fs.readFile, but deal with the async nature
         const settings = readFileSync(path);
         const json = JSON.parse(settings.toLocaleString());
         return TestsManifest.fromJSON(path, json, context);
@@ -59,7 +59,7 @@ export class TestsManifest {
 
         const json = JSON.stringify(obj, null, 2);
         try {
-            await utils.afs.writeFile(this.uri.fsPath, json, 'utf8');
+            await workspace.fs.writeFile(this.uri, Buffer.from(json, 'utf8'));
         }
         catch(err) {
             window.showErrorMessage(`Error saving test case manifest ${err.name}: ${err.message}`);

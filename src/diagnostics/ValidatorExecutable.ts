@@ -8,48 +8,63 @@ import {
     Diagnostic
 } from 'vscode';
 
-import * as process from 'child_process';
-
 import { Validator } from './validator';
-import { ProblemPattern } from './ProblemPattern';
-import { ProblemInfo } from 'pddl-workspace';
-import { DomainInfo } from 'pddl-workspace';
-import { PddlFactory } from '../util/PddlFactory';
-import { utils } from 'pddl-workspace';
+import { ParserOptions, ParserRunContext, ProblemPattern } from 'ai-planning-val';
+import { ProblemInfo, DomainInfo } from 'pddl-workspace';
+import { Parser } from 'ai-planning-val';
+import { toDiagnostics } from './validatorUtils';
 
 export class ValidatorExecutable extends Validator {
-    constructor(path: string, public syntax: string, public customPattern: string) { super(path); }
+    
+    private parser: ConfiguredParser;
+    
+    constructor(path: string, public readonly syntax: string, public readonly customPattern: string) {
+        super(path);
+        this.parser = new ConfiguredParser({ executablePath: this.path, customPattern, syntax }, );
+    }
 
-    validate(domainInfo: DomainInfo, problemFiles: ProblemInfo[], onSuccess: (diagnostics: Map<string, Diagnostic[]>) => void, onError: (error: string) => void): void {
-        const domainFilePath = utils.Util.toPddlFileSync("domain", domainInfo.getText());
-
-        const diagnostics = this.createEmptyDiagnostics(domainInfo, problemFiles);
+    async validate(domainInfo: DomainInfo, problemFiles: ProblemInfo[],
+        onSuccess: (diagnostics: Map<string, Diagnostic[]>) => void,
+        onError: (error: string) => void): Promise<void> {
 
         if (!problemFiles.length) {
-            const problemFilePath = utils.Util.toPddlFileSync("problem", PddlFactory.createEmptyProblem('dummy', domainInfo.name));
-            const pathToUriMap: [string, string][] = [[domainFilePath, domainInfo.fileUri.toString()]];
-
-            this.validateOneProblem(domainFilePath, problemFilePath, output => {
-                this.processOutput(pathToUriMap, output, diagnostics);
-                onSuccess.apply(this, [diagnostics]);
-            }, onError);
+            try {
+                const parsingErrors = await this.parser.validate(domainInfo);
+                onSuccess.apply(this, [toDiagnostics(parsingErrors, [domainInfo])]);
+            } catch (err) {
+                onError.apply(this, [err]);
+            }
         }
         else {
-            problemFiles.forEach(problemFile => {
-                const problemFilePath = utils.Util.toPddlFileSync("problem", problemFile.getText());
-                const pathToUriMap: [string, string][] = [[domainFilePath, domainInfo.fileUri.toString()], [problemFilePath, problemFile.fileUri.toString()]];
+            problemFiles.forEach(async problemFile => {
 
                 // todo: the issues in the domain file should only be output once, not as many times as there are problem files
-                this.validateOneProblem(domainFilePath, problemFilePath, output => {
-                    this.processOutput(pathToUriMap, output, diagnostics);
-                    onSuccess.apply(this, [diagnostics]);
-                }, onError);
+                try {
+                    const parsingErrors = await this.parser.validate(domainInfo, problemFile);
+                    onSuccess.apply(this, [toDiagnostics(parsingErrors, [domainInfo, problemFile])]);
+                } catch (err) {
+                    onError.apply(this, [err]);
+                }
             });
         }
     }
+}
 
-    private processOutput(pathToUriMap: [string, string][], output: string, diagnostics: Map<string, Diagnostic[]>): void {
-        const filePaths = pathToUriMap.map(tuple => tuple[0]);
+class ConfiguredParser extends Parser {
+    customPattern: string;
+    args: string[];
+    constructor(options: ConfiguredParserOptions) {
+        super(options);
+        this.customPattern = options.customPattern;
+        this.args = options.syntax.split(' ');
+    }
+
+    protected getSyntax(): string[] {
+        return this.args;
+    }
+
+    protected createPatternMatchers(context: ParserRunContext): ProblemPattern[] {
+        const filePaths = context.fileNameMap.getFilePaths();
 
         const patterns = [
             // popf pattern
@@ -62,69 +77,11 @@ export class ValidatorExecutable extends Validator {
             patterns.push(new ProblemPattern(this.customPattern, filePaths));
         }
 
-        const distinctOutputs: string[] = [];
-
-        patterns.forEach(pattern => {
-            let match: RegExpExecArray | null;
-            while (match = pattern.regEx.exec(output)) {
-                // only report each warning/error once
-                if (distinctOutputs.includes(match[0])) { continue; }
-                distinctOutputs.push(match[0]);
-                
-                const pathUriTuple = pathToUriMap.find(tuple => tuple[0] === pattern.getFilePath(match!));
-
-                if (!pathUriTuple) { continue; } // this is not a file of interest
-
-                const uri = pathUriTuple[1];
-                const diagnostic = new Diagnostic(pattern.getRange(match), pattern.getMessage(match), Validator.toSeverity(pattern.getSeverity(match)));
-                diagnostics.get(uri)?.push(diagnostic);
-            }
-        });
-
+        return patterns;
     }
+}
 
-    private validateOneProblem(domainFilePath: string, problemFilePath: string, onOutput: (output: string) => void, onError: (error: string) => void): void {
-        const syntaxFragments = this.syntax.split(' ');
-        if (syntaxFragments.length < 1) {
-            throw new Error('Parser syntax pattern should start with $(parser)');
-        }
-
-        const args = syntaxFragments
-            .slice(1)
-            .map(fragment => {
-                switch (fragment) {
-                    case '$(parser)': return utils.Util.q(this.path);
-                    case '$(domain)': return utils.Util.q(domainFilePath);
-                    case '$(problem)': return utils.Util.q(problemFilePath);
-                    default: return fragment;
-                }
-            });
-
-        this.runProcess(utils.Util.q(this.path), args, onOutput, onError);
-    }
-
-    private runProcess(parserPath: string, args: string[], onOutput: (output: string) => void, onError: (error: string) => void): void {
-        const child = process.spawn(parserPath, args);
-    
-        let trailingLine = '';
-
-        child.stdout.on('data', output => {
-            const outputString = trailingLine + output.toString("utf8");
-            onOutput.apply(this, [outputString]);
-            trailingLine = outputString.substr(outputString.lastIndexOf('\n'));
-        });
-
-        child.on("error", error => {
-            if (!child.killed) {
-                onError.apply(this, [error.message]);
-                console.log(error.message);
-            }
-        });
-
-        child.on("close", (code, signal) => {
-            if (code !== 0) {
-                console.log(`Parser exit code: ${code}, signal: ${signal}.`);
-            }
-        });
-    }
+interface ConfiguredParserOptions extends ParserOptions {
+    customPattern: string;
+    syntax: string;
 }

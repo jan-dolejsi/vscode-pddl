@@ -5,6 +5,7 @@
 'use strict';
 
 import * as path from 'path';
+import * as fs from 'fs';
 import { Node } from 'jsonc-parser';
 import { ExtensionContext, Uri, workspace, window, Range, TextDocument, Webview, Position } from 'vscode';
 import { utils } from 'pddl-workspace';
@@ -16,7 +17,7 @@ export function createPddlExtensionContext(context: ExtensionContext): PddlExten
     return {
         asAbsolutePath: context.asAbsolutePath,
         extensionPath: context.extensionPath,
-        storagePath: context.storagePath,
+        storagePath: context.storagePath, // todo: replace with storageUri
         subscriptions: context.subscriptions,
         pythonPath: function (): string { return workspace.getConfiguration().get("python.pythonPath", "python"); }
     };
@@ -24,22 +25,29 @@ export function createPddlExtensionContext(context: ExtensionContext): PddlExten
 
 export async function getWebViewHtml(extensionContext: PddlExtensionContext, options: WebViewHtmlOptions, webview?: Webview): Promise<string> {
     const overviewHtmlPath = extensionContext.asAbsolutePath(path.join(options.relativePath, options.htmlFileName));
-    let html = await utils.afs.readFile(overviewHtmlPath, { encoding: "utf-8", flag: 'r' });
+    const templateHtml = (await fs.promises.readFile(overviewHtmlPath, { encoding: "utf-8", flag: 'r' })).toString();
 
     // generate nonce for secure calling of javascript
     const nonce = !options.allowUnsafeInlineScripts ? generateNonce() : undefined;
 
-    html = html.replace(/<(script|img|link) ([^>]*)(src|href)="([^"]+)"/g, (sourceElement: string, elementName: string, middleBits: string, attribName: string, attribValue: string) => {
+    // be sure that the template has a placeholder for Content Security Policy
+    const cspPlaceholderPattern = /<!--\s*CSP\s*-->/i;
+    if (!templateHtml.match(cspPlaceholderPattern) || templateHtml.includes('http-equiv="Content-Security-Policy"')) {
+        throw new Error(`Template does not contain CSP placeholder or contains rogue CSP.`);
+    }
+    
+    let html = templateHtml.replace(/<(script|img|link) ([^>]*)(src|href)="([^"]+)"/g, (sourceElement: string, elementName: string, middleBits: string, attribName: string, attribValue: string) => {
         if (isAbsoluteWebview(attribValue)) {
             return sourceElement;
         }
         const resource = getWebviewUri(extensionContext, options.relativePath, attribValue, webview);
-        const nonceAttr = attribName.toLowerCase() === "src" && nonce ? `nonce="${nonce}"` : "";
+        const nonceAttr = elementName.toLowerCase() === "script" && attribName.toLowerCase() === "src" && nonce ? `nonce="${nonce}" ` : "";
         return `<${elementName} ${middleBits ?? ""}${nonceAttr}${attribName}="${resource}"`;
     });
 
     if (webview) {
-        html = html.replace("<!--CSP-->", createContentSecurityPolicy(extensionContext, webview, options, nonce));
+        cspPlaceholderPattern.lastIndex = 0;
+        html = html.replace(cspPlaceholderPattern, createContentSecurityPolicy(extensionContext, webview, options, nonce));
     }
 
     return html;
@@ -62,6 +70,8 @@ export interface WebViewHtmlOptions {
     disableUnsafeInlineStyle?: boolean;
     /** Allow inline scripts. */
     allowUnsafeInlineScripts?: boolean;
+    /** Allow eval() */
+    allowUnsafeEval?: boolean;
 }
 
 function isAbsoluteWebview(attribValue: string): boolean {
@@ -88,13 +98,14 @@ export function asWebviewUri(localUri: Uri, webview?: Webview): Uri {
     return webview?.asWebviewUri(localUri) ?? localUri.with({ scheme: "vscode-resource" });
 }
 
-function createContentSecurityPolicy(extensionContext: PddlExtensionContext, webview: Webview, options: WebViewHtmlOptions, nonce: string): string {
+function createContentSecurityPolicy(extensionContext: PddlExtensionContext, webview: Webview, options: WebViewHtmlOptions, nonce: string | undefined): string {
     const externalStyles = getAbsoluteWebviewUrisSSV(extensionContext, webview, options, options.externalStyles);
     const externalScripts = getAbsoluteWebviewUrisSSV(extensionContext, webview, options, options.externalScripts);
     const externalImages = getAbsoluteWebviewUrisSSV(extensionContext, webview, options, options.externalImages);
     const fonts = getAbsoluteWebviewUrisSSV(extensionContext, webview, options, options.fonts);
     const unsafeInline = "'unsafe-inline'";
     const scriptUnsafeInline = options.allowUnsafeInlineScripts ? unsafeInline : '';
+    const scriptUnsafeEval = options.allowUnsafeEval ? "'unsafe-eval'" : '';
     const styleUnsafeInline = options.disableUnsafeInlineStyle ? '' : unsafeInline;
     const nonceCsp = nonce ? `'nonce-${nonce}'` : '';
 
@@ -102,7 +113,7 @@ function createContentSecurityPolicy(extensionContext: PddlExtensionContext, web
 \t\tcontent="default-src 'none'; `+
         `img-src ${webview.cspSource} ${externalImages} https:; ` +
         `font-src ${fonts};` +
-        `script-src ${webview.cspSource} ${externalScripts} ${scriptUnsafeInline} ${nonceCsp}; ` +
+        `script-src ${webview.cspSource} ${externalScripts} ${scriptUnsafeInline} ${scriptUnsafeEval} ${nonceCsp}; ` +
         `style-src ${webview.cspSource} ${externalStyles} ${styleUnsafeInline};"
 \t/>`;
 }
@@ -245,12 +256,8 @@ export function toUri(uri: URI): Uri {
     return Uri.parse(uri.toString());
 }
 
-export function equalsCaseInsensitive(text1: string, text2: string): boolean {
-    return text1.toLowerCase() === text2.toLowerCase();
-}
-
 export function toRange(pddlRange: PddlRange): Range {
-    return new Range(pddlRange.startLine, pddlRange.startCharacter, pddlRange.endLine, pddlRange.endCharacter);
+    return new Range(toPosition(pddlRange.start), toPosition(pddlRange.end));
 }
 
 export function nodeToRange(document: TextDocument, node: parser.PddlSyntaxNode): Range {
@@ -271,41 +278,6 @@ export class UriMap<T> extends utils.StringifyingMap<Uri, T> {
     protected stringifyKey(key: Uri): string {
         return key.toString();
     }
-}
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function asSerializable(obj: any): any {
-    if (obj instanceof Map) {
-        return strMapToObj(obj);
-    }
-    else if (obj instanceof Array) {
-        return obj.map(o => asSerializable(o));
-    }
-    else if (obj instanceof Object) {
-        const serObj = Object.create(null);
-        Object.keys(obj).forEach(key => serObj[key] = asSerializable(obj[key]));
-        return serObj;
-    }
-    else {
-        return obj;
-    }
-}
-
-export function strMapToObj(strMap: Map<string, unknown>): unknown {
-    const obj = Object.create(null);
-    for (const [k, v] of strMap) {
-        obj[k] = asSerializable(v);
-    }
-    return obj;
-}
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function objToStrMap(obj: any): Map<string, any> {
-    const strMap = new Map();
-    for (const k of Object.keys(obj)) {
-        strMap.set(k, obj[k]);
-    }
-    return strMap;
 }
 
 export async function fileExists(manifestUri: Uri): Promise<boolean> {

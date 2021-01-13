@@ -1,0 +1,13 @@
+{
+  "name": "views-common",
+  "version": "1.0.0",
+  "description": "Common resources used by more than one view.",
+  "scripts": {
+    "compile": "copyfiles --flat ../../node_modules/pddl-gantt/styles/* ./"
+  },
+  "author": "Jan Dolejsi",
+  "license": "MIT",
+  "devDependencies": {
+    "copyfiles": "file:../../node_modules/copyfiles"
+  }
+}

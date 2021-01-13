@@ -10,25 +10,23 @@ import {
 } from 'vscode';
 import { instrumentOperationAsVsCodeCommand } from "vscode-extension-telemetry-wrapper";
 import * as path from 'path';
+import { dirname } from 'path';
 
 import {
-    PddlWorkspace, parser, planner, ProblemInfo, Plan, DomainInfo, PddlLanguage
+    PddlWorkspace, parser, planner, ProblemInfo, Plan, DomainInfo, PddlLanguage, utils
 } from 'pddl-workspace';
-import { PddlConfiguration, CONF_PDDL, PLAN_REPORT_EXPORT_WIDTH, PDDL_CONFIGURE_COMMAND, PDDL_PLANNER } from '../configuration/configuration';
+import { PddlConfiguration, PDDL_CONFIGURE_COMMAND, PDDL_PLANNER } from '../configuration/configuration';
 import { PlannerExecutable } from './PlannerExecutable';
 import { PlannerSyncService } from './PlannerSyncService';
 import { PlannerAsyncService } from './PlannerAsyncService';
 import { Authentication } from '../util/Authentication';
-import { dirname } from 'path';
 import { PlanningResult } from './PlanningResult';
-import { PlanReportGenerator } from './PlanReportGenerator';
 import { PlanExporter } from './PlanExporter';
 import { PlanHappeningsExporter } from './PlanHappeningsExporter';
 import { HappeningsPlanExporter } from './HappeningsPlanExporter';
 import { isHappenings, isPlan, selectFile, isPddl } from '../workspace/workspaceUtils';
-import { utils } from 'pddl-workspace';
 
-import { PlanView, PDDL_GENERATE_PLAN_REPORT, PDDL_EXPORT_PLAN } from './PlanView';
+import { PlanView, PDDL_EXPORT_PLAN } from '../planView/PlanView';
 import { PlannerUserOptionsSelector } from './PlannerUserOptionsSelector';
 import { PlannerConfigurationSelector } from './PlannerConfigurationSelector';
 import { AssociationProvider } from '../workspace/AssociationProvider';
@@ -50,7 +48,7 @@ export class Planning implements planner.PlannerResponseHandler {
     planner: planner.Planner | null = null;
     plans: Plan[] = [];
     planningProcessKilled = false;
-    planView: PlanView;
+    private planView: PlanView;
     optionProviders: planner.PlannerOptionsProvider[] = [];
     userOptionsProvider: PlannerUserOptionsSelector;
 
@@ -73,15 +71,6 @@ export class Planning implements planner.PlannerResponseHandler {
         );
 
         context.subscriptions.push(instrumentOperationAsVsCodeCommand(PDDL_STOP_PLANNER, () => this.stopPlanner()));
-
-        context.subscriptions.push(instrumentOperationAsVsCodeCommand(PDDL_GENERATE_PLAN_REPORT, async (plans: Plan[] | undefined, selectedPlan: number) => {
-            if (plans) {
-                const width = workspace.getConfiguration(CONF_PDDL).get<number>(PLAN_REPORT_EXPORT_WIDTH, 200);
-                await new PlanReportGenerator(context, { displayWidth: width, selfContained: true }).export(plans, selectedPlan);
-            } else {
-                window.showErrorMessage("There is no plan to export.");
-            }
-        }));
 
         context.subscriptions.push(instrumentOperationAsVsCodeCommand(PDDL_EXPORT_PLAN, (plan: Plan) => {
             if (plan) {
@@ -407,13 +396,15 @@ export class Planning implements planner.PlannerResponseHandler {
                 throw new Error(`Planning service not supported: ${plannerConfiguration.url}. Only /solve or /request service endpoints are supported.`);
             }
         }
-        else {
+        else if(plannerConfiguration.path) {
             options = await this.getPlannerLineOptions(plannerConfiguration, options);
             if (options === undefined) { return null; }
 
             return this.codePddlWorkspace.pddlWorkspace.getPlannerRegistrar()
                 .getPlannerProvider({ kind: plannerConfiguration.kind })?.createPlanner?.(plannerConfiguration, options, workingDirectory) ?? 
                 new PlannerExecutable(plannerConfiguration.path, options, plannerConfiguration.syntax, workingDirectory);
+        } else {
+            throw new Error(`Planner configuration must define at least one of the properties 'url' or 'path': ${plannerConfiguration.title}`);
         }
     }
 
@@ -490,7 +481,10 @@ export class Planning implements planner.PlannerResponseHandler {
     }
 
     visualizePlans(plans: Plan[]): void {
-        if (!this.arePlanListsEqual(this.plans, plans)) {
+        // visualize if either
+        // 1. plan(s) are different
+        // 2. the plan preview was closed/disposed meanwhile
+        if (!this.arePlanListsEqual(this.plans, plans) || !this.planView.hasPlannerOutput()) {
             this.plans = [...plans]; // making a copy of the list, so the above comparison works
             this.planView.setPlannerOutput(plans, !this.isSearchDebugger());
         }
