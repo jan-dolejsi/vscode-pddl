@@ -242,12 +242,12 @@ async function activateWithTelemetry(_operationId: string, context: ExtensionCon
 	// tslint:disable-next-line:no-unused-expression
 	new Debugging(context, codePddlWorkspace, pddlConfiguration);
 
-	packageJson = JSON.parse((await workspace.fs.readFile(Uri.file(context.asAbsolutePath('package.json')))).toString());
+	const localPackageJson = packageJson = JSON.parse((await workspace.fs.readFile(Uri.file(context.asAbsolutePath('package.json')))).toString());
 
 	context.subscriptions.push(instrumentOperationAsVsCodeCommand('pddl.settings', (): void => {
 		commands.executeCommand(
 			'workbench.action.openSettings',
-			`@ext:${packageJson.publisher}.${packageJson.name}`
+			`@ext:${localPackageJson.publisher}.${localPackageJson.name}`
 		);
 	}));
 
