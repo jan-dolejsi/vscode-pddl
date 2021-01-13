@@ -208,6 +208,7 @@ function activateWithTelemetry(_operationId: string, context: ExtensionContext):
 	if (workspace.getConfiguration("pddl").get<boolean>("modelHierarchy")) {
 		const modelHierarchyProvider = new ModelHierarchyProvider(context, codePddlWorkspace);
 		context.subscriptions.push(languages.registerHoverProvider(PDDL, modelHierarchyProvider));
+		context.subscriptions.push(languages.registerCallHierarchyProvider(PDDL, modelHierarchyProvider));
 	}
 	
 	const symbolInfoProvider = new SymbolInfoProvider(codePddlWorkspace);

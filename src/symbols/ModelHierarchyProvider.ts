@@ -3,19 +3,20 @@
  * Licensed under the MIT License. See License.txt in the project root for license information.
  * ------------------------------------------------------------------------------------------ */
 'use strict';
-import { HoverProvider, TextDocument, Position, CancellationToken, Hover, MarkdownString, ExtensionContext, window, TextEditor, Range, TextEditorDecorationType, Location } from 'vscode';
+import {
+    HoverProvider, TextDocument, Position, CancellationToken, Hover, MarkdownString, ExtensionContext, window, TextEditor, Range, TextEditorDecorationType, Location,
+    CallHierarchyProvider, CallHierarchyItem, SymbolKind, ProviderResult, CallHierarchyIncomingCall, CallHierarchyOutgoingCall, workspace
+} from 'vscode';
+import {
+    PDDL, DomainInfo, Variable, parser, PddlWorkspace, utils, 
+    ModelHierarchy, VariableReferenceInfo, VariableReferenceKind, VariableEffectReferenceInfo, PddlDomainConstruct
+} from 'pddl-workspace';
 import { SymbolUtils, VariableInfo, SymbolInfo } from './SymbolUtils';
 import { CodePddlWorkspace } from '../workspace/CodePddlWorkspace';
-import { ModelHierarchy, VariableReferenceInfo, VariableReferenceKind, VariableEffectReferenceInfo } from 'pddl-workspace';
-import { PDDL } from 'pddl-workspace';
-import { DomainInfo } from 'pddl-workspace';
-import { Variable } from 'pddl-workspace';
-import { toPosition, toURI } from '../utils';
 import { isPddl } from '../workspace/workspaceUtils';
-import { parser } from 'pddl-workspace';
-import { PddlWorkspace } from 'pddl-workspace';
+import { nodeToRange, toPosition, toRange, toURI } from '../utils';
 
-export class ModelHierarchyProvider implements HoverProvider {
+export class ModelHierarchyProvider implements HoverProvider, CallHierarchyProvider {
     private symbolUtils: SymbolUtils;
     private dirtyEditors = new Set<TextEditor>();
     private timeout: NodeJS.Timer | undefined = undefined;
@@ -33,6 +34,88 @@ export class ModelHierarchyProvider implements HoverProvider {
         });
         window.visibleTextEditors.forEach(editor => this.scheduleDecoration(editor));
     }
+
+    async prepareCallHierarchy(document: TextDocument, position: Position, token: CancellationToken): Promise<CallHierarchyItem | undefined> {
+        if (token.isCancellationRequested) { return undefined; }
+        await this.symbolUtils.assertFileParsed(document);
+
+        const symbolInfo = this.symbolUtils.getSymbolInfo(document, position);
+
+        if (symbolInfo instanceof VariableInfo) {
+            return new VariableCallHierarchyItem(symbolInfo as VariableInfo, document);
+        } else {
+            return undefined;
+        }
+    }
+
+    async provideCallHierarchyIncomingCalls(item: CallHierarchyItem, token: CancellationToken): Promise<CallHierarchyIncomingCall[] | undefined> {
+        if (token.isCancellationRequested) { return undefined; }
+        const document = await workspace.openTextDocument(item.uri);
+        const fileInfo = this.pddlWorkspace.getFileInfoByUri(item.uri);
+
+        if (!fileInfo) {
+            console.log(`File not found in the workspace: ${item.uri}`);
+            return undefined;
+        }
+
+        if (!fileInfo.isDomain()) {
+            console.log(`File is not a PDDL domain: ${fileInfo.fileUri}`);
+            return undefined;
+        }
+
+        const domainInfo = fileInfo as DomainInfo;
+
+        if (item instanceof VariableCallHierarchyItem) {
+            const variableItem = item;
+            const references = this.symbolUtils.findSymbolReferences(document, variableItem.variableInfo, false);
+            const pddlFileInfo = this.pddlWorkspace.getFileInfo(document);
+            if (!pddlFileInfo) { return undefined; }
+
+            if (references !== undefined && domainInfo !== undefined) {
+                const referenceInfos = this.getReferences(references, domainInfo, variableItem.variableInfo, document);
+
+                /*
+                let readReferences = referenceInfos
+                    .filter(ri => [VariableReferenceKind.READ, VariableReferenceKind.READ_OR_WRITE].includes(ri.kind));
+
+                const writeReferences = referenceInfos
+                    .filter(ri => [VariableReferenceKind.WRITE, VariableReferenceKind.READ_OR_WRITE].includes(ri.kind));
+                const writeEffectReferences = writeReferences
+                    .filter(ri => (ri instanceof VariableEffectReferenceInfo))
+                    .map(ri => <VariableEffectReferenceInfo>ri);
+
+                let increaseReferences = writeEffectReferences.filter(ri => ri.effect instanceof IncreaseEffect);
+                let decreaseReferences = writeEffectReferences.filter(ri => ri.effect instanceof DecreaseEffect);
+                let scaleUpReferences = writeEffectReferences.filter(ri => ri.effect instanceof ScaleUpEffect);
+                let scaleDownReferences = writeEffectReferences.filter(ri => ri.effect instanceof ScaleDownEffect);
+                let assignReferences = writeEffectReferences.filter(ri => ri.effect instanceof AssignEffect);
+                let makeTrueReferences = writeEffectReferences.filter(ri => ri.effect instanceof MakeTrueEffect);
+                let makeFalseReferences = writeEffectReferences.filter(ri => ri.effect instanceof MakeFalseEffect);
+*/
+                const referenceByStructure = utils.Util.groupBy(referenceInfos, vri => vri.structure);
+
+                return [...referenceByStructure.keys()]
+                    .map(structure => this.createVariableIncomingCall(document, structure, referenceByStructure.get(structure)!));
+            }
+        } else if (item instanceof StructureCallHierarchyItem) {
+            // let structure = (<StructureCallHierarchyItem>item).structure;
+            return undefined;
+        }
+
+        return undefined;
+    }
+
+    private createVariableIncomingCall(document: TextDocument, structure: PddlDomainConstruct, references: VariableReferenceInfo[]): CallHierarchyIncomingCall {
+        const structureItem = new StructureCallHierarchyItem(structure, document);
+        const referenceRanges = references.map(ref => nodeToRange(document, ref.node));
+        return new CallHierarchyIncomingCall(structureItem, referenceRanges);
+    }
+
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    provideCallHierarchyOutgoingCalls(_item: CallHierarchyItem, _token: CancellationToken): ProviderResult<CallHierarchyOutgoingCall[]> {
+        throw new Error("Method not implemented.");
+    }
+
 
     scheduleDecoration(editor: TextEditor | undefined): void {
         if (editor && editor.visibleRanges.length && isPddl(editor.document)) {
@@ -236,5 +319,26 @@ export class ModelHierarchyProvider implements HoverProvider {
 
     private createAccessKindDocumentation(referenceInfos: VariableReferenceInfo[], documentation: MarkdownString): void {
         referenceInfos.forEach(ri => documentation.appendMarkdown(`\n- \`${ri.structure.getNameOrEmpty()}\` ${ri.getTimeQualifier()} ${ri.part}`).appendCodeblock(ri.relevantCode ?? '', PDDL));
+    }
+}
+
+class VariableCallHierarchyItem extends CallHierarchyItem {
+
+    /**
+     * Creates a new predicate/function call hierarchy item.
+     */
+    constructor(public readonly variableInfo: VariableInfo, document: TextDocument) {
+        super(SymbolKind.Function,
+            `(${variableInfo.variable.getFullName()})`,
+            variableInfo.hover.contents.join(''),
+            document.uri,
+            variableInfo.location.range,
+            variableInfo.location.range);
+    }
+}
+
+class StructureCallHierarchyItem extends CallHierarchyItem {
+    constructor(public readonly structure: PddlDomainConstruct, document: TextDocument) {
+        super(SymbolKind.Method, structure.getNameOrEmpty(), structure.getDocumentation().join(), document.uri, toRange(structure.getLocation()), toRange(structure.getLocation()));
     }
 }
