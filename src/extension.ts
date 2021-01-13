@@ -43,6 +43,7 @@ import { DomainTypesView } from './modelView/DomainTypesView';
 import { ProblemConstraintsView } from './modelView/ProblemConstraintsView';
 import { ModelHierarchyProvider } from './symbols/ModelHierarchyProvider';
 import { PlannersConfiguration } from './configuration/PlannersConfiguration';
+import { registerPlanReport } from './planReport/planReport';
 
 const PDDL_CONFIGURE_PARSER = 'pddl.configureParser';
 const PDDL_LOGIN_PARSER_SERVICE = 'pddl.loginParserService';
@@ -54,7 +55,8 @@ const PDDL_CONFIGURE_VALIDATOR = 'pddl.configureValidate';
 let formattingProvider: PddlFormatProvider;
 let pddlConfiguration: PddlConfiguration;
 export let plannersConfiguration: PlannersConfiguration;
-export let codePddlWorkspace: CodePddlWorkspace | undefined;
+/** the workspace instance that integration tests may use */
+export let codePddlWorkspaceForTests: CodePddlWorkspace | undefined;
 export let planning: Planning | undefined;
 export let ptestExplorer: PTestExplorer | undefined;
 
@@ -98,8 +100,10 @@ function activateWithTelemetry(_operationId: string, context: ExtensionContext):
 	// run start-up actions
 	new StartUp(context, pddlConfiguration, plannersConfiguration, valDownloader).atStartUp();
 
-	codePddlWorkspace = CodePddlWorkspace.getInstance(pddlWorkspace, context, pddlConfiguration);
+	const codePddlWorkspace = CodePddlWorkspace.getInstance(pddlWorkspace, context, pddlConfiguration);
+	codePddlWorkspaceForTests = codePddlWorkspace;
 	planning = new Planning(codePddlWorkspace, pddlConfiguration, plannersConfiguration, context);
+	registerPlanReport(context);
 	const planValidator = new PlanValidator(planning.output, codePddlWorkspace, pddlConfiguration, context);
 	const happeningsValidator = new HappeningsValidator(planning.output, codePddlWorkspace, pddlConfiguration, context);
 

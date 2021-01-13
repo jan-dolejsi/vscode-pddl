@@ -40,14 +40,17 @@ export class CommandPlannerProvider implements planner.PlannerProvider {
 
             if (!isHttp(newPlannerPath)) {
                 syntax = await this.askPlannerSyntax(previousConfiguration);
-                if (syntax.trim() === "") {
+                if (syntax?.trim() === "") {
                     syntax = "$(planner) $(options) $(domain) $(problem)";
                 }
             }
         }
 
-        return newPlannerPath !== undefined && syntax !== undefined
-            && this.createPlannerConfiguration(newPlannerPath, syntax);
+        if (newPlannerPath && syntax) {
+            return this.createPlannerConfiguration(newPlannerPath, syntax);
+        } else {
+            return undefined;
+        }
     }
 
     createPlannerConfiguration(command: string, syntax: string | undefined): planner.PlannerConfiguration {
@@ -107,7 +110,9 @@ export class SolveServicePlannerProvider implements planner.PlannerProvider {
             ignoreFocusOut: true
         });
 
-        return newPlannerUrl !== undefined && this.createPlannerConfiguration(newPlannerUrl);
+        if (!newPlannerUrl) { return undefined; }
+
+        return this.createPlannerConfiguration(newPlannerUrl);
     }
 
     createPlannerConfiguration(newPlannerUrl: string): planner.PlannerConfiguration {
@@ -150,7 +155,9 @@ export class RequestServicePlannerProvider implements planner.PlannerProvider {
             ignoreFocusOut: true
         });
 
-        return newPlannerUrl !== undefined && this.createPlannerConfiguration(newPlannerUrl);
+        if (!newPlannerUrl) { return undefined; }
+
+        return this.createPlannerConfiguration(newPlannerUrl);
     }
 
     createPlannerConfiguration(newPlannerUrl: string): planner.PlannerConfiguration {
@@ -181,8 +188,8 @@ export class JavaPlannerProvider implements planner.PlannerProvider {
             {
                 'Java executable archive': ['jar'],
             };
-
-        const defaultUri = previousConfiguration && previousConfiguration.path && Uri.file(previousConfiguration?.path);
+        
+        const defaultUri = previousConfiguration?.path ? Uri.file(previousConfiguration.path) : undefined;
 
         const executableUri = await selectedFile(`Select executable JAR`, defaultUri, filters);
         if (!executableUri) { return undefined; }
@@ -200,7 +207,11 @@ export class JavaPlannerProvider implements planner.PlannerProvider {
     showHelp(_output: OutputAdaptor): void {
         // do nothing
     }
-    createPlanner(configuration: planner.PlannerConfiguration, plannerOptions: string, workingDirectory: string): planner.Planner | undefined {
+    createPlanner(configuration: planner.PlannerConfiguration, plannerOptions: string, workingDirectory: string): planner.Planner {
+        if (configuration.path === undefined || configuration.syntax === undefined) {
+            throw new Error('Incomplete planner configuration. Mandatory attributes: path and syntax');
+        }
+
         return new PlannerExecutable(`java -jar ${utils.Util.q(configuration.path)}`, plannerOptions, configuration.syntax, workingDirectory);
     }
 }
@@ -223,7 +234,7 @@ export class ExecutablePlannerProvider implements planner.PlannerProvider {
             }
             : undefined;
 
-        const defaultUri = previousConfiguration && previousConfiguration.path && Uri.file(previousConfiguration?.path);
+        const defaultUri = previousConfiguration?.path ? Uri.file(previousConfiguration.path) : undefined;
 
         const executableUri = await selectedFile(`Select planner executable`, defaultUri, filters);
         if (!executableUri) { return undefined; }

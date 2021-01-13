@@ -4,7 +4,7 @@
   "description": "Planning Domain Description Language support",
   "author": "Jan Dolejsi",
   "license": "MIT",
-  "version": "2.19.4",
+  "version": "2.20.0",
   "publisher": "jan-dolejsi",
   "engines": {
     "vscode": "^1.45.0",
@@ -18,7 +18,8 @@
   "keywords": [
     "PDDL",
     "planning",
-    "AI"
+    "AI",
+    "ai-planning"
   ],
   "icon": "images/icon.png",
   "galleryBanner": {
@@ -250,7 +251,11 @@
       },
       {
         "command": "pddl.plan.preview",
-        "title": "PDDL: Preview plan"
+        "title": "PDDL: Preview plan",
+        "icon": {
+          "light": "images/light/plan-preview.svg",
+          "dark": "images/dark/plan-preview.svg"
+        }
       },
       {
         "command": "pddl.plan.normalize",
@@ -350,7 +355,6 @@
         {
           "command": "pddl.plan.preview",
           "when": "resourceLangId == plan",
-          "icon": "$(open-preview)",
           "group": "navigation"
         }
       ],
@@ -362,7 +366,6 @@
         {
           "command": "pddl.plan.preview",
           "when": "resourceLangId == plan",
-          "icon": "$(open-preview)",
           "group": "navigation"
         }
       ],
@@ -831,7 +834,7 @@
         },
         "pddl.validatorVersion": {
           "type": "number",
-          "default": 46,
+          "default": 55,
           "title": "VAL build number",
           "description": "Stable VAL build number to download or update to."
         },
@@ -980,9 +983,9 @@
     ]
   },
   "scripts": {
-    "prepare": "cd views/searchview && npm install && cd ../..",
+    "prepare": "copyfiles --flat ./src/planView/model/package.json ./out/planView/model/ && cd views/common && npm install && cd ../searchview && npm install && cd ../planview && npm install && cd ../..",
     "postinstall": "node downloadVisJs.js && copyfiles --flat ./node_modules/vscode-codicons/dist/codicon.css ./node_modules/vscode-codicons/dist/codicon.ttf  ./views/common/",
-    "compile": "tsc -p ./ && cd views/searchview && npm run compile && cd ../..",
+    "compile": "tsc -p ./ && copyfiles --flat ./src/planView/model/package.json ./out/planView/model/ && cd views/common && npm run compile && cd ../searchview && npm run compile && cd ../planview && npm run compile && cd ../..",
     "watch": "tsc -w -p ./",
     "lint": "eslint src --ext ts",
     "vscode:prepublish": "npm run compile",
@@ -994,14 +997,15 @@
     "test": "npm run test:unit && npm run test:integration"
   },
   "dependencies": {
-    "ai-planning-val": "^2.4.2",
+    "ai-planning-val": "^2.4.6",
     "await-notify": "^1.0.1",
     "body-parser": "^1.19.0",
     "events": "^3.1.0",
     "express": "^4.17.1",
     "jsonc-parser": "^2.2.1",
     "open": "^7.0.2",
-    "pddl-workspace": "^4.1.0",
+    "pddl-gantt": "^1.5.0",
+    "pddl-workspace": "^6.0.2",
     "request": "^2.88.2",
     "semver": "^7.1.3",
     "tree-kill": "^1.2.2",
@@ -1029,14 +1033,14 @@
     "@typescript-eslint/parser": "^2.18.0",
     "chai": "^4.2.0",
     "chai-string": "^1.5.0",
-    "copyfiles": "^2.4.0",
+    "copyfiles": "^2.4.1",
     "download-file": "^0.1.5",
     "eslint": "^6.8.0",
     "glob": "^7.1.6",
     "minimist": ">=0.2.1",
     "mocha": "^8.2.0",
     "tmp-promise": "^2.0.2",
-    "typescript": "^4.0.5",
+    "typescript": "^4.1.3",
     "vsce": "^1.80.0",
     "vscode-codicons": "0.0.12",
     "vscode-test": "^1.0.0"

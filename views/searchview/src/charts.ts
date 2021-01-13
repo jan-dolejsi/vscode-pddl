@@ -28,7 +28,6 @@ declare namespace google {
             addColumn(type: string, legend: string): void;
         }
 
-        // eslint-disable-next-line @typescript-eslint/no-empty-interface
         interface Chart {
             draw(chartData: DataTable, chartOptions: charts.ChartOptions): void;
         }

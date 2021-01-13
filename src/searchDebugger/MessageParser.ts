@@ -4,11 +4,8 @@
  * ------------------------------------------------------------------------------------------ */
 'use strict';
 
-import { State } from "./State";
 import { StateResolver } from "./StateResolver";
-import { SearchHappening } from "./SearchHappening";
-import { HappeningType } from 'pddl-workspace';
-import { HelpfulAction } from 'pddl-workspace';
+import { HappeningType, HelpfulAction, search } from 'pddl-workspace';
 
 export class MessageParser {
 
@@ -45,15 +42,15 @@ export class MessageParser {
     }
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    parseInitialState(state: any): State {
+    parseInitialState(state: any): search.SearchState {
         const assignedStateId = this.parseStateId(state.id);
         this.stateIdToOrder.set(state.id, assignedStateId);
 
-        return new State(assignedStateId, state.id, state.g, state.earliestTime, [], state.landmarks);
+        return new search.SearchState(assignedStateId, state.id, state.g, state.earliestTime, [], state.landmarks);
     }
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    parseState(state: any): State {
+    parseState(state: any): search.SearchState {
         let assignedStateId = this.stateIdToOrder.get(state.id);
         if (assignedStateId === undefined) {
             assignedStateId = this.parseStateId(state.id);
@@ -65,11 +62,11 @@ export class MessageParser {
 
         const actionName = state.appliedAction ? this.createActionName(this.parseSearchHappening(state.appliedAction, false)) : undefined;
 
-        return new State(assignedStateId, state.id, state.g, state.earliestTime, planHead,
+        return new search.SearchState(assignedStateId, state.id, state.g, state.earliestTime, planHead,
             state.landmarks, parentId, actionName);
     }
 
-    createActionName(lastHappening: SearchHappening): string {
+    createActionName(lastHappening: search.SearchHappening): string {
         let actionName = lastHappening.actionName;
         if (lastHappening.shotCounter > 0) {
             actionName += `[${lastHappening.shotCounter}]`;
@@ -91,7 +88,7 @@ export class MessageParser {
     }
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    parseEvaluatedState(state: any): State {
+    parseEvaluatedState(state: any): search.SearchState {
         const assignedStateId = this.stateIdToOrder.get(state.id);
         if (assignedStateId === undefined) {
             throw new Error(`State with id ${state.id} is unknown`);
@@ -116,7 +113,7 @@ export class MessageParser {
     }
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    parseSearchHappening(happening: any, isRelaxed: boolean): SearchHappening {
+    parseSearchHappening(happening: any, isRelaxed: boolean): search.SearchHappening {
         return {
             actionName: happening.actionName,
             earliestTime: happening.earliestTime,

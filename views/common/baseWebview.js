@@ -8,7 +8,11 @@ try {
 }
 
 function postMessage(message) {
-    if (vscode) { vscode.postMessage(message); }
+    if (vscode) {
+        vscode.postMessage(message);
+    } else {
+        console.debug(JSON.stringify(message));
+    }
 }
 
 /**

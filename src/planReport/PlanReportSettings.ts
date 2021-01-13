@@ -5,26 +5,41 @@
  * ------------------------------------------------------------------------------------------ */
 'use strict';
 
+import { DomainVizConfigurationSchema } from 'pddl-gantt';
 import { PlanStep } from 'pddl-workspace';
-import fs = require('fs');
-import { URL } from 'url';
+import { Uri, workspace } from 'vscode';
+import { exists } from '../util/workspaceFs';
 
+// todo: replace by JsonDomainVisualizationConfiguration
 export class PlanReportSettings {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    settings: any = null;
     excludeActions: string[] | undefined;
     ignoreActionParameters: ActionParameterPattern[] | undefined;
 
-    constructor(domainFileUri: string) {
-        const settingsFileUri = domainFileUri.replace(/\.pddl$/, '.planviz.json');
-        const url = new URL(settingsFileUri);
-        if (fs.existsSync(url)) {
-            const settings = fs.readFileSync(url, { encoding: 'utf8' });
-            try {
-                this.settings = JSON.parse(settings);
-            } catch (err) {
-                console.log(err);
-            }
+    constructor(public readonly settings: DomainVizConfigurationSchema | undefined) {
+    }
+
+    static toVisualizationSettings(domainFileUri: Uri): Uri {
+        return Uri.file(domainFileUri.fsPath.replace(/\.pddl$/, '.planviz.json'));
+    }
+
+    static async load(domainFileUri: Uri): Promise<PlanReportSettings> {
+        const configurationFileUri = PlanReportSettings.toVisualizationSettings(domainFileUri);
+
+        if (await exists(configurationFileUri)) {
+            const configurationText = (await workspace.fs.readFile(configurationFileUri)).toString();
+            return this.loadFromText(configurationText);
+        } else {
+            return new PlanReportSettings(undefined);
+        }
+    }
+
+    static loadFromText(configurationText: string): PlanReportSettings {
+        try {
+            const configuration = JSON.parse(configurationText);
+            return new PlanReportSettings(configuration);
+        } catch (err) {
+            console.log(err);
+            return new PlanReportSettings(undefined);
         }
     }
 
@@ -32,7 +47,7 @@ export class PlanReportSettings {
         if (!this.settings) { return true; }
 
         if (this.excludeActions === undefined) {
-            this.excludeActions = this.settings["excludeActions"];
+            this.excludeActions = this.settings.excludeActions;
         }
 
         if (!this.excludeActions) { return true; }
@@ -56,8 +71,8 @@ export class PlanReportSettings {
         return !!actionName.match(new RegExp(pattern, "i"));
     }
 
-    getPlanVisualizerScript(): string {
-        return this.settings && this.settings["planVisualizer"];
+    getPlanVisualizerScript(): string | undefined {
+        return this.settings?.customVisualization;
     }
 }
 

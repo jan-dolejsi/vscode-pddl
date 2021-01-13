@@ -57,8 +57,8 @@
         }
       }
     },
-    "planVisualizer": {
-      "$id": "/properties/planVisualizer",
+    "customVisualization": {
+      "$id": "/properties/customVisualization",
       "type": "string",
       "title": "Path to a javascript file, which declares function visualize(plan, width, height) returning HTML code to be inserted.",
       "default": "",

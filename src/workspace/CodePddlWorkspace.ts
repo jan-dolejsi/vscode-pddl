@@ -13,7 +13,7 @@ import { DocumentPositionResolver } from 'pddl-workspace';
 import { CodeDocumentPositionResolver } from './CodeDocumentPositionResolver';
 import { utils } from 'pddl-workspace';
 import { DomainInfo } from 'pddl-workspace';
-import { toRange, toURI, toUri } from '../utils';
+import { showError, toRange, toURI, toUri } from '../utils';
 import { PddlConfiguration } from '../configuration/configuration';
 import { ProblemInfo } from 'pddl-workspace';
 
@@ -34,7 +34,7 @@ export class CodePddlWorkspace {
 
     registerCommands(): CodePddlWorkspace {
         const revealActionCommand = instrumentOperationAsVsCodeCommand('pddl.revealAction', (domainFileUri: Uri, actionName: string) => {
-            revealAction(this.pddlWorkspace.getFileInfo(toURI(domainFileUri)) as DomainInfo, actionName);
+            revealAction(this.pddlWorkspace.getFileInfo(toURI(domainFileUri)) as DomainInfo, actionName).catch(showError);
         });
 
         if (this.context) {

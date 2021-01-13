@@ -163,7 +163,6 @@ export class SuggestionProvider implements CodeActionProvider {
                 sectionName = "predicate";
                 break;
             default:
-                console.log(`Could not determine whether ${variable.getFullName()} is a predicate or a function.`);
                 return undefined;
         }
 

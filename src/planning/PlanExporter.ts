@@ -8,7 +8,7 @@ import {
     Uri, SaveDialogOptions, window
 } from 'vscode';
 
-import { Plan } from 'pddl-workspace';
+import { parser, Plan } from 'pddl-workspace';
 import { parse, format } from 'path';
 import { exportToAndShow } from './ExportUtil';
 import { toUri } from '../utils';
@@ -43,12 +43,6 @@ export abstract class AbstractPlanExporter {
 
     abstract getPlanText(): string;
 
-    static getPlanMeta(domainName: string, problemName: string): string {
-        return `;;!domain: ${domainName}
-;;!problem: ${problemName}
-`;
-    }
-
     static replaceExtension(path: string, extension: string): string {
         const pathObj = parse(path);
         const origExt = pathObj.ext;
@@ -77,17 +71,17 @@ export class PlanExporter extends AbstractPlanExporter {
     }
 
     getPlanText(): string {
-        let planText = AbstractPlanExporter.getPlanMeta(this.plan.domain?.name ?? 'undefined', this.plan.problem?.name ?? 'undefined') +
+        let planText = parser.PddlPlanParser.getPlanMeta(this.plan.domain?.name ?? 'undefined', this.plan.problem?.name ?? 'undefined', '\n') +
 `
 ${this.plan.getText()}
 
 ; Makespan: ${this.plan.makespan}`;
 
-        if (this.plan.cost !== null && this.plan.cost !== undefined){
-            planText += `\n; Cost: ${this.plan.cost}`;
+        if (this.plan.metric !== null && this.plan.metric !== undefined){
+            planText += `\n; Metric: ${this.plan.metric}`;
         }
 
-        if (this.plan.statesEvaluated !== null && this.plan.statesEvaluated !== undefined){
+        if (this.plan.statesEvaluated !== undefined){
             planText += `\n; States evaluated: ${this.plan.statesEvaluated}`;
         }
 

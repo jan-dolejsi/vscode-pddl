@@ -146,7 +146,7 @@ suite('VAL Download and Configuration', () => {
             
             const actualParserPath = conf.getParserPath();
 
-            if (actualParserPath.includes(' ') && os.platform() === 'darwin') {
+            if (actualParserPath?.includes(' ') && os.platform() === 'darwin') {
                 expect(fs.existsSync(actualParserPath)).to.equal(true, `Parser at ${actualParserPath} should exist.`);
                 expect(actualParserPath).to.include('\ ', "spaces should be escaped by backslash");
             }

@@ -50,6 +50,10 @@ export class PddlConfiguration {
         const configuration = workspace.getConfiguration(section, workspaceFolder);
         const inspect = configuration.inspect(key);
 
+        if (!inspect) {
+            throw new Error(`Unexpected configuration: ${section}.${key}`);
+        }
+
         if (inspect.workspaceFolderValue !== undefined) {
             await configuration.update(key, value, ConfigurationTarget.WorkspaceFolder);
         }

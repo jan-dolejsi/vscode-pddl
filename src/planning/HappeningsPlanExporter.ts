@@ -50,10 +50,11 @@ export class HappeningsPlanExporter extends AbstractPlanExporter {
         planSteps = planSteps.sort(this.comparePlanSteps);
 
         const meta = parser.PddlPlanParser.parsePlanMeta(happeningsText);
+        const endl = '\n';
 
-        return AbstractPlanExporter.getPlanMeta(meta.domainName, meta.problemName)
-            + "\n"
-            + planSteps.map(step => step.toPddl()).join("\n");
+        return parser.PddlPlanParser.getPlanMeta(meta.domainName, meta.problemName, endl)
+            + endl
+            + planSteps.map(step => step.toPddl()).join(endl);
     }
 
     findEnd(happenings: Happening[], start: Happening, fromIndex: number): Happening | undefined {

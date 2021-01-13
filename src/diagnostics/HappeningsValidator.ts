@@ -11,8 +11,8 @@ import { instrumentOperationAsVsCodeCommand } from "vscode-extension-telemetry-w
 
 import * as process from 'child_process';
 
-import { ProblemInfo, DomainInfo, HappeningsInfo, Happening, PlanStep, utils } from 'pddl-workspace';
-import { HappeningsToValStep } from 'ai-planning-val';
+import { ProblemInfo, DomainInfo, HappeningsInfo, Happening, PlanStep } from 'pddl-workspace';
+import { HappeningsToValStep, Util } from 'ai-planning-val';
 import { PddlConfiguration } from '../configuration/configuration';
 import { dirname } from 'path';
 import { DomainAndProblem, isHappenings, getDomainAndProblemForHappenings } from '../workspace/workspaceUtils';
@@ -47,12 +47,12 @@ export class HappeningsValidator {
             }));
     }
 
-    async validateTextDocument(planDocument: TextDocument): Promise<HappeningsValidationOutcome> {
+    async validateTextDocument(happeningsDocument: TextDocument): Promise<HappeningsValidationOutcome> {
 
-        const planFileInfo = await this.codePddlWorkspace.upsertAndParseFile(planDocument) as HappeningsInfo;
+        const planFileInfo = await this.codePddlWorkspace.upsertAndParseFile(happeningsDocument) as HappeningsInfo;
 
         if (!planFileInfo) {
-            return HappeningsValidationOutcome.failed(null, new Error("Cannot open or parse plan file."));
+            throw new Error("Cannot open or parse plan file: " + happeningsDocument.uri.fsPath);
         }
 
         // eslint-disable-next-line @typescript-eslint/no-empty-function
@@ -102,8 +102,8 @@ export class HappeningsValidator {
         }
 
         // copy editor content to temp files to avoid using out-of-date content on disk
-        const domainFilePath = await utils.Util.toPddlFile('domain', context.domain.getText());
-        const problemFilePath = await utils.Util.toPddlFile('problem', context.problem.getText());
+        const domainFilePath = await Util.toPddlFile('domain', context.domain.getText());
+        const problemFilePath = await Util.toPddlFile('problem', context.problem.getText());
         const happeningsConverter = new HappeningsToValStep();
         happeningsConverter.convertAllHappenings(happeningsInfo);
         const valSteps = happeningsConverter.getExportedText(true);
@@ -158,7 +158,7 @@ export class HappeningsValidator {
     validateActionNames(domain: DomainInfo, problem: ProblemInfo, happeningsInfo: HappeningsInfo): Diagnostic[] {
         return happeningsInfo.getHappenings()
             .filter(happening => !this.isDomainAction(domain, problem, happening))
-            .map(happening => new Diagnostic(createRangeFromLine(happening.lineIndex), `Action '${happening.getAction()}' not known by the domain '${domain.name}'`, DiagnosticSeverity.Error));
+            .map(happening => new Diagnostic(createRangeFromLine(happening.lineIndex ?? 0), `Action '${happening.getAction()}' not known by the domain '${domain.name}'`, DiagnosticSeverity.Error));
     }
 
     /**
@@ -171,7 +171,7 @@ export class HappeningsValidator {
         return happeningsInfo.getHappenings()
             .slice(1)
             .filter((happening: Happening, index: number) => !this.isTimeMonotonociallyIncreasing(happeningsInfo.getHappenings()[index], happening))
-            .map(happening => new Diagnostic(createRangeFromLine(happening.lineIndex), `Action '${happening.getAction()}' time ${happening.getTime()} is before the preceding action time`, DiagnosticSeverity.Error));
+            .map(happening => new Diagnostic(createRangeFromLine(happening.lineIndex ?? 0), `Action '${happening.getAction()}' time ${happening.getTime()} is before the preceding action time`, DiagnosticSeverity.Error));
     }
 
     private isDomainAction(domain: DomainInfo, problem: ProblemInfo, happening: Happening): boolean {

@@ -70,6 +70,8 @@ export interface WebViewHtmlOptions {
     disableUnsafeInlineStyle?: boolean;
     /** Allow inline scripts. */
     allowUnsafeInlineScripts?: boolean;
+    /** Allow eval() */
+    allowUnsafeEval?: boolean;
 }
 
 function isAbsoluteWebview(attribValue: string): boolean {
@@ -96,13 +98,14 @@ export function asWebviewUri(localUri: Uri, webview?: Webview): Uri {
     return webview?.asWebviewUri(localUri) ?? localUri.with({ scheme: "vscode-resource" });
 }
 
-function createContentSecurityPolicy(extensionContext: PddlExtensionContext, webview: Webview, options: WebViewHtmlOptions, nonce: string): string {
+function createContentSecurityPolicy(extensionContext: PddlExtensionContext, webview: Webview, options: WebViewHtmlOptions, nonce: string | undefined): string {
     const externalStyles = getAbsoluteWebviewUrisSSV(extensionContext, webview, options, options.externalStyles);
     const externalScripts = getAbsoluteWebviewUrisSSV(extensionContext, webview, options, options.externalScripts);
     const externalImages = getAbsoluteWebviewUrisSSV(extensionContext, webview, options, options.externalImages);
     const fonts = getAbsoluteWebviewUrisSSV(extensionContext, webview, options, options.fonts);
     const unsafeInline = "'unsafe-inline'";
     const scriptUnsafeInline = options.allowUnsafeInlineScripts ? unsafeInline : '';
+    const scriptUnsafeEval = options.allowUnsafeEval ? "'unsafe-eval'" : '';
     const styleUnsafeInline = options.disableUnsafeInlineStyle ? '' : unsafeInline;
     const nonceCsp = nonce ? `'nonce-${nonce}'` : '';
 
@@ -110,7 +113,7 @@ function createContentSecurityPolicy(extensionContext: PddlExtensionContext, web
 \t\tcontent="default-src 'none'; `+
         `img-src ${webview.cspSource} ${externalImages} https:; ` +
         `font-src ${fonts};` +
-        `script-src ${webview.cspSource} ${externalScripts} ${scriptUnsafeInline} ${nonceCsp}; ` +
+        `script-src ${webview.cspSource} ${externalScripts} ${scriptUnsafeInline} ${scriptUnsafeEval} ${nonceCsp}; ` +
         `style-src ${webview.cspSource} ${externalStyles} ${styleUnsafeInline};"
 \t/>`;
 }
@@ -253,10 +256,6 @@ export function toUri(uri: URI): Uri {
     return Uri.parse(uri.toString());
 }
 
-export function equalsCaseInsensitive(text1: string, text2: string): boolean {
-    return text1.toLowerCase() === text2.toLowerCase();
-}
-
 export function toRange(pddlRange: PddlRange): Range {
     return new Range(toPosition(pddlRange.start), toPosition(pddlRange.end));
 }
@@ -279,41 +278,6 @@ export class UriMap<T> extends utils.StringifyingMap<Uri, T> {
     protected stringifyKey(key: Uri): string {
         return key.toString();
     }
-}
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function asSerializable(obj: any): any {
-    if (obj instanceof Map) {
-        return strMapToObj(obj);
-    }
-    else if (obj instanceof Array) {
-        return obj.map(o => asSerializable(o));
-    }
-    else if (obj instanceof Object) {
-        const serObj = Object.create(null);
-        Object.keys(obj).forEach(key => serObj[key] = asSerializable(obj[key]));
-        return serObj;
-    }
-    else {
-        return obj;
-    }
-}
-
-export function strMapToObj(strMap: Map<string, unknown>): unknown {
-    const obj = Object.create(null);
-    for (const [k, v] of strMap) {
-        obj[k] = asSerializable(v);
-    }
-    return obj;
-}
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function objToStrMap(obj: any): Map<string, any> {
-    const strMap = new Map();
-    for (const k of Object.keys(obj)) {
-        strMap.set(k, obj[k]);
-    }
-    return strMap;
 }
 
 export async function fileExists(manifestUri: Uri): Promise<boolean> {

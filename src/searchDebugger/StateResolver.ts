@@ -4,19 +4,19 @@
  * ------------------------------------------------------------------------------------------ */
 'use strict';
 
-import { State } from "./State";
+import { search } from "pddl-workspace";
 import { Event } from "vscode";
 
 export interface StateResolver {
-    onStateAdded: Event<State>;
+    onStateAdded: Event<search.SearchState>;
 
-    onStateUpdated: Event<State>;
+    onStateUpdated: Event<search.SearchState>;
 
-    onBetterState: Event<State>;
+    onBetterState: Event<search.SearchState>;
 
-    onPlanFound: Event<State[]>;
+    onPlanFound: Event<search.SearchState[]>;
 
-    getState(stateId: number): State | undefined;
+    getState(stateId: number): search.SearchState | undefined;
 
-    getStates(): State[];
+    getStates(): search.SearchState[];
 }

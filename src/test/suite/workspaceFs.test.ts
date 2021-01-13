@@ -7,6 +7,7 @@ import { exists } from '../../util/workspaceFs';
 import { activateExtension } from './testUtils';
 import { assertDefined } from '../../utils';
 import { workspace, Uri, WorkspaceFolder } from 'vscode';
+import { fail } from 'assert';
 
 
 suite('workspace FS', () => {
@@ -30,16 +31,17 @@ suite('workspace FS', () => {
     });
 
     after(async () => {
-        await workspace.fs.delete(fileUri, { useTrash: true });
-        await workspace.fs.delete(folderUri, { useTrash: true, recursive: true });
+        fileUri && await workspace.fs.delete(fileUri, { useTrash: true });
+        folderUri && await workspace.fs.delete(folderUri, { useTrash: true, recursive: true });
     });
 
     test('workspace.fs.createDirectory if it exists', async () => {
         // does not throw, when existing directory is created again
-        await workspace.fs.createDirectory(folderUri);
+        folderUri && await workspace.fs.createDirectory(folderUri);
     });
 
     test('workspace.fs.createDirectory nested directory if it exists', async () => {
+        if (!folderUri) { fail(); }
         // GIVEN
         const nestedNestedDirUri = Uri.joinPath(folderUri, "nested1", "nested2");
 
@@ -52,6 +54,7 @@ suite('workspace FS', () => {
     });
 
     test('existing directory exists', async () => {
+        if (!folderUri) { fail(); }
         // GIVEN
 
         // WHEN
@@ -62,6 +65,7 @@ suite('workspace FS', () => {
     });
 
     test('existing file exists', async () => {
+        if (!fileUri) { fail(); }
         // GIVEN
 
         // WHEN
@@ -72,6 +76,8 @@ suite('workspace FS', () => {
     });
 
     test('non-existent path does not exist', async () => {
+        if (!wf) { fail(); }
+
         // GIVEN
         const nonFolderUri = Uri.joinPath(wf.uri, "nonExistent");
 
