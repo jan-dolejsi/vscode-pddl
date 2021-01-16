@@ -39,6 +39,10 @@ See full example that uses a charting component [coffeeMachineView.js](https://g
 
 To see all the options for plan visualization as HTML/DOM/SVG, see the function signatures here: [CustomVisualization.ts](https://github.com/jan-dolejsi/pddl-gantt/blob/master/src/CustomVisualization.ts).
 
+### Fixes
+
+The plan report (export to HTML) was working incorrectly in the face of case-sensitive object names.
+
 ## 2.20.1
 
 ### Fixes
