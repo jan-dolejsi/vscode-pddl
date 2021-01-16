@@ -11,7 +11,7 @@ import {
 import { instrumentOperationAsVsCodeCommand } from "vscode-extension-telemetry-wrapper";
 import * as path from 'path';
 
-import { PlanFunctionEvaluator } from 'ai-planning-val';
+import { PlanEvaluator, PlanFunctionEvaluator } from 'ai-planning-val';
 import { PlanInfo, PLAN, VariableExpression, Plan, utils } from 'pddl-workspace';
 const makeSerializable = utils.serializationUtils.makeSerializable; 
 
@@ -20,7 +20,7 @@ import { CodePddlWorkspace } from '../workspace/CodePddlWorkspace';
 import { CONF_PDDL, PLAN_REPORT_WIDTH, PDDL_CONFIGURE_COMMAND, VAL_STEP_PATH, VALUE_SEQ_PATH, VAL_VERBOSE, PLAN_REPORT_LINE_PLOT_GROUP_BY_LIFTED } from '../configuration/configuration';
 import { Menu } from '../Menu';
 import { createPddlExtensionContext, ensureAbsoluteGlobalStoragePath, getWebViewHtml, showError } from '../utils';
-import { LinePlotData } from './model';
+import { LinePlotData, FinalStateData } from './model';
 import { handleValStepError } from './valStepErrorHandler';
 import { getDomainVisualizationConfigurationDataForPlans } from './DomainVisualization';
 
@@ -237,6 +237,11 @@ export class PlanView extends Disposable {
                 this.getLinePlotData(previewPanel, planIndex).catch(showError);
                 break;
             }
+            case 'finalStateDataRequest': {
+                const planIndex: number = message.planIndex;
+                this.getFinalStateData(previewPanel, planIndex).catch(showError);
+                break;    
+            }
             case 'selectPlan':
                 const planIndex: number = message.planIndex;
                 previewPanel.setSelectedPlanIndex(planIndex);
@@ -251,7 +256,7 @@ export class PlanView extends Disposable {
                 console.warn('Unexpected command: ' + message.command);
         }
     }
-
+    
     async getLinePlotData(previewPanel: PlanPreviewPanel, planIndex: number): Promise<void> {
         if (planIndex >= previewPanel.getPlans().length) {
             console.error(`requesting data for plan index {} while there are only {} plans`, planIndex, previewPanel.getPlans().length);
@@ -347,6 +352,42 @@ export class PlanView extends Disposable {
             "command": "showLinePlot",
             "data": data
         });
+    }
+
+    async getFinalStateData(previewPanel: PlanPreviewPanel, planIndex: number): Promise<void> {
+        if (planIndex >= previewPanel.getPlans().length) {
+            console.error(`requesting data for plan index {} while there are only {} plans`, planIndex, previewPanel.getPlans().length);
+            return;
+        }
+
+        const plan = previewPanel.getPlans()[planIndex];
+
+        const valStepPath = ensureAbsoluteGlobalStoragePath(workspace.getConfiguration(CONF_PDDL).get<string>(VAL_STEP_PATH), this.context);
+        const valVerbose = workspace.getConfiguration(CONF_PDDL).get<boolean>(VAL_VERBOSE, false);
+
+        if (plan.domain && plan.problem) {
+            try {
+                const finalStateValues = await new PlanEvaluator().evaluatePlan(plan, { valStepPath, verbose: valVerbose });
+
+                if (finalStateValues) {
+
+                    const data: FinalStateData = {
+                        finalState: finalStateValues.map(tvv => tvv.getVariableValue()),
+                        planIndex: planIndex
+                    };
+
+                    previewPanel.getPanel().webview.postMessage({
+                        "command": "visualizeFinalState",
+                        "data": data
+                    });
+                }
+            } catch (err) {
+                console.error(err);
+                if (valStepPath) {
+                    handleValStepError(err, valStepPath);
+                }
+            }
+        }
     }
 
     async showMenu(previewPanel: PlanPreviewPanel): Promise<void> {

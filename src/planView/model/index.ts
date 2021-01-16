@@ -5,3 +5,4 @@
 
 export * from './LinePlotData';
 export * from './PlansData';
+export * from './FinalStateData';

@@ -7,7 +7,7 @@
 			"script": "compile",
 			"group": "build",
 			"presentation": {
-				"panel": "dedicated",
+				"panel": "shared",
 				"reveal": "always"
 			},
 			"problemMatcher": [
@@ -21,8 +21,8 @@
 			"args": ["tsc"],
 			"group": "build",
 			"presentation": {
-				"panel": "dedicated",
-				"reveal": "never"
+				"panel": "shared",
+				"reveal": "always"
 			},
 			"problemMatcher": [
 				"$tsc"
