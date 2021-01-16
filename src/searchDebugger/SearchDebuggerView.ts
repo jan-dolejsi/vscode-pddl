@@ -11,7 +11,7 @@ import * as path from 'path';
 
 import { getWebViewHtml, createPddlExtensionContext, showError, ensureAbsoluteGlobalStoragePath } from '../utils';
 import { StateResolver } from './StateResolver';
-import { ProblemInfo, DomainInfo, utils, search } from 'pddl-workspace';
+import { ProblemInfo, DomainInfo, utils, search, Happening } from 'pddl-workspace';
 import { CONF_PDDL, DEFAULT_EPSILON, VAL_STEP_PATH, VAL_VERBOSE } from '../configuration/configuration';
 import { getDomainVisualizationConfigurationDataForPlan } from '../planView/DomainVisualization';
 import { PlanEvaluator } from 'ai-planning-val';
@@ -261,11 +261,11 @@ export class SearchDebuggerView {
         const valStepPath = ensureAbsoluteGlobalStoragePath(workspace.getConfiguration(CONF_PDDL).get<string>(VAL_STEP_PATH), this.context);
         const valVerbose = workspace.getConfiguration(CONF_PDDL).get<boolean>(VAL_VERBOSE, false);
 
-        const statePlan = new search.SearchStateToPlan(this.domain, this.problem, DEFAULT_EPSILON).convert(state);
+        const happenings = state.planHead.map(searchHappening => toHappening(searchHappening));
 
         if (this.domain && this.problem) {
             try {
-                const finalStateValues = await new PlanEvaluator().evaluatePlan(statePlan, { valStepPath, verbose: valVerbose });
+                const finalStateValues = await new PlanEvaluator().evaluateHappenings(this.domain, this.problem, happenings, { valStepPath, verbose: valVerbose });
 
                 if (finalStateValues) {
 
@@ -337,4 +337,13 @@ export class SearchDebuggerView {
             }
         }
     }
+}
+
+/**
+ * Converts `SearchHappening` to `Happening`.
+ * @param searchHappening plan happening that was created as a search state progression
+ */
+function toHappening(searchHappening: search.SearchHappening): Happening {
+    return new Happening(searchHappening.earliestTime, searchHappening.kind,
+        searchHappening.actionName, searchHappening.shotCounter);
 }

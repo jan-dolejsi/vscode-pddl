@@ -3,6 +3,36 @@
 	// List of configurations. Add new configurations or edit existing ones.
 	"configurations": [
 		{
+			"name": "Launch Extension",
+			"type": "extensionHost",
+			"request": "launch",
+			"runtimeExecutable": "${execPath}",
+			"args": [
+				"--extensionDevelopmentPath=${workspaceFolder}"
+			],
+			"stopOnEntry": false,
+			"sourceMaps": true,
+			"outFiles": [
+				"${workspaceFolder}/out/**/*.js"
+			],
+			"preLaunchTask": "compile"
+		},
+		{
+			"name": "Integration Tests",
+			"type": "extensionHost",
+			"request": "launch",
+			"runtimeExecutable": "${execPath}",
+			"args": [
+				"--folder-uri=${workspaceFolder}/src/test/tmpFolder/",
+				"--user-data-dir=${workspaceFolder}/src/test/tmpUserProfile/",
+				"--extensionDevelopmentPath=${workspaceFolder}",
+				"--extensionTestsPath=${workspaceFolder}/out/test/suite/index",
+				"--disable-extensions"
+			],
+			"outFiles": ["${workspaceFolder}/out/test/**/*.js"],
+			"preLaunchTask": "compile"
+		},
+		{
 			"type": "chrome",
 			"request": "launch",
 			"name": "Search debugger (html)",
@@ -42,35 +72,5 @@
 			"name": "Graph view (html)",
 			"file": "${workspaceFolder}/views/modelView/graphView.html"
 		},
-		{
-			"name": "Launch Extension",
-			"type": "extensionHost",
-			"request": "launch",
-			"runtimeExecutable": "${execPath}",
-			"args": [
-				"--extensionDevelopmentPath=${workspaceFolder}"
-			],
-			"stopOnEntry": false,
-			"sourceMaps": true,
-			"outFiles": [
-				"${workspaceFolder}/out/**/*.js"
-			],
-			"preLaunchTask": "compile"
-		},
-		{
-			"name": "Integration Tests",
-			"type": "extensionHost",
-			"request": "launch",
-			"runtimeExecutable": "${execPath}",
-			"args": [
-				"--folder-uri=${workspaceFolder}/src/test/tmpFolder/",
-				"--user-data-dir=${workspaceFolder}/src/test/tmpUserProfile/",
-				"--extensionDevelopmentPath=${workspaceFolder}",
-				"--extensionTestsPath=${workspaceFolder}/out/test/suite/index",
-				"--disable-extensions"
-			],
-			"outFiles": ["${workspaceFolder}/out/test/**/*.js"],
-			"preLaunchTask": "compile"
-		}
 	]
 }
