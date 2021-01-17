@@ -339,7 +339,7 @@ ${stepsInvolvingThisObject}
 
         let fromArgument = 0;
         do {
-            const indexOfArgument = step.getObjects().indexOf(obj.toLowerCase(), fromArgument);
+            const indexOfArgument = step.getObjects().indexOf(obj, fromArgument);
             fromArgument = indexOfArgument + 1;
             if (indexOfArgument > -1 && indexOfArgument < liftedAction.parameters.length) {
                 const parameter = liftedAction.parameters[indexOfArgument];
