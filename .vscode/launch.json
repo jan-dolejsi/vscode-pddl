@@ -64,7 +64,10 @@
 			"type": "chrome",
 			"request": "launch",
 			"name": "Problem/State view (html)",
-			"file": "${workspaceFolder}/views/modelView/problemInitView.html"
+			"file": "${workspaceFolder}/views/modelView/problemInitView.html",
+			"outFiles": [
+				"${workspaceFolder}/views/**/*.js"
+			]
 		},
 		{
 			"type": "chrome",

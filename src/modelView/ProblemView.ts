@@ -200,6 +200,7 @@ export abstract class ProblemView<TRendererOptions, TRenderData> extends Disposa
         }
         else {
             return getWebViewHtml(createPddlExtensionContext(this.context), {
+                allowUnsafeEval: this.options.allowUnsafeEval,
                 fonts: [
                     Uri.file(path.join("..", "..", COMMON_FOLDER, "codicon.ttf"))
                 ],
@@ -298,14 +299,15 @@ export interface ProblemRendererOptions {
 export interface ProblemViewOptions {
     /** Relative folder containing files used by the HTML content. */
     content: string;
-
+    
     viewCommand: string;
     insetViewCommand: string;
     insetHeight: number;
-
+    
     webviewType: string;
     webviewOptions: WebviewPanelOptions & WebviewOptions;
     webviewHtmlPath: string;
+    allowUnsafeEval?: boolean;
 }
 
 export interface ProblemRenderer<TOptions, TData> {

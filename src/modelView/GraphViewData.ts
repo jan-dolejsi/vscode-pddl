@@ -4,6 +4,7 @@
  * ------------------------------------------------------------------------------------------ */
 'use strict';
 
+/** Network diagram data */
 export interface GraphViewData {
     nodes: NetworkNode[];
     relationships: NetworkEdge[];

@@ -31,7 +31,7 @@ function initialize() {
 
   network.on("configChange", function () {
     // this will immediately fix the height of the configuration
-    // wrapper to prevent unecessary scrolls in chrome.
+    // wrapper to prevent unnecessary scrolls in chrome.
     // see https://github.com/almende/vis/issues/1568
     const div = container.getElementsByClassName("vis-configuration-wrapper")[0];
     div.style["height"] = div.getBoundingClientRect().height + "px";
@@ -54,6 +54,7 @@ function handleMessage(message) {
       updateObjectProperties(message.data.typeProperties);
       // console.log(JSON.stringify(message.data.typeRelationships));
       updateObjectRelationships(message.data.typeRelationships);
+      updateCustomView(message.data.customVisualization);
       break;
     default:
       console.log("Unexpected message: " + message.command);
@@ -62,6 +63,24 @@ function handleMessage(message) {
 
 function populateWithTestData() {
   // for testing only
+  updateCustomView({
+    plan: {},
+    state: [
+      { "variableName": "predicate1", "value": true },
+      { "variableName": "function1", "value": 3.14 },
+    ],
+    customVisualizationScript: `function visualizePlanHtml(plan, width) {
+        return "PLAN VISUALIZATION";
+    }
+    module.exports = {
+        // define one of the following functions:
+        visualizePlanHtml: visualizePlanHtml, 
+        visualizePlanInDiv: undefined, // function (hostDiv, plan, width)
+        visualizePlanSvg: undefined // function (plan, width)
+    };
+    `,
+    displayWidth: 500
+  });
   updateGraph({
     nodes: [{ id: 1, label: 'City' }, { id: 2, label: 'Town' }, { id: 3, label: 'Village' }],
     relationships: [{ from: 1, to: 2, label: 'connected' }, { from: 2, to: 3, label: 'connected' }]
@@ -321,6 +340,51 @@ function createRelationshipValue(relationshipName, relationship, objectNames) {
   else {
     return null;
   }
+}
+
+/** 
+ * @typedef CustomViewData Custom state visualization data and view logic. 
+ * @property {Plan} plan In this case, it is a dummy plan, which serves as a container for the domain and problem objects.
+ * @property {VariableValue[]} state
+ * @property {string} customVisualizationScript Javascript, which exports the `CustomVisualization` interface.
+ * @property {number} displayWidth
+ */
+
+/**
+ * Renders the custom state view.
+ * @param {CustomViewData | undefined} data data
+ */
+function updateCustomView(data) {
+  const customViewDiv = document.getElementById("customView");
+
+  if (data && data.customVisualizationScript) {
+
+    try {
+      const customVisualization = eval(data.customVisualizationScript);
+
+      if (customVisualization.visualizePlanHtml) {
+        const vizHtml = customVisualization.visualizePlanHtml(data.plan, data.displayWidth);
+        customViewDiv.innerHTML = vizHtml;
+      } else if (customVisualization.visualizePlanInDiv) {
+        customVisualization.visualizePlanInDiv(customViewDiv, data.plan, data.displayWidth);
+      } else if (customVisualization.visualizePlanSvg) {
+        const vizSvg = customVisualization.visualizePlanSvg(data.plan, data.displayWidth);
+        customViewDiv.appendChild(vizSvg);
+      } else if (customVisualization.visualizeStateHtml) {
+        const vizHtml = customVisualization.visualizeStateHtml(data.plan, data.state, data.displayWidth);
+        customViewDiv.innerHTML = vizHtml;
+      } else if (customVisualization.visualizeStateInDiv) {
+        customVisualization.visualizeStateInDiv(customViewDiv, data.plan, data.state, data.displayWidth);
+      } else if (customVisualization.visualizeStateSvg) {
+        const vizSvg = customVisualization.visualizeStateSvg(data.plan, data.state, data.displayWidth);
+        customViewDiv.appendChild(vizSvg);
+      }
+    }
+    catch (err) {
+      console.error(err);
+    }
+  }
+
 }
 
 function toPddlFunctionInit(functionNme, value) {

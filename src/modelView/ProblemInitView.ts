@@ -12,16 +12,18 @@ import {
 import {
     DomainInfo, ProblemInfo, TimedVariableValue,
     Variable, ObjectInstance, Parameter, Term,
-    parser, utils
+    parser, utils,
+    getObjectsInheritingFrom, getTypesInheritingFromPlusSelf, Plan, VariableValue
 } from 'pddl-workspace';
 
 import * as path from 'path';
 import { CodePddlWorkspace } from '../workspace/CodePddlWorkspace';
 import { nodeToRange } from '../utils';
-import { getObjectsInheritingFrom, getTypesInheritingFromPlusSelf } from 'pddl-workspace';
 import { DocumentCodeLens, DocumentInsetCodeLens } from './view';
 import { ProblemView, ProblemRenderer, ProblemRendererOptions } from './ProblemView';
 import { GraphViewData, NetworkEdge, NetworkNode } from './GraphViewData';
+const asSerializable = utils.serializationUtils.asSerializable;
+const makeSerializable = utils.serializationUtils.makeSerializable;
 
 const CONTENT = path.join('views', 'modelView');
 
@@ -39,6 +41,7 @@ export class ProblemInitView extends ProblemView<ProblemInitViewOptions, Problem
             insetHeight: DEFAULT_INSET_HEIGHT,
             webviewType: 'problemPreview',
             webviewHtmlPath: 'problemInitView.html',
+            allowUnsafeEval: true, // if only there was a way to find out if this will be needed
             webviewOptions: {
                 enableFindWidget: true,
                 // enableCommandUris: true,
@@ -105,18 +108,21 @@ class ProblemInitRenderer implements ProblemRenderer<ProblemInitViewOptions, Pro
                 nodes: renderer.getNodes(),
                 relationships: renderer.getRelationships()
             },
-            typeProperties: utils.serializationUtils.asSerializable(renderer.getTypeProperties()),
-            typeRelationships: utils.serializationUtils.asSerializable(renderer.getTypeRelationships()),
-            scalarValues: utils.serializationUtils.asSerializable(renderer.getScalarValues())
+            typeProperties: asSerializable(renderer.getTypeProperties()),
+            typeRelationships: asSerializable(renderer.getTypeRelationships()),
+            scalarValues: asSerializable(renderer.getScalarValues()),
+            customVisualization: makeSerializable(renderer.getCustomVisualization())
         };
     }
 }
 
+/** Schema for data being passed to the view for display. */
 interface ProblemInitViewData {
     symmetricRelationshipGraph: GraphViewData;
     typeProperties: Map<string, TypeProperties>;
     typeRelationships: TypesRelationship[];
     scalarValues: Map<string, number | boolean>;
+    customVisualization: CustomViewData | undefined;
 }
 
 interface TypeProperties {
@@ -135,6 +141,16 @@ interface RelationshipValue {
     value?: boolean | number;
 }
 
+/** Custom state visualization data and view logic. */
+interface CustomViewData {
+    /** In this case, it is a dummy plan, which serves as a container for the domain and problem objects. */
+    plan: Plan;
+    state: VariableValue[];
+    /** Javascript, which exports the `CustomVisualization` interface. */
+    customVisualizationScript: string;
+    displayWidth: number;
+}
+
 class ProblemInitRendererDelegate {
 
     private nodes: Map<string, number> = new Map();
@@ -142,6 +158,7 @@ class ProblemInitRendererDelegate {
     private typeProperties: Map<string, TypeProperties> = new Map();
     private typeRelationships = new Array<TypesRelationship>();
     private scalarValues = new Map<string, boolean | number | string>();
+    private customView: CustomViewData | undefined;
 
     constructor(_context: ExtensionContext, private domain: DomainInfo, private problem: ProblemInfo, private options: ProblemInitViewOptions) {
         if (!options.hide2dGraph) {
@@ -155,6 +172,9 @@ class ProblemInitRendererDelegate {
         }
         if (!options.hideObjectRelationships) {
             this.constructObjectRelationships();
+        }
+        if (!options.hideCustomViz) {
+            this.constructCustomViz();
         }
     }
 
@@ -401,9 +421,32 @@ class ProblemInitRendererDelegate {
     private static is2D(variable: Variable): boolean {
         return variable.parameters.length >= 2;
     }
+
+    constructCustomViz(): void {
+        this.customView = {
+            plan: new Plan([], this.domain, this.problem),
+            state: this.problem.getInits()
+                .filter(init => init.isSupported)
+                .map(init => init.getVariableValue()),
+            customVisualizationScript: `function visualizePlanHtml(plan, width) {
+                return "PLAN VISUALIZATION";
+            }
+            module.exports = {
+                // define one of the following functions:
+                visualizePlanHtml: visualizePlanHtml, 
+            };
+            `,
+            displayWidth: 500
+        };
+    }
+
+    getCustomVisualization(): CustomViewData | undefined {
+        return this.customView;
+    }
 }
 
 interface ProblemInitViewOptions extends ProblemRendererOptions {
+    hideCustomViz?: boolean;
     hideScalarValues?: boolean;
     graph2dSymmetricOnly?: boolean;
     hide2dGraph?: boolean;
