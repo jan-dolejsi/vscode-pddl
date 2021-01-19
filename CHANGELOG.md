@@ -1,5 +1,18 @@
 # PDDL support - What's new?
 
+## 2.20.3
+
+### Initial state visualization
+
+The _View_ code lens above the `(:init )` section of the problem (providing the editor found a corresponding domain file)
+now includes the custom state visualization. The view updates dynamically, when the problem is syntactically correct.
+
+![Initial state custom visualization](https://raw.githubusercontent.com/wiki/jan-dolejsi/vscode-pddl/img/blocksworld_init_state_viz.gif)
+
+Those lucky users, who have a planner that works with the visual Search Debugger will also see the plan visualization for every state encountered by the search.
+
+![Search tree custom visualization](https://raw.githubusercontent.com/wiki/jan-dolejsi/vscode-pddl/img/blocksworld_search_viz.gif)
+
 ## 2.20.2
 
 ### State visualization

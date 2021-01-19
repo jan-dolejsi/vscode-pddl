@@ -17,10 +17,10 @@ import { parser } from 'pddl-workspace';
 import { nodeToRange } from '../utils';
 import { DocumentInsetCodeLens, DocumentCodeLens } from './view';
 import { DomainView, DomainRendererOptions, DomainRenderer } from './DomainView';
-import { GraphViewData, NetworkEdge, NetworkNode } from './GraphViewData';
+import { GraphViewData, NetworkEdge, NetworkNode } from './model';
 import { DomainViewPanel } from './DomainViewPanel';
 
-const CONTENT = path.join('views', 'modelView');
+const CONTENT = path.join('views', 'modelView', 'static');
 
 const PDDL_DOMAIN_TYPES_PREVIEW_COMMAND = "pddl.domain.types.preview";
 const PDDL_DOMAIN_TYPES_INSET_COMMAND = "pddl.domain.types.inset";
