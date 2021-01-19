@@ -10,6 +10,7 @@
 		"davidanson.vscode-markdownlint",
 		"vscode-icons-team.vscode-icons",
 		"animu5.vscode-file-header-comment",
+		"eamodio.tsl-problem-matcher",
 		"msjsdiag.debugger-for-chrome",
 	],
 	// List of extensions recommended by VS Code that should not be recommended for users of this workspace.

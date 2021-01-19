@@ -15,7 +15,7 @@ jobs:
       matrix:
         node-version: [12.14]
         os: [windows-latest, macos-latest, ubuntu-latest]
-      # fail-fast: false
+      fail-fast: false
 
     runs-on: ${{ matrix.os }}
 

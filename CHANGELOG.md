@@ -1,5 +1,9 @@
 # PDDL support - What's new?
 
+## [Unreleased]
+
+- Faster start-up time due to migration to Webpack. Please report any errors that fell through my week of hands-on usage/testing.
+
 ## 2.20.3
 
 ### Initial state visualization

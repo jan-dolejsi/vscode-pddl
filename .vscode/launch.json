@@ -13,9 +13,9 @@
 			"stopOnEntry": false,
 			"sourceMaps": true,
 			"outFiles": [
-				"${workspaceFolder}/out/**/*.js"
+				"${workspaceFolder}/dist/**/*.js"
 			],
-			"preLaunchTask": "compile"
+			"preLaunchTask": "npm: webpack"
 		},
 		{
 			"name": "Launch Extension (skip views)",
@@ -28,9 +28,9 @@
 			"stopOnEntry": false,
 			"sourceMaps": true,
 			"outFiles": [
-				"${workspaceFolder}/out/**/*.js"
+				"${workspaceFolder}/dist/**/*.js"
 			],
-			"preLaunchTask": "compile - quick"
+			"preLaunchTask": "npm: webpack - quick"
 		},
 		{
 			"name": "Integration Tests",

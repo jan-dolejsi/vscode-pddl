@@ -23,6 +23,11 @@ coverage/
 .nyc_output/
 .github/
 downloadVisJs.js
+
+webpack.config.js
+node_modules
+views/.eslintrc.js
+
 how_to_contribute.md
 
 views/common/node_modules
