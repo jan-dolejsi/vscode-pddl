@@ -3,11 +3,55 @@
 	// List of configurations. Add new configurations or edit existing ones.
 	"configurations": [
 		{
+			"name": "Launch Extension",
+			"type": "extensionHost",
+			"request": "launch",
+			"runtimeExecutable": "${execPath}",
+			"args": [
+				"--extensionDevelopmentPath=${workspaceFolder}"
+			],
+			"stopOnEntry": false,
+			"sourceMaps": true,
+			"outFiles": [
+				"${workspaceFolder}/dist/**/*.js"
+			],
+			"preLaunchTask": "npm: webpack"
+		},
+		{
+			"name": "Launch Extension (skip views)",
+			"type": "extensionHost",
+			"request": "launch",
+			"runtimeExecutable": "${execPath}",
+			"args": [
+				"--extensionDevelopmentPath=${workspaceFolder}"
+			],
+			"stopOnEntry": false,
+			"sourceMaps": true,
+			"outFiles": [
+				"${workspaceFolder}/dist/**/*.js"
+			],
+			"preLaunchTask": "npm: webpack - quick"
+		},
+		{
+			"name": "Integration Tests",
+			"type": "extensionHost",
+			"request": "launch",
+			"runtimeExecutable": "${execPath}",
+			"args": [
+				"--folder-uri=${workspaceFolder}/src/test/tmpFolder/",
+				"--user-data-dir=${workspaceFolder}/src/test/tmpUserProfile/",
+				"--extensionDevelopmentPath=${workspaceFolder}",
+				"--extensionTestsPath=${workspaceFolder}/out/test/suite/index",
+				"--disable-extensions"
+			],
+			"outFiles": ["${workspaceFolder}/out/test/**/*.js"],
+			"preLaunchTask": "compile"
+		},
+		{
 			"type": "chrome",
 			"request": "launch",
 			"name": "Search debugger (html)",
 			"file": "${workspaceFolder}/views/searchview/static/search.html",
-			"cwd": "${workspaceFolder}/views/searchview/out",
 			"preLaunchTask": "npm: compile - views/searchview",
 			"outFiles": [
 				"${workspaceFolder}/views/searchview/out/**/*.js"
@@ -18,7 +62,6 @@
 			"request": "launch",
 			"name": "Plan view (html)",
 			"file": "${workspaceFolder}/views/planview/static/plans.html",
-			"cwd": "${workspaceFolder}/views/planview/out",
 			"preLaunchTask": "npm: compile - views/planview",
 			"outFiles": [
 				"${workspaceFolder}/views/planview/out/**/*.js"
@@ -34,45 +77,21 @@
 			"type": "chrome",
 			"request": "launch",
 			"name": "Problem/State view (html)",
-			"file": "${workspaceFolder}/views/modelView/problemInitView.html"
+			"file": "${workspaceFolder}/views/modelView/static/problemInitView.html",
+			"preLaunchTask": "npm: compile - views/modelView",
+			"outFiles": [
+				"${workspaceFolder}/views/modelView/out/*.js"
+			]
 		},
 		{
 			"type": "chrome",
 			"request": "launch",
 			"name": "Graph view (html)",
-			"file": "${workspaceFolder}/views/modelView/graphView.html"
-		},
-		{
-			"name": "Launch Extension",
-			"type": "extensionHost",
-			"request": "launch",
-			"runtimeExecutable": "${execPath}",
-			"args": [
-				"--extensionDevelopmentPath=${workspaceFolder}"
-			],
-			"stopOnEntry": false,
-			"sourceMaps": true,
+			"file": "${workspaceFolder}/views/modelView/static/graphView.html",
+			"preLaunchTask": "npm: compile - views/modelView",
 			"outFiles": [
-                "${workspaceFolder}/dist/**/*.js"
-			],
-            "preLaunchTask": "npm: webpack"
+				"${workspaceFolder}/views/**/*.js"
+			]
 		},
-		{
-			"name": "Integration Tests",
-			"type": "extensionHost",
-			"request": "launch",
-			"runtimeExecutable": "${execPath}",
-			"args": [
-				"--folder-uri=${workspaceFolder}/src/test/tmpFolder/",
-				"--user-data-dir=${workspaceFolder}/src/test/tmpUserProfile/",
-				"--extensionDevelopmentPath=${workspaceFolder}",
-				"--extensionTestsPath=${workspaceFolder}/out/test/suite/index",
-				"--disable-extensions"
-			],
-			"outFiles": [
-			    "${workspaceFolder}/out/test/**/*.js"
-			],
-			"preLaunchTask": "compile"
-		}
 	]
 }

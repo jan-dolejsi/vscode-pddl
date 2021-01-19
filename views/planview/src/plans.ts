@@ -5,7 +5,7 @@
 
 import { createPlansView, CustomVisualization, JsonDomainVizConfiguration, PlansView, PlanView } from "pddl-gantt";
 import { Plan, PlanStep } from "pddl-workspace";
-import { LinePlotData, PlansData } from 'model';
+import { LinePlotData, PlansData, FinalStateData } from 'model';
 
 /** VS Code stub, so we can work with it in a type safe way. */
 interface VsCodeApi {
@@ -46,6 +46,9 @@ window.addEventListener('message', event => {
         case 'hideLinePlotLoadingProgress':
             hideLinePlotLoadingProgress(message.planIndex);
             break;
+        case 'visualizeFinalState':
+            showFinalState(message.data);
+            break;
         case 'error':
             showError(message.message);
             break;        
@@ -65,6 +68,7 @@ function initialize(): void {
             epsilon: 1e-3,
             onActionSelected: actionName => revealAction(actionName),
             onLinePlotsVisible: planView => requestLinePlotData(planView),
+            onFinalStateVisible: planView => requestFinalState(planView),
             onPlanSelected: planIndex => setSelectedPlan(planIndex)
         }
     );
@@ -177,4 +181,12 @@ function showLinePlot(data: LinePlotData): void {
 
 function hideLinePlotLoadingProgress(planIndex: number): void {
     plansViz.getView(planIndex).hideLinePlotLoadingProgress();
+}
+
+function requestFinalState(planView: PlanView): void {
+    vscode?.postMessage({ 'command': 'finalStateDataRequest', 'planIndex': planView.planIndex });
+}
+
+function showFinalState(data: FinalStateData): void {
+    plansViz.getView(data.planIndex).showFinalState(data.finalState);
 }

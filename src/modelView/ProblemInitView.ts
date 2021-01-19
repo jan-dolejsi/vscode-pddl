@@ -12,18 +12,21 @@ import {
 import {
     DomainInfo, ProblemInfo, TimedVariableValue,
     Variable, ObjectInstance, Parameter, Term,
-    parser, utils
+    parser, utils,
+    getObjectsInheritingFrom, getTypesInheritingFromPlusSelf, Plan
 } from 'pddl-workspace';
 
 import * as path from 'path';
 import { CodePddlWorkspace } from '../workspace/CodePddlWorkspace';
 import { nodeToRange } from '../utils';
-import { getObjectsInheritingFrom, getTypesInheritingFromPlusSelf } from 'pddl-workspace';
 import { DocumentCodeLens, DocumentInsetCodeLens } from './view';
 import { ProblemView, ProblemRenderer, ProblemRendererOptions } from './ProblemView';
-import { GraphViewData, NetworkEdge, NetworkNode } from './GraphViewData';
+import { CustomViewData, NetworkEdge, NetworkNode, ProblemInitViewData, RelationshipValue, TypeProperties, TypesRelationship } from './model/';
+import { getDomainVisualizationConfigurationDataForPlan } from '../planView/DomainVisualization';
+const asSerializable = utils.serializationUtils.asSerializable;
+const makeSerializable = utils.serializationUtils.makeSerializable;
 
-const CONTENT = path.join('views', 'modelView');
+const CONTENT = path.join('views', 'modelView', 'static');
 
 const PDDL_PROBLEM_INIT_PREVIEW_COMMAND = "pddl.problem.init.preview";
 const PDDL_PROBLEM_INIT_INSET_COMMAND = "pddl.problem.init.inset";
@@ -39,6 +42,7 @@ export class ProblemInitView extends ProblemView<ProblemInitViewOptions, Problem
             insetHeight: DEFAULT_INSET_HEIGHT,
             webviewType: 'problemPreview',
             webviewHtmlPath: 'problemInitView.html',
+            allowUnsafeEval: true, // if only there was a way to find out if this will be needed
             webviewOptions: {
                 enableFindWidget: true,
                 // enableCommandUris: true,
@@ -97,7 +101,7 @@ export class ProblemInitView extends ProblemView<ProblemInitViewOptions, Problem
 }
 
 class ProblemInitRenderer implements ProblemRenderer<ProblemInitViewOptions, ProblemInitViewData> {
-    render(context: ExtensionContext, problem: ProblemInfo, domain: DomainInfo, options: ProblemInitViewOptions): ProblemInitViewData {
+    async render(context: ExtensionContext, problem: ProblemInfo, domain: DomainInfo, options: ProblemInitViewOptions): Promise<ProblemInitViewData> {
         const renderer = new ProblemInitRendererDelegate(context, domain, problem, options);
 
         return {
@@ -105,34 +109,12 @@ class ProblemInitRenderer implements ProblemRenderer<ProblemInitViewOptions, Pro
                 nodes: renderer.getNodes(),
                 relationships: renderer.getRelationships()
             },
-            typeProperties: utils.serializationUtils.asSerializable(renderer.getTypeProperties()),
-            typeRelationships: utils.serializationUtils.asSerializable(renderer.getTypeRelationships()),
-            scalarValues: utils.serializationUtils.asSerializable(renderer.getScalarValues())
+            typeProperties: asSerializable(renderer.getTypeProperties()),
+            typeRelationships: asSerializable(renderer.getTypeRelationships()),
+            scalarValues: asSerializable(renderer.getScalarValues()),
+            customVisualization: !options.hideCustomViz ? makeSerializable(await renderer.getCustomVisualization()) : undefined
         };
     }
-}
-
-interface ProblemInitViewData {
-    symmetricRelationshipGraph: GraphViewData;
-    typeProperties: Map<string, TypeProperties>;
-    typeRelationships: TypesRelationship[];
-    scalarValues: Map<string, number | boolean>;
-}
-
-interface TypeProperties {
-    propertyNames: string[];
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    objects: Map<string, Map<string, any>>;
-}
-
-interface TypesRelationship {
-    types: Map<string, string[]>;
-    relationships: Map<string, RelationshipValue[]>;
-}
-
-interface RelationshipValue {
-    parameters: Map<string, string>;
-    value?: boolean | number;
 }
 
 class ProblemInitRendererDelegate {
@@ -142,6 +124,9 @@ class ProblemInitRendererDelegate {
     private typeProperties: Map<string, TypeProperties> = new Map();
     private typeRelationships = new Array<TypesRelationship>();
     private scalarValues = new Map<string, boolean | number | string>();
+
+    private serializableDomain: DomainInfo | undefined;
+    private serializableProblem: ProblemInfo | undefined;
 
     constructor(_context: ExtensionContext, private domain: DomainInfo, private problem: ProblemInfo, private options: ProblemInitViewOptions) {
         if (!options.hide2dGraph) {
@@ -229,11 +214,9 @@ class ProblemInitRendererDelegate {
         const liftedVariables = this.domain.getPredicates().concat(this.domain.getFunctions())
             .filter(variable => this.isTypeProperty(type, variable));
 
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const objectsValues = new Map<string, Map<string, any>>();
+        const objectsValues = new Map<string, Map<string, boolean | number>>();
         objects.forEach(objectName => {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const objectValues = new Map<string, any>();
+            const objectValues = new Map<string, boolean | number>();
             liftedVariables.forEach(v => {
                 const value = this.getInitValue(v.bind([new ObjectInstance(objectName, type)]));
                 if (value) {
@@ -401,9 +384,32 @@ class ProblemInitRendererDelegate {
     private static is2D(variable: Variable): boolean {
         return variable.parameters.length >= 2;
     }
+
+    private getSerialisableDomain(): DomainInfo{
+        return this.serializableDomain ?? (this.serializableDomain = DomainInfo.clone(makeSerializable(this.domain)));
+    }
+
+    private getSerialisableProblem(): ProblemInfo{
+        return this.serializableProblem ?? (this.serializableProblem = ProblemInfo.clone(makeSerializable(this.problem)));
+    }
+
+    async getCustomVisualization(): Promise<CustomViewData> {
+        const plan = new Plan([], makeSerializable(this.getSerialisableDomain()), this.getSerialisableProblem());
+        const domainViz = await getDomainVisualizationConfigurationDataForPlan(plan);
+
+        return {
+            plan: plan,
+            state: this.problem.getInits()
+                .filter(init => init.isSupported)
+                .map(init => init.getVariableValue()),
+            customVisualizationScript: domainViz.customDomainVisualizationScript,
+            displayWidth: domainViz.width
+        };
+    }
 }
 
 interface ProblemInitViewOptions extends ProblemRendererOptions {
+    hideCustomViz?: boolean;
     hideScalarValues?: boolean;
     graph2dSymmetricOnly?: boolean;
     hide2dGraph?: boolean;

@@ -9,11 +9,14 @@ import {
 } from 'vscode';
 import * as path from 'path';
 
-import { getWebViewHtml, createPddlExtensionContext } from '../utils';
+import { getWebViewHtml, createPddlExtensionContext, showError, ensureAbsoluteGlobalStoragePath } from '../utils';
 import { StateResolver } from './StateResolver';
-import { ProblemInfo, DomainInfo, utils, search } from 'pddl-workspace';
-import { DEFAULT_EPSILON } from '../configuration/configuration';
+import { ProblemInfo, DomainInfo, utils, search, Happening } from 'pddl-workspace';
+import { CONF_PDDL, DEFAULT_EPSILON, VAL_STEP_PATH, VAL_VERBOSE } from '../configuration/configuration';
 import { getDomainVisualizationConfigurationDataForPlan } from '../planView/DomainVisualization';
+import { PlanEvaluator } from 'ai-planning-val';
+import { FinalStateData } from '../planView/model';
+import { handleValStepError } from '../planView/valStepErrorHandler';
 
 export class SearchDebuggerView {
     private webViewPanel: WebviewPanel | undefined;
@@ -135,6 +138,9 @@ export class SearchDebuggerView {
                     window.showErrorMessage("Error while displaying state-plan: " + ex);
                 }
                 break;
+            case 'finalStateDataRequest': 
+                this.getFinalStateData(message.stateId).catch(showError);
+                break;    
             case 'startDebugger':
                 commands.executeCommand("pddl.searchDebugger.start");
                 this.stateLogLineCache.clear();
@@ -246,6 +252,42 @@ export class SearchDebuggerView {
         });
     }
 
+    async getFinalStateData(stateId: number | null | undefined): Promise<void> {
+        if (this.search === undefined) { return void 0; }
+        if (stateId === null || stateId === undefined) { return void 0; }
+        const state = this.search.getState(stateId);
+        if (!state || !this.webViewPanel) { return; }
+
+        const valStepPath = ensureAbsoluteGlobalStoragePath(workspace.getConfiguration(CONF_PDDL).get<string>(VAL_STEP_PATH), this.context);
+        const valVerbose = workspace.getConfiguration(CONF_PDDL).get<boolean>(VAL_VERBOSE, false);
+
+        const happenings = state.planHead.map(searchHappening => toHappening(searchHappening));
+
+        if (this.domain && this.problem) {
+            try {
+                const finalStateValues = await new PlanEvaluator().evaluateHappenings(this.domain, this.problem, happenings, { valStepPath, verbose: valVerbose });
+
+                if (finalStateValues) {
+
+                    const data: FinalStateData = {
+                        finalState: finalStateValues.map(tvv => tvv.getVariableValue()),
+                        planIndex: stateId
+                    };
+
+                    this.postMessage({
+                        "command": "visualizeFinalState",
+                        "state": data
+                    });
+                }
+            } catch (err) {
+                console.error(err);
+                if (valStepPath) {
+                    handleValStepError(err, valStepPath);
+                }
+            }
+        }
+    }
+
     clear(): void {
         this.postMessage({ command: 'clear', state: 'n/a' });
         this.stateLogLineCache.clear();
@@ -295,4 +337,13 @@ export class SearchDebuggerView {
             }
         }
     }
+}
+
+/**
+ * Converts `SearchHappening` to `Happening`.
+ * @param searchHappening plan happening that was created as a search state progression
+ */
+function toHappening(searchHappening: search.SearchHappening): Happening {
+    return new Happening(searchHappening.earliestTime, searchHappening.kind,
+        searchHappening.actionName, searchHappening.shotCounter);
 }

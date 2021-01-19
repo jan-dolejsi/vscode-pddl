@@ -7,7 +7,7 @@
 			"script": "compile",
 			"group": "build",
 			"presentation": {
-				"panel": "dedicated",
+				"panel": "shared",
 				"reveal": "always"
 			},
 			"problemMatcher": [
@@ -15,14 +15,17 @@
 			]
 		},
 		{
-			"label": "compile - extension code only",
+			"label": "compile - quick",
+			"detail": "Does not re-compile views",
 			"type": "shell",
 			"command": "npx",
-			"args": ["tsc"],
+			"args": [
+				"tsc"
+			],
 			"group": "build",
 			"presentation": {
-				"panel": "dedicated",
-				"reveal": "never"
+				"panel": "shared",
+				"reveal": "always"
 			},
 			"problemMatcher": [
 				"$tsc"
@@ -92,6 +95,17 @@
 			"group": "build",
 			"label": "npm: compile - views/planview",
 			"detail": "npm run lint && browserify src/plans.ts -p tsify > out/plans.js"
+		},
+		{
+			"type": "npm",
+			"script": "compile",
+			"path": "views/modelView/",
+			"group": "build",
+			"problemMatcher": [
+				"$tsc"
+			],
+			"label": "npm: compile - views/modelView",
+			"detail": "npm run lint && browserify src/graphView.ts -p tsify > out/graphView.js && browserify src/problemInitView.ts -p tsify > out/problemInitView.js"
 		}
 	]
 }

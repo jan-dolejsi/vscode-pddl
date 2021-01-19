@@ -241,6 +241,38 @@ module.exports = {
 
 ```
 
+If the final state of the plan is more appropriate for visualization (as oppose to the plan itself),
+the visualization logic may look this way:
+
+```javascript
+/**
+ * Populates the `planVizDiv` element with the plan visualization of the `finalState`.
+ * @param {HTMLDivElement} planVizDiv host element on the page
+ * @param {Plan} plan plan to be visualized
+ * @param {{variableName: string, value: number | boolean}[]} finalState final state of the `plan`
+ * @param {number} displayWidth desired width in pixels
+ */
+function visualizeStateInDiv(planVizDiv, plan, finalState, displayWidth) {
+  for (const v of finalState) {
+    console.log(`${v.variableName}: ${v.value}`);
+  }
+
+  const valueMap = new Map(finalState.map(i => [i.variableName, i.value]));
+
+  // print certain value
+  console.log(valueMap.get('predicate1 obj2 obj3'));
+}
+
+module.exports = {
+   visualizeStateInDiv: visualizeStateInDiv
+};
+```
+
+The above example merely prints the final state values to the browser console.
+
+See full example that uses a charting component [coffeeMachineView.js](https://github.com/jan-dolejsi/vscode-pddl-samples/blob/master/CoffeeMachine/coffeeMachineView.js).
+![Plan visualization using Google Gauge diagram](https://raw.githubusercontent.com/wiki/jan-dolejsi/vscode-pddl/img/PDDL_plan_viz_gauges.jpg)
+
 To see all the options for plan visualization as HTML/DOM/SVG, see the function signatures here: [CustomVisualization.ts](https://github.com/jan-dolejsi/pddl-gantt/blob/master/src/CustomVisualization.ts).
 
 #### Generate plan report

@@ -1,0 +1,36 @@
+{
+  "name": "model-view",
+  "version": "1.0.0",
+  "description": "",
+  "scripts": {
+    "pretest": "tsc && npm run lint",
+    "test-watch": "tsc -w",
+    "test-compile": "tsc",
+    "test": "mocha -- out-test/test/**/*.js",
+    "compile": "npm run lint && browserify src/graphView.ts -p tsify > out/graphView.js && browserify src/problemInitView.ts -p tsify > out/problemInitView.js",
+    "lint": "eslint src --ext ts",
+    "watchGraph": "watchify src/graphView.ts -p tsify -o out/graphView.js --verbose",
+    "watchProblemInit": "watchify src/problemInitView.ts -p tsify -o out/problemInitView.js --verbose"
+  },
+  "author": "Jan Dolejsi",
+  "license": "MIT",
+  "devDependencies": {
+    "@typescript-eslint/eslint-plugin": "file:../../node_modules/@typescript-eslint/eslint-plugin",
+    "@typescript-eslint/parser": "file:../../node_modules/@typescript-eslint/parser",
+    "eslint": "file:../../node_modules/eslint",
+    "typescript": "file:../../node_modules/typescript",
+    "browserify": "^16.5.2",
+    "tsify": "^5.0.2",
+    "watchify": "^3.11.1",
+    "@types/mocha": "file:../../node_modules/@types/mocha",
+    "mocha": "file:../../node_modules/mocha",
+    "@types/chai": "file:../../node_modules/@types/chai",
+    "chai": "file:../../node_modules/chai",
+    "@types/chai-string": "file:../../node_modules/@types/chai-string",
+    "chai-string": "file:../../node_modules/chai-string",
+    "model": "file:../../out/modelView/model/"
+  },
+  "dependencies": {
+    "pddl-gantt": "file:../../node_modules/pddl-gantt"
+  }
+}

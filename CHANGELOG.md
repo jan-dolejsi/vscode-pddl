@@ -4,6 +4,69 @@
 
 - Faster start-up time due to migration to Webpack. Please report any errors that fell through my week of hands-on usage/testing.
 
+## 2.20.3
+
+### Initial state visualization
+
+The _View_ code lens above the `(:init )` section of the problem (providing the editor found a corresponding domain file)
+now includes the custom state visualization. The view updates dynamically, when the problem is syntactically correct.
+
+![Initial state custom visualization](https://raw.githubusercontent.com/wiki/jan-dolejsi/vscode-pddl/img/blocksworld_init_state_viz.gif)
+
+Those lucky users, who have a planner that works with the visual Search Debugger will also see the plan visualization for every state encountered by the search.
+
+![Search tree custom visualization](https://raw.githubusercontent.com/wiki/jan-dolejsi/vscode-pddl/img/blocksworld_search_viz.gif)
+
+## 2.20.2
+
+### State visualization
+
+Plan visualization was introduced in previous version. If the _final state_
+of the plan is more appropriate for visualization (as oppose to the plan itself),
+the visualization logic may look this way:
+
+```javascript
+/**
+ * Populates the `planVizDiv` element with the plan visualization of the `finalState`.
+ * @param {HTMLDivElement} planVizDiv host element on the page
+ * @param {Plan} plan plan to be visualized
+ * @param {{variableName: string, value: number | boolean}[]} finalState final state of the `plan`
+ * @param {number} displayWidth desired width in pixels
+ */
+function visualizeStateInDiv(planVizDiv, plan, finalState, displayWidth) {
+  for (const v of finalState) {
+    console.log(`${v.variableName}: ${v.value}`);
+  }
+
+  const valueMap = new Map(finalState.map(i => [i.variableName, i.value]));
+
+  // print certain value
+  console.log(valueMap.get('predicate1 obj2 obj3'));
+}
+
+module.exports = {
+   visualizeStateInDiv: visualizeStateInDiv
+};
+```
+
+The above example merely prints the final state values (calculated by the ValStep utility asynchronously behind the scenes) to the browser console.
+
+See full example that uses a charting component [coffeeMachineView.js](https://github.com/jan-dolejsi/vscode-pddl-samples/blob/master/CoffeeMachine/coffeeMachineView.js).
+![Plan visualization using Google Gauge diagram](https://raw.githubusercontent.com/wiki/jan-dolejsi/vscode-pddl/img/PDDL_plan_viz_gauges.jpg)
+
+To see all the options for plan visualization as HTML/DOM/SVG, see the function signatures here: [CustomVisualization.ts](https://github.com/jan-dolejsi/pddl-gantt/blob/master/src/CustomVisualization.ts).
+
+### Fixes
+
+The plan report (export to HTML) was working incorrectly in the face of case-sensitive object names.
+
+## 2.20.1
+
+### Fixes
+
+- Non-temporal plans do not display fully (especially the hello world sample) [#90](https://github.com/jan-dolejsi/vscode-pddl/issues/90)
+- Try HelloWorld overrides domain.pddl file [#87](https://github.com/jan-dolejsi/vscode-pddl/issues/87)
+
 ## 2.20.0 - New and customizable Plan Visualization
 
 ### New faster plan visualization component with custom domain-specific plan visualization

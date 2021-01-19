@@ -14,7 +14,7 @@ import opn = require('open');
 
 import { DomainInfo, PlanStep, PlanStepCommitment, HappeningType, Plan, HelpfulAction, PddlWorkspace, VariableExpression } from 'pddl-workspace';
 import { PlanFunctionEvaluator, Util as ValUtil } from 'ai-planning-val';
-import { capitalize } from 'pddl-gantt';
+import { capitalize, CustomVisualization } from 'pddl-gantt';
 import { SwimLane } from './SwimLane';
 import { PlanReportSettings } from './PlanReportSettings';
 import { VAL_STEP_PATH, CONF_PDDL, VALUE_SEQ_PATH, PLAN_REPORT_LINE_PLOT_GROUP_BY_LIFTED, DEFAULT_EPSILON, VAL_VERBOSE } from '../configuration/configuration';
@@ -63,7 +63,7 @@ export class PlanReportGenerator {
                 content="default-src 'none'; img-src vscode-resource: https: data:; script-src vscode-resource: https://www.gstatic.com/charts/ 'unsafe-inline'; style-src vscode-resource: https://www.gstatic.com/charts/ 'unsafe-inline';"
             />    
             ${await this.includeStyle(this.asAbsolutePath(ganttStylesPath, 'pddl-gantt.css'))}
-            ${await this.includeStyle(this.asAbsolutePath(staticPath, 'menu.css'))}
+            ${await this.includeStyle(this.asAbsolutePath(staticPath, 'plans.css'))}
             ${await this.includeScript(this.asAbsolutePath(path.join(relativePath, 'out'), 'plans.js'))}
             <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
             ${await this.includeScript(this.asAbsolutePath(staticPath, 'charts.js'))}
@@ -127,10 +127,11 @@ States evaluated: ${plan.statesEvaluated}`;
             const absPath = path.join(PddlWorkspace.getFolderPath(plan.domain.fileUri), planVisualizerPath);
             try {
                 const planVisualizerText = (await workspace.fs.readFile(Uri.file(absPath))).toString();
-                const visualize = eval(planVisualizerText);
-                stateViz = visualize(plan, 300, 100);
-                // todo: document.getElementById("stateviz").innerHTML = stateViz;
-                stateViz = `<div class="stateView" plan="${planIndex}" style="margin: 5px; width: 300px; height: 100px; display: ${styleDisplay};">${stateViz}</div>`;
+                const planVisualizer = eval(planVisualizerText) as CustomVisualization;
+                const width = this.options.displayWidth;
+                stateViz = planVisualizer.visualizePlanHtml?.(plan, width) ??
+                    `<div class="hint">Only 'visualizePlanHtml' option is supported by the exported plan report currently. </div>`;
+                stateViz = `<div class="stateView" plan="${planIndex}" style="margin: 5px; width: ${width}px; display: ${styleDisplay};">${stateViz}</div>`;
             }
             catch (ex) {
                 console.warn(ex);
@@ -338,7 +339,7 @@ ${stepsInvolvingThisObject}
 
         let fromArgument = 0;
         do {
-            const indexOfArgument = step.getObjects().indexOf(obj.toLowerCase(), fromArgument);
+            const indexOfArgument = step.getObjects().indexOf(obj, fromArgument);
             fromArgument = indexOfArgument + 1;
             if (indexOfArgument > -1 && indexOfArgument < liftedAction.parameters.length) {
                 const parameter = liftedAction.parameters[indexOfArgument];
