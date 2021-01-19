@@ -96,6 +96,7 @@ export async function createTestExtensionContext(): Promise<ExtensionContext> {
     return {
         asAbsolutePath: function (path: string): string { throw new Error(`Unsupported. ` + path); },
         extensionPath: '.',
+        // extensionRuntime: ExtensionRuntime.Node,
         storagePath: storage.path,
         storageUri: Uri.file(storage.path),
         subscriptions: new Array<Disposable>(),

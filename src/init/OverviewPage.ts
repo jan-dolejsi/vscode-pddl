@@ -241,31 +241,48 @@ export class OverviewPage {
 
         const sampleFiles = await workspace.fs.readDirectory(Uri.joinPath(this.context.extensionUri, this.CONTENT_FOLDER, subDirectory));
 
-        const sampleDocumentPromises = sampleFiles
-            .map(child => child[0]) // pick up the file name
-            .filter(async (sampleFile) => this.overwriteIfExists(folder!, sampleFile))
-            .map(async (sampleFile) => {
-                const sampleTargetPath = Uri.joinPath(folder!, sampleFile);
-                const sampleResourcePath = Uri.joinPath(this.context.extensionUri, this.CONTENT_FOLDER, subDirectory, sampleFile);//'overview/helloWorld/domain.pddl'
-                await workspace.fs.copy(sampleResourcePath, sampleTargetPath, { overwrite: true });
-                const sampleDocument = await workspace.openTextDocument(sampleTargetPath);
-                return sampleDocument;
-            });
+        const sampleFileNames = sampleFiles
+            .map(child => child[0]); // pick up the file name
 
-        const sampleDocuments = await Promise.all(sampleDocumentPromises);
+        const sampleDocuments: TextDocument[] = [];
+
+        for (const sampleFile of sampleFileNames) {
+            const shouldWrite = await this.overwriteIfExists(folder!, sampleFile);
+            if (shouldWrite === undefined) {
+                return undefined;
+            }
+            const sampleTargetPath = Uri.joinPath(folder!, sampleFile);
+            
+            if (shouldWrite) { 
+                const sampleResourcePath = Uri.joinPath(this.context.extensionUri, this.CONTENT_FOLDER, subDirectory, sampleFile);
+                await workspace.fs.copy(sampleResourcePath, sampleTargetPath, { overwrite: true });
+            }
+
+            const sampleDocument = await workspace.openTextDocument(sampleTargetPath);
+            sampleDocuments.push(sampleDocument);
+        }
+
         return sampleDocuments;
     }
 
-    async overwriteIfExists(folder: Uri, sampleFile: string): Promise<boolean> {
+    /**
+     * Checks whether the file already exists and decides whether to overwrite it.
+     * @param folder folder uri
+     * @param sampleFile sample file to write
+     * @returns undefined, if the user cancels.
+     */
+    async overwriteIfExists(folder: Uri, sampleFile: string): Promise<boolean | undefined> {
         const sampleTargetPath = Uri.joinPath(folder, sampleFile);
         if (await exists(sampleTargetPath)) {
-            const answer = await window.showWarningMessage(`File '${sampleFile}' already exists.`, "Overwrite", "Skip");
-            if (answer === "Overwrite") {
-                return true;
-            } else {
-                return false;
+            const overwrite = "Overwrite";
+            const answer = await window.showWarningMessage(`File '${sampleFile}' already exists.`, { modal: true }, overwrite, "Skip");
+            if (answer === undefined) {
+                // canceled by the user
+                return undefined;
             }
+            return answer === overwrite;
         } else {
+            // it does not exist
             return true;
         }
     }

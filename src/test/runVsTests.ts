@@ -41,7 +41,7 @@ async function runTestsInEmptyWorkspaceFolder(options: TestOptions, version: str
 	console.log(`Creating temp workspace folder: ${workspaceFolderName}`);
 	const workspaceFolder = await tmp.dir({ prefix: workspaceFolderName });
 
-	// Create temp folder for the workspace
+	// Create temp folder for the user
 	const userProfileFolderName = `vscode-user-settings_${version}_`;
 	console.log(`Creating temp user profile folder: ${userProfileFolderName}`);
 	const userDataDir = await tmp.dir({ prefix: userProfileFolderName } );
