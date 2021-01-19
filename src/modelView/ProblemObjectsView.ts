@@ -18,10 +18,10 @@ import { parser } from 'pddl-workspace';
 import { nodeToRange } from '../utils';
 import { DocumentInsetCodeLens, DocumentCodeLens } from './view';
 import { ProblemView, ProblemRendererOptions, ProblemRenderer } from './ProblemView';
-import { GraphViewData, NetworkEdge, NetworkNode } from './GraphViewData';
+import { GraphViewData, NetworkEdge, NetworkNode } from './model';
 import { ProblemViewPanel } from './ProblemViewPanel';
 
-const CONTENT = path.join('views', 'modelView');
+const CONTENT = path.join('views', 'modelView', 'static');
 
 const PDDL_PROBLEM_OBJECTS_PREVIEW_COMMAND = "pddl.problem.objects.preview";
 const PDDL_PROBLEM_OBJECTS_INSET_COMMAND = "pddl.problem.objects.inset";

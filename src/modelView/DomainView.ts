@@ -201,7 +201,7 @@ export abstract class DomainView<TRendererOptions, TRenderData> extends Disposab
         else {
             return getWebViewHtml(createPddlExtensionContext(this.context), {
                 fonts: [
-                    Uri.file(path.join("..", "..", COMMON_FOLDER, "codicon.ttf"))
+                    Uri.file(path.join("..", "..", "..", COMMON_FOLDER, "codicon.ttf"))
                 ],
                 relativePath: this.options.content,
                 htmlFileName: this.options.webviewHtmlPath
@@ -226,8 +226,7 @@ export abstract class DomainView<TRendererOptions, TRenderData> extends Disposab
     }
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    protected handleMessage(_panel: DomainViewPanel, _message: any): boolean {
+    protected handleMessage(_panel: DomainViewPanel, _message: {command: string }): boolean {
         return false;
     }
 
@@ -236,8 +235,7 @@ export abstract class DomainView<TRendererOptions, TRenderData> extends Disposab
         return await this.refreshPanelContent(panel);
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    private async handleMessageCore(panel: DomainViewPanel, message: any): Promise<void> {
+    private async handleMessageCore(panel: DomainViewPanel, message: {command: string }): Promise<void> {
         console.log(`Message received from the webview: ${message.command}`);
 
         switch (message.command) {

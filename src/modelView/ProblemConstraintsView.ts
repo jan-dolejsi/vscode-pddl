@@ -18,11 +18,11 @@ import { parser } from 'pddl-workspace';
 import { nodeToRange } from '../utils';
 import { DocumentInsetCodeLens, DocumentCodeLens } from './view';
 import { ProblemView, ProblemRendererOptions, ProblemRenderer } from './ProblemView';
-import { GraphViewData, NetworkEdge, NetworkNode } from './GraphViewData';
+import { GraphViewData, NetworkEdge, NetworkNode } from './model';
 import { NamedConditionConstraint, AfterConstraint, StrictlyAfterConstraint } from 'pddl-workspace';
 import { ProblemViewPanel } from './ProblemViewPanel';
 
-const CONTENT = path.join('views', 'modelView');
+const CONTENT = path.join('views', 'modelView', 'static');
 
 const PDDL_PROBLEM_CONSTRAINTS_PREVIEW_COMMAND = "pddl.problem.constraints.preview";
 const PDDL_PROBLEM_CONSTRAINTS_INSET_COMMAND = "pddl.problem.constraints.inset";

@@ -24,8 +24,8 @@ export function createPddlExtensionContext(context: ExtensionContext): PddlExten
 }
 
 export async function getWebViewHtml(extensionContext: PddlExtensionContext, options: WebViewHtmlOptions, webview?: Webview): Promise<string> {
-    const overviewHtmlPath = extensionContext.asAbsolutePath(path.join(options.relativePath, options.htmlFileName));
-    const templateHtml = (await fs.promises.readFile(overviewHtmlPath, { encoding: "utf-8", flag: 'r' })).toString();
+    const htmlPath = extensionContext.asAbsolutePath(path.join(options.relativePath, options.htmlFileName));
+    const templateHtml = (await fs.promises.readFile(htmlPath, { encoding: "utf-8", flag: 'r' })).toString();
 
     // generate nonce for secure calling of javascript
     const nonce = !options.allowUnsafeInlineScripts ? generateNonce() : undefined;

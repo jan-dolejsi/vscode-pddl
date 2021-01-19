@@ -1,0 +1,6 @@
+{
+	"name": "model-webview-model",
+	"description": "This module exposes the contract for communication with the model webview",
+	"main": "./index.js",
+	"types": "./index.d.ts"
+}

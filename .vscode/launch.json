@@ -3,61 +3,38 @@
 	// List of configurations. Add new configurations or edit existing ones.
 	"configurations": [
 		{
-			"type": "chrome",
-			"request": "launch",
-			"name": "Search debugger (html)",
-			"file": "${workspaceFolder}/views/searchview/static/search.html",
-			"cwd": "${workspaceFolder}/views/searchview/out",
-			"preLaunchTask": "npm: compile - views/searchview",
-			"outFiles": [
-				"${workspaceFolder}/views/searchview/out/**/*.js"
-			]
-		},
-		{
-			"type": "chrome",
-			"request": "launch",
-			"name": "Plan view (html)",
-			"file": "${workspaceFolder}/views/planview/static/plans.html",
-			"cwd": "${workspaceFolder}/views/planview/out",
-			"preLaunchTask": "npm: compile - views/planview",
-			"outFiles": [
-				"${workspaceFolder}/views/planview/out/**/*.js"
-			]
-		},
-		{
-			"type": "chrome",
-			"request": "launch",
-			"name": "Overview (html)",
-			"file": "${workspaceFolder}/views/overview/overview.html"
-		},
-		{
-			"type": "chrome",
-			"request": "launch",
-			"name": "Problem/State view (html)",
-			"file": "${workspaceFolder}/views/modelView/problemInitView.html"
-		},
-		{
-			"type": "chrome",
-			"request": "launch",
-			"name": "Graph view (html)",
-			"file": "${workspaceFolder}/views/modelView/graphView.html"
-		},
-		{
 			"name": "Launch Extension",
 			"type": "extensionHost",
 			"request": "launch",
 			"runtimeExecutable": "${execPath}",
 			"args": [
-				"--extensionDevelopmentPath=${workspaceRoot}",
+				"--extensionDevelopmentPath=${workspaceFolder}",
 				"--enable-proposed-api", 
 				"jan-dolejsi.pddl"
 			],
 			"stopOnEntry": false,
 			"sourceMaps": true,
 			"outFiles": [
-				"${workspaceRoot}/out/**/*.js"
+				"${workspaceFolder}/out/**/*.js"
 			],
 			"preLaunchTask": "compile"
+		},
+		{
+			"name": "Launch Extension (skip views)",
+			"type": "extensionHost",
+			"request": "launch",
+			"runtimeExecutable": "${execPath}",
+			"args": [
+				"--extensionDevelopmentPath=${workspaceFolder}",
+				"--enable-proposed-api", 
+				"jan-dolejsi.pddl"
+			],
+			"stopOnEntry": false,
+			"sourceMaps": true,
+			"outFiles": [
+				"${workspaceFolder}/out/**/*.js"
+			],
+			"preLaunchTask": "compile - quick"
 		},
 		{
 			"name": "Integration Tests",
@@ -73,6 +50,52 @@
 			],
 			"outFiles": ["${workspaceFolder}/out/test/**/*.js"],
 			"preLaunchTask": "compile"
-		}
+		},
+		{
+			"type": "chrome",
+			"request": "launch",
+			"name": "Search debugger (html)",
+			"file": "${workspaceFolder}/views/searchview/static/search.html",
+			"preLaunchTask": "npm: compile - views/searchview",
+			"outFiles": [
+				"${workspaceFolder}/views/searchview/out/**/*.js"
+			]
+		},
+		{
+			"type": "chrome",
+			"request": "launch",
+			"name": "Plan view (html)",
+			"file": "${workspaceFolder}/views/planview/static/plans.html",
+			"preLaunchTask": "npm: compile - views/planview",
+			"outFiles": [
+				"${workspaceFolder}/views/planview/out/**/*.js"
+			]
+		},
+		{
+			"type": "chrome",
+			"request": "launch",
+			"name": "Overview (html)",
+			"file": "${workspaceFolder}/views/overview/overview.html"
+		},
+		{
+			"type": "chrome",
+			"request": "launch",
+			"name": "Problem/State view (html)",
+			"file": "${workspaceFolder}/views/modelView/static/problemInitView.html",
+			"preLaunchTask": "npm: compile - views/modelView",
+			"outFiles": [
+				"${workspaceFolder}/views/modelView/out/*.js"
+			]
+		},
+		{
+			"type": "chrome",
+			"request": "launch",
+			"name": "Graph view (html)",
+			"file": "${workspaceFolder}/views/modelView/static/graphView.html",
+			"preLaunchTask": "npm: compile - views/modelView",
+			"outFiles": [
+				"${workspaceFolder}/views/**/*.js"
+			]
+		},
 	]
 }
