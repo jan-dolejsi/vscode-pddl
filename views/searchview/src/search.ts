@@ -9,7 +9,7 @@ import { createPlanView, JsonDomainVizConfiguration, PlanView } from "pddl-gantt
 import { SearchTree } from "./tree";
 import { StateChart } from "./charts";
 import { getElementByIdOrThrow, State } from "./utils";
-import { PlanData } from 'model';
+import { FinalStateData, PlanData } from 'model';
 
 /** VS Code stub, so we can work with it in a type safe way. */
 interface VsCodeApi {
@@ -44,6 +44,9 @@ window.addEventListener('message', event => {
             break;
         case 'showStatePlan':
             showStatePlan(message.state);
+            break;
+        case 'visualizeFinalState':
+            showFinalState(message.state);
             break;
         case 'clear':
             clearStates();
@@ -299,7 +302,8 @@ function initialize(): void {
             epsilon: 1e-3,
             disableLinePlots: true,
             onActionSelected: (actionName: string) => vscode?.postMessage({ "command": "revealAction", "action": actionName }),
-            onHelpfulActionSelected: (helpfulAction: string) => navigateToChildOfSelectedState(helpfulAction)
+            onHelpfulActionSelected: (helpfulAction: string) => navigateToChildOfSelectedState(helpfulAction),
+            onFinalStateVisible: planView => requestFinalState(planView),
         });
 
     getElementByIdOrThrow("mockMenu").style.visibility = vscode ? 'collapse' : 'visible';
@@ -487,5 +491,17 @@ function showStateLogButton(logFilePath: string): void {
     } else {
         button.style.color = "red";
         button.title = "State log file synchronization disabled. Click here to re-enable.";
+    }
+}
+
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+function requestFinalState(_planView: PlanView): void {
+    vscode?.postMessage({ 'command': 'finalStateDataRequest', 'stateId': selectedStateId });
+}
+
+function showFinalState(data: FinalStateData): void {
+    // check that the selected state is _still_ the same one as when the request was sent
+    if (data.planIndex === selectedStateId) {
+        planViz.showFinalState(data.finalState);
     }
 }
