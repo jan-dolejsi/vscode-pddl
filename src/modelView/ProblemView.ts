@@ -202,7 +202,7 @@ export abstract class ProblemView<TRendererOptions, TRenderData> extends Disposa
             return getWebViewHtml(createPddlExtensionContext(this.context), {
                 allowUnsafeEval: this.options.allowUnsafeEval,
                 fonts: [
-                    Uri.file(path.join("..", "..", COMMON_FOLDER, "codicon.ttf"))
+                    Uri.file(path.join("..", "..", "..", COMMON_FOLDER, "codicon.ttf"))
                 ],
                 relativePath: this.options.content, htmlFileName: this.options.webviewHtmlPath
             }, viewPanel.getPanel().webview);
@@ -210,8 +210,9 @@ export abstract class ProblemView<TRendererOptions, TRenderData> extends Disposa
     }
 
     private async updateContentData(domain: DomainInfo, problem: ProblemInfo, panel: ProblemViewPanel): Promise<boolean> {
+        const stateData = await this.renderer.render(this.context, problem, domain, this.rendererOptions);
         return panel.postMessage('updateContent', {
-            data: this.renderer.render(this.context, problem, domain, this.rendererOptions)
+            data: stateData
         });
     }
 
@@ -245,8 +246,7 @@ export abstract class ProblemView<TRendererOptions, TRenderData> extends Disposa
     }
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    protected handleMessage(_panel: ProblemViewPanel, _message: any): boolean {
+    protected handleMessage(_panel: ProblemViewPanel, _message: { command: string }): boolean {
         return false;
     }
 
@@ -255,8 +255,7 @@ export abstract class ProblemView<TRendererOptions, TRenderData> extends Disposa
         return await this.refreshPanelContent(panel);
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    private async handleMessageCore(panel: ProblemViewPanel, message: any): Promise<void> {
+    private async handleMessageCore(panel: ProblemViewPanel, message: { command: string }): Promise<void> {
         console.log(`Message received from the webview: ${message.command}`);
 
         switch (message.command) {
@@ -311,5 +310,5 @@ export interface ProblemViewOptions {
 }
 
 export interface ProblemRenderer<TOptions, TData> {
-    render(context: ExtensionContext, problem: ProblemInfo, domain: DomainInfo, options: TOptions): TData;
+    render(context: ExtensionContext, problem: ProblemInfo, domain: DomainInfo, options: TOptions): TData | Promise<TData>;
 }

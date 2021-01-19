@@ -18,6 +18,21 @@
 			"preLaunchTask": "compile"
 		},
 		{
+			"name": "Launch Extension (skip views)",
+			"type": "extensionHost",
+			"request": "launch",
+			"runtimeExecutable": "${execPath}",
+			"args": [
+				"--extensionDevelopmentPath=${workspaceFolder}"
+			],
+			"stopOnEntry": false,
+			"sourceMaps": true,
+			"outFiles": [
+				"${workspaceFolder}/out/**/*.js"
+			],
+			"preLaunchTask": "compile - quick"
+		},
+		{
 			"name": "Integration Tests",
 			"type": "extensionHost",
 			"request": "launch",
@@ -37,7 +52,6 @@
 			"request": "launch",
 			"name": "Search debugger (html)",
 			"file": "${workspaceFolder}/views/searchview/static/search.html",
-			"cwd": "${workspaceFolder}/views/searchview/out",
 			"preLaunchTask": "npm: compile - views/searchview",
 			"outFiles": [
 				"${workspaceFolder}/views/searchview/out/**/*.js"
@@ -48,7 +62,6 @@
 			"request": "launch",
 			"name": "Plan view (html)",
 			"file": "${workspaceFolder}/views/planview/static/plans.html",
-			"cwd": "${workspaceFolder}/views/planview/out",
 			"preLaunchTask": "npm: compile - views/planview",
 			"outFiles": [
 				"${workspaceFolder}/views/planview/out/**/*.js"
@@ -64,16 +77,21 @@
 			"type": "chrome",
 			"request": "launch",
 			"name": "Problem/State view (html)",
-			"file": "${workspaceFolder}/views/modelView/problemInitView.html",
+			"file": "${workspaceFolder}/views/modelView/static/problemInitView.html",
+			"preLaunchTask": "npm: compile - views/modelView",
 			"outFiles": [
-				"${workspaceFolder}/views/**/*.js"
+				"${workspaceFolder}/views/modelView/out/*.js"
 			]
 		},
 		{
 			"type": "chrome",
 			"request": "launch",
 			"name": "Graph view (html)",
-			"file": "${workspaceFolder}/views/modelView/graphView.html"
+			"file": "${workspaceFolder}/views/modelView/static/graphView.html",
+			"preLaunchTask": "npm: compile - views/modelView",
+			"outFiles": [
+				"${workspaceFolder}/views/**/*.js"
+			]
 		},
 	]
 }

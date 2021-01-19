@@ -13,7 +13,7 @@ import {
     DomainInfo, ProblemInfo, TimedVariableValue,
     Variable, ObjectInstance, Parameter, Term,
     parser, utils,
-    getObjectsInheritingFrom, getTypesInheritingFromPlusSelf, Plan, VariableValue
+    getObjectsInheritingFrom, getTypesInheritingFromPlusSelf, Plan
 } from 'pddl-workspace';
 
 import * as path from 'path';
@@ -21,11 +21,12 @@ import { CodePddlWorkspace } from '../workspace/CodePddlWorkspace';
 import { nodeToRange } from '../utils';
 import { DocumentCodeLens, DocumentInsetCodeLens } from './view';
 import { ProblemView, ProblemRenderer, ProblemRendererOptions } from './ProblemView';
-import { GraphViewData, NetworkEdge, NetworkNode } from './GraphViewData';
+import { CustomViewData, NetworkEdge, NetworkNode, ProblemInitViewData, RelationshipValue, TypeProperties, TypesRelationship } from './model/';
+import { getDomainVisualizationConfigurationDataForPlan } from '../planView/DomainVisualization';
 const asSerializable = utils.serializationUtils.asSerializable;
 const makeSerializable = utils.serializationUtils.makeSerializable;
 
-const CONTENT = path.join('views', 'modelView');
+const CONTENT = path.join('views', 'modelView', 'static');
 
 const PDDL_PROBLEM_INIT_PREVIEW_COMMAND = "pddl.problem.init.preview";
 const PDDL_PROBLEM_INIT_INSET_COMMAND = "pddl.problem.init.inset";
@@ -100,7 +101,7 @@ export class ProblemInitView extends ProblemView<ProblemInitViewOptions, Problem
 }
 
 class ProblemInitRenderer implements ProblemRenderer<ProblemInitViewOptions, ProblemInitViewData> {
-    render(context: ExtensionContext, problem: ProblemInfo, domain: DomainInfo, options: ProblemInitViewOptions): ProblemInitViewData {
+    async render(context: ExtensionContext, problem: ProblemInfo, domain: DomainInfo, options: ProblemInitViewOptions): Promise<ProblemInitViewData> {
         const renderer = new ProblemInitRendererDelegate(context, domain, problem, options);
 
         return {
@@ -111,44 +112,9 @@ class ProblemInitRenderer implements ProblemRenderer<ProblemInitViewOptions, Pro
             typeProperties: asSerializable(renderer.getTypeProperties()),
             typeRelationships: asSerializable(renderer.getTypeRelationships()),
             scalarValues: asSerializable(renderer.getScalarValues()),
-            customVisualization: makeSerializable(renderer.getCustomVisualization())
+            customVisualization: !options.hideCustomViz ? makeSerializable(await renderer.getCustomVisualization()) : undefined
         };
     }
-}
-
-/** Schema for data being passed to the view for display. */
-interface ProblemInitViewData {
-    symmetricRelationshipGraph: GraphViewData;
-    typeProperties: Map<string, TypeProperties>;
-    typeRelationships: TypesRelationship[];
-    scalarValues: Map<string, number | boolean>;
-    customVisualization: CustomViewData | undefined;
-}
-
-interface TypeProperties {
-    propertyNames: string[];
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    objects: Map<string, Map<string, any>>;
-}
-
-interface TypesRelationship {
-    types: Map<string, string[]>;
-    relationships: Map<string, RelationshipValue[]>;
-}
-
-interface RelationshipValue {
-    parameters: Map<string, string>;
-    value?: boolean | number;
-}
-
-/** Custom state visualization data and view logic. */
-interface CustomViewData {
-    /** In this case, it is a dummy plan, which serves as a container for the domain and problem objects. */
-    plan: Plan;
-    state: VariableValue[];
-    /** Javascript, which exports the `CustomVisualization` interface. */
-    customVisualizationScript: string;
-    displayWidth: number;
 }
 
 class ProblemInitRendererDelegate {
@@ -158,7 +124,9 @@ class ProblemInitRendererDelegate {
     private typeProperties: Map<string, TypeProperties> = new Map();
     private typeRelationships = new Array<TypesRelationship>();
     private scalarValues = new Map<string, boolean | number | string>();
-    private customView: CustomViewData | undefined;
+
+    private serializableDomain: DomainInfo | undefined;
+    private serializableProblem: ProblemInfo | undefined;
 
     constructor(_context: ExtensionContext, private domain: DomainInfo, private problem: ProblemInfo, private options: ProblemInitViewOptions) {
         if (!options.hide2dGraph) {
@@ -172,9 +140,6 @@ class ProblemInitRendererDelegate {
         }
         if (!options.hideObjectRelationships) {
             this.constructObjectRelationships();
-        }
-        if (!options.hideCustomViz) {
-            this.constructCustomViz();
         }
     }
 
@@ -249,11 +214,9 @@ class ProblemInitRendererDelegate {
         const liftedVariables = this.domain.getPredicates().concat(this.domain.getFunctions())
             .filter(variable => this.isTypeProperty(type, variable));
 
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const objectsValues = new Map<string, Map<string, any>>();
+        const objectsValues = new Map<string, Map<string, boolean | number>>();
         objects.forEach(objectName => {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const objectValues = new Map<string, any>();
+            const objectValues = new Map<string, boolean | number>();
             liftedVariables.forEach(v => {
                 const value = this.getInitValue(v.bind([new ObjectInstance(objectName, type)]));
                 if (value) {
@@ -422,26 +385,26 @@ class ProblemInitRendererDelegate {
         return variable.parameters.length >= 2;
     }
 
-    constructCustomViz(): void {
-        this.customView = {
-            plan: new Plan([], this.domain, this.problem),
+    private getSerialisableDomain(): DomainInfo{
+        return this.serializableDomain ?? (this.serializableDomain = DomainInfo.clone(makeSerializable(this.domain)));
+    }
+
+    private getSerialisableProblem(): ProblemInfo{
+        return this.serializableProblem ?? (this.serializableProblem = ProblemInfo.clone(makeSerializable(this.problem)));
+    }
+
+    async getCustomVisualization(): Promise<CustomViewData> {
+        const plan = new Plan([], makeSerializable(this.getSerialisableDomain()), this.getSerialisableProblem());
+        const domainViz = await getDomainVisualizationConfigurationDataForPlan(plan);
+
+        return {
+            plan: plan,
             state: this.problem.getInits()
                 .filter(init => init.isSupported)
                 .map(init => init.getVariableValue()),
-            customVisualizationScript: `function visualizePlanHtml(plan, width) {
-                return "PLAN VISUALIZATION";
-            }
-            module.exports = {
-                // define one of the following functions:
-                visualizePlanHtml: visualizePlanHtml, 
-            };
-            `,
-            displayWidth: 500
+            customVisualizationScript: domainViz.customDomainVisualizationScript,
+            displayWidth: domainViz.width
         };
-    }
-
-    getCustomVisualization(): CustomViewData | undefined {
-        return this.customView;
     }
 }
 
