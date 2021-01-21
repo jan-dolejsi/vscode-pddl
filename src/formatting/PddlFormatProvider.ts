@@ -4,289 +4,46 @@
  * ------------------------------------------------------------------------------------------ */
 'use strict';
 
-import {TextDocument, CancellationToken, DocumentFormattingEditProvider, FormattingOptions, ProviderResult, TextEdit, Range } from 'vscode';
+import { DomainInfo, parser, PddlLanguage, ProblemInfo } from 'pddl-workspace';
+import {TextDocument, CancellationToken, DocumentFormattingEditProvider, FormattingOptions, TextEdit } from 'vscode';
+import { nodeToRange } from '../utils';
+import { CodePddlWorkspace } from '../workspace/CodePddlWorkspace';
 
 export class PddlFormatProvider implements DocumentFormattingEditProvider {
 
-    provideDocumentFormattingEdits(document: TextDocument, options: FormattingOptions, token: CancellationToken): ProviderResult<TextEdit[]> {
-        if (token.isCancellationRequested) {
-            return null;
-        }
-        console.log(`Formatting: ${document.fileName}, insertSpaces: ${options.insertSpaces}, tabSize: ${options.tabSize}`);
+    constructor(private pddlWorkspace?: CodePddlWorkspace) {
+    }
 
-		// NEW ALGORITHM
-		// note: user is free to define spacing within comments
-		// note: array of boolean values was originally used to determine location within file
-		//			replaced by string since arrays cannot be switched over
+	async provideDocumentFormattingEdits(document: TextDocument, _options: FormattingOptions, token: CancellationToken): Promise<TextEdit[] | undefined> {
+        const fileInfo = await this.pddlWorkspace?.upsertAndParseFile(document);
+        if (token.isCancellationRequested) { return undefined; }
 
-		// note: predicate and function formatting buggy
-		// 			action formatting to be completed
-
-        // beg, sigreq, typ, prefun, act
-        let stateString = "beg";
-
-        // logical state array to determine location with respect to syntax - [com, fir, ope, req, inh, nes]
-        const logicalState: (boolean|null)[] = [false, false, null, false, false, false];
-
-        const selection = document.getText();
-        const textArray = selection.split('');
-        let formattedText = "";
-
-        const tabRegEx = new RegExp('[\t]');
-        const newLineRegEx = new RegExp('[\r\n]');
-		const alphaRegEx = new RegExp('[a-zA-Z]');
-		const numRegEx = new RegExp('[0-9]');
-
-        for (let i = 0; i < textArray.length; i++) {
-
-			// alphabet, number or question mark
-            if (alphaRegEx.test(textArray[i]) || numRegEx.test(textArray[i]) || textArray[i] === '?') {
-                formattedText += textArray[i];
-                continue;
-			}
-			// semicolon for comment
-            if (textArray[i] === ';') {
-                logicalState[0] = true;
-                formattedText += textArray[i];
-                continue;
-			}
-			if (textArray[i] === '-') {
-				if (stateString === "typ") {
-					logicalState[4] = true;					
-				}
-				formattedText += textArray[i];
-				continue;
-			}
-			// opening bracket
-            if (textArray[i] === '(') {
-				// not a comment and first bracket
-                if (logicalState[0] !== true && logicalState[1] !== true) {
-                    stateString = "sigreq";
-                    logicalState[1] = true; 
-				}
-				// not a comment and not first bracket and first bracket of a pair
-                else if (logicalState[0] !== true && logicalState[1] === true && logicalState[2] !== true) {
-                    logicalState[2] = true;
-				}
-				// not a comment and nested brackets
-				else if (logicalState[0] !== true && logicalState[2] === true) {
-					logicalState[5] = true;
-				}
-                formattedText += textArray[i];
-                continue;
-			}
-			// closing bracket
-			if (textArray[i] === ')') {
-				// not a comment and closing bracket of an already open one
-				if (logicalState[0] !== true && logicalState[2] === true) {
-					formattedText += textArray[i];
-					if (logicalState[5] !== true) {
-						logicalState[2] = false;
-						// no whitespace after closing bracket
-						if (!(tabRegEx.test(textArray[i+1]) || newLineRegEx.test(textArray[i+1]) || textArray[i+1] === ' ')) {
-							if (textArray[i+1] === ';') {
-								formattedText += ' ';
-							}
-							else {
-								formattedText += '\n' + '\n' + '\t';
-							}
-						}
-						if (logicalState[3] === true) {
-							logicalState[3] = false;
-						}
-						continue;						
-					}
-					else {
-						logicalState[5] = false;
-						if (!(tabRegEx.test(textArray[i+1]) || newLineRegEx.test(textArray[i+1]) || textArray[i+1] === ' ')) {
-							formattedText += '\n' + '\t' + '\t' + '\t' + '\t' + '\t';
-						}
-						continue;
-					}
-				}
-				formattedText += textArray[i];
-				continue;
-			}
-			// colon, post-colon whitespace and stateString setting
-			if (textArray[i] === ':') {
-				formattedText += ':';
-				i = skipWhiteSpace(i);
-				if (logicalState[3] !== true) {
-					switch (textArray[i+1]) {
-						case 'r':
-							stateString = "sigreq";
-							logicalState[3] = true;		
-							break;
-						case 't':
-							stateString = "typ";
-							break;
-						case 'p' || 'f':
-							stateString = "prefun";
-							break;
-						case 'd' || 'a':
-							stateString = "act";
-							break;
-						default:
-							stateString = "sigreq";
-							break;
-					}			
-				}
-				continue;
-			}
-
-			// white space
-            if (tabRegEx.test(textArray[i]) || newLineRegEx.test(textArray[i]) || textArray[i] === ' ') {
-                switch (stateString) {
-					// begin
-                    case "beg":
-						// comment
-                        if (logicalState[0] === true) {
-							i = handleCommentWhiteSpace(i);
-                        }
-						break;
-					// signature or requirements
-                    case "sigreq":
-						// comment
-                        if (logicalState[0] === true) {
-							i = handleCommentWhiteSpace(i);
-							break;
-                        }
-						// before or after bracket pair opened
-						if (logicalState[2] !== false) {
-							i = handleBracketPairWhiteSpace(i);
-						}
-						// after bracket pair closed
-						else {
-							i = handlePostBracketPairWhiteSpace(i);
-						}
-						break;
-					// types
-                    case "typ":
-						// comment
-                        if (logicalState[0] === true) {
-							i = handleCommentWhiteSpace(i);
-							break;
-                        }
-						// before or after bracket pair opened
-						if (logicalState[2] !== false) {
-							if (logicalState[4] !== true || textArray[i-1] === '-') {
-								i = handleBracketPairWhiteSpace(i);								
-							}
-							else {
-								i = skipWhiteSpace(i);
-								logicalState[4] = false;
-								if (textArray[i+1] === ')') {
-									break;
-								}
-								formattedText += '\n' + '\t' + '\t' + '\t';
-							}
-						}
-						// after bracket pair closed
-						else {
-							i = handlePostBracketPairWhiteSpace(i);
-						}
-						break;
-					// predicates or functions
-                    case "prefun":
-						// comment
-                        if (logicalState[0] === true) {
-							i = handleCommentWhiteSpace(i);
-							break;
-                        }
-						// before or after bracket pair opened
-						if (logicalState[2] !== false) {
-							if (logicalState[5] === true) {
-								i = handleBracketPairWhiteSpace(i);
-							}
-							else {
-								i = skipWhiteSpace(i);
-								if (textArray[i+1] = ')') {
-									break;
-								}
-								formattedText += '\n' + '\t' + '\t' + '\t' + '\t' + '\t';
-							}
-						}
-						// after bracket pair closed
-						else {
-							i = handlePostBracketPairWhiteSpace(i);
-						}
-						break;
-					// actions
-                    case "act":
-                        break;
-                    default:
-                        console.log("I'm lost!");
-                }
-            }
+        if (fileInfo && (fileInfo.getLanguage() !== PddlLanguage.PDDL)) {
+            return undefined;
         }
 
-        const invalidRange = new Range(0, 0, document.lineCount /*intentionally missing the '-1' */, 0);
-        const fullRange = document.validateRange(invalidRange);
-        
-		return [TextEdit.replace(fullRange, formattedText)];
+        let tree: parser.PddlSyntaxTree;
+        if (fileInfo && (fileInfo instanceof DomainInfo)) {
+            tree = (fileInfo as DomainInfo).syntaxTree;
+        }
+        else if (fileInfo && (fileInfo instanceof ProblemInfo)) {
+            tree = (fileInfo as ProblemInfo).syntaxTree;
+        }
+        else {
+            tree = new parser.PddlSyntaxTreeBuilder(document.getText()).getTree();
+		}
 		
-		// function to remove whitespace
-		function skipWhiteSpace(i: number): number {
-			while (tabRegEx.test(textArray[i+1]) || newLineRegEx.test(textArray[i+1]) || textArray[i+1] === ' ') {
-				i++;
-			}
-			return i;
+		const edits: TextEdit[] = [];
+		this.format(tree.getRootNode(), edits, document);
+
+		return edits;
+	}
+
+	format(node: parser.PddlSyntaxNode, edits: TextEdit[], document: TextDocument): void {
+		if (node.getToken().type === parser.PddlTokenType.Whitespace) {
+			edits.push(TextEdit.replace(nodeToRange(document, node), ' '));
 		}
 
-		// function to handle comment whitespace
-		function handleCommentWhiteSpace(i: number): number {
-			// newline exiting comment
-			if (newLineRegEx.test(textArray[i])) {
-				logicalState[0] = false;
-				i = skipWhiteSpace(i);
-				// multiple comments
-				if (textArray[i+1] === ';') {
-					formattedText += '\n';
-				}
-				else {
-					formattedText += '\n' + '\n';
-				}
-				if (stateString !== "beg") {
-					formattedText += '\t';
-				}
-			}
-			// space or tab
-			else {
-				formattedText += textArray[i];
-			}
-			return i;
-		}
-
-		// function to handle padding around opening and closing brackets
-		function handleBracketPairWhiteSpace(i: number): number {
-			if (textArray[i-1] === '(') {
-				i = skipWhiteSpace(i);
-				return i;
-			}
-			i = skipWhiteSpace(i);
-			if (textArray[i+1] === ')') {
-				return i;
-			}
-			if (stateString === "prefun") {
-				formattedText += '\t';
-			}
-			else {
-				formattedText += ' ';
-			}
-			return i;
-		}
-
-		// function to handle whitespace and/or comment after bracket pair closed
-		function handlePostBracketPairWhiteSpace(i: number): number {
-			i = skipWhiteSpace(i);
-			// comment after closing bracket
-			if (textArray[i+1] === ';') {
-				formattedText += " ";
-			}
-			else {
-				formattedText += '\n' + '\n' + '\t';
-			}
-			return i;
-		}
+		node.getChildren().forEach(child => this.format(child, edits, document));
 	}
 }

@@ -4,7 +4,7 @@
 
 - Overview alerts use codicons to look correct on MacOS
 - Fixed on-type formatting issues
-- ValueSeq swallows errors to display as many charts as possible. Previously a single error in ValueSeq calls returned error that caused that no charts were displayed.
+- ValueSeq swallows errors to display as many charts as possible. Previously a single error in ValueSeq calls returned error that caused that no charts were displayed. Updated to VAL build #58.
 - Vis.js Network upgraded to v9.0
 
 ## 2.20.3
