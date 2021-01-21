@@ -295,8 +295,8 @@ function createAuthentication(pddlConfiguration: PddlConfiguration): Authenticat
 
 function registerDocumentFormattingProvider(context: ExtensionContext, pddlWorkspace: CodePddlWorkspace): boolean {
 	if (workspace.getConfiguration("pddl").get<boolean>("formatter") && !formattingProvider) {
-		formattingProvider = new PddlFormatProvider();
-		// let formattingProviderDisposable = languages.registerDocumentFormattingEditProvider(PDDL, formattingProvider);
+		formattingProvider = new PddlFormatProvider(pddlWorkspace);
+		// const formattingProviderDisposable = languages.registerDocumentFormattingEditProvider(PDDL, formattingProvider);
 		// context.subscriptions.push(formattingProviderDisposable);
 
 		const onTypeFormattingProviderDisposable = languages.registerOnTypeFormattingEditProvider(PDDL, new PddlOnTypeFormatter(pddlWorkspace), '\n');

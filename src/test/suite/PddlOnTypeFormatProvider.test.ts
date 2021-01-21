@@ -47,6 +47,27 @@ suite('PDDL on-type formatter Test Suite', () => {
         await testFormatter(inputTextHead, ch, inputTextTail, expectedText, { insertSpaces: false, tabSize: 4});
     });
 
+    test('should honor wrong indentation on new-line char, inside unindented 1st level', async () => {
+        // GIVEN
+        const inputTextHead = '(define \n' + '(:requirements';
+        const ch = '\n';
+        const inputTextTail = ')\n)';
+
+        const expectedText = inputTextHead + ch + '\t\n' + inputTextTail;
+        await testFormatter(inputTextHead, ch, inputTextTail, expectedText, { insertSpaces: false, tabSize: 4});
+    });
+
+    test('should honor wrong indentation on additional new-line insertion, inside unindented 1st level', async () => {
+        // GIVEN
+        const previousIndent = '  ';
+        const inputTextHead = '(define \n' + previousIndent+'(:requirements )\n\n';
+        const ch = '\n';
+        const inputTextTail = '\n)';
+
+        const expectedText = inputTextHead + ch + previousIndent + inputTextTail;
+        await testFormatter(inputTextHead, ch, inputTextTail, expectedText, { insertSpaces: false, tabSize: 4});
+    });
+
     test('should indent nested text on new-line char, inside action precondition', async () => {
         // GIVEN
         const inputTextHead = '(:action a \n' + '\t:precondition (and';
@@ -67,7 +88,6 @@ suite('PDDL on-type formatter Test Suite', () => {
         await testFormatter(inputTextHead, ch, inputTextTail, expectedText, { insertSpaces: false, tabSize: 4});
     });
 
-    
     test('should indent when adding an empty line after 1-indented', async () => {
         // GIVEN
         const inputTextHead = '(define \n\t';
@@ -85,6 +105,16 @@ suite('PDDL on-type formatter Test Suite', () => {
         const inputTextTail = `)`;
 
         const expectedText = inputTextHead + ch + '\t\n' + inputTextTail;
+        await testFormatter(inputTextHead, ch, inputTextTail, expectedText, { insertSpaces: false, tabSize: 4});
+    });
+
+    test('should indent following text when enter is pressed mid-text', async () => {
+        // GIVEN
+        const inputTextHead = '(define ';
+        const ch = '\n';
+        const inputTextTail = `(following-text)\n)`;
+
+        const expectedText = inputTextHead + ch + '\t' + inputTextTail;
         await testFormatter(inputTextHead, ch, inputTextTail, expectedText, { insertSpaces: false, tabSize: 4});
     });
 
@@ -113,8 +143,12 @@ async function testFormatter(inputTextHead: string, ch: string, inputTextTail: s
     
     // WHEN
     const edits = await formatProvider.provideOnTypeFormattingEdits(doc, position, ch, options, new vscode.CancellationTokenSource().token);
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-    await Promise.all(edits!.map(edit => editor.edit(builder => reBuild(builder, edit))));
+    if (edits) {
+        await editor.edit(builder => reBuild(builder, edits));
+    }
+    else {
+        assert.fail('no edits returned');
+    }
     
     // THEN
     const startSelectionAfter = editor.selection.start;
@@ -123,6 +157,7 @@ async function testFormatter(inputTextHead: string, ch: string, inputTextTail: s
     assert.deepStrictEqual(startSelectionAfter, startSelectionBefore, "cursor position should be the same");
 }
 
-function reBuild(builder: vscode.TextEditorEdit, edit: vscode.TextEdit): void {
-    return builder.replace(edit.range, edit.newText);
+function reBuild(builder: vscode.TextEditorEdit, edits: vscode.TextEdit[]): void {
+    edits.forEach(edit =>
+        builder.replace(edit.range, edit.newText));
 }
