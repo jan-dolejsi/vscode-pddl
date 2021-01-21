@@ -17,49 +17,63 @@
 <body onload="initialize()">
     <h1>AI Planning and PDDL support in VS Code</h1>
 
-    <ul id="alertList" class="alertList">
-        <li id="installIconsAlert" class="alert">Improve usability by installing the <a
-                href="command:extension.open?%22vscode-icons-team.vscode-icons%22"
-                title="Extension that brings clearer file icons.">VS Code Icons for PDDL files</a> to quickly
-            distinguish PDDL files
-            <button onclick="installIcons()">Install icons e.g.
-                <img src="file_type_pddl.svg" class="fileIcon" title="Icon of domain and problem files." />
-                <img src="file_type_pddl_plan.svg" class="fileIcon" title="Icon for plan files." />
-                <img src="file_type_pddl_happenings.svg" class="fileIcon" title="Icon for happenings files." />
-            </button>
-        </li>
-        <li id="enableIconsAlert" class="alert">Enable VS Code Icons extension to quickly distinguish PDDL files
-            <button onclick="enableIcons()" class="button">Enable icons e.g.
-                <img src="file_type_pddl.svg" class="fileIcon" title="Icon of domain and problem files." />
-                <img src="file_type_pddl_plan.svg" class="fileIcon" title="Icon for plan files." />
-                <img src="file_type_pddl_happenings.svg" class="fileIcon" title="Icon for happenings files." />
-            </button>
-        </li>
-        <li id="enableAutoSaveAlert" class="alert">When processing files using command-line tools, it is simpler to enable file auto-saving. 
-            <a href="command:workbench.action.toggleAutoSave" class="button" style="width: 150px">Enable auto-save</a>
-            <br />It is also recommended to go run the <i>Git: Initialize Repository</i> command to enjoy safety of
-            version control and never miss a working version.
-        </li>
-        <li id="downloadValAlert" class="alert">Download the latest
-            <a href="https://dev.azure.com/schlumberger/ai-planning-validation">build</a> of
-            <a href="https://github.com/KCL-Planning/VAL">VAL tools</a> to get a PDDL parser, to be able to validate and
-            evaluate plans.
-            <a href="#" onclick="downloadValInformed()" class="button" style="width: 100px; text-align:center"
-                title="Click to initiate download. You will be able to see what is being downloaded and from where...">Download</a>
-            plan validation tools
-        </li>
-        <li id="updateValAlert" class="alert">New version of
-            <a href="https://github.com/KCL-Planning/VAL">VAL tools</a> is available.
-            Update to the latest version.
-            <a href="#" onclick="downloadValInformed()" class="button" style="width: 100px; text-align:center"
-            title="Click to initiate download..">Update VAL</a>
-        </li>
+    <table id="alertList" class="alertList">
+        <tr id="installIconsAlert" class="alert">
+            <td><i class="codicon codicon-bell-dot"></i></td>
+            <td>Improve usability by installing the <a href="command:extension.open?%22vscode-icons-team.vscode-icons%22"
+                    title="Extension that brings clearer file icons.">VS Code Icons for PDDL files</a> to quickly
+                distinguish PDDL files
+                <button onclick="installIcons()">Install icons e.g.
+                    <img src="file_type_pddl.svg" class="fileIcon" title="Icon of domain and problem files." />
+                    <img src="file_type_pddl_plan.svg" class="fileIcon" title="Icon for plan files." />
+                    <img src="file_type_pddl_happenings.svg" class="fileIcon" title="Icon for happenings files." />
+                </button>
+            </td>
+        </tr>
+        <tr id="enableIconsAlert" class="alert">
+            <td><i class="codicon codicon-bell-dot"></i></td>
+            <td>Enable VS Code Icons extension to quickly distinguish PDDL files
+                <button onclick="enableIcons()">Enable icons e.g.
+                    <img src="file_type_pddl.svg" class="fileIcon" title="Icon of domain and problem files." />
+                    <img src="file_type_pddl_plan.svg" class="fileIcon" title="Icon for plan files." />
+                    <img src="file_type_pddl_happenings.svg" class="fileIcon" title="Icon for happenings files." />
+                </button>
+            </td>
+        </tr>
+        <tr id="enableAutoSaveAlert" class="alert">
+            <td><i class="codicon codicon-bell-dot"></i></td>
+            <td>When processing files using command-line tools, it is simpler to enable file auto-saving.
+                <button onclick="location.href='command:workbench.action.toggleAutoSave'" style="width: 150px">Enable auto-save</button>
+                <br />It is also recommended to go run the <i>Git: Initialize Repository</i> command to enjoy safety of
+                version control and never miss a working version.
+            </td>
+        </tr>
+        <tr id="downloadValAlert" class="alert">
+            <td><i class="codicon codicon-bell-dot"></i></td>
+            <td>Download the latest
+                <a href="https://dev.azure.com/schlumberger/ai-planning-validation">build</a> of
+                <a href="https://github.com/KCL-Planning/VAL">VAL tools</a> to get a PDDL parser, to be able to validate and
+                evaluate plans.
+                <button onclick="downloadValInformed()" style="width: 100px; text-align:center"
+                    title="Click to initiate download. You will be able to see what is being downloaded and from where...">Download</button>
+                plan validation tools
+            </td>
+        </tr>
+        <tr id="updateValAlert" class="alert">
+            <td><i class="codicon codicon-bell-dot"></i></td>
+            <td>New version of
+                <a href="https://github.com/KCL-Planning/VAL">VAL tools</a> is available.
+                Update to the latest version.
+                <button onclick="downloadValInformed()" style="width: 100px; text-align:center"
+                    title="Click to initiate download..">Update VAL</button>
+            </td>
+        </tr>
         <!-- 
-            todo: Add alert for enabling formatOnType
-        "[pddl]": {
-            "editor.formatOnType": true
-        } -->
-    </ul>
+                todo: Add alert for enabling formatOnType
+            "[pddl]": {
+                "editor.formatOnType": true
+            } -->
+    </table>
 
     <table style="width: 100%">
         <tr style="vertical-align: top">

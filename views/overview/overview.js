@@ -300,6 +300,7 @@ function hasAnyChildrenToDisplay(elementId) {
     for (let index = 0; index < parent.childElementCount; index++) {
         const child = parent.children.item(index);
         if (child.nodeType !== Node.ELEMENT_NODE) { continue; }
+        if (child.tagName === 'TBODY') { continue; }
 
         if (child.style.display !== "none") {
             return true;
