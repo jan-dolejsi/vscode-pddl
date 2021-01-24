@@ -47,9 +47,9 @@ export class PddlOnTypeFormatter implements OnTypeFormattingEditProvider {
 
         if (ch === '\n' && currentNode.isType(parser.PddlTokenType.Whitespace)) {
             const insertBeforeText = previousIndent !== null ?
-                this.createIndent(previousIndent, 0, options) :
-                this.createIndent(parentIndent, +1, options);
-            const insertAfterText = '\n' + this.createIndent(previousIndent ?? parentIndent, 0, options);
+                PddlOnTypeFormatter.createIndent(previousIndent, 0, options) :
+                PddlOnTypeFormatter.createIndent(parentIndent, +1, options);
+            const insertAfterText = '\n' + PddlOnTypeFormatter.createIndent(previousIndent ?? parentIndent, 0, options);
             // todo: use createEolString(document)
             const trailingText = document.getText(rangeAfter).trim();
             if (trailingText && !trailingText.match(/\w/)) {
@@ -69,7 +69,7 @@ export class PddlOnTypeFormatter implements OnTypeFormattingEditProvider {
         else if (ch === '(-disabled') { // disabled, because it cancels out the auto-completion pop-up
             const leadingText = document.getText(rangeBefore);
             if (leadingText.trim() === '(') {
-                const insertBeforeText = this.createIndent(parentIndent, +1, options) + '(';
+                const insertBeforeText = PddlOnTypeFormatter.createIndent(parentIndent, +1, options) + '(';
                 return [
                     TextEdit.replace(rangeBefore, insertBeforeText)
                 ];
@@ -120,7 +120,7 @@ export class PddlOnTypeFormatter implements OnTypeFormattingEditProvider {
         return lineOfPrevious.text.substr(0, firstNonWhitespaceCharacter);
     }
 
-    createIndent(parentIndentText: string, levelIncrement: number, options: FormattingOptions): string {
+    static createIndent(parentIndentText: string, levelIncrement: number, options: FormattingOptions): string {
         const singleIndent = options.insertSpaces ? " ".repeat(options.tabSize) : "\t";
         return parentIndentText +
             singleIndent.repeat(levelIncrement);

@@ -1,5 +1,6 @@
 import * as assert from 'assert';
 import { before } from 'mocha';
+import { EOL } from 'os';
 
 // You can import and use all API from the 'vscode' module
 // as well as import your extension to test it
@@ -19,9 +20,18 @@ suite('Domain formatter Test Suite', () => {
 
     test('Does not modify formatted text', async () => {
         // GIVEN
-        const inputText = `(define )`;
+        const inputText = `(define)`;
 
         const expectedText = inputText;
+
+        await testFormatter(inputText, expectedText, { insertSpaces: true, tabSize: 4 });
+    });
+
+    test('Removes white space before closing bracket', async () => {
+        // GIVEN
+        const inputText = `(define )`;
+
+        const expectedText = `(define)`;
 
         await testFormatter(inputText, expectedText, { insertSpaces: true, tabSize: 4 });
     });
@@ -35,7 +45,7 @@ suite('Domain formatter Test Suite', () => {
         await testFormatter(inputText, expectedText, { insertSpaces: true, tabSize: 4 });
     });
 
-    test.skip('Indents requirements', async () => {
+    test('Indents requirements', async () => {
         // GIVEN
         const inputText = `(define (domain domain_name)
 (:requirements :strips)
@@ -44,6 +54,15 @@ suite('Domain formatter Test Suite', () => {
         const expectedText = `(define (domain domain_name)
     (:requirements :strips)
 )`;
+
+        await testFormatter(inputText, expectedText, { insertSpaces: true, tabSize: 4 });
+    });
+
+    test('Does not indent individual requirements', async () => {
+        // GIVEN
+        const inputText = `(:requirements :strips)`;
+
+        const expectedText = inputText;
 
         await testFormatter(inputText, expectedText, { insertSpaces: true, tabSize: 4 });
     });
@@ -75,8 +94,129 @@ suite('Domain formatter Test Suite', () => {
         await testFormatter(inputText, expectedText, { insertSpaces: true, tabSize: 4 });
     });
 
-    test.skip('Removes trailing whitespace', async () => {
-        assert.fail('Not implemented yet');
+    test('Removes trailing whitespace (last line)', async () => {
+        // GIVEN
+        const inputText = `(define)               `;
+
+        const expectedText = `(define)`;
+
+        await testFormatter(inputText, expectedText, { insertSpaces: true, tabSize: 4 });
+    });
+
+    test('Removes trailing whitespace', async () => {
+        // GIVEN
+        const inputText = [`(define (domain)\t\t`,
+            `)`].join('\n');
+
+        const expectedText = [`(define (domain)`,
+            `)`].join('\n');
+
+        await testFormatter(inputText, expectedText, { insertSpaces: true, tabSize: 4 });
+    });
+
+    test('Does not break line in numeric expressions', async () => {
+        // GIVEN
+        const inputText = `(= (f1) (f2))`;
+
+        const expectedText = inputText;
+
+        await testFormatter(inputText, expectedText, { insertSpaces: true, tabSize: 4 });
+    });
+
+    test('Formats numeric expression that is already broken to multiple lines', async () => {
+        // GIVEN
+        const inputText = `(= \n(f1)\n (f2))`;
+
+        const expectedText = `(=\n\t(f1)\n\t(f2))`;
+
+        await testFormatter(inputText, expectedText, { insertSpaces: false, tabSize: 4 });
+    });
+
+    test('Does not break line in logical expressions (not)', async () => {
+        // GIVEN
+        const inputText = `(not (p1))`;
+
+        const expectedText = inputText;
+
+        await testFormatter(inputText, expectedText, { insertSpaces: true, tabSize: 4 });
+    });
+
+    test('Does not break line in logical expressions (and)', async () => {
+        // GIVEN
+        const inputText = `(and (p1) (p2))`;
+
+        const expectedText = inputText;
+
+        await testFormatter(inputText, expectedText, { insertSpaces: true, tabSize: 4 });
+    });
+
+    test('Does not break line in temporal (at start)', async () => {
+        // GIVEN
+        const inputText = `(at start (p1))`;
+
+        const expectedText = inputText;
+
+        await testFormatter(inputText, expectedText, { insertSpaces: true, tabSize: 4 });
+    });
+
+    test('Does not break action keywords', async () => {
+        // GIVEN
+        const inputText = [`(:action a`,
+            '\t:parameters (?p1 - param1)',
+            ')'
+        ].join('\n');
+
+        const expectedText = inputText;
+
+        await testFormatter(inputText, expectedText, { insertSpaces: false, tabSize: 4 });
+    });
+
+    test('Does breaks line before action keywords', async () => {
+        // GIVEN
+        const inputText = [`(:action a`,
+        '\t:parameters ()',
+        '\t:precondition (and)',
+        ')'
+        ].join('\n');
+
+        const expectedText = inputText;
+
+        await testFormatter(inputText, expectedText, { insertSpaces: false, tabSize: 4 });
+    });
+
+    test('keeps line break before comment line', async () => {
+        // GIVEN
+        const inputText = [`(:functions`,
+        '\t(f1)',
+        '\t; (f2)',
+        ')'
+        ].join('\n');
+
+        const expectedText = inputText;
+
+        await testFormatter(inputText, expectedText, { insertSpaces: false, tabSize: 4 });
+    });
+
+    test('keeps short effects on one line', async () => {
+        // GIVEN
+        const inputText = `(assign (f1) 10)`;
+
+        const expectedText = inputText;
+
+        await testFormatter(inputText, expectedText, { insertSpaces: false, tabSize: 4 });
+    });
+
+    test('splits long effect', async () => {
+        // GIVEN
+        const inputText = `(increase (ffffffffffffffffffffffffff1) (+ (gggggggggggggggggggg) 1))`;
+
+        const expectedText = [
+            `(increase`,
+            `\t(ffffffffffffffffffffffffff1)`,
+                `\t(+ (gggggggggggggggggggg) 1))`
+        ].join(EOL);
+
+        await testFormatter(inputText, expectedText, { insertSpaces: false, tabSize: 4 });
     });
 });
 
