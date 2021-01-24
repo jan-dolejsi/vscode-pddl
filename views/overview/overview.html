@@ -43,7 +43,7 @@
         <tr id="enableAutoSaveAlert" class="alert">
             <td><i class="codicon codicon-bell-dot"></i></td>
             <td>When processing files using command-line tools, it is simpler to enable file auto-saving.
-                <button onclick="location.href='command:workbench.action.toggleAutoSave'" style="width: 150px">Enable auto-save</button>
+                <button onclick="location.href='command:workbench.action.toggleAutoSave'" class="alertButton" style="width: 150px">Enable auto-save</button>
                 <br />It is also recommended to go run the <i>Git: Initialize Repository</i> command to enjoy safety of
                 version control and never miss a working version.
             </td>
@@ -54,7 +54,7 @@
                 <a href="https://dev.azure.com/schlumberger/ai-planning-validation">build</a> of
                 <a href="https://github.com/KCL-Planning/VAL">VAL tools</a> to get a PDDL parser, to be able to validate and
                 evaluate plans.
-                <button onclick="downloadValInformed()" style="width: 100px; text-align:center"
+                <button onclick="downloadValInformed()" class="alertButton"
                     title="Click to initiate download. You will be able to see what is being downloaded and from where...">Download</button>
                 plan validation tools
             </td>
@@ -64,15 +64,19 @@
             <td>New version of
                 <a href="https://github.com/KCL-Planning/VAL">VAL tools</a> is available.
                 Update to the latest version.
-                <button onclick="downloadValInformed()" style="width: 100px; text-align:center"
+                <button onclick="downloadValInformed()" class="alertButton"
                     title="Click to initiate download..">Update VAL</button>
             </td>
         </tr>
-        <!-- 
-                todo: Add alert for enabling formatOnType
-            "[pddl]": {
-                "editor.formatOnType": true
-            } -->
+        <tr id="enableFormatterAlert" class="alert">
+            <td><i class="codicon codicon-bell-dot"></i></td>
+            <td>Enable on-type formatter to save time and make your models readable without wasting time formatting whitespace.
+                <button onclick="enableFormatOnType()" class="alertButton" title="Enable on-type formatting for all languages in VS Code">Enable On-Type Formatter</button>
+                <button onclick="enableFormatOnTypeForPddlOnly()" title="Enable on-type formatting for PDDL only." class="alertButton">...for PDDL only</button>
+                    <br/>
+                You can switch it off again using the <snap class="code">editor.formatOnType</snap> setting. 
+            </td>
+        </tr>
     </table>
 
     <table style="width: 100%">
@@ -91,6 +95,7 @@
                 <h2>
                     Configuration
                     <i id="settings" class="codicon codicon-settings-gear" style="font-size: large;" title="See all PDDL Extension settings"></i>
+                    <i id="settingsProgress" class="codicon codicon-loading codicon-animation-spin" style="font-size: large;"></i>
                 </h2>
                 <div id="workspaceFoldersDiv">
                     <label for="workspaceFolders">Workspace folder:</label>

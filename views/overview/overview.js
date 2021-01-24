@@ -53,6 +53,7 @@ function initialize() {
  * @property {boolean} showEnableIconsAlert
  * @property {boolean} downloadValAlert
  * @property {boolean} updateValAlert
+ * @property {boolean} showEnableFormatterAlert
  */
 
 /**
@@ -66,19 +67,28 @@ function initialize() {
  * @param {OverviewConfiguration} message configuration
  */
 function updateConfiguration(message) {
-    updatePlanners(message.planners, message.selectedPlanner, message.imagesPath);
-    updatePlannersError(message.plannersConfigError);
-    updateWorkspaceFolders(message.workspaceFolders, message.selectedWorkspaceFolder);
-    document.getElementById('parser').value = message.parser;
-    document.getElementById('validator').value = message.validator;
-    setStyleDisplay('installIconsAlert', message.showInstallIconsAlert, "list-item");
-    setStyleDisplay('enableIconsAlert', message.showEnableIconsAlert, "list-item");
-    setStyleDisplay('enableAutoSaveAlert', message.autoSave === "off", "list-item");
-    setStyleDisplay('downloadValAlert', message.downloadValAlert, "list-item");
-    setStyleDisplay('updateValAlert', message.updateValAlert, "list-item");
-    setStyleDisplay('alertList', hasAnyChildrenToDisplay('alertList'), "block");
-    updatePlannerOutputTarget(message.plannerOutputTarget);
-    updateShowOverviewChanged(message.shouldShow);
+    try {
+        updatePlanners(message.planners, message.selectedPlanner, message.imagesPath);
+        updatePlannersError(message.plannersConfigError);
+        updateWorkspaceFolders(message.workspaceFolders, message.selectedWorkspaceFolder);
+        document.getElementById('parser').value = message.parser;
+        document.getElementById('validator').value = message.validator;
+        setStyleDisplay('installIconsAlert', message.showInstallIconsAlert, "table-row");
+        setStyleDisplay('enableIconsAlert', message.showEnableIconsAlert, "table-row");
+        setStyleDisplay('enableAutoSaveAlert', message.autoSave === "off", "table-row");
+        setStyleDisplay('downloadValAlert', message.downloadValAlert, "table-row");
+        setStyleDisplay('updateValAlert', message.updateValAlert, "table-row");
+        setStyleDisplay('enableFormatterAlert', message.showEnableFormatterAlert, "table-row");
+        setStyleDisplay('alertList', hasAnyChildrenToDisplay(), "block");
+        updatePlannerOutputTarget(message.plannerOutputTarget);
+        updateShowOverviewChanged(message.shouldShow);
+    } finally {
+        const settingsProgress = document.getElementById('settingsProgress');
+        if (settingsProgress) {
+            settingsProgress.classList.remove('codicon-animation-spin');        
+            settingsProgress.style.visibility = "hidden";        
+        }
+    }
 }
 
 /**
@@ -279,6 +289,20 @@ function selectPlanner(selectedPlanner) {
     });
 }
 
+function enableFormatOnTypeForPddlOnly() {
+    postMessage({
+        command: 'enableFormatOnType',
+        forPddlOnly: true
+    });
+}
+
+function enableFormatOnType() {
+    postMessage({
+        command: 'enableFormatOnType',
+        forPddlOnly: false
+    });    
+}
+
 /**
  * Converts a boolean to a display style
  * @param {string} elementId element ID
@@ -293,16 +317,11 @@ function setStyleDisplay(elementId, shouldDisplay, displayStyle) {
 
 /**
  * Returns true if at least one element has not-"none" display style
- * @param {string} elementId html element ID
  */
-function hasAnyChildrenToDisplay(elementId) {
-    const parent = document.getElementById(elementId);
-    for (let index = 0; index < parent.childElementCount; index++) {
-        const child = parent.children.item(index);
-        if (child.nodeType !== Node.ELEMENT_NODE) { continue; }
-        if (child.tagName === 'TBODY') { continue; }
-
-        if (child.style.display !== "none") {
+function hasAnyChildrenToDisplay() {
+    const alerts = document.querySelectorAll('table.alertList > tbody > tr.alert');
+    for (const tr of alerts) {
+        if (tr.style.display !== "none"){
             return true;
         }
     }
@@ -448,7 +467,8 @@ function populateWithTestData() {
         showInstallIconsAlert: true,
         showEnableIconsAlert: true,
         downloadValAlert: true,
-        updateValAlert: true
+        updateValAlert: true,
+        showEnableFormatterAlert: true
     });
 }
 
@@ -462,6 +482,7 @@ function clearData() {
         showInstallIconsAlert: false,
         showEnableIconsAlert: false,
         downloadValAlert: false,
-        updateValAlert: false
+        updateValAlert: false,
+        enableFormatterAlert: false
     });
 }

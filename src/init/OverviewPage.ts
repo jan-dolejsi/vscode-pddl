@@ -147,6 +147,9 @@ export class OverviewPage {
                 const options: ValDownloadOptions = { bypassConsent: message.informedDecision };
                 await commands.executeCommand(VAL_DOWNLOAD_COMMAND, options);
                 break;
+            case 'enableFormatOnType':
+                this.pddlConfiguration.setEditorFormatOnType(true, { forPddlOnly: message.forPddlOnly as boolean});
+                break;
             default:
                 if (message.command?.startsWith('command:')) {
                     const command = message.command as string;
@@ -358,7 +361,8 @@ export class OverviewPage {
             showInstallIconsAlert: !this.iconsInstalled,
             showEnableIconsAlert: this.iconsInstalled && workspace.getConfiguration().get<string>("workbench.iconTheme") !== "vscode-icons",
             downloadValAlert: !this.pddlConfiguration.getValidatorPath(this.workspaceFolder) || !(await this.val.isInstalled()),
-            updateValAlert: await this.val.isNewValVersionAvailable()
+            updateValAlert: await this.val.isNewValVersionAvailable(),
+            showEnableFormatterAlert: !this.pddlConfiguration.getEditorFormatOnType()
             // todo: workbench.editor.revealIfOpen
         };
         return this?.webViewPanel?.webview?.postMessage(message) ?? false;
@@ -389,6 +393,7 @@ interface OverviewConfiguration {
     showEnableIconsAlert: boolean;
     downloadValAlert: boolean;
     updateValAlert: boolean;
+    showEnableFormatterAlert: boolean;
 }
 
 interface WireWorkspaceFolder {

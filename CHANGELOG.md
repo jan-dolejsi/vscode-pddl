@@ -1,5 +1,38 @@
 # PDDL support - What's new?
 
+## 2.21.0
+
+### PDDL Formatter
+
+Right-click on PDDL document and you will see two more options: _Format Document_ and _Format Selection_.
+It re-formats the white space to enhance readability of the domain/problem.\
+The formatter does not modify most of your line breaks, but modifies most of the indentation.
+
+Even more helpful is the on-type formatter, which automatically suggests indentation when you press Enter in the document.
+
+![On-type formatter](https://raw.githubusercontent.com/wiki/jan-dolejsi/vscode-pddl/img/on-type-formatter.gif)
+
+The on-type formatter must however be first enabled using this setting:
+
+```json
+"editor.formatOnType": true
+```
+
+You can selectively enable the on-type formatting just for PDDL documents:
+
+```json
+"[pddl]": {
+    "editor.formatOnType": true
+}
+```
+
+The above configuration can be now easily inserted from the _PDDL: Overview Page_.
+
+The Document and Document Selection formatter (along with the separately enabled on-type formatter) can be disabled (in case of clash with another extension) using the `pddl.formatter` setting.
+
+This was one of the oldest standing feature request is now addressed.
+This work was started by our intern more than 2 years ago, but I only had time to finish it now - _thanks_ to C-19 isolation.
+
 ## 2.20.4
 
 - Overview alerts use codicons to look correct on MacOS
@@ -1257,7 +1290,8 @@ Note for open source contributors: all notable changes to the "pddl" extension w
 
 Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
 
-[Unreleased]: https://github.com/jan-dolejsi/vscode-pddl/compare/v2.20.0...HEAD
+[Unreleased]: https://github.com/jan-dolejsi/vscode-pddl/compare/v2.21.0...HEAD
+[2.21.0]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.20.0...v2.21.0
 [2.20.0]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.19.0...v2.20.0
 [2.19.0]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.18.0...v2.19.0
 [2.18.0]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.17.1...v2.18.0
