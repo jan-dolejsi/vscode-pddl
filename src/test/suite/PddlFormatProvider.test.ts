@@ -18,7 +18,7 @@ suite('Domain formatter Test Suite', () => {
         formatProvider = new PddlFormatProvider();
     });
 
-    test('Does not modify formatted text', async () => {
+    test('Does not modify well formatted text', async () => {
         // GIVEN
         const inputText = `(define)`;
 
@@ -40,9 +40,32 @@ suite('Domain formatter Test Suite', () => {
         // GIVEN
         const inputText = `(define (domain                 domain_name))`;
 
-        const expectedText = `(define (domain domain_name))`;
+        const expectedText = [`(define (domain domain_name)`, `)`].join(EOL);
 
         await testFormatter(inputText, expectedText, { insertSpaces: true, tabSize: 4 });
+    });
+
+    test('does not modify comment', async () => {
+        // GIVEN
+        const inputText = [`(define`,
+            `\t; comment`,
+            `)`].join('\n');
+
+        const expectedText = inputText;
+
+        await testFormatter(inputText, expectedText, { insertSpaces: false, tabSize: 4 });
+    });
+
+    test('does not modify flatten 2 consecutive comments', async () => {
+        // GIVEN
+        const inputText = [`(define`,
+            `\t; comment1`,
+            `\t; comment2`,
+            `)`].join('\n');
+
+        const expectedText = inputText;
+
+        await testFormatter(inputText, expectedText, { insertSpaces: false, tabSize: 4 });
     });
 
     test('Indents requirements', async () => {
@@ -60,36 +83,68 @@ suite('Domain formatter Test Suite', () => {
 
     test('Does not indent individual requirements', async () => {
         // GIVEN
-        const inputText = `(:requirements :strips)`;
+        const inputText = `(:requirements :strips :typing)`;
 
         const expectedText = inputText;
 
         await testFormatter(inputText, expectedText, { insertSpaces: true, tabSize: 4 });
     });
 
-    test.skip('Formats types', async () => {
+    test('Does not format formatted types', async () => {
         // GIVEN
-        const inputText = `(define (domain domain_name)(:types child11 child12))`;
+        const inputText = [`(define`,
+        `    (:types`,
+        `        child11 child12`,
+        `    )`,
+        `)`].join(EOL);
 
-        const expectedText = `(define (domain domain_name)
-    (:types 
-        child11 child12
-    )
-)`;
+        const expectedText = inputText;
 
         await testFormatter(inputText, expectedText, { insertSpaces: true, tabSize: 4 });
     });
 
-    test.skip('Formats types with inheritance', async () => {
+    test('Formats types', async () => {
+        // GIVEN
+        const inputText = `(define (:types child11 child12))`;
+
+        const expectedText = [`(define`,
+            `    (:types`,
+            `        child11 child12`,
+            `    )`,
+            `)`].join(EOL);
+
+        await testFormatter(inputText, expectedText, { insertSpaces: true, tabSize: 4 });
+    });
+
+    test('Formats types with a comment', async () => {
+        // GIVEN
+        const inputText = [
+            `(define (:types child11`,
+            `; comment1`,
+            `child12))`
+        ].join(EOL);
+
+        const expectedText = [`(define`,
+            `    (:types`,
+            `        child11`,
+            `        ; comment1`,
+            `        child12`,
+            `    )`,
+            `)`].join(EOL);
+
+        await testFormatter(inputText, expectedText, { insertSpaces: true, tabSize: 4 });
+    });
+
+    test('Formats types with inheritance', async () => {
         // GIVEN
         const inputText = `(define (domain domain_name)(:types child11 child12 - parent1 child21 child22 - parent2))`;
 
-        const expectedText = `(define (domain domain_name)
-    (:types 
-        child11 child12 - parent1
-        child21 child22 - parent2
-    )
-)`;
+        const expectedText = [`(define (domain domain_name)`,
+            `    (:types`,
+            `        child11 child12 - parent1`,
+            `        child21 child22 - parent2`,
+            `    )`,
+            `)`].join(EOL);
 
         await testFormatter(inputText, expectedText, { insertSpaces: true, tabSize: 4 });
     });
@@ -171,7 +226,7 @@ suite('Domain formatter Test Suite', () => {
         await testFormatter(inputText, expectedText, { insertSpaces: false, tabSize: 4 });
     });
 
-    test('Does breaks line before action keywords', async () => {
+    test('Does break line before action keywords', async () => {
         // GIVEN
         const inputText = [`(:action a`,
         '\t:parameters ()',
@@ -193,6 +248,26 @@ suite('Domain formatter Test Suite', () => {
         ].join('\n');
 
         const expectedText = inputText;
+
+        await testFormatter(inputText, expectedText, { insertSpaces: false, tabSize: 4 });
+    });
+
+    test('removes excess empty lines', async () => {
+        // GIVEN
+        const inputText = [`(:init`,
+            '\t(f1)',
+            '\t',
+            '     ',
+            '\t(f2)',
+            ')'
+        ].join('\n');
+
+        const expectedText = [`(:init`,
+            '\t(f1)',
+            '',
+            '\t(f2)',
+            ')'
+        ].join('\n');
 
         await testFormatter(inputText, expectedText, { insertSpaces: false, tabSize: 4 });
     });

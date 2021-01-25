@@ -69,16 +69,45 @@ class PddlFormatter {
         this.lastOffset = document.offsetAt(range.end);
     }
 
+    getLastChild(node: parser.PddlSyntaxNode): parser.PddlSyntaxNode | undefined {
+        let children = node?.getChildren();
+        while (children && (children.length > 0)) {
+            node = children[children.length - 1];
+            children = node?.getChildren();
+        }
+
+        return node;
+    }
+
     format(node: parser.PddlSyntaxNode): TextEdit[] {
         if (node.getStart() > this.lastOffset || this.token.isCancellationRequested) {
             return this.edits;
         }
 
-        if (node.getStart() >= this.firstOffset || node.includesIndex(this.firstOffset)) {
-            if (node.getToken().type === parser.PddlTokenType.Whitespace) {
+        
+        const nextSibling = node.getFollowingSibling()
+            ?? node.getParent()?.getFollowingSibling(undefined, node);
 
-                const nextSibling = node.getFollowingSibling()
-                    ?? node.getParent()?.getFollowingSibling(undefined, node);
+        const precedingSibling = node.getPrecedingSibling();
+        const precedingNode = precedingSibling && this.getLastChild(precedingSibling);
+
+        if (node.getStart() >= this.firstOffset || node.includesIndex(this.firstOffset)) {
+            if (node.isType(parser.PddlTokenType.OpenBracketOperator)) {
+                if (precedingNode?.isNotType(parser.PddlTokenType.Whitespace)) {
+                    this.breakAndIndent(node);
+                }
+            } else if (node.getToken().type === parser.PddlTokenType.CloseBracket) {
+                if (precedingNode?.isNotType(parser.PddlTokenType.Whitespace)) {
+                    const openBracketToken = node.getParent()?.getToken().tokenText ?? '';
+                    if (['(:requirements', '(:domain'].includes(openBracketToken)) {
+                        // do nothing
+                    }
+                    else if (openBracketToken.startsWith('(:')
+                        || ['(define'].includes(openBracketToken)) {
+                        this.breakAndIndent(node, -1);
+                    }
+                }
+            } else if (node.isType(parser.PddlTokenType.Whitespace)) {
 
                 if (node.getParent() && ['(increase', '(decrease', '(assign'].includes(node.getParent()!.getToken().tokenText)) {
                     if ((node.getParent()?.length ?? 0) > 50) {
@@ -86,8 +115,30 @@ class PddlFormatter {
                     } else {
                         this.replace(node, ' ');
                     }
+                } else if (nextSibling?.isType(parser.PddlTokenType.Comment)) {
+                    if (node.getText().includes('\n')) {
+                        this.breakAndIndent(node);
+                    } else {
+                        this.replace(node, ' ');
+                    }
                 } else if (node.getParent() && ['(:types', '(:objects'].includes(node.getParent()!.getToken().tokenText)) {
-                    // todo: format type inheritance
+                    if (nextSibling?.isType(parser.PddlTokenType.Dash) || precedingSibling?.isType(parser.PddlTokenType.Dash)) {
+                        this.replace(node, ' ');
+                    } else if (precedingSibling?.isType(parser.PddlTokenType.Comment)) {
+                        this.breakAndIndent(node);
+                    } else if (nextSibling?.isType(parser.PddlTokenType.CloseBracket)) {
+                        this.breakAndIndent(node, -1);
+                    } else {
+                        const precedingNodes = node.getPrecedingSiblings()
+                            .filter(n => n.isNoneOf([parser.PddlTokenType.Comment, parser.PddlTokenType.Whitespace]));
+                        if (precedingNodes.length === 0) {
+                            this.breakAndIndent(node);
+                        } else if (precedingNodes.length > 2 && this.areTypes(precedingNodes.slice(-2), [parser.PddlTokenType.Dash, parser.PddlTokenType.Other])) {
+                            this.breakAndIndent(node);
+                        } else {
+                            this.replace(node, ' ');
+                        }
+                    }
                 } else if (nextSibling === undefined) {
                     this.replace(node, '');
                 } else if (nextSibling.isType(parser.PddlTokenType.CloseBracket)) {
@@ -96,18 +147,12 @@ class PddlFormatter {
                     } else {
                         this.replace(node, '');
                     }
-                } else if (nextSibling.isType(parser.PddlTokenType.Comment)) {
-                    if (node.getText().includes('\n')) {
-                        this.breakAndIndent(node);
-                    } else {
-                        this.replace(node, ' ');
-                    }
                 } else if (nextSibling.isAnyOf([parser.PddlTokenType.Dash, parser.PddlTokenType.Other, parser.PddlTokenType.Parameter])) {
                     this.replace(node, ' ');
                 } else if (nextSibling.isAnyOf([parser.PddlTokenType.OpenBracket, parser.PddlTokenType.OpenBracketOperator, parser.PddlTokenType.Keyword])) {
                     if (nextSibling.isType(parser.PddlTokenType.Keyword)) {
-                        if (node.getParent()
-                            && ['(:requirements'].includes(node.getParent()!.getToken().tokenText)) {
+                        const requirementsAncestor = node.findAncestor(parser.PddlTokenType.OpenBracketOperator, /:requirements/);
+                        if (requirementsAncestor) {
                             this.replace(node, ' ');
                         } else {
                             this.breakAndIndent(node);
@@ -137,9 +182,30 @@ class PddlFormatter {
         return this.edits;
     }
     
+    areTypes(nodes: parser.PddlSyntaxNode[], expectedTypes: parser.PddlTokenType[]): boolean {
+        if (nodes.length !== expectedTypes.length) {
+            throw new Error(`argument lengths are not matching`);
+        }
+
+        const actualTypes = nodes.map(n => n.getToken().type);
+
+        for (let i = 0; i < actualTypes.length; i++) {
+            if (actualTypes[i] !== expectedTypes[i]) {
+                return false;
+            }
+        }
+        return true;
+    }
+    
     breakAndIndent(node: parser.PddlSyntaxNode, offset = 0): void {
         const level = node.getAncestors([parser.PddlTokenType.OpenBracket, parser.PddlTokenType.OpenBracketOperator]).length;
-        this.replace(node, this.ends(node.getText(), 1) + PddlOnTypeFormatter.createIndent('', level + offset, this.options));
+
+        if (node.isType(parser.PddlTokenType.Whitespace)) {
+            this.replace(node, this.ends(node.getText(), 1) + PddlOnTypeFormatter.createIndent('', level + offset, this.options));
+        } else {
+            const newText = '\n' + PddlOnTypeFormatter.createIndent('', level + offset, this.options);
+            this.edits.push(TextEdit.insert(this.document.positionAt(node.getStart()), newText));
+        }
     }
 
     replace(node: parser.PddlSyntaxNode, newText: string): void {
