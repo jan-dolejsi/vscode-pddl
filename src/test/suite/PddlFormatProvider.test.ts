@@ -149,6 +149,21 @@ suite('Domain formatter Test Suite', () => {
         await testFormatter(inputText, expectedText, { insertSpaces: true, tabSize: 4 });
     });
 
+
+    test('Formats constants', async () => {
+        // GIVEN
+        const inputText = `(define (domain domain_name)(:constants object11 object12 - type1 object21 object22 - type2))`;
+
+        const expectedText = [`(define (domain domain_name)`,
+            `    (:constants`,
+            `        object11 object12 - type1`,
+            `        object21 object22 - type2`,
+            `    )`,
+            `)`].join(EOL);
+
+        await testFormatter(inputText, expectedText, { insertSpaces: true, tabSize: 4 });
+    });
+
     test('Removes trailing whitespace (last line)', async () => {
         // GIVEN
         const inputText = `(define)               `;

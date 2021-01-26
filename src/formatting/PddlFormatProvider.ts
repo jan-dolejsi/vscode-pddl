@@ -121,7 +121,7 @@ class PddlFormatter {
                     } else {
                         this.replace(node, ' ');
                     }
-                } else if (node.getParent() && ['(:types', '(:objects'].includes(node.getParent()!.getToken().tokenText)) {
+                } else if (node.getParent() && ['(:types', '(:objects', '(:constants'].includes(node.getParent()!.getToken().tokenText)) {
                     if (nextSibling?.isType(parser.PddlTokenType.Dash) || precedingSibling?.isType(parser.PddlTokenType.Dash)) {
                         this.replace(node, ' ');
                     } else if (precedingSibling?.isType(parser.PddlTokenType.Comment)) {

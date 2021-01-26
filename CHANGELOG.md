@@ -1,6 +1,13 @@
 # PDDL support - What's new?
 
-## 2.21.0
+## 2.21.1
+
+Fixed the configuration target for the planner output target. If the workspace configuration is set, it is overwritten. Otherwise, the global configuration is updated.
+
+Formatter handles type inheritance sections: `(:objects )` and `(:types )` and `(:constants )`.
+Also, it now removes excess line breaks, so it can be used on template-generated problem files.
+
+## [2.21.0]
 
 ### PDDL Formatter
 
@@ -103,7 +110,7 @@ The plan report (export to HTML) was working incorrectly in the face of case-sen
 - Non-temporal plans do not display fully (especially the hello world sample) [#90](https://github.com/jan-dolejsi/vscode-pddl/issues/90)
 - Try HelloWorld overrides domain.pddl file [#87](https://github.com/jan-dolejsi/vscode-pddl/issues/87)
 
-## 2.20.0 - New and customizable Plan Visualization
+## [2.20.0] - New and customizable Plan Visualization
 
 ### New faster plan visualization component with custom domain-specific plan visualization
 
