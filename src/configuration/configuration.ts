@@ -505,7 +505,9 @@ export class PddlConfiguration {
 
         if (itemSelected === undefined) { return; }
 
-        await workspace.getConfiguration().update(configName, itemSelected.label);
+        const configurationTarget = this.getEffectiveConfigurationTarget(configName);
+
+        await workspace.getConfiguration().update(configName, itemSelected.label, configurationTarget);
     }
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -553,7 +555,21 @@ export class PddlConfiguration {
 
         if (enteredValueAsString === undefined) { return; }
 
-        await workspace.getConfiguration().update(configName, parser(enteredValueAsString));
+        const configurationTarget = this.getEffectiveConfigurationTarget(configName);
+
+        await workspace.getConfiguration().update(configName, parser(enteredValueAsString), configurationTarget);
+    }
+
+    getEffectiveConfigurationTarget(configName: string): ConfigurationTarget {
+        const conf = workspace.getConfiguration().inspect(configName);
+
+        if (conf?.workspaceFolderValue) {
+            return ConfigurationTarget.WorkspaceFolder;
+        } else if (conf?.workspaceValue) {
+            return ConfigurationTarget.Workspace;
+        } else {
+            return ConfigurationTarget.Global;
+        } 
     }
 }
 
