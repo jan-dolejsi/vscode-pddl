@@ -45,7 +45,7 @@
 				"--disable-extensions"
 			],
 			"outFiles": ["${workspaceFolder}/out/test/**/*.js"],
-			"preLaunchTask": "compile"
+			"preLaunchTask": "compile - quick"
 		},
 		{
 			"type": "chrome",
