@@ -5,7 +5,7 @@
 'use strict';
 
 import { DomainInfo, FileInfo, parser, PddlLanguage, ProblemInfo } from 'pddl-workspace';
-import {TextDocument, CancellationToken, DocumentFormattingEditProvider, FormattingOptions, TextEdit, DocumentRangeFormattingEditProvider, Range, Position } from 'vscode';
+import {TextDocument, CancellationToken, DocumentFormattingEditProvider, FormattingOptions, TextEdit, DocumentRangeFormattingEditProvider, Range, Position, EndOfLine } from 'vscode';
 import { nodeToRange } from '../utils';
 import { CodePddlWorkspace } from '../workspace/CodePddlWorkspace';
 import { PddlOnTypeFormatter } from './PddlOnTypeFormatter';
@@ -201,9 +201,9 @@ class PddlFormatter {
         const level = node.getAncestors([parser.PddlTokenType.OpenBracket, parser.PddlTokenType.OpenBracketOperator]).length;
 
         if (node.isType(parser.PddlTokenType.Whitespace)) {
-            this.replace(node, this.ends(node.getText(), 1) + PddlOnTypeFormatter.createIndent('', level + offset, this.options));
+            this.replace(node, this.ends(node.getText(), { min: 1, max: 2 }) + PddlOnTypeFormatter.createIndent('', level + offset, this.options));
         } else {
-            const newText = '\n' + PddlOnTypeFormatter.createIndent('', level + offset, this.options);
+            const newText = this.eol() + PddlOnTypeFormatter.createIndent('', level + offset, this.options);
             this.edits.push(TextEdit.insert(this.document.positionAt(node.getStart()), newText));
         }
     }
@@ -213,13 +213,33 @@ class PddlFormatter {
     }
 
     /** @returns the endline characters only, but at least the `min` count */
-    ends(text: string, min: number): string {
-        const endls = text.replace(/[^\n\r]/g, '');
-        const endlCount = (endls.match(/\n/g) || []).length;
-        if (endlCount < min) {
-            return endls + '\n'.repeat(min - endlCount);
+    ends(text: string, options: { min: number; max?: number }): string {
+        // strip off all other characters than the bare `\n`
+        let endls = text.replace(/[^\n]/g, '');
+        let endlCount = (endls.match(/\n/g) || []).length;
+
+        // remove excess line breaks
+        while (endlCount > (options.max ?? Number.MAX_VALUE)) {
+            endls = endls.replace('\n', '');
+            endlCount--;
+        }
+
+        // replace all `\n` by the actual document's eol sequence
+        endls = endls.split('\n').join(this.eol());
+
+        if (endlCount < options.min) {
+            return endls + this.eol().repeat(options.min - endlCount);
         } else {
             return endls;
         }
     }
+
+    eol(): string {
+        switch (this.document.eol) {
+            case EndOfLine.LF:
+                return '\n';
+            case EndOfLine.CRLF:
+                return '\r\n';
+        }
+    }   
 }
