@@ -4,7 +4,7 @@
   "description": "Planning Domain Description Language support",
   "author": "Jan Dolejsi",
   "license": "MIT",
-  "version": "2.20.3",
+  "version": "2.21.0",
   "publisher": "jan-dolejsi",
   "engines": {
     "vscode": "^1.50.0",
@@ -834,7 +834,7 @@
         },
         "pddl.validatorVersion": {
           "type": "number",
-          "default": 55,
+          "default": 58,
           "title": "VAL build number",
           "description": "Stable VAL build number to download or update to."
         },
@@ -874,8 +874,8 @@
         },
         "pddl.formatter": {
           "type": "boolean",
-          "default": false,
-          "description": "Enable PDDL formatter (default is 'false'). Warning: this is an experimental feature - work in progress."
+          "default": true,
+          "description": "Enable/disable PDDL formatter (default is 'true')."
         },
         "pddl.modelHierarchy": {
           "type": "boolean",
@@ -997,7 +997,7 @@
     "test": "npm run test:unit && npm run test:integration"
   },
   "dependencies": {
-    "ai-planning-val": "^2.5.0",
+    "ai-planning-val": "^2.6.0",
     "await-notify": "^1.0.1",
     "body-parser": "^1.19.0",
     "events": "^3.1.0",
@@ -1005,7 +1005,7 @@
     "jsonc-parser": "^2.2.1",
     "open": "^7.0.2",
     "pddl-gantt": "^1.5.3",
-    "pddl-workspace": "^6.0.3",
+    "pddl-workspace": "^6.1.0",
     "request": "^2.88.2",
     "semver": "^7.1.3",
     "tree-kill": "^1.2.2",

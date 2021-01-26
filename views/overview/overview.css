@@ -11,20 +11,6 @@ input.config {
 i.codicon {
     cursor: pointer;
 }
-a.button {
-    -webkit-appearance: button;
-    -moz-appearance: button;
-    appearance: button;
-
-    text-decoration: none;
-    color: initial;
-
-    height: 22px;
-    width: 22px;
-    vertical-align: inherit;
-    margin-left: 3px;
-    text-align: center;
-}
 
 table#planners {
     border-collapse: collapse;
@@ -67,9 +53,9 @@ span#plannerConfigurationErrorMessage {
 div.hint {
     color: gray
 }
-ul.alertList {
+table.alertList {
     background-color: lightyellow;
-    width: 100%;
+    width: 105%;
     padding: 5px 25px 5px 25px;
     margin: 3px -19px;
     border-top-style: dashed;
@@ -84,13 +70,30 @@ ul.alertList {
 
     list-style: none;
 }
-li.alert {
-    padding-left: 1.5em;
-    text-indent: -1.5em;
+tr.alert > td:nth-child(1) {
+    padding-right: 10px;
+    /* text-indent: 0em; */
     margin: 5px;
 }
+button.alertButton {
+    text-align: center;
+}
+snap.code {
+    font-family: monospace;
+}
 
-li.alert:before {
-    content: "🕭";
-    padding-right: 10px;
+
+/* Rotating the 'loading' Codicon to indicate _progress_. 
+Same implementation as what VS Code is using in the user interface.
+https://github.com/microsoft/vscode/blob/master/src/vs/base/browser/ui/codicons/codicon/codicon-animations.css
+*/
+@keyframes codicon-spin {
+	100% {
+		transform:rotate(360deg);
+	}
+}
+
+.codicon-animation-spin {
+	/* Use steps to throttle FPS to reduce CPU usage */
+	animation: codicon-spin 1.5s steps(30) infinite;
 }

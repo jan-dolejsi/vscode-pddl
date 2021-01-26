@@ -71,7 +71,10 @@
 			"type": "chrome",
 			"request": "launch",
 			"name": "Overview (html)",
-			"file": "${workspaceFolder}/views/overview/overview.html"
+			"file": "${workspaceFolder}/views/overview/overview.html",
+			"outFiles": [
+				"${workspaceFolder}/views/overview/*.js"
+			]
 		},
 		{
 			"type": "chrome",

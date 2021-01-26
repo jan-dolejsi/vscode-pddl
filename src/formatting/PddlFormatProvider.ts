@@ -4,289 +4,156 @@
  * ------------------------------------------------------------------------------------------ */
 'use strict';
 
-import {TextDocument, CancellationToken, DocumentFormattingEditProvider, FormattingOptions, ProviderResult, TextEdit, Range } from 'vscode';
+import { DomainInfo, FileInfo, parser, PddlLanguage, ProblemInfo } from 'pddl-workspace';
+import {TextDocument, CancellationToken, DocumentFormattingEditProvider, FormattingOptions, TextEdit, DocumentRangeFormattingEditProvider, Range, Position } from 'vscode';
+import { nodeToRange } from '../utils';
+import { CodePddlWorkspace } from '../workspace/CodePddlWorkspace';
+import { PddlOnTypeFormatter } from './PddlOnTypeFormatter';
 
-export class PddlFormatProvider implements DocumentFormattingEditProvider {
+export class PddlFormatProvider implements DocumentFormattingEditProvider, DocumentRangeFormattingEditProvider {
 
-    provideDocumentFormattingEdits(document: TextDocument, options: FormattingOptions, token: CancellationToken): ProviderResult<TextEdit[]> {
-        if (token.isCancellationRequested) {
-            return null;
+    constructor(private pddlWorkspace?: CodePddlWorkspace) {
+    }
+
+    async provideDocumentRangeFormattingEdits(document: TextDocument, range: Range, options: FormattingOptions, token: CancellationToken): Promise<TextEdit[] | undefined> {
+        const fileInfo = await this.pddlWorkspace?.upsertAndParseFile(document);
+        if (token.isCancellationRequested) { return undefined; }
+
+        if (fileInfo && (fileInfo.getLanguage() !== PddlLanguage.PDDL)) {
+            return undefined;
         }
-        console.log(`Formatting: ${document.fileName}, insertSpaces: ${options.insertSpaces}, tabSize: ${options.tabSize}`);
 
-		// NEW ALGORITHM
-		// note: user is free to define spacing within comments
-		// note: array of boolean values was originally used to determine location within file
-		//			replaced by string since arrays cannot be switched over
+        const tree: parser.PddlSyntaxTree = this.getSyntaxTree(fileInfo, document);
+        
+		return new PddlFormatter(document, range, options, token).format(tree.getRootNode());
+    }
 
-		// note: predicate and function formatting buggy
-		// 			action formatting to be completed
+    async provideDocumentFormattingEdits(document: TextDocument, options: FormattingOptions, token: CancellationToken): Promise<TextEdit[] | undefined> {
+        const fileInfo = await this.pddlWorkspace?.upsertAndParseFile(document);
+        if (token.isCancellationRequested) { return undefined; }
 
-        // beg, sigreq, typ, prefun, act
-        let stateString = "beg";
+        if (fileInfo && (fileInfo.getLanguage() !== PddlLanguage.PDDL)) {
+            return undefined;
+        }
 
-        // logical state array to determine location with respect to syntax - [com, fir, ope, req, inh, nes]
-        const logicalState: (boolean|null)[] = [false, false, null, false, false, false];
+        const tree: parser.PddlSyntaxTree = this.getSyntaxTree(fileInfo, document);
 
-        const selection = document.getText();
-        const textArray = selection.split('');
-        let formattedText = "";
+        const fullRange = document.validateRange(new Range(new Position(0, 0), new Position(document.lineCount, Number.MAX_VALUE)));
+        
+		return new PddlFormatter(document, fullRange, options, token).format(tree.getRootNode());
+	}
 
-        const tabRegEx = new RegExp('[\t]');
-        const newLineRegEx = new RegExp('[\r\n]');
-		const alphaRegEx = new RegExp('[a-zA-Z]');
-		const numRegEx = new RegExp('[0-9]');
+    private getSyntaxTree(fileInfo: FileInfo | undefined, document: TextDocument): parser.PddlSyntaxTree {
+        let tree: parser.PddlSyntaxTree;
+        if (fileInfo && (fileInfo instanceof DomainInfo)) {
+            tree = (fileInfo as DomainInfo).syntaxTree;
+        }
+        else if (fileInfo && (fileInfo instanceof ProblemInfo)) {
+            tree = (fileInfo as ProblemInfo).syntaxTree;
+        }
+        else {
+            tree = new parser.PddlSyntaxTreeBuilder(document.getText()).getTree();
+        }
+        return tree;
+    }
+}
 
-        for (let i = 0; i < textArray.length; i++) {
+class PddlFormatter {
 
-			// alphabet, number or question mark
-            if (alphaRegEx.test(textArray[i]) || numRegEx.test(textArray[i]) || textArray[i] === '?') {
-                formattedText += textArray[i];
-                continue;
-			}
-			// semicolon for comment
-            if (textArray[i] === ';') {
-                logicalState[0] = true;
-                formattedText += textArray[i];
-                continue;
-			}
-			if (textArray[i] === '-') {
-				if (stateString === "typ") {
-					logicalState[4] = true;					
-				}
-				formattedText += textArray[i];
-				continue;
-			}
-			// opening bracket
-            if (textArray[i] === '(') {
-				// not a comment and first bracket
-                if (logicalState[0] !== true && logicalState[1] !== true) {
-                    stateString = "sigreq";
-                    logicalState[1] = true; 
-				}
-				// not a comment and not first bracket and first bracket of a pair
-                else if (logicalState[0] !== true && logicalState[1] === true && logicalState[2] !== true) {
-                    logicalState[2] = true;
-				}
-				// not a comment and nested brackets
-				else if (logicalState[0] !== true && logicalState[2] === true) {
-					logicalState[5] = true;
-				}
-                formattedText += textArray[i];
-                continue;
-			}
-			// closing bracket
-			if (textArray[i] === ')') {
-				// not a comment and closing bracket of an already open one
-				if (logicalState[0] !== true && logicalState[2] === true) {
-					formattedText += textArray[i];
-					if (logicalState[5] !== true) {
-						logicalState[2] = false;
-						// no whitespace after closing bracket
-						if (!(tabRegEx.test(textArray[i+1]) || newLineRegEx.test(textArray[i+1]) || textArray[i+1] === ' ')) {
-							if (textArray[i+1] === ';') {
-								formattedText += ' ';
-							}
-							else {
-								formattedText += '\n' + '\n' + '\t';
-							}
-						}
-						if (logicalState[3] === true) {
-							logicalState[3] = false;
-						}
-						continue;						
-					}
-					else {
-						logicalState[5] = false;
-						if (!(tabRegEx.test(textArray[i+1]) || newLineRegEx.test(textArray[i+1]) || textArray[i+1] === ' ')) {
-							formattedText += '\n' + '\t' + '\t' + '\t' + '\t' + '\t';
-						}
-						continue;
-					}
-				}
-				formattedText += textArray[i];
-				continue;
-			}
-			// colon, post-colon whitespace and stateString setting
-			if (textArray[i] === ':') {
-				formattedText += ':';
-				i = skipWhiteSpace(i);
-				if (logicalState[3] !== true) {
-					switch (textArray[i+1]) {
-						case 'r':
-							stateString = "sigreq";
-							logicalState[3] = true;		
-							break;
-						case 't':
-							stateString = "typ";
-							break;
-						case 'p' || 'f':
-							stateString = "prefun";
-							break;
-						case 'd' || 'a':
-							stateString = "act";
-							break;
-						default:
-							stateString = "sigreq";
-							break;
-					}			
-				}
-				continue;
-			}
+    private readonly edits: TextEdit[] = [];
+    private readonly firstOffset: number;
+    private readonly lastOffset: number;
 
-			// white space
-            if (tabRegEx.test(textArray[i]) || newLineRegEx.test(textArray[i]) || textArray[i] === ' ') {
-                switch (stateString) {
-					// begin
-                    case "beg":
-						// comment
-                        if (logicalState[0] === true) {
-							i = handleCommentWhiteSpace(i);
+    constructor(private readonly document: TextDocument, range: Range, private readonly options: FormattingOptions, private token: CancellationToken) {
+        this.firstOffset = document.offsetAt(range.start);
+        this.lastOffset = document.offsetAt(range.end);
+    }
+
+    format(node: parser.PddlSyntaxNode): TextEdit[] {
+        if (node.getStart() > this.lastOffset || this.token.isCancellationRequested) {
+            return this.edits;
+        }
+
+        if (node.getStart() >= this.firstOffset || node.includesIndex(this.firstOffset)) {
+            if (node.getToken().type === parser.PddlTokenType.Whitespace) {
+
+                const nextSibling = node.getFollowingSibling()
+                    ?? node.getParent()?.getFollowingSibling(undefined, node);
+
+                if (node.getParent() && ['(increase', '(decrease', '(assign'].includes(node.getParent()!.getToken().tokenText)) {
+                    if ((node.getParent()?.length ?? 0) > 50) {
+                        this.breakAndIndent(node);
+                    } else {
+                        this.replace(node, ' ');
+                    }
+                } else if (node.getParent() && ['(:types', '(:objects'].includes(node.getParent()!.getToken().tokenText)) {
+                    // todo: format type inheritance
+                } else if (nextSibling === undefined) {
+                    this.replace(node, '');
+                } else if (nextSibling.isType(parser.PddlTokenType.CloseBracket)) {
+                    if (node.getText().includes('\n')) {
+                        this.breakAndIndent(node, -1);
+                    } else {
+                        this.replace(node, '');
+                    }
+                } else if (nextSibling.isType(parser.PddlTokenType.Comment)) {
+                    if (node.getText().includes('\n')) {
+                        this.breakAndIndent(node);
+                    } else {
+                        this.replace(node, ' ');
+                    }
+                } else if (nextSibling.isAnyOf([parser.PddlTokenType.Dash, parser.PddlTokenType.Other, parser.PddlTokenType.Parameter])) {
+                    this.replace(node, ' ');
+                } else if (nextSibling.isAnyOf([parser.PddlTokenType.OpenBracket, parser.PddlTokenType.OpenBracketOperator, parser.PddlTokenType.Keyword])) {
+                    if (nextSibling.isType(parser.PddlTokenType.Keyword)) {
+                        if (node.getParent()
+                            && ['(:requirements'].includes(node.getParent()!.getToken().tokenText)) {
+                            this.replace(node, ' ');
+                        } else {
+                            this.breakAndIndent(node);
                         }
-						break;
-					// signature or requirements
-                    case "sigreq":
-						// comment
-                        if (logicalState[0] === true) {
-							i = handleCommentWhiteSpace(i);
-							break;
+                    } else if (node.getParent()?.isNumericExpression() || node.getParent()?.isLogicalExpression() || node.getParent()?.isTemporalExpression()) {
+                        if (node.getText().includes('\n')) {
+                            this.breakAndIndent(node);
+                        } else {
+                            this.replace(node, ' ');
                         }
-						// before or after bracket pair opened
-						if (logicalState[2] !== false) {
-							i = handleBracketPairWhiteSpace(i);
-						}
-						// after bracket pair closed
-						else {
-							i = handlePostBracketPairWhiteSpace(i);
-						}
-						break;
-					// types
-                    case "typ":
-						// comment
-                        if (logicalState[0] === true) {
-							i = handleCommentWhiteSpace(i);
-							break;
+                    } else if (['(domain', '(problem'].includes(nextSibling.getToken().tokenText)) {
+                        this.replace(node, ' ');
+                    } else {
+                        if (node.getParent()
+                            && [':parameters', ':duration', ':precondition', ':condition', ':effect'].includes(node.getParent()!.getToken().tokenText)) {
+                            this.replace(node, ' ');
+                        } else {
+                            this.breakAndIndent(node);
                         }
-						// before or after bracket pair opened
-						if (logicalState[2] !== false) {
-							if (logicalState[4] !== true || textArray[i-1] === '-') {
-								i = handleBracketPairWhiteSpace(i);								
-							}
-							else {
-								i = skipWhiteSpace(i);
-								logicalState[4] = false;
-								if (textArray[i+1] === ')') {
-									break;
-								}
-								formattedText += '\n' + '\t' + '\t' + '\t';
-							}
-						}
-						// after bracket pair closed
-						else {
-							i = handlePostBracketPairWhiteSpace(i);
-						}
-						break;
-					// predicates or functions
-                    case "prefun":
-						// comment
-                        if (logicalState[0] === true) {
-							i = handleCommentWhiteSpace(i);
-							break;
-                        }
-						// before or after bracket pair opened
-						if (logicalState[2] !== false) {
-							if (logicalState[5] === true) {
-								i = handleBracketPairWhiteSpace(i);
-							}
-							else {
-								i = skipWhiteSpace(i);
-								if (textArray[i+1] = ')') {
-									break;
-								}
-								formattedText += '\n' + '\t' + '\t' + '\t' + '\t' + '\t';
-							}
-						}
-						// after bracket pair closed
-						else {
-							i = handlePostBracketPairWhiteSpace(i);
-						}
-						break;
-					// actions
-                    case "act":
-                        break;
-                    default:
-                        console.log("I'm lost!");
+                    }
                 }
             }
         }
 
-        const invalidRange = new Range(0, 0, document.lineCount /*intentionally missing the '-1' */, 0);
-        const fullRange = document.validateRange(invalidRange);
+        node.getChildren().forEach(child => this.format(child));
         
-		return [TextEdit.replace(fullRange, formattedText)];
-		
-		// function to remove whitespace
-		function skipWhiteSpace(i: number): number {
-			while (tabRegEx.test(textArray[i+1]) || newLineRegEx.test(textArray[i+1]) || textArray[i+1] === ' ') {
-				i++;
-			}
-			return i;
-		}
+        return this.edits;
+    }
+    
+    breakAndIndent(node: parser.PddlSyntaxNode, offset = 0): void {
+        const level = node.getAncestors([parser.PddlTokenType.OpenBracket, parser.PddlTokenType.OpenBracketOperator]).length;
+        this.replace(node, this.ends(node.getText(), 1) + PddlOnTypeFormatter.createIndent('', level + offset, this.options));
+    }
 
-		// function to handle comment whitespace
-		function handleCommentWhiteSpace(i: number): number {
-			// newline exiting comment
-			if (newLineRegEx.test(textArray[i])) {
-				logicalState[0] = false;
-				i = skipWhiteSpace(i);
-				// multiple comments
-				if (textArray[i+1] === ';') {
-					formattedText += '\n';
-				}
-				else {
-					formattedText += '\n' + '\n';
-				}
-				if (stateString !== "beg") {
-					formattedText += '\t';
-				}
-			}
-			// space or tab
-			else {
-				formattedText += textArray[i];
-			}
-			return i;
-		}
+    replace(node: parser.PddlSyntaxNode, newText: string): void {
+        this.edits.push(TextEdit.replace(nodeToRange(this.document, node), newText));
+    }
 
-		// function to handle padding around opening and closing brackets
-		function handleBracketPairWhiteSpace(i: number): number {
-			if (textArray[i-1] === '(') {
-				i = skipWhiteSpace(i);
-				return i;
-			}
-			i = skipWhiteSpace(i);
-			if (textArray[i+1] === ')') {
-				return i;
-			}
-			if (stateString === "prefun") {
-				formattedText += '\t';
-			}
-			else {
-				formattedText += ' ';
-			}
-			return i;
-		}
-
-		// function to handle whitespace and/or comment after bracket pair closed
-		function handlePostBracketPairWhiteSpace(i: number): number {
-			i = skipWhiteSpace(i);
-			// comment after closing bracket
-			if (textArray[i+1] === ';') {
-				formattedText += " ";
-			}
-			else {
-				formattedText += '\n' + '\n' + '\t';
-			}
-			return i;
-		}
-	}
+    /** @returns the endline characters only, but at least the `min` count */
+    ends(text: string, min: number): string {
+        const endls = text.replace(/[^\n\r]/g, '');
+        const endlCount = (endls.match(/\n/g) || []).length;
+        if (endlCount < min) {
+            return endls + '\n'.repeat(min - endlCount);
+        } else {
+            return endls;
+        }
+    }
 }

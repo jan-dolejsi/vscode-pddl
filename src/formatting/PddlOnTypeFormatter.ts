@@ -14,7 +14,7 @@ export class PddlOnTypeFormatter implements OnTypeFormattingEditProvider {
     }
 
     async provideOnTypeFormattingEdits(document: TextDocument, position: Position, ch: string, options: FormattingOptions, token: CancellationToken): Promise<TextEdit[] | undefined> {
-        const fileInfo = this.pddlWorkspace && await this.pddlWorkspace.upsertAndParseFile(document);
+        const fileInfo = await this.pddlWorkspace?.upsertAndParseFile(document);
         if (token.isCancellationRequested) { return undefined; }
         const offset = document.offsetAt(position);
 
@@ -39,16 +39,20 @@ export class PddlOnTypeFormatter implements OnTypeFormattingEditProvider {
 
         const parentIndent = this.getParentStartCharacterIndent(currentNode, document);
         if (parentIndent === null) { return []; }
+
+        const previousIndent = this.getPreviousSiblingStartCharacterIndent(currentNode, document);
         
         const rangeBefore = new Range(position.with({character: 0}), position);
         const rangeAfter = new Range(position, position.with({ character: Number.MAX_VALUE }));
 
         if (ch === '\n' && currentNode.isType(parser.PddlTokenType.Whitespace)) {
-            const insertBeforeText = this.createIndent(parentIndent, +1, options);
-            const insertAfterText = '\n' + this.createIndent(parentIndent, 0, options);
-
-            const trailingText = document.getText(rangeAfter);
-            if (trailingText.trim()) {
+            const insertBeforeText = previousIndent !== null ?
+                PddlOnTypeFormatter.createIndent(previousIndent, 0, options) :
+                PddlOnTypeFormatter.createIndent(parentIndent, +1, options);
+            const insertAfterText = '\n' + PddlOnTypeFormatter.createIndent(previousIndent ?? parentIndent, 0, options);
+            // todo: use createEolString(document)
+            const trailingText = document.getText(rangeAfter).trim();
+            if (trailingText && !trailingText.match(/\w/)) {
                 const edits = [
                     TextEdit.replace(rangeBefore, insertBeforeText+insertAfterText),
                 ];
@@ -65,7 +69,7 @@ export class PddlOnTypeFormatter implements OnTypeFormattingEditProvider {
         else if (ch === '(-disabled') { // disabled, because it cancels out the auto-completion pop-up
             const leadingText = document.getText(rangeBefore);
             if (leadingText.trim() === '(') {
-                const insertBeforeText = this.createIndent(parentIndent, +1, options) + '(';
+                const insertBeforeText = PddlOnTypeFormatter.createIndent(parentIndent, +1, options) + '(';
                 return [
                     TextEdit.replace(rangeBefore, insertBeforeText)
                 ];
@@ -101,7 +105,22 @@ export class PddlOnTypeFormatter implements OnTypeFormattingEditProvider {
         }
     }
 
-    createIndent(parentIndentText: string, levelIncrement: number, options: FormattingOptions): string {
+    getPreviousSiblingStartCharacterIndent(currentNode: parser.PddlSyntaxNode, document: TextDocument): string | null {
+        const allPreviousSiblings = currentNode.getPrecedingSiblings(parser.PddlTokenType.OpenBracket)
+            .concat(currentNode.getPrecedingSiblings(parser.PddlTokenType.OpenBracketOperator))
+            .sort((n1, n2) => n1.getStart() - n2.getStart());
+        if (allPreviousSiblings.length === 0) {
+            return null;
+        }
+        const previous = allPreviousSiblings[allPreviousSiblings.length - 1];
+        if (previous.isDocument()) { return null; }
+
+        const lineOfPrevious = document.lineAt(document.positionAt(previous.getStart()).line);
+        const firstNonWhitespaceCharacter = lineOfPrevious.firstNonWhitespaceCharacterIndex;
+        return lineOfPrevious.text.substr(0, firstNonWhitespaceCharacter);
+    }
+
+    static createIndent(parentIndentText: string, levelIncrement: number, options: FormattingOptions): string {
         const singleIndent = options.insertSpaces ? " ".repeat(options.tabSize) : "\t";
         return parentIndentText +
             singleIndent.repeat(levelIncrement);

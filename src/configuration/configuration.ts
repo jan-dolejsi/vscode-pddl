@@ -40,6 +40,7 @@ export const PLANNER_VAL_STEP_PATH = CONF_PDDL + "." + VAL_STEP_PATH;
 export const PLANNER_VALUE_SEQ_PATH = CONF_PDDL + "." + VALUE_SEQ_PATH;
 export const PDDL_CONFIGURE_COMMAND = CONF_PDDL + "." + "configure";
 export const DEFAULT_EPSILON = 1e-3;
+const EDITOR_FORMAT_ON_TYPE = "editor.formatOnType";
 
 export class PddlConfiguration {
 
@@ -67,6 +68,18 @@ export class PddlConfiguration {
 
     getEpsilonTimeStep(): number {
         return workspace.getConfiguration().get(PLANNER_EPSILON_TIMESTEP, DEFAULT_EPSILON);
+    }
+
+    getEditorFormatOnType(): boolean {
+        return workspace.getConfiguration('', { languageId: CONF_PDDL }).get<boolean>(EDITOR_FORMAT_ON_TYPE, false);
+    }
+
+    setEditorFormatOnType(newValue: boolean, options: { forPddlOnly: boolean }): void {
+        if (options.forPddlOnly) {
+            workspace.getConfiguration(undefined, { languageId: CONF_PDDL }).update(EDITOR_FORMAT_ON_TYPE, newValue, true, true);
+        } else {
+            workspace.getConfiguration().update(EDITOR_FORMAT_ON_TYPE, newValue, true);
+        }
     }
 
     getParserPath(workspaceFolder?: WorkspaceFolder): string | undefined {
