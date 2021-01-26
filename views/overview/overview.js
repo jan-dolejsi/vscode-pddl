@@ -14,7 +14,7 @@ window.addEventListener('message', event => {
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 function initialize() {
     if (!vscode) {
-        populateWithTestData();
+        setTimeout(()=> populateWithTestData(), 2000);
     }
     else {
         clearData();
