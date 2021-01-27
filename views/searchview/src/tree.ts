@@ -407,10 +407,10 @@ function createActionTooltip(fullActionName: string): string {
     let tooltip = fullActionName.replace(/\[\d+\]/, "").replace(/[├┤]$/, " $&").split(' ')
         .filter(fragment => fragment !== ' ')
         .map(fragment => fragment in snapActionLegend ? snapActionLegend.get(fragment) : fragment)
-        .join('<br/>');
+        .join('\n');
 
     if (counter > 0) {
-        tooltip += '<br/>Shot counter: ' + counter;
+        tooltip += '\nShot counter: ' + counter;
     }
 
     return tooltip;
@@ -506,7 +506,6 @@ function toNodeTitle(newState: State): string {
         title += '\nHelpful actions: ' + newState.helpfulActions.length;
     }
 
-    title = title.split('\n').join('<br/>');
     return title;
 }
 

@@ -19,5 +19,5 @@ module.exports = {
     "no-throw-literal": "warn",
     "semi": "off"
   },
-  ignorePatterns: ["out/"]
+  ignorePatterns: ["out/", "*.js"]
 };

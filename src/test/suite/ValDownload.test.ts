@@ -30,7 +30,7 @@ class TestableValDownloader extends ValDownloader {
     }
     
     protected getLatestStableValBuildId(): number {
-        return 37;
+        return 58;
     }
 
     protected async shouldOverwrite(toolName: string, yourConfiguredPath: string, newToolPath: string): Promise<boolean> {
@@ -155,7 +155,7 @@ suite('VAL Download and Configuration', () => {
             const allStoredFiles = await utils.afs.getFiles(extensionContext.globalStoragePath);
             console.log(`All files in the mocked global storage: \n` + allStoredFiles.join('\n'));
         }
-    }).timeout(5000);
+    }).timeout(10000);
 
     after(async () => {
         // restore setting
