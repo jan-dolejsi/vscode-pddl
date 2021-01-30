@@ -67,8 +67,6 @@ table.alertList {
     border-bottom-color: lightgray;
 
     color: black;
-
-    list-style: none;
 }
 tr.alert > td:nth-child(1) {
     padding-right: 10px;
@@ -82,6 +80,40 @@ snap.code {
     font-family: monospace;
 }
 
+table.hintList {
+    background: rgba(125, 125, 125, .3);
+    width: 105%;
+    padding: 5px 25px 5px 25px;
+    margin-top: -3px;
+    margin: 3px -19px;
+    border-top-style: dashed;
+    border-top-width: 2px;
+    border-top-color: lightgray;
+
+    border-bottom-style: dashed;
+    border-bottom-width: 2px;
+    border-bottom-color: lightgray;
+}
+
+tr.hint > td:nth-child(1) {
+    padding-right: 10px;
+    /* text-indent: 0em; */
+    margin: 5px;
+    vertical-align: text-top;
+}
+
+tr.hint > td:nth-child(2) {
+    width: 100%;
+}
+
+span.keyboard {
+    border-radius: 3px;
+    border-width: 1px;
+    border-style: solid;
+    border-color: rgb(125, 125, 125, .5);
+    padding: 0 3px 0 3px;
+    background-color: rgb(125, 125, 125, .2);
+}
 
 /* Rotating the 'loading' Codicon to indicate _progress_. 
 Same implementation as what VS Code is using in the user interface.

@@ -18,10 +18,6 @@ import { ValDownloadReminder } from '../validation/ValDownloadReminder';
 import { ExtensionInfo } from '../configuration/ExtensionInfo';
 import { PlannersConfiguration } from '../configuration/PlannersConfiguration';
 
-const LATER = 'LATER';
-const NEVER = 'NEVER';
-const ACCEPTED = 'ACCEPTED';
-
 export class StartUp {
 
     overviewPage: OverviewPage;
@@ -40,7 +36,6 @@ export class StartUp {
     }
 
     WHATS_NEW_SHOWN_FOR_VERSION = 'whatsNewShownForVersion';
-    ACCEPTED_TO_WRITE_A_REVIEW = 'acceptedToWriteAReview';
     NEVER_AUTO_SAVE = 'neverAutoSave';
 
     suggestFolderIsOpen(): void {
@@ -112,36 +107,6 @@ export class StartUp {
         }
 
         return true;
-    }
-
-    async askForReview(): Promise<void> {
-        // what was the user response last time?
-        const accepted = this.context.globalState.get(this.ACCEPTED_TO_WRITE_A_REVIEW, LATER);
-
-        if (accepted === LATER) {
-            const optionAccepted: MessageItem = { title: "OK, let's give feedback" };
-            const optionLater: MessageItem = { title: "Remind me later" };
-            const optionNever: MessageItem = { title: "Never" };
-            const options: MessageItem[] = [optionAccepted, optionLater, optionNever];
-
-            const choice = await window.showInformationMessage('Are you finding the PDDL Extension useful? Do you want to boost our motivation? Please give us (5) stars or even write a review...', ...options);
-
-            switch (choice) {
-                case optionAccepted:
-                    const reviewPage = 'https://marketplace.visualstudio.com/items?itemName=jan-dolejsi.pddl#review-details';
-                    commands.executeCommand('vscode.open', Uri.parse(reviewPage));
-                    this.context.globalState.update(this.ACCEPTED_TO_WRITE_A_REVIEW, ACCEPTED);
-                    break;
-                case optionNever:
-                    this.context.globalState.update(this.ACCEPTED_TO_WRITE_A_REVIEW, NEVER);
-                    break;
-                case optionLater:
-                default:
-                    this.context.globalState.update(this.ACCEPTED_TO_WRITE_A_REVIEW, LATER);
-                    break;
-            }
-
-        }
     }
 
     showOverviewPage(): void {

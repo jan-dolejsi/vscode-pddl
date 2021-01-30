@@ -22,6 +22,10 @@ import { exists } from '../util/workspaceFs';
 export const SHOULD_SHOW_OVERVIEW_PAGE = 'shouldShowOverviewPage';
 export const LAST_SHOWN_OVERVIEW_PAGE = 'lastShownOverviewPage';
 
+const LATER = 'LATER';
+const NEVER = 'NEVER';
+const ACCEPTED = 'ACCEPTED';
+
 export class OverviewPage {
 
     private webViewPanel?: WebviewPanel;
@@ -29,6 +33,9 @@ export class OverviewPage {
     private workspaceFolder: WorkspaceFolder | undefined;
 
     private readonly ICONS_EXTENSION_NAME = "vscode-icons-team.vscode-icons";
+
+    NEXT_TIP_TO_SHOW = 'nextTipToShow';
+    ACCEPTED_TO_WRITE_A_REVIEW = 'acceptedToWriteAReview';
 
     constructor(private context: ExtensionContext, private pddlConfiguration: PddlConfiguration, private plannersConfiguration: PlannersConfiguration, private val: ValDownloader) {
         instrumentOperationAsVsCodeCommand("pddl.showOverview", () => this.showWelcomePage(true));
@@ -99,6 +106,7 @@ export class OverviewPage {
         switch (message.command) {
             case 'onload':
                 this.scheduleUpdatePageConfiguration();
+                this.showNextHint();
                 break;
             case 'shouldShowOverview':
                 this.context.globalState.update(SHOULD_SHOW_OVERVIEW_PAGE, message.value);
@@ -150,6 +158,24 @@ export class OverviewPage {
             case 'enableFormatOnType':
                 this.pddlConfiguration.setEditorFormatOnType(true, { forPddlOnly: message.forPddlOnly as boolean});
                 break;
+            case 'hintOk':
+                this.hintAcknowledged();
+                break;
+            case 'hintLater':
+                this.hintHide();
+                break;
+            case 'hintNext':
+                this.hintShowNext();
+                break;
+            case 'feedbackAccepted':
+                this.feedbackAccepted();
+                break;
+            case 'feedbackLater':
+                this.feedbackAskLater();
+                break;
+            case 'feedbackNever':
+                this.feedbackAskNever();
+                break;
             default:
                 if (message.command?.startsWith('command:')) {
                     const command = message.command as string;
@@ -163,6 +189,88 @@ export class OverviewPage {
     readonly VIEWS = "views";
     readonly CONTENT_FOLDER = path.join(this.VIEWS, "overview");
     readonly COMMON_FOLDER = path.join(this.VIEWS, "common");
+
+    private tipDisplayed = 0;
+
+    async showNextHint(): Promise<void> {
+        const tipsUri = Uri.joinPath(this.context.extensionUri, 'tips.html');
+        const tips: string[] = (await workspace.fs.readFile(tipsUri)).toString().split("\n");
+
+        let nextTipToShow = this.context.globalState.get(this.NEXT_TIP_TO_SHOW, 0);
+
+        for (let index = nextTipToShow; index < tips.length; index++) {
+            const tip = tips[index];
+
+            // skip tips that were removed subsequently as obsolete
+            if (tip.trim() === "") {
+                nextTipToShow++;
+                continue;
+            }
+
+            this.tipDisplayed = nextTipToShow;
+            this.showTip(tip);
+            return;
+        }
+
+        if (nextTipToShow === tips.length) {
+            this.showTip(undefined);
+            this.askForReview();
+        }
+
+        this.context.globalState.update(this.NEXT_TIP_TO_SHOW, nextTipToShow);
+    }
+
+    showTip(tip: string | undefined): void {
+        this.webViewPanel?.webview.postMessage({
+            command: 'showHint',
+            hint: tip
+        });
+    }
+
+    hintShowNext(): void {
+        this.context.globalState.update(this.NEXT_TIP_TO_SHOW, this.tipDisplayed+1);
+        this.showNextHint();
+    }
+
+    hintHide(): void {
+        this.showTip(undefined);
+    }
+
+    hintAcknowledged(): void {
+        this.context.globalState.update(this.NEXT_TIP_TO_SHOW, this.tipDisplayed + 1);
+        this.showTip(undefined);
+    }
+
+    async askForReview(): Promise<void> {
+        // what was the user response last time?
+        const accepted = this.context.globalState.get(this.ACCEPTED_TO_WRITE_A_REVIEW, LATER);
+
+        if (accepted === LATER) {
+            this.showFeedbackRequest(true);
+        }
+    }
+
+    feedbackAccepted(): void {
+        const reviewPage = 'https://marketplace.visualstudio.com/items?itemName=jan-dolejsi.pddl#review-details';
+        commands.executeCommand('vscode.open', Uri.parse(reviewPage));
+        this.context.globalState.update(this.ACCEPTED_TO_WRITE_A_REVIEW, ACCEPTED);
+        this.showFeedbackRequest(false);
+    }
+    feedbackAskNever(): void {
+        this.context.globalState.update(this.ACCEPTED_TO_WRITE_A_REVIEW, NEVER);
+        this.showFeedbackRequest(false);
+    }
+    feedbackAskLater(): void {
+        this.context.globalState.update(this.ACCEPTED_TO_WRITE_A_REVIEW, LATER);
+        this.showFeedbackRequest(false);
+    }
+
+    showFeedbackRequest(shouldShow: boolean): void {
+        this.webViewPanel?.webview.postMessage({
+            command: 'showFeedbackRequest',
+            visible: shouldShow
+        });
+    }
 
     async helloWorld(): Promise<void> {
         const sampleDocuments = await this.createSample('helloWorld', 'Hello World!');

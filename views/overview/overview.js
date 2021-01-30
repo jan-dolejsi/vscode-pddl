@@ -6,6 +6,12 @@ window.addEventListener('message', event => {
         case 'updateConfiguration':
             updateConfiguration(message);
             break;
+        case 'showHint':
+            showHint(message.hint);
+            break;
+        case 'showFeedbackRequest':
+            showFeedbackRequest(message.visible);
+            break;
         default:
             console.log("Unexpected message: " + message.command);
     }
@@ -32,6 +38,14 @@ function initialize() {
     document.getElementById('addPlanner').onclick = () => postCommand('command:pddl.addPlanner');
     document.getElementById('configureParser').onclick = () => postCommand('command:pddl.configureParser');
     document.getElementById('configureValidate').onclick = () => postCommand('command:pddl.configureValidate');
+    
+    document.getElementById('hintOk').onclick = () => postCommand('hintOk');
+    document.getElementById('hintLater').onclick = () => postCommand('hintLater');
+    document.getElementById('hintNext').onclick = () => postCommand('hintNext');
+
+    document.getElementById('feedbackAccepted').onclick = () => postCommand('feedbackAccepted');
+    document.getElementById('feedbackLater').onclick = () => postCommand('feedbackLater');
+    document.getElementById('feedbackNever').onclick = () => postCommand('feedbackNever');
     
     onLoad();
 }
@@ -79,7 +93,7 @@ function updateConfiguration(message) {
         setStyleDisplay('downloadValAlert', message.downloadValAlert, "table-row");
         setStyleDisplay('updateValAlert', message.updateValAlert, "table-row");
         setStyleDisplay('enableFormatterAlert', message.showEnableFormatterAlert, "table-row");
-        setStyleDisplay('alertList', hasAnyChildrenToDisplay(), "block");
+        setStyleDisplay('alertList', hasAnyChildrenToDisplay('table.alertList > tbody > tr.alert'), "block");
         updatePlannerOutputTarget(message.plannerOutputTarget);
         updateShowOverviewChanged(message.shouldShow);
     } finally {
@@ -318,14 +332,26 @@ function setStyleDisplay(elementId, shouldDisplay, displayStyle) {
 /**
  * Returns true if at least one element has not-"none" display style
  */
-function hasAnyChildrenToDisplay() {
-    const alerts = document.querySelectorAll('table.alertList > tbody > tr.alert');
+function hasAnyChildrenToDisplay(filter) {
+    const alerts = document.querySelectorAll(filter);
     for (const tr of alerts) {
-        if (tr.style.display !== "none"){
+        if (tr.style.display !== "none" || tr.style.visibility === "visible"){
             return true;
         }
     }
     return false;
+}
+
+function showFeedbackRequest(shouldShow) {
+    setStyleDisplay('feedback', shouldShow, "table-row");
+    setStyleDisplay('hintList', hasAnyChildrenToDisplay('table.hintList > tbody > tr.hint'), "block");
+}
+
+function showHint(hintText) {
+    document.getElementById('hintText').innerHTML = hintText;
+    setStyleDisplay('hint', hintText !== undefined, "table-row");
+
+    setStyleDisplay('hintList', hasAnyChildrenToDisplay('table.hintList > tbody > tr.hint'), "block");
 }
 
 /**
@@ -470,6 +496,8 @@ function populateWithTestData() {
         updateValAlert: true,
         showEnableFormatterAlert: true
     });
+    showHint('Did you know that <span class="keyboard">Ctrl</span> + <span class="keyboard">/</span> comments out the current line? Press it again to un-comment it.');
+    showFeedbackRequest(true);
 }
 
 function clearData() {
@@ -485,4 +513,6 @@ function clearData() {
         updateValAlert: false,
         enableFormatterAlert: false
     });
+    showHint(undefined);
+    showFeedbackRequest(false);
 }
