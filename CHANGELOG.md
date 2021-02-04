@@ -1,5 +1,13 @@
 # PDDL support - What's new?
 
+## 2.21.2
+
+VAL binaries build 60 fixes parsing issues related to combination of predicate and object names `at`, `after`, `start` or `end` or `after`.
+It also supports additional white space characters e.g. nbsp.
+
+Overview page resurrects the usage _tips_, but in a far less intrusive way then when it was popping up notifications.\
+Overview page also gives visual feedback, when the user clicks the VAL download button.
+
 ## 2.21.1
 
 Fixed the configuration target for the planner output target. If the workspace configuration is set, it is overwritten. Otherwise, the global configuration is updated.

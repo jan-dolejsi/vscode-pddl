@@ -28,6 +28,7 @@ export async function createTestPddlExtensionContext(): Promise<PddlExtensionCon
         asAbsolutePath: function (_path: string): string { throw new Error('asAbsolutePath not supported in test extension context'); },
         extensionPath: '.',
         storagePath: storage.path,
+        storageUri: Uri.file(storage.path),
         subscriptions: new Array<Disposable>(),
         pythonPath: function (): string {
             return workspace.getConfiguration().get("python.pythonPath", "python");

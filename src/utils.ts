@@ -17,7 +17,8 @@ export function createPddlExtensionContext(context: ExtensionContext): PddlExten
     return {
         asAbsolutePath: context.asAbsolutePath,
         extensionPath: context.extensionPath,
-        storagePath: context.storagePath, // todo: replace with storageUri
+        storagePath: context.storagePath,
+        storageUri: context.storageUri,
         subscriptions: context.subscriptions,
         pythonPath: function (): string { return workspace.getConfiguration().get("python.pythonPath", "python"); }
     };

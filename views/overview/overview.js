@@ -437,8 +437,14 @@ function enableIcons() {
     postCommand('enableIcons');
 }
 
+/**
+ * Initializes the VAL download without requesting a second approval.
+ * @param {HTMLButtonElement} originButton 
+ */
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-function downloadValInformed() {
+function downloadValInformed(originButton) {
+    originButton.disabled = true;
+    originButton.textContent = 'Downloading...'
     postMessage({
         command: 'downloadVal',
         informedDecision: true
