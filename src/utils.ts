@@ -7,8 +7,8 @@
 import * as path from 'path';
 import * as fs from 'fs';
 import { Node } from 'jsonc-parser';
-import { ExtensionContext, Uri, workspace, window, Range, TextDocument, Webview, Position } from 'vscode';
-import { utils } from 'pddl-workspace';
+import { ExtensionContext, Uri, workspace, window, Range, TextDocument, Webview, Position, FileSystem } from 'vscode';
+import { FileType, PddlFileSystem, utils } from 'pddl-workspace';
 import { PddlExtensionContext } from 'pddl-workspace';
 import { PddlRange, PddlPosition, parser } from 'pddl-workspace';
 import { URI } from 'vscode-uri';
@@ -21,6 +21,13 @@ export function createPddlExtensionContext(context: ExtensionContext): PddlExten
         storageUri: context.storageUri,
         subscriptions: context.subscriptions,
         pythonPath: function (): string { return workspace.getConfiguration().get("python.pythonPath", "python"); }
+    };
+}
+
+export function toPddlFileSystem(fileSystem: FileSystem): PddlFileSystem {
+    return {
+        readDirectory: async (uri: URI): Promise<[string, FileType][]> => await fileSystem.readDirectory(uri),
+        readFile: async (uri: URI) => await fileSystem.readFile(uri)
     };
 }
 
