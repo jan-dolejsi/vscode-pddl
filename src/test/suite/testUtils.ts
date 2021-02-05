@@ -3,7 +3,7 @@ import * as path from 'path';
 import * as os from 'os';
 import * as tmp from 'tmp-promise';
 import { PddlExtensionContext, planner } from 'pddl-workspace';
-import { Disposable, workspace, ExtensionContext, Memento, extensions, Event, FileType, Uri, ConfigurationTarget, EnvironmentVariableCollection, EnvironmentVariableMutator, ExtensionMode } from 'vscode';
+import { Disposable, workspace, ExtensionContext, Memento, extensions, Event, FileType, Uri, ConfigurationTarget, EnvironmentVariableCollection, EnvironmentVariableMutator, ExtensionMode, SecretStorage, SecretStorageChangeEvent } from 'vscode';
 import { assertDefined } from '../../utils';
 import { CONF_PDDL } from '../../configuration/configuration';
 import { CONF_PLANNERS, CONF_SELECTED_PLANNER } from '../../configuration/PlannersConfiguration';
@@ -52,6 +52,27 @@ class MockMemento implements Memento {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     setKeysForSync(keys: string[]): void {
         console.warn(`Key syncing not supported in mock. ${keys}`);
+    }
+}
+
+class MockSecretStorage implements SecretStorage {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    async get(_key: string): Promise<string | undefined> {
+        return undefined;
+    }
+
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    async store(_key: string, _value: string): Promise<void> {
+        return void(0);
+    }
+
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    async delete(_key: string): Promise<void>{
+        return void (0);
+    }
+
+    get onDidChange(): Event<SecretStorageChangeEvent> {
+        throw new Error('Unsupported.');
     }
 }
 
@@ -110,6 +131,7 @@ export async function createTestExtensionContext(): Promise<ExtensionContext> {
         environmentVariableCollection: new MockEnvironmentVariableCollection(),
         extensionMode: ExtensionMode.Development,
         extensionUri: Uri.file(process.cwd()),
+        secrets: new MockSecretStorage(),
     };
 }
 
