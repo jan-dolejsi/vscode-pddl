@@ -39,6 +39,17 @@ const PDDL_CONVERT_PLAN_TO_HAPPENINGS = 'pddl.convertPlanToHappenings';
 const PDDL_CONVERT_HAPPENINGS_TO_PLAN = 'pddl.convertHappeningsToPlan';
 export const PDDL_PLAN_AND_DISPLAY = 'pddl.planAndDisplayResult';
 
+/** Structure that VS Code passes, when user right-clicks on editor tab. */
+interface EditorId {
+    groupId: number;
+    editorIndex: number;
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function instanceOfEditorId(obj: any): obj is EditorId {
+    return 'groupId' in obj;
+}
+
 /**
  * Delegate for handling requests to run the planner and visualize the plans.
  */
@@ -61,8 +72,10 @@ export class Planning implements planner.PlannerResponseHandler {
         context.subscriptions.push(this.planView = new PlanView(context, codePddlWorkspace));
 
         context.subscriptions.push(instrumentOperationAsVsCodeCommand(PDDL_PLAN_AND_DISPLAY,
-            async (domainUri: Uri, problemUri: Uri, workingFolder: string, options?: string) => {
-                if (problemUri) {
+            async (domainUri: Uri, problemUri: Uri | EditorId | undefined, workingFolder: string, options?: string) => {
+                if (instanceOfEditorId(problemUri)) {
+                    await this.planFromDocument(await workspace.openTextDocument(domainUri));
+                } else if (problemUri) {
                     await this.planByUri(domainUri, problemUri, workingFolder, options).catch(showError);
                 } else {
                     await this.plan().catch(showError);
@@ -159,15 +172,19 @@ export class Planning implements planner.PlannerResponseHandler {
             return;
         }
 
-        this.output.clear();
-
         const activeDocument = window.activeTextEditor.document;
+        return this.planFromDocument(activeDocument);
+    }
+
+    async planFromDocument(activeDocument: TextDocument): Promise<void> {
         if (!activeDocument) { return; }
         const activeFileInfo = await this.codePddlWorkspace.upsertAndParseFile(activeDocument);
         if (activeFileInfo === undefined) { throw new Error('Selected file is not a PDDL document.'); }
 
         let problemFileInfo: ProblemInfo;
         let domainFileInfo: DomainInfo;
+
+        this.output.clear();
 
         if (activeFileInfo.isProblem()) {
             problemFileInfo = activeFileInfo as ProblemInfo;
@@ -178,7 +195,7 @@ export class Planning implements planner.PlannerResponseHandler {
             if (domainFiles.length === 1) {
                 domainFileInfo = domainFiles[0];
             } else if (domainFiles.length !== 1) {
-                const workspaceFolder = workspace.getWorkspaceFolder(window.activeTextEditor.document.uri);
+                const workspaceFolder = workspace.getWorkspaceFolder(activeDocument.uri);
                 const domainFileUri = await selectFile({
                     language: PddlLanguage.PDDL,
                     promptMessage: 'Select the matching domain file...',

@@ -1,5 +1,13 @@
 # PDDL support - What's new?
 
+## 2.21.3
+
+### Fixes
+
+The planner service _with configuration_ invocation now shows the file open dialog with correct json file filtering.
+
+Planner invocation through editor tab right click was silently failing to find the correct domain/problem documents.
+
 ## 2.21.2
 
 VAL binaries build 60 fixes parsing issues related to combination of predicate and object names `at`, `after`, `start` or `end` or `after`.
