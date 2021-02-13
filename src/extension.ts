@@ -29,7 +29,7 @@ import { SearchDebugger } from './searchDebugger/SearchDebugger';
 import { PlanningDomainsSessions } from './session/PlanningDomainsSessions';
 import { PddlFormatProvider } from './formatting/PddlFormatProvider';
 import { ValDownloader } from './validation/ValDownloader';
-import { createPddlExtensionContext, showError } from './utils';
+import { createPddlExtensionContext, showError, toPddlFileSystem } from './utils';
 import { AssociationProvider } from './workspace/AssociationProvider';
 import { SuggestionProvider } from './symbols/SuggestionProvider';
 import { CodePddlWorkspace } from './workspace/CodePddlWorkspace';
@@ -91,6 +91,7 @@ async function activateWithTelemetry(_operationId: string, context: ExtensionCon
 
 	const pddlContext = createPddlExtensionContext(context);
 
+	toPddlFileSystem(workspace.fs); // todo: pass it to the following constructor
 	const pddlWorkspace = new PddlWorkspace(pddlConfiguration.getEpsilonTimeStep(), pddlContext);
 	plannersConfiguration = new PlannersConfiguration(context, pddlWorkspace);
 
