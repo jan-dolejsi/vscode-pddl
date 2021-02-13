@@ -91,7 +91,8 @@ async function activateWithTelemetry(_operationId: string, context: ExtensionCon
 
 	const pddlContext = createPddlExtensionContext(context);
 
-	const pddlWorkspace = new PddlWorkspace(pddlConfiguration.getEpsilonTimeStep(), pddlContext, toPddlFileSystem(workspace.fs));
+	toPddlFileSystem(workspace.fs); // todo: pass it to the following constructor
+	const pddlWorkspace = new PddlWorkspace(pddlConfiguration.getEpsilonTimeStep(), pddlContext);
 	plannersConfiguration = new PlannersConfiguration(context, pddlWorkspace);
 
 	// run start-up actions
