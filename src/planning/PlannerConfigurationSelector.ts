@@ -34,8 +34,7 @@ export class PlannerConfigurationSelector {
     async selectConfigurationFile(): Promise<Uri | null> {
         const selectedUris = await window.showOpenDialog({
             canSelectMany: false, filters: {
-                'Planner Configuration JSON': ['plannerConfiguration.json'],
-                'JSON': ['json']
+                'Planner Configuration JSON': ['json']
             },
             defaultUri: this.problemPath
         });
