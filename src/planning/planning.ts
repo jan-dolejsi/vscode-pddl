@@ -73,8 +73,8 @@ export class Planning implements planner.PlannerResponseHandler {
 
         context.subscriptions.push(instrumentOperationAsVsCodeCommand(PDDL_PLAN_AND_DISPLAY,
             async (domainUri: Uri, problemUri: Uri | EditorId | undefined, workingFolder: string, options?: string) => {
-                if (instanceOfEditorId(problemUri)) {
-                    await this.planFromDocument(await workspace.openTextDocument(domainUri));
+                if (problemUri && instanceOfEditorId(problemUri)) {
+                    await this.planFromDocument(await workspace.openTextDocument(domainUri)).catch(showError);
                 } else if (problemUri) {
                     await this.planByUri(domainUri, problemUri, workingFolder, options).catch(showError);
                 } else {
