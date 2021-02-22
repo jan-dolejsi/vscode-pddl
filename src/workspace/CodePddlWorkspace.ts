@@ -138,11 +138,6 @@ function subscribeToWorkspace(pddlWorkspace: CodePddlWorkspace, context: Extensi
         }
     }));
 
-    // subscribe to document closing event
-    context.subscriptions.push(workspace.onDidCloseTextDocument(async (textDoc) => {
-        if (isAnyPddl(textDoc) && CodePddlWorkspace.isRealDocument(textDoc)) { await pddlWorkspace.removeFile(textDoc); }
-    }));
-
     // subscribe to document deletion event
     context.subscriptions.push(workspace.onDidDeleteFiles(deletionEvent => {
         const deletionSuccesses = deletionEvent.files

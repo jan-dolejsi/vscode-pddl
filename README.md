@@ -28,7 +28,7 @@ Simplest way to get started is to:
 1. open the _domain.pddl_ file and type ```domain```. The auto-completion suggests to insert the entire structure of the domain file. Use the <kbd>Tab</kbd> and <kbd>Enter</kbd> keys to skip through the placeholders and make your selections.
 1. open the _problem.pddl_ file and type ```problem```. The auto-completion suggests to insert the entire structure of the problem file. Make sure that the `(domain name)` here matches the name selected in the domain file.
 1. When prompted to install the VAL (i.e. Validator) tools, follow the instructions. This will bring a PDDL parser and plan validation utilities to your experience.
-1. When you are ready to run the planner on your domain and problem files (both must be open in the editor), invoke the planner via context menu on one of the file text content, or via the <kbd>Alt</kbd> + <kbd>P</kbd> shortcut. The [planning.domains](http://solver.planning.domains/) solver will be used, so do not send any confidential PDDL code.
+1. When you are ready to run the planner on your domain and problem files, invoke the planner via context menu on one of the file text content or editor tab, or via the <kbd>Alt</kbd> + <kbd>P</kbd> shortcut. The [planning.domains](http://solver.planning.domains/) solver will be used, so do not send any confidential PDDL code.
 1. Configure your own PDDL planner by following [instructions](https://github.com/jan-dolejsi/vscode-pddl/wiki/Configuring-the-PDDL-planner).
 
 ![PDDL Planner Configuration](https://raw.githubusercontent.com/wiki/jan-dolejsi/vscode-pddl/img/PDDL_planner_configuration.gif)
@@ -143,13 +143,12 @@ There are multiple scenarios supported:
 * if command is invoked on the domain file,
   * and if single corresponding problem file is open, the planner will run without asking further questions
   * and if multiple corresponding problem files are open, the list of applicable problem files will appear and the user will select one.
-* if command is invoked on a problem file, the domain file (if open in the editor) will be selected automatically.
+* if command is invoked on a problem file, the domain file (if located in the same folder) will be selected automatically.
 
 Domain, problem and plan/happenings files correspond to each other, if:
 
 * they have the same domain name i.e. `(domain name)` and
-* they are located in the same folder and
-* both files are open in the editor.
+* they are located in the same folder.
 
 ![planner](https://raw.githubusercontent.com/wiki/jan-dolejsi/vscode-pddl/img/PDDL_plan.gif)
 
@@ -457,7 +456,7 @@ A .plan file can be generated using an option in the Plan Visualization menu (&#
 
 All .plan files have a context menu option _PDDL: Validate plan_, which requires the `Validate` executable path to be configured in the _pddl.validatorPath_ setting. See [VAL](https://github.com/KCL-Planning/VAL) for more details.
 
-Sometimes it is more convenient to create a desired plan by hand and using the `Validate` tool to find out what is wrong in the domain model. While manually modifying the .plan file, all parsing and validation problems are displayed in the Problems panel of VS Code as long as a corresponding problem and domain files (located in the same folder) are open in the editor and the `Validate` executable location is configured via the _pddl.validatorPath_ setting.
+Sometimes it is more convenient to create a desired plan by hand and using the `Validate` tool to find out what is wrong in the domain model. While manually modifying the .plan file, all parsing and validation problems are displayed in the Problems panel of VS Code as long as a corresponding problem and domain files are located in the same folder and the `Validate` executable location is configured via the _pddl.validatorPath_ setting.
 
 ![Plan validation](https://raw.githubusercontent.com/wiki/jan-dolejsi/vscode-pddl/img/PDDL_plan_validation.gif)
 
