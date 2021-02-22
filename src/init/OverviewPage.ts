@@ -58,8 +58,8 @@ export class OverviewPage {
 
     beenAWhile(): boolean {
         const lastTimeShown = this.context.globalState.get<string>(LAST_SHOWN_OVERVIEW_PAGE, new Date(2000, 0, 1).toString());
-        const minutesSinceLastShow = (Date.now() - Date.parse(lastTimeShown)) / 1000 / 60;
-        return minutesSinceLastShow > 60;
+        const hoursSinceLastShow = (Date.now() - Date.parse(lastTimeShown)) / 1000 / 60 / 60;
+        return hoursSinceLastShow > 24;
     }
 
     async createWelcomePage(showOnTop: boolean): Promise<void> {
