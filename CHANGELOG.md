@@ -1,5 +1,18 @@
 # PDDL support - What's new?
 
+## 2.21.4
+
+### New Features
+
+All _.pddl_ files in the folder are parsed, as soon as one file is open.
+This should make invoking the planner much smoother as the corresponding
+domain/problem is already parsed, even if it not open in the editor.
+
+### Fixes
+
+Hot-fixing the planner invocation by Alt+P and editor right-click.
+Overview page view shows up once a day at most.
+
 ## 2.21.3
 
 ### Fixes
