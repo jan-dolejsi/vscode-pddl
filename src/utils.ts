@@ -288,9 +288,9 @@ export class UriMap<T> extends utils.StringifyingMap<Uri, T> {
     }
 }
 
-export async function fileExists(manifestUri: Uri): Promise<boolean> {
+export async function fileExists(fileOrFolderUri: Uri): Promise<boolean> {
     try {
-        await workspace.fs.stat(manifestUri);
+        await workspace.fs.stat(fileOrFolderUri);
         return true;
     } catch (err) {
         return false;

@@ -42,10 +42,14 @@ export class Diagnostics extends Disposable {
     constructor(private readonly codePddlWorkspace: CodePddlWorkspace, private readonly diagnosticCollection: DiagnosticCollection, 
         private readonly pddlConfiguration: PddlConfiguration,
         private readonly planValidator: PlanValidator, private readonly happeningsValidator: HappeningsValidator) {
-        super(() => this.codePddlWorkspace.pddlWorkspace.removeAllListeners()); //todo: this is probably too harsh
+        super(() => { console.log('Diagnostics disposed'); });//this.codePddlWorkspace.pddlWorkspace.removeAllListeners()); // this was probably too harsh
         this.pddlParserSettings = pddlConfiguration.getParserSettings();
 
-        this.codePddlWorkspace.pddlWorkspace.on(PddlWorkspace.UPDATED, () => this.scheduleValidation());
+        this.codePddlWorkspace.pddlWorkspace.on(PddlWorkspace.UPDATED, (fileInfo: FileInfo) => {
+            // clear diagnostics for that file
+            this.clearDiagnostics(fileInfo.fileUri);
+            this.scheduleValidation();
+        });
         this.codePddlWorkspace.pddlWorkspace.on(PddlWorkspace.REMOVING, (doc: FileInfo) => this.clearDiagnostics(doc.fileUri));
 
         workspace.onDidChangeConfiguration(e => {
