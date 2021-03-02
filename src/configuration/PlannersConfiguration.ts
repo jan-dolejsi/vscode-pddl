@@ -20,6 +20,7 @@ export const PDDL_SELECT_PLANNER = CONF_PDDL + '.' + 'selectPlanner';
 export const CONFIGURE_PLANNER_OUTPUT_TARGET = 'configureTarget';
 export const PDDL_CONFIGURE_PLANNER_OUTPUT_TARGET = CONF_PDDL + '.' + CONFIGURE_PLANNER_OUTPUT_TARGET;
 export const DEF_PLANNER_OUTPUT_TARGET = "Output window";
+export const PLANNER_OUTPUT_TARGET_SEARCH_DEBUGGER = "Search debugger";
 const PDDL_CONFIGURE_PLANNER = CONF_PDDL + '.' + 'configurePlanner';
 const PDDL_DELETE_PLANNER = CONF_PDDL + '.' + 'deletePlanner';
 const PDDL_JSON_SETTINGS = CONF_PDDL + '.' + 'plannersJsonSettings';
@@ -198,7 +199,7 @@ export class PlannersConfiguration {
                 return 'graph';
             case "Terminal":
                 return 'terminal';
-            case "Search debugger":
+            case PLANNER_OUTPUT_TARGET_SEARCH_DEBUGGER:
                 return 'git-merge';
             default:
                 return 'warning';

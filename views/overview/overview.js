@@ -90,7 +90,21 @@ function updateConfiguration(message) {
         setStyleDisplay('installIconsAlert', message.showInstallIconsAlert, "table-row");
         setStyleDisplay('enableIconsAlert', message.showEnableIconsAlert, "table-row");
         setStyleDisplay('enableAutoSaveAlert', message.autoSave === "off", "table-row");
+        if (message.downloadValAlert) {
+            const button = document.getElementById('downloadValAlertButton');
+            if (button) {
+                button.disabled = false;
+                button.textContent = 'Download';
+            }
+        }
         setStyleDisplay('downloadValAlert', message.downloadValAlert, "table-row");
+        if (message.updateValAlert) {
+            const button = document.getElementById('updateValAlertButton');
+            if (button) {
+                button.disabled = false;
+                button.textContent = 'Update VAL';
+            }
+        }
         setStyleDisplay('updateValAlert', message.updateValAlert, "table-row");
         setStyleDisplay('enableFormatterAlert', message.showEnableFormatterAlert, "table-row");
         setStyleDisplay('alertList', hasAnyChildrenToDisplay('table.alertList > tbody > tr.alert'), "block");

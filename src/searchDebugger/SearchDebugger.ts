@@ -15,8 +15,8 @@ import { MessageParser } from "./MessageParser";
 import { MockSearch } from "./MockSearch";
 import { SearchDebuggerView } from "./SearchDebuggerView";
 import { planner } from "pddl-workspace";
-import { PddlConfiguration } from "../configuration/configuration";
-import { STATUS_BAR_PRIORITY } from "../configuration/PlannersConfiguration";
+import { PddlConfiguration, PDDL_PLANNER } from "../configuration/configuration";
+import { DEF_PLANNER_OUTPUT_TARGET, EXECUTION_TARGET, PLANNER_OUTPUT_TARGET_SEARCH_DEBUGGER, STATUS_BAR_PRIORITY } from "../configuration/PlannersConfiguration";
 
 export class SearchDebugger implements planner.PlannerOptionsProvider {
 
@@ -38,6 +38,17 @@ export class SearchDebugger implements planner.PlannerOptionsProvider {
         this.context.subscriptions.push(instrumentOperationAsVsCodeCommand("pddl.searchDebugger.stop", () => this.tryStop()));
         this.context.subscriptions.push(instrumentOperationAsVsCodeCommand("pddl.searchDebugger.reset", () => this.reset()));
         this.context.subscriptions.push(instrumentOperationAsVsCodeCommand("pddl.searchDebugger.mock", () => this.mock()));
+
+        // hen the planner output target changes, disable the search debugger accordingly, so it stops listening
+        workspace.onDidChangeConfiguration(e => {
+            if (e.affectsConfiguration(PDDL_PLANNER + '.' + EXECUTION_TARGET)) {
+                const target = workspace.getConfiguration(PDDL_PLANNER).get<string>(EXECUTION_TARGET, DEF_PLANNER_OUTPUT_TARGET);
+                if (this.isRunning() && target !== PLANNER_OUTPUT_TARGET_SEARCH_DEBUGGER) {
+                    this.tryStop();
+                }
+            }
+        });
+        
 
         this.view = new SearchDebuggerView(this.context);
     }
@@ -224,9 +235,9 @@ export class SearchDebugger implements planner.PlannerOptionsProvider {
             this.statusBarItem.show();
         }
 
-        const statusIcon = this.isRunning() ? '$(radio-tower)' : '$(x)';
-        const status = this.isRunning() ? `ON (on port ${this.port}). Click here to stop it.` : 'OFF. Click here to start it.';
-        this.statusBarItem.text = `$(bug)${statusIcon}`;
+        this.statusBarItem.text = this.isRunning() ? '$(stop-circle)' : '$(record)';
+        this.statusBarItem.color = this.isRunning() ? undefined : 'red';
+        const status = this.isRunning() ? `listening on port ${this.port}. Click here to stop it.` : 'OFF. Click here to start it.';
         this.statusBarItem.tooltip = `PDDL Search debugger is ${status}.`;
     }
 }
