@@ -77,6 +77,8 @@ export class Search implements StateResolver {
             state = state.parentId !== undefined ? this.states.get(state.parentId) : undefined;
         }
         this._onPlanFound.fire(plan);
+        // goal state is better than previous state, because we assume H==0
+        this._onBetterState.fire(goalState);
     }
 
     setPlan(state: search.SearchState): void {

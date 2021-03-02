@@ -16,6 +16,7 @@ import { MockSearch } from "./MockSearch";
 import { SearchDebuggerView } from "./SearchDebuggerView";
 import { planner } from "pddl-workspace";
 import { PddlConfiguration } from "../configuration/configuration";
+import { STATUS_BAR_PRIORITY } from "../configuration/PlannersConfiguration";
 
 export class SearchDebugger implements planner.PlannerOptionsProvider {
 
@@ -215,7 +216,7 @@ export class SearchDebugger implements planner.PlannerOptionsProvider {
     showStatusBarItem(): void {
         if (!this.statusBarItem) {
             // create it and show it the first time the search debugger is used
-            this.statusBarItem = window.createStatusBarItem(StatusBarAlignment.Right);
+            this.statusBarItem = window.createStatusBarItem(StatusBarAlignment.Left, STATUS_BAR_PRIORITY);
             this.context.subscriptions.push(this.statusBarItem);
 
             this.context.subscriptions.push(instrumentOperationAsVsCodeCommand(SearchDebugger.TOGGLE_COMMAND, () => this.toggle()));
