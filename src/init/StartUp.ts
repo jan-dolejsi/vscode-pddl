@@ -68,20 +68,20 @@ export class StartUp {
         }
     }
 
-    async showWhatsNew(): Promise<boolean> {
+    async showWhatsNew(): Promise<void> {
         const currentVersion = new ExtensionInfo(ExtensionInfo.EXTENSION_ID).getVersion();
         const lastValue = this.context.globalState.get(this.WHATS_NEW_SHOWN_FOR_VERSION, "0.0.0");
 
         const lastInstalledDiff = diff(currentVersion, lastValue);
-        if (lastInstalledDiff === null) { return false; } // something odd
+        if (lastInstalledDiff === null) {
+             // something odd
+            console.warn(`Versions could not be compared: ${currentVersion} to ${lastValue}`);
+            return;
+        }
         if (['major', 'minor'].includes(lastInstalledDiff)) {
 
             if (true) {
-                const changeLogMd = this.context.asAbsolutePath('CHANGELOG.md');
-                commands.executeCommand('markdown.showPreview', Uri.file(changeLogMd), null, {
-                    sideBySide: false,
-                    locked: true
-                });
+                this.showChangeLog();
             }
             else {
                 const changeLog = this.context.asAbsolutePath('CHANGELOG.html');
@@ -104,9 +104,29 @@ export class StartUp {
                 this.context.subscriptions.push(webViewPanel);
             }
             this.context.globalState.update(this.WHATS_NEW_SHOWN_FOR_VERSION, currentVersion);
+        } else {
+            const SEE = `See what is new`;
+            const LATER = "Later";
+            const answer = await window.showInformationMessage(`PDDL Extension was updated to ${currentVersion}.`, SEE, LATER);
+            switch (answer) {
+                case LATER:
+                    // do nothing
+                    break;
+                case SEE:
+                    this.showChangeLog();
+                    // intentionally falling through to 'default'
+                default:
+                    this.context.globalState.update(this.WHATS_NEW_SHOWN_FOR_VERSION, currentVersion);
+            }
         }
+    }
 
-        return true;
+    private showChangeLog(): void {
+        const changeLogMd = this.context.asAbsolutePath('CHANGELOG.md');
+        commands.executeCommand('markdown.showPreview', Uri.file(changeLogMd), null, {
+            sideBySide: false,
+            locked: true
+        });
     }
 
     showOverviewPage(): void {

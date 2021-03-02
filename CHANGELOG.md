@@ -2,12 +2,16 @@
 
 ## 2.21.7
 
-### Updates
+### Fixes
 
 - We step up to VAL build number 63, which integrations [Pull Request from Fabrice Larribe](https://github.com/KCL-Planning/VAL/pull/53) that cleaned up the codebase and migrated it from the deprecated `std::auto_ptr` to `std::unique_ptr`. I hope this makes VAL more stable on all platforms. Please submit issues, if you see a behavior degradation, or send Fabrice a postcard, if this solves your problem.
 - Gantt chart plan view had a buggy line plot spinning placeholder, which would have to become fully visible before the line plots were created. Now the line plots start loading as soon as any part of the placeholder becomes visible. In case it becomes visible by resizing the window (rather than scrolling to it), it is still sensitive to mouse hover over. So, if you can see it spinning, hover over it.
+
+### Changes
+
 - When the _Planner Output Target_ is switched away from the _Search Debugger_, the _Search Debugger_ is stopped.
 - _Search Debugger_ status-bar icon (to start/stop) aligned with the icons used inside the view. This should now be lot more intuitive to find the toggle button and understand what it does.
+- The extension offers the _what's new_ after update is installed.
 
 ## 2.21.6
 
