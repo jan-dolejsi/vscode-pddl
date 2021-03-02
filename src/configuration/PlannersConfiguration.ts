@@ -35,6 +35,9 @@ export enum PlannerConfigurationScope {
     WorkspaceFolder = 4,
 }
 
+/** Base priority for all the status bar items */
+export const STATUS_BAR_PRIORITY = 10;
+
 export class PlannersConfiguration {
 
     private plannerSelector: StatusBarItem | undefined;
@@ -45,11 +48,11 @@ export class PlannersConfiguration {
         context.subscriptions.push(instrumentOperationAsVsCodeCommand(PDDL_SELECT_PLANNER, () => this.selectPlanner()));
 
         if (workspace.getConfiguration(CONF_PDDL).get('showPlannerInStatusBar', true)) {
-            this.plannerSelector = window.createStatusBarItem(StatusBarAlignment.Left, 10);
+            this.plannerSelector = window.createStatusBarItem(StatusBarAlignment.Left, STATUS_BAR_PRIORITY);
             this.plannerSelector.command = PDDL_SELECT_PLANNER;
             context.subscriptions.push(this.plannerSelector);
 
-            this.plannerOutputSelector = window.createStatusBarItem(StatusBarAlignment.Left, 10);
+            this.plannerOutputSelector = window.createStatusBarItem(StatusBarAlignment.Left, STATUS_BAR_PRIORITY);
             this.plannerOutputSelector.command = PDDL_CONFIGURE_PLANNER_OUTPUT_TARGET;
             context.subscriptions.push(this.plannerOutputSelector);
 

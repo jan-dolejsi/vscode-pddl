@@ -560,6 +560,10 @@ export class PddlConfiguration {
         await workspace.getConfiguration().update(configName, parser(enteredValueAsString), configurationTarget);
     }
 
+    /**
+     * Determines the configuration scope, where the `configName` was configured in the active workspace.
+     * @param configName configuration item e.g. scope.name
+     */
     getEffectiveConfigurationTarget(configName: string): ConfigurationTarget {
         const conf = workspace.getConfiguration().inspect(configName);
 

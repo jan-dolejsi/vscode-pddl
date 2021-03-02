@@ -1,5 +1,18 @@
 # PDDL support - What's new?
 
+## 2.21.6
+
+### Updates
+
+- Status bar icons grouped together. The Search Debugger on/off toggle was moved next to the planner and output target selector.
+- Search Debugger view displays the goal state in the gantt chart now. Till now the previous state remained visible even when plan was found, because the goal state does not have H evaluated and therefore was not _better_.
+
+## 2.21.5
+
+### Fixes
+
+Fine-tuning the symbiosis with other extension(s) contributing custom PDDL parser(s).
+
 ## 2.21.4
 
 ### New Features
