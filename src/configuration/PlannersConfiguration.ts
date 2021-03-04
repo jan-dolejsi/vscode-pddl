@@ -200,7 +200,7 @@ export class PlannersConfiguration {
             case "Terminal":
                 return 'terminal';
             case PLANNER_OUTPUT_TARGET_SEARCH_DEBUGGER:
-                return 'git-merge';
+                return 'symbol-class';
             default:
                 return 'warning';
         }
