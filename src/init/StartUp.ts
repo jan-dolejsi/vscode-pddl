@@ -74,8 +74,7 @@ export class StartUp {
 
         const lastInstalledDiff = diff(currentVersion, lastValue);
         if (lastInstalledDiff === null) {
-             // something odd
-            console.warn(`Versions could not be compared: ${currentVersion} to ${lastValue}`);
+             // same version
             return;
         }
         if (['major', 'minor'].includes(lastInstalledDiff)) {
