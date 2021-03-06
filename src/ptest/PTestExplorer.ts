@@ -5,7 +5,7 @@
 'use strict';
 
 import {
-    workspace, TreeView, window, commands, ViewColumn, Uri, ProgressLocation, SaveDialogOptions, Position, Disposable
+    workspace, TreeView, window, commands, ViewColumn, Uri, ProgressLocation, SaveDialogOptions, Position, Disposable, ExtensionContext
 } from 'vscode';
 import { instrumentOperationAsVsCodeCommand } from "vscode-extension-telemetry-wrapper";
 import { dirname } from 'path';
@@ -39,8 +39,12 @@ export class PTestExplorer {
     private report: PTestReport;
     manifestGenerator: ManifestGenerator;
 
-    constructor(private context: PddlExtensionContext, private codePddlWorkspace: CodePddlWorkspace, private planning: Planning) {
-        this.pTestTreeDataProvider = new PTestTreeDataProvider(context);
+    constructor(readonly context: ExtensionContext,
+        private readonly pddlContext: PddlExtensionContext,
+        private readonly codePddlWorkspace: CodePddlWorkspace,
+        private readonly planning: Planning) {
+        
+        this.pTestTreeDataProvider = new PTestTreeDataProvider(pddlContext);
 
         this.pTestViewer = window.createTreeView('pddl.tests.explorer', { treeDataProvider: this.pTestTreeDataProvider, showCollapseAll: true });
         this.subscribe(this.pTestViewer);
@@ -64,7 +68,7 @@ export class PTestExplorer {
             this.pTestViewer.reveal(this.pTestTreeDataProvider.findNodeByResourceOrThrow(nodeUri), { select: true, expand: true }).then(() => { return; }, showError))
         );
 
-        this.manifestGenerator = new ManifestGenerator(this.codePddlWorkspace.pddlWorkspace, this.context);
+        this.manifestGenerator = new ManifestGenerator(this.codePddlWorkspace.pddlWorkspace, this.pddlContext);
         this.subscribe(instrumentOperationAsVsCodeCommand('pddl.tests.createAll', () => this.generateAllManifests().catch(showError)));
 
         this.subscribe(instrumentOperationAsVsCodeCommand(PDDL_SAVE_AS_EXPECTED_PLAN, plan => this.manifestGenerator.createPlanAssertion(plan).catch(showError)));
@@ -86,7 +90,7 @@ export class PTestExplorer {
     }
 
     private subscribe(disposable: Disposable): void {
-        this.context.subscriptions.push(disposable);
+        this.pddlContext.subscriptions.push(disposable);
     }
 
     async saveProblemAs(): Promise<void> {
@@ -113,7 +117,7 @@ export class PTestExplorer {
 
     async openDefinition(node: PTestNode): Promise<void> {
         if (node.kind === PTestNodeKind.Test) {
-            const test = Test.fromUri(node.resource, this.context);
+            const test = Test.fromUri(node.resource, this.pddlContext);
             if (test === undefined) {
                 throw new Error("No test found at: " + node.resource);
             }
@@ -141,7 +145,7 @@ export class PTestExplorer {
 
     async openExpectedPlans(node: PTestNode): Promise<void> {
         if (node.kind === PTestNodeKind.Test) {
-            const test = Test.fromUri(node.resource, this.context);
+            const test = Test.fromUri(node.resource, this.pddlContext);
 
             // assert that everything exists
             if (!test) { return; }
@@ -168,7 +172,7 @@ export class PTestExplorer {
     }
 
     async openTestByUri(testCaseUri: Uri): Promise<void> {
-        const test = Test.fromUri(testCaseUri, this.context);
+        const test = Test.fromUri(testCaseUri, this.pddlContext);
 
         // assert that everything exists
         if (!test) { return; }
@@ -223,7 +227,7 @@ export class PTestExplorer {
             }
         }
         else if (node.kind === PTestNodeKind.Manifest) {
-            const manifest = TestsManifest.load(node.resource.fsPath, this.context);
+            const manifest = TestsManifest.load(node.resource.fsPath, this.pddlContext);
             allManifests.push(manifest);
         }
     }
@@ -270,7 +274,7 @@ export class PTestExplorer {
 
     async runTest(node: PTestNode): Promise<void> {
         if (node.kind === PTestNodeKind.Test) {
-            const test = Test.fromUri(node.resource, this.context);
+            const test = Test.fromUri(node.resource, this.pddlContext);
 
             // assert that everything exists
             if (!test) { return; }

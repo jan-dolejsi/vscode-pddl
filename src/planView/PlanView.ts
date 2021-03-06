@@ -19,10 +19,11 @@ import { isPlan, getDomainAndProblemForPlan } from '../workspace/workspaceUtils'
 import { CodePddlWorkspace } from '../workspace/CodePddlWorkspace';
 import { CONF_PDDL, PLAN_REPORT_WIDTH, PDDL_CONFIGURE_COMMAND, VAL_STEP_PATH, VALUE_SEQ_PATH, VAL_VERBOSE, PLAN_REPORT_LINE_PLOT_GROUP_BY_LIFTED } from '../configuration/configuration';
 import { Menu } from '../Menu';
-import { createPddlExtensionContext, ensureAbsoluteGlobalStoragePath, getWebViewHtml, showError } from '../utils';
+import { ensureAbsoluteGlobalStoragePath, showError } from '../utils';
 import { LinePlotData, FinalStateData } from './model';
 import { handleValStepError } from './valStepErrorHandler';
 import { getDomainVisualizationConfigurationDataForPlans } from './DomainVisualization';
+import { getWebViewHtml } from '../webviewUtils';
 
 const VIEWS = "views";
 const COMMON_FOLDER = path.join(VIEWS, "common");
@@ -197,7 +198,7 @@ export class PlanView extends Disposable {
 
     async getHtml(webview: Webview): Promise<string> {
         const googleCharts = Uri.parse("https://www.gstatic.com/charts/");
-        return getWebViewHtml(createPddlExtensionContext(this.context), {
+        return getWebViewHtml(this.context, {
             relativePath: STATIC_CONTENT_FOLDER, htmlFileName: 'plans.html',
             externalImages: [Uri.parse('data:')],
             allowUnsafeEval: true,

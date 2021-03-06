@@ -5,13 +5,12 @@
 'use strict';
 
 import {
-    workspace, OutputChannel, Disposable
+    workspace, OutputChannel, Disposable, ExtensionContext
 } from 'vscode';
 import { instrumentOperationAsVsCodeCommand } from "vscode-extension-telemetry-wrapper";
 import { TestsManifest } from './TestsManifest';
 import { TestOutcome, Test } from './Test';
 import { PTestReportView } from './PTestReportView';
-import { PddlExtensionContext } from 'pddl-workspace';
 import { PTEST_REPORT_VIEW } from './PTestCommands';
 import { utils } from 'pddl-workspace';
 import { assertDefined } from '../utils';
@@ -21,7 +20,7 @@ export class PTestReport implements Disposable {
     private view: PTestReportView | undefined;
     private manifests = new ManifestMap();
 
-    constructor(private context: PddlExtensionContext, private outputWindow: OutputChannel) {
+    constructor(private context: ExtensionContext, private outputWindow: OutputChannel) {
         instrumentOperationAsVsCodeCommand(PTEST_REPORT_VIEW, () => this.show());
     }
 

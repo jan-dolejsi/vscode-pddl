@@ -5,11 +5,10 @@
 'use strict';
 
 import {
-    window, Uri, ViewColumn, WebviewPanel, workspace, commands, Webview
+    window, Uri, ViewColumn, WebviewPanel, workspace, commands, Webview, ExtensionContext
 } from 'vscode';
 import * as path from 'path';
-import { getWebViewHtml } from '../utils';
-import { PddlExtensionContext } from 'pddl-workspace';
+import { getWebViewHtml } from '../webviewUtils';
 import { PTestReport } from './PTestReport';
 import { TestsManifest } from './TestsManifest';
 import { Test } from './Test';
@@ -20,7 +19,7 @@ export class PTestReportView {
     private webViewPanel: WebviewPanel | undefined;
     readonly CONTENT_FOLDER = path.join("views", "ptestReport");
 
-    constructor(private context: PddlExtensionContext, private report: PTestReport) {
+    constructor(private context: ExtensionContext, private report: PTestReport) {
     }
 
     async showReport(): Promise<void> {

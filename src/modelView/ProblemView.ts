@@ -18,9 +18,10 @@ import { PddlWorkspace } from 'pddl-workspace';
 import { FileInfo } from 'pddl-workspace';
 
 import { CodePddlWorkspace } from '../workspace/CodePddlWorkspace';
-import { getWebViewHtml, createPddlExtensionContext, UriMap, showError, toUri } from '../utils';
+import { UriMap, showError, toUri } from '../utils';
 import { ProblemViewPanel } from './ProblemViewPanel';
 import { WebviewPanelAdapter } from './view';
+import { getWebViewHtml } from '../webviewUtils';
 
 const VIEWS = "views";
 const COMMON_FOLDER = path.join(VIEWS, "common");
@@ -199,7 +200,7 @@ export abstract class ProblemView<TRendererOptions, TRenderData> extends Disposa
             return error.message;
         }
         else {
-            return getWebViewHtml(createPddlExtensionContext(this.context), {
+            return getWebViewHtml(this.context, {
                 allowUnsafeEval: this.options.allowUnsafeEval,
                 fonts: [
                     Uri.file(path.join("..", "..", "..", COMMON_FOLDER, "codicon.ttf"))

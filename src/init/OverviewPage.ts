@@ -11,13 +11,14 @@ import {
 import { PddlConfiguration, PDDL_PLANNER } from '../configuration/configuration';
 
 import * as path from 'path';
-import { getWebViewHtml, createPddlExtensionContext, showError, asWebviewUri } from '../utils';
+import { showError } from '../utils';
 import { ValDownloader } from '../validation/ValDownloader';
 import { VAL_DOWNLOAD_COMMAND, ValDownloadOptions } from '../validation/valCommand';
 import { PTEST_VIEW } from '../ptest/PTestCommands';
 import { instrumentOperationAsVsCodeCommand } from "vscode-extension-telemetry-wrapper";
 import { DEF_PLANNER_OUTPUT_TARGET, EXECUTION_TARGET, PlannersConfiguration, ScopedPlannerConfiguration } from '../configuration/PlannersConfiguration';
 import { exists } from '../util/workspaceFs';
+import { asWebviewUri, getWebViewHtml } from '../webviewUtils';
 
 export const SHOULD_SHOW_OVERVIEW_PAGE = 'shouldShowOverviewPage';
 export const LAST_SHOWN_OVERVIEW_PAGE = 'lastShownOverviewPage';
@@ -399,7 +400,7 @@ export class OverviewPage {
     }
 
     async getHtml(webview: Webview): Promise<string> {
-        return getWebViewHtml(createPddlExtensionContext(this.context), {
+        return getWebViewHtml(this.context, {
             relativePath: this.CONTENT_FOLDER,
             htmlFileName: 'overview.html',
             allowUnsafeInlineScripts: true, // used mostly by the alerts

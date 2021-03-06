@@ -16,10 +16,11 @@ import { PddlWorkspace } from 'pddl-workspace';
 import { FileInfo } from 'pddl-workspace';
 
 import { CodePddlWorkspace } from '../workspace/CodePddlWorkspace';
-import { getWebViewHtml, createPddlExtensionContext, UriMap, showError, toUri } from '../utils';
+import { UriMap, showError, toUri } from '../utils';
 import { DomainViewPanel } from './DomainViewPanel';
 import { WebviewPanelAdapter } from './view';
 import { instrumentOperationAsVsCodeCommand } from "vscode-extension-telemetry-wrapper";
+import { getWebViewHtml } from '../webviewUtils';
 
 const VIEWS = "views";
 const COMMON_FOLDER = path.join(VIEWS, "common");
@@ -168,7 +169,7 @@ export abstract class DomainView<TRendererOptions, TRenderData> extends Disposab
             return error.message;
         }
         else {
-            return getWebViewHtml(createPddlExtensionContext(this.context), {
+            return getWebViewHtml(this.context, {
                 fonts: [
                     Uri.file(path.join("..", "..", "..", COMMON_FOLDER, "codicon.ttf"))
                 ],

@@ -9,7 +9,7 @@ import {
 } from 'vscode';
 import * as path from 'path';
 
-import { getWebViewHtml, createPddlExtensionContext, showError, ensureAbsoluteGlobalStoragePath } from '../utils';
+import { showError, ensureAbsoluteGlobalStoragePath } from '../utils';
 import { StateResolver } from './StateResolver';
 import { ProblemInfo, DomainInfo, utils, search, Happening } from 'pddl-workspace';
 import { CONF_PDDL, DEFAULT_EPSILON, VAL_STEP_PATH, VAL_VERBOSE } from '../configuration/configuration';
@@ -17,6 +17,7 @@ import { getDomainVisualizationConfigurationDataForPlan } from '../planView/Doma
 import { PlanEvaluator } from 'ai-planning-val';
 import { FinalStateData } from '../planView/model';
 import { handleValStepError } from '../planView/valStepErrorHandler';
+import { getWebViewHtml } from '../webviewUtils';
 
 export class SearchDebuggerView {
     private webViewPanel: WebviewPanel | undefined;
@@ -168,7 +169,7 @@ export class SearchDebuggerView {
 
     async getHtml(webview: Webview): Promise<string> {
         const googleCharts = Uri.parse("https://www.gstatic.com/charts/");
-        return getWebViewHtml(createPddlExtensionContext(this.context), {
+        return getWebViewHtml(this.context, {
             relativePath: this.STATIC_CONTENT_FOLDER, htmlFileName: 'search.html',
             externalImages: [Uri.parse('data:')],
             allowUnsafeInlineScripts: true, // todo: false?

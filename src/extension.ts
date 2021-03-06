@@ -231,7 +231,7 @@ async function activateWithTelemetry(_operationId: string, context: ExtensionCon
 	const happeningsHoverProvider = languages.registerHoverProvider(HAPPENINGS, symbolInfoProvider);
 
 	// tslint:disable-next-line:no-unused-expression
-	ptestExplorer = new PTestExplorer(pddlContext, codePddlWorkspace, planning);
+	ptestExplorer = new PTestExplorer(context, pddlContext, codePddlWorkspace, planning);
 	
 	// tslint:disable-next-line:no-unused-expression
 	new Catalog(context);

@@ -1,5 +1,10 @@
 # PDDL support - What's new?
 
+## [Unreleased]
+
+- replaced the planner output target icon for the search debugger
+- separated the webview utils for usage in other extensions
+
 ## 2.21.7
 
 ### Fixes
