@@ -1,9 +1,10 @@
 # PDDL support - What's new?
 
-## [Unreleased]
+## 2.21.8
 
 - replaced the planner output target icon for the search debugger
 - separated the webview utils for usage in other extensions
+- exposed the command `pddl.selectedPlanner` for other extensions to be able to detect the active planner
 
 ## 2.21.7
 

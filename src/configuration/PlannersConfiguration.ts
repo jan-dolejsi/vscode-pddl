@@ -21,6 +21,7 @@ export const CONFIGURE_PLANNER_OUTPUT_TARGET = 'configureTarget';
 export const PDDL_CONFIGURE_PLANNER_OUTPUT_TARGET = CONF_PDDL + '.' + CONFIGURE_PLANNER_OUTPUT_TARGET;
 export const DEF_PLANNER_OUTPUT_TARGET = "Output window";
 export const PLANNER_OUTPUT_TARGET_SEARCH_DEBUGGER = "Search debugger";
+const PDDL_GET_SELECTED_PLANNER = CONF_PDDL + '.' + CONF_SELECTED_PLANNER;
 const PDDL_CONFIGURE_PLANNER = CONF_PDDL + '.' + 'configurePlanner';
 const PDDL_DELETE_PLANNER = CONF_PDDL + '.' + 'deletePlanner';
 const PDDL_JSON_SETTINGS = CONF_PDDL + '.' + 'plannersJsonSettings';
@@ -46,7 +47,8 @@ export class PlannersConfiguration {
 
     constructor(context: ExtensionContext, private pddlWorkspace: PddlWorkspace) {
         context.subscriptions.push(instrumentOperationAsVsCodeCommand(PDDL_ADD_PLANNER, () => this.createPlannerConfiguration().catch(showError)));
-        context.subscriptions.push(instrumentOperationAsVsCodeCommand(PDDL_SELECT_PLANNER, () => this.selectPlanner()));
+        context.subscriptions.push(instrumentOperationAsVsCodeCommand(PDDL_GET_SELECTED_PLANNER, () => this.getSelectedPlanner()?.configuration));
+        context.subscriptions.push(instrumentOperationAsVsCodeCommand(PDDL_SELECT_PLANNER, async () => (await this.selectPlanner())?.configuration));
 
         if (workspace.getConfiguration(CONF_PDDL).get('showPlannerInStatusBar', true)) {
             this.plannerSelector = window.createStatusBarItem(StatusBarAlignment.Left, STATUS_BAR_PRIORITY);
@@ -196,7 +198,7 @@ export class PlannersConfiguration {
     createTargetIcon(target: string): string {
         switch (target) {
             case DEF_PLANNER_OUTPUT_TARGET:
-                return 'graph';
+                return 'note';
             case "Terminal":
                 return 'terminal';
             case PLANNER_OUTPUT_TARGET_SEARCH_DEBUGGER:
@@ -400,8 +402,9 @@ export class PlannersConfiguration {
 
         if (selectedPlannerTitle !== undefined) {
             for (const scope of PlannersConfiguration.SCOPES) {
+                // todo: get the planners for all scopes, then filter
                 const planners = this.getPlannersPerScope(scope, workingFolder);
-                if (!Array.isArray(planners)) { console.error(`Planners for scope ${scope} is invalid: ${planners}`); continue; }
+                if (!Array.isArray(planners)) { console.error(`Planners configuration for scope ${scope} is invalid: ${planners}`); continue; }
                 const indexFound = planners.findIndex(p => p.title === selectedPlannerTitle);
                 if (indexFound > -1) {
                     return this.toScopedConfiguration(planners[indexFound], indexFound, scope, workingFolder);
