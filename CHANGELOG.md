@@ -1,5 +1,9 @@
 # PDDL support - What's new?
 
+## [Unreleased]
+
+- When one or two PDDL files (i.e. domain and/or problem) are selected in the File Explorer and the context menu includes the _PDDL: Run the planner and display the plan_ command. This is extra helpful, when the domain and problem files are in different folders.
+
 ## 2.21.8
 
 - replaced the planner output target icon for the search debugger

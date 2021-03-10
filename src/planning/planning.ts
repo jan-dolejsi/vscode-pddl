@@ -72,11 +72,17 @@ export class Planning implements planner.PlannerResponseHandler {
         context.subscriptions.push(this.planView = new PlanView(context, codePddlWorkspace));
 
         context.subscriptions.push(instrumentOperationAsVsCodeCommand(PDDL_PLAN_AND_DISPLAY,
-            async (domainUri: Uri, problemUri: Uri | EditorId | undefined, workingFolder: string, options?: string) => {
-                if (problemUri && instanceOfEditorId(problemUri)) {
+            async (domainUri: Uri, payload: Uri | Uri[] | EditorId | undefined, workingFolder: string, options?: string) => {
+                if (payload && instanceOfEditorId(payload)) {
+                    // triggered from the editor tab
                     await this.planFromDocument(await workspace.openTextDocument(domainUri)).catch(showError);
-                } else if (problemUri) {
-                    await this.planByUri(domainUri, problemUri, workingFolder, options).catch(showError);
+                } else if (Array.isArray(payload)) {
+                    // multi-selected multiple files in the Explorer
+                    const selectedFiles = payload;
+                    this.planByUris(selectedFiles, workingFolder, options).catch(showError);
+                } else if (payload) {
+                    // payload should be Uri; we ruled out other options
+                    await this.planByUri(domainUri, payload, workingFolder, options).catch(showError);
                 } else {
                     await this.plan().catch(showError);
                 }
@@ -155,6 +161,44 @@ export class Planning implements planner.PlannerResponseHandler {
         const problemInfo = await this.codePddlWorkspace.upsertAndParseFile(problemDocument) as ProblemInfo;
 
         this.planExplicit(domainInfo, problemInfo, workingFolder, options);
+    }
+
+    async planByUris(selectedFiles: Uri[], workingFolder: string, options?: string): Promise<void> {
+        if (selectedFiles.length === 1) {
+            await this.planFromDocument(await workspace.openTextDocument(selectedFiles[0])).catch(showError);
+        } else if (selectedFiles.length === 2) {
+
+            let problemFileInfo: ProblemInfo | undefined;
+            let domainFileInfo: DomainInfo | undefined;
+
+            for (let i = 0; i < selectedFiles.length; i++) {
+                const selectedFile = selectedFiles[i];
+                const selectedDoc = await workspace.openTextDocument(selectedFile);
+
+                const fileInfo = await this.codePddlWorkspace.upsertAndParseFile(selectedDoc);
+                if (fileInfo === undefined) { throw new Error(`Selected file is not a PDDL document: ${selectedDoc.fileName}`); }
+
+                if (fileInfo.isDomain()) {
+                    if (domainFileInfo !== undefined) {
+                        throw new Error('Two domain files were selected. Select a domain file and one problem file.');
+                    }
+                    domainFileInfo = fileInfo as DomainInfo;
+                } else if (fileInfo.isProblem()) {
+                    if (problemFileInfo !== undefined) {
+                        throw new Error('Two problem files were selected. Select a domain file and one problem file.');
+                    }
+                    problemFileInfo = fileInfo as ProblemInfo;
+                } else {
+                    throw new Error(`File not supported: ${fileInfo.name}. Select a domain file and one problem file.`);
+                }
+            }
+
+            if (!domainFileInfo || !problemFileInfo) {
+                throw new Error('Select a domain file and one problem file.');
+            }
+
+            await this.planExplicit(domainFileInfo, problemFileInfo, workingFolder, options);
+        }
     }
 
     /**

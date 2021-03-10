@@ -470,6 +470,11 @@
       ],
       "explorer/context": [
         {
+          "command": "pddl.planAndDisplayResult",
+          "when": "resourceLangId == pddl",
+          "group": "navigation"
+        },
+        {
           "command": "pddl.plan.compareNormalized",
           "when": "viewItem != folder && resourceLangId == plan",
           "group": "3_compare"
