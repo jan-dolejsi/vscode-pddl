@@ -7,7 +7,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 import {
-    workspace, window
+    workspace, window, EventEmitter, Event, Disposable
 } from 'vscode';
 
 import * as process from 'child_process';
@@ -19,18 +19,36 @@ import {
 
 import { Util } from 'ai-planning-val';
 
-/** Planner implemented as an executable process. */
-export class PlannerExecutable extends planner.Planner {
+/** Planner implemented as an executable process, which outputs through VS Code facilities. */
+export class PlannerExecutable extends planner.Planner implements Disposable {
 
     // this property stores the reference to the planner child process, while planning is in progress
     private child: process.ChildProcess | undefined;
-
+    private _exited = new EventEmitter<number>();
+    
     static readonly DEFAULT_SYNTAX = "$(planner) $(options) $(domain) $(problem)";
     private readonly plannerSyntax: string;
+    private readonly plannerOptions: string;
 
-    constructor(plannerPath: string, private plannerOptions: string, plannerSyntax: string | undefined, private workingDirectory: string) {
-        super(plannerPath);
-        this.plannerSyntax = plannerSyntax ?? PlannerExecutable.DEFAULT_SYNTAX;
+    constructor(plannerPath: string, private configuration: planner.PlannerExecutableRunConfiguration) {
+        super(plannerPath, configuration);
+        this.plannerSyntax = configuration.plannerSyntax ?? PlannerExecutable.DEFAULT_SYNTAX;
+        this.plannerOptions = configuration.options ?? '';
+    }
+
+    get onExited(): Event<number> {
+        return this._exited.event;
+    }
+
+    dispose(): void {
+        this._exited.dispose();
+    }
+
+    get requiresKeyboardInput(): boolean {
+        return false;
+    }
+    get supportsSearchDebugger(): boolean {
+        return true;
     }
 
     async plan(domainFileInfo: DomainInfo, problemFileInfo: ProblemInfo, planParser: parser.PddlPlannerOutputParser, callbacks: planner.PlannerResponseHandler): Promise<Plan[]> {
@@ -49,11 +67,10 @@ export class PlannerExecutable extends planner.Planner {
         callbacks.handleOutput(command + '\n');
 
         const thisPlanner = this;
-        super.planningProcessKilled = false;
 
         if (workspace.getConfiguration("pddlPlanner").get("executionTarget") === "Terminal") {
             return new Promise<Plan[]>((resolve) => {
-                const terminal = window.createTerminal({ name: "Planner output", cwd: thisPlanner.workingDirectory });
+                const terminal = window.createTerminal({ name: "Planner output", cwd: thisPlanner.configuration.workingDirectory });
                 terminal.sendText(command, true);
                 terminal.show(true);
                 const plans: Plan[] = [];
@@ -63,12 +80,12 @@ export class PlannerExecutable extends planner.Planner {
 
         return new Promise<Plan[]>(function (resolve, reject) {
             thisPlanner.child = process.exec(command,
-                { cwd: thisPlanner.workingDirectory },
+                { cwd: thisPlanner.configuration.workingDirectory },
                 (error) => {
                     planParser.onPlanFinished();
 
                     if (error && !thisPlanner.child?.killed && !thisPlanner.planningProcessKilled) {
-                        reject(error);
+                        reject(error); // todo: should calle `return` here?
                     }
 
                     const plans = planParser.getPlans();
@@ -86,6 +103,7 @@ export class PlannerExecutable extends planner.Planner {
             thisPlanner.child.on("close", (code: any, signal: any) => {
                 if (code) { console.log("Exit code: " + code); }
                 if (signal) { console.log("Exit Signal: " + signal); }
+                thisPlanner._exited.fire(code);
             });
         });
     }
@@ -102,5 +120,19 @@ export class PlannerExecutable extends planner.Planner {
             // this.child.stdin.pause();
             treeKill(this.child.pid);
         }
+    }
+}
+
+/** Creates instances of the PlannerExecutable, so other extensions could wrap them. */
+export class PlannerExecutableFactory {
+
+    /**
+     * Creates new instance of `PlannerExecutable`.
+     * @param plannerPath planner path
+     * @param plannerRunConfiguration run configuration
+     * @returns planner executable that VS Code will call the `plan()` method on.
+     */
+    createPlannerExecutable(plannerPath: string, plannerRunConfiguration: planner.PlannerExecutableRunConfiguration): PlannerExecutable {
+        return new PlannerExecutable(plannerPath, plannerRunConfiguration);
     }
 }

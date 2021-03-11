@@ -9,6 +9,7 @@ import {
     MessageItem, ExtensionContext, ProgressLocation, EventEmitter, Event, CancellationToken, Progress, QuickPickItem, TextDocument
 } from 'vscode';
 import { instrumentOperationAsVsCodeCommand } from "vscode-extension-telemetry-wrapper";
+import { PlannerAsyncService, AsyncServiceConfiguration } from "pddl-planning-service-client";
 import * as path from 'path';
 import { dirname } from 'path';
 
@@ -17,9 +18,7 @@ import {
 } from 'pddl-workspace';
 import { PddlConfiguration, PDDL_CONFIGURE_COMMAND, PDDL_PLANNER } from '../configuration/configuration';
 import { PlannerExecutable } from './PlannerExecutable';
-import { PlannerSyncService } from './PlannerSyncService';
-import { PlannerAsyncService } from './PlannerAsyncService';
-import { Authentication } from '../util/Authentication';
+import { SAuthentication } from '../util/Authentication';
 import { PlanningResult } from './PlanningResult';
 import { PlanExporter } from './PlanExporter';
 import { PlanHappeningsExporter } from './PlanHappeningsExporter';
@@ -33,6 +32,7 @@ import { AssociationProvider } from '../workspace/AssociationProvider';
 import { showError, isHttp } from '../utils';
 import { CodePddlWorkspace } from '../workspace/CodePddlWorkspace';
 import { EXECUTION_TARGET, PDDL_CONFIGURE_PLANNER_OUTPUT_TARGET, PlannersConfiguration } from '../configuration/PlannersConfiguration';
+import { RequestServicePlannerProvider, SolveServicePlannerProvider } from '../configuration/plannerConfigurations';
 
 const PDDL_STOP_PLANNER = 'pddl.stopPlanner';
 const PDDL_CONVERT_PLAN_TO_HAPPENINGS = 'pddl.convertPlanToHappenings';
@@ -333,6 +333,9 @@ export class Planning implements planner.PlannerResponseHandler {
         this.planner = await this.createPlanner(workingDirectory, options);
         if (!this.planner) { return; }
         const planner: planner.Planner = this.planner;
+        if ("dispose" in planner) {
+            this.context.subscriptions.push(planner);
+        }
 
         this.planningProcessKilled = false;
 
@@ -357,7 +360,7 @@ export class Planning implements planner.PlannerResponseHandler {
             this.progressUpdater = new ElapsedTimeProgressUpdater(progress, token);
             return planner.plan(domainFileInfo, problemFileInfo, planParser, this);
         })
-            .then(plans => this.onPlannerFinished(plans), reason => this.onPlannerFailed(reason));
+            .then(plans => this.onPlannerFinished(plans), reason => this.onPlannerFailed(reason, planner));
     }
 
     isSearchDebugger(): boolean {
@@ -377,7 +380,9 @@ export class Planning implements planner.PlannerResponseHandler {
     }
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    onPlannerFailed(reason: any): void {
+    onPlannerFailed(reason: any,
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        _planner: planner.Planner): void {
         if (!this.progressUpdater) { return; }
         this.progressUpdater.setFinished();
         this._onPlansFound.fire(PlanningResult.failure(reason.toString()));
@@ -387,10 +392,10 @@ export class Planning implements planner.PlannerResponseHandler {
 
         window.showErrorMessage<ProcessErrorMessageItem>(reason.message,
             { title: "Re-configure the planner", setPlanner: true },
-            { title: "Ignore", setPlanner: false, isCloseAffordance: true }
+            { title: "Dismiss", setPlanner: false, isCloseAffordance: true }
         ).then(selection => {
             if (selection && selection.setPlanner) {
-                this.pddlConfiguration.askNewPlannerPath();
+                commands.executeCommand("pddl.showOverview");
             }
         });
     }
@@ -436,7 +441,7 @@ export class Planning implements planner.PlannerResponseHandler {
             let authentication = undefined;
             if (useAuthentication) {
                 const configuration = this.pddlConfiguration.getPddlPlannerServiceAuthenticationConfiguration();
-                authentication = new Authentication(configuration.url, configuration.requestEncoded, configuration.clientId, configuration.callbackPort, configuration.timeoutInMs,
+                authentication = new SAuthentication(configuration.url, configuration.requestEncoded, configuration.clientId, configuration.callbackPort, configuration.timeoutInMs,
                     configuration.tokensvcUrl, configuration.tokensvcApiKey, configuration.tokensvcAccessPath, configuration.tokensvcValidatePath,
                     configuration.tokensvcCodePath, configuration.tokensvcRefreshPath, configuration.tokensvcSvctkPath,
                     configuration.refreshToken, configuration.accessToken, configuration.sToken);
@@ -446,12 +451,24 @@ export class Planning implements planner.PlannerResponseHandler {
                 options = await this.getPlannerLineOptions(plannerConfiguration, options);
                 if (options === undefined) { return null; }
 
-                return new PlannerSyncService(plannerConfiguration.url, options, authentication);
+                const plannerRunConfiguration: planner.PlannerRunConfiguration = {
+                    options: options,
+                    authentication: authentication
+                };
+
+                return this.codePddlWorkspace.pddlWorkspace.getPlannerRegistrar()
+                    .getPlannerProvider(new planner.PlannerKind(plannerConfiguration.kind))?.createPlanner?.(plannerConfiguration, plannerRunConfiguration) ??
+                    SolveServicePlannerProvider.createDefaultPlanner(plannerConfiguration.url, plannerRunConfiguration);
             }
             else if (plannerConfiguration.url.endsWith("/request")) {
-                const configuration = options ? this.toAbsoluteUri(options, workingDirectory) : await new PlannerConfigurationSelector(Uri.file(workingDirectory)).getConfiguration();
-                if (!configuration) { return null; } // canceled by user
-                return new PlannerAsyncService(plannerConfiguration.url, configuration, authentication);
+                const configurationUri = options ? this.toAbsoluteUri(options, workingDirectory) : await new PlannerConfigurationSelector(Uri.file(workingDirectory)).getConfiguration();
+                if (!configurationUri) { return null; } // canceled by user
+                const plannerRunConfiguration = await PlannerConfigurationSelector.loadConfiguration(configurationUri, PlannerAsyncService.DEFAULT_TIMEOUT) as AsyncServiceConfiguration;
+                plannerRunConfiguration.authentication = authentication;
+
+                return this.codePddlWorkspace.pddlWorkspace.getPlannerRegistrar()
+                    .getPlannerProvider(new planner.PlannerKind(plannerConfiguration.kind))?.createPlanner?.(plannerConfiguration, plannerRunConfiguration) ??
+                    RequestServicePlannerProvider.createDefaultPlanner(plannerConfiguration.url, plannerRunConfiguration);
             }
             else {
                 throw new Error(`Planning service not supported: ${plannerConfiguration.url}. Only /solve or /request service endpoints are supported.`);
@@ -460,10 +477,13 @@ export class Planning implements planner.PlannerResponseHandler {
         else if(plannerConfiguration.path) {
             options = await this.getPlannerLineOptions(plannerConfiguration, options);
             if (options === undefined) { return null; }
-
+            const plannerRunConfiguration: planner.PlannerExecutableRunConfiguration = {
+                options: options,
+                workingDirectory :workingDirectory
+            };
             return this.codePddlWorkspace.pddlWorkspace.getPlannerRegistrar()
-                .getPlannerProvider({ kind: plannerConfiguration.kind })?.createPlanner?.(plannerConfiguration, options, workingDirectory) ?? 
-                new PlannerExecutable(plannerConfiguration.path, options, plannerConfiguration.syntax, workingDirectory);
+                .getPlannerProvider(new planner.PlannerKind(plannerConfiguration.kind))?.createPlanner?.(plannerConfiguration, plannerRunConfiguration) ?? 
+                new PlannerExecutable(plannerConfiguration.path, plannerRunConfiguration);
         } else {
             throw new Error(`Planner configuration must define at least one of the properties 'url' or 'path': ${plannerConfiguration.title}`);
         }
@@ -479,7 +499,7 @@ export class Planning implements planner.PlannerResponseHandler {
     async getPlannerLineOptions(configuration: planner.PlannerConfiguration, options: string | undefined): Promise<string | undefined> {
         if (options === undefined) {
             const plannerProvider = this.codePddlWorkspace.pddlWorkspace.getPlannerRegistrar()
-                .getPlannerProvider({ kind: configuration.kind });
+                .getPlannerProvider(new planner.PlannerKind(configuration.kind));
 
             return await this.userOptionsProvider.getPlannerOptions(plannerProvider);
         }

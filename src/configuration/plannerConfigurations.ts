@@ -11,6 +11,7 @@ import { Uri, window } from 'vscode';
 import { planner, OutputAdaptor, utils } from 'pddl-workspace';
 import { isHttp } from '../utils';
 import { PlannerExecutable } from '../planning/PlannerExecutable';
+import { AsyncServiceConfiguration, PlannerAsyncService, PlannerSyncService } from 'pddl-planning-service-client';
 
 export class CommandPlannerProvider implements planner.PlannerProvider {
     get kind(): planner.PlannerKind {
@@ -112,15 +113,16 @@ export class SolveServicePlannerProvider implements planner.PlannerProvider {
 
         if (!newPlannerUrl) { return undefined; }
 
-        return this.createPlannerConfiguration(newPlannerUrl);
+        return this.createPlannerConfiguration(newPlannerUrl, previousConfiguration);
     }
 
-    createPlannerConfiguration(newPlannerUrl: string): planner.PlannerConfiguration {
+    createPlannerConfiguration(newPlannerUrl: string, previousConfiguration?: planner.PlannerConfiguration): planner.PlannerConfiguration {
         return {
             kind: this.kind.kind,
             url: newPlannerUrl,
             title: newPlannerUrl,
-            canConfigure: true
+            canConfigure: true,
+            path: previousConfiguration?.path
         };
     }
 
@@ -128,6 +130,19 @@ export class SolveServicePlannerProvider implements planner.PlannerProvider {
     showHelp(_output: OutputAdaptor): void {
         throw new Error("Method not implemented.");
     }
+
+    /** Custom `Planner` implementation. */
+    createPlanner?(configuration: planner.PlannerConfiguration, plannerInvocationOptions?: planner.PlannerRunConfiguration): planner.Planner {
+        if (configuration.url === undefined) {
+            throw new Error(`Planner ${configuration.title} does not specify 'url'.`);
+        }
+        return SolveServicePlannerProvider.createDefaultPlanner(configuration.url, plannerInvocationOptions ?? {});
+    }
+
+    /** Default `Planner` implementation. */
+    static createDefaultPlanner(url: string, plannerInvocationOptions: planner.PlannerRunConfiguration): planner.Planner {
+        return new PlannerSyncService(url, plannerInvocationOptions);
+    }    
 }
 
 export class RequestServicePlannerProvider implements planner.PlannerProvider {
@@ -157,15 +172,16 @@ export class RequestServicePlannerProvider implements planner.PlannerProvider {
 
         if (!newPlannerUrl) { return undefined; }
 
-        return this.createPlannerConfiguration(newPlannerUrl);
+        return this.createPlannerConfiguration(newPlannerUrl, previousConfiguration);
     }
 
-    createPlannerConfiguration(newPlannerUrl: string): planner.PlannerConfiguration {
+    createPlannerConfiguration(newPlannerUrl: string, previousConfiguration?: planner.PlannerConfiguration): planner.PlannerConfiguration {
         return {
             kind: this.kind.kind,
             url: newPlannerUrl,
             title: newPlannerUrl,
-            canConfigure: true
+            canConfigure: true,
+            path: previousConfiguration?.path
         };
     }
 
@@ -173,6 +189,19 @@ export class RequestServicePlannerProvider implements planner.PlannerProvider {
     showHelp(_output: OutputAdaptor): void {
         throw new Error("Method not implemented.");
     }
+
+    /** Custom `Planner` implementation. */
+    createPlanner?(configuration: planner.PlannerConfiguration, plannerInvocationOptions?: planner.PlannerRunConfiguration): planner.Planner {
+        if (configuration.url === undefined) {
+            throw new Error(`Planner ${configuration.title} does not specify 'url'.`);
+        }
+        return RequestServicePlannerProvider.createDefaultPlanner(configuration.url, plannerInvocationOptions as AsyncServiceConfiguration);
+    }
+
+    /** Default `Planner` implementation. */
+    static createDefaultPlanner(url: string, plannerInvocationOptions?: AsyncServiceConfiguration): planner.Planner {
+        return new PlannerAsyncService(url, plannerInvocationOptions as AsyncServiceConfiguration);
+    }    
 }
 
 export class JavaPlannerProvider implements planner.PlannerProvider {
@@ -207,12 +236,12 @@ export class JavaPlannerProvider implements planner.PlannerProvider {
     showHelp(_output: OutputAdaptor): void {
         // do nothing
     }
-    createPlanner(configuration: planner.PlannerConfiguration, plannerOptions: string, workingDirectory: string): planner.Planner {
-        if (configuration.path === undefined || configuration.syntax === undefined) {
-            throw new Error('Incomplete planner configuration. Mandatory attributes: path and syntax');
+    createPlanner(configuration: planner.PlannerConfiguration, plannerRunConfiguration: planner.PlannerRunConfiguration): planner.Planner {
+        if (!configuration.path) {
+            throw new Error('Incomplete planner configuration. Mandatory attributes: path');
         }
 
-        return new PlannerExecutable(`java -jar ${utils.Util.q(configuration.path)}`, plannerOptions, configuration.syntax, workingDirectory);
+        return new PlannerExecutable(`java -jar ${utils.Util.q(configuration.path)}`, plannerRunConfiguration as planner.PlannerExecutableRunConfiguration);
     }
 }
 
@@ -258,7 +287,7 @@ export class ExecutablePlannerProvider implements planner.PlannerProvider {
 export class Popf implements planner.PlannerProvider {
 
     get kind(): planner.PlannerKind {
-        return { kind: 'popf' };
+        return new planner.PlannerKind('popf');
     }
 
     getNewPlannerLabel(): string {
@@ -320,7 +349,7 @@ export class Popf implements planner.PlannerProvider {
 export class Lpg implements planner.PlannerProvider {
 
     get kind(): planner.PlannerKind {
-        return { kind: 'lpg-td' };
+        return new planner.PlannerKind('lpg-td');
     }
 
     getNewPlannerLabel(): string {

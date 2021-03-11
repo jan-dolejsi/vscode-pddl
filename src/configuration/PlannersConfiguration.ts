@@ -116,7 +116,7 @@ export class PlannersConfiguration {
         }
 
         const plannerProvider = this.pddlWorkspace.getPlannerRegistrar()
-            .getPlannerProvider({ kind: plannerConfiguration.configuration.kind });
+            .getPlannerProvider(new planner.PlannerKind(plannerConfiguration.configuration.kind));
 
         if (!plannerProvider) {
             new Error(`Planner provider for '${plannerConfiguration.configuration.kind}' is not currently available. Are you missing an extension?`);

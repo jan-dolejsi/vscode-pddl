@@ -142,7 +142,7 @@ export class MockPlannerProvider implements planner.PlannerProvider {
     constructor(private options?: { canConfigure?: boolean }) { }
 
     get kind(): planner.PlannerKind {
-        return { kind: "mock" };
+        return new planner.PlannerKind("mock");
     }
 
     getNewPlannerLabel(): string {
