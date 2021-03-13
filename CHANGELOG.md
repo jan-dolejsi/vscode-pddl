@@ -1,8 +1,47 @@
 # PDDL support - What's new?
 
-## [Unreleased]
+## [2.22.0]
 
 - When one or two PDDL files (i.e. domain and/or problem) are selected in the File Explorer and the context menu includes the _PDDL: Run the planner and display the plan_ command. This is extra helpful, when the domain and problem files are in different folders.
+- When planner fails, the correct 're-configure planner' action is used (currently it opens the Overview Page). Till now, the UI was offering an obsolete planner re-configuration option.
+- When planner fails, custom `PlannerProvider` can offer trouble-shooting actions e.g. start/re-start the service, authenticate, ...
+- Planning servers (those planner configurations that populate the `url` property), may also specify the `path` property, which is assumed to be a program/script that starts the service that serves the `url`. The extension now offers to start the service.
+- Planner configuration may specify the `cwd` current working directory.
+
+### Engineering work
+
+In order to give planner implementers more flexibility to create the planner and handle its lifecycle, the API exposed by this extension changed to:
+
+```typescript
+import { planner } from "pddl-workspace";
+import { Event } from "vscode";
+
+
+export declare interface PddlExtensionApi {
+    pddlWorkspace: PddlWorkspace;
+    plannerExecutableFactory: PlannerExecutableFactory;
+}
+
+/** Creates instances of the PlannerExecutable, so other extensions could wrap them. */
+export declare class PlannerExecutableFactory {
+    /**
+     * Creates new instance of `PlannerExecutable`.
+     * @param plannerPath planner path
+     * @param plannerRunConfiguration run configuration
+     * @param providerConfiguration provider configuration
+     * @returns planner executable that VS Code will call the `plan()` method on.
+     */
+    createPlannerExecutable(plannerPath: string, plannerRunConfiguration: planner.PlannerExecutableRunConfiguration,
+        providerConfiguration: planner.ProviderConfiguration): PlannerExecutable & planner.Planner;
+}
+
+export declare interface PlannerExecutable {
+    /**
+     * Event fired when the planner process exits. The value is the exit code.
+     */
+    onExited: Event<number>;
+}
+```
 
 ## 2.21.8
 
@@ -1362,7 +1401,8 @@ Note for open source contributors: all notable changes to the "pddl" extension w
 
 Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
 
-[Unreleased]: https://github.com/jan-dolejsi/vscode-pddl/compare/v2.21.0...HEAD
+[Unreleased]: https://github.com/jan-dolejsi/vscode-pddl/compare/v2.22.0...HEAD
+[2.22.0]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.21.0...v2.22.0
 [2.21.0]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.20.0...v2.21.0
 [2.20.0]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.19.0...v2.20.0
 [2.19.0]:https://github.com/jan-dolejsi/vscode-pddl/compare/v2.18.0...v2.19.0

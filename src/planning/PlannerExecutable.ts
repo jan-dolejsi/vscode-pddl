@@ -30,8 +30,8 @@ export class PlannerExecutable extends planner.Planner implements Disposable {
     private readonly plannerSyntax: string;
     private readonly plannerOptions: string;
 
-    constructor(plannerPath: string, private configuration: planner.PlannerExecutableRunConfiguration) {
-        super(plannerPath, configuration);
+    constructor(plannerPath: string, private configuration: planner.PlannerExecutableRunConfiguration, providerConfiguration: planner.ProviderConfiguration) {
+        super(plannerPath, configuration, providerConfiguration);
         this.plannerSyntax = configuration.plannerSyntax ?? PlannerExecutable.DEFAULT_SYNTAX;
         this.plannerOptions = configuration.options ?? '';
     }
@@ -130,9 +130,11 @@ export class PlannerExecutableFactory {
      * Creates new instance of `PlannerExecutable`.
      * @param plannerPath planner path
      * @param plannerRunConfiguration run configuration
+     * @param providerConfiguration provider configuration
      * @returns planner executable that VS Code will call the `plan()` method on.
      */
-    createPlannerExecutable(plannerPath: string, plannerRunConfiguration: planner.PlannerExecutableRunConfiguration): PlannerExecutable {
-        return new PlannerExecutable(plannerPath, plannerRunConfiguration);
+    createPlannerExecutable(plannerPath: string, plannerRunConfiguration: planner.PlannerExecutableRunConfiguration,
+        providerConfiguration: planner.ProviderConfiguration): PlannerExecutable {
+        return new PlannerExecutable(plannerPath, plannerRunConfiguration, providerConfiguration);
     }
 }

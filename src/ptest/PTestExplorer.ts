@@ -133,7 +133,7 @@ export class PTestExplorer {
             // use jsonc-parser to find the element in the JSON DOM
             const manifestText = (await workspace.fs.readFile(Uri.file(manifest.path))).toString();
             const rootNode = parseTree(manifestText);
-            const jsonTestNode = findNodeAtLocation(rootNode, ["cases", test.getIndex() ?? 0]);
+            const jsonTestNode = rootNode && findNodeAtLocation(rootNode, ["cases", test.getIndex() ?? 0]);
 
             const selection = jsonTestNode && jsonNodeToRange(manifestDocument, jsonTestNode);
             await window.showTextDocument(manifestDocument.uri, { preview: true, viewColumn: ViewColumn.One, selection: selection });

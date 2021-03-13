@@ -12,6 +12,7 @@ import { planner, OutputAdaptor, utils } from 'pddl-workspace';
 import { isHttp } from '../utils';
 import { PlannerExecutable } from '../planning/PlannerExecutable';
 import { AsyncServiceConfiguration, PlannerAsyncService, PlannerSyncService } from 'pddl-planning-service-client';
+import { LongRunningPlannerProvider } from './plannerExecution';
 
 export class CommandPlannerProvider implements planner.PlannerProvider {
     get kind(): planner.PlannerKind {
@@ -87,7 +88,7 @@ export class CommandPlannerProvider implements planner.PlannerProvider {
     }
 }
 
-export class SolveServicePlannerProvider implements planner.PlannerProvider {
+export class SolveServicePlannerProvider extends LongRunningPlannerProvider {
     get kind(): planner.PlannerKind {
         return planner.WellKnownPlannerKind.SERVICE_SYNC;
     }
@@ -132,20 +133,26 @@ export class SolveServicePlannerProvider implements planner.PlannerProvider {
     }
 
     /** Custom `Planner` implementation. */
-    createPlanner?(configuration: planner.PlannerConfiguration, plannerInvocationOptions?: planner.PlannerRunConfiguration): planner.Planner {
-        if (configuration.url === undefined) {
-            throw new Error(`Planner ${configuration.title} does not specify 'url'.`);
-        }
-        return SolveServicePlannerProvider.createDefaultPlanner(configuration.url, plannerInvocationOptions ?? {});
+    createPlanner?(configuration: planner.PlannerConfiguration, plannerInvocationOptions: planner.PlannerRunConfiguration): planner.Planner {
+        return SolveServicePlannerProvider.createDefaultPlanner(configuration, plannerInvocationOptions, this);
     }
 
     /** Default `Planner` implementation. */
-    static createDefaultPlanner(url: string, plannerInvocationOptions: planner.PlannerRunConfiguration): planner.Planner {
-        return new PlannerSyncService(url, plannerInvocationOptions);
+    static createDefaultPlanner(configuration: planner.PlannerConfiguration, plannerInvocationOptions: planner.PlannerRunConfiguration, plannerProvider?: planner.PlannerProvider): planner.Planner {
+        if (configuration.url === undefined) {
+            throw new Error(`Planner ${configuration.title} does not specify 'url'.`);
+        }
+
+        const providerConfiguration: planner.ProviderConfiguration = {
+            configuration: configuration,
+            provider: plannerProvider
+        }
+
+        return new PlannerSyncService(configuration.url, plannerInvocationOptions, providerConfiguration);
     }    
 }
 
-export class RequestServicePlannerProvider implements planner.PlannerProvider {
+export class RequestServicePlannerProvider extends LongRunningPlannerProvider {
     get kind(): planner.PlannerKind {
         return planner.WellKnownPlannerKind.SERVICE_ASYNC;
     }
@@ -191,16 +198,21 @@ export class RequestServicePlannerProvider implements planner.PlannerProvider {
     }
 
     /** Custom `Planner` implementation. */
-    createPlanner?(configuration: planner.PlannerConfiguration, plannerInvocationOptions?: planner.PlannerRunConfiguration): planner.Planner {
-        if (configuration.url === undefined) {
-            throw new Error(`Planner ${configuration.title} does not specify 'url'.`);
-        }
-        return RequestServicePlannerProvider.createDefaultPlanner(configuration.url, plannerInvocationOptions as AsyncServiceConfiguration);
+    createPlanner(configuration: planner.PlannerConfiguration, plannerInvocationOptions: planner.PlannerRunConfiguration): planner.Planner {
+        return RequestServicePlannerProvider.createDefaultPlanner(configuration, plannerInvocationOptions as AsyncServiceConfiguration);
     }
 
     /** Default `Planner` implementation. */
-    static createDefaultPlanner(url: string, plannerInvocationOptions?: AsyncServiceConfiguration): planner.Planner {
-        return new PlannerAsyncService(url, plannerInvocationOptions as AsyncServiceConfiguration);
+    static createDefaultPlanner(configuration: planner.PlannerConfiguration, plannerInvocationOptions: AsyncServiceConfiguration, plannerProvider?: planner.PlannerProvider): planner.Planner {
+        if (configuration.url === undefined) {
+            throw new Error(`Planner ${configuration.title} does not specify 'url'.`);
+        }
+
+        const providerConfiguration: planner.ProviderConfiguration = {
+            configuration: configuration,
+            provider: plannerProvider
+        }
+        return new PlannerAsyncService(configuration.url, plannerInvocationOptions, providerConfiguration);
     }    
 }
 
@@ -241,7 +253,13 @@ export class JavaPlannerProvider implements planner.PlannerProvider {
             throw new Error('Incomplete planner configuration. Mandatory attributes: path');
         }
 
-        return new PlannerExecutable(`java -jar ${utils.Util.q(configuration.path)}`, plannerRunConfiguration as planner.PlannerExecutableRunConfiguration);
+        const providerConfiguration: planner.ProviderConfiguration = {
+            configuration: configuration,
+            provider: this
+        }
+
+        return new PlannerExecutable(`java -jar ${utils.Util.q(configuration.path)}`,
+            plannerRunConfiguration as planner.PlannerExecutableRunConfiguration, providerConfiguration);
     }
 }
 
