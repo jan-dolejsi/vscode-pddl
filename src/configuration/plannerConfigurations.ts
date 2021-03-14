@@ -400,6 +400,25 @@ export class Lpg implements planner.PlannerProvider {
         return newPlannerConfiguration;
     }
 
+    createPlanner(configuration: planner.PlannerConfiguration, plannerRunConfiguration: planner.PlannerRunConfiguration): planner.Planner {
+        if (!plannerRunConfiguration.options) {
+            // ensure mandatory option is set
+            plannerRunConfiguration.options = "-n 1";
+        }
+
+        if (!configuration.path) {
+            throw new Error('Incomplete planner configuration. Mandatory attributes: path');
+        }
+
+        const providerConfiguration: planner.ProviderConfiguration = {
+            configuration: configuration,
+            provider: this
+        }
+
+        return new PlannerExecutable(configuration.path,
+            plannerRunConfiguration as planner.PlannerExecutableRunConfiguration, providerConfiguration);
+    }
+
     getPlannerOptions(): planner.PlannerOption[] {
         // see https://lpg.unibs.it/lpg/README-LPGTD
         return [

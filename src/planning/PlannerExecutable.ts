@@ -32,7 +32,7 @@ export class PlannerExecutable extends planner.Planner implements Disposable {
 
     constructor(plannerPath: string, private configuration: planner.PlannerExecutableRunConfiguration, providerConfiguration: planner.ProviderConfiguration) {
         super(plannerPath, configuration, providerConfiguration);
-        this.plannerSyntax = configuration.plannerSyntax ?? PlannerExecutable.DEFAULT_SYNTAX;
+        this.plannerSyntax = configuration.plannerSyntax ?? providerConfiguration.configuration.syntax ?? PlannerExecutable.DEFAULT_SYNTAX;
         this.plannerOptions = configuration.options ?? '';
     }
 

@@ -504,7 +504,8 @@ export class Planning implements planner.PlannerResponseHandler {
 
             const plannerRunConfiguration: planner.PlannerExecutableRunConfiguration = {
                 options: options,
-                workingDirectory: workingDirectory
+                workingDirectory: workingDirectory,
+                plannerSyntax: plannerConfiguration.syntax
             };
 
             const providerConfiguration: planner.ProviderConfiguration = {
