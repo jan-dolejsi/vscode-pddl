@@ -141,9 +141,11 @@ The planner can be invoked in the context of a currently edited PDDL file. There
 There are multiple scenarios supported:
 
 * if command is invoked on the domain file,
-  * and if single corresponding problem file is open, the planner will run without asking further questions
-  * and if multiple corresponding problem files are open, the list of applicable problem files will appear and the user will select one.
-* if command is invoked on a problem file, the domain file (if located in the same folder) will be selected automatically.
+  * and if single corresponding problem file exists in the same directory, the planner will run without asking further questions
+  * and if multiple corresponding problem files exist in the same directory, the list of applicable problem files will appear and the user will select one.
+* if command is invoked on a problem file, the domain file (if located in the same folder) will be selected automatically (as long as it is unique).
+
+To invoke the planner on domain/problem pair that are located in different directories, multi-select them both on the File Explorer tree and select the _PDDL: Run the planner and visualize the plan_ option from the context menu.
 
 Domain, problem and plan/happenings files correspond to each other, if:
 

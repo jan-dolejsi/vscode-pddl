@@ -10,7 +10,7 @@ import { Planning } from './planning/planning';
 import { PddlWorkspace } from 'pddl-workspace';
 import { PDDL, PLAN, HAPPENINGS } from 'pddl-workspace';
 import { PddlConfiguration, PDDL_CONFIGURE_COMMAND } from './configuration/configuration';
-import { Authentication } from './util/Authentication';
+import { SAuthentication } from './util/Authentication';
 import { AutoCompletion } from './completion/AutoCompletion';
 import { SymbolRenameProvider } from './symbols/SymbolRenameProvider';
 import { SymbolInfoProvider } from './symbols/SymbolInfoProvider';
@@ -43,6 +43,7 @@ import { ProblemConstraintsView } from './modelView/ProblemConstraintsView';
 import { ModelHierarchyProvider } from './symbols/ModelHierarchyProvider';
 import { PlannersConfiguration } from './configuration/PlannersConfiguration';
 import { registerPlanReport } from './planReport/planReport';
+import { PlannerExecutableFactory } from './planning/PlannerExecutable';
 
 const PDDL_CONFIGURE_PARSER = 'pddl.configureParser';
 const PDDL_LOGIN_PARSER_SERVICE = 'pddl.loginParserService';
@@ -61,14 +62,21 @@ export let ptestExplorer: PTestExplorer | undefined;
 
 export let packageJson: ExtensionPackage | undefined;
   
-export async function activate(context: ExtensionContext): Promise<PddlWorkspace | undefined> {
+
+/** API this extension exposes to other extensions. */
+interface PddlExtensionApi {
+	pddlWorkspace: PddlWorkspace;
+	plannerExecutableFactory: PlannerExecutableFactory;
+}
+
+export async function activate(context: ExtensionContext): Promise<PddlExtensionApi | undefined> {
 
 	const extensionInfo = new ExtensionInfo();
 
 	// initialize the instrumentation wrapper
 	const telemetryKey = process.env.VSCODE_PDDL_TELEMETRY_TOKEN;
 	if (telemetryKey) {
-		await initialize(extensionInfo.getId(), extensionInfo.getVersion(), telemetryKey);
+		initialize(extensionInfo.getId(), extensionInfo.getVersion(), telemetryKey);
 	}
 
 	try {
@@ -83,7 +91,7 @@ export async function activate(context: ExtensionContext): Promise<PddlWorkspace
 	}
 }
 
-async function activateWithTelemetry(_operationId: string, context: ExtensionContext): Promise<PddlWorkspace> {
+async function activateWithTelemetry(_operationId: string, context: ExtensionContext): Promise<PddlExtensionApi> {
 	pddlConfiguration = new PddlConfiguration(context);
 
 	const valDownloader = new ValDownloader(context).registerCommands();
@@ -278,16 +286,19 @@ async function activateWithTelemetry(_operationId: string, context: ExtensionCon
 		planHoverProvider, planDefinitionProvider, happeningsHoverProvider, happeningsDefinitionProvider,
 		problemInitView, problemObjectsView, problemConstraintsView, configureCommand);
 	
-	return pddlWorkspace;
+	return {
+		pddlWorkspace: pddlWorkspace,
+		plannerExecutableFactory: new PlannerExecutableFactory()
+	};
 }
 
 export function deactivate(): void {
 	// nothing to do
 }
 
-function createAuthentication(pddlConfiguration: PddlConfiguration): Authentication {
+function createAuthentication(pddlConfiguration: PddlConfiguration): SAuthentication {
 	const configuration = pddlConfiguration.getPddlParserServiceAuthenticationConfiguration();
-	return new Authentication(configuration.url!, configuration.requestEncoded!, configuration.clientId!, configuration.callbackPort!, configuration.timeoutInMs!,
+	return new SAuthentication(configuration.url!, configuration.requestEncoded!, configuration.clientId!, configuration.callbackPort!, configuration.timeoutInMs!,
 		configuration.tokensvcUrl!, configuration.tokensvcApiKey!, configuration.tokensvcAccessPath!, configuration.tokensvcValidatePath!,
 		configuration.tokensvcCodePath!, configuration.tokensvcRefreshPath!, configuration.tokensvcSvctkPath!,
 		configuration.refreshToken!, configuration.accessToken!, configuration.sToken!);

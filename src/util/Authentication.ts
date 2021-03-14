@@ -10,8 +10,9 @@ import request = require('request');
 import bodyParser = require('body-parser');
 import http = require('http');
 import opn = require('open');
+import { planner } from 'pddl-workspace';
 
-export class Authentication {
+export class SAuthentication implements planner.Authentication {
 
     private sToken?: string;
     private accessToken?: string;
@@ -28,7 +29,7 @@ export class Authentication {
         this.display();
     }
 
-    getSToken(): string | undefined {
+    getToken(): string | undefined {
         return this.sToken;
     }
 

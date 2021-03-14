@@ -2,8 +2,9 @@
  * Copyright (c) Jan Dolejsi. All rights reserved.
  * Licensed under the MIT License. See License.txt in the project root for license information.
  * ------------------------------------------------------------------------------------------ */
-import { window, Uri, QuickPickItem } from 'vscode';
+import { window, Uri, QuickPickItem, workspace } from 'vscode';
 import * as path from 'path';
+import { AsyncServiceOnlyConfiguration, PlannerAsyncService } from 'pddl-planning-service-client';
 
 export class PlannerConfigurationSelector {
 
@@ -43,6 +44,18 @@ export class PlannerConfigurationSelector {
 
         return selectedUris[0];
     }
+
+    static async loadConfiguration(configurationUri: Uri, timeout: number): Promise<AsyncServiceOnlyConfiguration> {
+        if (configurationUri.toString() === PlannerConfigurationSelector.DEFAULT.toString()) {
+            return PlannerAsyncService.createDefaultConfiguration(timeout);
+        }
+        else {
+            const configurationDoc = await workspace.openTextDocument(configurationUri);
+            const configurationString = configurationDoc.getText();
+            return JSON.parse(configurationString);
+        }
+    }
+
 
 }
 

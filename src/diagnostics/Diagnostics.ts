@@ -8,7 +8,7 @@ import {
     Diagnostic, DiagnosticSeverity, DiagnosticCollection, Uri, window, Disposable, workspace
 } from 'vscode';
 
-import { Authentication } from '../util/Authentication';
+import { SAuthentication } from '../util/Authentication';
 import { PddlWorkspace } from 'pddl-workspace';
 import { PlanInfo } from 'pddl-workspace';
 import { ProblemInfo } from 'pddl-workspace';
@@ -268,7 +268,7 @@ export class Diagnostics extends Disposable {
             
             if (isHttp(newParserPath)) {
                 // is a service
-                const authentication = new Authentication(
+                const authentication = new SAuthentication(
                     this.pddlParserSettings.serviceAuthenticationUrl,
                     this.pddlParserSettings.serviceAuthenticationRequestEncoded,
                     this.pddlParserSettings.serviceAuthenticationClientId,

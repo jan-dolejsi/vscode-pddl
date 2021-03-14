@@ -22,7 +22,6 @@ const PARSER_SERVICE_AUTHENTICATION_S_TOKEN = PDDL_PARSER + '.serviceAuthenticat
 
 export const PDDL_PLANNER = 'pddlPlanner';
 export const PLANNER_EXECUTABLE_OR_SERVICE = PDDL_PLANNER + '.' + EXECUTABLE_OR_SERVICE;
-const PLANNER_EXECUTABLE_OPTIONS = PDDL_PLANNER + '.' + EXECUTABLE_OPTIONS;
 const PLANNER_SERVICE_AUTHENTICATION_REFRESH_TOKEN = PDDL_PLANNER + '.serviceAuthenticationRefreshToken';
 const PLANNER_SERVICE_AUTHENTICATION_ACCESS_TOKEN = PDDL_PLANNER + '.serviceAuthenticationAccessToken';
 const PLANNER_SERVICE_AUTHENTICATION_S_TOKEN = PDDL_PLANNER + '.serviceAuthenticationSToken';
@@ -243,88 +242,6 @@ export class PddlConfiguration {
         configuration.update(PLANNER_SERVICE_AUTHENTICATION_REFRESH_TOKEN, refreshtoken, target);
         configuration.update(PLANNER_SERVICE_AUTHENTICATION_ACCESS_TOKEN, accesstoken, target);
         configuration.update(PLANNER_SERVICE_AUTHENTICATION_S_TOKEN, stoken, target);
-    }
-
-    /**
-     * @deprecated
-     */
-    async getPlannerPath(workingFolder?: Uri): Promise<string | undefined> {
-        let plannerPath = workspace.getConfiguration(PDDL_PLANNER, workingFolder).get<string>(EXECUTABLE_OR_SERVICE);
-
-        if (!plannerPath) {
-            plannerPath = await this.askNewPlannerPath();
-        }
-
-        return plannerPath; // this may be 'undefined', if the user canceled
-    }
-
-    /**
-     * @deprecated
-     */
-    async askNewPlannerPath(): Promise<string | undefined> {
-        const existingValue = workspace.getConfiguration(PDDL_PLANNER, null).get<string>(EXECUTABLE_OR_SERVICE);
-
-        let newPlannerPath = await window.showInputBox({
-            prompt: "Enter PDDL planner path local command or web service URL",
-            placeHolder: `planner.exe OR java -jar c:\\planner.jar OR http://solver.planning.domains/solve`,
-            value: existingValue,
-            ignoreFocusOut: true
-        });
-
-        if (newPlannerPath) {
-
-            newPlannerPath = newPlannerPath.trim().replace(/\\/g, '/');
-
-            // todo: validate that this planner actually works by sending a dummy request to it
-
-            const newPlannerScope = await this.askConfigurationScope();
-
-            if (!newPlannerScope) { return undefined; }
-            const configurationToUpdate = this.getConfigurationForScope(newPlannerScope);
-            if (!configurationToUpdate) { return undefined; }
-
-            if (!isHttp(newPlannerPath)) {
-                this.askPlannerSyntax(newPlannerScope);
-            }
-
-            // Update the value in the target
-            configurationToUpdate.update(PLANNER_EXECUTABLE_OR_SERVICE, newPlannerPath, newPlannerScope.target);
-        }
-
-        return newPlannerPath;
-    }
-
-    /**
-     * @deprecated
-     */
-    async askPlannerSyntax(scope: ScopeQuickPickItem): Promise<string | undefined> {
-        const existingValue = workspace.getConfiguration().get<string>(PLANNER_EXECUTABLE_OPTIONS);
-
-        const newPlannerOptions = await window.showInputBox({
-            prompt: "In case you use command line switches and options, override the default syntax. For more info, see (the wiki)[https://github.com/jan-dolejsi/vscode-pddl/wiki/Configuring-the-PDDL-planner].",
-            placeHolder: `$(planner) $(options) $(domain) $(problem)`,
-            value: existingValue,
-            ignoreFocusOut: true
-        });
-
-        if (newPlannerOptions) {
-            // todo: validate that this planner actually works by sending a dummy request to it
-
-            const configurationToUpdate = this.getConfigurationForScope(scope);
-            if (!configurationToUpdate) { return undefined; }
-
-            // Update the value in the target
-            configurationToUpdate.update(PLANNER_EXECUTABLE_OPTIONS, newPlannerOptions, scope.target);
-        }
-
-        return newPlannerOptions;
-    }
-
-    /**
-     * @deprecated
-     */
-    getPlannerSyntax(): string | undefined {
-        return workspace.getConfiguration().get<string>(PLANNER_EXECUTABLE_OPTIONS);
     }
 
     getValueSeqPath(): string | undefined {

@@ -12,22 +12,22 @@ import { Validator } from './validator';
 import { ProblemInfo } from 'pddl-workspace';
 import { DomainInfo } from 'pddl-workspace';
 import { FileStatus } from 'pddl-workspace';
-import { Authentication } from '../util/Authentication';
+import { SAuthentication } from '../util/Authentication';
 
 import request = require('request');
 
 export class ValidatorService extends Validator {
 
-    constructor(path: string, private useAuthentication: boolean, private authentication: Authentication) { 
+    constructor(path: string, private useAuthentication: boolean, private authentication: SAuthentication) { 
         super(path);
     }
     
     validate(domainInfo: DomainInfo, problemFiles: ProblemInfo[], onSuccess: (diagnostics: Map<string, Diagnostic[]>) => void, onError: (error: string) => void): void {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         let requestHeader: any = {};
-        if(this.useAuthentication && this.authentication.getSToken()) {
+        if(this.useAuthentication && this.authentication.getToken()) {
             requestHeader = {
-                "Authorization": "Bearer " + this.authentication.getSToken()
+                "Authorization": "Bearer " + this.authentication.getToken()
             };
         }
 

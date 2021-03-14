@@ -8,7 +8,7 @@ del pddl-workspace-*.tgz
 call npm pack
 
 cd ..\vscode-pddl
-call npm install ..\pddl-workspace\pddl-workspace-6.2.0.tgz --save
+call npm install ..\pddl-workspace\pddl-workspace-6.3.0.tgz --save
 
 call npm uninstall ai-planning-val
 cd ..\ai-planning-val.js
@@ -17,3 +17,7 @@ call npm pack
 
 cd ..\vscode-pddl
 call npm install ..\ai-planning-val.js\ai-planning-val-2.4.1.tgz --save
+
+:: pddl-planning-service-client
+call npm uninstall pddl-planning-service-client
+call npm install ..\pddl-planning-service-client\pddl-planning-service-client-0.0.1.tgz --save

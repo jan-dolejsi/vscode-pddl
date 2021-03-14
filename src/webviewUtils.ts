@@ -64,7 +64,7 @@ export interface WebViewHtmlOptions {
 }
 
 function getWebviewUri(extensionContext: ExtensionContext, relativePath: string, fileName: string, webview?: Webview): Uri {
-    return asWebviewUri(Uri.file(extensionContext.asAbsolutePath(path.join(relativePath, fileName))), webview);
+    return asWebviewUri(Uri.joinPath(extensionContext.extensionUri, relativePath, fileName), webview);
 }
 
 function getAbsoluteWebviewUri(extensionContext: ExtensionContext, webview: Webview, options: WebViewHtmlOptions, uri: Uri): Uri {

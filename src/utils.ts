@@ -181,7 +181,7 @@ export class UriMap<T> extends utils.StringifyingMap<Uri, T> {
     }
 }
 
-export async function fileExists(fileOrFolderUri: Uri): Promise<boolean> {
+export async function fileOrFolderExists(fileOrFolderUri: Uri): Promise<boolean> {
     try {
         await workspace.fs.stat(fileOrFolderUri);
         return true;

@@ -9,6 +9,7 @@ import {
     MessageItem, ExtensionContext, ProgressLocation, EventEmitter, Event, CancellationToken, Progress, QuickPickItem, TextDocument
 } from 'vscode';
 import { instrumentOperationAsVsCodeCommand } from "vscode-extension-telemetry-wrapper";
+import { PlannerAsyncService, AsyncServiceConfiguration } from "pddl-planning-service-client";
 import * as path from 'path';
 import { dirname } from 'path';
 
@@ -17,9 +18,7 @@ import {
 } from 'pddl-workspace';
 import { PddlConfiguration, PDDL_CONFIGURE_COMMAND, PDDL_PLANNER } from '../configuration/configuration';
 import { PlannerExecutable } from './PlannerExecutable';
-import { PlannerSyncService } from './PlannerSyncService';
-import { PlannerAsyncService } from './PlannerAsyncService';
-import { Authentication } from '../util/Authentication';
+import { SAuthentication } from '../util/Authentication';
 import { PlanningResult } from './PlanningResult';
 import { PlanExporter } from './PlanExporter';
 import { PlanHappeningsExporter } from './PlanHappeningsExporter';
@@ -33,6 +32,7 @@ import { AssociationProvider } from '../workspace/AssociationProvider';
 import { showError, isHttp } from '../utils';
 import { CodePddlWorkspace } from '../workspace/CodePddlWorkspace';
 import { EXECUTION_TARGET, PDDL_CONFIGURE_PLANNER_OUTPUT_TARGET, PlannersConfiguration } from '../configuration/PlannersConfiguration';
+import { RequestServicePlannerProvider, SolveServicePlannerProvider } from '../configuration/plannerConfigurations';
 
 const PDDL_STOP_PLANNER = 'pddl.stopPlanner';
 const PDDL_CONVERT_PLAN_TO_HAPPENINGS = 'pddl.convertPlanToHappenings';
@@ -72,11 +72,17 @@ export class Planning implements planner.PlannerResponseHandler {
         context.subscriptions.push(this.planView = new PlanView(context, codePddlWorkspace));
 
         context.subscriptions.push(instrumentOperationAsVsCodeCommand(PDDL_PLAN_AND_DISPLAY,
-            async (domainUri: Uri, problemUri: Uri | EditorId | undefined, workingFolder: string, options?: string) => {
-                if (problemUri && instanceOfEditorId(problemUri)) {
+            async (domainUri: Uri, payload: Uri | Uri[] | EditorId | undefined, workingFolder: string, options?: string) => {
+                if (payload && instanceOfEditorId(payload)) {
+                    // triggered from the editor tab
                     await this.planFromDocument(await workspace.openTextDocument(domainUri)).catch(showError);
-                } else if (problemUri) {
-                    await this.planByUri(domainUri, problemUri, workingFolder, options).catch(showError);
+                } else if (Array.isArray(payload)) {
+                    // multi-selected multiple files in the Explorer
+                    const selectedFiles = payload;
+                    this.planByUris(selectedFiles, workingFolder, options).catch(showError);
+                } else if (payload) {
+                    // payload should be Uri; we ruled out other options
+                    await this.planByUri(domainUri, payload, workingFolder, options).catch(showError);
                 } else {
                     await this.plan().catch(showError);
                 }
@@ -155,6 +161,44 @@ export class Planning implements planner.PlannerResponseHandler {
         const problemInfo = await this.codePddlWorkspace.upsertAndParseFile(problemDocument) as ProblemInfo;
 
         this.planExplicit(domainInfo, problemInfo, workingFolder, options);
+    }
+
+    async planByUris(selectedFiles: Uri[], workingFolder: string, options?: string): Promise<void> {
+        if (selectedFiles.length === 1) {
+            await this.planFromDocument(await workspace.openTextDocument(selectedFiles[0])).catch(showError);
+        } else if (selectedFiles.length === 2) {
+
+            let problemFileInfo: ProblemInfo | undefined;
+            let domainFileInfo: DomainInfo | undefined;
+
+            for (let i = 0; i < selectedFiles.length; i++) {
+                const selectedFile = selectedFiles[i];
+                const selectedDoc = await workspace.openTextDocument(selectedFile);
+
+                const fileInfo = await this.codePddlWorkspace.upsertAndParseFile(selectedDoc);
+                if (fileInfo === undefined) { throw new Error(`Selected file is not a PDDL document: ${selectedDoc.fileName}`); }
+
+                if (fileInfo.isDomain()) {
+                    if (domainFileInfo !== undefined) {
+                        throw new Error('Two domain files were selected. Select a domain file and one problem file.');
+                    }
+                    domainFileInfo = fileInfo as DomainInfo;
+                } else if (fileInfo.isProblem()) {
+                    if (problemFileInfo !== undefined) {
+                        throw new Error('Two problem files were selected. Select a domain file and one problem file.');
+                    }
+                    problemFileInfo = fileInfo as ProblemInfo;
+                } else {
+                    throw new Error(`File not supported: ${fileInfo.name}. Select a domain file and one problem file.`);
+                }
+            }
+
+            if (!domainFileInfo || !problemFileInfo) {
+                throw new Error('Select a domain file and one problem file.');
+            }
+
+            await this.planExplicit(domainFileInfo, problemFileInfo, workingFolder, options);
+        }
     }
 
     /**
@@ -289,6 +333,9 @@ export class Planning implements planner.PlannerResponseHandler {
         this.planner = await this.createPlanner(workingDirectory, options);
         if (!this.planner) { return; }
         const planner: planner.Planner = this.planner;
+        if ("dispose" in planner) {
+            this.context.subscriptions.push(planner);
+        }
 
         this.planningProcessKilled = false;
 
@@ -313,7 +360,7 @@ export class Planning implements planner.PlannerResponseHandler {
             this.progressUpdater = new ElapsedTimeProgressUpdater(progress, token);
             return planner.plan(domainFileInfo, problemFileInfo, planParser, this);
         })
-            .then(plans => this.onPlannerFinished(plans), reason => this.onPlannerFailed(reason));
+            .then(plans => this.onPlannerFinished(plans), reason => this.onPlannerFailed(reason, planner));
     }
 
     isSearchDebugger(): boolean {
@@ -332,8 +379,13 @@ export class Planning implements planner.PlannerResponseHandler {
         this.visualizePlans(plans);
     }
 
+    /**
+     * Called when the planner run fails.
+     * @param reason reason of the failure
+     * @param failedPlanner planner that failed
+     */
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    onPlannerFailed(reason: any): void {
+    async onPlannerFailed(reason: any, failedPlanner: planner.Planner): Promise<void> {
         if (!this.progressUpdater) { return; }
         this.progressUpdater.setFinished();
         this._onPlansFound.fire(PlanningResult.failure(reason.toString()));
@@ -341,14 +393,35 @@ export class Planning implements planner.PlannerResponseHandler {
         this.planner = null;
         console.error(reason);
 
-        window.showErrorMessage<ProcessErrorMessageItem>(reason.message,
-            { title: "Re-configure the planner", setPlanner: true },
-            { title: "Ignore", setPlanner: false, isCloseAffordance: true }
-        ).then(selection => {
-            if (selection && selection.setPlanner) {
-                this.pddlConfiguration.askNewPlannerPath();
+        // does the planner provide any trouble-shooting options?
+        const troubleShootingInfo = await failedPlanner.providerConfiguration.provider?.troubleshoot?.(failedPlanner, reason as unknown);
+
+        const options: ProcessErrorMessageItem[] = [
+            {
+                title: failedPlanner.providerConfiguration.configuration.canConfigure ?
+                    "Re-configure the planner" : "Show configuration",
+                action: (): void => {
+                    // todo, if there is only one configuration of the kind, launch the configuration directly
+                    commands.executeCommand("pddl.showOverview");
+                }
             }
-        });
+        ];
+
+        if (troubleShootingInfo?.options) {
+            [...troubleShootingInfo.options.keys()]
+                .forEach(title => {
+                    options.push({ title: title, action: troubleShootingInfo.options.get(title) });
+                });
+        }
+
+        options.push({ title: "Dismiss", isCloseAffordance: true });
+
+        const message = (troubleShootingInfo?.info ?? '') + '\n\n\nError: ' + (reason.message ?? reason);
+
+        const selection = await window.showErrorMessage<ProcessErrorMessageItem>(message, ...options);
+        if (selection?.action) {
+            selection.action(failedPlanner);
+        }
     }
 
     async adjustWorkingFolder(workingDirectory: string): Promise<string> {
@@ -392,7 +465,7 @@ export class Planning implements planner.PlannerResponseHandler {
             let authentication = undefined;
             if (useAuthentication) {
                 const configuration = this.pddlConfiguration.getPddlPlannerServiceAuthenticationConfiguration();
-                authentication = new Authentication(configuration.url, configuration.requestEncoded, configuration.clientId, configuration.callbackPort, configuration.timeoutInMs,
+                authentication = new SAuthentication(configuration.url, configuration.requestEncoded, configuration.clientId, configuration.callbackPort, configuration.timeoutInMs,
                     configuration.tokensvcUrl, configuration.tokensvcApiKey, configuration.tokensvcAccessPath, configuration.tokensvcValidatePath,
                     configuration.tokensvcCodePath, configuration.tokensvcRefreshPath, configuration.tokensvcSvctkPath,
                     configuration.refreshToken, configuration.accessToken, configuration.sToken);
@@ -402,24 +475,46 @@ export class Planning implements planner.PlannerResponseHandler {
                 options = await this.getPlannerLineOptions(plannerConfiguration, options);
                 if (options === undefined) { return null; }
 
-                return new PlannerSyncService(plannerConfiguration.url, options, authentication);
+                const plannerRunConfiguration: planner.PlannerRunConfiguration = {
+                    options: options,
+                    authentication: authentication
+                };
+
+                return this.codePddlWorkspace.pddlWorkspace.getPlannerRegistrar()
+                    .getPlannerProvider(new planner.PlannerKind(plannerConfiguration.kind))?.createPlanner?.(plannerConfiguration, plannerRunConfiguration) ??
+                    SolveServicePlannerProvider.createDefaultPlanner(plannerConfiguration, plannerRunConfiguration);
             }
             else if (plannerConfiguration.url.endsWith("/request")) {
-                const configuration = options ? this.toAbsoluteUri(options, workingDirectory) : await new PlannerConfigurationSelector(Uri.file(workingDirectory)).getConfiguration();
-                if (!configuration) { return null; } // canceled by user
-                return new PlannerAsyncService(plannerConfiguration.url, configuration, authentication);
+                const configurationUri = options ? this.toAbsoluteUri(options, workingDirectory) : await new PlannerConfigurationSelector(Uri.file(workingDirectory)).getConfiguration();
+                if (!configurationUri) { return null; } // canceled by user
+                const plannerRunConfiguration = await PlannerConfigurationSelector.loadConfiguration(configurationUri, PlannerAsyncService.DEFAULT_TIMEOUT) as AsyncServiceConfiguration;
+                plannerRunConfiguration.authentication = authentication;
+
+                return this.codePddlWorkspace.pddlWorkspace.getPlannerRegistrar()
+                    .getPlannerProvider(new planner.PlannerKind(plannerConfiguration.kind))?.createPlanner?.(plannerConfiguration, plannerRunConfiguration) ??
+                    RequestServicePlannerProvider.createDefaultPlanner(plannerConfiguration, plannerRunConfiguration);
             }
             else {
                 throw new Error(`Planning service not supported: ${plannerConfiguration.url}. Only /solve or /request service endpoints are supported.`);
             }
         }
-        else if(plannerConfiguration.path) {
+        else if (plannerConfiguration.path) {
             options = await this.getPlannerLineOptions(plannerConfiguration, options);
             if (options === undefined) { return null; }
 
+            const plannerRunConfiguration: planner.PlannerExecutableRunConfiguration = {
+                options: options,
+                workingDirectory: workingDirectory,
+                plannerSyntax: plannerConfiguration.syntax
+            };
+
+            const providerConfiguration: planner.ProviderConfiguration = {
+                configuration: plannerConfiguration
+            };
+
             return this.codePddlWorkspace.pddlWorkspace.getPlannerRegistrar()
-                .getPlannerProvider({ kind: plannerConfiguration.kind })?.createPlanner?.(plannerConfiguration, options, workingDirectory) ?? 
-                new PlannerExecutable(plannerConfiguration.path, options, plannerConfiguration.syntax, workingDirectory);
+                .getPlannerProvider(new planner.PlannerKind(plannerConfiguration.kind))?.createPlanner?.(plannerConfiguration, plannerRunConfiguration) ??
+                new PlannerExecutable(plannerConfiguration.path, plannerRunConfiguration, providerConfiguration);
         } else {
             throw new Error(`Planner configuration must define at least one of the properties 'url' or 'path': ${plannerConfiguration.title}`);
         }
@@ -435,7 +530,7 @@ export class Planning implements planner.PlannerResponseHandler {
     async getPlannerLineOptions(configuration: planner.PlannerConfiguration, options: string | undefined): Promise<string | undefined> {
         if (options === undefined) {
             const plannerProvider = this.codePddlWorkspace.pddlWorkspace.getPlannerRegistrar()
-                .getPlannerProvider({ kind: configuration.kind });
+                .getPlannerProvider(new planner.PlannerKind(configuration.kind));
 
             return await this.userOptionsProvider.getPlannerOptions(plannerProvider);
         }
@@ -543,7 +638,7 @@ export class Planning implements planner.PlannerResponseHandler {
 interface ProcessErrorMessageItem extends MessageItem {
     title: string;
     isCloseAffordance?: boolean;
-    setPlanner: boolean;
+    action?: (planner: planner.Planner) => void | Promise<void>;
 }
 
 class ElapsedTimeProgressUpdater {

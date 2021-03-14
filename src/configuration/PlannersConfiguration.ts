@@ -12,7 +12,7 @@ import { PddlWorkspace, planner } from 'pddl-workspace';
 import { CommandPlannerProvider, SolveServicePlannerProvider, RequestServicePlannerProvider, ExecutablePlannerProvider, Popf, JavaPlannerProvider, Lpg } from './plannerConfigurations';
 import { CONF_PDDL, PDDL_PLANNER, EXECUTABLE_OR_SERVICE, EXECUTABLE_OPTIONS } from './configuration';
 import { instrumentOperationAsVsCodeCommand } from 'vscode-extension-telemetry-wrapper';
-import { showError, jsonNodeToRange, fileExists, isHttp } from '../utils';
+import { showError, jsonNodeToRange, fileOrFolderExists, isHttp } from '../utils';
 
 export const CONF_PLANNERS = "planners";
 export const CONF_SELECTED_PLANNER = "selectedPlanner";
@@ -45,7 +45,7 @@ export class PlannersConfiguration {
     private plannerSelector: StatusBarItem | undefined;
     private plannerOutputSelector: StatusBarItem | undefined;
 
-    constructor(context: ExtensionContext, private pddlWorkspace: PddlWorkspace) {
+    constructor(private context: ExtensionContext, private pddlWorkspace: PddlWorkspace) {
         context.subscriptions.push(instrumentOperationAsVsCodeCommand(PDDL_ADD_PLANNER, () => this.createPlannerConfiguration().catch(showError)));
         context.subscriptions.push(instrumentOperationAsVsCodeCommand(PDDL_GET_SELECTED_PLANNER, () => this.getSelectedPlanner()?.configuration));
         context.subscriptions.push(instrumentOperationAsVsCodeCommand(PDDL_SELECT_PLANNER, async () => (await this.selectPlanner())?.configuration));
@@ -116,7 +116,7 @@ export class PlannersConfiguration {
         }
 
         const plannerProvider = this.pddlWorkspace.getPlannerRegistrar()
-            .getPlannerProvider({ kind: plannerConfiguration.configuration.kind });
+            .getPlannerProvider(new planner.PlannerKind(plannerConfiguration.configuration.kind));
 
         if (!plannerProvider) {
             new Error(`Planner provider for '${plannerConfiguration.configuration.kind}' is not currently available. Are you missing an extension?`);
@@ -159,8 +159,8 @@ export class PlannersConfiguration {
         const config = workspace.getConfiguration(PDDL_PLANNER, workspaceFolder);
         const migratedPlanner = isHttp(legacyPlanner)
             ? legacyPlanner.endsWith('/solve')
-                ? new SolveServicePlannerProvider().createPlannerConfiguration(legacyPlanner)
-                : new RequestServicePlannerProvider().createPlannerConfiguration(legacyPlanner)
+                ? new SolveServicePlannerProvider([]).createPlannerConfiguration(legacyPlanner)
+                : new RequestServicePlannerProvider([]).createPlannerConfiguration(legacyPlanner)
             : new CommandPlannerProvider().createPlannerConfiguration(legacyPlanner, legacySyntax);
 
         const target = this.toConfigurationTarget(scope);
@@ -212,8 +212,8 @@ export class PlannersConfiguration {
         [
             new ExecutablePlannerProvider(),
             new CommandPlannerProvider(),
-            new SolveServicePlannerProvider(),
-            new RequestServicePlannerProvider(),
+            new SolveServicePlannerProvider(this.context.subscriptions),
+            new RequestServicePlannerProvider(this.context.subscriptions),
             new Popf(),
             new Lpg(),
             new JavaPlannerProvider(),
@@ -546,11 +546,11 @@ export class PlannersConfiguration {
 
     async toDocumentAndRange(setting: { fileUri: Uri | undefined; settingRootPath: (string | number)[] }, index?: number): Promise<{ settingsDoc: TextDocument; range: Range } | undefined> {
         if (!setting.fileUri) { return undefined; }
-        const exists = await fileExists(setting.fileUri);
+        const exists = await fileOrFolderExists(setting.fileUri);
         if (!exists) { return undefined; }
         const settingsText = await workspace.fs.readFile(setting.fileUri);
         const settingsRoot = parseTree(settingsText.toString());
-
+        if (!settingsRoot) { return undefined; }
         let path = setting.settingRootPath.concat([CONF_PDDL + '.' + CONF_PLANNERS]);
         if (index !== undefined) {
             path = path.concat([index]);
