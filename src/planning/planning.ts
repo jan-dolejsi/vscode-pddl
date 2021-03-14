@@ -398,7 +398,8 @@ export class Planning implements planner.PlannerResponseHandler {
 
         const options: ProcessErrorMessageItem[] = [
             {
-                title: "Re-configure the planner",
+                title: failedPlanner.providerConfiguration.configuration.canConfigure ?
+                    "Re-configure the planner" : "Show configuration",
                 action: (): void => {
                     // todo, if there is only one configuration of the kind, launch the configuration directly
                     commands.executeCommand("pddl.showOverview");

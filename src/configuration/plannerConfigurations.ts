@@ -133,13 +133,13 @@ export class SolveServicePlannerProvider extends LongRunningPlannerProvider {
     }
 
     /** Custom `Planner` implementation. */
-    createPlanner?(configuration: planner.PlannerConfiguration, plannerInvocationOptions: planner.PlannerRunConfiguration): planner.Planner {
+    createPlanner(configuration: planner.PlannerConfiguration, plannerInvocationOptions: planner.PlannerRunConfiguration): planner.Planner {
         return SolveServicePlannerProvider.createDefaultPlanner(configuration, plannerInvocationOptions, this);
     }
 
     /** Default `Planner` implementation. */
     static createDefaultPlanner(configuration: planner.PlannerConfiguration, plannerInvocationOptions: planner.PlannerRunConfiguration, plannerProvider?: planner.PlannerProvider): planner.Planner {
-        if (configuration.url === undefined) {
+        if (!configuration.url) {
             throw new Error(`Planner ${configuration.title} does not specify 'url'.`);
         }
 
@@ -199,7 +199,7 @@ export class RequestServicePlannerProvider extends LongRunningPlannerProvider {
 
     /** Custom `Planner` implementation. */
     createPlanner(configuration: planner.PlannerConfiguration, plannerInvocationOptions: planner.PlannerRunConfiguration): planner.Planner {
-        return RequestServicePlannerProvider.createDefaultPlanner(configuration, plannerInvocationOptions as AsyncServiceConfiguration);
+        return RequestServicePlannerProvider.createDefaultPlanner(configuration, plannerInvocationOptions as AsyncServiceConfiguration, this);
     }
 
     /** Default `Planner` implementation. */
