@@ -67,7 +67,7 @@ export abstract class LongRunningPlannerProvider implements planner.PlannerProvi
 
             const isLocal = ['localhost', '127.0.0.1'].includes(reason.address);
             const serviceExePath = configuration.path;
-            if (isLocal && serviceExePath) {
+            if (isLocal && serviceExePath !== undefined) {
                 const fileName = path.basename(serviceExePath);
                 if (await fileOrFolderExists(Uri.file(serviceExePath))) {
                     if (this.isServiceRunning(configuration)) {
@@ -104,7 +104,7 @@ export abstract class LongRunningPlannerProvider implements planner.PlannerProvi
 
     get taskDefinition(): TaskDefinition {
         return {
-            type: 'PlanningService'
+            type: 'PlanningService:' + this.kind.kind
         };
     }
 
