@@ -1,5 +1,10 @@
 # PDDL support - What's new?
 
+## 2.22.1
+
+- Planning service, which specifies both the `url` and `path` in the planner configuration, may be started by the user, as long as the `url` is local. The service then runs as a _Task_ in a new _Terminal_ inside VS Code
+  ![Planning service start suggestion](https://raw.githubusercontent.com/wiki/jan-dolejsi/vscode-pddl/img/pddl_planning_service_start-up.gif)
+
 ## [2.22.0]
 
 - When one or two PDDL files (i.e. domain and/or problem) are selected in the File Explorer and the context menu includes the _PDDL: Run the planner and display the plan_ command. This is extra helpful, when the domain and problem files are in different folders.

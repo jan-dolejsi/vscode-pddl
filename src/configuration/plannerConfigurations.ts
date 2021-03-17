@@ -4,6 +4,8 @@
  * ------------------------------------------------------------------------------------------ */
 'use strict';
 
+import * as http from 'http';
+import { URL } from 'url';
 import * as os from 'os';
 import * as path from 'path';
 import { Uri, window } from 'vscode';
@@ -149,7 +151,29 @@ export class SolveServicePlannerProvider extends LongRunningPlannerProvider {
         }
 
         return new PlannerSyncService(configuration.url, plannerInvocationOptions, providerConfiguration);
-    }    
+    }
+
+    /**
+     * Checks if the server is responsive
+     * @param configuration planning service configuration
+     * @returns true of the service responds
+     */
+    async isServiceAccessible(configuration: planner.PlannerConfiguration): Promise<boolean> {
+        const url = configuration.url;
+        if (!url) {
+            throw new Error(`Expected planning configuration with the 'url' attribute.`);
+        }
+
+        return new Promise<boolean>(resolve => {
+            const req = http.request(new URL(url), { method: 'post' }, response => {
+                resolve((response.statusCode !== undefined) && (response.statusCode >= 400));
+            }).once("error", () => {
+                resolve(false);
+            });
+            req.write(JSON.stringify({ domain: "", problem: "" }))
+            req.end();
+        });
+    }
 }
 
 export class RequestServicePlannerProvider extends LongRunningPlannerProvider {
@@ -213,7 +237,45 @@ export class RequestServicePlannerProvider extends LongRunningPlannerProvider {
             provider: plannerProvider
         }
         return new PlannerAsyncService(configuration.url, plannerInvocationOptions, providerConfiguration);
-    }    
+    }
+
+    /**
+     * Checks if the server is responsive
+     * @param configuration planning service configuration
+     * @returns true of the service responds
+     */
+    async isServiceAccessible(configuration: planner.PlannerConfiguration): Promise<boolean> {
+        const url = configuration.url;
+        if (!url) {
+            throw new Error(`Expected planning configuration with the 'url' attribute.`);
+        }
+
+        return new Promise<boolean>(resolve => {
+            const req = http.request(new URL(url), { method: 'post' }, response => {
+                resolve((response.statusCode !== undefined) && (response.statusCode >= 400));
+            }).once("error", () => {
+                resolve(false);
+            });
+            req.write(JSON.stringify(this.createDummyRequestBody()))
+            req.end();
+        });
+    }
+
+    private createDummyRequestBody(): unknown {
+        return {
+            'domain': {
+                'name': 'dummy-domain',
+                'format': 'PDDL',
+                'content': '' // empty
+            },
+            'problem': {
+                'name': 'dummy-problem',
+                'format': 'PDDL',
+                'content': '' // empty
+            },
+            'configuration': {}
+        };
+    }
 }
 
 export class JavaPlannerProvider implements planner.PlannerProvider {
@@ -225,11 +287,11 @@ export class JavaPlannerProvider implements planner.PlannerProvider {
     }
 
     async configurePlanner(previousConfiguration?: planner.PlannerConfiguration): Promise<planner.PlannerConfiguration | undefined> {
-        const filters = 
-            {
-                'Java executable archive': ['jar'],
-            };
-        
+        const filters =
+        {
+            'Java executable archive': ['jar'],
+        };
+
         const defaultUri = previousConfiguration?.path ? Uri.file(previousConfiguration.path) : undefined;
 
         const executableUri = await selectedFile(`Select executable JAR`, defaultUri, filters);
@@ -257,7 +319,7 @@ export class JavaPlannerProvider implements planner.PlannerProvider {
             configuration: configuration,
             provider: this
         }
-
+        // todo: use java.home setting
         return new PlannerExecutable(`java -jar ${utils.Util.q(configuration.path)}`,
             plannerRunConfiguration as planner.PlannerExecutableRunConfiguration, providerConfiguration);
     }
@@ -528,7 +590,7 @@ export class Lpg implements planner.PlannerProvider {
 // const python: QuickPickItem = {
 //     label: "$(file-text) Select a Python file..."
 // };
-
+// ${command:python.interpreterPath}
 
 async function selectedFile(label: string, defaultUri?: Uri, filters?: { [name: string]: string[] }): Promise<Uri | undefined> {
     const selectedUris = await window.showOpenDialog({
