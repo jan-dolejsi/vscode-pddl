@@ -8,9 +8,9 @@
 'use strict';
 
 import * as path from 'path';
+import { Disposable, ShellExecution, Task, TaskDefinition, TaskEndEvent, TaskExecution, TaskRevealKind, tasks, TaskScope, Uri, window } from 'vscode';
 import { instanceOfHttpConnectionRefusedError } from 'pddl-planning-service-client';
 import { planner, utils } from 'pddl-workspace';
-import { Disposable, ShellExecution, Task, TaskDefinition, TaskEndEvent, TaskExecution, TaskRevealKind, tasks, TaskScope, Uri } from 'vscode';
 import { fileOrFolderExists } from '../utils';
 
 
@@ -51,13 +51,33 @@ export abstract class LongRunningPlannerProvider implements planner.PlannerProvi
         }
     }
 
-    protected isServiceRunning(configuration: planner.PlannerConfiguration): boolean {
+    /**
+     * Checks if the service was started.
+     * @param configuration planner configuration to start
+     * @returns true if the service was started by this provider
+     */
+    public isServiceWasStarted(configuration: planner.PlannerConfiguration): boolean {
         return configuration.path !== undefined && this.planningServiceExecutions.has(configuration.path);
     }
 
+    abstract isServiceAccessible(configuration: planner.PlannerConfiguration): Promise<boolean>;
     
-    /** Get troubleshooting options */
-    async troubleshoot?(failedPlanner: planner.Planner, reason: unknown): Promise<planner.TroubleShootingInfo> {
+    /**
+     * Tests whether host name is local (this machine)
+     * @param hostname host name from the configured url of the planning service
+     * @returns true if the service is running locally
+     */
+    static isLocal(hostname: string): boolean {
+        return ['localhost', '127.0.0.1'].includes(hostname);
+    }
+
+    /**
+     * Callback invoked when the planner fails. Get troubleshooting options.
+     * @param failedPlanner planner that failed
+     * @param reason reason to fail (most likely an `Error`)
+     * @returns list of troubleshooting options
+     */
+    async troubleshoot(failedPlanner: planner.Planner, reason: unknown): Promise<planner.TroubleShootingInfo> {
         let troubleShootingInfo = '';
         const troubleShootings = new Map<string, (p: planner.Planner) => Promise<void>>();
 
@@ -65,17 +85,17 @@ export abstract class LongRunningPlannerProvider implements planner.PlannerProvi
             const configuration = failedPlanner.providerConfiguration.configuration;
             troubleShootingInfo += `Service ${configuration.url} cannot be reached.\n`;
 
-            const isLocal = ['localhost', '127.0.0.1'].includes(reason.address);
+            const isLocal = LongRunningPlannerProvider.isLocal(reason.address);
             const serviceExePath = configuration.path;
             if (isLocal && serviceExePath !== undefined) {
                 const fileName = path.basename(serviceExePath);
                 if (await fileOrFolderExists(Uri.file(serviceExePath))) {
-                    if (this.isServiceRunning(configuration)) {
+                    if (this.isServiceWasStarted(configuration)) {
                         troubleShootingInfo += `Service appears to be running, but not responding. Click 'Re-start the service'.\n`;
-                        troubleShootings.set(`Re-start the service`, async () => this.startService(serviceExePath, configuration));
+                        troubleShootings.set(`Re-start the service`, async () => this.startService(configuration));
                     } else {
                         troubleShootingInfo += `Service does not appear to be running. Click 'Start the service' to execute '${fileName}'.\n`;
-                        troubleShootings.set(`Start the service`, async () => this.startService(serviceExePath, configuration));
+                        troubleShootings.set(`Start the service`, async () => this.startService(configuration));
                     }
                 } else {
                     troubleShootingInfo += `Service does not appear to be running. The configured server '${fileName}' is not a valid file.\n`;
@@ -89,7 +109,33 @@ export abstract class LongRunningPlannerProvider implements planner.PlannerProvi
         };
     }
     
-    protected startService(executablePath: string, configuration: planner.PlannerConfiguration): void {
+    /**
+     * Suggest to the user to start the planning service.
+     * @param configuration planning configuration for a service to start
+     */
+    async suggestStartService(configuration: planner.PlannerConfiguration): Promise<void> {
+        const serviceExePath = configuration.path;
+        if (!serviceExePath) {
+            throw new Error(`Expected planner configuration with a 'path' specified`);
+        }
+        const fileName = path.basename(serviceExePath);
+        const startService = 'Start the service';
+        const answer = await window.showWarningMessage(`Service at '${configuration.url}' does not appear to be running. Click '${startService}' to execute '${fileName}'.\n`, startService);
+        if (answer === startService) {
+            this.startService(configuration);
+        }
+    }
+
+    /**
+     * Start the planning service.
+     * @param configuration planning configuration for a service to start
+     */
+    public startService(configuration: planner.PlannerConfiguration): void {
+        const executablePath = configuration.path;
+        if (!executablePath) {
+            throw new Error(`Expected configuration with attribute: 'path'`);
+        }
+
         const taskExecution = new ShellExecution(utils.Util.q(executablePath), {
             cwd: configuration.cwd ??
                 path.isAbsolute(executablePath) ? path.dirname(executablePath) : undefined

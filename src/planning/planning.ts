@@ -360,7 +360,7 @@ export class Planning implements planner.PlannerResponseHandler {
             this.progressUpdater = new ElapsedTimeProgressUpdater(progress, token);
             return planner.plan(domainFileInfo, problemFileInfo, planParser, this);
         })
-            .then(plans => this.onPlannerFinished(plans), reason => this.onPlannerFailed(reason, planner));
+            .then(plans => this.onPlannerFinished(plans), reason => this.onPlannerFailed(reason, planner).catch(showError));
     }
 
     isSearchDebugger(): boolean {
