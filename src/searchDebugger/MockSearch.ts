@@ -4,8 +4,6 @@
  * ------------------------------------------------------------------------------------------ */
 'use strict';
 
-/* eslint-disable @typescript-eslint/camelcase */
-
 import request = require('request');
 import { sleep } from '../utils';
 import { HappeningType, HelpfulAction, search } from 'pddl-workspace';
@@ -60,11 +58,9 @@ export class MockSearch {
                 return await this.post('/state/initial', mockEvent.toWireMessage());
             case 'post':
                 return await this.post('/state', mockEvent.toWireMessage());
-                break;
             case 'patch':
                 // this should really be a 'patch' verb, but the clients have more trouble making it work
                 return await this.post('/state/heuristic', mockEvent.toWireMessage());
-                break;
             default:
                 console.log("Unsupported mock event: " + mockEvent.operation);
         }

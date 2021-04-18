@@ -3,7 +3,7 @@ import * as path from 'path';
 import * as os from 'os';
 import * as tmp from 'tmp-promise';
 import { PddlExtensionContext, planner } from 'pddl-workspace';
-import { Disposable, workspace, ExtensionContext, Memento, extensions, Event, FileType, Uri, ConfigurationTarget, EnvironmentVariableCollection, EnvironmentVariableMutator, ExtensionMode, SecretStorage, SecretStorageChangeEvent } from 'vscode';
+import { Disposable, workspace, ExtensionContext, Memento, extensions, Event, FileType, Uri, ConfigurationTarget, EnvironmentVariableCollection, EnvironmentVariableMutator, ExtensionMode, SecretStorage, SecretStorageChangeEvent, ExtensionKind } from 'vscode';
 import { assertDefined } from '../../utils';
 import { CONF_PDDL } from '../../configuration/configuration';
 import { CONF_PLANNERS, CONF_SELECTED_PLANNER } from '../../configuration/PlannersConfiguration';
@@ -129,6 +129,18 @@ export async function createTestExtensionContext(): Promise<ExtensionContext> {
         logPath: log.path,
         logUri: Uri.file(log.path),
         environmentVariableCollection: new MockEnvironmentVariableCollection(),
+        extension: {
+            id: "jan-dolejsi.pddl",
+            extensionUri: Uri.file(process.cwd()),
+            extensionPath: process.cwd(),
+            isActive: true,
+            packageJSON: {},
+            extensionKind: ExtensionKind.UI,
+            exports: null,
+            activate(): Thenable<unknown> {
+                throw new Error('Method not implemented.');
+            }
+        },
         extensionMode: ExtensionMode.Development,
         extensionUri: Uri.file(process.cwd()),
         secrets: new MockSecretStorage(),

@@ -49,7 +49,7 @@ export class PlanDebugRuntime extends EventEmitter {
 	/**
 	 * Start executing the given program.
 	 */
-	public start(program: string, stopOnEntry: boolean) {
+	public start(program: string, stopOnEntry: boolean): void {
 
 		this.loadSource(program);
 		this._currentLine = -1;
@@ -72,14 +72,14 @@ export class PlanDebugRuntime extends EventEmitter {
 	/**
 	 * Continue execution to the end/beginning.
 	 */
-	public continue(reverse = false) {
+	public continue(reverse = false): void {
 		this.run(reverse, undefined);
 	}
 
 	/**
 	 * Step to the next/previous non empty line.
 	 */
-	public step(reverse = false, event = 'stopOnStep') {
+	public step(reverse = false, event = 'stopOnStep'): void {
 		this.run(reverse, event);
 	}
 
@@ -276,7 +276,7 @@ export class PlanDebugRuntime extends EventEmitter {
 	}
 
 	private sendEvent(event: string, ... args: any[]): void {
-		setImmediate(_ => {
+		setImmediate(() => {
 			this.emit(event, ...args);
 		});
 	}

@@ -283,6 +283,7 @@ export class SessionSourceControl implements vscode.Disposable {
 
 			const solverUrl = solver.settings["url"];
 
+			// todo: this configuration is upgraded right away; move to the new planner configuration pattern
 			await vscode.workspace.getConfiguration(PDDL_PLANNER, this.workspaceFolder.uri).update(EXECUTABLE_OR_SERVICE, solverUrl + "/solve", vscode.ConfigurationTarget.WorkspaceFolder);
 		}
 	}

@@ -97,6 +97,7 @@ export class HappeningsToPlanResumeCasesConvertor {
             console.log(output.toLocaleString()); // for inspection while debugging
 
             await commands.executeCommand('workbench.view.extension.test');
+            await commands.executeCommand('pddl.tests.report.view');
             await commands.executeCommand(PTEST_REVEAL, manifestUri);
             await commands.executeCommand(PTEST_REFRESH);
 

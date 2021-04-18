@@ -5,6 +5,8 @@
 
 import { getElementByIdOrThrow, State } from "./utils";
 
+// eslint-disable @typescript-eslint/class-name-casing
+
 // eslint-disable-next-line @typescript-eslint/no-namespace
 declare namespace google {
     // eslint-disable-next-line @typescript-eslint/no-namespace

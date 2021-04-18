@@ -3,6 +3,8 @@
  * Licensed under the MIT License. See License.txt in the project root for license information.
  * ------------------------------------------------------------------------------------------ */
 
+// eslint-disable @typescript-eslint/class-name-casing
+
 import { getElementByIdOrThrow, State } from './utils';
 
 // see vis.js documentation at
@@ -26,7 +28,7 @@ interface ActionEdge {
     readonly label: string;
     readonly title: string;
     readonly actionName: string; // this is a custom extension to the vis.js network Edge
-};
+}
 
 // eslint-disable-next-line @typescript-eslint/no-namespace
 declare namespace vis {

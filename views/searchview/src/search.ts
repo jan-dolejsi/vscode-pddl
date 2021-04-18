@@ -3,6 +3,8 @@
  * Licensed under the MIT License. See License.txt in the project root for license information.
  * ------------------------------------------------------------------------------------------ */
 
+// eslint-disable @typescript-eslint/class-name-casing
+
 import { Plan, PlanStep } from "pddl-workspace";
 import { createPlanView, JsonDomainVizConfiguration, PlanView } from "pddl-gantt";
 
