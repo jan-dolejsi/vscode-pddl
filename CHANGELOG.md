@@ -6,6 +6,7 @@
 - test panel opens after test cases are generated
 - 3rd party upgrades
 - Linter config and warning clean-up
+- Minimum VS Code version is now 1.55 (March 2021)
 
 ## 2.22.1
 
