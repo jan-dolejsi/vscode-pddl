@@ -4,7 +4,7 @@
  * ------------------------------------------------------------------------------------------ */
 'use strict';
 
-import { workspace, window, ExtensionContext, languages, commands, Uri } from 'vscode';
+import { workspace, window, ExtensionContext, languages, commands } from 'vscode';
 
 import { Planning } from './planning/planning';
 import { PddlWorkspace } from 'pddl-workspace';
@@ -250,7 +250,7 @@ async function activateWithTelemetry(_operationId: string, context: ExtensionCon
 	// tslint:disable-next-line:no-unused-expression
 	new Debugging(context, codePddlWorkspace, pddlConfiguration);
 
-	const localPackageJson = packageJson = JSON.parse((await workspace.fs.readFile(Uri.file(context.asAbsolutePath('package.json')))).toString());
+	const localPackageJson = packageJson = context.extension.packageJSON;
 
 	context.subscriptions.push(instrumentOperationAsVsCodeCommand('pddl.settings', (): void => {
 		commands.executeCommand(

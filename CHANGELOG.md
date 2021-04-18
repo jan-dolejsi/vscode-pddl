@@ -1,5 +1,13 @@
 # PDDL support - What's new?
 
+## 2.22.2
+
+- improved icon for search debugger
+- test panel opens after test cases are generated
+- 3rd party upgrades
+- Linter config and warning clean-up
+- Minimum VS Code version is now 1.55 (March 2021)
+
 ## 2.22.1
 
 - Planning service, which specifies both the `url` and `path` in the planner configuration, may be started by the user, as long as the `url` is local. The service then runs as a _Task_ in a new _Terminal_ inside VS Code

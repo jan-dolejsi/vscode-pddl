@@ -26,7 +26,7 @@ interface ActionEdge {
     readonly label: string;
     readonly title: string;
     readonly actionName: string; // this is a custom extension to the vis.js network Edge
-};
+}
 
 // eslint-disable-next-line @typescript-eslint/no-namespace
 declare namespace vis {

@@ -148,7 +148,7 @@ export class SolveServicePlannerProvider extends LongRunningPlannerProvider {
         const providerConfiguration: planner.ProviderConfiguration = {
             configuration: configuration,
             provider: plannerProvider
-        }
+        };
 
         return new PlannerSyncService(configuration.url, plannerInvocationOptions, providerConfiguration);
     }
@@ -170,7 +170,7 @@ export class SolveServicePlannerProvider extends LongRunningPlannerProvider {
             }).once("error", () => {
                 resolve(false);
             });
-            req.write(JSON.stringify({ domain: "", problem: "" }))
+            req.write(JSON.stringify({ domain: "", problem: "" }));
             req.end();
         });
     }
@@ -235,7 +235,7 @@ export class RequestServicePlannerProvider extends LongRunningPlannerProvider {
         const providerConfiguration: planner.ProviderConfiguration = {
             configuration: configuration,
             provider: plannerProvider
-        }
+        };
         return new PlannerAsyncService(configuration.url, plannerInvocationOptions, providerConfiguration);
     }
 
@@ -256,7 +256,7 @@ export class RequestServicePlannerProvider extends LongRunningPlannerProvider {
             }).once("error", () => {
                 resolve(false);
             });
-            req.write(JSON.stringify(this.createDummyRequestBody()))
+            req.write(JSON.stringify(this.createDummyRequestBody()));
             req.end();
         });
     }
@@ -318,7 +318,7 @@ export class JavaPlannerProvider implements planner.PlannerProvider {
         const providerConfiguration: planner.ProviderConfiguration = {
             configuration: configuration,
             provider: this
-        }
+        };
         // todo: use java.home setting
         return new PlannerExecutable(`java -jar ${utils.Util.q(configuration.path)}`,
             plannerRunConfiguration as planner.PlannerExecutableRunConfiguration, providerConfiguration);
@@ -475,7 +475,7 @@ export class Lpg implements planner.PlannerProvider {
         const providerConfiguration: planner.ProviderConfiguration = {
             configuration: configuration,
             provider: this
-        }
+        };
 
         return new PlannerExecutable(configuration.path,
             plannerRunConfiguration as planner.PlannerExecutableRunConfiguration, providerConfiguration);

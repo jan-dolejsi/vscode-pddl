@@ -118,7 +118,7 @@ export interface Edge {
     readonly to: number;
     readonly label?: string;
     // readonly title: string; what was this for?
-};
+}
 
 export interface Node {
     id: number;

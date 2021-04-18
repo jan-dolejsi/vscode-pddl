@@ -10,10 +10,6 @@ import { Variable } from 'pddl-workspace';
 
 export abstract class Delegate {
 
-    constructor(){
-
-    }
-
     createOperator(label: string, detail: string, documentation: string | MarkdownString, snippet?: SnippetString): CompletionItem {
         return this.createCompletionItem(label, detail, documentation, CompletionItemKind.Operator, snippet);
     }
