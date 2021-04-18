@@ -3,8 +3,6 @@
  * Licensed under the MIT License. See License.txt in the project root for license information.
  * ------------------------------------------------------------------------------------------ */
 
-// eslint-disable @typescript-eslint/class-name-casing
-
 export function getElementByIdOrThrow(elementId: string): HTMLElement {
     const el = document.getElementById(elementId);
     if (!el) {
