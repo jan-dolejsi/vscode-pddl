@@ -1,5 +1,9 @@
 # PDDL support - What's new?
 
+## 2.22.3
+
+Fix for the [breaking change in VS Code](https://github.com/microsoft/vscode/issues/123822) that caused the custom views to be broken.
+
 ## 2.22.2
 
 - improved icon for search debugger

@@ -30,7 +30,7 @@ function update(message) {
  */
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 function openManifest(nodeUri) {
-    postMessage({
+    postMessageToVsCode({
         command: 'openManifest',
         value: nodeUri
     });
@@ -43,13 +43,13 @@ function openManifest(nodeUri) {
  */
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 function openTest(nodeUri) {
-    postMessage({
+    postMessageToVsCode({
         command: 'openTest',
         value: nodeUri
     });
 }
 
-function postMessage(message) {
+function postMessageToVsCode(message) {
     if (vscode) { vscode.postMessage(message); }
 }
 

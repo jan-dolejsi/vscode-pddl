@@ -7,7 +7,7 @@ try {
     // swallow, so in the script can be tested in a browser
 }
 
-function postMessage(message) {
+function postMessageToVsCode(message) {
     if (vscode) {
         vscode.postMessage(message);
     } else {
@@ -20,7 +20,7 @@ function postMessage(message) {
  * @param {string} command
  */
 function postCommand(command) {
-    postMessage({ 'command': command });
+    postMessageToVsCode({ 'command': command });
 }
 
 let theme = 'unknown';

@@ -27,7 +27,7 @@ function initialize() {
     }
     
     document.getElementById('workspaceFolders').onchange = function (ev) {
-        postMessage({
+        postMessageToVsCode({
             command: 'workspaceFolderSelected',
             workspaceFolderUri: ev.target.options[ev.target.selectedIndex].value
         });
@@ -278,7 +278,7 @@ function addCodiconButton(td, imageName, tooltip, onclick) {
  * @param {ScopedPlannerConfig} selectedPlanner planner
  */
 function configurePlanner(selectedPlanner) {
-    postMessage({
+    postMessageToVsCode({
         command: 'configurePlanner',
         value: selectedPlanner
     });
@@ -289,7 +289,7 @@ function configurePlanner(selectedPlanner) {
  * @param {ScopedPlannerConfig} scopedConfig planner
  */
 function showConfiguration(scopedConfig) {
-    postMessage({
+    postMessageToVsCode({
         command: 'showConfiguration',
         value: scopedConfig
     });
@@ -300,7 +300,7 @@ function showConfiguration(scopedConfig) {
  * @param {ScopedPlannerConfig} selectedPlanner planner
  */
 function deletePlanner(selectedPlanner) {
-    postMessage({
+    postMessageToVsCode({
         command: 'deletePlanner',
         value: selectedPlanner
     });
@@ -311,21 +311,21 @@ function deletePlanner(selectedPlanner) {
  * @param {ScopedPlannerConfig} selectedPlanner planner
  */
 function selectPlanner(selectedPlanner) {
-    postMessage({
+    postMessageToVsCode({
         command: 'selectPlanner',
         value: selectedPlanner
     });
 }
 
 function enableFormatOnTypeForPddlOnly() {
-    postMessage({
+    postMessageToVsCode({
         command: 'enableFormatOnType',
         forPddlOnly: true
     });
 }
 
 function enableFormatOnType() {
-    postMessage({
+    postMessageToVsCode({
         command: 'enableFormatOnType',
         forPddlOnly: false
     });    
@@ -387,7 +387,7 @@ function updatePlannerOutputTarget(value) {
 function shouldShowOverviewChanged(value) {
     showHowToShowOverview(value);
 
-    postMessage({
+    postMessageToVsCode({
         command: 'shouldShowOverview',
         value: value
     });
@@ -420,7 +420,7 @@ function onPlannerOutputTargetChanged() {
         }
     }
 
-    postMessage({
+    postMessageToVsCode({
         command: 'plannerOutputTarget',
         value: selectedValue
     });
@@ -459,7 +459,7 @@ function enableIcons() {
 function downloadValInformed(originButton) {
     originButton.disabled = true;
     originButton.textContent = 'Downloading...'
-    postMessage({
+    postMessageToVsCode({
         command: 'downloadVal',
         informedDecision: true
     });
