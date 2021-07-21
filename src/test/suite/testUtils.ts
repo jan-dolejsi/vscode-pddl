@@ -41,9 +41,10 @@ class MockMemento implements Memento {
     constructor() {
         this.map = new Map<string, unknown>();
     }
-    get keys(): string[] {
-        return [...this.map.keys()];
-    }
+    // will be needed for a future version of VS Code?
+    // get keys(): string[] {
+    //     return [...this.map.keys()];
+    // }
     get<T>(key: string, defaultValue?: T): T {
         return (this.map.get(key) as T) ?? assertDefined(defaultValue, "Default value not specified");
     }
