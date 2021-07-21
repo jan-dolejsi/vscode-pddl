@@ -41,6 +41,9 @@ class MockMemento implements Memento {
     constructor() {
         this.map = new Map<string, unknown>();
     }
+    get keys(): string[] {
+        return [...this.map.keys()];
+    }
     get<T>(key: string, defaultValue?: T): T {
         return (this.map.get(key) as T) ?? assertDefined(defaultValue, "Default value not specified");
     }
@@ -50,7 +53,7 @@ class MockMemento implements Memento {
     }
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    setKeysForSync(keys: string[]): void {
+    setKeysForSync(keys: readonly string[]): void {
         console.warn(`Key syncing not supported in mock. ${keys}`);
     }
 }
