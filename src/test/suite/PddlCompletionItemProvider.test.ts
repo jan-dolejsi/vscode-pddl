@@ -1,5 +1,6 @@
 import * as assert from 'assert';
 import { before } from 'mocha';
+import { expect } from 'chai';
 
 // You can import and use all API from the 'vscode' module
 // as well as import your extension to test it
@@ -27,7 +28,7 @@ suite('PDDL Completion Item Provider', () => {
 
         // THEN
         assert.strictEqual(items.length, 2, 'there should be N completion items');
-        items.forEach(item => assert.ok(item.label.startsWith('(define')));
+        items.forEach(item => expect(item.label).to.startWith('(define'));
     });
 
     test('should offer to declare pre-parsing meta data instruction', async () => {
@@ -41,7 +42,7 @@ suite('PDDL Completion Item Provider', () => {
 
         // THEN
         assert.strictEqual(items.length, 3, 'there should be N completion items');
-        items.forEach(item => assert.ok(item.label.startsWith(';;')));
+        items.forEach(item => expect(item.label).to.startWith(';;'));
     });
 
     /* Domain keywords */

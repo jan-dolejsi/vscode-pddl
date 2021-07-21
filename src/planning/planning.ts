@@ -6,7 +6,7 @@
 
 import {
     window, workspace, commands, OutputChannel, Uri,
-    MessageItem, ExtensionContext, ProgressLocation, EventEmitter, Event, CancellationToken, Progress, QuickPickItem, TextDocument
+    MessageItem, ExtensionContext, ProgressLocation, EventEmitter, Event, CancellationToken, Progress, QuickPickItem, TextDocument, Disposable
 } from 'vscode';
 import { instrumentOperationAsVsCodeCommand } from "vscode-extension-telemetry-wrapper";
 import { PlannerAsyncService, AsyncServiceConfiguration } from "pddl-planning-service-client";
@@ -333,7 +333,7 @@ export class Planning implements planner.PlannerResponseHandler {
         this.planner = await this.createPlanner(workingDirectory, options);
         if (!this.planner) { return; }
         const planner: planner.Planner = this.planner;
-        if ("dispose" in planner) {
+        if (planner instanceof Disposable) {
             this.context.subscriptions.push(planner);
         }
 

@@ -97,7 +97,7 @@ function createContentSecurityPolicy(extensionContext: ExtensionContext, webview
     return `<meta http-equiv="Content-Security-Policy"
 \t\tcontent="default-src 'none'; `+
         `img-src ${webview.cspSource} ${externalImages} https:; ` +
-        `font-src ${fonts};` +
+        `font-src ${webview.cspSource} ${fonts};` +
         `script-src ${webview.cspSource} ${externalScripts} ${scriptUnsafeInline} ${scriptUnsafeEval} ${nonceCsp}; ` +
         `style-src ${webview.cspSource} ${externalStyles} ${styleUnsafeInline};"
 \t/>`;
