@@ -5,7 +5,7 @@
 'use strict';
 
 import {
-    window, commands, OutputChannel, ExtensionContext, TextDocument, Diagnostic, Uri, DiagnosticSeverity, workspace
+    window, commands, OutputChannel, ExtensionContext, TextDocument, Diagnostic, Range, Location, Uri, DiagnosticSeverity, DiagnosticRelatedInformation, workspace
 } from 'vscode';
 
 import * as process from 'child_process';
@@ -192,22 +192,43 @@ export class PlanValidator {
             const failurePattern = /Checking next happening \(time (\d+.\d+)\)/g;
             let result: RegExpExecArray | null;
             let timeStamp = -1;
+            let remainingOutputIndex = 0;
             while ((result = failurePattern.exec(output)) !== null) {
                 timeStamp = parseFloat(result[1]);
+                remainingOutputIndex = result.index + result[0].length + 1;
             }
 
             const match = output.match(/Plan Repair Advice:([\s\S]+)Failed plans:/);
             if (match) {
                 return PlanValidationOutcome.failedAtTime(planInfo, timeStamp, match[1].trim().split('\n'));
             } else {
-                return PlanValidationOutcome.failedAtTime(planInfo, timeStamp, ["Unidentified error. Run the 'PDDL: Validate plan' command for more info."]);
+                const errorOutput = output.substr(remainingOutputIndex).trim().split('\n')[0];
+                if (errorOutput) {
+                    return PlanValidationOutcome.failedAtTime(planInfo, timeStamp, [errorOutput], {
+                        severity: DiagnosticSeverity.Error, showMoreInfoHint: true
+                    });
+                } else {
+                    return PlanValidationOutcome.failedAtTime(planInfo, timeStamp, [
+                        "Unidentified error. Run the 'PDDL: Validate plan' command for more info."
+                    ], { showMoreInfoHint: false });
+                }
             }
+        }
+
+        const warnings: Diagnostic[] = [];
+
+        const warningPattern = /Checking next happening \(time (\d+.\d+)\)\s*\nWARNING:([^\n]+)\n/g;
+        let warningMatch: RegExpExecArray | null;
+        while ((warningMatch = warningPattern.exec(output)) !== null) {
+            const timeStamp = parseFloat(warningMatch[1]);
+            const warning = warningMatch[2];
+            warnings.push(...PlanValidationOutcome.createDiagnostics(planInfo, timeStamp, [warning]));
         }
 
         if (output.match("Bad plan description!")) {
             return PlanValidationOutcome.invalidPlanDescription(planInfo);
         } else if (output.match("Plan valid")) {
-            return PlanValidationOutcome.valid(planInfo);
+            return PlanValidationOutcome.validWithDiagnostics(planInfo, warnings);
         }
 
         if (stderr?.trim()) {
@@ -289,7 +310,14 @@ class PlanValidationOutcome {
      * Creates validation outcomes for valid plan, which does not reach the goal.
      */
     static valid(planInfo: PlanInfo): PlanValidationOutcome {
-        return new PlanValidationOutcome(planInfo, [], undefined);
+        return PlanValidationOutcome.validWithDiagnostics(planInfo, []);
+    }
+
+    /**
+     * Creates validation outcomes for valid plan, which does not reach the goal.
+     */
+    static validWithDiagnostics(planInfo: PlanInfo, diagnostics: Diagnostic[]): PlanValidationOutcome {
+        return new PlanValidationOutcome(planInfo, diagnostics, undefined);
     }
 
     static failed(planInfo: PlanInfo, error: Error): PlanValidationOutcome {
@@ -309,7 +337,7 @@ class PlanValidationOutcome {
         return new PlanValidationOutcome(planInfo, diagnostics);
     }
 
-    static failedAtTime(planInfo: PlanInfo, timeStamp: number, repairHints: string[]): PlanValidationOutcome {
+    static createDiagnostics(planInfo: PlanInfo, timeStamp: number, repairHints: string[], options?: PlanValidationOutcomeOptions): Diagnostic[] {
         let errorLine = 0;
         const stepAtTimeStamp =
             planInfo.getSteps()
@@ -317,7 +345,24 @@ class PlanValidationOutcome {
 
         if (stepAtTimeStamp && stepAtTimeStamp.lineIndex !== undefined) { errorLine = stepAtTimeStamp.lineIndex; }
 
-        const diagnostics = repairHints.map(hint => new Diagnostic(createRangeFromLine(errorLine), hint, DiagnosticSeverity.Warning));
+        const range = createRangeFromLine(errorLine);
+        return repairHints.map(hint => PlanValidationOutcome.createDiagnostic(planInfo, range, hint, options));
+    }
+
+    static createDiagnostic(planInfo: PlanInfo, range: Range, message: string, options?: PlanValidationOutcomeOptions): Diagnostic {
+        const diagnostic = new Diagnostic(range, message.trim(), options?.severity ?? DiagnosticSeverity.Warning);
+
+        if (options?.showMoreInfoHint) {
+            diagnostic.relatedInformation = [
+                new DiagnosticRelatedInformation(new Location(planInfo.fileUri, range),
+                    "Run the 'PDDL: Validate plan' command for more info.")
+            ];
+        }
+        return diagnostic;
+    }
+
+    static failedAtTime(planInfo: PlanInfo, timeStamp: number, repairHints: string[], options?: PlanValidationOutcomeOptions): PlanValidationOutcome {
+        const diagnostics = PlanValidationOutcome.createDiagnostics(planInfo, timeStamp, repairHints, options);
         return new PlanValidationOutcome(planInfo, diagnostics);
     }
 
@@ -330,4 +375,9 @@ class PlanValidationOutcome {
         const diagnostics = [new Diagnostic(createRangeFromLine(0), "Unknown error. Run the 'PDDL: Validate plan' command for more information.", DiagnosticSeverity.Warning)];
         return new PlanValidationOutcome(planInfo, diagnostics, "Unknown error.");
     }
+}
+
+export interface PlanValidationOutcomeOptions {
+    severity?: DiagnosticSeverity;
+    showMoreInfoHint?: boolean;
 }

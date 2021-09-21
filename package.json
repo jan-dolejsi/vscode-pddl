@@ -4,7 +4,7 @@
   "description": "Planning Domain Description Language support",
   "author": "Jan Dolejsi",
   "license": "MIT",
-  "version": "2.22.4",
+  "version": "2.22.5",
   "publisher": "jan-dolejsi",
   "engines": {
     "vscode": "^1.55.0",
@@ -844,7 +844,7 @@
         },
         "pddl.validatorVersion": {
           "type": "number",
-          "default": 63,
+          "default": 64,
           "title": "VAL build number",
           "description": "Stable VAL build number to download or update to."
         },
