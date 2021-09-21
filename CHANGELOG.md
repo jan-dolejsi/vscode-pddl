@@ -2,7 +2,8 @@
 
 ## 2.22.4
 
-More detailed VAL errors.
+- More detailed VAL errors.
+- VAL build 64
 
 ## 2.22.3
 
