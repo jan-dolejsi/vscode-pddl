@@ -1,5 +1,10 @@
 # PDDL support - What's new?
 
+## 2.22.4
+
+- More detailed VAL errors.
+- VAL build 64
+
 ## 2.22.3
 
 Fix for the [breaking change in VS Code](https://github.com/microsoft/vscode/issues/123822) that caused the custom views to be broken.
