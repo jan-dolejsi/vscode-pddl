@@ -16,4 +16,5 @@
 	"eslint.validate": [
 		"typescript"
 	],
+	"WhiteSource Advise.BaseBranch": "master",
 }

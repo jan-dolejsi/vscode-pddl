@@ -1,5 +1,10 @@
 # PDDL support - What's new?
 
+## 2.22.6
+
+Fix for display of plans with zero metric.
+3rd party library upgrades.
+
 ## 2.22.4
 
 - More detailed VAL errors.
