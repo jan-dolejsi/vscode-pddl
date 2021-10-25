@@ -102,8 +102,8 @@ export class PlanValidator {
 
         try {
             context = getDomainAndProblemForPlan(planInfo, this.codePddlWorkspace.pddlWorkspace);
-        } catch (err) {
-            const outcome = PlanValidationOutcome.failed(planInfo, err);
+        } catch (err: unknown) {
+            const outcome = PlanValidationOutcome.failed(planInfo, err as Error);
             onSuccess(outcome.getDiagnostics());
             return outcome;
         }

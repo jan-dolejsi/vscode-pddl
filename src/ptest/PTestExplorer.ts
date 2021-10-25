@@ -335,8 +335,9 @@ export class PTestExplorer {
                     try {
                         this.assertMatchesAnExpectedPlan(result, test);
                     }
-                    catch (err) {
-                        this.outputTestResult(test, TestOutcome.FAILED, result.elapsedTime, "Failed to compare plan to expected plans. Error: " + err.message ?? err);
+                    catch (err: unknown) {
+                        const error = err as Error;
+                        this.outputTestResult(test, TestOutcome.FAILED, result.elapsedTime, "Failed to compare plan to expected plans. Error: " + error.message ?? err);
                     }
                 }
                 else {

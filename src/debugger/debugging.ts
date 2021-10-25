@@ -52,8 +52,8 @@ export class Debugging {
 				const decorations = await new HappeningsExecutor(editor, context, this.plannerConfiguration).execute();
 				this.saveDecorations(editor.document, decorations);
 			}
-			catch (ex) {
-				vscode.window.showErrorMessage(ex.message ?? ex);
+			catch (ex: unknown) {
+				vscode.window.showErrorMessage((ex as Error).message ?? ex);
 			}
 		}));
 
@@ -62,8 +62,8 @@ export class Debugging {
 				const context = await this.getActiveContext();
 				new HappeningsToPlanResumeCasesConvertor(context, this.plannerConfiguration).generate();
 			}
-			catch (ex) {
-				vscode.window.showErrorMessage(ex.message ?? ex);
+			catch (ex: unknown) {
+				vscode.window.showErrorMessage((ex as Error).message ?? ex);
 			}
 		}));
 

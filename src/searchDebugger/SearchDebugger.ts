@@ -187,8 +187,8 @@ export class SearchDebugger implements planner.PlannerOptionsProvider {
         try {
             this.stop();
         }
-        catch (ex) {
-            window.showErrorMessage("Error stopping search debug listener: " + (ex.message ?? ex));
+        catch (ex: unknown) {
+            window.showErrorMessage("Error stopping search debug listener: " + ((ex as Error).message ?? ex));
         }
     }
 

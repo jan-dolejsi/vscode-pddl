@@ -101,8 +101,8 @@ export class PlanView extends Disposable {
                 const plan = await this.parsePlanFile(planDocument);
                 panel.setPlans([plan]);
             }
-            catch (ex) {
-                panel.setError(ex);
+            catch (ex: unknown) {
+                panel.setError(ex as Error);
             }
 
             this.resetTimeout();

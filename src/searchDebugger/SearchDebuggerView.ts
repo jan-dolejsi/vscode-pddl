@@ -122,8 +122,7 @@ export class SearchDebuggerView {
         }
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    async handleMessage(message: any): Promise<void> {
+    async handleMessage(message: CommandMessage): Promise<void> {
         console.log(`Message received from the webview: ${message.command}`);
 
         switch (message.command) {
@@ -131,16 +130,18 @@ export class SearchDebuggerView {
                 this.showDebuggerState();
                 break;
             case 'stateSelected':
+                const stateMessage = message as StateMessage;
                 try {
-                    this.showStatePlan(message.stateId);
-                    this.scrollStateLog(message.stateId);
+                    this.showStatePlan(stateMessage.stateId);
+                    this.scrollStateLog(stateMessage.stateId);
                 }
                 catch (ex) {
                     window.showErrorMessage("Error while displaying state-plan: " + ex);
                 }
                 break;
             case 'finalStateDataRequest': 
-                this.getFinalStateData(message.stateId).catch(showError);
+                const stateMessage1 = message as StateMessage;
+                this.getFinalStateData(stateMessage1.stateId).catch(showError);
                 break;    
             case 'startDebugger':
                 commands.executeCommand("pddl.searchDebugger.start");
@@ -156,7 +157,8 @@ export class SearchDebuggerView {
                 this.toggleStateLog();
                 break;
             case 'revealAction':
-                this.domain && commands.executeCommand("pddl.revealAction", this.domain.fileUri, message.action);
+                const actionMessage = message as ActionMessage;
+                this.domain && commands.executeCommand("pddl.revealAction", this.domain.fileUri, actionMessage.action);
                 break;
             default:
                 console.warn('Unexpected command: ' + message.command);
@@ -216,8 +218,8 @@ export class SearchDebuggerView {
     displayBetterState(state: search.SearchState): void {
         try {
             this.showStatePlan(state.id);
-        } catch (ex) {
-            window.showErrorMessage(ex.message ?? ex);
+        } catch (ex: unknown) {
+            window.showErrorMessage((ex as Error).message ?? ex);
         }
     }
 
@@ -348,3 +350,17 @@ function toHappening(searchHappening: search.SearchHappening): Happening {
     return new Happening(searchHappening.earliestTime, searchHappening.kind,
         searchHappening.actionName, searchHappening.shotCounter);
 }
+
+interface CommandMessage {
+    command: string;
+}
+
+interface StateMessage extends CommandMessage {
+    stateId: number;
+}
+
+interface ActionMessage extends CommandMessage {
+    action: string;
+}
+
+// todo: handle Home / End keyboard buttons to move to initial state and goal state (when there are multiple goal states, perhaps we can iterate through them upon repetitive <end> key presses).

@@ -41,6 +41,9 @@ class MockMemento implements Memento {
     constructor() {
         this.map = new Map<string, unknown>();
     }
+    keys(): readonly string[] {
+        throw new Error('Method not implemented.');
+    }
     // will be needed for a future version of VS Code?
     // get keys(): string[] {
     //     return [...this.map.keys()];

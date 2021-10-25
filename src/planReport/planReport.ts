@@ -19,8 +19,8 @@ export function registerPlanReport(context: ExtensionContext): void {
             const width = workspace.getConfiguration(CONF_PDDL).get<number>(PLAN_REPORT_EXPORT_WIDTH, 1000);
             try {
                 await new PlanReportGenerator(context, { displayWidth: width, selfContained: true }).export(plans, selectedPlan);
-            } catch(ex) {
-                showError(ex);
+            } catch(ex: unknown) {
+                showError(ex as Error);
             }
         } else {
             window.showErrorMessage("There is no plan to export.");

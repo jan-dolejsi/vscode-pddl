@@ -91,8 +91,9 @@ export class GeneratedDocumentContentProvider implements TextDocumentContentProv
             // force parsing of the generated problem
             this.pddlWorkspace.pddlWorkspace.upsertFile(uri, PddlLanguage.PDDL, 0, preProcessedProblemText, new SimpleDocumentPositionResolver(preProcessedProblemText), true);
             return preProcessedProblemText;
-        } catch (ex) {
-            return `;;Problem file '${basename(uri.fsPath)}' failed to generate: ${ex.message}\n\n` + documentText;
+        } catch (ex: unknown) {
+            const error = ex as Error;
+            return `;;Problem file '${basename(uri.fsPath)}' failed to generate: ${error.message}\n\n` + documentText;
         }
     }
 }
