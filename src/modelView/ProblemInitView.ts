@@ -109,9 +109,9 @@ class ProblemInitRenderer implements ProblemRenderer<ProblemInitViewOptions, Pro
                 nodes: renderer.getNodes(),
                 relationships: renderer.getRelationships()
             },
-            typeProperties: asSerializable(renderer.getTypeProperties()),
-            typeRelationships: asSerializable(renderer.getTypeRelationships()),
-            scalarValues: asSerializable(renderer.getScalarValues()),
+            typeProperties: asSerializable(renderer.getTypeProperties()) as Map<string, TypeProperties>,
+            typeRelationships: asSerializable(renderer.getTypeRelationships()) as TypesRelationship[],
+            scalarValues: asSerializable(renderer.getScalarValues()) as Map<string, number | boolean>,
             customVisualization: !options.hideCustomViz ? makeSerializable(await renderer.getCustomVisualization()) : undefined
         };
     }

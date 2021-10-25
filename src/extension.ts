@@ -83,10 +83,11 @@ export async function activate(context: ExtensionContext): Promise<PddlExtension
 		// activate the extension, but send instrumentation data
 		return await instrumentOperation("activation", activateWithTelemetry)(context);
 	}
-	catch (ex) {
+	catch (ex: unknown) {
 		// sadly, the next line never gets triggered, even if the activateWithTelemetry fails
-		console.error("Error during PDDL extension activation: " + (ex.message ?? ex));
-		window.showErrorMessage("There was an error starting the PDDL extension: " + ex.message);
+		const error = ex as Error;
+		console.error("Error during PDDL extension activation: " + (error.message ?? ex));
+		window.showErrorMessage("There was an error starting the PDDL extension: " + (error.message ?? ex));
 		return undefined;
 	}
 }

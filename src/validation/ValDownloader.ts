@@ -35,8 +35,9 @@ export class ValDownloader extends ValDownloaderBase {
                 const userAgreesToDownload = options?.bypassConsent ?? await this.promptForConsent();
                 if (!userAgreesToDownload) { return; }
                 await this.downloadConfigureAndCleanUp();
-            } catch (ex) {
-                window.showErrorMessage(ex.message ?? ex);
+            } catch (ex: unknown) {
+                const error = ex as Error;
+                window.showErrorMessage(error.message ?? "" + error);
             }
         }));
 

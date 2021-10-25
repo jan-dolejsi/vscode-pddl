@@ -90,8 +90,8 @@ export class PlanningDomainsSessions {
                     this.initializeFromConfigurationFile(wf, context);
                 });
 
-            } catch (ex) {
-                window.showErrorMessage(ex.message ?? ex);
+            } catch (ex: unknown) {
+                window.showErrorMessage((ex as Error).message ?? ex);
             } finally {
                 // dispose source control for removed workspace folders
                 e.removed.forEach(wf => {
@@ -144,8 +144,8 @@ export class PlanningDomainsSessions {
         try {
             await this.openSession(context, sessionId, workspaceUri);
         }
-        catch (ex) {
-            window.showErrorMessage(ex.message ?? ex);
+        catch (ex: unknown) {
+            window.showErrorMessage((ex as Error).message ?? ex);
             console.log(ex);
         }
     }
@@ -234,9 +234,9 @@ export class PlanningDomainsSessions {
                 try {
                     await this.initializeFromConfigurationFile(folder, context);
                 }
-                catch (err) {
+                catch (err: unknown) {
                     const output = window.createOutputChannel("Planner output");
-                    output.appendLine(err);
+                    output.appendLine("" + err);
                     output.show();
                 }
             });
@@ -275,7 +275,7 @@ export class PlanningDomainsSessions {
             } else {
                 if (await doesNotExist(folderUri)) {                    
                     await workspace.fs.createDirectory(folderUri); /* 0o777 */
-                } else if (isNotDirectory(folderUri)) {
+                } else if (await isNotDirectory(folderUri)) {
                     window.showErrorMessage("Selected path is not a directory.");
                     return undefined;
                 }

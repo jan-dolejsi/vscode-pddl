@@ -94,8 +94,8 @@ export class SymbolInfoProvider implements DocumentSymbolProvider, DefinitionPro
 
             try {
                 return this.provideProblemSymbols(document, problemInfo, token);
-            } catch (err) {
-                showError(err);
+            } catch (err: unknown) {
+                showError(err as Error);
             }
         }
         return [];

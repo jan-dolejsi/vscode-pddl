@@ -449,8 +449,8 @@ export class OverviewPage {
         try {
             planners = this.plannersConfiguration.getPlanners(this.workspaceFolder);
         }
-        catch (err) {
-            plannersConfigError = err.message ?? err;
+        catch (err: unknown) {
+            plannersConfigError = (err as Error).message ?? err;
             console.log(plannersConfigError);
         }
 

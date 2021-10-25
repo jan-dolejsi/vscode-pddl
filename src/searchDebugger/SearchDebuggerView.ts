@@ -216,8 +216,8 @@ export class SearchDebuggerView {
     displayBetterState(state: search.SearchState): void {
         try {
             this.showStatePlan(state.id);
-        } catch (ex) {
-            window.showErrorMessage(ex.message ?? ex);
+        } catch (ex: unknown) {
+            window.showErrorMessage((ex as Error).message ?? ex);
         }
     }
 
@@ -348,3 +348,5 @@ function toHappening(searchHappening: search.SearchHappening): Happening {
     return new Happening(searchHappening.earliestTime, searchHappening.kind,
         searchHappening.actionName, searchHappening.shotCounter);
 }
+
+// todo: handle Home / End keyboard buttons to move to initial state and goal state (when there are multiple goal states, perhaps we can iterate through them upon repetitive <end> key presses).

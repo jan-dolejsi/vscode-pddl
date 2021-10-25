@@ -26,8 +26,9 @@ async function main(): Promise<void> {
 			await runTestsInEmptyWorkspaceFolder(options, version, ["--disable-extensions"]);
 		}
 
-	} catch (err) {
-		console.error('Failed to run tests:'  + (err.message ?? err));
+	} catch (err: unknown) {
+		const error = err as Error;
+		console.error('Failed to run tests:'  + (error.message ?? err));
 		process.exit(1);
 	}
 }

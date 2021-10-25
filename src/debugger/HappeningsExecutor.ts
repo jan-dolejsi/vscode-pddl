@@ -52,7 +52,7 @@ export class HappeningsExecutor {
             await this.valStep.executeIncrementally(this.context.happenings.getHappenings(), { valStepPath, cwd, verbose: valStepVerbose });
 
             this.decorations.push(this.seeNextLineDecoration);
-        } catch (err) {
+        } catch (err: unknown) {
             if (err instanceof ValStepError) {
                 window.showErrorMessage(err.message);
             }
@@ -60,7 +60,7 @@ export class HappeningsExecutor {
                 window.showInformationMessage(err.message);
             }
             else {
-                window.showErrorMessage(err);
+                window.showErrorMessage("" + err);
             }
         }
 

@@ -87,8 +87,8 @@ export abstract class ProblemView<TRendererOptions, TRenderData> extends Disposa
         try {
             domainInfoAssigned = domainInfo ?? getDomainFileForProblem(problemInfo, this.codePddlWorkspace);
         }
-        catch (ex) {
-            error = ex;
+        catch (ex: unknown) {
+            error = ex as Error;
         }
 
         let panelsToRefresh: ProblemViewPanel[] = [];
@@ -137,8 +137,8 @@ export abstract class ProblemView<TRendererOptions, TRenderData> extends Disposa
             const domainInfo = getDomainFileForProblem(problemInfo, this.codePddlWorkspace);
             previewPanel.setDomainAndProblem(domainInfo, problemInfo);
         }
-        catch (ex) {
-            previewPanel.setError(ex);
+        catch (ex: unknown) {
+            previewPanel.setError(ex as Error);
         }
     }
 

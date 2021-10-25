@@ -61,8 +61,9 @@ export class TestsManifest {
         try {
             await workspace.fs.writeFile(this.uri, Buffer.from(json, 'utf8'));
         }
-        catch(err) {
-            window.showErrorMessage(`Error saving test case manifest ${err.name}: ${err.message}`);
+        catch (err: unknown) {
+            const error = err as Error;
+            window.showErrorMessage(`Error saving test case manifest ${error.name}: ${error.message}`);
         }
     }
 }

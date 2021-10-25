@@ -72,8 +72,8 @@ export class HappeningsValidator {
 
         try {
             context = getDomainAndProblemForHappenings(happeningsInfo, this.codePddlWorkspace.pddlWorkspace);
-        } catch (err) {
-            const outcome = HappeningsValidationOutcome.info(happeningsInfo, err);
+        } catch (err: unknown) {
+            const outcome = HappeningsValidationOutcome.info(happeningsInfo, err as Error);
             onSuccess(outcome.getDiagnostics());
             return outcome;
         }

@@ -31,8 +31,8 @@ export class ValidatorExecutable extends Validator {
             try {
                 const parsingErrors = await this.parser.validate(domainInfo);
                 onSuccess.apply(this, [toDiagnostics(parsingErrors, [domainInfo])]);
-            } catch (err) {
-                onError.apply(this, [err]);
+            } catch (err: unknown) {
+                onError.apply(this, ["" + err]);
             }
         }
         else {
@@ -42,8 +42,8 @@ export class ValidatorExecutable extends Validator {
                 try {
                     const parsingErrors = await this.parser.validate(domainInfo, problemFile);
                     onSuccess.apply(this, [toDiagnostics(parsingErrors, [domainInfo, problemFile])]);
-                } catch (err) {
-                    onError.apply(this, [err]);
+                } catch (err: unknown) {
+                    onError.apply(this, ["" + err]);
                 }
             });
         }

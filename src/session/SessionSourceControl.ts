@@ -138,8 +138,8 @@ export class SessionSourceControl implements vscode.Disposable {
 					progress.report({ message: 'Session re-downloaded.', increment: 34 });
 					this.sessionScm.inputBox.value = '';
 				});
-			} catch (ex) {
-				vscode.window.showErrorMessage("Cannot commit changes to Planning.Domains session. " + ex.message);
+			} catch (ex: unknown) {
+				vscode.window.showErrorMessage("Cannot commit changes to Planning.Domains session. " + (ex as Error).message);
 			}
 		}
 	}
@@ -219,8 +219,8 @@ export class SessionSourceControl implements vscode.Disposable {
 				} else {
 					await this.setSession(newSession, true);
 				}
-			} catch (ex) {
-				vscode.window.showErrorMessage(ex.message ?? ex);
+			} catch (ex: unknown) {
+				vscode.window.showErrorMessage((ex as Error).message ?? ex);
 			}
 		}
 	}
@@ -321,8 +321,8 @@ export class SessionSourceControl implements vscode.Disposable {
 		try {
 			await this.updateChangedGroup();
 		}
-		catch (ex) {
-			vscode.window.showErrorMessage(ex.message ?? ex);
+		catch (ex: unknown) {
+			vscode.window.showErrorMessage((ex as Error).message ?? ex);
 		}
 	}
 
@@ -474,8 +474,8 @@ export class SessionSourceControl implements vscode.Disposable {
 			}
 
 			return newSessionWriteHash;
-		} catch (ex) {
-			throw new Error("Failed creating duplicate session in Planning.Domains. " + (ex.message ?? ex));
+		} catch (ex: unknown) {
+			throw new Error("Failed creating duplicate session in Planning.Domains. " + ((ex as Error).message ?? ex));
 		}
 	}
 

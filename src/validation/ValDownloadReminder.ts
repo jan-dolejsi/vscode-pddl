@@ -55,8 +55,9 @@ export class ValDownloadReminder {
     async launchDownload(): Promise<void> {
         try {
             await this.val.downloadConfigureAndCleanUp();
-        } catch (ex) {
-            window.showErrorMessage(ex.message ?? ex);
+        } catch (ex: unknown) {
+            const error = ex as Error;
+            window.showErrorMessage(error.message ?? "" + error);
         }
     }
 }
