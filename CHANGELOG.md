@@ -5,6 +5,28 @@
 Fix for display of plans with zero metric.
 3rd party library upgrades.
 
+### Pddl4j support
+
+[Pddl4j](https://github.com/pellierd/pddl4j) supports both parsing of propositional PDDL and planning. To use _PDDL: Select planner_ command, and select _Create new planner configuration_ and then the pddl4j built-in option.
+
+![PDDL4J Planner Support](https://raw.githubusercontent.com/wiki/jan-dolejsi/vscode-pddl/img/pddl4j_support.gif)
+
+Done. Nothing else needs to be configured. You are ready to call the planner from the UI.
+
+It is also possible to use the _javaagent_ option, but it needs to be added to VS Code using the _Command_ kind of planner and entering command such as into the `path` element:
+
+```bash
+java -javaagent:d:/tools/pddl4j/pddl4j-3.5.0.jar -server -Xms2048m -Xmx2048m fr.uga.pddl4j.planners.hsp.HSP
+```
+
+And the command line options (using the `syntax` element):
+
+```bash
+    $(planner) $(options) -o $(domain) -f $(problem)
+```
+
+where -o and -f are the switches expected by the planner.
+
 ## 2.22.4
 
 - More detailed VAL errors.
