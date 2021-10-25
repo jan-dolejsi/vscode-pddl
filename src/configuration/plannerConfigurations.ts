@@ -325,6 +325,67 @@ export class JavaPlannerProvider implements planner.PlannerProvider {
     }
 }
 
+export class Pddl4jProvider extends JavaPlannerProvider {
+    get kind(): planner.PlannerKind {
+        return new planner.PlannerKind('pddl4j');
+    }
+    getNewPlannerLabel(): string {
+        return "$(file-binary) Select a pddl4j-<ver>.jar Java JAR file...";
+    }
+
+    async configurePlanner(previousConfiguration?: planner.PlannerConfiguration): Promise<planner.PlannerConfiguration | undefined> {
+        const filters =
+        {
+            'Java pddl4j-<ver>.jar': ['jar'],
+        };
+
+        const defaultUri = previousConfiguration?.path ? Uri.file(previousConfiguration.path) : undefined;
+
+        const executableUri = await selectedFile(`Select pddl4j-<ver>.jar`, defaultUri, filters);
+        if (!executableUri) { return undefined; }
+
+        const newPlannerConfiguration: planner.PlannerConfiguration = {
+            kind: this.kind.kind,
+            canConfigure: true,
+            path: executableUri.fsPath,
+            title: path.basename(executableUri.fsPath).replace('.jar', ''),
+            syntax: '$(planner) -o $(domain) -f $(problem) $(options)',
+        };
+
+        return newPlannerConfiguration;
+    }
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    showHelp(_output: OutputAdaptor): void {
+        // do nothing
+    }
+    getPlannerOptions(): planner.PlannerOption[] {
+        return [
+            { label: "-w <num>", option: "-w 1", description: "weight used in the a star search (default: 1)" },
+            { label: "-t <num>", option: "-t 300", description: "specifies the maximum CPU-time in seconds (preset: 300)" },
+
+            { option: "-p 0", description: "HSP planner. Simple forward planner based on A* algorithm (default)" },
+            { option: "-p 1", description: "FF planner. Fast Forward planner based on Enforced Hill Climbing Algorithm and Greedy Best First Search" },
+            { option: "-p 2", description: "FF Anytime planner" },
+                 
+            { option: "-u 0", description: "ff heuristic" },
+            { option: "-u 1", description: "sum heuristic" },
+            { option: "-u 2", description: "sum mutex heuristic" },
+            { option: "-u 3", description: "adjusted sum heuristic" },
+            { option: "-u 4", description: "adjusted sum 2 heuristic" },
+            { option: "-u 5", description: "adjusted sum 2M heuristic" },
+            { option: "-u 6", description: "combo heuristic" },
+            { option: "-u 7", description: "max heuristic" },
+            { option: "-u 8", description: "set-level heuristic" },
+            { option: "-u 9", description: "min cost heuristic" },
+            
+            { label: "-i", option: "-i 1", description: "run-time information level from 0 to 8, see -h (preset: 1)" },
+            { label: "-s", option: "-s false", description: "generate statistics (default: true)" },
+            { label: "-d", option: "-d true", description: "print cost in solution plan (preset: false)" },
+            { option: "-h", description: "print help" },
+        ];
+    }
+}
+
 export class ExecutablePlannerProvider implements planner.PlannerProvider {
     get kind(): planner.PlannerKind {
         return planner.WellKnownPlannerKind.EXECUTABLE;
