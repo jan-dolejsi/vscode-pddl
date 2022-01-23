@@ -16,5 +16,5 @@
 	"eslint.validate": [
 		"typescript"
 	],
-	"WhiteSource Advise.BaseBranch": "master",
+	"WhiteSource Advise.Diff.BaseBranch": "master",
 }

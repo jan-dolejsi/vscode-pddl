@@ -14,3 +14,4 @@ src/test/tmpFolder/
 debug.log
 **/package-lock.json
 !/package-lock.json
+.vscode/diff/

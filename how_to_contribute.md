@@ -9,6 +9,10 @@ Are you looking for the [End-user documentation](README.md)?
 
 ## Building extension
 
+Prerequisites:
+
+- NodeJS 12.22+
+
 Run `npm install`.
 
 This will ensure the extension dependencies are downloaded using the `--no-optional` switch.
