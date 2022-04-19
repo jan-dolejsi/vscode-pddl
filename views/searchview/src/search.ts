@@ -279,6 +279,13 @@ function initialize(): void {
         }
     });
 
+    searchTree.network.on('oncontext', params => {
+        const node = searchTree.network.getNodeAt(params.pointer.DOM);
+        if (node) {
+            vscode?.postMessage({ command: 'stateContext', stateId: node });
+        }
+    });
+
     window.document.addEventListener('keydown', function (event) {
         navigate(event);
     });

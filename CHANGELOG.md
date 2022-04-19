@@ -1,5 +1,13 @@
 # PDDL support - What's new?
 
+## 2.23.0
+
+- freshly created documents shall remain open in the editor
+- async planning service now offers to create a .json configuration file
+- search debugger support re-designed
+- search debugger supports state-to-problem file export (using VAL) by right-click on state
+- technical debt: NPM packages upgrades, bodyParser package removed
+
 ## 2.22.6
 
 Fix for display of plans with zero metric.

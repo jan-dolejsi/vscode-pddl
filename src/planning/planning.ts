@@ -6,7 +6,7 @@
 
 import {
     window, workspace, commands, OutputChannel, Uri,
-    MessageItem, ExtensionContext, ProgressLocation, EventEmitter, Event, CancellationToken, Progress, QuickPickItem, TextDocument, Disposable
+    ExtensionContext, ProgressLocation, EventEmitter, Event, CancellationToken, Progress, QuickPickItem, TextDocument, Disposable
 } from 'vscode';
 import { instrumentOperationAsVsCodeCommand } from "vscode-extension-telemetry-wrapper";
 import { PlannerAsyncService, AsyncServiceConfiguration } from "pddl-planning-service-client";
@@ -33,6 +33,10 @@ import { showError, isHttp } from '../utils';
 import { CodePddlWorkspace } from '../workspace/CodePddlWorkspace';
 import { EXECUTION_TARGET, PDDL_CONFIGURE_PLANNER_OUTPUT_TARGET, PlannersConfiguration } from '../configuration/PlannersConfiguration';
 import { RequestServicePlannerProvider, SolveServicePlannerProvider } from '../configuration/plannerConfigurations';
+import { SearchDebuggerView } from '../searchDebugger/SearchDebuggerView';
+import { SearchDebugger } from '../searchDebugger/SearchDebugger';
+import { PlannerRunConfiguration } from 'pddl-workspace/dist/planner';
+import { cratePlannerConfigurationMessageItems, ProcessErrorMessageItem } from './planningUtils';
 
 const PDDL_STOP_PLANNER = 'pddl.stopPlanner';
 const PDDL_CONVERT_PLAN_TO_HAPPENINGS = 'pddl.convertPlanToHappenings';
@@ -326,7 +330,9 @@ export class Planning implements planner.PlannerResponseHandler {
      */
     async planExplicit(domainFileInfo: DomainInfo, problemFileInfo: ProblemInfo, workingDirectory: string, options?: string): Promise<void> {
 
-        const planParser = new parser.PddlPlannerOutputParser(domainFileInfo, problemFileInfo, { epsilon: this.pddlConfiguration.getEpsilonTimeStep() }, plans => this.visualizePlans(plans));
+        const planParser = new parser.PddlPlannerOutputParser(domainFileInfo, problemFileInfo, {
+            epsilon: this.pddlConfiguration.getEpsilonTimeStep()
+        }, plans => this.visualizePlans(plans));
 
         workingDirectory = await this.adjustWorkingFolder(workingDirectory);
 
@@ -343,7 +349,7 @@ export class Planning implements planner.PlannerResponseHandler {
             this.output.show(true);
         }
         else {
-            commands.executeCommand('pddl.searchDebugger.start');
+            commands.executeCommand(SearchDebuggerView.COMMAND_SEARCH_DEBUGGER_START);
         }
 
         window.withProgress<Plan[]>({
@@ -396,16 +402,7 @@ export class Planning implements planner.PlannerResponseHandler {
         // does the planner provide any trouble-shooting options?
         const troubleShootingInfo = await failedPlanner.providerConfiguration.provider?.troubleshoot?.(failedPlanner, reason as unknown);
 
-        const options: ProcessErrorMessageItem[] = [
-            {
-                title: failedPlanner.providerConfiguration.configuration.canConfigure ?
-                    "Re-configure the planner" : "Show configuration",
-                action: (): void => {
-                    // todo, if there is only one configuration of the kind, launch the configuration directly
-                    commands.executeCommand("pddl.showOverview");
-                }
-            }
-        ];
+        const options: ProcessErrorMessageItem[] = cratePlannerConfigurationMessageItems(failedPlanner);
 
         if (troubleShootingInfo?.options) {
             [...troubleShootingInfo.options.keys()]
@@ -489,6 +486,7 @@ export class Planning implements planner.PlannerResponseHandler {
                 if (!configurationUri) { return null; } // canceled by user
                 const plannerRunConfiguration = await PlannerConfigurationSelector.loadConfiguration(configurationUri, PlannerAsyncService.DEFAULT_TIMEOUT) as AsyncServiceConfiguration;
                 plannerRunConfiguration.authentication = authentication;
+                await this.addSearchDebuggerConfig(plannerRunConfiguration);
 
                 return this.codePddlWorkspace.pddlWorkspace.getPlannerRegistrar()
                     .getPlannerProvider(new planner.PlannerKind(plannerConfiguration.kind))?.createPlanner?.(plannerConfiguration, plannerRunConfiguration) ??
@@ -507,6 +505,7 @@ export class Planning implements planner.PlannerResponseHandler {
                 workingDirectory: workingDirectory,
                 plannerSyntax: plannerConfiguration.syntax
             };
+            await this.addSearchDebuggerConfig(plannerRunConfiguration);
 
             const providerConfiguration: planner.ProviderConfiguration = {
                 configuration: plannerConfiguration
@@ -517,6 +516,12 @@ export class Planning implements planner.PlannerResponseHandler {
                 new PlannerExecutable(plannerConfiguration.path, plannerRunConfiguration, providerConfiguration);
         } else {
             throw new Error(`Planner configuration must define at least one of the properties 'url' or 'path': ${plannerConfiguration.title}`);
+        }
+    }
+
+    private async addSearchDebuggerConfig(plannerRunConfiguration: PlannerRunConfiguration) {
+        if (plannerRunConfiguration.searchDebuggerEnabled = this.isSearchDebugger()) {
+            plannerRunConfiguration.searchDebuggerPort = await commands.executeCommand(SearchDebugger.PORT_COMMAND);
         }
     }
 
@@ -633,12 +638,6 @@ export class Planning implements planner.PlannerResponseHandler {
     static q(path: string): string {
         return path.includes(' ') ? `"${path}"` : path;
     }
-}
-
-interface ProcessErrorMessageItem extends MessageItem {
-    title: string;
-    isCloseAffordance?: boolean;
-    action?: (planner: planner.Planner) => void | Promise<void>;
 }
 
 class ElapsedTimeProgressUpdater {

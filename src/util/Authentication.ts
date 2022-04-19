@@ -7,7 +7,6 @@
 import uuidv4 = require('uuid/v4');
 import express = require('express');
 import request = require('request');
-import bodyParser = require('body-parser');
 import http = require('http');
 import opn = require('open');
 import { planner } from 'pddl-workspace';
@@ -54,8 +53,8 @@ export class SAuthentication implements planner.Authentication {
     login(onSuccess: (refreshToken: string, accessToken: string, sToken: string) => void, onError: (message: string) => void): void {
         const nonce = uuidv4();
         const app = express();
-        app.use(bodyParser.json());
-        app.use(bodyParser.urlencoded({ extended: true }));
+        app.use(express.json());
+        app.use(express.urlencoded({ extended: true }));
         let server: http.Server | undefined = undefined;
         const thisAuthentication = this;
         app.post('/auth/sauth/callback', function (req, res, next) {
