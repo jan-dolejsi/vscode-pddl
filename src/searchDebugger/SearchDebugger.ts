@@ -16,7 +16,7 @@ import { SearchDebuggerView, toHappening } from "./SearchDebuggerView";
 import { PDDL, planner, DomainInfo, ProblemInfo, search } from "pddl-workspace";
 import { CONF_PDDL, PddlConfiguration, PDDL_PLANNER, VAL_STEP_PATH, VAL_VERBOSE } from "../configuration/configuration";
 import { DEF_PLANNER_OUTPUT_TARGET, EXECUTION_TARGET, PLANNER_OUTPUT_TARGET_SEARCH_DEBUGGER, STATUS_BAR_PRIORITY } from "../configuration/PlannersConfiguration";
-import { ensureAbsoluteGlobalStoragePath } from "../utils";
+import { ensureAbsoluteGlobalStoragePath, showError } from "../utils";
 import { ValStep } from "ai-planning-val";
 import { handleValStepError } from "../planView/valStepErrorHandler";
 import { basename, dirname, extname, join } from "path";
@@ -45,10 +45,15 @@ export class SearchDebugger implements planner.PlannerOptionsProvider {
     private problem: ProblemInfo | undefined;
 
     constructor(private context: ExtensionContext, private pddlConfiguration: PddlConfiguration) {
-        this.context.subscriptions.push(instrumentOperationAsVsCodeCommand(SearchDebugger.START_COMMAND, () => this.tryStart()));
+        this.context.subscriptions.push(instrumentOperationAsVsCodeCommand(SearchDebugger.START_COMMAND, async () => this.tryStart()));
         this.context.subscriptions.push(instrumentOperationAsVsCodeCommand(SearchDebugger.STOP_COMMAND, () => this.tryStop()));
         this.context.subscriptions.push(instrumentOperationAsVsCodeCommand(SearchDebugger.RESET_COMMAND, () => this.reset()));
-        this.context.subscriptions.push(commands.registerCommand(SearchDebugger.PORT_COMMAND, () => this.port));
+        this.context.subscriptions.push(commands.registerCommand(SearchDebugger.PORT_COMMAND, async () => {
+            if (!this.server) {
+                await this.tryStart();
+            }
+            return this.port;
+        }));
         this.context.subscriptions.push(instrumentOperationAsVsCodeCommand("pddl.searchDebugger.mock", () => this.mock()));
         this.context.subscriptions.push(instrumentOperationAsVsCodeCommand(SearchDebuggerView.COMMAND_SHOW_STATE_CONTEXT, (stateId) => this.showContextMenu(stateId)));
 
@@ -61,7 +66,6 @@ export class SearchDebugger implements planner.PlannerOptionsProvider {
                 }
             }
         });
-        
 
         this.view = new SearchDebuggerView(this.context);
     }
@@ -114,7 +118,7 @@ export class SearchDebugger implements planner.PlannerOptionsProvider {
                 const finalStateValues = await valStep.executeBatch(happenings, { valStepPath, verbose: valVerbose });
 
                 if (finalStateValues) {
-                    const newProblemText = ProblemInfo.cloneWithInitStateAt(this.problem, finalStateValues, lastHappeningTime);                    
+                    const newProblemText = ProblemInfo.cloneWithInitStateAt(this.problem, finalStateValues, lastHappeningTime);
                     const origProblemPath = (this.problem.fileUri as Uri).fsPath;
                     const ext = extname(origProblemPath);
                     const defaultNewProblemPath = join(dirname(origProblemPath), basename(origProblemPath, ext) + "_state" + state.id + "." + PDDL);
@@ -123,10 +127,10 @@ export class SearchDebugger implements planner.PlannerOptionsProvider {
                         filters: {
                             "PDDL Problem": [PDDL]
                         },
-            
+
                         defaultUri: Uri.file(defaultNewProblemPath)
                     };
-            
+
                     const newProblemUri = await window.showSaveDialog(options);
                     if (!newProblemUri) { return; } // canceled by user
                     exportToAndShow(newProblemText, newProblemUri);
@@ -140,9 +144,9 @@ export class SearchDebugger implements planner.PlannerOptionsProvider {
         }
     }
 
-    tryStart(): void {
+    async tryStart(): Promise<void> {
         try {
-            this.startAndShow();
+            await this.startAndShow();
         }
         catch (ex) {
             window.showErrorMessage("Error starting search debug listener: " + ex);
@@ -153,15 +157,15 @@ export class SearchDebugger implements planner.PlannerOptionsProvider {
         return this.server !== null && this.server.listening;
     }
 
-    startAndShow(): void {
+    async startAndShow(): Promise<void> {
         if (!this.isRunning()) {
-            this.startServer();
+            await this.startServer();
         }
-        this.view.showDebugView();
+        this.view.showDebugView().catch(err => showError(err));
         this.showStatusBarItem();
     }
 
-    private startServer(): void {
+    private async startServer(): Promise<void> {
         if (!this.search || !this.messageParser) {
             this.search = new Search();
             const stateIdPattern = this.getStateIdPattern();
@@ -174,25 +178,28 @@ export class SearchDebugger implements planner.PlannerOptionsProvider {
         const defaultPort = workspace.getConfiguration(SearchDebugger.CONFIG_PDDL_SEARCH_DEBUGGER).get<number>(this.CONF_DEFAULT_PORT, 0);
 
         this.port = defaultPort > 0 ? defaultPort : 8000 + Math.floor(Math.random() * 1000);
-        this.server = http.createServer(app);
-        this.server.on('error', e => {
-            window.showErrorMessage(e.message);
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            if ((e as any)['code'] === "EADDRINUSE") {
-                this.pddlConfiguration.askConfiguration(SearchDebugger.CONFIG_PDDL_SEARCH_DEBUGGER + "." + this.CONF_DEFAULT_PORT);
-            }
-        });
-        this.server.on("listening", () => {
-            console.log("Search debugger listening at port " + this.port);
-            this.showStatus();
-        });
-        this.server.on("close", () => {
-            console.log("Search debugger closed");
-            this.server = null;
-            this.showStatus();
-        });
+        return new Promise<void>(resolve => {
+            this.server = http.createServer(app);
+            this.server.on('error', e => {
+                window.showErrorMessage(e.message);
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                if ((e as any)['code'] === "EADDRINUSE") {
+                    this.pddlConfiguration.askConfiguration(SearchDebugger.CONFIG_PDDL_SEARCH_DEBUGGER + "." + this.CONF_DEFAULT_PORT);
+                }
+            });
+            this.server.on("listening", () => {
+                resolve();
+                console.log("Search debugger listening at port " + this.port);
+                this.showStatus();
+            });
+            this.server.on("close", () => {
+                console.log("Search debugger closed");
+                this.server = null;
+                this.showStatus();
+            });
 
-        this.server.listen(this.port, "127.0.0.1"); // listen to the local loop-back IP address only
+            this.server.listen(this.port, "127.0.0.1"); // listen to the local loop-back IP address only
+        });
     }
 
     private getStateIdPattern(): RegExp {
@@ -274,7 +281,7 @@ export class SearchDebugger implements planner.PlannerOptionsProvider {
         if (this.isRunning()) {
             this.tryStop();
         } else {
-            this.tryStart();
+            this.tryStart().catch(showError);
         }
     }
 

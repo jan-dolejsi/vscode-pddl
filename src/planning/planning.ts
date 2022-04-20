@@ -336,6 +336,13 @@ export class Planning implements planner.PlannerResponseHandler {
 
         workingDirectory = await this.adjustWorkingFolder(workingDirectory);
 
+        if (!this.isSearchDebugger()) {
+            this.output.show(true);
+        }
+        else {
+            commands.executeCommand(SearchDebuggerView.COMMAND_SEARCH_DEBUGGER_START);
+        }
+        
         this.planner = await this.createPlanner(workingDirectory, options);
         if (!this.planner) { return; }
         const planner: planner.Planner = this.planner;
@@ -344,13 +351,6 @@ export class Planning implements planner.PlannerResponseHandler {
         }
 
         this.planningProcessKilled = false;
-
-        if (!this.isSearchDebugger()) {
-            this.output.show(true);
-        }
-        else {
-            commands.executeCommand(SearchDebuggerView.COMMAND_SEARCH_DEBUGGER_START);
-        }
 
         window.withProgress<Plan[]>({
             location: ProgressLocation.Notification,
