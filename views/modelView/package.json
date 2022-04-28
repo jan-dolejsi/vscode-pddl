@@ -20,7 +20,7 @@
     "eslint": "file:../../node_modules/eslint",
     "typescript": "file:../../node_modules/typescript",
     "browserify": "^16.5.2",
-    "tsify": "^5.0.2",
+    "tsify": "^5.0.4",
     "watchify": "^3.11.1",
     "@types/mocha": "file:../../node_modules/@types/mocha",
     "mocha": "file:../../node_modules/mocha",
