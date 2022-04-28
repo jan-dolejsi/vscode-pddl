@@ -2,10 +2,12 @@
 
 ## 2.23.0
 
-- freshly created documents shall remain open in the editor
-- async planning service now offers to create a .json configuration file
-- search debugger support re-designed
-- search debugger supports state-to-problem file export (using VAL) by right-click on state
+- fix: freshly created documents (e.g. `.plan` files) shall remain open in the editor
+- async planning service now offers to create a blank `.json` configuration file
+- search debugger support now supports the async planning service (via the HTTP callback)
+- search debugger supports state-to-problem file export (using VAL) by right-click on state to see the option
+- overview page how offers to enable bracket pair colorisation
+- fix: overview page crashed when the "Enable auto-save" button was clicked. Stuart, please retry!
 - technical debt: NPM packages upgrades, bodyParser package removed
 
 ## 2.22.6
