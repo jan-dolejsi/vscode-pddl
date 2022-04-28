@@ -43,7 +43,7 @@
         <tr id="enableAutoSaveAlert" class="alert">
             <td><i class="codicon codicon-bell-dot"></i></td>
             <td>When processing files using command-line tools, it is simpler to enable file auto-saving.
-                <button onclick="location.href='command:workbench.action.toggleAutoSave'" class="alertButton" style="width: 150px">Enable auto-save</button>
+                <button onclick="postCommand('command:workbench.action.toggleAutoSave')" class="alertButton" style="width: 150px">Enable auto-save</button>
                 <br />It is also recommended to go run the <i>Git: Initialize Repository</i> command to enjoy safety of
                 version control and never miss a working version.
             </td>
