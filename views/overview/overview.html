@@ -77,6 +77,16 @@
                 You can switch it off again using the <snap class="code">editor.formatOnType</snap> setting. 
             </td>
         </tr>
+        <tr id="enableBracketColorizationAlert" class="alert">
+            <td><i class="codicon codicon-bell-dot"></i></td>
+            <td>Enable bracket pair colorization for better readability of your PDDL e.g. <span style="background-color: black; font-family: monospace; color: white; padding: 3px;"><span style="color: deeppink;">(</span>not <span style="color: chartreuse;">(</span>predicate1 objA<span style="color: chartreuse;">)</span><span style="color: deeppink;">)</span></span>
+                <button onclick="enableBracketColorization()" class="alertButton" title="Enable bracket colorization for all languages in VS Code">Enable bracket colorization</button>
+                <button onclick="enableBracketColorizationForPddlOnly()" title="Enable bracket colorization for PDDL only." class="alertButton">...for PDDL only</button>
+                    <br/>                
+                You can switch it off again using the <snap class="code">editor.bracketPairColorization</snap> setting. 
+                <a href="command:workbench.action.openSettings?%5B%22editor.bracketPairColorization.enabled%22%5D">See bracket colorization settings...</a>
+            </td>
+        </tr>
     </table>
 
     <table id="hintList" class="hintList" style="margin-top: -3px;">

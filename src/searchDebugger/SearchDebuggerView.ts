@@ -85,7 +85,7 @@ export class SearchDebuggerView {
 
     async showDebugView(): Promise<void> {
         if (this.webViewPanel !== undefined) {
-            this.webViewPanel.reveal();
+            this.webViewPanel.reveal(undefined, true);
         }
         else {
             await this.createDebugView(false);
