@@ -1068,7 +1068,7 @@
     "download-file": "^0.1.5",
     "eslint": "^8.14.0",
     "glob": "^7.1.6",
-    "minimist": ">=0.2.1",
+    "minimist": ">=1.2.6",
     "mocha": "^9.2.2",
     "tmp-promise": "^3.0.2",
     "typescript": "^4.6.4",
