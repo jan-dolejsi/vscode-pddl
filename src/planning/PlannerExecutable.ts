@@ -18,6 +18,8 @@ import {
 } from 'pddl-workspace';
 
 import { Util } from 'ai-planning-val';
+import { SearchDebugger } from '../searchDebugger/SearchDebugger';
+import { cratePlannerConfigurationMessageItems, ProcessErrorMessageItem } from './planningUtils';
 
 /** Planner implemented as an executable process, which outputs through VS Code facilities. */
 export class PlannerExecutable extends planner.Planner implements Disposable {
@@ -25,7 +27,7 @@ export class PlannerExecutable extends planner.Planner implements Disposable {
     // this property stores the reference to the planner child process, while planning is in progress
     private child: process.ChildProcess | undefined;
     private _exited = new EventEmitter<number>();
-    
+
     static readonly DEFAULT_SYNTAX = "$(planner) $(options) $(domain) $(problem)";
     private readonly plannerSyntax: string;
     private readonly plannerOptions: string;
@@ -62,6 +64,29 @@ export class PlannerExecutable extends planner.Planner implements Disposable {
             .replace('$(domain)', utils.Util.q(domainFilePath))
             .replace('$(problem)', utils.Util.q(problemFilePath));
 
+        if (this.plannerConfiguration.searchDebuggerEnabled) {
+            if (!this.providerConfiguration.configuration.searchDebuggerSupport) {
+                const options = cratePlannerConfigurationMessageItems(this);
+                options.push({ title: "Dismiss", isCloseAffordance: true });
+
+                const message = `Selected planner does not support the Search Debugger.`;
+
+                window.showErrorMessage<ProcessErrorMessageItem>(message, ...options).then(selection => {
+                    if (selection?.action) {
+                        selection.action(this);
+                    }
+                });
+            } else if (this.providerConfiguration.configuration.searchDebuggerSupport !== planner.SearchDebuggerSupportType.HttpCallback) {
+                window.showWarningMessage(`Local executable planners may only support the Search Debugger via the HTTP callback.`);
+            } else {
+
+                const commandLine =
+                    this.providerConfiguration.configuration.searchDebuggerCommandLineSyntax ??
+                    workspace.getConfiguration(SearchDebugger.CONFIG_PDDL_SEARCH_DEBUGGER).get<string>(SearchDebugger.CONFIG_PLANNER_OPTION);
+                if (!commandLine) { throw new Error(`Missing planner command-line option configuration: ${SearchDebugger.CONFIG_PDDL_SEARCH_DEBUGGER}.${SearchDebugger.CONFIG_PLANNER_OPTION}`); }
+                command += ' ' + commandLine.replace('$(port)', this.configuration.searchDebuggerPort?.toString() || "undefined");
+            }
+        }
         command += ' ' + callbacks.providePlannerOptions({ domain: domainFileInfo, problem: problemFileInfo }).join(' ');
 
         callbacks.handleOutput(command + '\n');

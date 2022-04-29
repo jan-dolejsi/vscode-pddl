@@ -68,6 +68,7 @@ function initialize() {
  * @property {boolean} downloadValAlert
  * @property {boolean} updateValAlert
  * @property {boolean} showEnableFormatterAlert
+ * @property {boolean} showBracketColorizationAlert
  */
 
 /**
@@ -107,6 +108,7 @@ function updateConfiguration(message) {
         }
         setStyleDisplay('updateValAlert', message.updateValAlert, "table-row");
         setStyleDisplay('enableFormatterAlert', message.showEnableFormatterAlert, "table-row");
+        setStyleDisplay('enableBracketColorizationAlert', message.showBracketColorizationAlert, "table-row");
         setStyleDisplay('alertList', hasAnyChildrenToDisplay('table.alertList > tbody > tr.alert'), "block");
         updatePlannerOutputTarget(message.plannerOutputTarget);
         updateShowOverviewChanged(message.shouldShow);
@@ -212,7 +214,7 @@ function updatePlanners(planners, selectedPlanner) {
 
 /**
  * Creates a themed icon for the config scope
- * @param {HTMLTableDataCellElement} td cell
+ * @param {HTMLTableCellElement} td cell
  * @param {number} scope configuration scope/level
  * @param {ScopedPlannerConfig} scopedConfig planner configuration incl. scope
  */
@@ -318,16 +320,24 @@ function selectPlanner(selectedPlanner) {
 }
 
 function enableFormatOnTypeForPddlOnly() {
+    enableFormatOnType(true);
+}
+
+function enableFormatOnType(forPddlOnly=false) {
     postMessageToVsCode({
         command: 'enableFormatOnType',
-        forPddlOnly: true
+        forPddlOnly: forPddlOnly
     });
 }
 
-function enableFormatOnType() {
+function enableBracketColorizationForPddlOnly() {
+    enableBracketColorization(true);
+}
+
+function enableBracketColorization(forPddlOnly=false) {
     postMessageToVsCode({
-        command: 'enableFormatOnType',
-        forPddlOnly: false
+        command: 'enableBracketColorization',
+        forPddlOnly: forPddlOnly
     });    
 }
 
@@ -514,7 +524,8 @@ function populateWithTestData() {
         showEnableIconsAlert: true,
         downloadValAlert: true,
         updateValAlert: true,
-        showEnableFormatterAlert: true
+        showEnableFormatterAlert: true,
+        showBracketColorizationAlert: true,
     });
     showHint('Did you know that <span class="keyboard">Ctrl</span> + <span class="keyboard">/</span> comments out the current line? Press it again to un-comment it.');
     showFeedbackRequest(true);

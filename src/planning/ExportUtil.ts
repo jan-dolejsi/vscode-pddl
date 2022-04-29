@@ -17,7 +17,14 @@ export async function exportToAndShow(text: string, uri: Uri): Promise<boolean> 
     const editor = await window.showTextDocument(newDocument, { viewColumn: ViewColumn.Active, preserveFocus: true });
     const fullRange = newDocument.validateRange(new Range(0, 0, newDocument.lineCount, 0));
     if (await editor.edit(edit => edit.replace(fullRange, text))) {
-        return newDocument.save();
+        const docSaved = await newDocument.save();
+
+        // workaround to keep the editor window open after saving (or what actually closes it)
+        if (!fileExists) {
+            await window.showTextDocument(newDocument);
+        }
+
+        return docSaved;
     }
     else {
         throw new Error("Cannot insert text to document: " + newDocument.fileName);

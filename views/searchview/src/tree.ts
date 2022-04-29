@@ -56,7 +56,9 @@ declare namespace vis {
         focus(nodeId: number, arg1: { animation: boolean; locked: boolean }): void;
         selectNodes(arg0: number[]): void;
 
-        on(arg0: string, event: (nodeEvent: { nodes: number[] }) => void): void;
+        on(arg0: string, event: (nodeEvent: { nodes: number[], pointer: { DOM: {x: number, y: number} } }) => void): void;
+
+        getNodeAt(coord: { x: number; y: number }): IdType | undefined;
     }
 }
 
@@ -513,6 +515,5 @@ function toIntNodeId(nodeId: vis.IdType): number {
     return nodeId as number;
 }
 
-// todo: support for context menu: http://jsbin.com/qeyumiwepo/5/edit?html,output
 // todo: nodes.shape: diamond, dot, star, triangle, triangleDown, hexagon, square and icon
 // https://visjs.github.io/vis-network/examples/network/nodeStyles/icons.html

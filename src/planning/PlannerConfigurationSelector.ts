@@ -2,9 +2,11 @@
  * Copyright (c) Jan Dolejsi. All rights reserved.
  * Licensed under the MIT License. See License.txt in the project root for license information.
  * ------------------------------------------------------------------------------------------ */
-import { window, Uri, QuickPickItem, workspace } from 'vscode';
+import { window, Uri, QuickPickItem, workspace, SaveDialogOptions } from 'vscode';
 import * as path from 'path';
 import { AsyncServiceOnlyConfiguration, PlannerAsyncService } from 'pddl-planning-service-client';
+import { exportToAndShow } from './ExportUtil';
+import { utils } from 'pddl-workspace';
 
 export class PlannerConfigurationSelector {
 
@@ -14,7 +16,7 @@ export class PlannerConfigurationSelector {
     }
 
     async getConfiguration(): Promise<Uri | null> {
-        const selectedItem = await window.showQuickPick<PlannerConfigurationItem>([useDefaultsItem, selectedConfigurationItem], { placeHolder: 'Select planner configuration from a .json file...' });
+        const selectedItem = await window.showQuickPick<PlannerConfigurationItem>([useDefaultsItem, selectedConfigurationItem, createConfigurationItem], { placeHolder: 'Select planner configuration from a .json file...' });
         if (!selectedItem) { return null; }
 
         switch (selectedItem) {
@@ -22,6 +24,9 @@ export class PlannerConfigurationSelector {
                 return PlannerConfigurationSelector.DEFAULT;
             case selectedConfigurationItem:
                 return await this.selectConfigurationFile();
+            case createConfigurationItem:
+                await this.createConfigurationFile();
+                return null;
             default:
                 if (selectedConfigurationItem instanceof PlannerConfigurationUriItem) {
                     return (selectedConfigurationItem as PlannerConfigurationUriItem).uri;
@@ -56,7 +61,35 @@ export class PlannerConfigurationSelector {
         }
     }
 
-
+    async createConfigurationFile(): Promise<void> {
+        let uri = Uri.joinPath(this.problemPath, ".plannerConfiguration.json");
+        while (await utils.afs.exists(uri.fsPath)) {
+            const overwrite = "Overwrite";
+            const selectDifferentFileName = "Select a different file name...";
+            const shouldOverwrite = await window.showQuickPick([overwrite, selectDifferentFileName], {placeHolder: 'Configuration file already exists...'});
+            if (shouldOverwrite === overwrite) {
+                break;
+            } else if (!shouldOverwrite) {
+                return; // canceled
+            } else if (shouldOverwrite === selectDifferentFileName) {
+                const options: SaveDialogOptions = {
+                    saveLabel: "Create",
+                    filters: {
+                        "JSON": ["json"]
+                    },
+                    defaultUri: uri
+                };
+                const selectedUri = await window.showSaveDialog(options);
+                if (selectedUri) {
+                    uri = selectedUri;
+                
+                } else {
+                    return; // canceled
+                }
+            }
+        }
+        await exportToAndShow("{\n\t\n}", uri);
+    }
 }
 
 class PlannerConfigurationItem implements QuickPickItem {
@@ -75,3 +108,4 @@ class PlannerConfigurationUriItem extends PlannerConfigurationItem {
 
 const useDefaultsItem = new PlannerConfigurationItem("Use defaults");
 const selectedConfigurationItem = new PlannerConfigurationItem("Select a configuration file...");
+const createConfigurationItem = new PlannerConfigurationItem("Create a blank configuration file...", "This creates a blank file, you populate it and launch the planner again.");

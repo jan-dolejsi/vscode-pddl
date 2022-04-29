@@ -40,6 +40,7 @@ export const PLANNER_VALUE_SEQ_PATH = CONF_PDDL + "." + VALUE_SEQ_PATH;
 export const PDDL_CONFIGURE_COMMAND = CONF_PDDL + "." + "configure";
 export const DEFAULT_EPSILON = 1e-3;
 const EDITOR_FORMAT_ON_TYPE = "editor.formatOnType";
+const BRACKET_COLORIZATION_ENABLE = "editor.bracketPairColorization.enabled";
 
 export class PddlConfiguration {
 
@@ -78,6 +79,18 @@ export class PddlConfiguration {
             workspace.getConfiguration(undefined, { languageId: CONF_PDDL }).update(EDITOR_FORMAT_ON_TYPE, newValue, true, true);
         } else {
             workspace.getConfiguration().update(EDITOR_FORMAT_ON_TYPE, newValue, true);
+        }
+    }
+
+    getBracketColorization(): boolean {
+        return workspace.getConfiguration('', { languageId: CONF_PDDL }).get<boolean>(BRACKET_COLORIZATION_ENABLE, false);
+    }
+
+    setBracketColorization(newValue: boolean, options: { forPddlOnly: boolean }): void {
+        if (options.forPddlOnly) {
+            workspace.getConfiguration(undefined, { languageId: CONF_PDDL }).update(BRACKET_COLORIZATION_ENABLE, newValue, true, true);
+        } else {
+            workspace.getConfiguration().update(BRACKET_COLORIZATION_ENABLE, newValue, true);
         }
     }
 

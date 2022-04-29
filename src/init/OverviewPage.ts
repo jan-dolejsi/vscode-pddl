@@ -159,6 +159,9 @@ export class OverviewPage {
             case 'enableFormatOnType':
                 this.pddlConfiguration.setEditorFormatOnType(true, { forPddlOnly: message.forPddlOnly as boolean});
                 break;
+            case 'enableBracketColorization':
+                this.pddlConfiguration.setBracketColorization(true, { forPddlOnly: message.forPddlOnly as boolean});
+                break;
             case 'hintOk':
                 this.hintAcknowledged();
                 break;
@@ -180,7 +183,7 @@ export class OverviewPage {
             default:
                 if (message.command?.startsWith('command:')) {
                     const command = message.command as string;
-                    await commands.executeCommand(command.substr('command:'.length));
+                    await commands.executeCommand(command.substring('command:'.length));
                 } else {
                     console.warn('Unexpected command: ' + message.command);
                 }
@@ -471,7 +474,8 @@ export class OverviewPage {
             showEnableIconsAlert: this.iconsInstalled && workspace.getConfiguration().get<string>("workbench.iconTheme") !== "vscode-icons",
             downloadValAlert: !this.pddlConfiguration.getValidatorPath(this.workspaceFolder) || !(await this.val.isInstalled()),
             updateValAlert: await this.val.isNewValVersionAvailable(),
-            showEnableFormatterAlert: !this.pddlConfiguration.getEditorFormatOnType()
+            showEnableFormatterAlert: !this.pddlConfiguration.getEditorFormatOnType(),
+            showBracketColorizationAlert: !this.pddlConfiguration.getBracketColorization(),
             // todo: workbench.editor.revealIfOpen
         };
         return this?.webViewPanel?.webview?.postMessage(message) ?? false;
@@ -503,6 +507,7 @@ interface OverviewConfiguration {
     downloadValAlert: boolean;
     updateValAlert: boolean;
     showEnableFormatterAlert: boolean;
+    showBracketColorizationAlert: boolean;
 }
 
 interface WireWorkspaceFolder {

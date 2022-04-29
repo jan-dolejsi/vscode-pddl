@@ -36,7 +36,20 @@ export class SearchDebuggerView {
     private debuggerState: boolean | undefined;
     private port: number | undefined;
 
+    public static readonly COMMAND_SHOW_STATE_CONTEXT = "pddl.showStateContext";
+    public static readonly COMMAND_SEARCH_DEBUGGER_START = "pddl.searchDebugger.start";
+    public static readonly COMMAND_SEARCH_DEBUGGER_STOP = "pddl.searchDebugger.stop";
+    public static readonly COMMAND_SEARCH_DEBUGGER_RESET = "pddl.searchDebugger.reset";
+
     constructor(private context: ExtensionContext) {
+    }
+
+    getDomain(): DomainInfo | undefined {
+        return this.domain;
+    }
+
+    getProblem(): ProblemInfo | undefined {
+        return this.problem;
     }
 
     isVisible(): boolean {
@@ -72,7 +85,7 @@ export class SearchDebuggerView {
 
     async showDebugView(): Promise<void> {
         if (this.webViewPanel !== undefined) {
-            this.webViewPanel.reveal();
+            this.webViewPanel.reveal(undefined, true);
         }
         else {
             await this.createDebugView(false);
@@ -139,19 +152,23 @@ export class SearchDebuggerView {
                     window.showErrorMessage("Error while displaying state-plan: " + ex);
                 }
                 break;
+            case 'stateContext':
+                const stateMessage2 = message as StateMessage;
+                commands.executeCommand(SearchDebuggerView.COMMAND_SHOW_STATE_CONTEXT , stateMessage2.stateId);
+                break;
             case 'finalStateDataRequest': 
                 const stateMessage1 = message as StateMessage;
                 this.getFinalStateData(stateMessage1.stateId).catch(showError);
                 break;    
             case 'startDebugger':
-                commands.executeCommand("pddl.searchDebugger.start");
+                commands.executeCommand(SearchDebuggerView.COMMAND_SEARCH_DEBUGGER_START);
                 this.stateLogLineCache.clear();
                 break;
             case 'stopDebugger':
-                commands.executeCommand("pddl.searchDebugger.stop");
+                commands.executeCommand(SearchDebuggerView.COMMAND_SEARCH_DEBUGGER_STOP);
                 break;
             case 'reset':
-                commands.executeCommand("pddl.searchDebugger.reset");
+                commands.executeCommand(SearchDebuggerView.COMMAND_SEARCH_DEBUGGER_RESET);
                 break;
             case 'toggleStateLog':
                 this.toggleStateLog();
@@ -346,7 +363,7 @@ export class SearchDebuggerView {
  * Converts `SearchHappening` to `Happening`.
  * @param searchHappening plan happening that was created as a search state progression
  */
-function toHappening(searchHappening: search.SearchHappening): Happening {
+export function toHappening(searchHappening: search.SearchHappening): Happening {
     return new Happening(searchHappening.earliestTime, searchHappening.kind,
         searchHappening.actionName, searchHappening.shotCounter);
 }
