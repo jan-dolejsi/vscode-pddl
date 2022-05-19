@@ -591,10 +591,12 @@ export class Planning implements planner.PlannerResponseHandler {
         this.output.append(outputText);
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    handlePlan(_plan: Plan): void {
-        // todo: this shall be implemented, when the planning service can return multiple plans
-        throw new Error("Method not implemented.");
+    handlePlan(plan: Plan): void {
+        this.output.appendLine(`\nPlan found:`);
+        this.output.appendLine(plan.getText());
+        this.output.appendLine(`Metric: ${plan.metric}`);
+        this.output.appendLine(`Makespan: ${plan.makespan}`);
+        this.output.appendLine(`States evaluated: ${plan.statesEvaluated}`);
     }
 
     visualizePlans(plans: Plan[]): void {

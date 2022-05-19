@@ -319,7 +319,7 @@ export class JavaPlannerProvider implements planner.PlannerProvider {
             configuration: configuration,
             provider: this
         };
-        // todo: use java.home setting
+        // todo: use `java.home` (deprecated) or `java.jdt.ls.java.home` setting
         return new PlannerExecutable(`java -jar ${utils.Util.q(configuration.path)}`,
             plannerRunConfiguration as planner.PlannerExecutableRunConfiguration, providerConfiguration);
     }

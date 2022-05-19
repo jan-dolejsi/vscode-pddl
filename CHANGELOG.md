@@ -1,5 +1,10 @@
 # PDDL support - What's new?
 
+## 2.23.1
+
+- Support for multiple plans from async `/request` planning service endpoint
+- fix for plan time unit (using the time unit, if returned by the service)
+
 ## 2.23.0
 
 - fix: freshly created documents (e.g. `.plan` files) shall remain open in the editor
