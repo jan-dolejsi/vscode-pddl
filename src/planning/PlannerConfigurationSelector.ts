@@ -4,10 +4,12 @@
  * ------------------------------------------------------------------------------------------ */
 import { window, Uri, QuickPickItem, workspace, SaveDialogOptions } from 'vscode';
 import * as path from 'path';
+import * as jsonc from 'jsonc-parser';
 import { AsyncServiceOnlyConfiguration, PlannerAsyncService } from 'pddl-planning-service-client';
-import { exportToAndShow } from './ExportUtil';
+import { exportToAndShow } from '../util/editorUtil';
 import { utils } from 'pddl-workspace';
 
+/** Async planner interface configuration. */
 export class PlannerConfigurationSelector {
 
     public static readonly DEFAULT = Uri.parse("configuration:/default");
@@ -57,7 +59,7 @@ export class PlannerConfigurationSelector {
         else {
             const configurationDoc = await workspace.openTextDocument(configurationUri);
             const configurationString = configurationDoc.getText();
-            return JSON.parse(configurationString);
+            return jsonc.parse(configurationString, [], { allowTrailingComma: true });
         }
     }
 

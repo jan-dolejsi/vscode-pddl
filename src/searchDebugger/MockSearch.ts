@@ -24,7 +24,7 @@ export class MockSearch {
                 }
                 else {
                     if (httpResponse && httpResponse.statusCode > 204) {
-                        reject("HTTP status code " + httpResponse.statusCode);
+                        reject(new Error("HTTP status code " + httpResponse.statusCode));
                         return;
                     }
                     else {

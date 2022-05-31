@@ -1,5 +1,16 @@
 # PDDL support - What's new?
 
+## 2.23.2
+
+### Planning-as-a-service client - preview
+
+For now the packaged planning-as-a-service url needs to be added as an additional planner.\
+Later, this will replace the solver.planning.domains/solve
+
+For planners that support additional switches, the argument values may be sent directly from VS Code using a temp file that is displayed while launching the planner.
+
+![Planning-as-a-service](https://raw.githubusercontent.com/wiki/jan-dolejsi/vscode-pddl/img/planning-as-a-service.gif)
+
 ## 2.23.1
 
 - Support for multiple plans from async `/request` planning service endpoint

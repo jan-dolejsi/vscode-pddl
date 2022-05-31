@@ -10,7 +10,7 @@ import {
 
 import { PlanExporter } from './PlanExporter';
 import { parser } from 'pddl-workspace';
-import { exportToAndShow } from './ExportUtil';
+import { exportToAndShow } from '../util/editorUtil';
 
 /**
  * Converts plan to happenings while preserving comments.
