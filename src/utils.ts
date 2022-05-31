@@ -101,7 +101,7 @@ export function toFuzzyRelativeTime(time: number): string {
 
 export function showError(reason: Error): void {
     console.error(reason);
-    window.showErrorMessage(reason.message);
+    window.showErrorMessage(reason.message ?? reason);
 }
 
 export function throwForUndefined<T>(part: string): T {

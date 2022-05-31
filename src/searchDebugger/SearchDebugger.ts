@@ -20,7 +20,7 @@ import { ensureAbsoluteGlobalStoragePath, showError } from "../utils";
 import { ValStep } from "ai-planning-val";
 import { handleValStepError } from "../planView/valStepErrorHandler";
 import { basename, dirname, extname, join } from "path";
-import { exportToAndShow } from "../planning/ExportUtil";
+import { exportToAndShow } from "../util/editorUtil";
 
 /** Search debugger component. It owns and manages the {@link SearchDebuggerView}. */
 export class SearchDebugger implements planner.PlannerOptionsProvider {

@@ -32,11 +32,13 @@ import { AssociationProvider } from '../workspace/AssociationProvider';
 import { showError, isHttp } from '../utils';
 import { CodePddlWorkspace } from '../workspace/CodePddlWorkspace';
 import { EXECUTION_TARGET, PDDL_CONFIGURE_PLANNER_OUTPUT_TARGET, PlannersConfiguration } from '../configuration/PlannersConfiguration';
-import { RequestServicePlannerProvider, SolveServicePlannerProvider } from '../configuration/plannerConfigurations';
+import { PlanningAsAServiceProvider, RequestServicePlannerProvider, SolveServicePlannerProvider } from '../configuration/plannerConfigurations';
 import { SearchDebuggerView } from '../searchDebugger/SearchDebuggerView';
 import { SearchDebugger } from '../searchDebugger/SearchDebugger';
 import { PlannerRunConfiguration } from 'pddl-workspace/dist/planner';
 import { cratePlannerConfigurationMessageItems, ProcessErrorMessageItem } from './planningUtils';
+import { PackagedPlanners } from './PackagedPlanners';
+import { PlannerArgumentsSelector } from './PlannerArgumentsSelector';
 
 const PDDL_STOP_PLANNER = 'pddl.stopPlanner';
 const PDDL_CONVERT_PLAN_TO_HAPPENINGS = 'pddl.convertPlanToHappenings';
@@ -342,7 +344,7 @@ export class Planning implements planner.PlannerResponseHandler {
         else {
             commands.executeCommand(SearchDebuggerView.COMMAND_SEARCH_DEBUGGER_START);
         }
-        
+
         this.planner = await this.createPlanner(workingDirectory, options);
         if (!this.planner) { return; }
         const planner: planner.Planner = this.planner;
@@ -468,7 +470,28 @@ export class Planning implements planner.PlannerResponseHandler {
                     configuration.refreshToken, configuration.accessToken, configuration.sToken);
             }
 
-            if (plannerConfiguration.url.endsWith("/solve")) {
+            if (plannerConfiguration.url.endsWith("/package")) {
+                const selectedEndPoint = await new PackagedPlanners(plannerConfiguration.url).select();
+                if (!selectedEndPoint) {
+                    return null;
+                }
+                console.log(`Selected package: '${selectedEndPoint.manifest.name}'`);
+                plannerConfiguration.url = `${plannerConfiguration.url}/${selectedEndPoint.manifest.package_name}/${selectedEndPoint.endpoint}`;
+
+                const plannerRunArguments = options ?
+                    await PlannerArgumentsSelector.loadConfiguration(this.toAbsoluteUri(options, workingDirectory)) :
+                    await new PlannerArgumentsSelector(Uri.file(workingDirectory), selectedEndPoint).getConfiguration();
+                if (!plannerRunArguments) { return null; } // canceled by user
+
+                // const plannerRunConfiguration: planner.PlannerRunConfiguration = {
+                //     options: options,
+                //     authentication: authentication
+                // };
+
+                return this.codePddlWorkspace.pddlWorkspace.getPlannerRegistrar()
+                    .getPlannerProvider(new planner.PlannerKind(plannerConfiguration.kind))?.createPlanner?.(plannerConfiguration, plannerRunArguments) ??
+                    PlanningAsAServiceProvider.createDefaultPlanner(plannerConfiguration, plannerRunArguments);
+            } else if (plannerConfiguration.url.endsWith("/solve")) {
                 options = await this.getPlannerLineOptions(plannerConfiguration, options);
                 if (options === undefined) { return null; }
 

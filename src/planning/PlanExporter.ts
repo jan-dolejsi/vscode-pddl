@@ -10,7 +10,7 @@ import {
 
 import { parser, Plan } from 'pddl-workspace';
 import { parse, format } from 'path';
-import { exportToAndShow } from './ExportUtil';
+import { exportToAndShow } from '../util/editorUtil';
 import { toUri } from '../utils';
 
 

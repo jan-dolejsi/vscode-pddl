@@ -12,7 +12,7 @@
 		"powerHeader.commentMode": "raw",
         "powerHeader.template": "/*\\n * Copyright (c) Jan Dolejsi $CURRENT_YEAR. All rights reserved.\\n * Licensed under the MIT License. See License.txt in the project root for license information.\\n */\\n'use strict';\\n\\nimport { } from 'vscode';"
     },
-	"mocha.files.glob": "common/out/test/*.js",
+	"mocha.files.glob": "out/test/*Test.js",
 	"eslint.validate": [
 		"typescript"
 	],

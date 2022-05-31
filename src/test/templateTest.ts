@@ -4,7 +4,7 @@
  * ------------------------------------------------------------------------------------------ */
 'use strict';
 
-import * as assert from 'assert';
+import { expect } from 'chai';
 
 describe('Template', () => {
 
@@ -17,7 +17,7 @@ describe('Template', () => {
             const actual = true;
 
             // THEN
-            assert.strictEqual(actual, expected, "actual should equal expected");
+            expect(actual).to.equal(expected, "actual should equal expected");
         });
     });
 });

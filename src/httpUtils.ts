@@ -7,8 +7,16 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 import * as request from 'request';
+import { get } from 'http';
 import * as fs from 'fs';
+import { URL } from 'url';
 
+/**
+ * Get using `request` npm package.
+ * @param url url
+ * @returns returned structure
+ * @deprecated use getJson2
+ */
 export function getJson(url: string): Promise<any> {
     return new Promise<any>((resolve, reject) => {
         request.get(url, { json: true }, (error: any, httpResponse: request.Response, body: any) => {
@@ -17,12 +25,44 @@ export function getJson(url: string): Promise<any> {
             }
             else {
                 if (httpResponse && httpResponse.statusCode !== 200) {
-                    reject("HTTP status code " + httpResponse.statusCode);
+                    reject(new Error("HTTP status code " + httpResponse.statusCode));
                 }
                 else {
                     resolve(body);
                 }
             }
+        });
+    });
+}
+
+export async function getJson2<T>(url: URL): Promise<T> {
+    return await new Promise((resolve, reject) => {
+        get(url, res => {
+            if (res.statusCode && res.statusCode >= 300) {
+                reject(new Error(`Status code ${res.statusCode}, ${res.statusMessage} from ${url}`));
+                res.resume();
+                return;
+            }
+            const contentType = res.headers['content-type'];
+            if (!contentType || !/^application\/json/.test(contentType)) {
+                reject(new Error('Invalid content-type.\n' +
+                    `Expected application/json but received ${contentType} from ${url}`));
+                res.resume();
+                return;
+            }
+            res.setEncoding('utf8');
+            let rawData = '';
+            res.on('data', (chunk) => { rawData += chunk; });
+            res.on('end', () => {
+                try {
+                    const parsedData = JSON.parse(rawData);
+                    // console.log(parsedData);
+                    resolve(parsedData);
+                } catch (e: unknown) {
+                    console.error(e);
+                    reject(e);
+                }
+            });
         });
     });
 }
@@ -54,7 +94,7 @@ export function getText(url: string): string | PromiseLike<string> {
             }
             else {
                 if (httpResponse && httpResponse.statusCode !== 200) {
-                    reject("HTTP status code " + httpResponse.statusCode);
+                    reject(new Error("HTTP status code " + httpResponse.statusCode));
                 }
                 else {
                     resolve(body);
@@ -72,7 +112,7 @@ export function postJson(url: string, content: any): Promise<any> {
             }
             else {
                 if (httpResponse && httpResponse.statusCode > 204) {
-                    reject("HTTP status code " + httpResponse.statusCode);
+                    reject(new Error("HTTP status code " + httpResponse.statusCode));
                 }
                 else {
                     resolve(body);
