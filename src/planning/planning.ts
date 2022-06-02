@@ -11,7 +11,7 @@ import {
 import { instrumentOperationAsVsCodeCommand } from "vscode-extension-telemetry-wrapper";
 import { PlannerAsyncService, AsyncServiceConfiguration } from "pddl-planning-service-client";
 import * as path from 'path';
-import { dirname } from 'path';
+import { URL } from 'url';
 
 import {
     PddlWorkspace, parser, planner, ProblemInfo, Plan, DomainInfo, PddlLanguage, utils
@@ -37,7 +37,7 @@ import { SearchDebuggerView } from '../searchDebugger/SearchDebuggerView';
 import { SearchDebugger } from '../searchDebugger/SearchDebugger';
 import { PlannerRunConfiguration } from 'pddl-workspace/dist/planner';
 import { cratePlannerConfigurationMessageItems, ProcessErrorMessageItem } from './planningUtils';
-import { PackagedPlanners } from './PackagedPlanners';
+import { PackagedPlannerSelector } from './PackagedPlannerSelector';
 import { PlannerArgumentsSelector } from './PlannerArgumentsSelector';
 
 const PDDL_STOP_PLANNER = 'pddl.stopPlanner';
@@ -302,13 +302,13 @@ export class Planning implements planner.PlannerResponseHandler {
     private establishWorkingDirectory(activeDocument: TextDocument, problemFileInfo: ProblemInfo, domainFileInfo: DomainInfo): string {
         let workingDirectory = "";
         if (activeDocument.uri.scheme === "file") {
-            workingDirectory = dirname(activeDocument.fileName);
+            workingDirectory = path.dirname(activeDocument.fileName);
         }
         else if (problemFileInfo.fileUri.scheme === "file") {
-            workingDirectory = dirname(problemFileInfo.fileUri.fsPath);
+            workingDirectory = path.dirname(problemFileInfo.fileUri.fsPath);
         }
         else if (domainFileInfo.fileUri.scheme === "file") {
-            workingDirectory = dirname(domainFileInfo.fileUri.fsPath);
+            workingDirectory = path.dirname(domainFileInfo.fileUri.fsPath);
         }
         return workingDirectory;
     }
@@ -471,7 +471,7 @@ export class Planning implements planner.PlannerResponseHandler {
             }
 
             if (plannerConfiguration.url.endsWith("/package")) {
-                const selectedEndPoint = await new PackagedPlanners(plannerConfiguration.url).select();
+                const selectedEndPoint = await new PackagedPlannerSelector(new URL(plannerConfiguration.url)).select();
                 if (!selectedEndPoint) {
                     return null;
                 }

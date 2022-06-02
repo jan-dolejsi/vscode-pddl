@@ -6,8 +6,8 @@
 
 import { expect } from 'chai';
 import * as jsonc from 'jsonc-parser';
-import { PackagedServerRequestArgs } from 'pddl-planning-service-client';
-import { EndpointService, SelectedEndpoint } from '../planning/PackagedPlanners';
+import { EndpointService, PackagedServerRequestArgs } from 'pddl-planning-service-client';
+import { SelectedEndpoint } from '../planning/PackagedPlannerSelector';
 import { PlannerArgumentsGenerator } from '../planning/PlannerArgumentsGenerator';
 
 describe('PlannerArgumentsGenerator', () => {

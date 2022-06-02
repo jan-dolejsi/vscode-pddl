@@ -9,7 +9,7 @@ import * as jsonc from 'jsonc-parser';
 import { PackagedServerRequestArgs } from 'pddl-planning-service-client';
 import { utils } from 'pddl-workspace';
 import { exportToAndShow, waitTillClosed } from '../util/editorUtil';
-import { SelectedEndpoint } from './PackagedPlanners';
+import { SelectedEndpoint } from './PackagedPlannerSelector';
 import { Util as valUtil } from 'ai-planning-val';
 import { PlannerArgumentsGenerator } from './PlannerArgumentsGenerator';
 
