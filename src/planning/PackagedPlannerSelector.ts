@@ -6,12 +6,12 @@
 
 import { URL } from 'url';
 import { ProgressLocation, QuickPickItem, window } from 'vscode';
-import { getJson2 } from '../httpUtils';
+import { EndpointService, PackagedPlanners, PackageManifest } from 'pddl-planning-service-client';
 
 /** See https://github.com/AI-Planning/planning-as-a-service/issues/32 */
-export class PackagedPlanners {
-    constructor(private readonly packageUrl: string) {
-
+export class PackagedPlannerSelector extends PackagedPlanners {
+    constructor(packageUrl: URL) {
+        super(packageUrl);
     }
 
     async getManifests(): Promise<PackageManifest[]> {
@@ -19,7 +19,7 @@ export class PackagedPlanners {
             location: ProgressLocation.Notification,
             title: 'Discovering packages...',
             cancellable: true
-        }, async () => await getJson2(new URL(this.packageUrl)));
+        }, async () => await super.getManifests());
     }
 
     async select(): Promise<SelectedEndpoint | undefined> {
@@ -82,40 +82,4 @@ export interface SelectedEndpoint {
     manifest: PackageManifest;
     endpoint: string;
     service: EndpointService;
-}
-
-/** Describes returned data structure. */
-interface PackageManifest {
-    description: string | undefined;
-    package_name: string | undefined;
-    name: string;
-    endpoint: {
-        services: { [key: string]: EndpointService }
-    };
-    runnable: boolean;
-    "install-size": string;
-    dependencies: string[];
-}
-
-export interface EndpointService {
-    args: EndpointServiceArgument[];
-    call: string; // irrelevant for remote calling
-    return: {
-        files: string,
-        type: string
-    }; // irrelevant for remote calling
-}
-
-export interface EndpointServiceArgument {
-    name: "domain" | "problem" | string;
-    description: string;
-    type: "file" | "int" | "categorical";
-    default?: string | number | boolean;
-    /** Only if type is 'categorical' */
-    choices?: EndpointServiceArgumentChoice[];
-}
-
-export interface EndpointServiceArgumentChoice {
-    display_value: string;
-    value: string | number | boolean;
 }

@@ -4,8 +4,8 @@
  * ------------------------------------------------------------------------------------------ */
 
 import * as jsonc from 'jsonc-parser';
-import { PackagedServerRequestArgs } from 'pddl-planning-service-client';
-import { EndpointServiceArgument, EndpointServiceArgumentChoice, SelectedEndpoint } from './PackagedPlanners';
+import { PackagedServerRequestArgs, EndpointServiceArgument, EndpointServiceArgumentChoice } from 'pddl-planning-service-client';
+import { SelectedEndpoint } from './PackagedPlannerSelector';
 
 /** Async planner-as-a-service argument generator. Separated out for unit-testing. */
 export class PlannerArgumentsGenerator {
