@@ -5,10 +5,6 @@
 'use strict';
 
 import * as vscode from 'vscode';
-import { WorkspaceFolder, DebugConfiguration, CancellationToken, window } from 'vscode';
-import { PlanDebugSession } from './PlanDebugSession';
-import * as Net from 'net';
-import { HAPPENINGS } from 'pddl-workspace';
 import { HappeningsInfo } from 'pddl-workspace';
 import { isHappenings, getDomainAndProblemForHappenings, selectHappenings } from '../workspace/workspaceUtils';
 import { PddlConfiguration } from '../configuration/configuration';
@@ -23,7 +19,7 @@ import { instrumentOperationAsVsCodeCommand } from "vscode-extension-telemetry-w
  * debug adapter should run inside the extension host.
  * Please note: the test suite does no longer work in this mode.
  */
-const EMBED_DEBUG_ADAPTER = true;
+// const EMBED_DEBUG_ADAPTER = true;
 
 export class Debugging {
 
@@ -37,13 +33,13 @@ export class Debugging {
 		}));
 
 		// register a configuration provider for 'pddl-happenings' debug type
-		const provider = new PddlPlanDebugConfigurationProvider();
-		context.subscriptions.push(vscode.debug.registerDebugConfigurationProvider('pddl-happenings', provider));
-		context.subscriptions.push(provider);
+		// const provider = new PddlPlanDebugConfigurationProvider();
+		// context.subscriptions.push(vscode.debug.registerDebugConfigurationProvider('pddl-happenings', provider));
+		// context.subscriptions.push(provider);
 
-		context.subscriptions.push(instrumentOperationAsVsCodeCommand('pddl.happenings.debug', () => {
-			return this.startDebugging();
-		}));
+		// context.subscriptions.push(instrumentOperationAsVsCodeCommand('pddl.happenings.debug', () => {
+		// 	return this.startDebugging();
+		// }));
 
 		context.subscriptions.push(vscode.commands.registerTextEditorCommand("pddl.happenings.execute", async (editor) => {
 			try {
@@ -85,15 +81,15 @@ export class Debugging {
 
 	async getActiveContext(): Promise<DebuggingSessionFiles> {
 
-		if (!window.activeTextEditor) {
+		if (!vscode.window.activeTextEditor) {
 			throw new Error('There is no file active in the editor.');
 		}
 
-		if (!isHappenings(window.activeTextEditor.document)) {
+		if (!isHappenings(vscode.window.activeTextEditor.document)) {
 			throw new Error('Active document cannot be debugged.');
 		}
 
-		const activeFileInfo = await this.pddlWorkspace.upsertAndParseFile(window.activeTextEditor.document);
+		const activeFileInfo = await this.pddlWorkspace.upsertAndParseFile(vscode.window.activeTextEditor.document);
 
 		if (!(activeFileInfo instanceof HappeningsInfo)) {
 			throw new Error('Active document cannot be debugged.');
@@ -114,7 +110,7 @@ export class Debugging {
 
 		const context = await this.getActiveContext();
 
-		let folder: WorkspaceFolder | undefined; // so far there is no configuration to resolve
+		let folder: vscode.WorkspaceFolder | undefined; // so far there is no configuration to resolve
 		const debugConfiguration: vscode.DebugConfiguration = {
 			"name": "PDDL Plan Happenings F5",
 			"type": "pddl-happenings",
@@ -128,57 +124,57 @@ export class Debugging {
 	}
 }
 
-class PddlPlanDebugConfigurationProvider implements vscode.DebugConfigurationProvider {
+// class PddlPlanDebugConfigurationProvider implements vscode.DebugConfigurationProvider {
 
-	private _server?: Net.Server;
+// 	private _server?: Net.Server;
 
-	/**
-	 * Massage a debug configuration just before a debug session is being launched,
-	 * e.g. add all missing attributes to the debug configuration.
-	 */
-	async resolveDebugConfiguration(_folder: WorkspaceFolder | undefined, config: DebugConfiguration, token?: CancellationToken): Promise<DebugConfiguration | undefined> {
-		if (token?.isCancellationRequested) { return undefined; }
-		// if launch.json is missing or empty
-		if (!config.type && !config.request && !config.name) {
-			const editor = vscode.window.activeTextEditor;
-			if (editor && editor.document.languageId === HAPPENINGS) {
-				config.type = 'pddl-happenings';
-				config.name = 'PDDL: Plan Happenings (from context menu)';
-				config.request = 'launch';
-				config.program = '${file}';
-				config.domain = 'domain.pddl';
-				config.problem = '${fileBasenameNoExtension}.pddl';
-				config.stopOnEntry = true;
-			}
-		}
+// 	/**
+// 	 * Massage a debug configuration just before a debug session is being launched,
+// 	 * e.g. add all missing attributes to the debug configuration.
+// 	 */
+// 	async resolveDebugConfiguration(_folder: WorkspaceFolder | undefined, config: DebugConfiguration, token?: CancellationToken): Promise<DebugConfiguration | undefined> {
+// 		if (token?.isCancellationRequested) { return undefined; }
+// 		// if launch.json is missing or empty
+// 		if (!config.type && !config.request && !config.name) {
+// 			const editor = vscode.window.activeTextEditor;
+// 			if (editor && editor.document.languageId === HAPPENINGS) {
+// 				config.type = 'pddl-happenings';
+// 				config.name = 'PDDL: Plan Happenings (from context menu)';
+// 				config.request = 'launch';
+// 				config.program = '${file}';
+// 				config.domain = 'domain.pddl';
+// 				config.problem = '${fileBasenameNoExtension}.pddl';
+// 				config.stopOnEntry = true;
+// 			}
+// 		}
 
-		if (!config.program) {
-			await vscode.window.showInformationMessage("Cannot find a program to debug");
-				return undefined;	// abort launch
-		}
+// 		if (!config.program) {
+// 			await vscode.window.showInformationMessage("Cannot find a program to debug");
+// 				return undefined;	// abort launch
+// 		}
 
-		if (EMBED_DEBUG_ADAPTER) {
-			// start port listener on launch of first debug session
-			if (!this._server) {
+// 		if (EMBED_DEBUG_ADAPTER) {
+// 			// start port listener on launch of first debug session
+// 			if (!this._server) {
 
-				// start listening on a random port
-				this._server = Net.createServer(socket => {
-					const session = new PlanDebugSession();
-					session.setRunAsServer(true);
-					session.start(socket as NodeJS.ReadableStream, socket);
-				}).listen(0);
-			}
+// 				// start listening on a random port
+// 				this._server = Net.createServer(socket => {
+// 					const session = new PlanDebugSession();
+// 					session.setRunAsServer(true);
+// 					session.start(socket as NodeJS.ReadableStream, socket);
+// 				}).listen(0);
+// 			}
 
-			// make VS Code connect to debug server instead of launching debug adapter
-			config.debugServer = (this._server.address() as Net.AddressInfo).port;
-		}
+// 			// make VS Code connect to debug server instead of launching debug adapter
+// 			config.debugServer = (this._server.address() as Net.AddressInfo).port;
+// 		}
 
-		return config;
-	}
+// 		return config;
+// 	}
 
-	dispose(): void {
-		if (this._server) {
-			this._server.close();
-		}
-	}
-}
+// 	dispose(): void {
+// 		if (this._server) {
+// 			this._server.close();
+// 		}
+// 	}
+// }

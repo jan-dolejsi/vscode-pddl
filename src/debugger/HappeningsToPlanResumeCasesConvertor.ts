@@ -4,17 +4,15 @@
  * ------------------------------------------------------------------------------------------ */
 'use strict';
 
-import { Uri, commands, window } from 'vscode';
-import { PddlConfiguration } from '../configuration/configuration';
-import { Util as ValUtil } from 'ai-planning-val';
-import { utils } from 'pddl-workspace';
-import { dirname, relative, basename, join } from 'path';
 import * as process from 'child_process';
-import { HappeningsToValStep } from 'ai-planning-val';
+import { dirname, relative, basename, join } from 'path';
+import { Uri, commands, window } from 'vscode';
+import { Util as ValUtil, HappeningsToValStep } from 'ai-planning-val';
+import { utils, Happening, HappeningType } from 'pddl-workspace';
+import { PddlConfiguration } from '../configuration/configuration';
 import { DebuggingSessionFiles } from './DebuggingSessionFiles';
 import { TestsManifest } from '../ptest/TestsManifest';
 import { Test } from '../ptest/Test';
-import { Happening, HappeningType } from 'pddl-workspace';
 import { PTEST_REVEAL, PTEST_REFRESH } from '../ptest/PTestCommands';
 
 /**

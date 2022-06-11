@@ -1,6 +1,6 @@
 # PDDL support - What's new?
 
-## 2.23.2
+## 2.23.2 + 2.23.3 hotfix
 
 ### Planning-as-a-service client - preview
 

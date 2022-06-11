@@ -1,10 +1,10 @@
 import * as path from 'path';
 
-import { runTests } from 'vscode-test';
+import { runTests } from "@vscode/test-electron";
 import { URI } from 'vscode-uri';
 import { utils } from 'pddl-workspace';
 import * as tmp from 'tmp-promise';
-import { TestOptions } from 'vscode-test/out/runTest';
+import { TestOptions } from '@vscode/test-electron/out/runTest';
 
 async function main(): Promise<void> {
 	try {
