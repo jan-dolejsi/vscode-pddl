@@ -449,6 +449,12 @@ suite('PDDL Completion Item Provider', () => {
             '(:metric'
         ]);
         items.forEach(item => assert.deepStrictEqual(item.range, new vscode.Range(1, 0, 1, 3), `Range of '${item.label}'`));
+
+        const objectsCompletion = items.find(i => (i.filterText ?? i.label) === '(:objects');
+        expect((objectsCompletion?.insertText as vscode.SnippetString).value, ":objects template").equal('(:objects\n\t$0\n)', "does not include (and )");
+
+        const initCompletion = items.find(i => (i.filterText ?? i.label) === '(:init');
+        expect((initCompletion?.insertText as vscode.SnippetString).value, ":init template").equal('(:init\n\t$0\n)', "does not include (and )");
     });    
 });
 
