@@ -103,6 +103,20 @@ suite('Domain formatter Test Suite', () => {
         await testFormatter(inputText, expectedText, { insertSpaces: true, tabSize: 4 });
     });
 
+    test('Does not format type hierarchy with comment', async () => {
+        // GIVEN
+        const inputText = [`(define`,
+        `    (:types`,
+        `        child11 child12 ; comment`,
+        `        - parent`,
+        `    )`,
+        `)`].join(EOL);
+
+        const expectedText = inputText;
+
+        await testFormatter(inputText, expectedText, { insertSpaces: true, tabSize: 4 });
+    });
+
     test('Formats types', async () => {
         // GIVEN
         const inputText = `(define (:types child11 child12))`;
