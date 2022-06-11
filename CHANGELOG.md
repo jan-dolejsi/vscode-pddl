@@ -1,6 +1,25 @@
 # PDDL support - What's new?
 
-## 2.23.2
+## 2.23.4
+
+Fix for `(:init )` and `(:objects )` auto-completion template. It wrongly included the `(and )`.
+
+Fix for type hierarchy formatting, when comment was inserted between the child and ancestor.\
+The formatter wrongly added the ancestor to the end of the comment, thus rendering it invisible\
+and making the children inherit from `object` instead.
+
+```lisp
+(:objects 
+    car bus ; airplane
+    - vehicle
+)
+```
+
+Migrated from obsolete dependencies.
+
+Included links to ![Youtube](https://www.youtube.com/s/desktop/f2388c5e/img/favicon.ico) [Modeling in PDDL, back to the basics](https://www.youtube.com/playlist?list=PL1Q0jeuU6XppS_r2Sa9fzVanpbXKqLsYS) channel
+
+## 2.23.2 + 2.23.3 hotfix
 
 ### Planning-as-a-service client - preview
 

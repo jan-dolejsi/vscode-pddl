@@ -16,3 +16,8 @@ rmdir /S /Q views\searchview\node_modules
 rmdir /S /Q views\searchview\out
 rmdir /S /Q views\searchview\out-test
 del views\searchview\package-lock.json
+
+rmdir /S /Q views\modelview\node_modules
+rmdir /S /Q views\modelview\out
+rmdir /S /Q views\modelview\out-test
+del views\modelview\package-lock.json

@@ -5,7 +5,7 @@
 'use strict';
 
 import { DomainInfo, FileInfo, parser, PddlLanguage, ProblemInfo } from 'pddl-workspace';
-import {TextDocument, CancellationToken, DocumentFormattingEditProvider, FormattingOptions, TextEdit, DocumentRangeFormattingEditProvider, Range, Position, EndOfLine } from 'vscode';
+import { TextDocument, CancellationToken, DocumentFormattingEditProvider, FormattingOptions, TextEdit, DocumentRangeFormattingEditProvider, Range, Position, EndOfLine } from 'vscode';
 import { nodeToRange } from '../utils';
 import { CodePddlWorkspace } from '../workspace/CodePddlWorkspace';
 import { PddlOnTypeFormatter } from './PddlOnTypeFormatter';
@@ -24,8 +24,8 @@ export class PddlFormatProvider implements DocumentFormattingEditProvider, Docum
         }
 
         const tree: parser.PddlSyntaxTree = this.getSyntaxTree(fileInfo, document);
-        
-		return new PddlFormatter(document, range, options, token).format(tree.getRootNode());
+
+        return new PddlFormatter(document, range, options, token).format(tree.getRootNode());
     }
 
     async provideDocumentFormattingEdits(document: TextDocument, options: FormattingOptions, token: CancellationToken): Promise<TextEdit[] | undefined> {
@@ -39,9 +39,9 @@ export class PddlFormatProvider implements DocumentFormattingEditProvider, Docum
         const tree: parser.PddlSyntaxTree = this.getSyntaxTree(fileInfo, document);
 
         const fullRange = document.validateRange(new Range(new Position(0, 0), new Position(document.lineCount, Number.MAX_VALUE)));
-        
-		return new PddlFormatter(document, fullRange, options, token).format(tree.getRootNode());
-	}
+
+        return new PddlFormatter(document, fullRange, options, token).format(tree.getRootNode());
+    }
 
     private getSyntaxTree(fileInfo: FileInfo | undefined, document: TextDocument): parser.PddlSyntaxTree {
         let tree: parser.PddlSyntaxTree;
@@ -84,7 +84,6 @@ class PddlFormatter {
             return this.edits;
         }
 
-        
         const nextSibling = node.getFollowingSibling()
             ?? node.getParent()?.getFollowingSibling(undefined, node);
 
@@ -108,9 +107,9 @@ class PddlFormatter {
                     }
                 }
             } else if (node.isType(parser.PddlTokenType.Whitespace)) {
-
-                if (node.getParent() && ['(increase', '(decrease', '(assign'].includes(node.getParent()!.getToken().tokenText)) {
-                    if ((node.getParent()?.length ?? 0) > 50) {
+                const parentNode = node.getParent();
+                if (parentNode && ['(increase', '(decrease', '(assign'].includes(parentNode.getToken().tokenText)) {
+                    if ((parentNode.length ?? 0) > 50) {
                         this.breakAndIndent(node);
                     } else {
                         this.replace(node, ' ');
@@ -121,9 +120,15 @@ class PddlFormatter {
                     } else {
                         this.replace(node, ' ');
                     }
-                } else if (node.getParent() && ['(:types', '(:objects', '(:constants'].includes(node.getParent()!.getToken().tokenText)) {
-                    if (nextSibling?.isType(parser.PddlTokenType.Dash) || precedingSibling?.isType(parser.PddlTokenType.Dash)) {
+                } else if (parentNode && ['(:types', '(:objects', '(:constants'].includes(parentNode.getToken().tokenText)) {
+                    if (precedingSibling?.isType(parser.PddlTokenType.Dash)) {
                         this.replace(node, ' ');
+                    } else if (nextSibling?.isType(parser.PddlTokenType.Dash)) {
+                        if (precedingSibling?.isType(parser.PddlTokenType.Comment)) {
+                            this.breakAndIndent(node); // must keep the line break after comment
+                        } else {
+                            this.replace(node, ' ');
+                        }
                     } else if (precedingSibling?.isType(parser.PddlTokenType.Comment)) {
                         this.breakAndIndent(node);
                     } else if (nextSibling?.isType(parser.PddlTokenType.CloseBracket)) {
@@ -178,10 +183,10 @@ class PddlFormatter {
         }
 
         node.getChildren().forEach(child => this.format(child));
-        
+
         return this.edits;
     }
-    
+
     areTypes(nodes: parser.PddlSyntaxNode[], expectedTypes: parser.PddlTokenType[]): boolean {
         if (nodes.length !== expectedTypes.length) {
             throw new Error(`argument lengths are not matching`);
@@ -196,7 +201,7 @@ class PddlFormatter {
         }
         return true;
     }
-    
+
     breakAndIndent(node: parser.PddlSyntaxNode, offset = 0): void {
         const level = node.getAncestors([parser.PddlTokenType.OpenBracket, parser.PddlTokenType.OpenBracketOperator]).length;
 
@@ -241,5 +246,5 @@ class PddlFormatter {
             case EndOfLine.CRLF:
                 return '\r\n';
         }
-    }   
+    }
 }

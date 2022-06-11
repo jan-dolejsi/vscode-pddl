@@ -15,20 +15,20 @@
   "author": "Jan Dolejsi",
   "license": "MIT",
   "devDependencies": {
+    "@types/chai": "file:../../node_modules/@types/chai",
+    "@types/chai-string": "file:../../node_modules/@types/chai-string",
+    "@types/mocha": "file:../../node_modules/@types/mocha",
     "@typescript-eslint/eslint-plugin": "file:../../node_modules/@typescript-eslint/eslint-plugin",
     "@typescript-eslint/parser": "file:../../node_modules/@typescript-eslint/parser",
-    "eslint": "file:../../node_modules/eslint",
-    "typescript": "file:../../node_modules/typescript",
     "browserify": "^16.5.2",
-    "tsify": "^5.0.4",
-    "watchify": "^3.11.1",
-    "@types/mocha": "file:../../node_modules/@types/mocha",
-    "mocha": "file:../../node_modules/mocha",
-    "@types/chai": "file:../../node_modules/@types/chai",
     "chai": "file:../../node_modules/chai",
-    "@types/chai-string": "file:../../node_modules/@types/chai-string",
     "chai-string": "file:../../node_modules/chai-string",
-    "model": "file:../../out/modelView/model/"
+    "eslint": "file:../../node_modules/eslint",
+    "mocha": "file:../../node_modules/mocha",
+    "model": "file:../../out/modelView/model/",
+    "tsify": "^5.0.4",
+    "typescript": "^4.7.2",
+    "watchify": "^3.11.1"
   },
   "dependencies": {
     "pddl-gantt": "file:../../node_modules/pddl-gantt"
