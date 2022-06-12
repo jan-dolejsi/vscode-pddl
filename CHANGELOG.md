@@ -1,5 +1,9 @@
 # PDDL support - What's new?
 
+## 2.23.5
+
+Displaying `/solve` and `/request` service output.
+
 ## 2.23.4
 
 Fix for `(:init )` and `(:objects )` auto-completion template. It wrongly included the `(and )`.
