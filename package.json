@@ -4,11 +4,11 @@
   "description": "Planning Domain Description Language support",
   "author": "Jan Dolejsi",
   "license": "MIT",
-  "version": "2.23.4",
+  "version": "2.23.5",
   "publisher": "jan-dolejsi",
   "engines": {
     "vscode": "^1.55.0",
-    "node": "^12.14.1"
+    "node": "^14.18.3"
   },
   "categories": [
     "Snippets",
@@ -1037,7 +1037,7 @@
     "jsonc-parser": "^3.0.0",
     "open": "^8.0.6",
     "pddl-gantt": "^1.5.12",
-    "pddl-planning-service-client": "^2.2.0",
+    "pddl-planning-service-client": "^2.2.1",
     "pddl-workspace": "^7.2.2",
     "request": "^2.88.2",
     "semver": "^7.3.5",

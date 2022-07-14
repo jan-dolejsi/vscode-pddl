@@ -18,14 +18,14 @@ import request = require('request');
 
 export class ValidatorService extends Validator {
 
-    constructor(path: string, private useAuthentication: boolean, private authentication: SAuthentication) { 
+    constructor(path: string, private useAuthentication: boolean, private authentication: SAuthentication) {
         super(path);
     }
-    
+
     validate(domainInfo: DomainInfo, problemFiles: ProblemInfo[], onSuccess: (diagnostics: Map<string, Diagnostic[]>) => void, onError: (error: string) => void): void {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         let requestHeader: any = {};
-        if(this.useAuthentication && this.authentication.getToken()) {
+        if (this.useAuthentication && this.authentication.getToken()) {
             requestHeader = {
                 "Authorization": "Bearer " + this.authentication.getToken()
             };
@@ -43,7 +43,7 @@ export class ValidatorService extends Validator {
                 return;
             }
 
-            if(this.useAuthentication) {
+            if (this.useAuthentication) {
                 if (httpResponse) {
                     if (httpResponse.statusCode === 400) {
                         const message = "Authentication failed. Please login or update tokens.";
@@ -65,7 +65,7 @@ export class ValidatorService extends Validator {
                 return;
             }
 
-            const messages = responseBody;
+            const messages: ValParsingProblem[] = responseBody;
 
             const diagnostics = this.createEmptyDiagnostics(domainInfo, problemFiles);
 
@@ -82,7 +82,7 @@ export class ValidatorService extends Validator {
                     fileUri = domainInfo.fileUri;
                 }
                 else if (location.startsWith("PROBLEM")) {
-                    const problemIdx = parseInt(location.substr("PROBLEM".length + 1));
+                    const problemIdx = parseInt(location.substring("PROBLEM".length + 1));
                     fileUri = problemFiles[problemIdx].fileUri;
                 }
                 else {
@@ -90,12 +90,10 @@ export class ValidatorService extends Validator {
                     continue;
                 }
 
-                const severity = Validator.toSeverity(messages[i].severity);
-
-                const range = this.toRange(messages[i].position);
 
                 if (fileUri !== undefined) {
-                    diagnostics.get(fileUri.toString())?.push(new Diagnostic(range, messages[i].message, severity));
+                    const diagnostic = toDiagnostic(messages[i]);
+                    diagnostics.get(fileUri.toString())?.push(diagnostic);
                 }
             }
 
@@ -104,14 +102,32 @@ export class ValidatorService extends Validator {
         });
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    toRange(position: any): Range {
+    static toRange(position: ValPosition): Range {
         if (position === null || position === undefined) { return Validator.createRange(0, 0); }
 
-        const line = parseInt(position.line) - 1;
-        const character = parseInt(position.character) - 1;
+        const line = position.line - 1;
+        const character = position.character - 1;
 
         return Validator.createRange(line, character);
     }
 
+}
+
+export interface ValParsingProblem {
+    /** DOMAIN / PROBLEM*/
+    location: string;
+    message: string;
+    position: ValPosition;
+    severity: string;
+}
+
+interface ValPosition {
+    line: number;
+    character: number;
+}
+
+export function toDiagnostic(problem: ValParsingProblem) {
+    const severity = Validator.toSeverity(problem.severity);
+    const range = ValidatorService.toRange(problem.position);
+    return new Diagnostic(range, problem.message, severity);
 }

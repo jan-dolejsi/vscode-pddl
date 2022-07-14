@@ -20,7 +20,7 @@ import { ValidatorService } from './ValidatorService';
 import { ValidatorExecutable } from './ValidatorExecutable';
 import { PDDLParserSettings } from '../util/Settings';
 import { PddlConfiguration, PDDL_PARSER, VALIDATION_PATH, CONF_PDDL } from '../configuration/configuration';
-import { PlanValidator } from './PlanValidator';
+import { PlanDiagnostics } from './PlanDiagnostics';
 import { HappeningsValidator } from './HappeningsValidator';
 import { HappeningsInfo } from 'pddl-workspace';
 import { NoDomainAssociated, getDomainFileForProblem } from '../workspace/workspaceUtils';
@@ -39,9 +39,9 @@ export class Diagnostics extends Disposable {
 
     private defaultTimerDelayInSeconds = 3;
 
-    constructor(private readonly codePddlWorkspace: CodePddlWorkspace, private readonly diagnosticCollection: DiagnosticCollection, 
+    constructor(private readonly codePddlWorkspace: CodePddlWorkspace, private readonly diagnosticCollection: DiagnosticCollection,
         private readonly pddlConfiguration: PddlConfiguration,
-        private readonly planValidator: PlanValidator, private readonly happeningsValidator: HappeningsValidator) {
+        private readonly planValidator: PlanDiagnostics, private readonly happeningsValidator: HappeningsValidator) {
         super(() => { console.log('Diagnostics disposed'); });//this.codePddlWorkspace.pddlWorkspace.removeAllListeners()); // this was probably too harsh
         this.pddlParserSettings = pddlConfiguration.getParserSettings();
 
@@ -160,17 +160,18 @@ export class Diagnostics extends Disposable {
 
         console.log(`Validating ${planInfo.name} plan.`);
 
-        this.planValidator.validatePlanAndReportDiagnostics(planInfo, false, (diagnostics) => {
-            // Send the computed diagnostics to VSCode.
-            this.sendDiagnostics(diagnostics);
-            planInfo.setStatus(FileStatus.Validated);
-            if (scheduleFurtherValidation) { this.scheduleValidation(); }
-        }, (err) => {
-            window.showErrorMessage("Error during plan validation: " + err);
-            console.warn("Error during plan validation: " + err);
-            // var showNever = false;
-            // this.pddlConfiguration.suggestNewValidatorConfiguration(showNever);
-        });
+        this.planValidator.validatePlanAndReportDiagnostics(planInfo, { showOutput: false })
+            .then(outcome => {
+                // Send the computed diagnostics to VSCode.
+                this.sendDiagnostics(outcome.getDiagnostics());
+                planInfo.setStatus(FileStatus.Validated);
+                if (scheduleFurtherValidation) { this.scheduleValidation(); }
+            }).catch(err => {
+                window.showErrorMessage("Error during plan validation: " + err);
+                console.warn("Error during plan validation: " + err);
+                // var showNever = false;
+                // this.pddlConfiguration.suggestNewValidatorConfiguration(showNever);
+            });
     }
 
     validateHappenings(happeningsInfo: HappeningsInfo, scheduleFurtherValidation: boolean): void {
@@ -265,7 +266,7 @@ export class Diagnostics extends Disposable {
                 this.validator.syntax !== this.pddlParserSettings.executableOptions ||
                 this.validator.customPattern !== this.pddlParserSettings.problemPattern
             )) {
-            
+
             if (isHttp(newParserPath)) {
                 // is a service
                 const authentication = new SAuthentication(
