@@ -7,7 +7,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 import * as request from 'request';
-import { get } from 'http';
+import { get, request as httpRequest } from 'http';
 import * as fs from 'fs';
 import { URL } from 'url';
 
@@ -119,5 +119,37 @@ export function postJson(url: string, content: any): Promise<any> {
                 }
             }
         });
+    });
+}
+
+export async function postJson2<O>(url: URL, content: unknown, headers?: NodeJS.Dict<string>): Promise<O> {
+    return await new Promise((resolve, reject) => {
+        httpRequest(url, {headers: headers, method: "POST"}, res => {
+            if (res.statusCode && res.statusCode >= 300) {
+                reject(new Error(`Status code ${res.statusCode}, ${res.statusMessage} from ${url}`));
+                res.resume();
+                return;
+            }
+            const contentType = res.headers['content-type'];
+            if (!contentType || !/^application\/json/.test(contentType)) {
+                reject(new Error('Invalid content-type.\n' +
+                    `Expected application/json but received ${contentType} from ${url}`));
+                res.resume();
+                return;
+            }
+            res.setEncoding('utf8');
+            let rawData = '';
+            res.on('data', (chunk) => { rawData += chunk; });
+            res.on('end', () => {
+                try {
+                    const parsedData = JSON.parse(rawData);
+                    // console.log(parsedData);
+                    resolve(parsedData);
+                } catch (e: unknown) {
+                    console.error(e);
+                    reject(e);
+                }
+            });
+        }).end(JSON.stringify(content));
     });
 }

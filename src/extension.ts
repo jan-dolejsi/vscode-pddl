@@ -17,7 +17,7 @@ import { SymbolInfoProvider } from './symbols/SymbolInfoProvider';
 import { Diagnostics } from './diagnostics/Diagnostics';
 import { StartUp } from './init/StartUp';
 import { PTestExplorer } from './ptest/PTestExplorer';
-import { PlanValidator } from './diagnostics/PlanValidator';
+import { PlanDiagnostics } from './diagnostics/PlanDiagnostics';
 import { Debugging } from './debugger/debugging';
 import { ExtensionInfo, ExtensionPackage } from './configuration/ExtensionInfo';
 import { HappeningsValidator } from './diagnostics/HappeningsValidator';
@@ -110,7 +110,7 @@ async function activateWithTelemetry(_operationId: string, context: ExtensionCon
 	codePddlWorkspaceForTests = codePddlWorkspace;
 	planning = new Planning(codePddlWorkspace, pddlConfiguration, plannersConfiguration, context);
 	registerPlanReport(context);
-	const planValidator = new PlanValidator(planning.output, codePddlWorkspace, pddlConfiguration, context);
+	const planValidator = new PlanDiagnostics(planning.output, codePddlWorkspace, pddlConfiguration, context);
 	const happeningsValidator = new HappeningsValidator(planning.output, codePddlWorkspace, pddlConfiguration, context);
 
 	const configureParserCommand = instrumentOperationAsVsCodeCommand(PDDL_CONFIGURE_PARSER, () => {
