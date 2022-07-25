@@ -9,7 +9,7 @@ import { DomainInfo, ProblemInfo, PlanInfo } from 'pddl-workspace';
 import { Uri, workspace } from 'vscode';
 import { PlanValidationOutcome, PlanValidator } from './PlanValidator';
 import { toDiagnosticsFromParsingProblems } from './validatorUtils';
-import { ValPlanValidator, PlanValidationOutcome as ValPlanValidationOutcome } from './ValPlanValidator';
+import { PlanValidator as ValPlanValidator, PlanValidationOutcome as ValPlanValidationOutcome } from 'ai-planning-val';
 
 /**
  * Plan validator executable.

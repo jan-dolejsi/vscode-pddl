@@ -1030,7 +1030,7 @@
     "test": "npm run test:unit && npm run test:integration"
   },
   "dependencies": {
-    "ai-planning-val": "^2.9.1",
+    "ai-planning-val": "^2.10.0",
     "await-notify": "^1.0.1",
     "events": "^3.3.0",
     "express": "^4.18.0",
