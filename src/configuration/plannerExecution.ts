@@ -8,6 +8,8 @@
 'use strict';
 
 import * as path from 'path';
+import * as os from 'os';
+import { ShellExecutionOptions } from "vscode";
 import { Disposable, ShellExecution, Task, TaskDefinition, TaskEndEvent, TaskExecution, TaskRevealKind, tasks, TaskScope, Uri, window } from 'vscode';
 import { instanceOfHttpConnectionRefusedError } from 'pddl-planning-service-client';
 import { planner, utils } from 'pddl-workspace';
@@ -136,10 +138,10 @@ export abstract class LongRunningPlannerProvider implements planner.PlannerProvi
             throw new Error(`Expected configuration with attribute: 'path'`);
         }
 
-        const taskExecution = new ShellExecution(utils.Util.q(executablePath), {
-            cwd: configuration.cwd ??
+        const taskExecution = new ShellExecution(utils.Util.q(executablePath),
+            ShellExecutionOptionsFactory.createExecution(configuration.cwd ??
                 path.isAbsolute(executablePath) ? path.dirname(executablePath) : undefined
-        });
+            ));
         const task = new Task(this.taskDefinition, TaskScope.Global, configuration.title, this.taskSource, taskExecution);
         task.presentationOptions = { reveal: TaskRevealKind.Always, echo: true };
         task.isBackground = true;
@@ -156,5 +158,15 @@ export abstract class LongRunningPlannerProvider implements planner.PlannerProvi
 
     get taskSource(): string {
         return 'PDDL';
+    }
+}
+
+export class ShellExecutionOptionsFactory {
+    static createExecution(cwd: string | undefined): ShellExecutionOptions {
+        return {
+            executable: os.platform() === 'win32' ? 'cmd' : undefined,
+            shellArgs: os.platform() === 'win32' ? ['/d', '/c'] : undefined,
+            cwd: cwd
+        };
     }
 }

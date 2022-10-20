@@ -55,8 +55,8 @@ export class PlannerExecutable extends planner.Planner implements Disposable {
 
     async plan(domainFileInfo: DomainInfo, problemFileInfo: ProblemInfo, planParser: parser.PddlPlannerOutputParser, callbacks: planner.PlannerResponseHandler): Promise<Plan[]> {
 
-        const domainFilePath = await Util.toPddlFile("domain", domainFileInfo.getText());
-        const problemFilePath = await Util.toPddlFile("problem", problemFileInfo.getText());
+        const domainFilePath = await Util.toPddlFile(domainFileInfo.getText(), { prefix: "domain" });
+        const problemFilePath = await Util.toPddlFile(problemFileInfo.getText(), { prefix: "problem" });
 
         let command = this.plannerSyntax
             .replace('$(planner)', utils.Util.q(this.plannerPath))

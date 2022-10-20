@@ -182,8 +182,9 @@ export class OverviewPage {
                 break;
             default:
                 if (message.command?.startsWith('command:')) {
-                    const command = message.command as string;
-                    await commands.executeCommand(command.substring('command:'.length));
+                    const command = (message.command as string).substring('command:'.length);
+                    // console.log(`Executing command: ` + command);
+                    await commands.executeCommand(command);
                 } else {
                     console.warn('Unexpected command: ' + message.command);
                 }

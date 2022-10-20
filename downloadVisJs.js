@@ -27,7 +27,7 @@ const downloads = [
 ];
 
 downloads.forEach(task => {
-    console.log("Downloading " + task.options.directory + "/" + task.options.filename);
+    console.log(`Downloading ${task.url} to ${task.options.directory}/${task.options.filename}`);
 
     download(task.url, task.options, function (error) {
         if (error) {

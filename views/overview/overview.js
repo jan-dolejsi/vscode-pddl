@@ -245,9 +245,9 @@ function toScopeTooltip(scope) {
     switch (scope) {
         case SCOPE_DEFAULT: return "Default planner installed with the PDDL extension.";
         case SCOPE_EXTENSION: return "Planner installed by a VS Code extension";
-        case SCOPE_USER: return "Planner from user/machine global configuration settings";
-        case SCOPE_WORKSPACE: return "Planner from workspace file";
-        case SCOPE_WORKSPACE_FOLDER: return "Planner from workspace folder";
+        case SCOPE_USER: return "Planner from user/machine global configuration settings. Click to show...";
+        case SCOPE_WORKSPACE: return "Planner from workspace file. Click to show...";
+        case SCOPE_WORKSPACE_FOLDER: return "Planner from workspace folder. Click to show...";
     }
 }
 

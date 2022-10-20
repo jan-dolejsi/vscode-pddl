@@ -115,7 +115,7 @@ export class PlannerArgumentsSelector extends PlannerArgumentsGenerator {
     async editConfiguration(): Promise<PackagedServerRequestArgs> {
         const templateWithInstructions = `// Instructions: EDIT AND CLOSE/HIDE THIS TAB TO START THE PLANNER\n\n` + this.createArgumentTemplate();
 
-        const argumentTempFilePath = await valUtil.toFile("", this.createArgumentsFileName(), templateWithInstructions);
+        const argumentTempFilePath = await valUtil.toFile(templateWithInstructions, { suffix: this.createArgumentsFileName() });
         const argumentTempUri = Uri.file(argumentTempFilePath);
         const argsEditor = await exportToAndShow(templateWithInstructions, argumentTempUri, { forceShow: true, preview: true });
         const editedContent = await waitTillClosed(argsEditor!);

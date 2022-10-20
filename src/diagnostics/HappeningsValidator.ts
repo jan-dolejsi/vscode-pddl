@@ -102,8 +102,8 @@ export class HappeningsValidator {
         }
 
         // copy editor content to temp files to avoid using out-of-date content on disk
-        const domainFilePath = await Util.toPddlFile('domain', context.domain.getText());
-        const problemFilePath = await Util.toPddlFile('problem', context.problem.getText());
+        const domainFilePath = await Util.toPddlFile(context.domain.getText(), { prefix: 'domain' });
+        const problemFilePath = await Util.toPddlFile(context.problem.getText(), { prefix: 'problem' });
         const happeningsConverter = new HappeningsToValStep();
         happeningsConverter.convertAllHappenings(happeningsInfo);
         const valSteps = happeningsConverter.getExportedText(true);
