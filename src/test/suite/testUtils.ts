@@ -84,6 +84,10 @@ class MockSecretStorage implements SecretStorage {
 }
 
 class MockEnvironmentVariableCollection implements EnvironmentVariableCollection {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    [Symbol.iterator](): Iterator<[variable: string, mutator: EnvironmentVariableMutator], any, undefined> {
+        throw new Error('Method not implemented.');
+    }
     persistent = true;
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     replace(_variable: string, _value: string): void {

@@ -7,7 +7,7 @@
 import * as os from 'os';
 import * as path from 'path';
 import { parseTree, findNodeAtLocation } from 'jsonc-parser';
-import { window, commands, workspace, ConfigurationTarget, QuickPickItem, ExtensionContext, StatusBarItem, StatusBarAlignment, Uri, Range, WorkspaceFolder, TextDocument, ViewColumn } from 'vscode';
+import { window, commands, workspace, ConfigurationTarget, QuickPickItem, ExtensionContext, StatusBarItem, StatusBarAlignment, Uri, Range, WorkspaceFolder, TextDocument, ViewColumn, env } from 'vscode';
 import { PddlWorkspace, planner } from 'pddl-workspace';
 import { CommandPlannerProvider, SolveServicePlannerProvider, RequestServicePlannerProvider, ExecutablePlannerProvider, Popf, JavaPlannerProvider, Lpg, Pddl4jProvider, PlanningAsAServiceProvider } from './plannerConfigurations';
 import { CONF_PDDL, PDDL_PLANNER, EXECUTABLE_OR_SERVICE, EXECUTABLE_OPTIONS } from './configuration';
@@ -229,7 +229,7 @@ export class PlannersConfiguration {
         const items = [
             NewPlannerQuickPickItem.CREATE_NEW,
             ConfigurePlannerQuickPickItem.CONFIGURE,
-            ... planners.map(plannerConfig => new ExistingPlannerQuickPickItem(plannerConfig))
+            ...planners.map(plannerConfig => new ExistingPlannerQuickPickItem(plannerConfig))
         ];
 
         const selectedItem = await window.showQuickPick(items, { placeHolder: 'Select planner ...' });
@@ -528,7 +528,7 @@ export class PlannersConfiguration {
     private createSettingForScope(scope: PlannerConfigurationScope, workspaceFolder?: WorkspaceFolder): { fileUri: Uri; settingRootPath: string[] } | undefined {
         switch (scope) {
             case PlannerConfigurationScope.User:
-                return { fileUri: Uri.file(this.getUserSettings()), settingRootPath: [] };
+                return { fileUri: Uri.file(this.getMachineSettings() ?? this.getUserSettings()), settingRootPath: [] };
             case PlannerConfigurationScope.Workspace:
                 return workspace.workspaceFile && { fileUri: workspace.workspaceFile, settingRootPath: ["settings"] };
             case PlannerConfigurationScope.WorkspaceFolder:
@@ -586,6 +586,11 @@ export class PlannersConfiguration {
                 return linux;
         }
     }
+
+    getMachineSettings(): string | undefined {
+        return env.remoteName === "wsl" ?
+            '$HOME/.vscode-server/data/Machine/settings.json' : undefined;
+    }
 }
 
 abstract class PlannerQuickPickItem implements QuickPickItem {
@@ -594,7 +599,7 @@ abstract class PlannerQuickPickItem implements QuickPickItem {
     picked?: boolean;
     alwaysShow?: boolean;
 
-    constructor(public readonly label: string){}
+    constructor(public readonly label: string) { }
 }
 
 class ExistingPlannerQuickPickItem extends PlannerQuickPickItem {

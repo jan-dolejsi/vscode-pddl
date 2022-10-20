@@ -17,4 +17,5 @@
 		"typescript"
 	],
 	"WhiteSource Advise.Diff.BaseBranch": "master",
+	"task.allowAutomaticTasks": "on",
 }

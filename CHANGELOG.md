@@ -1,5 +1,23 @@
 # PDDL support - What's new?
 
+## 2.24.0
+
+### WSL Windows Subsystem for Linux support
+
+Using the _WSL_ extension for VS Code, open a folder on a WSL location.
+
+The planner configuration is picked-up from the _machine_ settings:
+
+`$HOME/.vscode-server/data/Machine/settings.json`
+
+The extension should work as usual.
+
+### Fixes
+
+Fixed Jinja2 transform for Python runtimes that return line-end in their version string.
+
+Fixed planning service start-up for users that have Powershell as their default terminal.
+
 ## 2.23.5
 
 Displaying `/solve` and `/request` service output.

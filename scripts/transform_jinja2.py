@@ -30,6 +30,10 @@ def map_filter(value: any, attribute_name: str, default=None) -> any:
     else:
         return default
 
+def sanitize_line_ends(value: str) -> str:
+    """ sanitize values to be printed as single line comments """
+    return ", ".join(value.splitlines(value))
+
 def main(args):
     """ Transforms the problem file streamed in through the standard input using JSON the data file passed via command-line argument. """
     if len(args) < 1:
@@ -47,10 +51,10 @@ def main(args):
 
     rendered = template.render(data=input_data)
 
-    # output the rednered template to the standard output
+    # output the rendered template to the standard output
     print(rendered)
     print("; This PDDL problem file was generated using Jinja2 template")
-    print(";    Python: " + sys.version)
+    print(";    Python: " + sanitize_line_ends(sys.version))
     print(";    Data: " + data_path)
     print(";    Time: " + str(datetime.datetime.now()))
 

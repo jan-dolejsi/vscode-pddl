@@ -35,7 +35,7 @@ export class PlanReportGenerator {
     async export(plans: Plan[], planId: number): Promise<boolean> {
         const html = await this.generateHtml(plans, planId);
 
-        const htmlFile = await ValUtil.toFile("plan-report", ".html", html);
+        const htmlFile = await ValUtil.toFile(html, { prefix: "plan-report", suffix: ".html", });
         const uri = Uri.parse("file://" + htmlFile);
         opn(uri.toString());
         return true; //env.openExternal(uri);

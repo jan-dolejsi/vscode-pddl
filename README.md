@@ -33,6 +33,34 @@ Simplest way to get started is to:
 
 ![PDDL Planner Configuration](https://raw.githubusercontent.com/wiki/jan-dolejsi/vscode-pddl/img/PDDL_planner_configuration.gif)
 
+### Installing a planner
+
+The PDDL extension to VS Code does _not_ include any PDDL planner/solver. It comes pre-configured with the cloud-hosted planner supported by the PDDL community,
+but that one has limited capability to non-temporal planning.
+
+#### Running linux planners on Windows Subsystem for Linux (WSL)
+
+Using the _WSL_ extension for VS Code, open a folder on a WSL location.
+
+The planner configuration is picked-up from the _machine_ settings:
+
+`$HOME/.vscode-server/data/Machine/settings.json`
+
+The extension should work as usual.
+
+#### Adapting your PDDL planner (and parser) to this VS Code extension
+
+Some frequently used planners have a wrapper already created in this extension. If your favorite planner is not available in the drop down,
+you may adapt the planner by wrapping it by a script that would satisfy
+this spec:
+
+* [[How to configure your PDDL parser to be used by this extension.|Configuring-the-PDDL-parser]]
+* [[How to configure your PDDL planner to be used by this extension.|Configuring-the-PDDL-planner]]
+
+#### Installing `planutils`
+
+Support coming soon.
+
 ### Explore VS Code PDDL show-cases
 
 To exercise the features of this PDDL Extension, clone this [vscode-pddl-samples](https://github.com/jan-dolejsi/vscode-pddl-samples/) repository and open the folder in VS Code. Follow the instructions and explanations in the [readme](https://github.com/jan-dolejsi/vscode-pddl-samples/blob/master/README.md).
