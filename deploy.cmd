@@ -1,8 +1,8 @@
- @echo off
+@echo off
 :: https://code.visualstudio.com/docs/extensions/publish-extension
 :: https://code.visualstudio.com/docs/editor/extension-gallery#_install-from-a-vsix
 
-call npm install -g vsce
+call npm install --location=global --registry=https://registry.npmjs.org vsce
 
 call export-md.cmd
 start CHANGELOG.html

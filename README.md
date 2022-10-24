@@ -54,8 +54,8 @@ Some frequently used planners have a wrapper already created in this extension. 
 you may adapt the planner by wrapping it by a script that would satisfy
 this spec:
 
-* [[How to configure your PDDL parser to be used by this extension.|Configuring-the-PDDL-parser]]
-* [[How to configure your PDDL planner to be used by this extension.|Configuring-the-PDDL-planner]]
+* [How to configure your PDDL parser to be used by this extension.](https://github.com/jan-dolejsi/vscode-pddl/wiki/Configuring-the-PDDL-parser)
+* [How to configure your PDDL planner to be used by this extension.](https://github.com/jan-dolejsi/vscode-pddl/wiki/Configuring-the-PDDL-planner)
 
 #### Installing `planutils`
 
@@ -707,7 +707,7 @@ See [CHANGELOG](CHANGELOG.md).
 
 Icons made by [Pixel perfect](https://www.flaticon.com/authors/pixel-perfect) from [www.flaticon.com](https://www.flaticon.com/) is licensed by [CC 3.0 BY](http://creativecommons.org/licenses/by/3.0/).
 
-Development of this extension was supported by [Schlumberger](https://www.slb.com). Visit [careers.slb.com](https://careers.slb.com/).
+Development of this extension was supported by [SLB](https://www.slb.com). Visit [careers.slb.com](https://careers.slb.com/).
 
 **Enjoy!**
 
