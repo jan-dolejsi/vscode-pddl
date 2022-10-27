@@ -41,6 +41,7 @@ export const PDDL_CONFIGURE_COMMAND = CONF_PDDL + "." + "configure";
 export const DEFAULT_EPSILON = 1e-3;
 const EDITOR_FORMAT_ON_TYPE = "editor.formatOnType";
 const BRACKET_COLORIZATION_ENABLE = "editor.bracketPairColorization.enabled";
+const BRACKET_PAIR_GUIDES = "editor.guides.bracketPairs";
 
 export class PddlConfiguration {
 
@@ -91,6 +92,19 @@ export class PddlConfiguration {
             workspace.getConfiguration(undefined, { languageId: CONF_PDDL }).update(BRACKET_COLORIZATION_ENABLE, newValue, true, true);
         } else {
             workspace.getConfiguration().update(BRACKET_COLORIZATION_ENABLE, newValue, true);
+        }
+    }
+
+    getBracketPairGuides(): boolean {
+        return workspace.getConfiguration('', { languageId: CONF_PDDL }).get(BRACKET_PAIR_GUIDES, false) !== false;
+    }
+
+    setBracketPairGuides(newValue: boolean, options: { forPddlOnly: boolean }): void {
+        const newValueStr = newValue ? 'active' : false;
+        if (options.forPddlOnly) {
+            workspace.getConfiguration(undefined, { languageId: CONF_PDDL }).update(BRACKET_PAIR_GUIDES, newValueStr, true, true);
+        } else {
+            workspace.getConfiguration().update(BRACKET_PAIR_GUIDES, newValueStr, true);
         }
     }
 
