@@ -162,6 +162,9 @@ export class OverviewPage {
             case 'enableBracketColorization':
                 this.pddlConfiguration.setBracketColorization(true, { forPddlOnly: message.forPddlOnly as boolean});
                 break;
+            case 'enableBracketPairGuides':
+                this.pddlConfiguration.setBracketPairGuides(true, { forPddlOnly: message.forPddlOnly as boolean});
+                break;
             case 'hintOk':
                 this.hintAcknowledged();
                 break;
@@ -477,6 +480,7 @@ export class OverviewPage {
             updateValAlert: await this.val.isNewValVersionAvailable(),
             showEnableFormatterAlert: !this.pddlConfiguration.getEditorFormatOnType(),
             showBracketColorizationAlert: !this.pddlConfiguration.getBracketColorization(),
+            showBracketPairGuidesAlert: !this.pddlConfiguration.getBracketPairGuides(),
             // todo: workbench.editor.revealIfOpen
         };
         return this?.webViewPanel?.webview?.postMessage(message) ?? false;
@@ -509,6 +513,7 @@ interface OverviewConfiguration {
     updateValAlert: boolean;
     showEnableFormatterAlert: boolean;
     showBracketColorizationAlert: boolean;
+    showBracketPairGuidesAlert: boolean;
 }
 
 interface WireWorkspaceFolder {

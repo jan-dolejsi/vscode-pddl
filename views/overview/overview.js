@@ -69,6 +69,7 @@ function initialize() {
  * @property {boolean} updateValAlert
  * @property {boolean} showEnableFormatterAlert
  * @property {boolean} showBracketColorizationAlert
+ * @property {boolean} showBracketPairGuidesAlert
  */
 
 /**
@@ -109,6 +110,7 @@ function updateConfiguration(message) {
         setStyleDisplay('updateValAlert', message.updateValAlert, "table-row");
         setStyleDisplay('enableFormatterAlert', message.showEnableFormatterAlert, "table-row");
         setStyleDisplay('enableBracketColorizationAlert', message.showBracketColorizationAlert, "table-row");
+        setStyleDisplay('enableBracketPairGuidesAlert', message.showBracketPairGuidesAlert, "table-row");
         setStyleDisplay('alertList', hasAnyChildrenToDisplay('table.alertList > tbody > tr.alert'), "block");
         updatePlannerOutputTarget(message.plannerOutputTarget);
         updateShowOverviewChanged(message.shouldShow);
@@ -341,6 +343,17 @@ function enableBracketColorization(forPddlOnly=false) {
     });    
 }
 
+function enableBracketPairGuidesForPddlOnly() {
+    enableBracketPairGuides(true);
+}
+
+function enableBracketPairGuides(forPddlOnly=false) {
+    postMessageToVsCode({
+        command: 'enableBracketPairGuides',
+        forPddlOnly: forPddlOnly
+    });    
+}
+
 /**
  * Converts a boolean to a display style
  * @param {string} elementId element ID
@@ -526,6 +539,7 @@ function populateWithTestData() {
         updateValAlert: true,
         showEnableFormatterAlert: true,
         showBracketColorizationAlert: true,
+        showBracketPairGuidesAlert: true,
     });
     showHint('Did you know that <span class="keyboard">Ctrl</span> + <span class="keyboard">/</span> comments out the current line? Press it again to un-comment it.');
     showFeedbackRequest(true);
