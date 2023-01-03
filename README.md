@@ -57,7 +57,9 @@ this spec:
 * [How to configure your PDDL parser to be used by this extension.](https://github.com/jan-dolejsi/vscode-pddl/wiki/Configuring-the-PDDL-parser)
 * [How to configure your PDDL planner to be used by this extension.](https://github.com/jan-dolejsi/vscode-pddl/wiki/Configuring-the-PDDL-planner)
 
-#### Installing `planutils`
+#### Install `planutils` to have 20+ planners at your fingertips
+
+![Planutils server](https://raw.githubusercontent.com/wiki/jan-dolejsi/vscode-pddl/img/planutils-server.gif)
 
 If you are on a linux-based environment, or use WSL on Windows, follow these steps to install [`planutils`](https://pypi.org/project/planutils/) there.
 

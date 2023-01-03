@@ -1,10 +1,12 @@
 # PDDL support - What's new?
 
-## 2.25.0
+## 2.25.0 and Happy New Year, planning community
 
 ### Planutil server support
 
-Install the [planutils](https://pypi.org/project/planutils/) package if you are on a Linux-like envoirnment or can activate the WSL Windows Subsystem for Linux (as mentioned below). You will have a whole bunch  of planners suddenly at your fingertips.
+Install the [planutils](https://pypi.org/project/planutils/) if you are on a Linux-like envoirnment or can activate the WSL Windows Subsystem for Linux (as mentioned below). You will have a whole bunch  of planners suddenly at your fingertips.
+
+![Planutils server](https://raw.githubusercontent.com/wiki/jan-dolejsi/vscode-pddl/img/planutils-server.gif)
 
 #### Installing `planutils`
 
