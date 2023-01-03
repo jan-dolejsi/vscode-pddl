@@ -24,7 +24,15 @@ export class PackagedPlannerSelector extends PackagedPlanners {
 
     async select(): Promise<SelectedEndpoint | undefined> {
         const manifests = await this.getManifests();
-        const plannerItems = manifests.map(m => this.toManifestQuickPickItem(m));
+        const plannerItems: PackageQuickPickItem[] = [];
+        for (const key in manifests) {
+            if (Object.prototype.hasOwnProperty.call(manifests, key)) {
+                const manifest = manifests[key];
+                manifest.package_name = key;
+                const item = this.toManifestQuickPickItem(manifest);
+                plannerItems.push(item);
+            }
+        }
         const selectedOption = await window.showQuickPick(plannerItems, {
             matchOnDescription: true, matchOnDetail: true, placeHolder: 'Select a planner...'
         });

@@ -1,5 +1,47 @@
 # PDDL support - What's new?
 
+## 2.25.0
+
+### Planutil server support
+
+Install the [planutils](https://pypi.org/project/planutils/) package if you are on a Linux-like envoirnment or can activate the WSL Windows Subsystem for Linux (as mentioned below). You will have a whole bunch  of planners suddenly at your fingertips.
+
+#### Installing `planutils`
+
+If you are on a linux-based environment, or use WSL on Windows, follow these steps to install [`planutils`](https://pypi.org/project/planutils/) there.
+
+If you can run `docker` on your system, [follow the instructions for Docker](https://pypi.org/project/planutils/).
+
+If you can just use Python, here is what you need to do:
+
+```bash
+pip install planutils
+planutils setup
+planutils activate
+```
+
+if `planutils` does not seem to be available, refresh the bash context to read in the updated `path`.
+
+Instally any planner you want, e.g. ...
+
+```bash
+planutils install lama
+```
+
+Start the service. (replicating what [Docker would do for you automatically](https://github.com/AI-Planning/planutils/blob/main/environments/server/Dockerfile)):
+
+```bash
+pip install flask
+
+planutils server --port 5555
+```
+
+Add a planner of the type _Planutils server_ and keep the address as suggested `http://localhost:5555/package`. Plan. Enjoy.
+
+### Bracket-pairing guide lines
+
+Guide lines between colored bracket pairs help readability of poorly formatted PDDL code.
+
 ## 2.24.0
 
 ### WSL Windows Subsystem for Linux support

@@ -59,7 +59,35 @@ this spec:
 
 #### Installing `planutils`
 
-Support coming soon.
+If you are on a linux-based environment, or use WSL on Windows, follow these steps to install [`planutils`](https://pypi.org/project/planutils/) there.
+
+If you can run `docker` on your system, [follow the instructions for Docker](https://pypi.org/project/planutils/).
+
+If you can just use Python, here is what you need to do:
+
+```bash
+pip install planutils
+planutils setup
+planutils activate
+```
+
+if `planutils` does not seem to be available, refresh the bash context to read in the updated `path`.
+
+Instally any planner you want, e.g. ...
+
+```bash
+planutils install lama
+```
+
+Start the service. (replicating what [Docker would do for you automatically](https://github.com/AI-Planning/planutils/blob/main/environments/server/Dockerfile)):
+
+```bash
+pip install flask
+
+planutils server --port 5555
+```
+
+Add a planner of the type _Planutils server_ and keep the address as suggested `http://localhost:5555/package`. Plan. Enjoy.
 
 ### Explore VS Code PDDL show-cases
 
