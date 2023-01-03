@@ -4,21 +4,21 @@ const download = require('download-file');
 
 const downloads = [
     {
-        url: "https://unpkg.com/vis-network@9.0.0/dist/vis-network.min.js",
+        url: "https://unpkg.com/vis-network@9.1.2/dist/vis-network.min.js",
         options: {
             directory: "views/common",
             filename: "vis-network.min.js"
         }
     },
     {
-        url: "https://unpkg.com/vis-network@9.0.0/dist/vis-network.min.js.map",
+        url: "https://unpkg.com/vis-network@9.1.2/dist/vis-network.min.js.map",
         options: {
             directory: "views/common",
             filename: "vis-network.min.js.map"
         }
     },
     {
-        url: "https://unpkg.com/vis-network@9.0.0/dist/dist/vis-network.min.css",
+        url: "https://unpkg.com/vis-network@9.1.2/dist/dist/vis-network.min.css",
         options: {
             directory: "views/common",
             filename: "vis-network.min.css"
