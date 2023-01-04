@@ -1,9 +1,9 @@
 # Planning Domain Description Language Support
 
-[![Downloads](https://vsmarketplacebadge.apphb.com/downloads/jan-dolejsi.pddl.svg?subject=Downloads)](https://marketplace.visualstudio.com/items?itemName=jan-dolejsi.pddl)
-[![Installs](https://vsmarketplacebadge.apphb.com/installs/jan-dolejsi.pddl.svg?subject=Installations)](https://marketplace.visualstudio.com/items?itemName=jan-dolejsi.pddl)
-[![Ratings](https://vsmarketplacebadge.apphb.com/rating-star/jan-dolejsi.pddl.svg?subject=Reviews)](https://marketplace.visualstudio.com/items?itemName=jan-dolejsi.pddl&ssr=false#review-details)
-[![Version](https://vsmarketplacebadge.apphb.com/version/jan-dolejsi.pddl.svg)](https://marketplace.visualstudio.com/items?itemName=jan-dolejsi.pddl)
+[![Downloads](https://vsmarketplacebadges.dev/downloads-short/jan-dolejsi.pddl.svg)](https://marketplace.visualstudio.com/items?itemName=jan-dolejsi.pddl)
+[![Installs](https://vsmarketplacebadges.dev/installs/jan-dolejsi.pddl.svg)](https://marketplace.visualstudio.com/items?itemName=jan-dolejsi.pddl)
+[![Ratings](https://vsmarketplacebadges.dev/rating/jan-dolejsi.pddl.svg)](https://marketplace.visualstudio.com/items?itemName=jan-dolejsi.pddl&ssr=false#review-details)
+[![Version](https://vsmarketplacebadges.dev/version/jan-dolejsi.pddl.svg)](https://marketplace.visualstudio.com/items?itemName=jan-dolejsi.pddl)
 [![VS Code PDDL Extension CI/CD](https://github.com/jan-dolejsi/vscode-pddl/workflows/Build/badge.svg)](https://github.com/jan-dolejsi/vscode-pddl/actions?query=workflow%3ABuild)
 
 This extension makes VS Code a great place for modeling planning domains.
