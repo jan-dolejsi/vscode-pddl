@@ -32,7 +32,7 @@ def map_filter(value: any, attribute_name: str, default=None) -> any:
 
 def sanitize_line_ends(value: str) -> str:
     """ sanitize values to be printed as single line comments """
-    return ", ".join(value.splitlines(value))
+    return ", ".join(value.splitlines())
 
 def main(args):
     """ Transforms the problem file streamed in through the standard input using JSON the data file passed via command-line argument. """
