@@ -137,7 +137,7 @@ export class PlannerExecutable extends planner.Planner implements Disposable {
      * When the UI button is pressed, the planner is forced to stop.
      */
     stop(): void {
-        if (this.child) {
+        if (this.child?.pid) {
             super.stop();
 
             // try to kill just the shell
