@@ -24,7 +24,7 @@ export class PlannerArgumentsSelector extends PlannerArgumentsGenerator {
 
     async getConfiguration(): Promise<PackagedServerRequestArgs | null> {
         // check if there actually are any configurable arguments
-        const isConfigurable = this.selectedEndpoint.service.args.some(arg => PlannerArgumentsSelector.isConfigurable(arg));
+        const isConfigurable = this.selectedEndpoint.service.args?.some(arg => PlannerArgumentsSelector.isConfigurable(arg));
 
         if (!isConfigurable) {
             return PlannerArgumentsSelector.DEFAULT;

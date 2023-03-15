@@ -4,7 +4,7 @@
   "description": "Planning Domain Description Language support",
   "author": "Jan Dolejsi",
   "license": "MIT",
-  "version": "2.24.0",
+  "version": "2.25.1",
   "publisher": "jan-dolejsi",
   "engines": {
     "vscode": "^1.69.0",
@@ -675,6 +675,12 @@
               "url": "http://solver.planning.domains/solve",
               "title": "http://solver.planning.domains/solve",
               "canConfigure": false
+            },
+            {
+              "kind": "PLANNING_AS_A_SERVICE_PREVIEW",
+              "url": "http://45.113.232.43:5001/package",
+              "title": "Planning as a service (preview)",
+              "canConfigure": false
             }
           ],
           "items": {
@@ -1037,7 +1043,7 @@
     "jsonc-parser": "^3.0.0",
     "open": "^8.0.6",
     "pddl-gantt": "^1.5.12",
-    "pddl-planning-service-client": "^2.2.1",
+    "pddl-planning-service-client": "^2.2.2",
     "pddl-workspace": "^7.2.2",
     "request": "^2.88.2",
     "semver": "^7.3.5",

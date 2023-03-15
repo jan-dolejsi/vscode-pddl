@@ -90,6 +90,92 @@ export class CommandPlannerProvider implements planner.PlannerProvider {
     }
 }
 
+export class PlanutilsServerProvider extends LongRunningPlannerProvider {
+    get kind(): planner.PlannerKind {
+        return new planner.PlannerKind('planutils_server');
+    }
+    getNewPlannerLabel(): string {
+        return "$(package) Planutils server (preview) URL...";
+    }
+
+    async configurePlanner(previousConfiguration?: planner.PlannerConfiguration): Promise<planner.PlannerConfiguration | undefined> {
+        const existingValue = previousConfiguration?.url ?? "http://localhost:5555/package";
+
+        const existingUri = Uri.parse(existingValue);
+        const indexOf = existingValue.indexOf(existingUri.authority);
+        const existingHostAndPort: [number, number] | undefined
+            = indexOf > -1 ? [indexOf, indexOf + existingUri.authority.length] : undefined;
+
+        const newPlannerUrl = await window.showInputBox({
+            prompt: "Enter /package URL",
+            placeHolder: `http://host:port/package`,
+            valueSelection: existingHostAndPort,
+            value: existingValue,
+            ignoreFocusOut: true
+        });
+
+        if (!newPlannerUrl) { return undefined; }
+
+        return this.createPlannerConfiguration(newPlannerUrl, previousConfiguration);
+    }
+
+    createPlannerConfiguration(newPlannerUrl: string, previousConfiguration?: planner.PlannerConfiguration): planner.PlannerConfiguration {
+        return {
+            kind: this.kind.kind,
+            url: newPlannerUrl,
+            title: newPlannerUrl,
+            canConfigure: true,
+            path: previousConfiguration?.path
+        };
+    }
+
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    showHelp(_output: OutputAdaptor): void {
+        throw new Error("Method not implemented."); // possibly show a page like http://45.113.232.43/docs/lama
+    }
+
+    /** Custom `Planner` implementation. */
+    createPlanner(configuration: planner.PlannerConfiguration, plannerInvocationOptions: planner.PlannerRunConfiguration): planner.Planner {
+        return PlanningAsAServiceProvider.createDefaultPlanner(configuration, plannerInvocationOptions, this);
+    }
+
+    /** Default `Planner` implementation. */
+    static createDefaultPlanner(configuration: planner.PlannerConfiguration, plannerInvocationOptions: planner.PlannerRunConfiguration, plannerProvider?: planner.PlannerProvider): planner.Planner {
+        if (!configuration.url) {
+            throw new Error(`Planner ${configuration.title} does not specify 'url'.`);
+        }
+
+        const providerConfiguration: planner.ProviderConfiguration = {
+            configuration: configuration,
+            provider: plannerProvider
+        };
+
+        return new PlannerPackagePreviewService(configuration.url, plannerInvocationOptions, providerConfiguration);
+    }
+
+    /**
+     * Checks if the server is responsive
+     * @param configuration planning service configuration
+     * @returns true of the service responds
+     */
+    async isServiceAccessible(configuration: planner.PlannerConfiguration): Promise<boolean> {
+        const url = configuration.url;
+        if (!url) {
+            throw new Error(`Expected planning configuration with the 'url' attribute.`);
+        }
+
+        return new Promise<boolean>(resolve => {
+            const req = http.request(new URL(url), { method: 'post' }, response => {
+                resolve((response.statusCode !== undefined) && (response.statusCode >= 400));
+            }).once("error", () => {
+                resolve(false);
+            });
+            req.write(JSON.stringify({ domain: "", problem: "" }));
+            req.end();
+        });
+    }
+}
+
 export class PlanningAsAServiceProvider extends LongRunningPlannerProvider {
     get kind(): planner.PlannerKind {
         return planner.WellKnownPlannerKind.PLANNING_AS_A_SERVICE_PREVIEW;

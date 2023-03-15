@@ -1,9 +1,9 @@
 # Planning Domain Description Language Support
 
-[![Downloads](https://vsmarketplacebadge.apphb.com/downloads/jan-dolejsi.pddl.svg?subject=Downloads)](https://marketplace.visualstudio.com/items?itemName=jan-dolejsi.pddl)
-[![Installs](https://vsmarketplacebadge.apphb.com/installs/jan-dolejsi.pddl.svg?subject=Installations)](https://marketplace.visualstudio.com/items?itemName=jan-dolejsi.pddl)
-[![Ratings](https://vsmarketplacebadge.apphb.com/rating-star/jan-dolejsi.pddl.svg?subject=Reviews)](https://marketplace.visualstudio.com/items?itemName=jan-dolejsi.pddl&ssr=false#review-details)
-[![Version](https://vsmarketplacebadge.apphb.com/version/jan-dolejsi.pddl.svg)](https://marketplace.visualstudio.com/items?itemName=jan-dolejsi.pddl)
+<!-- [![Downloads](https://vsmarketplacebadges.dev/downloads-short/jan-dolejsi.pddl.svg)](https://marketplace.visualstudio.com/items?itemName=jan-dolejsi.pddl)
+[![Installs](https://vsmarketplacebadges.dev/installs/jan-dolejsi.pddl.svg)](https://marketplace.visualstudio.com/items?itemName=jan-dolejsi.pddl)
+[![Ratings](https://vsmarketplacebadges.dev/rating/jan-dolejsi.pddl.svg)](https://marketplace.visualstudio.com/items?itemName=jan-dolejsi.pddl&ssr=false#review-details)
+[![Version](https://vsmarketplacebadges.dev/version/jan-dolejsi.pddl.svg)](https://marketplace.visualstudio.com/items?itemName=jan-dolejsi.pddl) -->
 [![VS Code PDDL Extension CI/CD](https://github.com/jan-dolejsi/vscode-pddl/workflows/Build/badge.svg)](https://github.com/jan-dolejsi/vscode-pddl/actions?query=workflow%3ABuild)
 
 This extension makes VS Code a great place for modeling planning domains.
@@ -57,9 +57,39 @@ this spec:
 * [How to configure your PDDL parser to be used by this extension.](https://github.com/jan-dolejsi/vscode-pddl/wiki/Configuring-the-PDDL-parser)
 * [How to configure your PDDL planner to be used by this extension.](https://github.com/jan-dolejsi/vscode-pddl/wiki/Configuring-the-PDDL-planner)
 
-#### Installing `planutils`
+#### Install `planutils` to have 20+ planners at your fingertips
 
-Support coming soon.
+![Planutils server](https://raw.githubusercontent.com/wiki/jan-dolejsi/vscode-pddl/img/planutils-server.gif)
+
+If you are on a linux-based environment, or use WSL on Windows, follow these steps to install [`planutils`](https://pypi.org/project/planutils/) there.
+
+If you can run `docker` on your system, [follow the instructions for Docker](https://pypi.org/project/planutils/).
+
+If you can just use Python, here is what you need to do:
+
+```bash
+pip install planutils
+planutils setup
+planutils activate
+```
+
+if `planutils` does not seem to be available, refresh the bash context to read in the updated `path`.
+
+Instally any planner you want, e.g. ...
+
+```bash
+planutils install lama
+```
+
+Start the service. (replicating what [Docker would do for you automatically](https://github.com/AI-Planning/planutils/blob/main/environments/server/Dockerfile)):
+
+```bash
+pip install flask
+
+planutils server --port 5555
+```
+
+Add a planner of the type _Planutils server_ and keep the address as suggested `http://localhost:5555/package`. Plan. Enjoy.
 
 ### Explore VS Code PDDL show-cases
 
