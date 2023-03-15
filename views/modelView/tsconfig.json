@@ -10,7 +10,7 @@
 		"sourceMap": true,
 		"rootDirs": ["src", "test"],
 		"strict": true,
-		"skipLibCheck": true,
+		"skipLibCheck": true
 	},
 	"exclude": [
 		"node_modules"
