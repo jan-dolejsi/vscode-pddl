@@ -10,7 +10,6 @@
 		"davidanson.vscode-markdownlint",
 		"vscode-icons-team.vscode-icons",
 		"epivision.vscode-file-header",
-		"msjsdiag.debugger-for-chrome",
 		"joaompinto.vscode-graphviz"
 	],
 	// List of extensions recommended by VS Code that should not be recommended for users of this workspace.
