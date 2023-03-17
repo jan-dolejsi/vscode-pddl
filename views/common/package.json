@@ -8,6 +8,7 @@
   "author": "Jan Dolejsi",
   "license": "MIT",
   "devDependencies": {
-    "copyfiles": "file:../../node_modules/copyfiles"
+    "copyfiles": "file:../../node_modules/copyfiles",
+    "vis-network": "^9.1.4"
   }
 }

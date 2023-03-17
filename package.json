@@ -1023,7 +1023,7 @@
   },
   "scripts": {
     "prepare": "copyfiles --flat ./src/planView/model/package.json ./out/planView/model/ && copyfiles --flat ./src/modelView/model/package.json ./out/modelView/model/ && cd views/common && npm install && cd ../searchview && npm install && cd ../planview && npm install && cd ../modelView && npm install && cd ../..",
-    "postinstall": "node downloadVisJs.js && copyfiles --flat ./node_modules/@vscode/codicons/dist/codicon.css ./node_modules/@vscode/codicons/dist/codicon.ttf  ./views/common/",
+    "postinstall": "copyfiles --flat ./node_modules/@vscode/codicons/dist/codicon.css ./node_modules/@vscode/codicons/dist/codicon.ttf  ./views/common/",
     "compile": "tsc -p ./ && copyfiles --flat ./src/planView/model/package.json ./out/planView/model/ && copyfiles --flat ./src/modelView/model/package.json ./out/modelView/model/ && cd views/common && npm run compile && cd ../searchview && npm run compile && cd ../planview && npm run compile && cd ../modelView && npm run compile && cd ../..",
     "watch": "tsc -w -p ./",
     "lint": "eslint src --ext ts",
