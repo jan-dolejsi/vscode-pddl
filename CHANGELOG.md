@@ -1,5 +1,9 @@
 # PDDL support - What's new?
 
+## 2.25.2 fix from donyazz
+
+Fix in the jinja2 templating Python code thanks to donyazz [#141](https://github.com/jan-dolejsi/vscode-pddl/pull/141). Thank you.
+
 ## 2.25.0 and Happy New Year, planning community
 
 ### Planutil server support
