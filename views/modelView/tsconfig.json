@@ -9,7 +9,8 @@
 		"outDir": "out-test",
 		"sourceMap": true,
 		"rootDirs": ["src", "test"],
-		"strict": true
+		"strict": true,
+		"skipLibCheck": true
 	},
 	"exclude": [
 		"node_modules"
