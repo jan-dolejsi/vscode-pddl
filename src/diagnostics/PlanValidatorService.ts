@@ -7,7 +7,7 @@
 import { DomainInfo, ProblemInfo, PlanInfo } from 'pddl-workspace';
 import { Uri } from 'vscode';
 import { URL } from 'url';
-import { postJson2 } from '../httpUtils';
+import { postJson } from '../httpUtils';
 import { PlanValidationOutcome, PlanValidator } from './PlanValidator';
 import { toDiagnostic, ValParsingProblem } from './ValidatorService';
 
@@ -26,7 +26,7 @@ export class PlanValidatorService extends PlanValidator {
         };
 
         const url = new URL(this.validationService.toString());
-        const response = await postJson2<ValServiceResponse>(url, requestBody, {
+        const response = await postJson<ValServiceResponse>(url, requestBody, {
             evaluations: 'validation', //'plan-happenings-effect-evaluation,final-state-evaluation,plan-function-evaluation',
             epsilon: options.epsilon.toString()
         });

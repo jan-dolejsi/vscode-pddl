@@ -28,7 +28,7 @@
     "model": "file:../../out/modelView/model/",
     "tsify": "^5.0.4",
     "typescript": "^4.7.2",
-    "watchify": "^3.11.1"
+    "watchify": "^4.0.0"
   },
   "dependencies": {
     "pddl-gantt": "file:../../node_modules/pddl-gantt"

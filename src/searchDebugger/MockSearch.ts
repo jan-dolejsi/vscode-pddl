@@ -4,10 +4,11 @@
  * ------------------------------------------------------------------------------------------ */
 'use strict';
 
-import request = require('request');
+import { URL } from 'url';
 import { sleep } from '../utils';
 import { HappeningType, HelpfulAction, search } from 'pddl-workspace';
 import { DEFAULT_EPSILON } from '../configuration/configuration';
+import { getText, postJson } from '../httpUtils';
 
 export class MockSearch {
     url: string;
@@ -15,24 +16,8 @@ export class MockSearch {
         this.url = `http://localhost:${port}`;
     }
 
-    async run(): Promise<void> {
-        const helloWorld = await new Promise<string>((resolve, reject) => {
-            request.get(this.url + '/about', (error, httpResponse, httpBody) => {
-                if (error) {
-                    reject(error);
-                    return;
-                }
-                else {
-                    if (httpResponse && httpResponse.statusCode > 204) {
-                        reject(new Error("HTTP status code " + httpResponse.statusCode));
-                        return;
-                    }
-                    else {
-                        resolve(httpBody);
-                    }
-                }
-            });
-        });
+    async run(): Promise<void> { 
+        const helloWorld = await getText(new URL(this.url + '/about'));
 
         console.log(helloWorld);
 
@@ -68,23 +53,7 @@ export class MockSearch {
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     private async post(path: string, content: any): Promise<void> {
-        return await new Promise<void>((resolve, reject) => {
-            request.post(this.url + path, { json: content }, (error, httpResponse) => {
-                if (error) {
-                    reject(error);
-                    return;
-                }
-                else {
-                    if (httpResponse && httpResponse.statusCode > 204) {
-                        reject('HTTP status code ' + httpResponse.statusCode);
-                        return;
-                    }
-                    else {
-                        resolve(void 0);
-                    }
-                }
-            });
-        });
+        return await postJson(new URL(this.url + path), content);
     }
 
     /**
