@@ -4,6 +4,7 @@
  * ------------------------------------------------------------------------------------------ */
 'use strict';
 
+import { URL } from 'url';
 import {
     Diagnostic, Range, Uri
 } from 'vscode';
@@ -13,8 +14,7 @@ import { ProblemInfo } from 'pddl-workspace';
 import { DomainInfo } from 'pddl-workspace';
 import { FileStatus } from 'pddl-workspace';
 import { SAuthentication } from '../util/Authentication';
-
-import request = require('request');
+import { HttpStatusError, postJson } from '../httpUtils';
 
 export class ValidatorService extends Validator {
 
@@ -22,7 +22,7 @@ export class ValidatorService extends Validator {
         super(path);
     }
 
-    validate(domainInfo: DomainInfo, problemFiles: ProblemInfo[], onSuccess: (diagnostics: Map<string, Diagnostic[]>) => void, onError: (error: string) => void): void {
+    async validate(domainInfo: DomainInfo, problemFiles: ProblemInfo[], onSuccess: (diagnostics: Map<string, Diagnostic[]>) => void, onError: (error: string) => void): Promise<void> {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         let requestHeader: any = {};
         if (this.useAuthentication && this.authentication.getToken()) {
@@ -36,70 +36,64 @@ export class ValidatorService extends Validator {
             "problems": problemFiles.map(pf => pf.getText())
         };
 
-        request.post({ url: this.path, headers: requestHeader, body: requestBody, json: true }, (err, httpResponse, responseBody) => {
-
-            if (err) {
-                onError.apply(this, [err.message]);
+        let messages: ValParsingProblem[] = [];
+        try {
+            messages = await postJson<ValParsingProblem[]>(new URL(this.path), requestBody, requestHeader);
+        } catch (err: unknown) {
+            if (!(err instanceof HttpStatusError)) {
+                const message = (err as Error).message;
+                onError.apply(this, [message]);
                 return;
             }
-
-            if (this.useAuthentication) {
-                if (httpResponse) {
-                    if (httpResponse.statusCode === 400) {
-                        const message = "Authentication failed. Please login or update tokens.";
-                        onError.apply(this, [message]);
-                        return;
-                    }
-                    else if (httpResponse.statusCode === 401) {
-                        const message = "Invalid token. Please update tokens.";
-                        onError.apply(this, [message]);
-                        return;
-                    }
+            let message: string;
+            if (this.useAuthentication && err instanceof HttpStatusError) {
+                switch (err.statusCode) {
+                    case 400:
+                        message = "Authentication failed. Please login or update tokens.";
+                        break;
+                    case 401:
+                        message = "Invalid token. Please update tokens.";
+                        break;
+                    default:
+                        message = `PDDL Language Parser returned code ${err.statusCode} ${err.statusMessage}`;
                 }
-            }
-
-            if (httpResponse && httpResponse.statusCode !== 200) {
-                const notificationMessage = `PDDL Language Parser returned code ${httpResponse.statusCode} ${httpResponse.statusMessage}`;
-                //let notificationType = MessageType.Warning;
-                onError.apply(this, [notificationMessage]);
+                onError.apply(this, [message]);
                 return;
             }
+        }
 
-            const messages: ValParsingProblem[] = responseBody;
+        const diagnostics = this.createEmptyDiagnostics(domainInfo, problemFiles);
 
-            const diagnostics = this.createEmptyDiagnostics(domainInfo, problemFiles);
+        for (let i = 0; i < messages.length; i++) {
+            //&& diagnostics.length < this.maxNumberOfProblems; i++) {
 
-            for (let i = 0; i < messages.length; i++) {
-                //&& diagnostics.length < this.maxNumberOfProblems; i++) {
+            domainInfo.setStatus(FileStatus.Validated);
+            problemFiles.forEach(p => p.setStatus(FileStatus.Validated));
 
-                domainInfo.setStatus(FileStatus.Validated);
-                problemFiles.forEach(p => p.setStatus(FileStatus.Validated));
+            const location: string = messages[i].location;
 
-                const location: string = messages[i].location;
-
-                let fileUri: Uri | undefined;
-                if (location === "DOMAIN") {
-                    fileUri = domainInfo.fileUri;
-                }
-                else if (location.startsWith("PROBLEM")) {
-                    const problemIdx = parseInt(location.substring("PROBLEM".length + 1));
-                    fileUri = problemFiles[problemIdx].fileUri;
-                }
-                else {
-                    console.log("Unsupported: " + location);
-                    continue;
-                }
-
-
-                if (fileUri !== undefined) {
-                    const diagnostic = toDiagnostic(messages[i]);
-                    diagnostics.get(fileUri.toString())?.push(diagnostic);
-                }
+            let fileUri: Uri | undefined;
+            if (location === "DOMAIN") {
+                fileUri = domainInfo.fileUri;
+            }
+            else if (location.startsWith("PROBLEM")) {
+                const problemIdx = parseInt(location.substring("PROBLEM".length + 1));
+                fileUri = problemFiles[problemIdx].fileUri;
+            }
+            else {
+                console.log("Unsupported: " + location);
+                continue;
             }
 
-            // Send the computed diagnostics to VSCode.
-            onSuccess.apply(this, [diagnostics]);
-        });
+
+            if (fileUri !== undefined) {
+                const diagnostic = toDiagnostic(messages[i]);
+                diagnostics.get(fileUri.toString())?.push(diagnostic);
+            }
+        }
+
+        // Send the computed diagnostics to VSCode.
+        onSuccess.apply(this, [diagnostics]);
     }
 
     static toRange(position: ValPosition): Range {

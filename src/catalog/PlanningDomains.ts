@@ -3,6 +3,7 @@
  * Licensed under the MIT License. See License.txt in the project root for license information.
  * ------------------------------------------------------------------------------------------ */
 
+import { URL } from 'url';
 import { CatalogEntry, Collection, Domain, Problem } from './CatalogEntry';
 import { getJson } from '../httpUtils';
 
@@ -65,9 +66,9 @@ export class PlanningDomains {
 }
 
 async function getJsonResult(url: string): Promise<any> {
-    const response = await getJson(url);
+    const response = await getJson<{ result: any }>(new URL(url));
     checkResponseForError(response);
-    return response["result"];
+    return response.result;
 }
 
 export function checkResponseForError(response: any): void {

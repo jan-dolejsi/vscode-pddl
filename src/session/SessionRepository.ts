@@ -6,6 +6,7 @@
 import { QuickDiffProvider, Uri, CancellationToken, WorkspaceFolder, workspace } from "vscode";
 import { utils } from "pddl-workspace";
 import * as path from 'path';
+import { URL } from 'url';
 import { compareMaps, throwForUndefined, assertDefined } from "../utils";
 import { SessionConfiguration, SessionMode } from "./SessionConfiguration";
 import { getText, postJson, getJson } from "../httpUtils";
@@ -97,6 +98,11 @@ const SESSION_URL = "http://editor.planning.domains/session/";
 const SESSION_PLUGINS_PATTERN = /define\s*\(\s*function\s*\(\s*\)\s*\{\s*return\s*{\s*meta:\s*true\s*,\s*plugins\s*:\s*({[\S\s]*})\s*}\s*}\s*\);/ms;
 const SESSION_DETAILS_PATTERN = /window\.session_details\s*=\s*{\s*(?:readwrite_hash:\s*"(\w+)"\s*,\s*)?read_hash:\s*"(\w+)"\s*,\s*last_change:\s*"([\w: \(\)\+]+)",?\s*};/;
 
+interface SessionInfo {
+	type: string;
+	last_change: string;
+}
+
 /**
  * Tests whether the session exists, determines whether it is writable and what is the last change time.
  * @param sessionId session read/write hash code
@@ -105,12 +111,12 @@ const SESSION_DETAILS_PATTERN = /window\.session_details\s*=\s*{\s*(?:readwrite_
 export async function checkSession(sessionId: string): Promise<[SessionMode, number]> {
 	const url = `${SESSION_URL}check/${sessionId}`;
 
-	const response = await getJson(url);
+	const response = await getJson<SessionInfo>(new URL(url));
 
 	checkResponseForError(response);
 
 	let sessionMode: SessionMode;
-	switch ((response["type"] as string).toLowerCase()) {
+	switch (response.type.toLowerCase()) {
 		case "read":
 			sessionMode = SessionMode.READ_ONLY;
 			break;
@@ -118,11 +124,11 @@ export async function checkSession(sessionId: string): Promise<[SessionMode, num
 			sessionMode = SessionMode.READ_WRITE;
 			break;
 		default:
-			throw new Error("Unexpected session type: " + response["type"]);
+			throw new Error("Unexpected session type: " + response.type);
 	}
 
 	// last_change contains last session change time (round it down to seconds)
-	const sessionVersionDate: number = Math.floor(Date.parse(response["last_change"]) / 1000) * 1000;
+	const sessionVersionDate: number = Math.floor(Date.parse(response.last_change) / 1000) * 1000;
 
 	return [sessionMode, sessionVersionDate];
 }
@@ -151,6 +157,14 @@ ${sessionDefinitionAsString}
 	}
 });
 `;
+}
+
+interface UploadedSessionData {
+	error: string; 
+	message: string;
+	result: {
+		readwrite_hash: string;
+	}
 }
 
 export async function uploadSession(session: SessionContent): Promise<SessionContent> {
@@ -194,10 +208,10 @@ export async function uploadSession(session: SessionContent): Promise<SessionCon
 
 	const url = `${SESSION_URL}${session.writeHash}`;
 
-	const postResult = await postJson(url, postBody);
+	const postResult = await postJson<UploadedSessionData>(new URL(url), postBody);
 
-	if (postResult["error"]) {
-		throw new Error(postResult["message"]);
+	if (postResult.error) {
+		throw new Error(postResult.message);
 	}
 
 	// get the latest session
@@ -216,14 +230,14 @@ export async function duplicateSession(session: SessionContent): Promise<string>
 	const postBody = Object.create(null);
 	postBody["content"] = newContent;
 
-	const postResult = await postJson(SESSION_URL, postBody);
+	const postResult = await postJson<UploadedSessionData>(new URL(SESSION_URL), postBody);
 
-	if (postResult["error"]) {
-		throw new Error(postResult["message"]);
+	if (postResult.error) {
+		throw new Error(postResult.message);
 	}
 
 	// get the latest session
-	return postResult["result"]["readwrite_hash"];
+	return postResult.result.readwrite_hash;
 }
 
 const SAVE_TABS_PLUGIN_NAME = "save-tabs";
@@ -238,7 +252,7 @@ async function getRawSession(sessionConfiguration: SessionConfiguration): Promis
 		`${SESSION_URL}edit/${sessionConfiguration.writeHash}` :
 		`${SESSION_URL}${sessionConfiguration.hash}`;
 
-	const sessionContent = await getText(url);
+	const sessionContent = await getText(new URL(url));
 
 	if (sessionContent.match(/not found/i)) {
 		throw new Error(`Session ${sessionConfiguration.writeHash ?? sessionConfiguration.hash} not found.`);
