@@ -4,12 +4,19 @@
  * ------------------------------------------------------------------------------------------ */
 'use strict';
 
-import uuidv4 = require('uuid/v4');
+import { v4 as uuidv4 } from 'uuid';
 import express = require('express');
-import request = require('request');
 import http = require('http');
 import opn = require('open');
 import { planner } from 'pddl-workspace';
+import { postJson } from '../httpUtils';
+import { URL } from 'url';
+
+interface TokenServiceResponse {
+    stoken: string | undefined;
+    accesstoken: string;
+}
+
 
 export class SAuthentication implements planner.Authentication {
 
@@ -111,54 +118,47 @@ export class SAuthentication implements planner.Authentication {
         }
     }
 
-    refreshAccessAndSToken(onSuccess: (refreshToken: string, accessToken: string, sToken: string) => void, onError: (message: string) => void): void {
-        const authentication = this;
-        request.post({ url: this.tokensvcUrl + this.tokensvcRefreshPath + '?key=' + this.tokensvcApiKey + '&accesstoken=\'\'', json: { clientid: this.clientId, refreshtoken: this.refreshToken } },
-            function (error, response, body) {
-                if (!error && response.statusCode === 200 && !!body) {
-                    authentication.accessToken = body.accesstoken;
-                    authentication.refreshSToken(onSuccess, onError);
-                }
-                else {
-                    authentication.accessToken = undefined;
-                    authentication.sToken = undefined;
-                    onError("Refresh Access Token failed.");
-                }
-            });
+    async refreshAccessAndSToken(onSuccess: (refreshToken: string, accessToken: string, sToken: string) => void, onError: (message: string) => void): Promise<void> {
+        const url = this.tokensvcUrl + this.tokensvcRefreshPath + '?key=' + this.tokensvcApiKey + '&accesstoken=\'\'';
+        const content = { clientid: this.clientId, refreshtoken: this.refreshToken };
+        try {
+            const response = await postJson<TokenServiceResponse>(new URL(url), content);
+            this.accessToken = response.accesstoken;
+            this.refreshSToken(onSuccess, onError);
+        } catch (err: unknown) {
+            this.accessToken = undefined;
+            this.sToken = undefined;
+            onError("Refresh Access Token failed: " + (err as Error).message);
+        }
     }
 
-    refreshSToken(onSuccess: (refreshToken: string, accessToken: string, sToken: string) => void, onError: (message: string) => void): void {
-        const authentication = this;
+    async refreshSToken(onSuccess: (refreshToken: string, accessToken: string, sToken: string) => void, onError: (message: string) => void): Promise<void> {
         const url = this.tokensvcUrl + this.tokensvcAccessPath + '?key=' + this.tokensvcApiKey + '&stoken=\'\'';
-        request.post({ url: url, json: { clientid: this.clientId, accesstoken: this.accessToken } },
-            (error, response, body) => {
-                if (!error && response.statusCode === 200 && !!body) {
-                    authentication.sToken = body.stoken;
-                    if (authentication.refreshToken && authentication.accessToken && authentication.sToken) {
-                        onSuccess(authentication.refreshToken, authentication.accessToken, authentication.sToken);
-                    }
-                }
-                else {
-                    authentication.accessToken = undefined;
-                    authentication.sToken = undefined;
-                    onError("Refresh S Token failed.");
-                }
-            });
+        const content = { clientid: this.clientId, accesstoken: this.accessToken };
+        try {
+            const body = await postJson<TokenServiceResponse>(new URL(url), content);
+            this.sToken = body.stoken;
+            if (this.refreshToken && this.accessToken && this.sToken) {
+                onSuccess(this.refreshToken, this.accessToken, this.sToken);
+            }
+        } catch (err: unknown) {
+            this.accessToken = undefined;
+            this.sToken = undefined;
+            onError("Refresh S Token failed: " + (err as Error).message);
+        }
     }
 
-    validateSToken(onSuccess: (refreshToken: string, accessToken: string, sToken: string) => void, onError: (message: string) => void): void {
-        const authentication = this;
-        request.post({ url: this.tokensvcUrl + this.tokensvcValidatePath + '?key=' + this.tokensvcApiKey, json: { clientid: this.clientId, audiences: this.clientId, stoken: this.sToken } },
-            function (error, response, body) {
-                if (!error && response.statusCode === 200 && !!body) {
-                    authentication.sToken = authentication.sToken;
-                    if (authentication.refreshToken && authentication.accessToken && authentication.sToken) {
-                        onSuccess(authentication.refreshToken, authentication.accessToken, authentication.sToken);
-                    }
-                }
-                else {
-                    authentication.refreshSToken(onSuccess, onError);
-                }
-            });
+    async validateSToken(onSuccess: (refreshToken: string, accessToken: string, sToken: string) => void, onError: (message: string) => void): Promise<void> {
+        const url = this.tokensvcUrl + this.tokensvcValidatePath + '?key=' + this.tokensvcApiKey;
+        const content = { clientid: this.clientId, audiences: this.clientId, stoken: this.sToken };
+        try {
+            await postJson(new URL(url), content);
+            this.sToken = this.sToken;
+            if (this.refreshToken && this.accessToken && this.sToken) {
+                onSuccess(this.refreshToken, this.accessToken, this.sToken);
+            }
+        } catch (err) {
+            this.refreshSToken(onSuccess, onError);
+        }
     }
 }
