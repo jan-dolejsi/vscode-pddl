@@ -11,7 +11,7 @@ Are you looking for the [End-user documentation](README.md)?
 
 Prerequisites:
 
-- NodeJS 12.22+
+- NodeJS 16+
 
 Run `npm install`.
 
@@ -19,13 +19,7 @@ This will ensure the extension dependencies are downloaded using the `--no-optio
 
 ## Packaging extension
 
-Install the VS Code extension packaging tool:
-
-```bash
-npm install -g vsce
-```
-
-On Windows, you can use the `publish.cmd` script to review the content of the package before building it, installing it, testing it and possibly publishing it.
+On Windows, you can use the `deploy.cmd` script to review the content of the package before building it, installing it, testing it. 
 The extension is published to the marketplace automatically by the GitHub CI/CD workflow, when the master branch is updated and the version number was bumped.
 
 ## Testing the extension
