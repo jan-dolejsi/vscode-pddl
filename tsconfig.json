@@ -16,7 +16,8 @@
 		"rootDir": "src",
 		"outDir": "out",
 		"declaration": true, // api for webview
-		"sourceMap": true
+		"sourceMap": true,
+		"skipLibCheck": true
 	},
 	"exclude": [
 		"node_modules",

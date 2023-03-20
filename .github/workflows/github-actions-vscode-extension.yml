@@ -13,9 +13,9 @@ jobs:
     
     strategy:
       matrix:
-        node-version: [14.18]
+        node-version: [16]
         os: [windows-latest, ubuntu-20.04] # macos-latest, 
-      # fail-fast: false
+      fail-fast: false
 
     runs-on: ${{ matrix.os }}
 
@@ -52,7 +52,7 @@ jobs:
       - name: Use Node.js ${{ matrix.node-version }}
         uses: actions/setup-node@v1
         with:
-          node-version: 14.18
+          node-version: 16
 
       - name: NPM Install
         run: npm install

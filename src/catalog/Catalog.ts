@@ -3,12 +3,13 @@
  * Licensed under the MIT License. See License.txt in the project root for license information.
  * ------------------------------------------------------------------------------------------ */
 
+import { URL } from 'url';
+import { join } from 'path';
 import { ExtensionContext, TreeDataProvider, EventEmitter, TreeItem, Event, window, TreeItemCollapsibleState, Uri, TextDocumentContentProvider, CancellationToken, workspace, commands, ViewColumn, TreeView, Command } from 'vscode';
 
 import { CatalogEntry, CatalogEntryKind, Collection, Domain, Problem } from './CatalogEntry';
 import { PlanningDomains } from './PlanningDomains';
-import request = require('request');
-import { join } from 'path';
+import { getJson, getText } from '../httpUtils';
 import { instrumentOperationAsVsCodeCommand } from "vscode-extension-telemetry-wrapper";
 
 const COMMAND_SHOW_DOMAIN_PROBLEM = 'pddl.planning.domains.show';
@@ -62,16 +63,7 @@ class CatalogDomainProblemProvider implements TextDocumentContentProvider {
         if (token.isCancellationRequested) { return "Operation canceled."; }
 
         uri = uri.with({ scheme: "http" });
-        return new Promise<string>((resolve) => {
-            request.get(uri.toString(), (error, _httpResponse, httpBody) => {
-                if (error) {
-                    resolve(error);
-                }
-                else {
-                    resolve(httpBody);
-                }
-            });
-        });
+        return getText(new URL(uri.toString()));
     }
 }
 
@@ -82,16 +74,8 @@ class CatalogPlanProvider implements TextDocumentContentProvider {
         if (token.isCancellationRequested) { return "Operation canceled."; }
 
         uri = decodePlanUri(uri);
-        return new Promise<string>((resolve) => {
-            request.get(uri.toString(), { json: true }, (error, _httpResponse, httpBody) => {
-                if (error) {
-                    resolve(error);
-                }
-                else {
-                    resolve(httpBody["result"]["plan"]);
-                }
-            });
-        });
+        const response = await getJson(new URL(uri.toString())) as { result: { plan: string } };
+        return response.result.plan;
     }
 }
 
