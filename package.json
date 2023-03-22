@@ -920,6 +920,11 @@
           "default": true,
           "description": "Enable the PDDL model hierarchy decorator (predicate and function usage)"
         },
+        "pddl.jobScheduling": {
+          "type": "boolean",
+          "default": false,
+          "description": "Enable support for the experimental job-scheduling syntax"
+        },
         "pddlSearchDebugger.defaultPort": {
           "type": "integer",
           "description": "Search debugger static port. If not specified (or set to zero, the port is randomized for security reasons).",

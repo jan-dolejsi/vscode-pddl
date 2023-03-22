@@ -218,7 +218,7 @@ class ProblemInitRendererDelegate {
         objects.forEach(objectName => {
             const objectValues = new Map<string, boolean | number>();
             liftedVariables.forEach(v => {
-                const value = this.getInitValue(v.bind([new ObjectInstance(objectName, type)]));
+                const value = this.getInitValue(v.ground([new ObjectInstance(objectName, type)]));
                 if (value) {
                     objectValues.set(v.name, value.getValue());
                 }

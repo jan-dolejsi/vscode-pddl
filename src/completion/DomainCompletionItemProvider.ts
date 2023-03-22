@@ -4,7 +4,7 @@
  * ------------------------------------------------------------------------------------------ */
 'use strict';
 
-import { CompletionItem, TextDocument, Position, CompletionContext, CompletionItemKind, Range, MarkdownString } from 'vscode';
+import { CompletionItem, TextDocument, Position, CompletionContext, CompletionItemKind, Range, MarkdownString, workspace } from 'vscode';
 import { PDDL } from 'pddl-workspace';
 import { DomainInfo, parser } from 'pddl-workspace';
 import { nodeToRange } from '../utils';
@@ -29,6 +29,9 @@ export class DomainCompletionItemProvider extends AbstractCompletionItemProvider
         this.addSuggestionDocumentation(':derived', 'Derived predicate/function', new MarkdownString('Derived predicate/function can be defined to simplify action declaration. Example derived predicate:').appendCodeblock('(:derived (p_and_q) \n\t(and (p) (q))\n)', PDDL).appendText('Example derived function: ').appendCodeblock('(:derived (c) (+ (a) (b))', PDDL));
         this.addSuggestionDocumentation(':action', 'Instantaneous action', new MarkdownString('Actions that change state of the world. Example:').appendCodeblock('(:action action_name\n\t:parameters (?t - type1)\n\t:precondition (and (p ?t))\n\t:effect (and (q ?t))\n)', PDDL));
         this.addSuggestionDocumentation(':durative-action', 'Durative action', 'Actions that change the state of the world when they start, then they last for a defined duration period, while changing the world continuously and finally change the state when they end.');
+        if (workspace.getConfiguration("pddl").get<boolean>("jobScheduling")) {
+            this.addSuggestionDocumentation(':job', 'Job (simplified durative action)', 'Durative Action simplified for specifying job-scheduling problems.');
+        }
         this.addSuggestionDocumentation(':process', 'PDDL+ Process', new MarkdownString('Process is activated and continues running when its condition is met. It may only have continuous effects. Example:').appendCodeblock(['(:process HEAT',
             '    :parameters (?r - room)',
             '    :precondition (and',
@@ -212,6 +215,24 @@ export class DomainCompletionItemProvider extends AbstractCompletionItemProvider
                     "        (over all (and ",
                     "        ))",
                     "        (at end (and ",
+                    "        ))",
+                    "    )",
+                    "    :effect (and ",
+                    "        (at start (and ",
+                    "        ))",
+                    "        (at end (and ",
+                    "        ))",
+                    "    )",
+                    ")",
+                    ""
+                ].join('\n'), range, context, index);
+            case parser.PddlStructure.JOB:
+                return this.createSnippetCompletionItem(suggestion, [
+                    "(:job ${1:job_name}",
+                    "    :parameters ($0)",
+                    // "    " + this.DURATION_SNIPPET,
+                    "    :condition (and ",
+                    "        (at start (and ",
                     "        ))",
                     "    )",
                     "    :effect (and ",

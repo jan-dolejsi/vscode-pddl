@@ -3,80 +3,46 @@
  * Licensed under the MIT License. See License.txt in the project root for license information.
  * ------------------------------------------------------------------------------------------ */
 'use strict';
-import { HoverProvider, TextDocument, Position, CancellationToken, Hover, MarkdownString, ExtensionContext, window, TextEditor, Range, TextEditorDecorationType, Location } from 'vscode';
-import { SymbolUtils, VariableInfo, SymbolInfo } from './SymbolUtils';
+import { HoverProvider, TextDocument, Position, CancellationToken, Hover, MarkdownString, ExtensionContext, TextEditor, TextEditorDecorationType, Location } from 'vscode';
+import { VariableInfo, SymbolInfo } from './SymbolUtils';
 import { CodePddlWorkspace } from '../workspace/CodePddlWorkspace';
-import { ModelHierarchy, VariableReferenceInfo, VariableReferenceKind, VariableEffectReferenceInfo } from 'pddl-workspace';
+import { ModelHierarchy, VariableReferenceInfo, VariableReferenceKind, VariableEffectReferenceInfo, FileInfo } from 'pddl-workspace';
 import { PDDL } from 'pddl-workspace';
 import { DomainInfo } from 'pddl-workspace';
 import { Variable } from 'pddl-workspace';
-import { toPosition, toURI } from '../utils';
-import { isPddl } from '../workspace/workspaceUtils';
+import { toPosition } from '../utils';
 import { parser } from 'pddl-workspace';
-import { PddlWorkspace } from 'pddl-workspace';
+import { DecorationRelativePosition, SyntaxAugmenter } from '../syntax/SyntaxAugmenter';
 
-export class ModelHierarchyProvider implements HoverProvider {
-    private symbolUtils: SymbolUtils;
-    private dirtyEditors = new Set<TextEditor>();
-    private timeout: NodeJS.Timer | undefined = undefined;
-    private decorations = new Map<TextEditor, TextEditorDecorationType[]>();
+/** Shows decorations in the PDDL domain. */
+export class ModelHierarchyProvider extends SyntaxAugmenter implements HoverProvider {
 
-    constructor(context: ExtensionContext, private readonly pddlWorkspace: CodePddlWorkspace) {
-        this.symbolUtils = new SymbolUtils(pddlWorkspace);
-        window.onDidChangeActiveTextEditor(editor => this.scheduleDecoration(editor), null, context.subscriptions);
-        pddlWorkspace.pddlWorkspace.on(PddlWorkspace.UPDATED, updatedFile => {
-            if (updatedFile instanceof DomainInfo) {
-                window.visibleTextEditors
-                    .filter(editor => editor.document.uri.toString() === updatedFile.fileUri.toString())
-                    .forEach(editor => this.scheduleDecoration(editor));
-            }
-        });
-        window.visibleTextEditors.forEach(editor => this.scheduleDecoration(editor));
+    constructor(context: ExtensionContext, pddlWorkspace: CodePddlWorkspace) {
+        super(context, pddlWorkspace);
     }
 
-    scheduleDecoration(editor: TextEditor | undefined): void {
-        if (editor && editor.visibleRanges.length && isPddl(editor.document)) {
-
-            this.triggerDecorationRefresh(editor);
-        }
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    isApplicable(_file: FileInfo): boolean {
+        return true;
     }
 
-    private triggerDecorationRefresh(editor: TextEditor): void {
-        this.dirtyEditors.add(editor);
-        if (this.timeout) {
-            clearTimeout(this.timeout);
-            this.timeout = undefined;
-        }
-        this.timeout = setTimeout(() => this.refreshDirtyEditors(), 1000);
+    getHoverProvider(): HoverProvider | undefined {
+        return this;
     }
 
-    private refreshDirtyEditors(): void {
-        const currentlyDirtyEditors = new Set<TextEditor>(this.dirtyEditors);
-        this.dirtyEditors.clear();
-
-        currentlyDirtyEditors
-            .forEach(editor => this.updateDecoration(editor));
-    }
-
-    private updateDecoration(editor: TextEditor): void {
-        if (editor.visibleRanges.length === 0) { return; }
-        const fileInfo = this.pddlWorkspace.pddlWorkspace.getFileInfo(toURI(editor.document.uri));
-
+    protected createDecoration(editor: TextEditor, fileInfo: FileInfo): TextEditorDecorationType[] {
         if (fileInfo instanceof DomainInfo) {
             const domainInfo = fileInfo as DomainInfo;
 
             const allVariables = domainInfo.getFunctions().concat(domainInfo.getPredicates());
             //todo: add derived variables
 
-            this.decorations.get(editor)?.forEach(d => d.dispose());
-            this.decorations.delete(editor);
-
             const decorations = allVariables.map(v => this.decorateVariable(v, editor, domainInfo))
                 .filter(dec => !!dec)
                 .map(dec => dec!);
-
-            this.decorations.set(editor, decorations);
+            return decorations;
         }
+        return [];
     }
 
     decorateVariable(variable: Variable, editor: TextEditor, domainInfo: DomainInfo): TextEditorDecorationType | undefined {
@@ -157,23 +123,13 @@ export class ModelHierarchyProvider implements HoverProvider {
                     hoverText.push(`${rest}x unrecognized`);
                 }
 
-                return this.decorate(editor, decorationText.join(' '), hoverText.join('\n\n'), symbolInfo.location.range);
+                return this.decorateSymbol(editor, decorationText.join(' '), hoverText.join('\n\n'),
+                    symbolInfo.location.range, { relativePosition: DecorationRelativePosition.After, margin: true});
             }
 
         }
 
         return undefined;
-    }
-
-    decorate(editor: TextEditor, decorationText: string, hoverText: string, range: Range): TextEditorDecorationType {
-        const decorationType = window.createTextEditorDecorationType({
-            after: {
-                contentText: decorationText,
-                textDecoration: "; color: gray; margin-left: 10px" //font-size: 10px; ; opacity: 0.5
-            }
-        });
-        editor.setDecorations(decorationType, [{ range: range, hoverMessage: hoverText }]);
-        return decorationType;
     }
 
     async provideHover(document: TextDocument, position: Position, token: CancellationToken): Promise<Hover | undefined> {
