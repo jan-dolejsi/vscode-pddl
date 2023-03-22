@@ -44,6 +44,7 @@ import { ModelHierarchyProvider } from './symbols/ModelHierarchyProvider';
 import { PlannersConfiguration } from './configuration/PlannersConfiguration';
 import { registerPlanReport } from './planReport/planReport';
 import { PlannerExecutableFactory } from './planning/PlannerExecutable';
+import { SyntaxAugmenters } from './syntax/SyntaxAugmenters';
 
 const PDDL_CONFIGURE_PARSER = 'pddl.configureParser';
 const PDDL_LOGIN_PARSER_SERVICE = 'pddl.loginParserService';
@@ -210,12 +211,16 @@ async function activateWithTelemetry(_operationId: string, context: ExtensionCon
 	registerDocumentFormattingProvider(context, codePddlWorkspace);
 
 	const renameProvider = languages.registerRenameProvider(PDDL, new SymbolRenameProvider(codePddlWorkspace));
-	
+
+	const syntaxAugmenters = new SyntaxAugmenters();
+
 	if (workspace.getConfiguration("pddl").get<boolean>("modelHierarchy")) {
 		const modelHierarchyProvider = new ModelHierarchyProvider(context, codePddlWorkspace);
-		context.subscriptions.push(languages.registerHoverProvider(PDDL, modelHierarchyProvider));
+		syntaxAugmenters.register(modelHierarchyProvider);
 	}
-	
+
+	syntaxAugmenters.registerAll(context);
+
 	const symbolInfoProvider = new SymbolInfoProvider(codePddlWorkspace);
 
 	const documentSymbolProvider = languages.registerDocumentSymbolProvider(PDDL, symbolInfoProvider);
