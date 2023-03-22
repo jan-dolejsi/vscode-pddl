@@ -5,8 +5,7 @@
 'use strict';
 
 import { TextDocument, WorkspaceEdit } from 'vscode';
-import { parser } from 'pddl-workspace';
-import { FileInfo } from 'pddl-workspace';
+import { parser, FileInfo } from 'pddl-workspace';
 import { UndeclaredVariable } from './UndeclaredVariable';
 
 export class MissingRequirements {
@@ -39,10 +38,22 @@ export class MissingRequirements {
         if (requirementsNode) {
             edit.insert(document.uri, document.positionAt(requirementsNode.getEnd()-1), ' '  + requirementName);
         } else {
-            const domainNode = defineNode.getFirstOpenBracketOrThrow('domain');
-            const indent = UndeclaredVariable.createIndent(document, 1);
-            const eol = UndeclaredVariable.createEolString(document);
-            edit.insert(document.uri, document.positionAt(domainNode.getEnd()), eol + indent + `(:requirements ${requirementName})`);
+            let precedingNode: parser.PddlBracketNode | undefined = undefined;
+            const domainNode = defineNode.getFirstOpenBracket('domain');
+            if (domainNode) {
+                // this is a domain file
+                precedingNode = domainNode;
+            }
+            const problemNode = defineNode.getFirstOpenBracket('problem');
+            if (problemNode) {
+                // this is a problem file
+                precedingNode = defineNode.getFirstOpenBracket(':domain');
+            }
+            if (precedingNode) {
+                const indent = UndeclaredVariable.createIndent(document, 1);
+                const eol = UndeclaredVariable.createEolString(document);
+                edit.insert(document.uri, document.positionAt(precedingNode.getEnd()), eol + indent + `(:requirements ${requirementName})`);
+            }
         }
 
         return edit;
