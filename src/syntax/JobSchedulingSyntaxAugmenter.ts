@@ -99,9 +99,18 @@ export class JobSchedulingSyntaxAugmenter extends SyntaxAugmenter {
                 const functions = [JobSchedulingSyntaxAugmenter.TRAVEL_TIME_FUNCTION]
                     .concat(jobDecorations?.flatMap(jd => jd.generatedFunctions) ?? []);
                 const hover = this.createHoverTitle('Functions');
-                    decorations.push(this.decorateSyntaxNode(functionsNode, editor,
+                decorations.push(this.decorateSyntaxNode(functionsNode, editor,
                     functions.map(f => declaration(f)).join(" "),
                     hover, { position: DecorationPosition.InsideEnd, italic: true }));
+            }
+
+            { // move action
+                const hover = this.createHoverTitle('Resource move action');
+                const moveActionText = `(:durative-action move :parameters (?from ?to - ${JobSchedulingSyntaxAugmenter.LOCATION} ?r - ${JobSchedulingSyntaxAugmenter.RESOURCE}) ...)`;
+                decorations.push(this.decorateSyntaxNode(domainInfo.syntaxTree.getDefineNode() as PddlBracketNode,
+                    editor, moveActionText, hover, {
+                    position: DecorationPosition.InsideEnd, italic: true
+                }));
             }
         }
         return decorations;
@@ -124,8 +133,8 @@ export class JobSchedulingSyntaxAugmenter extends SyntaxAugmenter {
                 break;
             case DecorationPosition.InsideEnd:
                 range = new Range(
-                    doc.positionAt(hostNode.getEnd()-1),
-                    doc.positionAt(hostNode.getEnd()-1));
+                    doc.positionAt(hostNode.getEnd() - 1),
+                    doc.positionAt(hostNode.getEnd() - 1));
                 relativePosition = DecorationRelativePosition.Before;
                 break;
             case DecorationPosition.OutsideEnd:
