@@ -1043,7 +1043,7 @@
     "jsonc-parser": "^3.2.0",
     "open": "^8.4.2",
     "pddl-gantt": "^1.5.13",
-    "pddl-planning-service-client": "^3.0.1",
+    "pddl-planning-service-client": "^4.0.0",
     "pddl-workspace": "^8.0.0",
     "semver": "^7.3.5",
     "tree-kill": "^1.2.2",
