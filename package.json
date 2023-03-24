@@ -4,7 +4,7 @@
   "description": "Planning Domain Description Language support",
   "author": "Jan Dolejsi",
   "license": "MIT",
-  "version": "2.25.2",
+  "version": "2.25.3",
   "publisher": "jan-dolejsi",
   "engines": {
     "vscode": "^1.69.0",
@@ -1041,15 +1041,15 @@
     "test": "npm run test:unit && npm run test:integration"
   },
   "dependencies": {
-    "ai-planning-val": "^3.0.1",
+    "ai-planning-val": "^3.0.3",
     "await-notify": "^1.0.1",
     "events": "^3.3.0",
     "express": "^4.18.2",
     "jsonc-parser": "^3.2.0",
     "open": "^8.4.2",
-    "pddl-gantt": "^1.5.12",
-    "pddl-planning-service-client": "^2.2.2",
-    "pddl-workspace": "^7.2.2",
+    "pddl-gantt": "^1.5.13",
+    "pddl-planning-service-client": "^4.0.0",
+    "pddl-workspace": "^8.0.0",
     "semver": "^7.3.5",
     "tree-kill": "^1.2.2",
     "uuid": "^9.0.0",
