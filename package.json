@@ -923,7 +923,7 @@
         "pddl.jobScheduling": {
           "type": "boolean",
           "default": false,
-          "description": "Enable support for the experimental job-scheduling syntax"
+          "description": "Enable support for the experimental job-scheduling syntax (requires VS Code reload)"
         },
         "pddlSearchDebugger.defaultPort": {
           "type": "integer",
