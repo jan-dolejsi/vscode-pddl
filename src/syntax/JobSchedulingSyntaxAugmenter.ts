@@ -46,13 +46,18 @@ export class JobSchedulingSyntaxAugmenter extends SyntaxAugmenter {
         new Parameter('r', JobSchedulingSyntaxAugmenter.RESOURCE),
         new Parameter('l', JobSchedulingSyntaxAugmenter.LOCATION)
     ]);
-    private static readonly JOB_STARTED_SUFFIX = '_started';
-    private static readonly JOB_DONE_SUFFIX = '_done';
+    private static readonly BUSY_PREDICATE_NAME = 'busy';
+    private static readonly BUSY_PREDICATE = new Variable(JobSchedulingSyntaxAugmenter.BUSY_PREDICATE_NAME, [
+        new Parameter('r', JobSchedulingSyntaxAugmenter.RESOURCE)
+    ]);
+    private static readonly JOB_STARTED_SUFFIX = '_job_started';
+    private static readonly JOB_DONE_SUFFIX = '_job_done';
 
     /* FUNCTION NAMES */
-    static readonly JOB_DURATION_SUFFIX = '_duration';
+    static readonly JOB_DURATION_SUFFIX = '_job_duration';
     private static readonly TRAVEL_TIME = 'travel_time';
     private static readonly TRAVEL_TIME_FUNCTION = new Variable(JobSchedulingSyntaxAugmenter.TRAVEL_TIME, [
+        new Parameter('r', JobSchedulingSyntaxAugmenter.RESOURCE),
         new Parameter('from', JobSchedulingSyntaxAugmenter.LOCATION),
         new Parameter('to', JobSchedulingSyntaxAugmenter.LOCATION)
     ]);
@@ -86,7 +91,8 @@ export class JobSchedulingSyntaxAugmenter extends SyntaxAugmenter {
             if (predicatesNode) {
                 const predicates = [
                     JobSchedulingSyntaxAugmenter.IS_AVAILABLE_PREDICATE,
-                    JobSchedulingSyntaxAugmenter.LOCATED_AT_PREDICATE
+                    JobSchedulingSyntaxAugmenter.LOCATED_AT_PREDICATE,
+                    JobSchedulingSyntaxAugmenter.BUSY_PREDICATE,
                 ].concat(jobDecorations?.flatMap(jd => jd.generatedPredicates) ?? []);
                 const hover = this.createHoverTitle('Predicates');
                 decorations.push(this.decorateSyntaxNode(predicatesNode, editor,
@@ -106,7 +112,7 @@ export class JobSchedulingSyntaxAugmenter extends SyntaxAugmenter {
 
             { // move action
                 const hover = this.createHoverTitle('Resource move action');
-                const moveActionText = `(:durative-action move :parameters (?from ?to - ${JobSchedulingSyntaxAugmenter.LOCATION} ?r - ${JobSchedulingSyntaxAugmenter.RESOURCE}) ...)`;
+                const moveActionText = `(:durative-action move :parameters (?res - ${JobSchedulingSyntaxAugmenter.RESOURCE} ?from ?to - ${JobSchedulingSyntaxAugmenter.LOCATION}) ...)`;
                 decorations.push(this.decorateSyntaxNode(domainInfo.syntaxTree.getDefineNode() as PddlBracketNode,
                     editor, moveActionText, hover, {
                     position: DecorationPosition.InsideEnd, italic: true
