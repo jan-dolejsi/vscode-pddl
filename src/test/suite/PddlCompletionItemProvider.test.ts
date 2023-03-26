@@ -68,7 +68,8 @@ suite('PDDL Completion Item Provider', () => {
             '(:action',
             '(:durative-action',
             '(:process',
-            '(:event'
+            '(:event',
+            '(:job',
         ]);
         items.forEach(item => assert.strictEqual(item.range, undefined, `Range of ${item.label} should be undefined`));
     });
@@ -94,7 +95,8 @@ suite('PDDL Completion Item Provider', () => {
             '(:action',
             '(:durative-action',
             '(:process',
-            '(:event'
+            '(:event',
+            '(:job',
         ]);
         items.forEach(item => assert.deepStrictEqual(item.range, new vscode.Range(1, 0, 1, 2), `Range of ${item.label}`));
     });
@@ -119,7 +121,8 @@ suite('PDDL Completion Item Provider', () => {
             '(:action',
             '(:durative-action',
             '(:process',
-            '(:event'
+            '(:event',
+            '(:job',
         ]);
         items.forEach(item => assert.deepStrictEqual(item.range, new vscode.Range(1, 0, 1, 3), `Range of '${item.label}'`));
     });

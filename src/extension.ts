@@ -45,6 +45,7 @@ import { PlannersConfiguration } from './configuration/PlannersConfiguration';
 import { registerPlanReport } from './planReport/planReport';
 import { PlannerExecutableFactory } from './planning/PlannerExecutable';
 import { SyntaxAugmenters } from './syntax/SyntaxAugmenters';
+import { JobSchedulingSyntaxAugmenter } from './syntax/JobSchedulingSyntaxAugmenter';
 
 const PDDL_CONFIGURE_PARSER = 'pddl.configureParser';
 const PDDL_LOGIN_PARSER_SERVICE = 'pddl.loginParserService';
@@ -218,7 +219,10 @@ async function activateWithTelemetry(_operationId: string, context: ExtensionCon
 		const modelHierarchyProvider = new ModelHierarchyProvider(context, codePddlWorkspace);
 		syntaxAugmenters.register(modelHierarchyProvider);
 	}
-
+	
+	if (workspace.getConfiguration("pddl").get<boolean>("jobScheduling")) {
+		syntaxAugmenters.register(new JobSchedulingSyntaxAugmenter(context, codePddlWorkspace));
+	}
 	syntaxAugmenters.registerAll(context);
 
 	const symbolInfoProvider = new SymbolInfoProvider(codePddlWorkspace);
