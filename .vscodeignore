@@ -25,7 +25,7 @@ coverage/
 how_to_contribute.md
 
 views/common/node_modules
-!views/common/node_modules/vis-network/vis-network.min.js
+!views/common/node_modules/vis-network/dist/vis-network.min.js
 !views/common/node_modules/vis-network/styles/vis-network.min.css
 
 views/searchview/node_modules
