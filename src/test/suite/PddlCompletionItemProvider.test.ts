@@ -275,7 +275,30 @@ suite('PDDL Completion Item Provider', () => {
         ]);
         items.forEach(item => assert.strictEqual(item.range, undefined, `Range of '${item.label}' should be undefined`));
     });
-    
+
+    test('should suggest (:action effects upon invoke under :job-scheduling', async () => {
+        // GIVEN
+        const inputTextHead = '(define (domain d) (:requirements :job-scheduling) (:types cook1 - resource) (:predicates (has_michelin_star ?c - cook1)) (:job cooking :parameters (?r - location ?c - cook)) (:action :effect (and\n';
+        const ch = '';
+        const inputTextTail = '\n)))';
+
+        // WHEN
+        const items = await testDomainProvider(inputTextHead, ch, inputTextTail, { triggerKind: vscode.CompletionTriggerKind.Invoke, triggerCharacter: ch });
+
+        // THEN
+        assertSnippetIncludes(items, "(not", 'has_michelin_star ?c,is_available ?a,located_at ?r ?l,busy ?r,cooking_job_started ?r ?c,cooking_job_done ?r ?c');
+        assertSnippetIncludes(items, "(assign", '(assign (${1|cooking_job_duration ?r ?c|}) ${2:0})$0');
+        assert.deepStrictEqual(items.map(i => i.filterText ?? i.label), [
+            '(not',
+            '(assign',
+            '(increase',
+            '(decrease',
+            '(forall',
+            '(when',
+        ]);
+        items.forEach(item => assert.strictEqual(item.range, undefined, `Range of '${item.label}' should be undefined`));
+    });
+
     test('should suggest (:action effects upon ( trigger', async () => {
         // GIVEN
         const inputTextHead = '(define (domain d) (:predicates (p1)(p2)) (:action :effect (and\n';
@@ -464,9 +487,9 @@ suite('PDDL Completion Item Provider', () => {
 
 function assertSnippetIncludes(items: vscode.CompletionItem[], filterText: string, needle: string): void {
     const item = items.find(item => item.filterText === filterText);
-    assert.ok(item, `Item '${filterText}' should be included`);
+    expect(item, `Item '${filterText}' should be included`).to.not.be.undefined;
     const snippet = (item!.insertText as vscode.SnippetString);
-    assert.ok(snippet.value.includes(needle), `snippet '${snippet.value}' should include ${needle}`);
+    expect(snippet.value, `snippet '${snippet.value}' should include ${needle}`).to.includes(needle);
 }
 
 async function testProvider(inputTextHead: string, ch: string, inputTextTail: string, context: vscode.CompletionContext): Promise<vscode.CompletionItem[]> {

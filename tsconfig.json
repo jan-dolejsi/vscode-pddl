@@ -14,6 +14,10 @@
 		"moduleResolution": "node",
 		"forceConsistentCasingInFileNames": true,
 		"rootDir": "src",
+		"paths": {
+			// to ensure the compiler uses the direct dependency, not the nested ones
+			"pddl-workspace": ["./node_modules/pddl-workspace/dist"],
+		},
 		"outDir": "out",
 		"declaration": true, // api for webview
 		"sourceMap": true,

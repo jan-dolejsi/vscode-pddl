@@ -4,7 +4,7 @@
  * ------------------------------------------------------------------------------------------ */
 'use strict';
 
-import { CompletionItem, CompletionContext, CompletionItemKind, SnippetString, Range, CompletionTriggerKind, MarkdownString, TextDocument } from 'vscode';
+import { CompletionItem, CompletionContext, CompletionItemKind, SnippetString, Range, CompletionTriggerKind, MarkdownString, TextDocument, workspace } from 'vscode';
 import { DomainInfo, ProblemInfo, parser } from 'pddl-workspace';
 import { nodeToRange } from '../utils';
 
@@ -71,6 +71,11 @@ export class AbstractCompletionItemProvider {
             ? nodeToRange(document, currentNode) : null;
         
         const requirements = ['strips', 'typing', 'negative-preconditions', 'disjunctive-preconditions', 'equality', 'existential-preconditions', 'universal-preconditions', 'quantified-preconditions', 'conditional-effects', 'fluents', 'numeric-fluents', 'object-fluents', 'adl', 'durative-actions', 'duration-inequalities', 'continuous-effects', 'derived-predicates', 'derived-functions', 'timed-initial-literals', 'timed-effects', 'preferences', 'constraints', 'action-costs', 'timed-initial-fluents', 'time'];
+
+        if (workspace.getConfiguration("pddl").get<boolean>("jobScheduling")) {
+            requirements.push(':job-scheduling');
+        }
+
         return requirements.map(r => ':' + r)
             .map((r, index) => {
                 const suggestion = Suggestion.from(r, context.triggerCharacter, '');
