@@ -170,7 +170,7 @@ export class DomainCompletionItemProvider extends AbstractCompletionItemProvider
     }
 
     private insideDurativeAction(currentNode: parser.PddlSyntaxNode): boolean {
-        const pattern = /^\(\s*:durative-action$/i;
+        const pattern = /^\(\s*:(durative-action|job)$/i;
         return this.insideScope(currentNode, pattern);
     }
 

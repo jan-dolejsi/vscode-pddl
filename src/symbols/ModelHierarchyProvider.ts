@@ -46,7 +46,12 @@ export class ModelHierarchyProvider extends SyntaxAugmenter implements HoverProv
     }
 
     decorateVariable(variable: Variable, editor: TextEditor, domainInfo: DomainInfo): TextEditorDecorationType | undefined {
-        const symbolInfo = this.symbolUtils.getSymbolInfo(editor.document, toPosition(variable.getLocation().start).translate({ characterDelta: 1 }));
+        const variableLocationRange = variable.getLocation();
+        if (!variableLocationRange) {
+            // variable was code-injected
+            return undefined;
+        }
+        const symbolInfo = this.symbolUtils.getSymbolInfo(editor.document, toPosition(variableLocationRange.start).translate({ characterDelta: 1 }));
 
         if (symbolInfo instanceof VariableInfo) {
             const references = this.symbolUtils.findSymbolReferences(editor.document, symbolInfo, false);

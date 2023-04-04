@@ -343,6 +343,10 @@ ${stepsInvolvingThisObject}
             fromArgument = indexOfArgument + 1;
             if (indexOfArgument > -1 && indexOfArgument < liftedAction.parameters.length) {
                 const parameter = liftedAction.parameters[indexOfArgument];
+                if (!parameter) {
+                    console.warn(`Parameter #${indexOfArgument} of action ${liftedAction.getNameOrEmpty()} corresponding to plan step ${step.fullActionName} is null`);
+                    return true;
+                }
                 const shouldIgnoreThisArgument = this.settings.get(plan)?.shouldIgnoreActionParameter(liftedAction.name ?? 'unnamed', parameter.name);
                 if (!shouldIgnoreThisArgument) {
                     return true;

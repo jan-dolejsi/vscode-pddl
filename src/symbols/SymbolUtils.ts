@@ -33,26 +33,29 @@ export class SymbolUtils {
         if (symbol.isPrefixedBy('(')) {
             const symbolName = symbol.name.toLowerCase();
             const predicateFound = domainInfo.getPredicates().find(p => p.matchesShortNameCaseInsensitive(symbol.name));
-            if (predicateFound) {
+            const predicateLocation = predicateFound?.getLocation();
+            if (predicateFound && predicateLocation) {
                 return new VariableInfo(
                     this.createHover(symbol.range, 'Predicate', this.brackets(predicateFound.declaredName), predicateFound.getDocumentation()),
-                    new Location(toUri(domainInfo.fileUri), toRange(predicateFound.getLocation())),
+                    new Location(toUri(domainInfo.fileUri), toRange(predicateLocation)),
                     predicateFound,
                 );
             }
             const functionFound = domainInfo.getFunctions().find(f => f.matchesShortNameCaseInsensitive(symbol.name));
-            if (functionFound) {
+            const functionLocation = functionFound?.getLocation();
+            if (functionFound && functionLocation) {
                 return new VariableInfo(
                     this.createHover(symbol.range, 'Function', this.brackets(functionFound.declaredName), functionFound.getDocumentation()),
-                    new Location(toUri(domainInfo.fileUri), toRange(functionFound.getLocation())),
+                    new Location(toUri(domainInfo.fileUri), toRange(functionLocation)),
                     functionFound
                 );
             }
             const derivedFound = domainInfo.getDerived().find(d => d.matchesShortNameCaseInsensitive(symbol.name));
-            if (derivedFound) {
+            const derivedLocation = derivedFound?.getLocation();
+            if (derivedFound && derivedLocation) {
                 return new VariableInfo(
                     this.createHover(symbol.range, 'Derived predicate/function', this.brackets(derivedFound.declaredName), derivedFound.getDocumentation()),
-                    new Location(toUri(domainInfo.fileUri), toRange(derivedFound.getLocation())),
+                    new Location(toUri(domainInfo.fileUri), toRange(derivedLocation)),
                     derivedFound
                 );
             }

@@ -278,7 +278,7 @@ suite('PDDL Completion Item Provider', () => {
 
     test('should suggest (:action effects upon invoke under :job-scheduling', async () => {
         // GIVEN
-        const inputTextHead = '(define (domain d) (:requirements :job-scheduling) (:types cook1 - resource) (:predicates (has_michelin_star ?c - cook1)) (:job cooking :parameters (?r - location ?c - cook)) (:action :effect (and\n';
+        const inputTextHead = '(define (domain d) (:requirements :job-scheduling) (:types cook - resource) (:predicates (has_michelin_star ?c - cook)) (:job cooking :parameters (?r - location ?c - cook)) (:action :effect (and\n';
         const ch = '';
         const inputTextTail = '\n)))';
 
@@ -286,8 +286,8 @@ suite('PDDL Completion Item Provider', () => {
         const items = await testDomainProvider(inputTextHead, ch, inputTextTail, { triggerKind: vscode.CompletionTriggerKind.Invoke, triggerCharacter: ch });
 
         // THEN
-        assertSnippetIncludes(items, "(not", 'has_michelin_star ?c,is_available ?a,located_at ?r ?l,busy ?r,cooking_job_started ?r ?c,cooking_job_done ?r ?c');
-        assertSnippetIncludes(items, "(assign", '(assign (${1|cooking_job_duration ?r ?c|}) ${2:0})$0');
+        assertSnippetIncludes(items, "(not", 'has_michelin_star ?c,is_available ?a,located_at ?r ?l,busy ?r,cooking_job_started ?r,cooking_job_done ?r');
+        assertSnippetIncludes(items, "(assign", '(assign (${1|travel_time ?r ?from ?to,cooking_job_duration ?r|}) ${2:0})$0');
         assert.deepStrictEqual(items.map(i => i.filterText ?? i.label), [
             '(not',
             '(assign',
