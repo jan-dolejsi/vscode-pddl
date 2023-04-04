@@ -30,7 +30,7 @@ export class ModelHierarchyProvider extends SyntaxAugmenter implements HoverProv
         return this;
     }
 
-    protected createDecoration(editor: TextEditor, fileInfo: FileInfo): TextEditorDecorationType[] {
+    protected createDecorations(editor: TextEditor, fileInfo: FileInfo): TextEditorDecorationType[] {
         if (fileInfo instanceof DomainInfo) {
             const domainInfo = fileInfo as DomainInfo;
 

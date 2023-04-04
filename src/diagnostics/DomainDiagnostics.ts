@@ -48,10 +48,17 @@ export class DomainDiagnostics {
         const references = domainInfo.getVariableReferences(variable);
 
         if (references.length === 1) {
-            const diagnostic = new Diagnostic(toRange(references[0]), `Unused ${variableType} (${variable.declaredName})`, DiagnosticSeverity.Hint);
-            diagnostic.tags = [DiagnosticTag.Unnecessary];
-            diagnostic.code = UNUSED;
-            return diagnostic;
+            const assumedDeclaration = references[0];
+            const assumedDeclarationOffset = domainInfo.getDocumentPositionResolver().resolveToOffset(assumedDeclaration.start); 
+            // must ensure the variable was actually declared (it could have been code-injected)
+            if (domainInfo.getFunctionsNode()?.includesIndex(assumedDeclarationOffset) ||
+                domainInfo.getPredicatesNode()?.includesIndex(assumedDeclarationOffset)) {
+                
+                const diagnostic = new Diagnostic(toRange(references[0]), `Unused ${variableType} (${variable.declaredName})`, DiagnosticSeverity.Hint);
+                diagnostic.tags = [DiagnosticTag.Unnecessary];
+                diagnostic.code = UNUSED;
+                return diagnostic;
+            }
         }
 
         return undefined;

@@ -5,10 +5,10 @@
 'use strict';
 
 import { workspace, window, ExtensionContext, languages, commands } from 'vscode';
+import { initialize, instrumentOperation, instrumentOperationAsVsCodeCommand } from "vscode-extension-telemetry-wrapper";
+import { PddlWorkspace, PDDL, PLAN, HAPPENINGS, injector } from 'pddl-workspace';
 
 import { Planning } from './planning/planning';
-import { PddlWorkspace } from 'pddl-workspace';
-import { PDDL, PLAN, HAPPENINGS } from 'pddl-workspace';
 import { PddlConfiguration, PDDL_CONFIGURE_COMMAND } from './configuration/configuration';
 import { SAuthentication } from './util/Authentication';
 import { AutoCompletion } from './completion/AutoCompletion';
@@ -24,7 +24,6 @@ import { HappeningsValidator } from './diagnostics/HappeningsValidator';
 import { PlanComparer } from './comparison/PlanComparer';
 import { Catalog } from './catalog/Catalog';
 
-import { initialize, instrumentOperation, instrumentOperationAsVsCodeCommand } from "vscode-extension-telemetry-wrapper";
 import { SearchDebugger } from './searchDebugger/SearchDebugger';
 import { PlanningDomainsSessions } from './session/PlanningDomainsSessions';
 import { PddlFormatProvider } from './formatting/PddlFormatProvider';
@@ -45,7 +44,7 @@ import { PlannersConfiguration } from './configuration/PlannersConfiguration';
 import { registerPlanReport } from './planReport/planReport';
 import { PlannerExecutableFactory } from './planning/PlannerExecutable';
 import { SyntaxAugmenters } from './syntax/SyntaxAugmenters';
-import { JobSchedulingSyntaxAugmenter } from './syntax/JobSchedulingSyntaxAugmenter';
+import { CompilationAugmenter } from './syntax/CompilationAugmenter';
 
 const PDDL_CONFIGURE_PARSER = 'pddl.configureParser';
 const PDDL_LOGIN_PARSER_SERVICE = 'pddl.loginParserService';
@@ -102,7 +101,16 @@ async function activateWithTelemetry(_operationId: string, context: ExtensionCon
 
 	const pddlContext = createPddlExtensionContext(context);
 
-	const pddlWorkspace = new PddlWorkspace(pddlConfiguration.getEpsilonTimeStep(), pddlContext, toPddlFileSystem(workspace.fs));
+	const pddlSyntaxInjectors = new injector.SyntaxInjectors();
+	if (workspace.getConfiguration("pddl").get<boolean>("jobScheduling")) {
+		pddlSyntaxInjectors.add(new injector.JobSchedulingSyntaxInjector());
+	}
+
+	const pddlWorkspace = new PddlWorkspace({
+		epsilon: pddlConfiguration.getEpsilonTimeStep(), context: pddlContext,
+		fileLoader: toPddlFileSystem(workspace.fs), 
+		parserOptions: { injectors: pddlSyntaxInjectors },
+	});
 	plannersConfiguration = new PlannersConfiguration(context, pddlWorkspace);
 
 	// run start-up actions
@@ -220,9 +228,7 @@ async function activateWithTelemetry(_operationId: string, context: ExtensionCon
 		syntaxAugmenters.register(modelHierarchyProvider);
 	}
 	
-	if (workspace.getConfiguration("pddl").get<boolean>("jobScheduling")) {
-		syntaxAugmenters.register(new JobSchedulingSyntaxAugmenter(context, codePddlWorkspace));
-	}
+	syntaxAugmenters.register(new CompilationAugmenter(context, codePddlWorkspace));
 	syntaxAugmenters.registerAll(context);
 
 	const symbolInfoProvider = new SymbolInfoProvider(codePddlWorkspace);

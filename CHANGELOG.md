@@ -1,5 +1,10 @@
 # PDDL support - What's new?
 
+## 2.25.7 `:job-scheduling` proposed PDDL syntax extension
+
+To support our [ICAPS23 KEPS workshop](https://icaps23.icaps-conference.org/program/workshops/keps/) workshop paper,
+we've implemented the PDDL code compilation for scheduling problems. More about that, if our paper gets accepted : ]
+
 ## 2.25.2 fix from donyazz
 
 Fix in the jinja2 templating Python code thanks to donyazz [#141](https://github.com/jan-dolejsi/vscode-pddl/pull/141). Thank you.
