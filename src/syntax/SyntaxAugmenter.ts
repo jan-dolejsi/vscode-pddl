@@ -5,7 +5,7 @@
 'use strict';
 
 import { ExtensionContext, HoverProvider, TextEditor, TextEditorDecorationType, window, Range, ThemableDecorationAttachmentRenderOptions, DecorationRenderOptions, MarkdownString } from 'vscode';
-import { DomainInfo, FileInfo, PddlWorkspace } from 'pddl-workspace';
+import { CompilationDocumentation, DomainInfo, FileInfo, PDDL, PddlWorkspace } from 'pddl-workspace';
 import { CodePddlWorkspace } from '../workspace/CodePddlWorkspace';
 import { isPddl } from '../workspace/workspaceUtils';
 import { SymbolUtils } from '../symbols/SymbolUtils';
@@ -72,7 +72,7 @@ export abstract class SyntaxAugmenter {
             this.decorations.get(editor)?.forEach(d => d.dispose());
             this.decorations.delete(editor);
 
-            const newDecorations = this.createDecoration(editor, fileInfo);
+            const newDecorations = this.createDecorations(editor, fileInfo);
 
             this.decorations.set(editor, newDecorations);
         }
@@ -104,7 +104,14 @@ export abstract class SyntaxAugmenter {
         return decorationType;
     }
 
-    protected abstract createDecoration(editor: TextEditor, fileInfo: FileInfo): TextEditorDecorationType[];
+    protected abstract createDecorations(editor: TextEditor, fileInfo: FileInfo): TextEditorDecorationType[];
+
+    protected toMarkdown(documentation: CompilationDocumentation): MarkdownString {
+        const md = new MarkdownString(documentation.title).appendMarkdown('\n\n');
+        documentation.codeblock &&
+            md.appendCodeblock(documentation.codeblock, PDDL);
+        return md;
+    }
 }
 
 

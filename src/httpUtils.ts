@@ -98,6 +98,9 @@ export async function getText(url: URL): Promise<string> {
     });
 }
 
+const CONTENT_TYPE = 'Content-Type';
+const APPLICATION_JSON = 'application/json';
+
 /**
  * Post JSON body and expects JSON response.
  * @param url url to call
@@ -107,6 +110,10 @@ export async function getText(url: URL): Promise<string> {
  * @throws HttpStatusError if the status code >= 300
  */
 export async function postJson<O>(url: URL, content: unknown, headers?: NodeJS.Dict<string>): Promise<O> {
+    headers = headers ?? {};
+    if (! (CONTENT_TYPE in headers)) {
+        headers[CONTENT_TYPE] = APPLICATION_JSON;
+    }
     return await new Promise((resolve, reject) => {
         request(url)(url, {headers: headers, method: "POST"}, res => {
             if (res.statusCode && res.statusCode >= 300) {
