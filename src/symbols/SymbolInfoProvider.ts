@@ -79,11 +79,15 @@ export class SymbolInfoProvider implements DocumentSymbolProvider, DefinitionPro
                     new SymbolInformation(event.name ?? "unnamed event", SymbolKind.Event, containerName,
                         SymbolUtils.toLocation(document, event.getLocation())));
 
-            const predicateSymbols = domainInfo.getPredicates().map(variable =>
-                new SymbolInformation(variable.declaredName, SymbolKind.Boolean, containerName, SymbolUtils.toLocation(document, variable.getLocation())));
+            const predicateSymbols = domainInfo.getPredicates()
+                .filter(variable => variable.getLocation())
+                .map(variable =>
+                    new SymbolInformation(variable.declaredName, SymbolKind.Boolean, containerName, SymbolUtils.toLocation(document, variable.getLocation()!)));
 
-            const functionSymbols = domainInfo.getFunctions().map(variable =>
-                new SymbolInformation(variable.declaredName, SymbolKind.Function, containerName, SymbolUtils.toLocation(document, variable.getLocation())));
+            const functionSymbols = domainInfo.getFunctions()
+                .filter(variable => variable.getLocation())
+                .map(variable =>
+                    new SymbolInformation(variable.declaredName, SymbolKind.Function, containerName, SymbolUtils.toLocation(document, variable.getLocation()!)));
 
             const symbols = actionSymbols.concat(processSymbols, eventSymbols, predicateSymbols, functionSymbols);
 
