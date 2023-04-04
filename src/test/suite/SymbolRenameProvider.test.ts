@@ -21,7 +21,7 @@ suite('SymbolRenameProvider Test Suite', () => {
 		const initialText = `(define (domain domain_name)`;
 		const doc = await vscode.workspace.openTextDocument({ language: 'pddl', content: initialText });
 
-		const renameProvider = new SymbolRenameProvider(CodePddlWorkspace.getInstanceForTestingOnly(new PddlWorkspace(.3)));
+		const renameProvider = new SymbolRenameProvider(CodePddlWorkspace.getInstanceForTestingOnly(new PddlWorkspace({ epsilon: .3 })));
 
 		// tslint:disable-next-line: no-unused-expression
 		expect(async () => {
@@ -42,7 +42,7 @@ suite('SymbolRenameProvider Test Suite', () => {
 		const initialText = `(define (domain domain_name) (:types type1))`;
 		const doc = await vscode.workspace.openTextDocument({ language: 'pddl', content: initialText });
 
-		const renameProvider = new SymbolRenameProvider(CodePddlWorkspace.getInstanceForTestingOnly(new PddlWorkspace(.3)));
+		const renameProvider = new SymbolRenameProvider(CodePddlWorkspace.getInstanceForTestingOnly(new PddlWorkspace({ epsilon: .3 })));
 
 		const typeEdits = await renameProvider.provideRenameEdits(doc, new vscode.Position(0, 40), "asdf", tokenSource.token);
 		assert.strictEqual(typeEdits?.size, 1, "there should be N edits");
