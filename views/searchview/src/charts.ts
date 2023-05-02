@@ -85,7 +85,7 @@ export class StateChart {
     private chartNeedsReDrawing = false;
 
 
-    constructor(private onStateSelected: (stateId: number | null) => void) {
+    constructor(private readonly chartDivId: string, private onStateSelected: (stateId: number | null) => void) {
 
         this.chartData = new google.visualization.DataTable();
         this.chartData.addColumn('number', 'State');
@@ -147,7 +147,7 @@ export class StateChart {
     }
 
     reSizeChart(): google.visualization.Chart {
-        this.chart = new google.visualization.ComboChart(getElementByIdOrThrow('chart_div'));
+        this.chart = new google.visualization.ComboChart(getElementByIdOrThrow(this.chartDivId));
         this.reDrawChart();
         return this.chart;
     }

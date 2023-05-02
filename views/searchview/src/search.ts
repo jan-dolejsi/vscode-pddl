@@ -10,6 +10,8 @@ import { SearchTree } from "./tree";
 import { StateChart } from "./charts";
 import { getElementByIdOrThrow, State } from "./utils";
 import { FinalStateData, PlanData } from 'model';
+import { StatesView } from "./StatesView";
+import { BubbleChart } from "./BubbleChart";
 
 /** VS Code stub, so we can work with it in a type safe way. */
 interface VsCodeApi {
@@ -183,9 +185,14 @@ getElementByIdOrThrow("planMock").onclick = (): void => {
     showPlan(planStates);
 };
 
-let stateChart: StateChart;
+let stackChart: StateChart;
+let bubbleChart: StatesView;
 
 let planViz: PlanView;
+// let endBatchTimeout: NodeJS.Timeout | undefined;
+
+const MAX_STATES_ON_NETWORK = 200;
+const MAX_STATES_ON_STACK_CHART = 500;
 
 /**
  * Adds state
@@ -194,8 +201,23 @@ let planViz: PlanView;
  * @returns {void}
  */
 function add(newState: State, batch: boolean): void {
-    searchTree.addStateToTree(newState, batch);
-    stateChart.addStateToChart(newState, batch);
+    if (states.length < MAX_STATES_ON_NETWORK) {
+        searchTree.addStateToTree(newState, batch);
+    } else {
+        showNetwork(false);
+        // if (endBatchTimeout) {
+        //     clearTimeout(endBatchTimeout);
+        // }
+        // endBatchTimeout = setTimeout(() => {
+        //     searchTree.endTreeBatch();
+        //     endBatchTimeout = undefined;
+        // }, states.length * 2);
+    }
+    if (states.length < MAX_STATES_ON_STACK_CHART) {
+        stackChart.addStateToChart(newState, batch);
+    } else {
+        showStackChart(false);
+    }
     states[newState.id] = newState;
 }
 
@@ -204,11 +226,12 @@ function add(newState: State, batch: boolean): void {
  * @param state state to update
  */
 function update(state: State): void {
-    stateChart.updateStateOnChart(state);
+    stackChart.updateStateOnChart(state);
     searchTree.updateStateOnTree(state);
+    bubbleChart.addState(state);
 
     if (selectedStateId === state.id) {
-        stateChart.selectChartRow(state.id);
+        stackChart.selectChartRow(state.id);
     }
 }
 
@@ -218,6 +241,7 @@ function update(state: State): void {
  */
 function showPlan(states: State[]): void {
     searchTree.showPlanOnTree(states);
+    showBubbleChart(false);
 }
 
 /**
@@ -233,7 +257,7 @@ function showAllStates(states: State[]): void {
 }
 
 function endBatch(): void {
-    stateChart.endChartBatch();
+    stackChart.endChartBatch();
     searchTree.endTreeBatch();
 }
 
@@ -245,7 +269,7 @@ function onStateSelected(stateId: number | null): void {
     if (selectedStateId === stateId) { return; }
 
     selectedStateId = stateId;
-    stateChart.selectChartRow(stateId);
+    stackChart.selectChartRow(stateId);
     searchTree.selectTreeNode(stateId);
     vscode?.postMessage({ command: 'stateSelected', stateId: stateId });
     if (!vscode) {
@@ -260,10 +284,14 @@ function onStateSelected(stateId: number | null): void {
     }
 }
 
+const NETWORK_DIV_ID = 'network';
+const STACK_CHART_DIV_ID = 'chart_div';
+const BUBBLE_CHART_DIV_ID = 'bubbleChart';
+
 document.body.onload = (): void => initialize();
 
 function initialize(): void {
-    searchTree = new SearchTree();
+    searchTree = new SearchTree(NETWORK_DIV_ID);
     searchTree.network.on('selectNode', function (nodeEvent) {
         if (nodeEvent.nodes.length > 0) {
             onStateSelected(nodeEvent.nodes[0]);
@@ -291,17 +319,17 @@ function initialize(): void {
     });
 
     window.onresize = function (): void {
-        stateChart.unsubscribeChartEvents();
-        stateChart.reSizeChart();
-        stateChart.subscribeToChartEvents();
+        stackChart.unsubscribeChartEvents();
+        stackChart.reSizeChart();
+        stackChart.subscribeToChartEvents();
     };
 
     if (!vscode) {
         showDebuggerOn(false);
     }
 
-    stateChart = new StateChart(onStateSelected);
-    stateChart.subscribeToChartEvents();
+    stackChart = new StateChart(STACK_CHART_DIV_ID, onStateSelected);
+    stackChart.subscribeToChartEvents();
 
     planViz = createPlanView("statePlan",
         {
@@ -315,13 +343,20 @@ function initialize(): void {
 
     getElementByIdOrThrow("mockMenu").style.visibility = vscode ? 'collapse' : 'visible';
 
+    bubbleChart = new BubbleChart(BUBBLE_CHART_DIV_ID);
+
     onLoad();
 }
 
 function clearStates(): void {
     console.log('clearing all states');
     searchTree.clearTree();
-    stateChart.clearChart();
+    stackChart.clearChart();
+    bubbleChart.clear();
+    states.length = 0;
+    showNetwork(true);
+    showStackChart(true);
+    showBubbleChart(true);
 }
 
 const START_DEBUGGER_BUTTON_ID = "startDebuggerButton";
@@ -329,6 +364,25 @@ const STOP_DEBUGGER_BUTTON_ID = "stopDebuggerButton";
 const CLEAR_DEBUGGER_BUTTON_ID = "restartDebuggerButton";
 
 getElementByIdOrThrow(START_DEBUGGER_BUTTON_ID).onclick = (): void => startSearchDebugger();
+
+function showNetwork(visible: boolean): void {
+    showElements([NETWORK_DIV_ID, 'networkHelp'], visible);
+}
+
+function showStackChart(visible: boolean): void {
+    showElements([STACK_CHART_DIV_ID], visible);
+}
+
+function showBubbleChart(visible: boolean): void {
+    showElements([BUBBLE_CHART_DIV_ID], visible);
+    getElementByIdOrThrow(NETWORK_DIV_ID).style.backgroundColor = visible ? '' : 'whitesmoke';
+}
+
+function showElements(elementIDs: string[], visible: boolean): void {
+    const visibility = visible ? 'visible' : 'collapse';
+    elementIDs.forEach(id =>
+        getElementByIdOrThrow(id).style.visibility = visibility);
+}
 
 function startSearchDebugger(): void {
     showDebuggerOn(true);
@@ -396,7 +450,6 @@ shapeMap.set('b', 'box');
 shapeMap.set('d', 'diamond');
 shapeMap.set('s', 'star');
 shapeMap.set('t', 'triangle');
-shapeMap.set('h', 'hexagon');
 shapeMap.set('q', 'square');
 shapeMap.set('e', 'ellipse');
 
@@ -406,12 +459,12 @@ function navigate(e: any): void {
     let newSelectedStateId: number | null;
     switch (e.key) {
         case "ArrowLeft":
-            newSelectedStateId = e.shiftKey ? stateChart.navigateChart(-1) : searchTree.navigateTreeSiblings(-1);
+            newSelectedStateId = e.shiftKey ? stackChart.navigateChart(-1) : searchTree.navigateTreeSiblings(-1);
             onStateSelected(newSelectedStateId);
             if (newSelectedStateId !== null) { e.cancelBubble = true; }
             break;
         case "ArrowRight":
-            newSelectedStateId = e.shiftKey ? stateChart.navigateChart(+1) : searchTree.navigateTreeSiblings(+1);
+            newSelectedStateId = e.shiftKey ? stackChart.navigateChart(+1) : searchTree.navigateTreeSiblings(+1);
             onStateSelected(newSelectedStateId);
             if (newSelectedStateId !== null) { e.cancelBubble = true; }
             break;

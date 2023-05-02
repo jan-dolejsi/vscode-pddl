@@ -23,6 +23,7 @@
     "browserify": "^16.5.2",
     "chai": "file:../../node_modules/chai",
     "chai-string": "file:../../node_modules/chai-string",
+    "chart.js": "^4.2.1",
     "eslint": "file:../../node_modules/eslint",
     "mocha": "file:../../node_modules/mocha",
     "model": "file:../../out/planView/model/",
