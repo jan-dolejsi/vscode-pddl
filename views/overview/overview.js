@@ -264,7 +264,7 @@ function updatePlannersError(error) {
 
 /**
  * Add codicon based button to a cell.
- * @param {HTMLTableDataCellElement} td cell
+ * @param {HTMLTableCellElement} td cell
  * @param {string} imageName codicon image name
  * @param {string} tooltip tooltip
  * @param {(this: GlobalEventHandlers, ev: MouseEvent) => any} onclick onclick callback
@@ -397,8 +397,8 @@ function showHint(hintText) {
  */
 function updatePlannerOutputTarget(value) {
     const radioButtons = document.getElementsByName("planner_output_target");
-    for (let i = 0; i < radioButtons.length; i++) {
-        radioButtons[i].checked = value === radioButtons[i].value;
+    for (const element of radioButtons) {
+        element.checked = value === element.value;
     }
 }
 
@@ -436,9 +436,9 @@ function onPlannerOutputTargetChanged() {
     let selectedValue = undefined;
 
     const radioButtons = document.getElementsByName("planner_output_target");
-    for (let i = 0; i < radioButtons.length; i++) {
-        if (radioButtons[i].checked === true) {
-            selectedValue = radioButtons[i].value;
+    for (const element of radioButtons) {
+        if (element.checked === true) {
+            selectedValue = element.value;
             break;
         }
     }
