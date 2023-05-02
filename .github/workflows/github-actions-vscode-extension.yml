@@ -13,8 +13,8 @@ jobs:
     
     strategy:
       matrix:
-        node-version: [16]
-        os: [windows-latest, ubuntu-20.04] # macos-latest, 
+        node-version: [18]
+        os: [windows-latest, ubuntu-22.04] # macos-latest, 
       fail-fast: false
 
     runs-on: ${{ matrix.os }}
@@ -49,10 +49,10 @@ jobs:
     if: success() && github.ref == 'refs/heads/master'
     steps:
       - uses: actions/checkout@v2
-      - name: Use Node.js ${{ matrix.node-version }}
+      - name: Use Node.js 18
         uses: actions/setup-node@v1
         with:
-          node-version: 16
+          node-version: 18
 
       - name: NPM Install
         run: npm install
