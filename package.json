@@ -47,6 +47,7 @@
     "onUri"
   ],
   "main": "./out/extension",
+  "browser": "./out/web/extension.js",
   "contributes": {
     "languages": [
       {
