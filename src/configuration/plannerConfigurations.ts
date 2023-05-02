@@ -8,13 +8,14 @@ import * as http from 'http';
 import { URL } from 'url';
 import * as os from 'os';
 import * as path from 'path';
-import { Uri, window } from 'vscode';
+import { Uri, commands, window, workspace } from 'vscode';
 
 import { planner, OutputAdaptor, utils } from 'pddl-workspace';
 import { isHttp } from '../utils';
 import { PlannerExecutable } from '../planning/PlannerExecutable';
 import { AsyncServiceConfiguration, PlannerAsyncService, PlannerSyncService, PlannerPackagePreviewService } from 'pddl-planning-service-client';
 import { LongRunningPlannerProvider } from './plannerExecution';
+import { exists } from 'pddl-workspace/dist/utils/asyncfs';
 
 export class CommandPlannerProvider implements planner.PlannerProvider {
     get kind(): planner.PlannerKind {
@@ -815,15 +816,112 @@ export class Lpg implements planner.PlannerProvider {
     }
 }
 
+export class NodeJsPlannerProvider implements planner.PlannerProvider {
+    get kind(): planner.PlannerKind {
+        return planner.WellKnownPlannerKind.NODE_JS_SCRIPT;
+    }
+    getNewPlannerLabel(): string {
+        return "$(file-code) Select a Node.js javascript file...";
+    }
 
-// const node: QuickPickItem = {
-//     label: "$(file-code) Select a Node.js file..."
-// };
+    async configurePlanner(previousConfiguration?: planner.PlannerConfiguration): Promise<planner.PlannerConfiguration | undefined> {
+        const filters =
+        {
+            'Javascript script': ['js', 'mjs', 'cjs'],
+        };
 
-// const python: QuickPickItem = {
-//     label: "$(file-text) Select a Python file..."
-// };
-// ${command:python.interpreterPath}
+        const defaultUri = previousConfiguration?.path ? Uri.file(previousConfiguration.path) : undefined;
+
+        const executableUri = await selectedFile(`Select Node.js script`, defaultUri, filters);
+        if (!executableUri) { return undefined; }
+
+        const newPlannerConfiguration: planner.PlannerConfiguration = {
+            kind: this.kind.kind,
+            canConfigure: true,
+            path: executableUri.fsPath,
+            title: path.basename(executableUri.fsPath)
+        };
+
+        return newPlannerConfiguration;
+    }
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    showHelp(_output: OutputAdaptor): void {
+        // do nothing
+    }
+    async createPlanner(configuration: planner.PlannerConfiguration, plannerRunConfiguration: planner.PlannerRunConfiguration): Promise<planner.Planner> {
+        if (!configuration.path) {
+            throw new Error('Incomplete planner configuration. Mandatory attributes: path');
+        }
+
+        const providerConfiguration: planner.ProviderConfiguration = {
+            configuration: configuration,
+            provider: this
+        };
+        return new PlannerExecutable(`node ${utils.Util.q(configuration.path)}`,
+            plannerRunConfiguration as planner.PlannerExecutableRunConfiguration, providerConfiguration);
+    }
+}
+
+
+export class PythonPlannerProvider implements planner.PlannerProvider {
+    get kind(): planner.PlannerKind {
+        return planner.WellKnownPlannerKind.PYTHON_SCRIPT;
+    }
+    getNewPlannerLabel(): string {
+        return "$(file-text) Select a Python file...";
+    }
+
+    async configurePlanner(previousConfiguration?: planner.PlannerConfiguration): Promise<planner.PlannerConfiguration | undefined> {
+        const filters =
+        {
+            'Python script': ['py'],
+        };
+
+        const defaultUri = previousConfiguration?.path ? Uri.file(previousConfiguration.path) : undefined;
+
+        const executableUri = await selectedFile(`Select Python script`, defaultUri, filters);
+        if (!executableUri) { return undefined; }
+
+        const newPlannerConfiguration: planner.PlannerConfiguration = {
+            kind: this.kind.kind,
+            canConfigure: true,
+            path: executableUri.fsPath,
+            title: path.basename(executableUri.fsPath)
+        };
+
+        return newPlannerConfiguration;
+    }
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    showHelp(_output: OutputAdaptor): void {
+        // do nothing
+    }
+    async createPlanner(configuration: planner.PlannerConfiguration, plannerRunConfiguration: planner.PlannerRunConfiguration): Promise<planner.Planner> {
+        if (!configuration.path) {
+            throw new Error('Incomplete planner configuration. Mandatory attributes: path');
+        }
+
+        const providerConfiguration: planner.ProviderConfiguration = {
+            configuration: configuration,
+            provider: this
+        };
+
+        let interpreter: string | undefined = undefined;
+        try {
+            interpreter = (await commands.executeCommand<string>("python.interpreterPath"));
+        } catch (err: unknown) {
+            console.log('Failed to get the python interpreter: ' + err);
+            interpreter = workspace.getConfiguration().get<string>("python.defaultInterpreterPath");
+        }
+
+        if (!interpreter || !await exists(interpreter)) {
+            interpreter = 'python';
+        }
+
+        return new PlannerExecutable(`${interpreter} ${utils.Util.q(configuration.path)}`,
+            plannerRunConfiguration as planner.PlannerExecutableRunConfiguration, providerConfiguration);
+    }
+}
+
 
 async function selectedFile(label: string, defaultUri?: Uri, filters?: { [name: string]: string[] }): Promise<Uri | undefined> {
     const selectedUris = await window.showOpenDialog({
