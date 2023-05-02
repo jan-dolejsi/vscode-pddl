@@ -11,7 +11,7 @@ Are you looking for the [End-user documentation](README.md)?
 
 Prerequisites:
 
-- NodeJS 16+
+- NodeJS 18.16
 
 Run `npm install`.
 
