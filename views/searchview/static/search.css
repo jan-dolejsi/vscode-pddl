@@ -2,14 +2,20 @@ body {
     height: 100%;
 }
 /* consider this approach: https://stackoverflow.com/questions/90178/make-a-div-fill-the-height-of-the-remaining-screen-space */
-#network{
+div#network {
     min-height: 300px;
     height: 450px;
     min-width: 350px;
     border: 1px solid lightgray;
     resize: vertical;
     overflow: auto;
+}
+canvas#bubbleChart {
+    position: absolute;
+    height: 100%;
+    width: 100%;
     background: whitesmoke;
+    /* visibility: collapse; */
 }
 * {
     box-sizing:border-box;

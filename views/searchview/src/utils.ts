@@ -3,12 +3,12 @@
  * Licensed under the MIT License. See License.txt in the project root for license information.
  * ------------------------------------------------------------------------------------------ */
 
-export function getElementByIdOrThrow(elementId: string): HTMLElement {
+export function getElementByIdOrThrow<T extends HTMLElement>(elementId: string): T {
     const el = document.getElementById(elementId);
     if (!el) {
         throw new Error(`HTML document does not contain element with ID=${elementId}`);
     }
-    return el;
+    return el as T;
 }
 
 

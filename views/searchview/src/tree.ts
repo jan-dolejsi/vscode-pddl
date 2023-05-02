@@ -80,9 +80,9 @@ export class SearchTree {
     /**
      * Creates tree
      */
-    constructor() {
+    constructor(elementId: string) {
         // create the network
-        const container = getElementByIdOrThrow('network');
+        const container = getElementByIdOrThrow(elementId);
         const options = {
             autoResize: true,
             height: '100%',
