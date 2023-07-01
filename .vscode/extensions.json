@@ -9,7 +9,8 @@
 		"davidanson.vscode-markdownlint",
 		"vscode-icons-team.vscode-icons",
 		"epivision.vscode-file-header",
-		"joaompinto.vscode-graphviz"
+		"joaompinto.vscode-graphviz",
+		"pedro-w.tmlanguage",
 	],
 	// List of extensions recommended by VS Code that should not be recommended for users of this workspace.
 	"unwantedRecommendations": [
