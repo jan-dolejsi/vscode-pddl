@@ -13,7 +13,7 @@ import { ShellExecutionOptions } from "vscode";
 import { Disposable, ShellExecution, Task, TaskDefinition, TaskEndEvent, TaskExecution, TaskRevealKind, tasks, TaskScope, Uri, window } from 'vscode';
 import { instanceOfHttpConnectionRefusedError } from 'pddl-planning-service-client';
 import { planner, utils } from 'pddl-workspace';
-import { fileOrFolderExists } from '../utils';
+import { exists } from '../util/workspaceFs';
 
 
 /** Tracks a long-running planning service execution. */
@@ -91,7 +91,7 @@ export abstract class LongRunningPlannerProvider implements planner.PlannerProvi
             const serviceExePath = configuration.path;
             if (isLocal && serviceExePath !== undefined) {
                 const fileName = path.basename(serviceExePath);
-                if (await fileOrFolderExists(Uri.file(serviceExePath))) {
+                if (await exists(Uri.file(serviceExePath))) {
                     if (this.isServiceWasStarted(configuration)) {
                         troubleShootingInfo += `Service appears to be running, but not responding. Click 'Re-start the service'.\n`;
                         troubleShootings.set(`Re-start the service`, async () => this.startService(configuration));
