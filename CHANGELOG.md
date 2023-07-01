@@ -1,5 +1,7 @@
 # PDDL support - What's new?
 
+## 2.25.9 experimental support for scheduling solvers
+
 ## 2.25.7 `:job-scheduling` proposed PDDL syntax extension
 
 To support our [ICAPS23 KEPS workshop](https://icaps23.icaps-conference.org/program/workshops/keps/) workshop paper,
