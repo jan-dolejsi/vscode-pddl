@@ -16,6 +16,7 @@ import { PlannerExecutable } from '../planning/PlannerExecutable';
 import { AsyncServiceConfiguration, PlannerAsyncService, PlannerSyncService, PlannerPackagePreviewService } from 'pddl-planning-service-client';
 import { LongRunningPlannerProvider } from './plannerExecution';
 import { exists } from 'pddl-workspace/dist/utils/asyncfs';
+import { SchedulingService } from './SchedulingService';
 
 export class CommandPlannerProvider implements planner.PlannerProvider {
     get kind(): planner.PlannerKind {
@@ -448,6 +449,96 @@ export class RequestServicePlannerProvider extends LongRunningPlannerProvider {
             },
             'configuration': {}
         };
+    }
+}
+
+// move to planner.WellKnownPlannerKind
+const SCHEDULER_SERVICE_SYNC = new planner.PlannerKind("scheduler");
+
+export class SchedulingServiceProvider extends LongRunningPlannerProvider {
+    get kind(): planner.PlannerKind {
+        return SCHEDULER_SERVICE_SYNC;
+    }
+    getNewPlannerLabel(): string {
+        return "$(calendar) Input a scheduling service URL...";
+    }
+
+    async configurePlanner(previousConfiguration?: planner.PlannerConfiguration): Promise<planner.PlannerConfiguration | undefined> {
+        const existingValue = previousConfiguration?.url ?? "http://localhost:8091/scheduling";
+
+        const existingUri = Uri.parse(existingValue);
+        const indexOf = existingValue.indexOf(existingUri.authority);
+        const existingHostAndPort: [number, number] | undefined
+            = indexOf > -1 ? [indexOf, indexOf + existingUri.authority.length] : undefined;
+
+        const newPlannerUrl = await window.showInputBox({
+            prompt: "Enter scheduling service URL",
+            placeHolder: `http://host:port/scheduling`,
+            valueSelection: existingHostAndPort,
+            value: existingValue,
+            ignoreFocusOut: true
+        });
+
+        if (!newPlannerUrl) { return undefined; }
+
+        return this.createPlannerConfiguration(newPlannerUrl, previousConfiguration);
+    }
+
+    createPlannerConfiguration(newPlannerUrl: string, previousConfiguration?: planner.PlannerConfiguration): planner.PlannerConfiguration {
+        return {
+            kind: this.kind.kind,
+            url: newPlannerUrl,
+            title: newPlannerUrl,
+            canConfigure: true,
+            path: previousConfiguration?.path
+        };
+    }
+
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    showHelp(_output: OutputAdaptor): void {
+        throw new Error("Method not implemented.");
+    }
+
+    /** Custom `Planner` implementation. */
+    createPlanner(configuration: planner.PlannerConfiguration, plannerInvocationOptions: planner.PlannerRunConfiguration): planner.Planner {
+        return SchedulingServiceProvider.createDefaultPlanner(configuration, plannerInvocationOptions, this);
+    }
+
+    /** Default `Planner` implementation. */
+    static createDefaultPlanner(configuration: planner.PlannerConfiguration, plannerInvocationOptions: planner.PlannerRunConfiguration, plannerProvider?: planner.PlannerProvider): planner.Planner {
+        if (!configuration.url) {
+            throw new Error(`Planner ${configuration.title} does not specify 'url'.`);
+        }
+
+        const providerConfiguration: planner.ProviderConfiguration = {
+            configuration: configuration,
+            provider: plannerProvider
+        };
+
+        return new SchedulingService(configuration.url, plannerInvocationOptions, providerConfiguration);
+    }
+
+    /**
+     * Checks if the server is responsive
+     * @param configuration planning service configuration
+     * @returns true of the service responds
+     */
+    async isServiceAccessible(configuration: planner.PlannerConfiguration): Promise<boolean> {
+        const url = configuration.url;
+        if (!url) {
+            throw new Error(`Expected planning configuration with the 'url' attribute.`);
+        }
+
+        return new Promise<boolean>(resolve => {
+            const req = http.request(new URL(url), { method: 'post' }, response => {
+                resolve((response.statusCode !== undefined) && (response.statusCode >= 400));
+            }).once("error", () => {
+                resolve(false);
+            });
+            // todo: different schema or multipart ....
+            req.write(JSON.stringify({ domain: "", problem: "" }));
+            req.end();
+        });
     }
 }
 

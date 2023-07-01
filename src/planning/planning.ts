@@ -520,6 +520,19 @@ export class Planning implements planner.PlannerResponseHandler {
                 return newPlanner ??
                     RequestServicePlannerProvider.createDefaultPlanner(plannerConfiguration, plannerRunConfiguration);
             }
+            else if (plannerConfiguration.url.endsWith("/scheduling")) {
+                const configurationUri = options ? this.toAbsoluteUri(options, workingDirectory) : await new PlannerConfigurationSelector(Uri.file(workingDirectory)).getConfiguration();
+                if (!configurationUri) { return null; } // canceled by user
+                const plannerRunConfiguration = await PlannerConfigurationSelector.loadConfiguration(configurationUri, PlannerAsyncService.DEFAULT_TIMEOUT) as AsyncServiceConfiguration;
+                plannerRunConfiguration.authentication = authentication;
+                // await this.addSearchDebuggerConfig(plannerRunConfiguration);
+
+                const newPlanner = await this.codePddlWorkspace.pddlWorkspace.getPlannerRegistrar()
+                    .getPlannerProvider(new planner.PlannerKind(plannerConfiguration.kind))?.createPlanner?.(plannerConfiguration, plannerRunConfiguration);
+                
+                return newPlanner ??
+                    RequestServicePlannerProvider.createDefaultPlanner(plannerConfiguration, plannerRunConfiguration);
+            }
             else {
                 throw new Error(`Planning service not supported: ${plannerConfiguration.url}. Only /solve or /request service endpoints are supported.`);
             }

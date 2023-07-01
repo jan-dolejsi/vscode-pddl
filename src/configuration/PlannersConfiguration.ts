@@ -9,7 +9,7 @@ import * as path from 'path';
 import { parseTree, findNodeAtLocation } from 'jsonc-parser';
 import { window, commands, workspace, ConfigurationTarget, QuickPickItem, ExtensionContext, StatusBarItem, StatusBarAlignment, Uri, Range, WorkspaceFolder, TextDocument, ViewColumn, env } from 'vscode';
 import { PddlWorkspace, planner } from 'pddl-workspace';
-import { CommandPlannerProvider, SolveServicePlannerProvider, RequestServicePlannerProvider, ExecutablePlannerProvider, Popf, JavaPlannerProvider, Lpg, Pddl4jProvider, PlanningAsAServiceProvider, PlanutilsServerProvider, PythonPlannerProvider, NodeJsPlannerProvider } from './plannerConfigurations';
+import { CommandPlannerProvider, SolveServicePlannerProvider, RequestServicePlannerProvider, ExecutablePlannerProvider, Popf, JavaPlannerProvider, Lpg, Pddl4jProvider, PlanningAsAServiceProvider, PlanutilsServerProvider, PythonPlannerProvider, NodeJsPlannerProvider, SchedulingServiceProvider } from './plannerConfigurations';
 import { CONF_PDDL, PDDL_PLANNER, EXECUTABLE_OR_SERVICE, EXECUTABLE_OPTIONS } from './configuration';
 import { instrumentOperationAsVsCodeCommand } from 'vscode-extension-telemetry-wrapper';
 import { showError, jsonNodeToRange, fileOrFolderExists, isHttp } from '../utils';
@@ -216,6 +216,7 @@ export class PlannersConfiguration {
             new PlanningAsAServiceProvider(this.context.subscriptions),
             new SolveServicePlannerProvider(this.context.subscriptions),
             new RequestServicePlannerProvider(this.context.subscriptions),
+            new SchedulingServiceProvider(this.context.subscriptions),
             new Popf(),
             new Lpg(),
             new PythonPlannerProvider(),

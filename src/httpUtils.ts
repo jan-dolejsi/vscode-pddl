@@ -9,6 +9,7 @@ import * as https from 'https';
 import * as http from 'http';
 import * as fs from 'fs';
 import { URL } from 'url';
+import FormData = require('form-data');
 
 function get(url: URL): (options: http.RequestOptions | string | URL, callback?: (res: http.IncomingMessage) => void) => http.ClientRequest {
     return url.protocol === 'https:' ? https.get : http.get;
@@ -142,6 +143,52 @@ export async function postJson<O>(url: URL, content: unknown, headers?: NodeJS.D
                 }
             });
         }).end(JSON.stringify(content));
+    });
+}
+
+
+/**
+ * Post JSON body and expects JSON response.
+ * @param url url to call
+ * @param content content to post
+ * @param headers headers to add
+ * @returns returned body
+ * @throws HttpStatusError if the status code >= 300
+ */
+export async function postMultipart<O>(url: URL, content: FormData, headers?: NodeJS.Dict<string>): Promise<O> {
+    headers = headers ?? {};
+    // if (! (CONTENT_TYPE in headers)) {
+    //     headers[CONTENT_TYPE] = 'multipart/form-data';
+    // }
+    const allHeaders = content.getHeaders(headers);
+    return await new Promise((resolve, reject) => {
+        request(url)(url, {headers: allHeaders, method: "POST"}, res => {
+            if (res.statusCode && res.statusCode >= 300) {
+                reject(new HttpStatusError(res.statusCode, res.statusMessage, url));
+                res.resume();
+                return;
+            }
+            const contentType = res.headers['content-type'];
+            if (!contentType || !/^application\/json/.test(contentType)) {
+                reject(new Error('Invalid content-type.\n' +
+                    `Expected application/json but received ${contentType} from ${url}`));
+                res.resume();
+                return;
+            }
+            res.setEncoding('utf8');
+            let rawData = '';
+            res.on('data', (chunk) => { rawData += chunk; });
+            res.on('end', () => {
+                try {
+                    const parsedData = JSON.parse(rawData);
+                    // console.log(parsedData);
+                    resolve(parsedData);
+                } catch (e: unknown) {
+                    console.error(e);
+                    reject(e);
+                }
+            });
+        }).end(content.getBuffer());
     });
 }
 
