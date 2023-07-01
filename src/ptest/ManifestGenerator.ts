@@ -9,7 +9,7 @@ import { basename, extname, dirname, join, relative } from 'path';
 import { PTestTreeDataProvider } from './PTestTreeDataProvider';
 import { Test } from './Test';
 import { Uri, workspace } from 'vscode';
-import { fileOrFolderExists } from '../utils';
+import { exists } from '../util/workspaceFs';
 
 export class ManifestGenerator {
     constructor(private readonly pddlWorkspace: PddlWorkspace,
@@ -58,7 +58,7 @@ export class ManifestGenerator {
 
         const manifestUri = Uri.file(join(dirname(domainPath), domainFileNameWithoutExt + PTestTreeDataProvider.PTEST_SUFFIX));
 
-        if (await fileOrFolderExists(manifestUri)) {
+        if (await exists(manifestUri)) {
             const manifestText = await workspace.fs.readFile(manifestUri);
             const manifestJson = JSON.parse(manifestText.toString());
             return TestsManifest.fromJSON(manifestUri.fsPath, manifestJson, context);

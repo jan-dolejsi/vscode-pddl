@@ -180,12 +180,3 @@ export class UriMap<T> extends utils.StringifyingMap<Uri, T> {
         return key.toString();
     }
 }
-
-export async function fileOrFolderExists(fileOrFolderUri: Uri): Promise<boolean> {
-    try {
-        await workspace.fs.stat(fileOrFolderUri);
-        return true;
-    } catch (err) {
-        return false;
-    }
-}

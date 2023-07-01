@@ -12,7 +12,8 @@ import { PddlWorkspace, planner } from 'pddl-workspace';
 import { CommandPlannerProvider, SolveServicePlannerProvider, RequestServicePlannerProvider, ExecutablePlannerProvider, Popf, JavaPlannerProvider, Lpg, Pddl4jProvider, PlanningAsAServiceProvider, PlanutilsServerProvider, PythonPlannerProvider, NodeJsPlannerProvider, SchedulingServiceProvider } from './plannerConfigurations';
 import { CONF_PDDL, PDDL_PLANNER, EXECUTABLE_OR_SERVICE, EXECUTABLE_OPTIONS } from './configuration';
 import { instrumentOperationAsVsCodeCommand } from 'vscode-extension-telemetry-wrapper';
-import { showError, jsonNodeToRange, fileOrFolderExists, isHttp } from '../utils';
+import { showError, jsonNodeToRange, isHttp } from '../utils';
+import { doesNotExist } from '../util/workspaceFs';
 
 export const CONF_PLANNERS = "planners";
 export const CONF_SELECTED_PLANNER = "selectedPlanner";
@@ -552,8 +553,7 @@ export class PlannersConfiguration {
 
     async toDocumentAndRange(setting: { fileUri: Uri | undefined; settingRootPath: (string | number)[] }, index?: number): Promise<{ settingsDoc: TextDocument; range: Range } | undefined> {
         if (!setting.fileUri) { return undefined; }
-        const exists = await fileOrFolderExists(setting.fileUri);
-        if (!exists) { return undefined; }
+        if (await doesNotExist(setting.fileUri)) { return undefined; }
         const settingsText = await workspace.fs.readFile(setting.fileUri);
         const settingsRoot = parseTree(settingsText.toString());
         if (!settingsRoot) { return undefined; }
