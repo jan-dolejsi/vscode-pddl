@@ -10,6 +10,7 @@ import * as http from 'http';
 import * as fs from 'fs';
 import { URL } from 'url';
 import FormData = require('form-data');
+import zlib = require('zlib');
 
 function get(url: URL): (options: http.RequestOptions | string | URL, callback?: (res: http.IncomingMessage) => void) => http.ClientRequest {
     return url.protocol === 'https:' ? https.get : http.get;
@@ -155,14 +156,15 @@ export async function postJson<O>(url: URL, content: unknown, headers?: NodeJS.D
  * @returns returned body
  * @throws HttpStatusError if the status code >= 300
  */
-export async function postMultipart<O>(url: URL, content: FormData, headers?: NodeJS.Dict<string>): Promise<O> {
+export async function postMultipart<O>(url: URL, content: FormData, auth?: string, headers?: NodeJS.Dict<string>): Promise<O> {
     headers = headers ?? {};
     // if (! (CONTENT_TYPE in headers)) {
     //     headers[CONTENT_TYPE] = 'multipart/form-data';
     // }
     const allHeaders = content.getHeaders(headers);
+
     return await new Promise((resolve, reject) => {
-        request(url)(url, {headers: allHeaders, method: "POST"}, res => {
+        request(url)(url, {headers: allHeaders, method: "POST", auth: auth }, res => {
             if (res.statusCode && res.statusCode >= 300) {
                 reject(new HttpStatusError(res.statusCode, res.statusMessage, url));
                 res.resume();
@@ -196,4 +198,16 @@ export class HttpStatusError extends Error {
     constructor(public readonly statusCode: number, public readonly statusMessage: string | undefined, public readonly url: URL){
         super(`Status code ${statusCode}, ${statusMessage} from ${url}`);
     }
+}
+
+export async function gzip(content: string): Promise<Buffer> {
+    return await new Promise((resolve, reject) => {
+        zlib.gzip(content, (error, result) => {
+            if (!error) {
+                resolve(result);
+            } else {
+                reject(error);
+            }
+        });
+    });
 }

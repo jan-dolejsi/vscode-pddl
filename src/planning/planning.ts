@@ -519,10 +519,8 @@ export class Planning implements planner.PlannerResponseHandler {
                 return newPlanner ??
                     RequestServicePlannerProvider.createDefaultPlanner(plannerConfiguration, plannerRunConfiguration);
             }
-            else if (plannerConfiguration.url.endsWith("/scheduling")) {
-                const configurationUri = options ? this.toAbsoluteUri(options, workingDirectory) : await new PlannerConfigurationSelector(Uri.file(workingDirectory)).getConfiguration();
-                if (!configurationUri) { return null; } // canceled by user
-                const plannerRunConfiguration = await PlannerConfigurationSelector.loadConfiguration(configurationUri, PlannerAsyncService.DEFAULT_TIMEOUT) as AsyncServiceConfiguration;
+            else if (plannerConfiguration.kind === 'scheduler') {
+                const plannerRunConfiguration = await PlannerConfigurationSelector.loadConfiguration(PlannerConfigurationSelector.DEFAULT, PlannerAsyncService.DEFAULT_TIMEOUT) as AsyncServiceConfiguration;
                 plannerRunConfiguration.authentication = authentication;
                 // await this.addSearchDebuggerConfig(plannerRunConfiguration);
 
