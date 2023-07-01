@@ -14,7 +14,7 @@ export class CompilationAugmenter extends SyntaxAugmenter {
         return true;
     }
     getHoverProvider(): HoverProvider | undefined {
-        return undefined
+        return undefined;
     }
     protected createDecorations(editor: TextEditor, fileInfo: FileInfo): TextEditorDecorationType[] {
         return [...fileInfo.getCompilations().getAll().values()]
