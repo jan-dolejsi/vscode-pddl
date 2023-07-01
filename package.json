@@ -30,6 +30,9 @@
     "type": "git",
     "url": "https://github.com/jan-dolejsi/vscode-pddl"
   },
+	"vsce": {
+		"baseImagesUrl": "https://raw.githubusercontent.com/wiki/jan-dolejsi/vscode-pddl/img/"
+	},
   "activationEvents": [
     "onLanguage:pddl",
     "onLanguage:plan",
