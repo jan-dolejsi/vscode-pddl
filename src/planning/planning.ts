@@ -177,8 +177,7 @@ export class Planning implements planner.PlannerResponseHandler {
             let problemFileInfo: ProblemInfo | undefined;
             let domainFileInfo: DomainInfo | undefined;
 
-            for (let i = 0; i < selectedFiles.length; i++) {
-                const selectedFile = selectedFiles[i];
+            for (const selectedFile of selectedFiles) {
                 const selectedDoc = await workspace.openTextDocument(selectedFile);
 
                 const fileInfo = await this.codePddlWorkspace.upsertAndParseFile(selectedDoc);
