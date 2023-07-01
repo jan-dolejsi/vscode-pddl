@@ -10,7 +10,7 @@ import { PlannerService, ServerResponse } from 'pddl-planning-service-client';
 import { DomainInfo, ProblemInfo, Plan, parser, planner, PlanStep } from 'pddl-workspace';
 import { Uri, workspace } from 'vscode';
 import { exists } from '../util/workspaceFs';
-import { postMultipart } from '../httpUtils';
+import { gzip, postMultipart } from '../httpUtils';
 
 export class SchedulingService extends PlannerService<FormData, SchedulerResponse> {
 
@@ -35,7 +35,8 @@ export class SchedulingService extends PlannerService<FormData, SchedulerRespons
 
         if (await exists(scheduleUri)) {
             const scheduleBuffer = await workspace.fs.readFile(scheduleUri);
-            form.append('schedule', scheduleBuffer.toString(), {
+            const zippedBuffer = await gzip(scheduleBuffer.toString());
+            form.append('schedule', zippedBuffer, {
                 filename: scheduleUri.fsPath, header: {
                     'Content-Encoding': 'gzip',
                 },
@@ -73,7 +74,9 @@ export class SchedulingService extends PlannerService<FormData, SchedulerRespons
 
         requestHeader['command'] = "generate,solve";
 
-        const schedule = await postMultipart<SchedulerResponse>(new URL(url), requestBody, requestHeader
+        const auth = ':' + process.env.AI_SCHEDULER_API_KEY;
+
+        const schedule = await postMultipart<SchedulerResponse>(new URL(url), requestBody, auth, requestHeader
             // {
             // isAuthenticated: this.plannerConfiguration.authentication !== undefined,
             // serviceFriendlyName: 'PDDL Scheduling Service',
