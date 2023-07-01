@@ -31,7 +31,7 @@ export class PlannerConfigurationSelector {
                 return null;
             default:
                 if (selectedConfigurationItem instanceof PlannerConfigurationUriItem) {
-                    return (selectedConfigurationItem as PlannerConfigurationUriItem).uri;
+                    return selectedConfigurationItem.uri;
                 }
                 else {
                     throw new Error("Unexpected selected item type: " + typeof (selectedConfigurationItem));
