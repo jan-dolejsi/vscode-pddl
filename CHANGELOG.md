@@ -1,5 +1,12 @@
 # PDDL support - What's new?
 
+## 2.26.0 [ICAPS23](https://icaps23.icaps-conference.org/) celebratory release
+
+Welcome to ICAPS 2023 whether you are here in Prague, attending virtually, or catching up later.
+
+This version supports our [KEPS workshop paper](https://icaps23.icaps-conference.org/program/workshops/keps/KEPS-23_paper_4664.pdf)
+and the [system demo](https://icaps23.icaps-conference.org/program/demos/#3913).
+
 ## 2.25.9 experimental support for scheduling solvers
 
 ## 2.25.7 `:job-scheduling` proposed PDDL syntax extension

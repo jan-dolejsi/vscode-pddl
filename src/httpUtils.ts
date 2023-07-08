@@ -156,7 +156,7 @@ export async function postJson<O>(url: URL, content: unknown, headers?: NodeJS.D
  * @returns returned body
  * @throws HttpStatusError if the status code >= 300
  */
-export async function postMultipart<O>(url: URL, content: FormData, auth?: string, headers?: NodeJS.Dict<string>): Promise<O> {
+export async function postMultipart<O>(url: URL, content: FormData, auth?: string, headers?: NodeJS.Dict<string>): Promise<O | string> {
     headers = headers ?? {};
     // if (! (CONTENT_TYPE in headers)) {
     //     headers[CONTENT_TYPE] = 'multipart/form-data';
@@ -171,7 +171,9 @@ export async function postMultipart<O>(url: URL, content: FormData, auth?: strin
                 return;
             }
             const contentType = res.headers['content-type'];
-            if (!contentType || !/^application\/json/.test(contentType)) {
+            const isJson = contentType?.startsWith('application/json');
+            const isPlainText = contentType?.startsWith('text/plain');
+            if (!isJson && !isPlainText) {
                 reject(new Error('Invalid content-type.\n' +
                     `Expected application/json but received ${contentType} from ${url}`));
                 res.resume();
@@ -182,9 +184,14 @@ export async function postMultipart<O>(url: URL, content: FormData, auth?: strin
             res.on('data', (chunk) => { rawData += chunk; });
             res.on('end', () => {
                 try {
-                    const parsedData = JSON.parse(rawData);
-                    // console.log(parsedData);
-                    resolve(parsedData);
+                    if (isJson) {
+                        const parsedData = JSON.parse(rawData);
+                        // console.log(parsedData);
+                        resolve(parsedData);
+                    } else if (isPlainText) {
+                        console.log(rawData);
+                        resolve(rawData);
+                    }
                 } catch (e: unknown) {
                     console.error(e);
                     reject(e);

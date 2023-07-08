@@ -86,11 +86,16 @@ export class SchedulingService extends PlannerService<FormData, SchedulerRespons
             // }
         );
 
-        const plans = await this.processServerResponseBody(url, schedule, planParser, parent);
+        if (typeof schedule === 'string') {
+            parent.handleOutput(schedule);
+            return [];
+        }
+        else {
+            const plans = await this.processServerResponseBody(url, schedule, planParser, parent);
 
-        this.injectObjects(schedule, problemFileInfo);
-
-        return plans;
+            this.injectObjects(schedule, problemFileInfo);
+            return plans;
+        }
     }
 
     private injectObjects(schedule: SchedulerResponse, problemFileInfo: ProblemInfo) {
