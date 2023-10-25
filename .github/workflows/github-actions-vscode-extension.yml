@@ -33,7 +33,7 @@ jobs:
 
       - name: Run extension integration tests in head-less VS Code
         if: success()
-        uses: GabrielBB/xvfb-action@v1.0
+        uses: coactions/setup-xvfb@v1
         with:
           run: npm test
 
