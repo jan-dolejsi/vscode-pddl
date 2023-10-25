@@ -1,5 +1,27 @@
 # PDDL support - What's new?
 
+## 2.27.0
+
+### Secured communication with planning.domains server
+
+We switched to `https` for communication with the planning.domain servers (solver, editor).
+
+### Planning-as-a-service client
+
+Planning-as-a-service deployed at <https://paas-uom.org> is now one of the built-in planners.
+
+For planners that support additional switches, the argument values may be sent directly from VS Code using a temp file that is displayed while launching the planner.
+
+![Planning-as-a-service](https://raw.githubusercontent.com/wiki/jan-dolejsi/vscode-pddl/img/planning-as-a-service.gif)
+
+### Job scheduling injection
+
+The code injection to domains listing the `:job-scheduling` requirement now also includes the `contains` predicate to capture parent-child hierarchical relationships for topological locations.
+
+```lisp
+(contains ?parent ?child - location)
+```
+
 ## 2.26.0 [ICAPS23](https://icaps23.icaps-conference.org/) celebratory release
 
 Welcome to ICAPS 2023 whether you are here in Prague, attending virtually, or catching up later.
