@@ -682,8 +682,8 @@
             },
             {
               "kind": "PLANNING_AS_A_SERVICE_PREVIEW",
-              "url": "http://45.113.232.43:5001/package",
-              "title": "Planning as a service (preview)",
+              "url": "https://paas-uom.org:5001/package",
+              "title": "Planning as a service (paas-uom.org:5001)",
               "canConfigure": false
             }
           ],
