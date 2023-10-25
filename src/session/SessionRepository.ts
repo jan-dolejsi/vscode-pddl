@@ -94,7 +94,7 @@ export class SessionRepository implements QuickDiffProvider {
 	}
 }
 
-const SESSION_URL = "http://editor.planning.domains/session/";
+const SESSION_URL = "https://editor.planning.domains/session/";
 const SESSION_PLUGINS_PATTERN = /define\s*\(\s*function\s*\(\s*\)\s*\{\s*return\s*{\s*meta:\s*true\s*,\s*plugins\s*:\s*({[\S\s]*})\s*}\s*}\s*\);/ms;
 const SESSION_DETAILS_PATTERN = /window\.session_details\s*=\s*{\s*(?:readwrite_hash:\s*"(\w+)"\s*,\s*)?read_hash:\s*"(\w+)"\s*,\s*last_change:\s*"([\w: \(\)\+]+)",?\s*};/;
 

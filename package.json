@@ -660,7 +660,7 @@
           "scope": "resource",
           "type": "string",
           "description": "Title field of a planner from the `pddl.planners` setting.",
-          "default": "http://solver.planning.domains/solve"
+          "default": "https://solver.planning.domains/solve"
         },
         "pddl.showPlannerInStatusBar": {
           "scope": "application",
@@ -676,8 +676,8 @@
           "default": [
             {
               "kind": "SERVICE_SYNC",
-              "url": "http://solver.planning.domains/solve",
-              "title": "http://solver.planning.domains/solve",
+              "url": "https://solver.planning.domains/solve",
+              "title": "https://solver.planning.domains/solve",
               "canConfigure": false
             },
             {
@@ -732,7 +732,7 @@
               "url": {
                 "type": "string",
                 "format": "uri",
-                "description": "URL of the service e.g. http://solver.planning.domains/solve."
+                "description": "URL of the service e.g. https://solver.planning.domains/solve."
               },
               "searchDebuggerSupport": {
                 "type": "string",

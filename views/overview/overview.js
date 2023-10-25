@@ -514,15 +514,15 @@ function populateWithTestData() {
                 scope: 0,
                 configuration: {
                     "kind": "service",
-                    "title": "http://solver.planning.domains/solve",
-                    "url": "http://solver.planning.domains/solve",
+                    "title": "https://solver.planning.domains/solve",
+                    "url": "https://solver.planning.domains/solve",
                     "canConfigure": false,
-                    "documentation": "http://solver.planning.domains"
+                    "documentation": "https://solver.planning.domains"
                 }
             }
         ],
         plannersConfigError: "Error in planner configuration xyz",
-        selectedPlanner: "http://solver.planning.domains/solve",
+        selectedPlanner: "https://solver.planning.domains/solve",
         workspaceFolders: [
             { name: 'wf1', uri: 'file://asdf/folder1'},
             { name: 'wf2', uri: 'file://asdf/folder2'},
