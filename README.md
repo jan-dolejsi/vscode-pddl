@@ -28,7 +28,7 @@ Simplest way to get started is to:
 1. open the _domain.pddl_ file and type ```domain```. The auto-completion suggests to insert the entire structure of the domain file. Use the <kbd>Tab</kbd> and <kbd>Enter</kbd> keys to skip through the placeholders and make your selections.
 1. open the _problem.pddl_ file and type ```problem```. The auto-completion suggests to insert the entire structure of the problem file. Make sure that the `(domain name)` here matches the name selected in the domain file.
 1. When prompted to install the VAL (i.e. Validator) tools, follow the instructions. This will bring a PDDL parser and plan validation utilities to your experience.
-1. When you are ready to run the planner on your domain and problem files, invoke the planner via context menu on one of the file text content or editor tab, or via the <kbd>Alt</kbd> + <kbd>P</kbd> shortcut. The [planning.domains](http://solver.planning.domains/) solver will be used, so do not send any confidential PDDL code.
+1. When you are ready to run the planner on your domain and problem files, invoke the planner via context menu on one of the file text content or editor tab, or via the <kbd>Alt</kbd> + <kbd>P</kbd> shortcut. The [planning.domains](https://solver.planning.domains/) solver will be used, so do not send any confidential PDDL code.
 1. Configure your own PDDL planner by following [instructions](https://github.com/jan-dolejsi/vscode-pddl/wiki/Configuring-the-PDDL-planner).
 
 ![PDDL Planner Configuration](https://raw.githubusercontent.com/wiki/jan-dolejsi/vscode-pddl/img/PDDL_planner_configuration.gif)
@@ -101,7 +101,7 @@ To exercise the features of this PDDL Extension, clone this [vscode-pddl-samples
 
 ### Starting from existing PDDL models
 
-Open [editor.planning.domains](http://editor.planning.domains/) in your browser, select _Import_ from the menu and browse the catalog of all the International Planning Competition benchmarks. Or find more examples [here](https://github.com/SoarGroup/Domains-Planning-Domain-Definition-Language/tree/master/pddl).\
+Open [editor.planning.domains](https://editor.planning.domains/) in your browser, select _Import_ from the menu and browse the catalog of all the International Planning Competition benchmarks. Or find more examples [here](https://github.com/SoarGroup/Domains-Planning-Domain-Definition-Language/tree/master/pddl).\
 To get back from the online editor to VS Code, save your files into a session and click "Open offline".
 
 ## Features
@@ -638,7 +638,7 @@ The domain, problem and plan files are downloaded and displayed as read-only fil
 
 ### Planning.Domains sessions
 
-The online [Planning.Domains editor](http://editor.planning.domains) has a concept of a session. _Session Details_ pane shows links to open the session online / offline. The _offline_ links are handled by VS Code, if installed.
+The online [Planning.Domains editor](https://editor.planning.domains) has a concept of a session. _Session Details_ pane shows links to open the session online / offline. The _offline_ links are handled by VS Code, if installed.
 
 There are two ways to get started:
 

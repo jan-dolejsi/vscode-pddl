@@ -1070,7 +1070,7 @@ The tree/chart was not responding to clicking on the Search Debugger helpful act
 
 ### Planning.Domains sessions
 
-The online [Planning.Domains](http://editor.planning.domains) editor has a concept of a session. _Session Details_ pane shows links to open the session online / offline. The _offline_ links are handled by VS Code, if installed.
+The online [Planning.Domains](https://editor.planning.domains) editor has a concept of a session. _Session Details_ pane shows links to open the session online / offline. The _offline_ links are handled by VS Code, if installed.
 
 There are two ways to get started:
 

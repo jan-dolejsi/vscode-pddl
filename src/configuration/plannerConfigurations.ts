@@ -273,7 +273,7 @@ export class SolveServicePlannerProvider extends LongRunningPlannerProvider {
     }
 
     async configurePlanner(previousConfiguration?: planner.PlannerConfiguration): Promise<planner.PlannerConfiguration | undefined> {
-        const existingValue = previousConfiguration?.url ?? "http://solver.planning.domains/solve";
+        const existingValue = previousConfiguration?.url ?? "https://solver.planning.domains/solve";
 
         const existingUri = Uri.parse(existingValue);
         const indexOf = existingValue.indexOf(existingUri.authority);

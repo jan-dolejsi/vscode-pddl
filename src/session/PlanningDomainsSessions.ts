@@ -405,7 +405,7 @@ Open session in Visual Studio Code: ${this.createVSCodeUri(session, readWrite)}`
     }
 
     private createBrowserUri(session: SessionConfiguration, readWrite: boolean): string {
-        let sessionUri = "http://editor.planning.domains/";
+        let sessionUri = "https://editor.planning.domains/";
         if (session.writeHash && readWrite) {
             sessionUri += "#edit_session=" + session.writeHash;
         }
