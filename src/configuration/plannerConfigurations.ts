@@ -133,7 +133,7 @@ export class PlanutilsServerProvider extends LongRunningPlannerProvider {
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     showHelp(_output: OutputAdaptor): void {
-        throw new Error("Method not implemented."); // possibly show a page like http://45.113.232.43/docs/lama
+        throw new Error("Method not implemented."); // possibly show a page like https://paas-uom.org/docs/lama
     }
 
     /** Custom `Planner` implementation. */
@@ -187,7 +187,7 @@ export class PlanningAsAServiceProvider extends LongRunningPlannerProvider {
     }
 
     async configurePlanner(previousConfiguration?: planner.PlannerConfiguration): Promise<planner.PlannerConfiguration | undefined> {
-        const existingValue = previousConfiguration?.url ?? "http://45.113.232.43/package";
+        const existingValue = previousConfiguration?.url ?? "https://paas-uom.org/package";
 
         const existingUri = Uri.parse(existingValue);
         const indexOf = existingValue.indexOf(existingUri.authority);
@@ -219,7 +219,7 @@ export class PlanningAsAServiceProvider extends LongRunningPlannerProvider {
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     showHelp(_output: OutputAdaptor): void {
-        throw new Error("Method not implemented."); // possibly show a page like http://45.113.232.43/docs/lama
+        throw new Error("Method not implemented."); // possibly show a page like https://paas-uom.org/docs/lama
     }
 
     /** Custom `Planner` implementation. */
