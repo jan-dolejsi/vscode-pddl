@@ -43,7 +43,7 @@ suite('Planner configuration test', () => {
 		const defaultPlanner = planners[0];
 		expect(defaultPlanner).to.not.be.undefined;
 		expect(defaultPlanner.scope).to.equal(PlannerConfigurationScope.Default);
-		expect(defaultPlanner.configuration.url).to.equal('http://solver.planning.domains/solve');
+		expect(defaultPlanner.configuration.url).to.equal('https://solver.planning.domains/solve');
 	});
 
 	test('Creates a user-level planner', async () => {
@@ -286,7 +286,7 @@ suite('Planner configuration test', () => {
 	});
 
 	test('Migrates deprecated planner service configuration', async () => {
-		const executable = 'http://solver.planning.domains/solve';
+		const executable = 'https://solver.planning.domains/solve';
 
 		// GIVEN
 		await workspace.getConfiguration(PDDL_PLANNER).update(EXECUTABLE_OR_SERVICE, executable, ConfigurationTarget.Global);
