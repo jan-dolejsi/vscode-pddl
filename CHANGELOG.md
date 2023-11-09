@@ -1,5 +1,9 @@
 # PDDL support - What's new?
 
+## 2.27.1
+
+Fixed parsing of the planning-as-a-service (and planutils) planner manifests.
+
 ## 2.27.0
 
 ### Secured communication with planning.domains server
