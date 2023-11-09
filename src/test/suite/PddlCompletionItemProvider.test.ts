@@ -286,7 +286,7 @@ suite('PDDL Completion Item Provider', () => {
         const items = await testDomainProvider(inputTextHead, ch, inputTextTail, { triggerKind: vscode.CompletionTriggerKind.Invoke, triggerCharacter: ch });
 
         // THEN
-        assertSnippetIncludes(items, "(not", 'has_michelin_star ?c,is_available ?a,located_at ?r ?l,busy ?r,cooking_job_started ?r,cooking_job_done ?r');
+        assertSnippetIncludes(items, "(not", 'has_michelin_star ?c,is_available ?a,located_at ?r ?l,contains ?parent ?child,busy ?r,cooking_job_started ?r,cooking_job_done ?r');
         assertSnippetIncludes(items, "(assign", '(assign (${1|travel_time ?r ?from ?to,cooking_job_duration ?r|}) ${2:0})$0');
         assert.deepStrictEqual(items.map(i => i.filterText ?? i.label), [
             '(not',

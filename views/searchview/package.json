@@ -20,7 +20,7 @@
     "@types/mocha": "file:../../node_modules/@types/mocha",
     "@typescript-eslint/eslint-plugin": "file:../../node_modules/@typescript-eslint/eslint-plugin",
     "@typescript-eslint/parser": "file:../../node_modules/@typescript-eslint/parser",
-    "browserify": "^16.5.2",
+    "browserify": "^17.0.0",
     "chai": "file:../../node_modules/chai",
     "chai-string": "file:../../node_modules/chai-string",
     "chart.js": "^4.2.1",
@@ -28,7 +28,7 @@
     "mocha": "file:../../node_modules/mocha",
     "model": "file:../../out/planView/model/",
     "tsify": "^5.0.4",
-    "typescript": "^4.7.2",
+    "typescript": "^4.9.5",
     "watchify": "^4.0.0"
   },
   "dependencies": {

@@ -11,7 +11,7 @@ interface VsCodeApi {
 
 declare function postCommand(command: string): void;
 
-declare const acquireVsCodeApi: () => VsCodeApi;
+// declare const acquireVsCodeApi: () => VsCodeApi;
 
 export declare const vscode: VsCodeApi | undefined;
 // let vscode: VsCodeApi | undefined;
