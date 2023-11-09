@@ -59,7 +59,7 @@ jobs:
 
       - name: Publish extension to marketplace
         run: | 
-          npm install -g vsce
+          npm install -g @vscode/vsce
           vsce publish -p $VSCE_TOKEN
         env: 
           VSCE_TOKEN: ${{ secrets.VSCE_TOKEN }}
