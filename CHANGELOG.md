@@ -1,5 +1,9 @@
 # PDDL support - What's new?
 
+## 2.27.2
+
+3rd party library updates.
+
 ## 2.27.1
 
 Fixed parsing of the planning-as-a-service (and planutils) planner manifests.

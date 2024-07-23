@@ -39,3 +39,9 @@ views/planview/out-test
 views/planview/src
 views/planview/test 
 views/planview/tsconfig.json
+
+views/modelView/node_modules
+views/modelView/src
+views/modelView/test
+views/modelView/tsconfig.json
+views/modelView/.npmrc
