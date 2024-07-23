@@ -15,7 +15,7 @@ import { toURI } from '../utils';
 export abstract class SyntaxAugmenter {
     protected symbolUtils: SymbolUtils;
     protected dirtyEditors = new Set<TextEditor>();
-    protected timeout: NodeJS.Timer | undefined = undefined;
+    protected timeout: NodeJS.Timeout | undefined = undefined;
     protected decorations = new Map<TextEditor, TextEditorDecorationType[]>();
 
     constructor(context: ExtensionContext, protected readonly pddlWorkspace: CodePddlWorkspace) {

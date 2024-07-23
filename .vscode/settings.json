@@ -18,5 +18,7 @@
 	],
 	"WhiteSource Advise.Diff.BaseBranch": "master",
 	"task.allowAutomaticTasks": "on",
-    "git.branchProtection": ["master"],
+	"git.branchProtection": [
+		"master"
+	],
 }

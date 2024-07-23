@@ -38,7 +38,7 @@ export class SessionSourceControl implements vscode.Disposable {
 	/** This represents the most recent session version on the server. */
 	private latestSessionVersionDate: number = Number.MIN_VALUE; // until actual value is established
 	private _onRepositoryChange = new vscode.EventEmitter<SessionContent>();
-	private timeout?: NodeJS.Timer;
+	private timeout?: NodeJS.Timeout;
 	private session!: SessionContent;
 	private isRefreshing = false;
 
