@@ -33,7 +33,7 @@ import { toDiagnosticsFromParsingProblems } from './validatorUtils';
  */
 export class Diagnostics extends Disposable {
 
-    timeout: NodeJS.Timer | undefined;
+    timeout: NodeJS.Timeout | undefined;
     validator: Validator | undefined;
     pddlParserSettings: PDDLParserSettings;
 

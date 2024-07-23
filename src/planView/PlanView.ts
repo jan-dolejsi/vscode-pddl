@@ -36,7 +36,7 @@ export const PDDL_SAVE_AS_EXPECTED_PLAN = 'pddl.saveAsExpectedPlan';
 export class PlanView extends Disposable {
 
     private webviewPanels = new Map<Uri, PlanPreviewPanel>();// todo: replace with UriMap
-    private timeout: NodeJS.Timer | undefined;
+    private timeout: NodeJS.Timeout | undefined;
     public static readonly PLANNER_OUTPUT_URI = Uri.parse("pddl://planner/output");
 
     constructor(private context: ExtensionContext, private codePddlWorkspace: CodePddlWorkspace) {
