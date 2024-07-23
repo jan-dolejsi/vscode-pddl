@@ -13,7 +13,7 @@ jobs:
     
     strategy:
       matrix:
-        node-version: [18]
+        node-version: [20]
         os: [windows-latest, ubuntu-22.04] # macos-latest, 
       fail-fast: false
 
@@ -22,7 +22,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Use Node.js ${{ matrix.node-version }}
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node-version }}
 
@@ -40,8 +40,7 @@ jobs:
       - name: Package extension
         if: success()
         run: | 
-          npm install -g vsce
-          vsce package
+          npx vsce package
 
   publish:
     needs: build
@@ -49,18 +48,17 @@ jobs:
     if: success() && github.ref == 'refs/heads/master'
     steps:
       - uses: actions/checkout@v4
-      - name: Use Node.js 18
-        uses: actions/setup-node@v3
+      - name: Use Node.js 20
+        uses: actions/setup-node@v4
         with:
-          node-version: 18
+          node-version: 20
 
       - name: NPM Install
         run: npm install
 
       - name: Publish extension to marketplace
         run: | 
-          npm install -g @vscode/vsce
-          vsce publish -p $VSCE_TOKEN
+          npx vsce publish -p $VSCE_TOKEN
         env: 
           VSCE_TOKEN: ${{ secrets.VSCE_TOKEN }}
         continue-on-error: true
