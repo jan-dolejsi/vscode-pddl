@@ -4,7 +4,7 @@
   "description": "Planning Domain Description Language support",
   "author": "Jan Dolejsi",
   "license": "MIT",
-  "version": "2.27.2",
+  "version": "2.28.0",
   "publisher": "jan-dolejsi",
   "engines": {
     "vscode": "^1.69.0",
@@ -660,7 +660,7 @@
           "scope": "resource",
           "type": "string",
           "description": "Title field of a planner from the `pddl.planners` setting.",
-          "default": "https://solver.planning.domains/solve"
+          "default": "https://solver.planning.domains:5001/package"
         },
         "pddl.showPlannerInStatusBar": {
           "scope": "application",
@@ -675,15 +675,9 @@
           "markdownDescription": "The PDDL Extension can work with multiple **PDDL Planners**. It has a notion of planner _kind_. The _kind_s are defined by the PDDL Extension, or by other extensions injecting in their _Planner Providers_. For more information, see [Configuring the PDDL planner](https://github.com/jan-dolejsi/vscode-pddl/wiki/Configuring-the-PDDL-planner) wiki page.",
           "default": [
             {
-              "kind": "SERVICE_SYNC",
-              "url": "https://solver.planning.domains/solve",
-              "title": "https://solver.planning.domains/solve",
-              "canConfigure": false
-            },
-            {
               "kind": "PLANNING_AS_A_SERVICE_PREVIEW",
-              "url": "https://paas-uom.org:5001/package",
-              "title": "Planning as a service (paas-uom.org:5001)",
+              "url": "https://solver.planning.domains:5001/package",
+              "title": "Planning as a service (solver.planning.domains)",
               "canConfigure": false
             }
           ],
@@ -732,7 +726,7 @@
               "url": {
                 "type": "string",
                 "format": "uri",
-                "description": "URL of the service e.g. https://solver.planning.domains/solve."
+                "description": "URL of the service e.g. https://solver.planning.domains:5001/package."
               },
               "searchDebuggerSupport": {
                 "type": "string",
