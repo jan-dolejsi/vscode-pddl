@@ -30,7 +30,7 @@ suite('Planner configuration test', () => {
 		await clearConfiguration();
 	});
 
-	const outOfTheBoxPlanners = 2;
+	const outOfTheBoxPlanners = 1;
 
 	test('Default planners are returned in blank configuration', () => {
 		const wf = assertDefined(workspace.workspaceFolders, "workspace folders")[0];
@@ -43,7 +43,7 @@ suite('Planner configuration test', () => {
 		const defaultPlanner = planners[0];
 		expect(defaultPlanner).to.not.be.undefined;
 		expect(defaultPlanner.scope).to.equal(PlannerConfigurationScope.Default);
-		expect(defaultPlanner.configuration.url).to.equal('https://solver.planning.domains/solve');
+		expect(defaultPlanner.configuration.url).to.equal('https://solver.planning.domains:5001/package');
 	});
 
 	test('Creates a user-level planner', async () => {
@@ -303,7 +303,7 @@ suite('Planner configuration test', () => {
 		expect(migratedPlanner).to.not.be.undefined;
 		expect(migratedPlanner.scope).to.equal(PlannerConfigurationScope.User);
 		expect(migratedPlanner.configuration.url).to.equal(executable);
-		expect(migratedPlanner.configuration.title).to.equal(executable + ' #2');
+		expect(migratedPlanner.configuration.title).to.equal(executable);
 	});
 
 
