@@ -97,7 +97,7 @@ export class PlanutilsServerProvider extends LongRunningPlannerProvider {
         return new planner.PlannerKind('planutils_server');
     }
     getNewPlannerLabel(): string {
-        return "$(package) Planutils server (preview) URL...";
+        return "$(package) Planutils server URL...";
     }
 
     async configurePlanner(previousConfiguration?: planner.PlannerConfiguration): Promise<planner.PlannerConfiguration | undefined> {
@@ -180,14 +180,14 @@ export class PlanutilsServerProvider extends LongRunningPlannerProvider {
 
 export class PlanningAsAServiceProvider extends LongRunningPlannerProvider {
     get kind(): planner.PlannerKind {
-        return planner.WellKnownPlannerKind.PLANNING_AS_A_SERVICE_PREVIEW;
+        return planner.WellKnownPlannerKind.PLANNING_AS_A_SERVICE;
     }
     getNewPlannerLabel(): string {
-        return "$(package) Planning-as-a-service (preview) URL...";
+        return "$(package) Planning-as-a-service URL...";
     }
 
     async configurePlanner(previousConfiguration?: planner.PlannerConfiguration): Promise<planner.PlannerConfiguration | undefined> {
-        const existingValue = previousConfiguration?.url ?? "https://paas-uom.org/package";
+        const existingValue = previousConfiguration?.url ?? "https://your-planning-as-a-service:5001/package";
 
         const existingUri = Uri.parse(existingValue);
         const indexOf = existingValue.indexOf(existingUri.authority);
@@ -264,6 +264,13 @@ export class PlanningAsAServiceProvider extends LongRunningPlannerProvider {
     }
 }
 
+/** To support user configurations created using the 'preview' planner configuration. */
+export class PreviewPlanningAsAServiceProvider extends PlanningAsAServiceProvider {
+    get kind(): planner.PlannerKind {
+        return planner.WellKnownPlannerKind.PLANNING_AS_A_SERVICE_PREVIEW;
+    }
+}
+
 export class SolveServicePlannerProvider extends LongRunningPlannerProvider {
     get kind(): planner.PlannerKind {
         return planner.WellKnownPlannerKind.SERVICE_SYNC;
@@ -273,7 +280,7 @@ export class SolveServicePlannerProvider extends LongRunningPlannerProvider {
     }
 
     async configurePlanner(previousConfiguration?: planner.PlannerConfiguration): Promise<planner.PlannerConfiguration | undefined> {
-        const existingValue = previousConfiguration?.url ?? "https://solver.planning.domains/solve";
+        const existingValue = previousConfiguration?.url ?? "https://your-server/solve";
 
         const existingUri = Uri.parse(existingValue);
         const indexOf = existingValue.indexOf(existingUri.authority);

@@ -1,5 +1,9 @@
 # PDDL support - What's new?
 
+## 2.28.0
+
+Updated the [solver.planning.domains](https://solver.planning.domains) default planner to the new Planning-as-a-service api.
+
 ## 2.27.2
 
 3rd party library updates.
