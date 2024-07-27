@@ -13,6 +13,7 @@ import { plannersConfiguration, codePddlWorkspaceForTests } from '../../extensio
 import { PlannerConfigurationScope, CONF_PLANNERS, CONF_SELECTED_PLANNER } from '../../configuration/PlannersConfiguration';
 import { PDDL_PLANNER, EXECUTABLE_OR_SERVICE, EXECUTABLE_OPTIONS, CONF_PDDL } from '../../configuration/configuration';
 import { fail } from 'assert';
+import { PreviewPlanningAsAServiceProvider } from '../../configuration/plannerConfigurations';
 
 suite('Planner configuration test', () => {
 
@@ -327,4 +328,27 @@ suite('Planner configuration test', () => {
 		expect(migratedPlanner.url).to.equal(executable);
 		expect(migratedPlanner.title).to.equal(executable);
 	});
+
+	
+	test('Migrates deprecated planning-as-a-service configuration', async () => {
+		const executable = 'https://solver.planning.domains/solve';
+
+		// GIVEN
+		const legacyProvider = new PreviewPlanningAsAServiceProvider([]);
+		const legacyConfiguration = legacyProvider.createPlannerConfiguration('https://mock-as-a-service/');
+		await plannersConfiguration.addPlannerConfiguration(PlannerConfigurationScope.User, legacyConfiguration);
+		await workspace.getConfiguration(PDDL_PLANNER).update(EXECUTABLE_OR_SERVICE, executable, ConfigurationTarget.Global);
+
+		const previewConfigsBefore = plannersConfiguration.getPlanners().filter(p => p.configuration.kind === legacyProvider.kind.kind);
+
+		expect(previewConfigsBefore, 'preview configs before').to.have.length.greaterThanOrEqual(1);
+
+		// WHEN
+		await plannersConfiguration.migrateLegacyConfiguration();
+
+		// THEN
+		const previewConfigsAfter = plannersConfiguration.getPlanners().filter(p => p.configuration.kind === legacyProvider.kind.kind);
+		expect(previewConfigsAfter, 'preview configs after').to.have.length(previewConfigsBefore.length);
+	});
+
 });

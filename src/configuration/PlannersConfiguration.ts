@@ -9,7 +9,11 @@ import * as path from 'path';
 import { parseTree, findNodeAtLocation } from 'jsonc-parser';
 import { window, commands, workspace, ConfigurationTarget, QuickPickItem, ExtensionContext, StatusBarItem, StatusBarAlignment, Uri, Range, WorkspaceFolder, TextDocument, ViewColumn, env } from 'vscode';
 import { PddlWorkspace, planner } from 'pddl-workspace';
-import { CommandPlannerProvider, SolveServicePlannerProvider, RequestServicePlannerProvider, ExecutablePlannerProvider, Popf, JavaPlannerProvider, Lpg, Pddl4jProvider, PlanningAsAServiceProvider, PlanutilsServerProvider, PythonPlannerProvider, NodeJsPlannerProvider, SchedulingServiceProvider } from './plannerConfigurations';
+import {
+    CommandPlannerProvider, SolveServicePlannerProvider, RequestServicePlannerProvider, ExecutablePlannerProvider,
+    Popf, JavaPlannerProvider, Lpg, Pddl4jProvider, PlanningAsAServiceProvider, PlanutilsServerProvider,
+    PythonPlannerProvider, NodeJsPlannerProvider, SchedulingServiceProvider, PreviewPlanningAsAServiceProvider
+} from './plannerConfigurations';
 import { CONF_PDDL, PDDL_PLANNER, EXECUTABLE_OR_SERVICE, EXECUTABLE_OPTIONS } from './configuration';
 import { instrumentOperationAsVsCodeCommand } from 'vscode-extension-telemetry-wrapper';
 import { showError, jsonNodeToRange, isHttp } from '../utils';
@@ -136,6 +140,11 @@ export class PlannersConfiguration {
     }
 
     async migrateLegacyConfiguration(workspaceFolder?: WorkspaceFolder): Promise<void> {
+        await this.migrateLegacySelectedPlannerConfiguration(workspaceFolder);
+        await this.migrateLegacyPaaSPreviews(workspaceFolder);
+    }
+
+    async migrateLegacySelectedPlannerConfiguration(workspaceFolder?: WorkspaceFolder): Promise<void> {
         const config = workspace.getConfiguration(PDDL_PLANNER, workspaceFolder);
         const legacyPlannerInspect = config.inspect<string>(EXECUTABLE_OR_SERVICE);
         const legacySyntaxInspect = config.inspect<string>(EXECUTABLE_OPTIONS);
@@ -158,11 +167,7 @@ export class PlannersConfiguration {
 
     async migrateLegacyConfigurationInTarget(legacyPlanner: string, legacySyntax: string | undefined, scope: PlannerConfigurationScope, workspaceFolder?: WorkspaceFolder): Promise<void> {
         const config = workspace.getConfiguration(PDDL_PLANNER, workspaceFolder);
-        const migratedPlanner = isHttp(legacyPlanner)
-            ? legacyPlanner.endsWith('/solve')
-                ? new SolveServicePlannerProvider([]).createPlannerConfiguration(legacyPlanner)
-                : new RequestServicePlannerProvider([]).createPlannerConfiguration(legacyPlanner)
-            : new CommandPlannerProvider().createPlannerConfiguration(legacyPlanner, legacySyntax);
+        const migratedPlanner = this.migrateLegacyPlannerConfigurationInTarget(legacyPlanner, legacySyntax);
 
         const target = this.toConfigurationTarget(scope);
 
@@ -171,6 +176,35 @@ export class PlannersConfiguration {
         await config.update(EXECUTABLE_OPTIONS, undefined, target);
 
         console.log(`Migrated ${legacyPlanner} to ${newPlannerConfig.scope.toString()}:${newPlannerConfig.configuration.title}`);
+    }
+
+    private migrateLegacyPlannerConfigurationInTarget(legacyPlanner: string, legacySyntax: string | undefined): planner.PlannerConfiguration {
+        if (isHttp(legacyPlanner)) {
+            if (legacyPlanner.endsWith('/solve')) {
+                return new SolveServicePlannerProvider([]).createPlannerConfiguration(legacyPlanner);
+            } else if (legacyPlanner.endsWith('/package')) {
+                return new PlanningAsAServiceProvider([]).createPlannerConfiguration(legacyPlanner);
+            } else {
+                return new RequestServicePlannerProvider([]).createPlannerConfiguration(legacyPlanner);
+            }
+        } else {
+            return new CommandPlannerProvider().createPlannerConfiguration(legacyPlanner, legacySyntax);
+        }
+    }
+
+    async migrateLegacyPaaSPreviews(workspaceFolder: WorkspaceFolder | undefined): Promise<void> {
+        const planners = this.getPlanners(workspaceFolder);
+        const previewKind = new PreviewPlanningAsAServiceProvider([]).kind.kind;
+        const awaitables = planners
+            .filter(p => p.configuration.kind === previewKind)
+            .map(async p => await this.migrateLegacyPaaSPreview(p));
+        Promise.all(awaitables);
+    }
+
+    private async migrateLegacyPaaSPreview(config: ScopedPlannerConfiguration): Promise<void> {
+        config.configuration.kind = planner.WellKnownPlannerKind.PLANNING_AS_A_SERVICE.kind;
+        await this.savePlannerConfiguration(config.index, config.scope, config.configuration, this.toWorkspaceFolder(config));
+        console.log(`Migrated '${config.configuration.title}' to ${config.configuration.kind}`);
     }
 
     refreshStatusBar(): void {
@@ -411,7 +445,7 @@ export class PlannersConfiguration {
             for (const scope of PlannersConfiguration.SCOPES) {
                 // todo: get the planners for all scopes, then filter
                 const planners = this.getPlannersPerScope(scope, workingFolder);
-                if (!Array.isArray(planners)) { console.error(`Planners configuration for scope ${scope} is invalid: ${planners}`); continue; }
+                if (!Array.isArray(planners)) { console.error(`Planners configuration for scope ${scope} is invalid: `, planners); continue; }
                 const indexFound = planners.findIndex(p => p.title === selectedPlannerTitle);
                 if (indexFound > -1) {
                     return this.toScopedConfiguration(planners[indexFound], indexFound, scope, workingFolder);
