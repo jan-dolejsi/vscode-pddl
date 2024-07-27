@@ -241,7 +241,8 @@ export async function duplicateSession(session: SessionContent): Promise<string>
 }
 
 const SAVE_TABS_PLUGIN_NAME = "save-tabs";
-const SOLVER_PLUGIN_NAME = "solver";
+export const SOLVER_PLUGIN_NAME = "solver";
+export const PLANNING_AS_A_SERVICE_PLUGIN_NAME = "planning-as-a-service-plugin";
 
 /**
  * Fetches session from the planning.domains server.
@@ -283,7 +284,7 @@ async function getRawSession(sessionConfiguration: SessionConfiguration): Promis
 	if (pluginsMatch = SESSION_PLUGINS_PATTERN.exec(sessionContent)) {
 		const rawPlugins = JSON.parse(pluginsMatch[1]);
 
-		[SAVE_TABS_PLUGIN_NAME, SOLVER_PLUGIN_NAME].forEach(pluginName => {
+		[SAVE_TABS_PLUGIN_NAME, SOLVER_PLUGIN_NAME, PLANNING_AS_A_SERVICE_PLUGIN_NAME].forEach(pluginName => {
 			if (rawPlugins.hasOwnProperty(pluginName)) {
 				plugins.set(pluginName, toRawSessionPlugin(pluginName, rawPlugins[pluginName]));
 			}

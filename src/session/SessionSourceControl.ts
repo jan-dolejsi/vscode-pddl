@@ -4,12 +4,14 @@
  * ------------------------------------------------------------------------------------------ */
 
 import * as vscode from 'vscode';
-import { SessionRepository, getSession, SessionContent, uploadSession, duplicateSession, checkSession } from './SessionRepository';
+import { SessionRepository, getSession, SessionContent, uploadSession, duplicateSession, checkSession, PLANNING_AS_A_SERVICE_PLUGIN_NAME, SOLVER_PLUGIN_NAME } from './SessionRepository';
 import * as path from 'path';
 import { toFuzzyRelativeTime } from '../utils';
 import { SessionConfiguration, saveConfiguration, SessionMode, toSessionConfiguration, CONFIGURATION_FILE } from './SessionConfiguration';
-import { PDDL_PLANNER, EXECUTABLE_OR_SERVICE } from '../configuration/configuration';
+import { CONF_PDDL } from '../configuration/configuration';
 import { exists } from '../util/workspaceFs';
+import { CONF_PLANNERS, CONF_SELECTED_PLANNER } from '../configuration/PlannersConfiguration';
+import { PlanningAsAServiceProvider, SolveServicePlannerProvider } from '../configuration/plannerConfigurations';
 
 /**
  * Command for cloning a session to the local storage.
@@ -273,18 +275,32 @@ export class SessionSourceControl implements vscode.Disposable {
 		return await saveConfiguration(this.workspaceFolder.uri, this.session);
 	}
 
-	private static readonly SOLVER_PLUGIN = "solver";
-
 	/** Saves setting of eligible session plugins to workspace configuration. */
 	async saveWorkspaceSettings(): Promise<void> {
-		if (this.session.plugins.has(SessionSourceControl.SOLVER_PLUGIN)) {
-			const solver = this.session.plugins.get(SessionSourceControl.SOLVER_PLUGIN);
+		if (this.session.plugins.has(PLANNING_AS_A_SERVICE_PLUGIN_NAME)) {
+			const solver = this.session.plugins.get(PLANNING_AS_A_SERVICE_PLUGIN_NAME);
+			if (solver?.url !== "/plugins/featured/paas/plugin.js") { return; }
+
+			const solverUrl = solver.settings["PASURL"] + '/package';
+			const configuration = new PlanningAsAServiceProvider([]).createPlannerConfiguration(solverUrl);
+			configuration.title += ' - from session';
+
+			await vscode.workspace.getConfiguration(CONF_PDDL, this.workspaceFolder.uri)
+				.update(CONF_PLANNERS, [configuration], vscode.ConfigurationTarget.WorkspaceFolder);
+			await vscode.workspace.getConfiguration(CONF_PDDL, this.workspaceFolder.uri)
+				.update(CONF_SELECTED_PLANNER, configuration.title, vscode.ConfigurationTarget.WorkspaceFolder);
+		} else if (this.session.plugins.has(SOLVER_PLUGIN_NAME)) {
+			const solver = this.session.plugins.get(SOLVER_PLUGIN_NAME);
 			if (solver?.url !== "/plugins/solver.js") { return; }
 
-			const solverUrl = solver.settings["url"];
+			const solverUrl = solver.settings["url"] + "/solve";
+			const configuration = new SolveServicePlannerProvider([]).createPlannerConfiguration(solverUrl);
+			configuration.title += ' - from obsolete session';
 
-			// todo: this configuration is upgraded right away; move to the new planner configuration pattern
-			await vscode.workspace.getConfiguration(PDDL_PLANNER, this.workspaceFolder.uri).update(EXECUTABLE_OR_SERVICE, solverUrl + "/solve", vscode.ConfigurationTarget.WorkspaceFolder);
+			await vscode.workspace.getConfiguration(CONF_PDDL, this.workspaceFolder.uri)
+				.update(CONF_PLANNERS, [configuration], vscode.ConfigurationTarget.WorkspaceFolder);
+			await vscode.workspace.getConfiguration(CONF_PDDL, this.workspaceFolder.uri)
+				.update(CONF_SELECTED_PLANNER, configuration.title, vscode.ConfigurationTarget.WorkspaceFolder);
 		}
 	}
 
