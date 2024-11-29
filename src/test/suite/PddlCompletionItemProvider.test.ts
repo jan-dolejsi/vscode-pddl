@@ -287,7 +287,7 @@ suite('PDDL Completion Item Provider', () => {
 
         // THEN
         assertSnippetIncludes(items, "(not", 'has_michelin_star ?c,is_available ?a,located_at ?r ?l,contains ?parent ?child,busy ?r,cooking_job_started ?r,cooking_job_done ?r');
-        assertSnippetIncludes(items, "(assign", '(assign (${1|travel_time ?r ?from ?to,cooking_job_duration ?r|}) ${2:0})$0');
+        assertSnippetIncludes(items, "(assign", '(assign (${1|travel_time ?r ?from ?to,time_steps_per_day,time_step_in_days,cooking_job_duration ?r|}) ${2:0})$0');
         assert.deepStrictEqual(items.map(i => i.filterText ?? i.label), [
             '(not',
             '(assign',
